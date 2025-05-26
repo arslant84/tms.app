@@ -1,0 +1,49 @@
+<header class="app-header">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary-teal">
+    <div class="container-fluid">
+      <a class="navbar-brand" routerLink="/dashboard">
+        <span class="brand-name">SynTra</span>
+      </a>
+      <button class="navbar-toggler" type="button" (click)="toggleNavbar()" aria-controls="navbarNav" [attr.aria-expanded]="!isCollapsed" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" [class.show]="!isCollapsed" id="navbarNav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/trf" routerLinkActive="active">TRF Management</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/booking" routerLinkActive="active">Booking Portal</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/expenses" routerLinkActive="active">Expense Claims</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/insights" routerLinkActive="active">Travel Insights</a>
+          </li>
+          <li class="nav-item" *ngIf="isAdmin$ | async">
+            <a class="nav-link" routerLink="/users/admin" routerLinkActive="active">User Management</a>
+          </li>
+        </ul>
+        <div class="d-flex" *ngIf="currentUser$ | async as user; else loginButton">
+          <div class="dropdown">
+            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              {{ user.name }}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+              <li><a class="dropdown-item" routerLink="/profile">My Profile</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#" (click)="logout($event)">Logout</a></li>
+            </ul>
+          </div>
+        </div>
+        <ng-template #loginButton>
+          <a class="btn btn-outline-light" routerLink="/auth/login">Login</a>
+        </ng-template>
+      </div>
+    </div>
+  </nav>
+</header>

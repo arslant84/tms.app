@@ -1,0 +1,75 @@
+<div class="container">
+  <div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white text-center py-3">
+          <h2>Travel Management System</h2>
+          <p class="mb-0">Sign in to your account</p>
+        </div>
+        <div class="card-body p-4">
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+            <!-- Debug section -->
+            <div class="mb-3 text-center">
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="fillTestCredentials()">
+                Use Test Admin Credentials
+              </button>
+            </div>
+            <!-- Error message -->
+            <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+              {{ errorMessage }}
+            </div>
+            
+            <!-- Email field -->
+            <div class="mb-3">
+              <label for="email" class="form-label">Email address</label>
+              <input 
+                type="email" 
+                class="form-control" 
+                id="email" 
+                formControlName="email" 
+                placeholder="name@example.com"
+                [ngClass]="{'is-invalid': loginForm.get('email')?.invalid && loginForm.get('email')?.touched}"
+              >
+              <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="invalid-feedback">
+                <div *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</div>
+                <div *ngIf="loginForm.get('email')?.errors?.['email']">Please enter a valid email address</div>
+              </div>
+            </div>
+            
+            <!-- Password field -->
+            <div class="mb-4">
+              <label for="password" class="form-label">Password</label>
+              <input 
+                type="password" 
+                class="form-control" 
+                id="password" 
+                formControlName="password"
+                [ngClass]="{'is-invalid': loginForm.get('password')?.invalid && loginForm.get('password')?.touched}"
+              >
+              <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="invalid-feedback">
+                <div *ngIf="loginForm.get('password')?.errors?.['required']">Password is required</div>
+                <div *ngIf="loginForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</div>
+              </div>
+            </div>
+            
+            <!-- Submit button -->
+            <div class="d-grid">
+              <button 
+                type="submit" 
+                class="btn btn-primary btn-lg" 
+                [disabled]="loginForm.invalid || isSubmitting"
+              >
+                <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                {{ isSubmitting ? 'Signing in...' : 'Sign In' }}
+              </button>
+            </div>
+          </form>
+        </div>
+        <div class="card-footer text-center py-3 bg-light">
+          <p class="mb-0">Travel Request Management System</p>
+          <small class="text-muted">© 2025 All Rights Reserved</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

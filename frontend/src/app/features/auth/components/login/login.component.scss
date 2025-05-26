@@ -1,0 +1,42 @@
+.card {
+  border-radius: 10px;
+  overflow: hidden;
+  border: none;
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+  }
+}
+
+.card-header {
+  border-bottom: none;
+}
+
+.form-control {
+  padding: 12px;
+  border-radius: 8px;
+  
+  &:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+}
+
+.btn-primary {
+  padding: 12px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.card-footer {
+  border-top: none;
+}

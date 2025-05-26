@@ -1,0 +1,50 @@
+/* You can add global styles to this file, and also import other style files */
+/* Bootstrap CSS is imported in angular.json */
+@use './styles/typography' as typography;
+@use './styles/colors' as colors;
+
+// We're using Google Fonts for Raleway instead of local font files
+// The font is loaded in index.html
+
+// Global styles
+body {
+  @include typography.body-text;
+  color: colors.$text-primary;
+  background-color: colors.$background-primary;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  @include typography.title;
+  color: colors.$primary-teal;
+}
+
+h2 {
+  @include typography.subtitle;
+  color: colors.$primary-dark-gray;
+}
+
+// Secondary font usage for specific elements
+.secondary-font {
+  @include typography.secondary-text;
+}
+
+// Utility classes for colors
+.bg-primary-teal { background-color: colors.$primary-teal; }
+.bg-primary-dark-gray { background-color: colors.$primary-dark-gray; }
+.bg-secondary-purple-dark { background-color: colors.$secondary-purple-dark; }
+.bg-secondary-purple-medium { background-color: colors.$secondary-purple-medium; }
+.bg-secondary-blue { background-color: colors.$secondary-blue; }
+.bg-secondary-light-blue { background-color: colors.$secondary-light-blue; }
+.bg-secondary-green { background-color: colors.$secondary-green; }
+.bg-secondary-yellow { background-color: colors.$secondary-yellow; }
+.bg-secondary-orange { background-color: colors.$secondary-orange; }
+.bg-neutral { background-color: colors.$neutral-color; }
+.bg-highlight { background-color: colors.$highlight-color; }
+
+.text-primary-teal { color: colors.$primary-teal; }
+.text-primary-dark-gray { color: colors.$primary-dark-gray; }
+.text-highlight { color: colors.$highlight-color; }
+
+// Add your custom global styles below

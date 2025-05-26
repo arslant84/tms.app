@@ -1,0 +1,150 @@
+<div class="dashboard-container">
+  <div class="welcome-section text-center py-4 mb-4">
+    <h1 class="welcome-title">Welcome to <span class="brand-name">SynTra</span></h1>
+    <p class="welcome-subtitle">Travel is Synchronized</p>
+  </div>
+
+  <div class="action-buttons text-center mb-4">
+    <div class="row justify-content-center">
+      <div class="col-md-auto mb-2 mb-md-0">
+        <button class="btn btn-primary" routerLink="/trf/create">
+          <i class="bi bi-plus-circle me-2"></i> Create New TRF
+        </button>
+      </div>
+      <div class="col-md-auto mb-2 mb-md-0">
+        <button class="btn btn-success" routerLink="/trf">
+          <i class="bi bi-file-earmark-text me-2"></i> Submit Travel Plan
+        </button>
+      </div>
+      <div class="col-md-auto mb-2 mb-md-0">
+        <button class="btn btn-info" routerLink="/booking/hotels">
+          <i class="bi bi-building me-2"></i> Book Accommodation
+        </button>
+      </div>
+      <div class="col-md-auto">
+        <button class="btn btn-warning" routerLink="/expenses/create">
+          <i class="bi bi-receipt me-2"></i> Process Trip
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-cards mb-4">
+    <div class="row">
+      <div class="col-md-3 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title">My Pending TRFs</h5>
+              <span class="badge bg-primary rounded-pill">3</span>
+            </div>
+            <p class="card-text">Requires action to proceed</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title">Upcoming Trips</h5>
+              <span class="badge bg-info rounded-pill">2</span>
+            </div>
+            <p class="card-text">Booked upcoming TRFs</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title">My Draft Claims</h5>
+              <span class="badge bg-warning rounded-pill">5</span>
+            </div>
+            <p class="card-text">Submit for faster payment</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="card-title">Book Accommodation</h5>
+              <span class="badge bg-success rounded-pill">2</span>
+            </div>
+            <p class="card-text">Available for booking</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-bar mb-4">
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" class="form-control" placeholder="Search activities, requests or claims...">
+    </div>
+  </div>
+
+  <div class="recent-activity mb-4">
+    <h3 class="section-title mb-3">Recent Activity</h3>
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="badge bg-primary">TRF</span>
+              <div>
+                <button class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-share"></i></button>
+                <button class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-printer"></i></button>
+                <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-three-dots"></i></button>
+              </div>
+            </div>
+            <h5 class="card-title">Domestic TRF: Ahmedabad Site Visit</h5>
+            <p class="card-text"><small class="text-muted">Approved: Feb 12, 2025</small></p>
+            <div class="text-end">
+              <a href="#" class="btn btn-link">View Details →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="badge bg-warning">Expense Claim</span>
+              <div>
+                <button class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-share"></i></button>
+                <button class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-printer"></i></button>
+                <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-three-dots"></i></button>
+              </div>
+            </div>
+            <h5 class="card-title">Client Dinner: Site Visit (CDSV-0018)</h5>
+            <p class="card-text"><small class="text-muted">Submitted: Feb 15, 2025</small></p>
+            <div class="text-end">
+              <a href="#" class="btn btn-link">View Details →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="badge bg-info">TRF</span>
+              <div>
+                <button class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-share"></i></button>
+                <button class="btn btn-sm btn-outline-secondary me-1"><i class="bi bi-printer"></i></button>
+                <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-three-dots"></i></button>
+              </div>
+            </div>
+            <h5 class="card-title">Overseas TRF: London Conference</h5>
+            <p class="card-text"><small class="text-muted">Booked: Feb 20, 2025</small></p>
+            <div class="text-end">
+              <a href="#" class="btn btn-link">View Details →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

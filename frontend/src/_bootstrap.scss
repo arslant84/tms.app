@@ -1,0 +1,5 @@
+// We're using the compiled Bootstrap CSS version instead of SCSS to avoid deprecation warnings
+// The CSS is imported in angular.json
+
+// If you need to customize Bootstrap variables, you would need to set up a proper build process
+// that addresses the SASS deprecation warnings in the Bootstrap SCSS files
