@@ -7,8 +7,8 @@ import { DashboardHomeComponent } from './components/dashboard-home/dashboard-ho
 @NgModule({
   imports: [
     CommonModule,
-    DashboardRoutingModule,
-    DashboardHomeComponent
-  ]
+    DashboardRoutingModule
+  ],
+  declarations: []
 })
 export class DashboardModule { }

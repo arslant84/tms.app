@@ -177,14 +177,17 @@
   }
 </style>
 
-<div class="app-container d-flex flex-column min-vh-100">
-  <app-header></app-header>
+<!-- Main application container -->
+<div class="app-container">
+  <!-- Show main layout with sidebar for authenticated users -->
+  <ng-container *ngIf="(isAuthenticated$ | async)">
+    <router-outlet></router-outlet>
+  </ng-container>
   
-  <main class="flex-grow-1">
-    <div class="container-fluid py-3">
+  <!-- Clean login page for visitors (no sidebar/header/footer) -->
+  <ng-container *ngIf="!(isAuthenticated$ | async)">
+    <div class="login-container">
       <router-outlet></router-outlet>
     </div>
-  </main>
-  
-  <app-footer></app-footer>
+  </ng-container>
 </div>

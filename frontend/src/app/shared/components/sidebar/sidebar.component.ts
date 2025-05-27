@@ -1,11 +1,99 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { UserRole, User } from '../../../core/models/user.model';
+import { AuthService } from '../../../core/services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit, OnDestroy {
+  userRole: string = 'Employee'; // Default role, will be fetched from auth service
+  pendingApprovals: number = 0;
+  currentUser: User | null = null;
+  private userSubscription: Subscription | null = null;
+  
+  // Sections can be collapsed/expanded
+  expandedSections = {
+    requests: true,
+    approvals: false,
+    admin: false
+  };
 
+  constructor(private authService: AuthService) {}
+
+  ngOnInit(): void {
+    // Fetch the current user from the auth service
+    this.userSubscription = this.authService.getCurrentUser().subscribe(user => {
+      this.currentUser = user;
+      if (user) {
+        // Handle the role properly
+        this.userRole = user.role || 'Employee';
+        console.log('Current user role:', this.userRole);
+        console.log('User is_admin flag:', user.is_admin);
+        
+        // If user has is_admin flag set to true, ensure they have admin role
+        if (user.is_admin) {
+          console.log('User has admin flag, setting ADMIN role');
+          this.userRole = UserRole.ADMIN;
+        }
+        
+        console.log('Final user role:', this.userRole);
+        console.log('Has approval permissions:', this.hasApprovalPermissions);
+        console.log('Has admin permissions:', this.hasAdminPermissions);
+      }
+    });
+    
+    // Fetch pending approvals
+    this.fetchPendingApprovals();
+  }
+  
+  ngOnDestroy(): void {
+    // Clean up subscriptions to prevent memory leaks
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
+    }
+  }
+
+  toggleSection(section: string): void {
+    this.expandedSections[section as keyof typeof this.expandedSections] = 
+      !this.expandedSections[section as keyof typeof this.expandedSections];
+  }
+
+  // No longer needed as we're getting the role from the auth service
+
+  private fetchPendingApprovals(): void {
+    // This would be replaced with an actual service call
+    this.pendingApprovals = Math.floor(Math.random() * 10);
+  }
+
+  // Check if user has approval permissions
+  get hasApprovalPermissions(): boolean {
+    // Use the enum values from UserRole
+    return this.userRole === UserRole.FOCAL || 
+           this.userRole === UserRole.HOD || 
+           this.userRole === UserRole.ADMIN || 
+           this.userRole === 'admin' || // Fallback for string values
+           this.userRole === 'focal' || 
+           this.userRole === 'hod';
+  }
+
+  // Check if user has admin permissions
+  get hasAdminPermissions(): boolean {
+    // Use the enum values from UserRole
+    return this.userRole === UserRole.ADMIN || 
+           this.userRole === UserRole.TICKETING_CLERK || 
+           this.userRole === 'admin' || // Fallback for string values
+           this.userRole === 'ticketing_clerk';
+  }
+  
+  // Get user name safely
+  getUserName(): string {
+    return this.currentUser?.name || 'User';
+  }
 }

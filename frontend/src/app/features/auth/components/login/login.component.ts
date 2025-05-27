@@ -32,8 +32,8 @@ export class LoginComponent implements OnInit {
   // Fill the form with test admin credentials
   fillTestCredentials(): void {
     this.loginForm.patchValue({
-      email: 'admin@tms.com',
-      password: 'Admin@123'
+      email: 'turkzuk@gmail.com',
+      password: 'admin'
     });
   }
 
@@ -62,7 +62,14 @@ export class LoginComponent implements OnInit {
       error: (error) => {
         console.error('Login error:', error);
         this.isSubmitting = false;
-        this.errorMessage = error.message || 'Login failed. Please check your credentials.';
+        
+        if (error.status === 401) {
+          this.errorMessage = 'Invalid email or password. Please try again.';
+        } else if (error.status === 0) {
+          this.errorMessage = 'Cannot connect to the server. Please check if the backend is running.';
+        } else {
+          this.errorMessage = error.message || 'Login failed. Please check your credentials.';
+        }
       }
     });
   }

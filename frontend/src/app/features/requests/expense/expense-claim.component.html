@@ -1,0 +1,362 @@
+<div class="request-wizard-container">
+  <div class="wizard-header">
+    <h2>Expense Claim</h2>
+    <p>Complete the form below to submit a new expense claim</p>
+  </div>
+  
+  <!-- Progress Indicator -->
+  <div class="progress-container">
+    <div class="progress mb-3">
+      <div class="progress-bar" role="progressbar" [style.width.%]="progressPercentage" 
+           [attr.aria-valuenow]="currentStep" aria-valuemin="0" [attr.aria-valuemax]="totalSteps">
+        Step {{ currentStep }} of {{ totalSteps }}
+      </div>
+    </div>
+    <div class="steps-indicator">
+      <div class="step-item" *ngFor="let title of stepTitles; let i = index" 
+           [class.active]="currentStep === i + 1"
+           [class.completed]="currentStep > i + 1">
+        <div class="step-number">{{ i + 1 }}</div>
+        <div class="step-title">{{ title }}</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Form -->
+  <div class="wizard-form">
+    <form [formGroup]="expenseForm" (ngSubmit)="submitRequest()">
+      
+      <!-- Step 1: Basic Information -->
+      <div class="step-content" *ngIf="currentStep === 1">
+        <h3>Basic Information</h3>
+        
+        <div class="mb-3">
+          <label for="title" class="form-label">Expense Claim Title *</label>
+          <input type="text" class="form-control" id="title" formControlName="title" 
+                 placeholder="E.g., Business Trip to New York, Conference Expenses">
+          <div class="invalid-feedback" *ngIf="expenseForm.get('title')?.invalid && expenseForm.get('title')?.touched">
+            Title is required
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="description" class="form-label">Description *</label>
+          <textarea class="form-control" id="description" formControlName="description" rows="2"
+                   placeholder="Brief description of the expense claim"></textarea>
+          <div class="invalid-feedback" *ngIf="expenseForm.get('description')?.invalid && expenseForm.get('description')?.touched">
+            Description is required
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="tripPurpose" class="form-label">Trip/Expense Purpose *</label>
+          <input type="text" class="form-control" id="tripPurpose" formControlName="tripPurpose" 
+                 placeholder="E.g., Client Meeting, Conference, Training">
+          <div class="invalid-feedback" *ngIf="expenseForm.get('tripPurpose')?.invalid && expenseForm.get('tripPurpose')?.touched">
+            Trip/Expense purpose is required
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="relatedTravelRequest" class="form-label">Related Travel Request (if any)</label>
+          <select class="form-select" id="relatedTravelRequest" formControlName="relatedTravelRequest">
+            <option value="">None</option>
+            <option value="1">TR-2025-001: Conference in New York (Jun 15-20)</option>
+            <option value="2">TR-2025-002: Client Meeting in Dubai (Jul 10-15)</option>
+            <option value="3">TR-2025-003: Training in London (Aug 5-10)</option>
+          </select>
+          <div class="form-text">Link this expense claim to an existing travel request</div>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="startDate" class="form-label">Start Date *</label>
+            <input type="date" class="form-control" id="startDate" formControlName="startDate">
+            <div class="invalid-feedback" *ngIf="expenseForm.get('startDate')?.invalid && expenseForm.get('startDate')?.touched">
+              Start date is required
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label for="endDate" class="form-label">End Date *</label>
+            <input type="date" class="form-control" id="endDate" formControlName="endDate">
+            <div class="invalid-feedback" *ngIf="expenseForm.get('endDate')?.invalid && expenseForm.get('endDate')?.touched">
+              End date is required
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Step 2: Expense Details -->
+      <div class="step-content" *ngIf="currentStep === 2">
+        <h3>Expense Details</h3>
+        
+        <div formArrayName="expenseItems">
+          <div *ngFor="let item of expenseItems.controls; let i = index" class="expense-item mb-4" [formGroupName]="i">
+            <div class="expense-item-header">
+              <h4>Expense Item #{{ i + 1 }}</h4>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeExpenseItem(i)" *ngIf="expenseItems.length > 1">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label [for]="'date' + i" class="form-label">Date *</label>
+                <input type="date" class="form-control" [id]="'date' + i" formControlName="date">
+                <div class="invalid-feedback" *ngIf="item.get('date')?.invalid && item.get('date')?.touched">
+                  Date is required
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label [for]="'category' + i" class="form-label">Category *</label>
+                <select class="form-select" [id]="'category' + i" formControlName="category">
+                  <option value="">Select category...</option>
+                  <option *ngFor="let category of expenseCategories" [value]="category.id">{{ category.name }}</option>
+                </select>
+                <div class="invalid-feedback" *ngIf="item.get('category')?.invalid && item.get('category')?.touched">
+                  Category is required
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label [for]="'itemDescription' + i" class="form-label">Description *</label>
+              <input type="text" class="form-control" [id]="'itemDescription' + i" formControlName="description"
+                     placeholder="E.g., Taxi from airport to hotel">
+              <div class="invalid-feedback" *ngIf="item.get('description')?.invalid && item.get('description')?.touched">
+                Description is required
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label [for]="'amount' + i" class="form-label">Amount *</label>
+                <input type="number" class="form-control" [id]="'amount' + i" formControlName="amount" min="0.01" step="0.01"
+                       (change)="calculateTotal()">
+                <div class="invalid-feedback" *ngIf="item.get('amount')?.invalid && item.get('amount')?.touched">
+                  Valid amount is required (minimum 0.01)
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label [for]="'currency' + i" class="form-label">Currency *</label>
+                <select class="form-select" [id]="'currency' + i" formControlName="currency">
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="PKR">PKR</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [id]="'receiptAttached' + i" formControlName="receiptAttached">
+                  <label class="form-check-label" [for]="'receiptAttached' + i">
+                    Receipt Attached
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label [for]="'notes' + i" class="form-label">Notes</label>
+                <input type="text" class="form-control" [id]="'notes' + i" formControlName="notes"
+                       placeholder="Any additional notes">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="d-grid mb-4">
+          <button type="button" class="btn btn-outline-primary" (click)="addExpenseItem()">
+            <i class="bi bi-plus-circle"></i> Add Another Expense Item
+          </button>
+        </div>
+        
+        <div class="expense-summary mb-4">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h4 class="mb-0">Total Amount:</h4>
+            </div>
+            <div class="col-md-6">
+              <div class="input-group">
+                <span class="input-group-text">{{ expenseForm.get('currency')?.value }}</span>
+                <input type="text" class="form-control form-control-lg fw-bold" formControlName="totalAmount" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="currency" class="form-label">Preferred Reimbursement Currency *</label>
+          <select class="form-select" id="currency" formControlName="currency">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="PKR">PKR</option>
+          </select>
+        </div>
+        
+        <div class="mb-3">
+          <label for="paymentMethod" class="form-label">Payment Method *</label>
+          <select class="form-select" id="paymentMethod" formControlName="paymentMethod">
+            <option value="reimbursement">Reimbursement to Bank Account</option>
+            <option value="cash">Cash</option>
+            <option value="check">Check</option>
+          </select>
+        </div>
+        
+        <div class="mb-3" *ngIf="expenseForm.get('paymentMethod')?.value === 'reimbursement'">
+          <label for="bankAccountDetails" class="form-label">Bank Account Details</label>
+          <textarea class="form-control" id="bankAccountDetails" formControlName="bankAccountDetails" rows="2"
+                   placeholder="Provide your bank account details for reimbursement"></textarea>
+        </div>
+      </div>
+      
+      <!-- Step 3: Review & Submit -->
+      <div class="step-content" *ngIf="currentStep === 3">
+        <h3>Review & Submit</h3>
+        
+        <div class="review-section mb-4">
+          <h4>Basic Information</h4>
+          <div class="review-item">
+            <span class="review-label">Title:</span>
+            <span class="review-value">{{ expenseForm.get('title')?.value }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">Description:</span>
+            <span class="review-value">{{ expenseForm.get('description')?.value }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">Purpose:</span>
+            <span class="review-value">{{ expenseForm.get('tripPurpose')?.value }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">Date Range:</span>
+            <span class="review-value">{{ expenseForm.get('startDate')?.value | date:'mediumDate' }} to {{ expenseForm.get('endDate')?.value | date:'mediumDate' }}</span>
+          </div>
+        </div>
+        
+        <div class="review-section mb-4">
+          <h4>Expense Summary</h4>
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Date</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of expenseItems.controls; let i = index">
+                  <td>{{ i + 1 }}</td>
+                  <td>{{ item.get('date')?.value | date:'shortDate' }}</td>
+                  <td>
+                    {{ getCategoryName(item.get('category')?.value) }}
+                  </td>
+                  <td>{{ item.get('description')?.value }}</td>
+                  <td>{{ item.get('currency')?.value }} {{ item.get('amount')?.value }}</td>
+                  <td>
+                    <i class="bi" [ngClass]="item.get('receiptAttached')?.value ? 'bi-check-circle-fill text-success' : 'bi-x-circle-fill text-danger'"></i>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <td colspan="4" class="text-end fw-bold">Total:</td>
+                  <td colspan="2" class="fw-bold">{{ expenseForm.get('currency')?.value }} {{ expenseForm.get('totalAmount')?.value }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="attachments" class="form-label">Attachments</label>
+          <input type="file" class="form-control" id="attachments" multiple>
+          <div class="form-text">Upload receipts and supporting documents (PDF, JPG, PNG)</div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="comments" class="form-label">Additional Comments</label>
+          <textarea class="form-control" id="comments" formControlName="comments" rows="2"
+                   placeholder="Any additional information or comments"></textarea>
+        </div>
+        
+        <div formGroupName="approvers" class="mb-3">
+          <h4 class="mt-4">Approvers</h4>
+          
+          <div class="mb-3">
+            <label for="focalPerson" class="form-label">Focal Person *</label>
+            <select class="form-select" id="focalPerson" formControlName="focalPerson">
+              <option value="">Select focal person...</option>
+              <option value="1">John Smith</option>
+              <option value="2">Sarah Johnson</option>
+              <option value="3">Michael Brown</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="expenseForm.get('approvers.focalPerson')?.invalid && expenseForm.get('approvers.focalPerson')?.touched">
+              Focal person is required
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="departmentHead" class="form-label">Department Head *</label>
+            <select class="form-select" id="departmentHead" formControlName="departmentHead">
+              <option value="">Select department head...</option>
+              <option value="1">Robert Wilson</option>
+              <option value="2">Emily Davis</option>
+              <option value="3">David Miller</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="expenseForm.get('approvers.departmentHead')?.invalid && expenseForm.get('approvers.departmentHead')?.touched">
+              Department head is required
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="financeManager" class="form-label">Finance Manager *</label>
+            <select class="form-select" id="financeManager" formControlName="financeManager">
+              <option value="">Select finance manager...</option>
+              <option value="1">Jennifer White</option>
+              <option value="2">Thomas Lee</option>
+              <option value="3">Patricia Clark</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="expenseForm.get('approvers.financeManager')?.invalid && expenseForm.get('approvers.financeManager')?.touched">
+              Finance manager is required
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Navigation Buttons -->
+      <div class="wizard-actions">
+        <button type="button" class="btn btn-outline-secondary" 
+                *ngIf="currentStep > 1" 
+                (click)="previousStep()">
+          <i class="bi bi-arrow-left"></i> Previous
+        </button>
+        
+        <button type="button" class="btn btn-primary" 
+                *ngIf="currentStep < totalSteps" 
+                [disabled]="!isCurrentStepValid()"
+                (click)="nextStep()">
+          Next <i class="bi bi-arrow-right"></i>
+        </button>
+        
+        <button type="submit" class="btn btn-success" 
+                *ngIf="currentStep === totalSteps" 
+                [disabled]="!isCurrentStepValid() || isSubmitting">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          {{ isSubmitting ? 'Submitting...' : 'Submit Expense Claim' }}
+        </button>
+        
+        <button type="button" class="btn btn-link text-danger ms-auto" 
+                (click)="clearDraft()">
+          Clear Form
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

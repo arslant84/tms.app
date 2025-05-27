@@ -23,17 +23,17 @@ export const AuthInterceptor: HttpInterceptorFn = (
   const token = authService.getToken();
 
   // Skip adding token for login and public endpoints
-  if (request.url.includes('/token') || request.url.includes('/public/')) {
+  if (request.url.includes('/api/login/') || request.url.includes('/public/')) {
     return next(request);
   }
 
   // Clone the request and add the token if available
   if (token) {
     // Make sure we're using the correct format for the Authorization header
-    // The backend expects: Bearer <token>
+    // Django REST Framework expects: Token <token>
     const authReq = request.clone({
       setHeaders: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Token ${token}`
       }
     });
     

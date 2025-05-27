@@ -1,0 +1,233 @@
+<div class="request-wizard-container">
+  <div class="wizard-header">
+    <h2>Accommodation Request</h2>
+    <p>Complete the form below to submit a new accommodation request</p>
+  </div>
+  
+  <!-- Progress Indicator -->
+  <div class="progress-container">
+    <div class="progress mb-3">
+      <div class="progress-bar" role="progressbar" [style.width.%]="progressPercentage" 
+           [attr.aria-valuenow]="currentStep" aria-valuemin="0" [attr.aria-valuemax]="totalSteps">
+        Step {{ currentStep }} of {{ totalSteps }}
+      </div>
+    </div>
+    <div class="steps-indicator">
+      <div class="step-item" *ngFor="let title of stepTitles; let i = index" 
+           [class.active]="currentStep === i + 1"
+           [class.completed]="currentStep > i + 1">
+        <div class="step-number">{{ i + 1 }}</div>
+        <div class="step-title">{{ title }}</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Form -->
+  <div class="wizard-form">
+    <form [formGroup]="accommodationForm" (ngSubmit)="submitRequest()">
+      
+      <!-- Step 1: Basic Information -->
+      <div class="step-content" *ngIf="currentStep === 1">
+        <h3>Basic Information</h3>
+        
+        <div class="mb-3">
+          <label for="purpose" class="form-label">Purpose of Accommodation *</label>
+          <input type="text" class="form-control" id="purpose" formControlName="purpose" 
+                 placeholder="E.g., Business Trip, Conference, Training">
+          <div class="invalid-feedback" *ngIf="accommodationForm.get('purpose')?.invalid && accommodationForm.get('purpose')?.touched">
+            Purpose is required
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="description" class="form-label">Description *</label>
+          <textarea class="form-control" id="description" formControlName="description" rows="3"
+                   placeholder="Provide details about why you need accommodation"></textarea>
+          <div class="invalid-feedback" *ngIf="accommodationForm.get('description')?.invalid && accommodationForm.get('description')?.touched">
+            Description is required
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label">Priority *</label>
+          <div class="priority-options">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" id="priorityLow" value="low" formControlName="priority">
+              <label class="form-check-label" for="priorityLow">Low</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" id="priorityMedium" value="medium" formControlName="priority">
+              <label class="form-check-label" for="priorityMedium">Medium</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" id="priorityHigh" value="high" formControlName="priority">
+              <label class="form-check-label" for="priorityHigh">High</label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="relatedTravelRequest" class="form-label">Related Travel Request (if any)</label>
+          <select class="form-select" id="relatedTravelRequest" formControlName="relatedTravelRequest">
+            <option value="">None</option>
+            <option value="1">TR-2025-001: Conference in New York (Jun 15-20)</option>
+            <option value="2">TR-2025-002: Client Meeting in Dubai (Jul 10-15)</option>
+            <option value="3">TR-2025-003: Training in London (Aug 5-10)</option>
+          </select>
+          <div class="form-text">Link this accommodation to an existing travel request</div>
+        </div>
+      </div>
+      
+      <!-- Step 2: Accommodation Details -->
+      <div class="step-content" *ngIf="currentStep === 2">
+        <h3>Accommodation Details</h3>
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="checkInDate" class="form-label">Check-in Date *</label>
+            <input type="date" class="form-control" id="checkInDate" formControlName="checkInDate">
+            <div class="invalid-feedback" *ngIf="accommodationForm.get('checkInDate')?.invalid && accommodationForm.get('checkInDate')?.touched">
+              Check-in date is required
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label for="checkOutDate" class="form-label">Check-out Date *</label>
+            <input type="date" class="form-control" id="checkOutDate" formControlName="checkOutDate">
+            <div class="invalid-feedback" *ngIf="accommodationForm.get('checkOutDate')?.invalid && accommodationForm.get('checkOutDate')?.touched">
+              Check-out date is required
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="location" class="form-label">Location/City *</label>
+          <input type="text" class="form-control" id="location" formControlName="location" 
+                 placeholder="City where accommodation is needed">
+          <div class="invalid-feedback" *ngIf="accommodationForm.get('location')?.invalid && accommodationForm.get('location')?.touched">
+            Location is required
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="accommodationType" class="form-label">Accommodation Type *</label>
+          <select class="form-select" id="accommodationType" formControlName="accommodationType">
+            <option value="hotel">Hotel</option>
+            <option value="guesthouse">Guesthouse</option>
+            <option value="airbnb">Airbnb</option>
+            <option value="serviced_apartment">Serviced Apartment</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        
+        <div class="mb-3">
+          <label for="numberOfGuests" class="form-label">Number of Guests *</label>
+          <input type="number" class="form-control" id="numberOfGuests" formControlName="numberOfGuests" min="1">
+          <div class="invalid-feedback" *ngIf="accommodationForm.get('numberOfGuests')?.invalid && accommodationForm.get('numberOfGuests')?.touched">
+            Valid number of guests is required (minimum 1)
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="specialRequirements" class="form-label">Special Requirements</label>
+          <textarea class="form-control" id="specialRequirements" formControlName="specialRequirements" rows="2"
+                   placeholder="Any special requirements or preferences"></textarea>
+        </div>
+      </div>
+      
+      <!-- Step 3: Budget & Approvals -->
+      <div class="step-content" *ngIf="currentStep === 3">
+        <h3>Budget & Approvals</h3>
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="estimatedBudget" class="form-label">Estimated Budget *</label>
+            <input type="number" class="form-control" id="estimatedBudget" formControlName="estimatedBudget" 
+                   placeholder="Enter amount">
+            <div class="invalid-feedback" *ngIf="accommodationForm.get('estimatedBudget')?.invalid && accommodationForm.get('estimatedBudget')?.touched">
+              Valid budget amount is required
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label for="budgetCurrency" class="form-label">Currency *</label>
+            <select class="form-select" id="budgetCurrency" formControlName="budgetCurrency">
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="PKR">PKR</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="budgetJustification" class="form-label">Budget Justification</label>
+          <textarea class="form-control" id="budgetJustification" formControlName="budgetJustification" rows="2"
+                   placeholder="Explain your budget breakdown"></textarea>
+        </div>
+        
+        <div class="mb-3">
+          <label for="attachments" class="form-label">Attachments</label>
+          <input type="file" class="form-control" id="attachments" multiple>
+          <div class="form-text">Upload any supporting documents (quotes, price comparisons, etc.)</div>
+        </div>
+        
+        <div formGroupName="approvers" class="mb-3">
+          <h4 class="mt-4">Approvers</h4>
+          
+          <div class="mb-3">
+            <label for="focalPerson" class="form-label">Focal Person *</label>
+            <select class="form-select" id="focalPerson" formControlName="focalPerson">
+              <option value="">Select focal person...</option>
+              <option value="1">John Smith</option>
+              <option value="2">Sarah Johnson</option>
+              <option value="3">Michael Brown</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="accommodationForm.get('approvers.focalPerson')?.invalid && accommodationForm.get('approvers.focalPerson')?.touched">
+              Focal person is required
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="departmentHead" class="form-label">Department Head *</label>
+            <select class="form-select" id="departmentHead" formControlName="departmentHead">
+              <option value="">Select department head...</option>
+              <option value="1">Robert Wilson</option>
+              <option value="2">Emily Davis</option>
+              <option value="3">David Miller</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="accommodationForm.get('approvers.departmentHead')?.invalid && accommodationForm.get('approvers.departmentHead')?.touched">
+              Department head is required
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Navigation Buttons -->
+      <div class="wizard-actions">
+        <button type="button" class="btn btn-outline-secondary" 
+                *ngIf="currentStep > 1" 
+                (click)="previousStep()">
+          <i class="bi bi-arrow-left"></i> Previous
+        </button>
+        
+        <button type="button" class="btn btn-primary" 
+                *ngIf="currentStep < totalSteps" 
+                [disabled]="!isCurrentStepValid()"
+                (click)="nextStep()">
+          Next <i class="bi bi-arrow-right"></i>
+        </button>
+        
+        <button type="submit" class="btn btn-success" 
+                *ngIf="currentStep === totalSteps" 
+                [disabled]="accommodationForm.invalid || isSubmitting">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+        </button>
+        
+        <button type="button" class="btn btn-link text-danger ms-auto" 
+                (click)="clearDraft()">
+          Clear Form
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

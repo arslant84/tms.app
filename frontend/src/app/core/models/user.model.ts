@@ -9,6 +9,8 @@ export interface User {
   // These fields are computed from name when needed
   firstName?: string;
   lastName?: string;
+  // Profile image URL
+  avatar?: string;
 }
 
 export enum UserRole {
@@ -21,10 +23,14 @@ export enum UserRole {
 }
 
 export interface AuthResponse {
-  access_token: string;
-  token_type: string;
-  user_id: number;
-  name: string;
-  role: UserRole;
-  is_admin: boolean;
+  token: string;
+  user: {
+    id: number;
+    username?: string;
+    name?: string;
+    email: string;
+    role: UserRole;
+    department?: string;
+    is_admin?: boolean;
+  };
 }

@@ -1,0 +1,57 @@
+<div class="app-container" [class.sidebar-collapsed]="isSidebarCollapsed">
+  <!-- Sidebar -->
+  <div class="sidebar-wrapper">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <img [src]="logoPath" alt="TMS Logo" class="logo"/>
+          <h2 class="logo-text">PC(T)SB</h2>
+        </div>
+        <button class="sidebar-toggle-btn d-md-none" (click)="toggleSidebar()">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+      <app-sidebar></app-sidebar>
+    </div>
+  </div>
+  
+  <!-- Main Content Area -->
+  <div class="main-content">
+    <!-- Header -->
+    <div class="header-wrapper">
+      <app-header (toggleSidebarEvent)="toggleSidebar()"></app-header>
+    </div>
+    
+    <!-- Content Area -->
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer-wrapper">
+      <footer class="main-footer">
+        <div class="footer-content">
+          <p>&copy; 2025 PC(T)SB Synchronised Travel Management System. All rights reserved.</p>
+          <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <span class="separator">|</span>
+            <a href="#">Terms of Service</a>
+            <span class="separator">|</span>
+            <a href="#">Help</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+  
+  <!-- Right Panel (Optional) -->
+  <div class="right-panel" *ngIf="showRightPanel">
+    <app-right-panel 
+      [requestId]="selectedRequestId" 
+      [requestType]="selectedRequestType"
+      (close)="closeRightPanel()"></app-right-panel>
+  </div>
+  
+  <!-- Mobile Sidebar Overlay -->
+  <div class="sidebar-overlay" *ngIf="!isSidebarCollapsed" (click)="toggleSidebar()"></div>
+</div>

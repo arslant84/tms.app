@@ -1,0 +1,85 @@
+.app-header {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  .navbar {
+    padding: 0.5rem 1rem;
+  }
+  
+  .bg-primary-teal {
+    background-color: #2c3e50;
+  }
+  
+  .sidebar-toggle {
+    color: white;
+    padding: 0.25rem 0.5rem;
+    margin-right: 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+    
+    i {
+      font-size: 1.5rem;
+    }
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+  
+  .navbar-brand {
+    display: flex;
+    align-items: center;
+    
+    .brand-name {
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: -1px;
+    }
+  }
+  
+  .navbar-nav {
+    .nav-link {
+      padding: 0.5rem 1rem;
+      position: relative;
+      
+      &.active {
+        color: white;
+        
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 30px;
+          height: 3px;
+          background-color: #3498db;
+          border-radius: 3px 3px 0 0;
+        }
+      }
+    }
+  }
+  
+  .dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .app-header {
+    .navbar-nav {
+      margin-top: 1rem;
+      
+      .nav-link {
+        padding: 0.75rem 0;
+        
+        &.active::after {
+          width: 100%;
+          left: 0;
+          transform: none;
+        }
+      }
+    }
+  }
+}

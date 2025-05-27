@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Observable, map } from 'rxjs';
@@ -16,6 +16,8 @@ export class HeaderComponent implements OnInit {
   isCollapsed = true;
   currentUser$: Observable<User | null>;
   isAdmin$: Observable<boolean>;
+  
+  @Output() toggleSidebarEvent = new EventEmitter<void>();
 
   constructor(private authService: AuthService) {
     this.currentUser$ = this.authService.currentUser$;
@@ -29,6 +31,10 @@ export class HeaderComponent implements OnInit {
 
   toggleNavbar(): void {
     this.isCollapsed = !this.isCollapsed;
+  }
+  
+  toggleSidebar(): void {
+    this.toggleSidebarEvent.emit();
   }
 
   logout(event: Event): void {

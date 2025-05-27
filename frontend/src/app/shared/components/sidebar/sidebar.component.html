@@ -1,1 +1,118 @@
-<p>sidebar works!</p>
+<div class="sidebar-container">
+  <!-- User Profile Section -->
+  <div class="user-profile">
+    <div class="user-avatar">
+      <img src="assets/images/avatar.png" alt="User Avatar" onerror="this.src='https://via.placeholder.com/50x50?text=User'; this.onerror='';" />
+    </div>
+    <div class="user-info">
+      <h4 class="user-name">{{ getUserName() }}</h4>
+      <div class="user-role-badge">{{ userRole }}</div>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <div class="nav-menu">
+    <!-- Requests Section -->
+    <div class="nav-section">
+      <div class="section-header" (click)="toggleSection('requests')">
+        <div class="section-title">
+          <i class="bi bi-list-check"></i>
+          <span>Requests</span>
+        </div>
+        <div class="section-toggle">
+          <i class="bi" [ngClass]="expandedSections.requests ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+        </div>
+      </div>
+      
+      <div class="section-items" [ngClass]="{'expanded': expandedSections.requests}" *ngIf="expandedSections.requests">
+        <a routerLink="/requests/select-type" routerLinkActive="active" class="nav-item">
+          <div class="nav-icon">
+            <i class="bi bi-airplane"></i>
+          </div>
+          <span class="nav-label">Travel</span>
+        </a>
+        <a routerLink="/requests/accommodation" routerLinkActive="active" class="nav-item">
+          <div class="nav-icon">
+            <i class="bi bi-building"></i>
+          </div>
+          <span class="nav-label">Accommodation</span>
+        </a>
+        <a routerLink="/requests/transport" routerLinkActive="active" class="nav-item">
+          <div class="nav-icon">
+            <i class="bi bi-car-front"></i>
+          </div>
+          <span class="nav-label">Transport</span>
+        </a>
+        <a routerLink="/requests/visa" routerLinkActive="active" class="nav-item">
+          <div class="nav-icon">
+            <i class="bi bi-file-text"></i>
+          </div>
+          <span class="nav-label">Visa</span>
+        </a>
+        <a routerLink="/requests/expense" routerLinkActive="active" class="nav-item">
+          <div class="nav-icon">
+            <i class="bi bi-cash-coin"></i>
+          </div>
+          <span class="nav-label">Expense Claims</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Approvals Section (Conditional) -->
+    <div class="nav-section" *ngIf="hasApprovalPermissions">
+      <div class="section-header" (click)="toggleSection('approvals')">
+        <div class="section-title">
+          <i class="bi bi-check2-square"></i>
+          <span>Approvals</span>
+        </div>
+        <div class="section-toggle">
+          <i class="bi" [ngClass]="expandedSections.approvals ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+        </div>
+      </div>
+      
+      <div class="section-items" [ngClass]="{'expanded': expandedSections.approvals}" *ngIf="expandedSections.approvals">
+        <a routerLink="/approvals/pending" routerLinkActive="active" class="nav-item">
+          <div class="nav-icon">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          <span class="nav-label">Pending</span>
+          <span class="badge" *ngIf="pendingApprovals > 0">{{ pendingApprovals }}</span>
+        </a>
+        <a routerLink="/approvals/history" routerLinkActive="active" class="nav-item">
+          <div class="nav-icon">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <span class="nav-label">History</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Admin Tools (Conditional) -->
+    <div class="nav-section" *ngIf="hasAdminPermissions">
+      <div class="section-header" (click)="toggleSection('admin')">
+        <div class="section-title">
+          <i class="bi bi-gear"></i>
+          <span>Admin Tools</span>
+        </div>
+        <div class="section-toggle">
+          <i class="bi" [ngClass]="expandedSections.admin ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+        </div>
+      </div>
+      
+      <div class="section-items" [ngClass]="{'expanded': expandedSections.admin}" *ngIf="expandedSections.admin">
+        <a routerLink="/admin/clerk-panel" routerLinkActive="active" class="nav-item">
+          <div class="nav-icon">
+            <i class="bi bi-clipboard-check"></i>
+          </div>
+          <span class="nav-label">Clerk Panel</span>
+        </a>
+        <a routerLink="/admin/reports" routerLinkActive="active" class="nav-item">
+          <div class="nav-icon">
+            <i class="bi bi-bar-chart"></i>
+          </div>
+          <span class="nav-label">Reports</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
