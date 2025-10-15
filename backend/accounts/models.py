@@ -6,6 +6,8 @@ from django.utils.translation import gettext_lazy as _
 class Permission(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -15,6 +17,8 @@ class Role(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
     permissions = models.ManyToManyField(Permission, through='RolePermission')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -23,6 +27,7 @@ class Role(models.Model):
 class RolePermission(models.Model):
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
     permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('role', 'permission')
@@ -63,6 +68,7 @@ class User(AbstractUser):
     department = models.CharField(max_length=100, blank=True)
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    status = models.CharField(max_length=50, default='Active')  # Matches syntra schema
     staff_id = models.CharField(max_length=50, blank=True, null=True, unique=True)
     phone = models.CharField(max_length=50, blank=True, null=True)
     profile_photo = models.CharField(max_length=255, blank=True, null=True)
