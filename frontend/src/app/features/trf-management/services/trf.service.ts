@@ -109,7 +109,7 @@ export class TrfService {
 
   // Create main Travel Request
   createTravelRequest(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/travel-requests/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/api/travel-requests/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -117,7 +117,7 @@ export class TrfService {
 
   // Create Itinerary Segment
   createItinerarySegment(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/itinerary-segments/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/api/itinerary-segments/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -125,7 +125,7 @@ export class TrfService {
 
   // Create Daily Meal Selection
   createDailyMeal(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/daily-meals/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/api/daily-meal-selections/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -133,15 +133,15 @@ export class TrfService {
 
   // Create Accommodation Detail
   createAccommodation(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/accommodation-details/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/api/accommodation-details/`, data)
       .pipe(
         catchError(this.handleError)
       );
   }
 
-  // Create Transport Detail
+  // Create Company Transport Detail
   createTransport(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/transport-details/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/api/company-transport-details/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -149,7 +149,7 @@ export class TrfService {
 
   // Create Meal Provision
   createMealProvision(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/meal-provisions/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/api/meal-provisions/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -157,7 +157,7 @@ export class TrfService {
 
   // Create Passport Detail
   createPassportDetail(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/passport-details/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/api/passport-details/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -165,7 +165,15 @@ export class TrfService {
 
   // Create Bank Detail
   createBankDetail(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/bank-details/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/api/advance-bank-details/`, data)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  // Create Advance Amount Requested Item
+  createAdvanceAmountItem(data: any): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/api/advance-amount-items/`, data)
       .pipe(
         catchError(this.handleError)
       );

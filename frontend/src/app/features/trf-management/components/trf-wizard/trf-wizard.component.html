@@ -21,9 +21,109 @@
       <app-requestor-information></app-requestor-information>
     </div>
 
-    <!-- Step 2: Domestic Travel Details -->
+    <!-- Step 2: Travel Type Selection -->
     <div class="step-content" *ngIf="currentStep === 2">
-      <app-domestic-travel-details></app-domestic-travel-details>
+      <div class="w-full rounded-lg border border-gray-200 bg-white shadow-lg">
+        <!-- Card Header -->
+        <div class="border-b border-gray-200 px-6 py-4">
+          <h2 class="flex items-center gap-2 text-xl font-semibold text-gray-900">
+            <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+            </svg>
+            Select Travel Type
+          </h2>
+          <p class="mt-1 text-sm text-gray-500">Choose the type of travel request you want to create</p>
+        </div>
+
+        <!-- Card Content -->
+        <div class="space-y-4 px-6 py-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Domestic Travel -->
+            <button
+              type="button"
+              (click)="onTravelTypeSelect('Domestic')"
+              [class]="selectedTravelType === 'Domestic'
+                ? 'relative flex flex-col items-center rounded-lg border-2 border-blue-600 bg-blue-50 px-6 py-8 text-center transition-all hover:shadow-md'
+                : 'relative flex flex-col items-center rounded-lg border-2 border-gray-300 bg-white px-6 py-8 text-center transition-all hover:border-blue-400 hover:shadow-md'">
+              <svg class="h-12 w-12 mb-3" [class]="selectedTravelType === 'Domestic' ? 'text-blue-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+              </svg>
+              <h3 [class]="selectedTravelType === 'Domestic' ? 'text-lg font-semibold text-blue-900' : 'text-lg font-semibold text-gray-900'">Domestic Travel</h3>
+              <p [class]="selectedTravelType === 'Domestic' ? 'mt-2 text-sm text-blue-700' : 'mt-2 text-sm text-gray-500'">Travel within Turkmenistan</p>
+              <div *ngIf="selectedTravelType === 'Domestic'" class="absolute top-2 right-2">
+                <svg class="h-6 w-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+            </button>
+
+            <!-- Overseas Travel -->
+            <button
+              type="button"
+              (click)="onTravelTypeSelect('Overseas')"
+              [class]="selectedTravelType === 'Overseas'
+                ? 'relative flex flex-col items-center rounded-lg border-2 border-blue-600 bg-blue-50 px-6 py-8 text-center transition-all hover:shadow-md'
+                : 'relative flex flex-col items-center rounded-lg border-2 border-gray-300 bg-white px-6 py-8 text-center transition-all hover:border-blue-400 hover:shadow-md'">
+              <svg class="h-12 w-12 mb-3" [class]="selectedTravelType === 'Overseas' ? 'text-blue-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <h3 [class]="selectedTravelType === 'Overseas' ? 'text-lg font-semibold text-blue-900' : 'text-lg font-semibold text-gray-900'">Overseas Travel</h3>
+              <p [class]="selectedTravelType === 'Overseas' ? 'mt-2 text-sm text-blue-700' : 'mt-2 text-sm text-gray-500'">International travel</p>
+              <div *ngIf="selectedTravelType === 'Overseas'" class="absolute top-2 right-2">
+                <svg class="h-6 w-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+            </button>
+
+            <!-- Home Leave -->
+            <button
+              type="button"
+              (click)="onTravelTypeSelect('Home Leave')"
+              [class]="selectedTravelType === 'Home Leave'
+                ? 'relative flex flex-col items-center rounded-lg border-2 border-blue-600 bg-blue-50 px-6 py-8 text-center transition-all hover:shadow-md'
+                : 'relative flex flex-col items-center rounded-lg border-2 border-gray-300 bg-white px-6 py-8 text-center transition-all hover:border-blue-400 hover:shadow-md'">
+              <svg class="h-12 w-12 mb-3" [class]="selectedTravelType === 'Home Leave' ? 'text-blue-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <h3 [class]="selectedTravelType === 'Home Leave' ? 'text-lg font-semibold text-blue-900' : 'text-lg font-semibold text-gray-900'">Home Leave Passage</h3>
+              <p [class]="selectedTravelType === 'Home Leave' ? 'mt-2 text-sm text-blue-700' : 'mt-2 text-sm text-gray-500'">Annual leave travel</p>
+              <div *ngIf="selectedTravelType === 'Home Leave'" class="absolute top-2 right-2">
+                <svg class="h-6 w-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+            </button>
+
+            <!-- External Parties -->
+            <button
+              type="button"
+              (click)="onTravelTypeSelect('External Parties')"
+              [class]="selectedTravelType === 'External Parties'
+                ? 'relative flex flex-col items-center rounded-lg border-2 border-blue-600 bg-blue-50 px-6 py-8 text-center transition-all hover:shadow-md'
+                : 'relative flex flex-col items-center rounded-lg border-2 border-gray-300 bg-white px-6 py-8 text-center transition-all hover:border-blue-400 hover:shadow-md'">
+              <svg class="h-12 w-12 mb-3" [class]="selectedTravelType === 'External Parties' ? 'text-blue-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
+              <h3 [class]="selectedTravelType === 'External Parties' ? 'text-lg font-semibold text-blue-900' : 'text-lg font-semibold text-gray-900'">External Parties</h3>
+              <p [class]="selectedTravelType === 'External Parties' ? 'mt-2 text-sm text-blue-700' : 'mt-2 text-sm text-gray-500'">Travel for guests/contractors</p>
+              <div *ngIf="selectedTravelType === 'External Parties'" class="absolute top-2 right-2">
+                <svg class="h-6 w-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Travel Details (Dynamic based on type) -->
+    <div class="step-content" *ngIf="currentStep === 3">
+      <app-domestic-travel-details *ngIf="selectedTravelType === 'Domestic'"></app-domestic-travel-details>
+      <app-overseas-travel-details *ngIf="selectedTravelType === 'Overseas'"></app-overseas-travel-details>
+      <app-home-leave-details *ngIf="selectedTravelType === 'Home Leave'"></app-home-leave-details>
+      <app-external-parties-details *ngIf="selectedTravelType === 'External Parties'"></app-external-parties-details>
     </div>
 
     <!-- Error Message -->

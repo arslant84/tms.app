@@ -1,0 +1,356 @@
+<form [formGroup]="overseasForm" (ngSubmit)="onSubmit()" class="space-y-8">
+  <!-- Main Card -->
+  <div class="w-full rounded-lg border border-gray-200 bg-white shadow-lg">
+    <!-- Card Header -->
+    <div class="border-b border-gray-200 px-6 py-4">
+      <h2 class="flex items-center gap-2 text-xl font-semibold text-gray-900">
+        <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Overseas Travel Details
+      </h2>
+      <p class="mt-1 text-sm text-gray-500">Please provide details specific to your overseas travel.</p>
+    </div>
+
+    <!-- Card Content -->
+    <div class="space-y-8 px-6 py-6">
+      <!-- Purpose of Travel -->
+      <div class="space-y-2">
+        <label class="block text-sm font-medium text-gray-700">
+          Purpose of Travel / Цель поездки <span class="text-red-500">*</span>
+        </label>
+        <textarea
+          formControlName="purpose"
+          rows="4"
+          class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder="Describe the purpose of your travel"
+        ></textarea>
+        <div *ngIf="overseasForm.get('purpose')?.invalid && overseasForm.get('purpose')?.touched" class="text-sm text-red-600">
+          Purpose must be at least 10 characters
+        </div>
+      </div>
+
+      <!-- Trip Type -->
+      <div class="space-y-2">
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+          </svg>
+          Trip Type / Тип поездки <span class="text-red-500">*</span>
+        </label>
+        <select
+          formControlName="tripType"
+          class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="One Way">One Way</option>
+          <option value="Round Trip">Round Trip</option>
+        </select>
+      </div>
+
+      <!-- Itinerary Section -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="flex items-center gap-2 text-lg font-medium text-gray-900">
+            <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            Itinerary / Маршрут
+          </h3>
+        </div>
+
+        <div formArrayName="itinerary" class="space-y-4">
+          <div *ngFor="let segment of itinerary.controls; let i = index" [formGroupName]="i" class="relative rounded-md border border-gray-200 bg-gray-50/50 p-4 space-y-4">
+            <!-- Date and Day -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Date / Дата <span class="text-red-500">*</span></label>
+                <input
+                  type="date"
+                  formControlName="date"
+                  (change)="onDateChange(i, $event)"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Day / День</label>
+                <div class="flex h-10 w-full items-center rounded-md border border-gray-300 bg-gray-100/50 px-3 text-sm text-gray-700">
+                  {{ segment.get('day')?.value || '—' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- From and To -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">From / Откуда <span class="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  formControlName="from"
+                  placeholder="Origin city/airport"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">To / Куда <span class="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  formControlName="to"
+                  placeholder="Destination city/airport"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <!-- ETD and ETA -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">ETD / Вылет</label>
+                <input
+                  type="time"
+                  formControlName="etd"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">ETA / Прилет</label>
+                <input
+                  type="time"
+                  formControlName="eta"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <!-- Flight Number -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Flight/Rein/Class / Рейс/Класс <span class="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  formControlName="flightNumber"
+                  placeholder="e.g., LH1234, Economy"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <!-- Remarks -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Remarks / Примечания</label>
+              <textarea
+                formControlName="remarks"
+                rows="2"
+                placeholder="Any additional information about this segment"
+                class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              ></textarea>
+            </div>
+
+            <!-- Remove Button -->
+            <button
+              *ngIf="itinerary.length > 1 && overseasForm.get('tripType')?.value === 'Round Trip'"
+              type="button"
+              (click)="removeItinerarySegment(i)"
+              class="absolute top-2 right-2 rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Itinerary Button -->
+        <button
+          *ngIf="overseasForm.get('tripType')?.value === 'Round Trip' || (overseasForm.get('tripType')?.value === 'One Way' && itinerary.length === 0)"
+          type="button"
+          (click)="addItinerarySegment()"
+          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Add Itinerary Segment
+        </button>
+      </div>
+
+      <!-- Advance Bank Details -->
+      <div class="space-y-4" formGroupName="advanceBankDetails">
+        <h3 class="flex items-center gap-2 text-lg font-medium text-gray-900">
+          <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path>
+          </svg>
+          Advance Bank Details / Банковские реквизиты для аванса
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Bank Name / Название банка <span class="text-red-500">*</span></label>
+            <input
+              type="text"
+              formControlName="bankName"
+              placeholder="Enter bank name"
+              class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Account Number / Номер счета <span class="text-red-500">*</span></label>
+            <input
+              type="text"
+              formControlName="accountNumber"
+              placeholder="Enter account number"
+              class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Advance Amount Requested -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="flex items-center gap-2 text-lg font-medium text-gray-900">
+            <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+            </svg>
+            Details for the Amount Requested / Детали по запрашиваемой сумме
+          </h3>
+        </div>
+
+        <div formArrayName="advanceAmountRequested" class="space-y-4">
+          <div *ngFor="let item of advanceAmountRequested.controls; let i = index" [formGroupName]="i" class="relative rounded-md border border-gray-200 bg-gray-50/50 p-4 space-y-4">
+            <!-- Date From and Date To -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Date From / Дата с <span class="text-red-500">*</span></label>
+                <input
+                  type="date"
+                  formControlName="dateFrom"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Date To / Дата по <span class="text-red-500">*</span></label>
+                <input
+                  type="date"
+                  formControlName="dateTo"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <!-- Amount Fields -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">LH</label>
+                <input
+                  type="number"
+                  formControlName="lh"
+                  min="0"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">MA</label>
+                <input
+                  type="number"
+                  formControlName="ma"
+                  min="0"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">OA</label>
+                <input
+                  type="number"
+                  formControlName="oa"
+                  min="0"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">TR</label>
+                <input
+                  type="number"
+                  formControlName="tr"
+                  min="0"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">OE</label>
+                <input
+                  type="number"
+                  formControlName="oe"
+                  min="0"
+                  class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">USD</label>
+                <input
+                  type="number"
+                  formControlName="usd"
+                  step="0.01"
+                  readonly
+                  class="block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-sm shadow-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Remarks -->
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Remarks / Примечания</label>
+              <textarea
+                formControlName="remarks"
+                rows="2"
+                placeholder="Remarks for this advance item"
+                class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              ></textarea>
+            </div>
+
+            <!-- Remove Button -->
+            <button
+              *ngIf="advanceAmountRequested.length > 1"
+              type="button"
+              (click)="removeAdvanceAmountItem(i)"
+              class="absolute top-2 right-2 rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Advance Amount Button -->
+        <button
+          type="button"
+          (click)="addAdvanceAmountItem()"
+          class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Add Advance Item
+        </button>
+        <p class="mt-2 text-xs text-gray-500">
+          LH: Lodging/Hotel. MA: Meal Allowance. OA: Other Allowances. TR: Transportation. OE: Other Expenses.
+        </p>
+      </div>
+    </div>
+
+    <!-- Card Footer -->
+    <div class="flex justify-between border-t border-gray-200 px-6 py-4">
+      <button
+        type="button"
+        class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+      >
+        Back: Requestor Info
+      </button>
+      <button
+        type="submit"
+        class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
+      >
+        Next: Approval & Submission
+      </button>
+    </div>
+  </div>
+</form>
