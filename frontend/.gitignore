@@ -36,8 +36,11 @@ yarn-error.log
 /libpeerconnection.log
 testem.log
 /typings
+
+# Custom exclusions
 /pctsb.syntra
 /.windsurf
+*.md
 
 # System files
 .DS_Store
