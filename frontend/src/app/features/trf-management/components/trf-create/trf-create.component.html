@@ -1,7 +1,7 @@
 <div class="trf-container">
   <div class="card">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-      <h2>Travel & Services Request Form (Domestic)</h2>
+      <h2>Travel & Services Request Form ({{formType == 'overseas' ? 'International' : 'Domestic'}})</h2>
       <div>
         <button class="btn btn-light me-2" (click)="saveDraft()" [disabled]="isSubmitting">
           <i class="bi bi-save"></i> Save Draft
@@ -22,7 +22,7 @@
           <thead>
             <tr>
               <th colspan="8" class="text-center bg-light">
-                <strong>TRAVEL & SERVICES REQUEST FORM (Domestic)</strong><br>
+                <strong>TRAVEL & SERVICES REQUEST FORM ({{formType == 'overseas' ? 'International' : 'Domestic'}})</strong><br>
                 <small>ФОРМА ЗАПРОСА НА ПОЕЗДКУ И УСЛУГИ (ВНУТРЕННЯЯ)</small>
               </th>
             </tr>
@@ -107,7 +107,7 @@
               </th>
             </tr>
             <tr>
-              <th>DATE/ДАТА</th>
+              <th>DATE / ДАТА</th>
               <th>DAY / ДЕНЬ</th>
               <th>FROM / ОТКУДА</th>
               <th>TO / КУДА</th>

@@ -6,7 +6,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from .serializers import UserSerializer, UserCreateSerializer
+from .serializers import UserSerializer, UserCreateSerializer, RoleSerializer, PermissionSerializer
+from .models import Role, Permission
 
 User = get_user_model()
 
@@ -31,15 +32,7 @@ class LoginView(ObtainAuthToken):
             # Return token and user data in format expected by Angular frontend
             return Response({
                 'token': token.key,
-                'user': {
-                    'id': user.id,
-                    'username': username,
-                    'email': username,
-                    'name': getattr(user, 'name', username),
-                    'role': getattr(user, 'role', 'employee'),
-                    'department': getattr(user, 'department', ''),
-                    'is_admin': getattr(user, 'is_admin', False)
-                }
+                'user': UserSerializer(user).data
             })
         else:
             print(f"Authentication failed for user: {username}")
@@ -82,13 +75,17 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAdminUser])
     def change_role(self, request, pk=None):
         user = self.get_object()
-        role = request.data.get('role')
+        role_id = request.data.get('role_id')
         
-        if not role:
-            return Response({'error': 'Role is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not role_id:
+            return Response({'error': 'Role ID is required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        user.role = role
-        user.save()
+        try:
+            role = Role.objects.get(id=role_id)
+            user.role = role
+            user.save()
+        except Role.DoesNotExist:
+            return Response({'error': 'Role not found'}, status=status.HTTP_404_NOT_FOUND)
         
         serializer = self.get_serializer(user)
         return Response(serializer.data)
@@ -110,3 +107,15 @@ class UserViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(user)
         return Response(serializer.data)
+
+
+class RoleViewSet(viewsets.ModelViewSet):
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class PermissionViewSet(viewsets.ModelViewSet):
+    queryset = Permission.objects.all()
+    serializer_class = PermissionSerializer
+    permission_classes = [permissions.IsAdminUser]

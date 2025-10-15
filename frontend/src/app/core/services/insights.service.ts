@@ -1,151 +1,323 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { TravelInsight, InsightType, TravelAnalytics, DestinationStat, CategorySpend, MonthlyTrend } from '../models/insights.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+// Dashboard Summary Interface
+export interface DashboardSummary {
+  total_trfs: number;
+  pending_trfs: number;
+  approved_trfs: number;
+  rejected_trfs: number;
+  total_travel_cost: number;
+  total_expense_claims: number;
+  active_bookings: number;
+  pending_approvals: number;
+  recent_activities: RecentActivity[];
+}
+
+export interface RecentActivity {
+  type: string;
+  id: number;
+  title: string;
+  status: string;
+  date: string;
+}
+
+// Travel Spend Analytics Interface
+export interface TravelSpendAnalytics {
+  total_spend: number;
+  by_category: { [key: string]: number };
+  by_department: { [key: string]: number };
+  by_month: MonthlySpend[];
+  top_spenders: TopSpender[];
+  budget_utilization?: number;
+}
+
+export interface MonthlySpend {
+  month: string;
+  amount: number;
+}
+
+export interface TopSpender {
+  user_id: number;
+  user_name: string;
+  total_spend: number;
+}
+
+// Travel Pattern Analytics Interface
+export interface TravelPatternAnalytics {
+  total_trips: number;
+  domestic_trips: number;
+  international_trips: number;
+  top_destinations: any[];
+  average_trip_duration: number;
+  most_frequent_travelers: FrequentTraveler[];
+  travel_by_purpose: { [key: string]: number };
+}
+
+export interface FrequentTraveler {
+  user_id: number;
+  user_name: string;
+  trip_count: number;
+}
+
+// Booking Analytics Interface
+export interface BookingAnalytics {
+  total_flight_bookings: number;
+  total_hotel_bookings: number;
+  flight_cost: number;
+  hotel_cost: number;
+  average_booking_lead_time: number;
+  preferred_airlines: string[];
+  preferred_hotels: string[];
+  booking_class_distribution: { [key: string]: number };
+}
+
+// Expense Analytics Interface
+export interface ExpenseAnalytics {
+  total_claims: number;
+  total_amount: number;
+  approved_amount: number;
+  pending_amount: number;
+  by_category: { [key: string]: number };
+  by_status: { [key: string]: number };
+  average_claim_amount: number;
+  top_expense_categories: any[];
+}
+
+// Department Analytics Interface
+export interface DepartmentAnalytics {
+  department_name: string;
+  total_trips: number;
+  total_spend: number;
+  active_travelers: number;
+  average_trip_cost: number;
+  pending_approvals: number;
+}
+
+// User Activity Interface
+export interface UserActivity {
+  user_id: number;
+  user_name: string;
+  email: string;
+  total_trfs: number;
+  total_bookings: number;
+  total_claims: number;
+  total_spend: number;
+  last_activity: string;
+}
+
+// Travel Insight Interface
+export interface TravelInsight {
+  id: number;
+  user: number;
+  user_name: string;
+  title: string;
+  description: string;
+  insight_type: string;
+  potential_savings?: number;
+  relevance_score: number;
+  expiry_date?: string;
+  is_expired: boolean;
+  created_at: string;
+}
+
+// Travel Analytics Interface
+export interface TravelAnalytics {
+  id: number;
+  user?: number;
+  user_name?: string;
+  total_trips: number;
+  total_spend: number;
+  average_trip_cost: number;
+  savings_opportunities: number;
+  top_destinations: any[];
+  spend_by_category: any[];
+  monthly_trend: any[];
+  created_at: string;
+  updated_at: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class InsightsService {
-  private mockInsights: TravelInsight[] = [
-    {
-      id: '1',
-      userId: '1',
-      title: 'Book New York flights 3 months in advance',
-      description: 'Based on your travel history, booking flights to New York 3 months in advance could save up to 25% on airfare.',
-      insightType: InsightType.BOOKING_TIMING,
-      potentialSavings: 250,
-      relevanceScore: 0.85,
-      createdAt: new Date('2025-05-10')
-    },
-    {
-      id: '2',
-      userId: '1',
-      title: 'Consider Hilton for London stays',
-      description: 'Your company has a preferred rate with Hilton in London that could save 15% on accommodation costs.',
-      insightType: InsightType.PREFERRED_VENDOR,
-      potentialSavings: 180,
-      relevanceScore: 0.75,
-      createdAt: new Date('2025-05-12')
-    },
-    {
-      id: '3',
-      userId: '1',
-      title: 'Combine upcoming trips to reduce costs',
-      description: 'You have two trips to Chicago scheduled within the same week. Combining them could save on travel costs.',
-      insightType: InsightType.COST_SAVING,
-      potentialSavings: 500,
-      relevanceScore: 0.9,
-      expiryDate: new Date('2025-06-30'),
-      createdAt: new Date('2025-05-15')
-    }
-  ];
+  private apiUrl = `${environment.apiUrl}/insights`;
 
-  private mockAnalytics: TravelAnalytics = {
-    totalTrips: 24,
-    totalSpend: 45000,
-    averageTripCost: 1875,
-    topDestinations: [
-      { destination: 'New York', count: 8, averageCost: 2200 },
-      { destination: 'Chicago', count: 6, averageCost: 1500 },
-      { destination: 'London', count: 4, averageCost: 3500 },
-      { destination: 'San Francisco', count: 3, averageCost: 2800 },
-      { destination: 'Tokyo', count: 2, averageCost: 4500 }
-    ],
-    spendByCategory: [
-      { category: 'Flights', amount: 22000, percentage: 49 },
-      { category: 'Hotels', amount: 15000, percentage: 33 },
-      { category: 'Meals', amount: 5000, percentage: 11 },
-      { category: 'Transportation', amount: 2000, percentage: 4 },
-      { category: 'Miscellaneous', amount: 1000, percentage: 3 }
-    ],
-    monthlyTrend: [
-      { month: 'January', year: 2025, tripCount: 2, totalSpend: 3800 },
-      { month: 'February', year: 2025, tripCount: 3, totalSpend: 5200 },
-      { month: 'March', year: 2025, tripCount: 2, totalSpend: 4100 },
-      { month: 'April', year: 2025, tripCount: 3, totalSpend: 5500 },
-      { month: 'May', year: 2025, tripCount: 2, totalSpend: 4200 },
-      { month: 'June', year: 2025, tripCount: 1, totalSpend: 2100 },
-      { month: 'July', year: 2025, tripCount: 0, totalSpend: 0 },
-      { month: 'August', year: 2025, tripCount: 0, totalSpend: 0 },
-      { month: 'September', year: 2025, tripCount: 0, totalSpend: 0 },
-      { month: 'October', year: 2025, tripCount: 0, totalSpend: 0 },
-      { month: 'November', year: 2025, tripCount: 0, totalSpend: 0 },
-      { month: 'December', year: 2025, tripCount: 0, totalSpend: 0 }
-    ],
-    savingsOpportunities: 2500
-  };
+  constructor(private http: HttpClient) {}
 
-  constructor(private http: HttpClient) { }
+  // ============ Dashboard APIs ============
 
-  // Get all insights for a user
-  getInsights(userId: string): Observable<TravelInsight[]> {
-    // In a real app, this would make an API call
-    return of(this.mockInsights.filter(insight => insight.userId === userId));
+  /**
+   * Get dashboard summary statistics
+   */
+  getDashboardSummary(): Observable<DashboardSummary> {
+    return this.http.get<DashboardSummary>(`${this.apiUrl}/dashboard/summary/`);
   }
 
-  // Get travel analytics for a user
-  getTravelAnalytics(userId: string): Observable<TravelAnalytics> {
-    // In a real app, this would make an API call
-    return of(this.mockAnalytics);
+  // ============ Analytics APIs ============
+
+  /**
+   * Get travel spend analytics with optional date range
+   */
+  getTravelSpendAnalytics(dateFrom?: string, dateTo?: string): Observable<TravelSpendAnalytics> {
+    let params = new HttpParams();
+    if (dateFrom) params = params.set('date_from', dateFrom);
+    if (dateTo) params = params.set('date_to', dateTo);
+
+    return this.http.get<TravelSpendAnalytics>(
+      `${this.apiUrl}/analytics/travel-spend/`,
+      { params }
+    );
   }
 
-  // Get travel analytics for a specific date range
-  getTravelAnalyticsForDateRange(userId: string, startDate: Date, endDate: Date): Observable<TravelAnalytics> {
-    // In a real app, this would make an API call with date range parameters
-    // For demo purposes, we'll return the same mock data
-    return of(this.mockAnalytics);
+  /**
+   * Get travel pattern analytics
+   */
+  getTravelPatternAnalytics(): Observable<TravelPatternAnalytics> {
+    return this.http.get<TravelPatternAnalytics>(`${this.apiUrl}/analytics/travel-patterns/`);
   }
 
-  // Generate new insights based on travel history
-  generateInsights(userId: string): Observable<TravelInsight[]> {
-    // In a real app, this would trigger an AI analysis of travel data
-    // For demo purposes, we'll return the existing mock insights
-    return of(this.mockInsights.filter(insight => insight.userId === userId));
+  /**
+   * Get booking analytics
+   */
+  getBookingAnalytics(): Observable<BookingAnalytics> {
+    return this.http.get<BookingAnalytics>(`${this.apiUrl}/analytics/bookings/`);
   }
 
-  // Get cost-saving opportunities
-  getCostSavingOpportunities(userId: string): Observable<TravelInsight[]> {
-    // In a real app, this would make an API call
-    return of(this.mockInsights.filter(insight => 
-      insight.userId === userId && 
-      insight.insightType === InsightType.COST_SAVING
-    ));
+  /**
+   * Get expense analytics
+   */
+  getExpenseAnalytics(): Observable<ExpenseAnalytics> {
+    return this.http.get<ExpenseAnalytics>(`${this.apiUrl}/analytics/expenses/`);
   }
 
-  // Get booking timing recommendations
-  getBookingTimingRecommendations(userId: string): Observable<TravelInsight[]> {
-    // In a real app, this would make an API call
-    return of(this.mockInsights.filter(insight => 
-      insight.userId === userId && 
-      insight.insightType === InsightType.BOOKING_TIMING
-    ));
+  /**
+   * Get department-wise analytics (admin only)
+   */
+  getDepartmentAnalytics(): Observable<DepartmentAnalytics[]> {
+    return this.http.get<DepartmentAnalytics[]>(`${this.apiUrl}/analytics/departments/`);
   }
 
-  // Get preferred vendor recommendations
-  getPreferredVendorRecommendations(userId: string): Observable<TravelInsight[]> {
-    // In a real app, this would make an API call
-    return of(this.mockInsights.filter(insight => 
-      insight.userId === userId && 
-      insight.insightType === InsightType.PREFERRED_VENDOR
-    ));
+  // ============ Reports APIs ============
+
+  /**
+   * Get user activity report (admin only)
+   */
+  getUserActivityReport(): Observable<UserActivity[]> {
+    return this.http.get<UserActivity[]>(`${this.apiUrl}/reports/user-activity/`);
   }
 
-  // Get travel pattern insights
-  getTravelPatternInsights(userId: string): Observable<TravelInsight[]> {
-    // In a real app, this would make an API call
-    return of(this.mockInsights.filter(insight => 
-      insight.userId === userId && 
-      insight.insightType === InsightType.TRAVEL_PATTERN
-    ));
+  // ============ Travel Insights APIs ============
+
+  /**
+   * Get all travel insights
+   */
+  getInsights(insightType?: string, includeExpired: boolean = false): Observable<TravelInsight[]> {
+    let params = new HttpParams();
+    if (insightType) params = params.set('insight_type', insightType);
+    if (includeExpired) params = params.set('include_expired', 'true');
+
+    return this.http.get<TravelInsight[]>(`${this.apiUrl}/insights/`, { params });
   }
 
-  // Get policy compliance insights
-  getPolicyComplianceInsights(userId: string): Observable<TravelInsight[]> {
-    // In a real app, this would make an API call
-    return of(this.mockInsights.filter(insight => 
-      insight.userId === userId && 
-      insight.insightType === InsightType.POLICY_COMPLIANCE
-    ));
+  /**
+   * Get a specific travel insight by ID
+   */
+  getInsight(id: number): Observable<TravelInsight> {
+    return this.http.get<TravelInsight>(`${this.apiUrl}/insights/${id}/`);
+  }
+
+  /**
+   * Create a new travel insight
+   */
+  createInsight(insight: Partial<TravelInsight>): Observable<TravelInsight> {
+    return this.http.post<TravelInsight>(`${this.apiUrl}/insights/`, insight);
+  }
+
+  /**
+   * Update a travel insight
+   */
+  updateInsight(id: number, insight: Partial<TravelInsight>): Observable<TravelInsight> {
+    return this.http.patch<TravelInsight>(`${this.apiUrl}/insights/${id}/`, insight);
+  }
+
+  /**
+   * Delete a travel insight
+   */
+  deleteInsight(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/insights/${id}/`);
+  }
+
+  // ============ Travel Analytics APIs ============
+
+  /**
+   * Get all travel analytics
+   */
+  getAllTravelAnalytics(): Observable<TravelAnalytics[]> {
+    return this.http.get<TravelAnalytics[]>(`${this.apiUrl}/analytics/`);
+  }
+
+  /**
+   * Get user's own analytics
+   */
+  getMyAnalytics(): Observable<TravelAnalytics> {
+    return this.http.get<TravelAnalytics>(`${this.apiUrl}/analytics/my_analytics/`);
+  }
+
+  /**
+   * Get company-wide analytics (admin only)
+   */
+  getCompanyAnalytics(): Observable<TravelAnalytics> {
+    return this.http.get<TravelAnalytics>(`${this.apiUrl}/analytics/company_analytics/`);
+  }
+
+  // ============ Helper Methods ============
+
+  /**
+   * Format currency for display
+   */
+  formatCurrency(amount: number, currency: string = 'USD'): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency
+    }).format(amount);
+  }
+
+  /**
+   * Calculate percentage
+   */
+  calculatePercentage(value: number, total: number): number {
+    if (total === 0) return 0;
+    return Math.round((value / total) * 100);
+  }
+
+  /**
+   * Get insight type label
+   */
+  getInsightTypeLabel(type: string): string {
+    const labels: { [key: string]: string } = {
+      'COST_SAVING': 'Cost Saving',
+      'BOOKING_TIMING': 'Booking Timing',
+      'PREFERRED_VENDOR': 'Preferred Vendor',
+      'TRAVEL_PATTERN': 'Travel Pattern',
+      'POLICY_COMPLIANCE': 'Policy Compliance'
+    };
+    return labels[type] || type;
+  }
+
+  /**
+   * Get insight type color
+   */
+  getInsightTypeColor(type: string): string {
+    const colors: { [key: string]: string } = {
+      'COST_SAVING': 'success',
+      'BOOKING_TIMING': 'info',
+      'PREFERRED_VENDOR': 'primary',
+      'TRAVEL_PATTERN': 'warning',
+      'POLICY_COMPLIANCE': 'danger'
+    };
+    return colors[type] || 'secondary';
   }
 }

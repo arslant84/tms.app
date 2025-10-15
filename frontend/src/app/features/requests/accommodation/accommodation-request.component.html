@@ -1,7 +1,7 @@
 <div class="request-wizard-container">
   <div class="wizard-header">
-    <h2>Accommodation Request</h2>
-    <p>Complete the form below to submit a new accommodation request</p>
+    <h2>Staff House/Camp Accommodation Request</h2>
+    <p>Book staff houses in Ashgabat or camps in Kiyanly</p>
   </div>
   
   <!-- Progress Indicator -->
@@ -26,63 +26,24 @@
   <div class="wizard-form">
     <form [formGroup]="accommodationForm" (ngSubmit)="submitRequest()">
       
-      <!-- Step 1: Basic Information -->
+      <!-- Step 1: Accommodation Selection -->
       <div class="step-content" *ngIf="currentStep === 1">
-        <h3>Basic Information</h3>
+        <h3>Accommodation Selection</h3>
         
-        <div class="mb-3">
-          <label for="purpose" class="form-label">Purpose of Accommodation *</label>
-          <input type="text" class="form-control" id="purpose" formControlName="purpose" 
-                 placeholder="E.g., Business Trip, Conference, Training">
-          <div class="invalid-feedback" *ngIf="accommodationForm.get('purpose')?.invalid && accommodationForm.get('purpose')?.touched">
-            Purpose is required
+        <!-- Location Type Selection -->
+        <div class="mb-4">
+          <label class="form-label">Accommodation Type *</label>
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" formControlName="accommodationType" id="ashgabat" value="ashgabat">
+            <label class="btn btn-outline-primary" for="ashgabat">Ashgabat staff houses</label>
+            
+            <input type="radio" class="btn-check" formControlName="accommodationType" id="kiyanly" value="kiyanly">
+            <label class="btn btn-outline-primary" for="kiyanly">Kiyanly camps</label>
           </div>
         </div>
         
-        <div class="mb-3">
-          <label for="description" class="form-label">Description *</label>
-          <textarea class="form-control" id="description" formControlName="description" rows="3"
-                   placeholder="Provide details about why you need accommodation"></textarea>
-          <div class="invalid-feedback" *ngIf="accommodationForm.get('description')?.invalid && accommodationForm.get('description')?.touched">
-            Description is required
-          </div>
-        </div>
-        
-        <div class="mb-3">
-          <label class="form-label">Priority *</label>
-          <div class="priority-options">
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" id="priorityLow" value="low" formControlName="priority">
-              <label class="form-check-label" for="priorityLow">Low</label>
-            </div>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" id="priorityMedium" value="medium" formControlName="priority">
-              <label class="form-check-label" for="priorityMedium">Medium</label>
-            </div>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" id="priorityHigh" value="high" formControlName="priority">
-              <label class="form-check-label" for="priorityHigh">High</label>
-            </div>
-          </div>
-        </div>
-        
-        <div class="mb-3">
-          <label for="relatedTravelRequest" class="form-label">Related Travel Request (if any)</label>
-          <select class="form-select" id="relatedTravelRequest" formControlName="relatedTravelRequest">
-            <option value="">None</option>
-            <option value="1">TR-2025-001: Conference in New York (Jun 15-20)</option>
-            <option value="2">TR-2025-002: Client Meeting in Dubai (Jul 10-15)</option>
-            <option value="3">TR-2025-003: Training in London (Aug 5-10)</option>
-          </select>
-          <div class="form-text">Link this accommodation to an existing travel request</div>
-        </div>
-      </div>
-      
-      <!-- Step 2: Accommodation Details -->
-      <div class="step-content" *ngIf="currentStep === 2">
-        <h3>Accommodation Details</h3>
-        
-        <div class="row mb-3">
+        <!-- Date Selection -->
+        <div class="row mb-4">
           <div class="col-md-6">
             <label for="checkInDate" class="form-label">Check-in Date *</label>
             <input type="date" class="form-control" id="checkInDate" formControlName="checkInDate">
@@ -99,38 +60,218 @@
           </div>
         </div>
         
-        <div class="mb-3">
-          <label for="location" class="form-label">Location/City *</label>
-          <input type="text" class="form-control" id="location" formControlName="location" 
-                 placeholder="City where accommodation is needed">
-          <div class="invalid-feedback" *ngIf="accommodationForm.get('location')?.invalid && accommodationForm.get('location')?.touched">
-            Location is required
+        <!-- Gender Selection (for room assignment) -->
+        <div class="mb-4">
+          <label class="form-label">Gender (for room assignment) *</label>
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" formControlName="gender" id="genderMale" value="male">
+            <label class="btn btn-outline-primary" for="genderMale">Male</label>
+            
+            <input type="radio" class="btn-check" formControlName="gender" id="genderFemale" value="female">
+            <label class="btn btn-outline-primary" for="genderFemale">Female</label>
+          </div>
+          <div class="form-text text-warning">
+            <i class="bi bi-info-circle"></i> Rooms are gender-segregated. You can only book rooms assigned to your gender.
           </div>
         </div>
         
-        <div class="mb-3">
-          <label for="accommodationType" class="form-label">Accommodation Type *</label>
-          <select class="form-select" id="accommodationType" formControlName="accommodationType">
-            <option value="hotel">Hotel</option>
-            <option value="guesthouse">Guesthouse</option>
-            <option value="airbnb">Airbnb</option>
-            <option value="serviced_apartment">Serviced Apartment</option>
-            <option value="other">Other</option>
+        <!-- Accommodation Selection -->
+        <div class="mb-4" *ngIf="accommodations.length > 0">
+          <label for="selectedAccommodation" class="form-label">Select {{ accommodationForm.get('accommodationType')?.value === 'ashgabat' ? 'Staff House' : 'Camp' }} *</label>
+          <select class="form-select" id="selectedAccommodation" formControlName="selectedAccommodation">
+            <option value="">-- Select --</option>
+            <option *ngFor="let acc of accommodations" [value]="acc.id">
+              {{ acc.name }} ({{ acc.rooms }} rooms)
+            </option>
           </select>
-        </div>
-        
-        <div class="mb-3">
-          <label for="numberOfGuests" class="form-label">Number of Guests *</label>
-          <input type="number" class="form-control" id="numberOfGuests" formControlName="numberOfGuests" min="1">
-          <div class="invalid-feedback" *ngIf="accommodationForm.get('numberOfGuests')?.invalid && accommodationForm.get('numberOfGuests')?.touched">
-            Valid number of guests is required (minimum 1)
+          <div class="invalid-feedback" *ngIf="accommodationForm.get('selectedAccommodation')?.invalid && accommodationForm.get('selectedAccommodation')?.touched">
+            Please select an accommodation
           </div>
         </div>
         
-        <div class="mb-3">
+        <!-- Room Selection -->
+        <div class="mb-4" *ngIf="rooms.length > 0">
+          <label for="selectedRoom" class="form-label">Select Room *</label>
+          <select class="form-select" id="selectedRoom" formControlName="selectedRoom">
+            <option value="">-- Select --</option>
+            <option *ngFor="let room of rooms" [value]="room.id">
+              {{ room.name }} ({{ room.gender === 'male' ? 'Male' : 'Female' }} only)
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="accommodationForm.get('selectedRoom')?.invalid && accommodationForm.get('selectedRoom')?.touched">
+            Please select a room
+          </div>
+        </div>
+        
+        <!-- Calendar View Toggle -->
+        <div class="mb-4" *ngIf="accommodationForm.get('selectedAccommodation')?.value">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="mb-0">Room Availability</h4>
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-sm" [class.btn-primary]="calendarView === 'option1'" [class.btn-outline-primary]="calendarView !== 'option1'" (click)="calendarView = 'option1'">Option 1</button>
+              <button type="button" class="btn btn-sm" [class.btn-primary]="calendarView === 'option2'" [class.btn-outline-primary]="calendarView !== 'option2'" (click)="calendarView = 'option2'">Option 2</button>
+            </div>
+          </div>
+          
+          <!-- Calendar Option 1 (Grid View) -->
+          <div *ngIf="calendarView === 'option1'" class="calendar-option-1">
+            <div class="table-responsive">
+              <table class="table table-bordered calendar-table">
+                <thead class="table-dark">
+                  <tr>
+                    <th>May 2024</th>
+                    <th *ngFor="let day of calendarDays">{{ day }}</th>
+                  </tr>
+                  <tr>
+                    <th></th>
+                    <th *ngFor="let day of calendarDays; let i = index" class="text-center">
+                      {{ ['We', 'Th', 'Fr', 'Sa', 'Su', 'Mo', 'Tu'][i % 7] }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let room of rooms">
+                    <td>Room #{{ room.id.replace('room', '') }}</td>
+                    <td *ngFor="let day of calendarDays" 
+                        [ngClass]="getRoomAvailabilityClass(room.id, accommodationForm.get('selectedAccommodation')?.value, day)">
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="legend d-flex gap-3 mt-2">
+              <div class="d-flex align-items-center">
+                <div class="legend-box available"></div>
+                <span class="ms-2">Available</span>
+              </div>
+              <div class="d-flex align-items-center">
+                <div class="legend-box booked"></div>
+                <span class="ms-2">Busy or booked</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Calendar Option 2 (Monthly View) -->
+          <div *ngIf="calendarView === 'option2'" class="calendar-option-2">
+            <div class="table-responsive">
+              <table class="table table-bordered calendar-table">
+                <thead class="table-success">
+                  <tr>
+                    <th colspan="7" class="text-center">May 2024</th>
+                  </tr>
+                  <tr>
+                    <th>Monday</th>
+                    <th>Tuesday</th>
+                    <th>Wednesday</th>
+                    <th>Thursday</th>
+                    <th>Friday</th>
+                    <th>Saturday</th>
+                    <th>Sunday</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Week 1 -->
+                  <tr>
+                    <td></td>
+                    <td></td>
+                    <td class="day-cell">1<div class="rooms-count">2 rooms</div></td>
+                    <td class="day-cell">2<div class="rooms-count">1 room</div></td>
+                    <td class="day-cell">3<div class="rooms-count">2 rooms</div></td>
+                    <td class="day-cell">4<div class="rooms-count">4 rooms</div></td>
+                    <td class="day-cell">5<div class="rooms-count">2 rooms</div></td>
+                  </tr>
+                  <!-- Week 2 -->
+                  <tr>
+                    <td class="day-cell">6<div class="rooms-count">3 rooms</div></td>
+                    <td class="day-cell">7<div class="rooms-count">3 rooms</div></td>
+                    <td class="day-cell">8<div class="rooms-count">1 room</div></td>
+                    <td class="day-cell">9<div class="rooms-count">3 rooms</div></td>
+                    <td class="day-cell">10<div class="rooms-count">2 rooms</div></td>
+                    <td class="day-cell">11<div class="rooms-count">3 rooms</div></td>
+                    <td class="day-cell">12<div class="rooms-count">3 rooms</div></td>
+                  </tr>
+                  <!-- Additional weeks would follow the same pattern -->
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-2">
+              <p><strong>Option 2:</strong> It is easy to check how many rooms are available.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Step 2: Booking Confirmation -->
+      <div class="step-content" *ngIf="currentStep === 2">
+        <h3>Booking Confirmation</h3>
+        
+        <div class="booking-summary card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Accommodation Details</h5>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <p><strong>Accommodation Type:</strong> {{ accommodationForm.get('accommodationType')?.value === 'ashgabat' ? 'Ashgabat Staff House' : 'Kiyanly Camp' }}</p>
+                <p><strong>Location:</strong> {{ accommodationForm.get('accommodationType')?.value === 'ashgabat' ? 'Ashgabat' : 'Kiyanly' }}</p>
+                <p *ngIf="accommodationForm.get('selectedAccommodation')?.value">
+                  <strong>{{ accommodationForm.get('accommodationType')?.value === 'ashgabat' ? 'Staff House' : 'Camp' }}:</strong> 
+                  {{ getAccommodationName() }}
+                </p>
+                <p *ngIf="accommodationForm.get('selectedRoom')?.value">
+                  <strong>Room:</strong> {{ getRoomNumber() }}
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Check-in Date:</strong> {{ getFormattedDate('checkInDate') }}</p>
+                <p><strong>Check-out Date:</strong> {{ getFormattedDate('checkOutDate') }}</p>
+                <p><strong>Gender:</strong> {{ getGenderDisplay() }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-4">
+          <label for="relatedTravelRequest" class="form-label">Related Travel Request (TRF)</label>
+          <select class="form-select" id="relatedTravelRequest" formControlName="relatedTravelRequest">
+            <option value="">None</option>
+            <option value="TRF-2025-001">TRF-2025-001: Business Trip to Ashgabat</option>
+            <option value="TRF-2025-002">TRF-2025-002: Site Visit to Kiyanly</option>
+            <option value="TRF-2025-003">TRF-2025-003: Training in Ashgabat</option>
+          </select>
+          <div class="form-text">Link this accommodation to an existing travel request</div>
+        </div>
+        
+        <div class="mb-4">
           <label for="specialRequirements" class="form-label">Special Requirements</label>
           <textarea class="form-control" id="specialRequirements" formControlName="specialRequirements" rows="2"
                    placeholder="Any special requirements or preferences"></textarea>
+        </div>
+        
+        <div class="mb-4">
+          <label for="reason" class="form-label">Reason for Accommodation *</label>
+          <textarea class="form-control" id="reason" formControlName="reason" rows="3"
+                   placeholder="Please provide the reason for your accommodation request"></textarea>
+          <div class="invalid-feedback" *ngIf="accommodationForm.get('reason')?.invalid && accommodationForm.get('reason')?.touched">
+            Reason is required
+          </div>
+        </div>
+        
+        <div class="alert alert-info">
+          <div class="d-flex">
+            <div class="me-3">
+              <i class="bi bi-info-circle-fill fs-4"></i>
+            </div>
+            <div>
+              <h5>Important Information</h5>
+              <ul>
+                <li>Bookings are for nights only</li>
+                <li>Key must be returned during daytime</li>
+                <li>Gender-segregated rooms cannot be mixed</li>
+                <li>Admin focal will receive notification of your booking</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
       

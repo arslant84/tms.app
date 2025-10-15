@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-from trf.models import TravelRequestForm, ApprovalStatus
+from trf.models import TravelRequest
 
 
 class ExpenseCategory(models.TextChoices):
@@ -38,7 +38,7 @@ class ExpenseItem(models.Model):
 
 class ExpenseClaim(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='expense_claims')
-    trf = models.ForeignKey(TravelRequestForm, on_delete=models.SET_NULL, related_name='expense_claims', null=True, blank=True)
+    trf = models.ForeignKey(TravelRequest, on_delete=models.SET_NULL, related_name='expense_claims', null=True, blank=True)
     title = models.CharField(max_length=255)
     description = models.TextField()
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -74,27 +74,15 @@ class ExpenseClaim(models.Model):
         return self.trf.id if self.trf else None
 
 
-class ExpenseApproval(models.Model):
-    expense = models.ForeignKey(ExpenseClaim, on_delete=models.CASCADE, related_name='approval_chain')
-    approver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='expense_approvals')
-    status = models.CharField(
-        max_length=20,
-        choices=ApprovalStatus.choices,
-        default=ApprovalStatus.PENDING,
-    )
+class ClaimsApprovalStep(models.Model):
+    claim = models.ForeignKey(ExpenseClaim, on_delete=models.CASCADE)
+    step_role = models.CharField(max_length=255)
+    step_name = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=255, default='Not Started')
+    step_date = models.DateTimeField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
-    timestamp = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['id']
-    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     def __str__(self):
-        return f"{self.approver.name}'s approval for {self.expense}"
-    
-    @property
-    def approver_name(self):
-        return self.approver.name
-    
-    @property
-    def approver_id(self):
-        return self.approver.id
+        return f'{self.claim} - {self.step_name}'

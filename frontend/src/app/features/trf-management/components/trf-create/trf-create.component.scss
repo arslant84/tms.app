@@ -1,0 +1,84 @@
+.trf-container {
+  margin: 20px;
+  
+  .card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    
+    .card-header {
+      padding: 15px;
+      
+      h2 {
+        margin-bottom: 0;
+        font-size: 1.5rem;
+      }
+    }
+  }
+  
+  table {
+    th, td {
+      vertical-align: middle;
+      padding: 8px;
+    }
+    
+    th {
+      font-weight: 600;
+    }
+  }
+  
+  .form-control-sm {
+    height: calc(1.5em + 0.5rem + 2px);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+  }
+  
+  .text-muted {
+    font-style: italic;
+  }
+  
+  // Validation styles
+  .ng-invalid.ng-touched {
+    border-color: #dc3545;
+  }
+  
+  .validation-error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  
+  // Success/Error messages
+  .alert {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    
+    &.alert-success {
+      color: #155724;
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+    }
+    
+    &.alert-danger {
+      color: #721c24;
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+    }
+  }
+}

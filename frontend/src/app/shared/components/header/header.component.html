@@ -1,52 +1,99 @@
+<!-- Header - Matching React pctsb.syntra design -->
 <header class="app-header">
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary-teal">
-    <div class="container-fluid">
-      <button class="btn btn-link sidebar-toggle" (click)="toggleSidebar()">
+  <div class="header-container">
+    <!-- Left Section: Mobile Menu + Logo -->
+    <div class="header-left">
+      <!-- Mobile Menu Button -->
+      <button class="mobile-menu-button" (click)="toggleSidebar()">
         <i class="bi bi-list"></i>
+        <span class="sr-only">Toggle Menu</span>
       </button>
-      <a class="navbar-brand" routerLink="/dashboard">
-        <span class="brand-name">SynTra</span>
-      </a>
-      <button class="navbar-toggler" type="button" (click)="toggleNavbar()" aria-controls="navbarNav" [attr.aria-expanded]="!isCollapsed" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" [class.show]="!isCollapsed" id="navbarNav">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/trf" routerLinkActive="active">TRF Management</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/booking" routerLinkActive="active">Booking Portal</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/expenses" routerLinkActive="active">Expense Claims</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/insights" routerLinkActive="active">Travel Insights</a>
-          </li>
-          <li class="nav-item" *ngIf="isAdmin$ | async">
-            <a class="nav-link" routerLink="/users/admin" routerLinkActive="active">User Management</a>
-          </li>
-        </ul>
-        <div class="d-flex" *ngIf="currentUser$ | async as user; else loginButton">
-          <div class="dropdown">
-            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-              {{ user.name }}
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-              <li><a class="dropdown-item" routerLink="/profile">My Profile</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="#" (click)="logout($event)">Logout</a></li>
-            </ul>
-          </div>
-        </div>
-        <ng-template #loginButton>
-          <a class="btn btn-outline-light" routerLink="/auth/login">Login</a>
-        </ng-template>
+
+      <!-- Logo (Desktop) -->
+      <div class="logo-desktop">
+        <a routerLink="/dashboard" class="logo-link">
+          <span class="logo-text">SynTra</span>
+        </a>
       </div>
     </div>
-  </nav>
+
+    <!-- Center Section: Main Navigation (Desktop Only) -->
+    <nav class="header-nav">
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{exact: true}"
+        class="nav-link">
+        <i class="bi bi-house"></i>
+        <span>Home</span>
+      </a>
+      <a
+        routerLink="/trf"
+        routerLinkActive="active"
+        class="nav-link">
+        <i class="bi bi-file-text"></i>
+        <span>TSR</span>
+      </a>
+      <a
+        routerLink="/transport"
+        routerLinkActive="active"
+        class="nav-link">
+        <i class="bi bi-truck"></i>
+        <span>Transport</span>
+      </a>
+      <a
+        routerLink="/visa"
+        routerLinkActive="active"
+        class="nav-link">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Visa</span>
+      </a>
+      <a
+        routerLink="/accommodation"
+        routerLinkActive="active"
+        class="nav-link">
+        <i class="bi bi-building"></i>
+        <span>Accommodation</span>
+      </a>
+      <a
+        routerLink="/claims"
+        routerLinkActive="active"
+        class="nav-link">
+        <i class="bi bi-receipt"></i>
+        <span>Claims</span>
+      </a>
+    </nav>
+
+    <!-- Right Section: User Menu -->
+    <div class="header-right">
+      <div class="user-menu" *ngIf="currentUser$ | async as user; else loginButton">
+        <div class="dropdown">
+          <button
+            class="user-button"
+            type="button"
+            id="userDropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            (click)="toggleProfileDropdown($event)">
+            <div class="user-avatar">
+              <i class="bi bi-person-circle" *ngIf="!user.avatar"></i>
+              <img *ngIf="user.avatar" [src]="user.avatar" [alt]="user.name">
+            </div>
+            <span class="user-name">{{ user.name }}</span>
+            <i class="bi bi-chevron-down chevron-icon"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" routerLink="/profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
+            <li><a class="dropdown-item" routerLink="/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" (click)="logout($event)"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <ng-template #loginButton>
+        <a class="btn btn-outline-primary" routerLink="/auth/login">Login</a>
+      </ng-template>
+    </div>
+  </div>
 </header>

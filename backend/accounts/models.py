@@ -3,13 +3,29 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
 
 
-class UserRole(models.TextChoices):
-    EMPLOYEE = 'employee', _('Employee')
-    FOCAL = 'focal', _('Focal')
-    HOD = 'hod', _('HOD')
-    TICKETING_CLERK = 'ticketing_clerk', _('Ticketing Clerk')
-    EXTERNAL = 'external', _('External')
-    ADMIN = 'admin', _('Admin')
+class Permission(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Role(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    permissions = models.ManyToManyField(Permission, through='RolePermission')
+
+    def __str__(self):
+        return self.name
+
+
+class RolePermission(models.Model):
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('role', 'permission')
 
 
 class UserManager(BaseUserManager):
@@ -26,12 +42,15 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_admin', True)
-        extra_fields.setdefault('role', UserRole.ADMIN)
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
+
+        # Create an admin role if it doesn't exist
+        admin_role, created = Role.objects.get_or_create(name='Admin')
+        extra_fields.setdefault('role', admin_role)
 
         return self.create_user(email, password, **extra_fields)
 
@@ -40,14 +59,15 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(_('email address'), unique=True)
     name = models.CharField(max_length=255)
-    role = models.CharField(
-        max_length=20,
-        choices=UserRole.choices,
-        default=UserRole.EMPLOYEE,
-    )
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
     department = models.CharField(max_length=100, blank=True)
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    staff_id = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    phone = models.CharField(max_length=50, blank=True, null=True)
+    profile_photo = models.CharField(max_length=255, blank=True, null=True)
+    gender = models.CharField(max_length=10, blank=True, null=True)
+    last_login_at = models.DateTimeField(blank=True, null=True)
     
     objects = UserManager()
     

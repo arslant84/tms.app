@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { VisaService } from '../../../visa/visa.service';
 
 @Component({
   selector: 'app-visa-request',
@@ -25,7 +26,8 @@ export class VisaRequestComponent implements OnInit {
   
   constructor(
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private visaService: VisaService
   ) {
     this.initForm();
   }
@@ -154,17 +156,20 @@ export class VisaRequestComponent implements OnInit {
   submitRequest(): void {
     if (this.visaForm.valid) {
       this.isSubmitting = true;
-      
-      // Here you would call your API service to submit the request
-      // For now, we'll simulate an API call with a timeout
-      setTimeout(() => {
-        console.log('Visa request submitted:', this.visaForm.value);
-        this.clearDraft();
-        this.isSubmitting = false;
-        this.router.navigate(['/requests/success'], { 
-          state: { message: 'Visa request submitted successfully!' } 
-        });
-      }, 1500);
+      this.visaService.create(this.visaForm.value).subscribe({
+        next: () => {
+          console.log('Visa request submitted:', this.visaForm.value);
+          this.clearDraft();
+          this.isSubmitting = false;
+          this.router.navigate(['/requests/success'], { 
+            state: { message: 'Visa request submitted successfully!' } 
+          });
+        },
+        error: (error) => {
+          console.error('Error submitting visa request:', error);
+          this.isSubmitting = false;
+        }
+      });
     } else {
       // Mark all fields as touched to show validation errors
       this.markFormGroupTouched(this.visaForm);

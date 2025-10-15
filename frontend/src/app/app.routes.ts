@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { UserRole } from './core/models/user.model';
-import { StyleGuideComponent } from './components/style-guide/style-guide.component';
 import { MainLayoutComponent } from './components/main-layout/main-layout.component';
 import { TravelRequestWizardComponent } from './features/requests/travel/travel-request-wizard.component';
 import { AccommodationRequestComponent } from './features/requests/accommodation/accommodation-request.component';
@@ -82,21 +81,13 @@ export const routes: Routes = [
         path: 'trf',
         loadChildren: () => import('./features/trf-management/trf-management.module').then(m => m.TrfManagementModule)
       },
-      // Booking Portal
-      {
-        path: 'booking',
-        loadChildren: () => import('./features/booking-portal/booking-portal.module').then(m => m.BookingPortalModule)
-      },
+
       // Expense Claims
       {
         path: 'expenses',
         loadChildren: () => import('./features/expense-claims/expense-claims.module').then(m => m.ExpenseClaimsModule)
       },
-      // Travel Insights
-      {
-        path: 'insights',
-        loadChildren: () => import('./features/travel-insights/travel-insights.module').then(m => m.TravelInsightsModule)
-      },
+
       // User Management
       {
         path: 'users',
@@ -107,11 +98,6 @@ export const routes: Routes = [
       {
         path: 'profile',
         loadChildren: () => import('./features/user-management/user-management.module').then(m => m.UserManagementModule)
-      },
-      // Style Guide
-      {
-        path: 'style-guide',
-        component: StyleGuideComponent
       }
     ]
   },

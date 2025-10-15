@@ -208,7 +208,7 @@ export class TravelRequestWizardComponent implements OnInit {
       case 'domestic':
         return 'Domestic Business Trip';
       case 'international':
-        return 'Overseas Business Trip';
+        return 'International Business Trip';
       case 'home-leave':
         return 'Home Leave Passage';
       case 'external':

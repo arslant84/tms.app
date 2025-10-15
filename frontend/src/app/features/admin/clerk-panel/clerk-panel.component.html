@@ -236,42 +236,74 @@
               <div class="col-md-6">
                 <div class="detail-item">
                   <span class="detail-label">Check-in Date:</span>
-                  <span class="detail-value">{{ selectedTask.details.checkInDate }}</span>
+                  <span class="detail-value">{{ selectedTask.details.checkInDate | date:'mediumDate' }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Check-out Date:</span>
-                  <span class="detail-value">{{ selectedTask.details.checkOutDate }}</span>
+                  <span class="detail-value">{{ selectedTask.details.checkOutDate | date:'mediumDate' }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="detail-label">Location:</span>
-                  <span class="detail-value">{{ selectedTask.details.location }}</span>
+                  <span class="detail-label">Accommodation Type:</span>
+                  <span class="detail-value">{{ selectedTask.details.accommodationType === 'ashgabat' ? 'Ashgabat Staff House' : 'Kiyanly Camp' }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Gender:</span>
+                  <span class="detail-value">{{ selectedTask.details.gender === 'male' ? 'Male' : 'Female' }}</span>
                 </div>
               </div>
               <div class="col-md-6">
                 <div class="detail-item">
-                  <span class="detail-label">Accommodation Type:</span>
-                  <span class="detail-value">{{ selectedTask.details.accommodationType }}</span>
+                  <span class="detail-label">Accommodation Name:</span>
+                  <span class="detail-value">{{ selectedTask.details.accommodationName }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="detail-label">Preferred Hotel:</span>
-                  <span class="detail-value">{{ selectedTask.details.preferredHotel }}</span>
+                  <span class="detail-label">Room Number:</span>
+                  <span class="detail-value">{{ selectedTask.details.roomNumber }}</span>
                 </div>
-                <div class="detail-item">
-                  <span class="detail-label">Number of Guests:</span>
-                  <span class="detail-value">{{ selectedTask.details.numberOfGuests }}</span>
+                <div class="detail-item" *ngIf="selectedTask.details.relatedTravelRequest">
+                  <span class="detail-label">Related Travel Request:</span>
+                  <span class="detail-value">{{ selectedTask.details.relatedTravelRequest }}</span>
+                </div>
+                <div class="detail-item" *ngIf="selectedTask.details.specialRequirements">
+                  <span class="detail-label">Special Requirements:</span>
+                  <span class="detail-value">{{ selectedTask.details.specialRequirements }}</span>
                 </div>
               </div>
             </div>
+            <div class="detail-item reason-section">
+              <span class="detail-label">Reason for Accommodation:</span>
+              <span class="detail-value">{{ selectedTask.details.reason }}</span>
+            </div>
             
             <div class="vendor-integration">
-              <h4>Book Accommodation</h4>
+              <h4>Accommodation Management</h4>
               <div class="vendor-buttons">
-                <button 
-                  *ngFor="let vendor of vendorOptions.hotels" 
-                  class="btn btn-outline-primary"
-                  (click)="openVendorWebsite('hotels', vendor.id)">
-                  {{ vendor.name }}
-                </button>
+                <!-- Different vendor options based on accommodation type -->
+                <ng-container *ngIf="selectedTask.details.accommodationType === 'ashgabat'">
+                  <button 
+                    class="btn btn-outline-primary"
+                    (click)="openVendorWebsite('hotels', 1)">
+                    Staff House Management
+                  </button>
+                  <button 
+                    class="btn btn-outline-secondary"
+                    (click)="openVendorWebsite('hotels', 2)">
+                    Room Allocation
+                  </button>
+                </ng-container>
+                
+                <ng-container *ngIf="selectedTask.details.accommodationType === 'kiyanly'">
+                  <button 
+                    class="btn btn-outline-primary"
+                    (click)="openVendorWebsite('hotels', 3)">
+                    Camp Management
+                  </button>
+                  <button 
+                    class="btn btn-outline-secondary"
+                    (click)="openVendorWebsite('hotels', 2)">
+                    Room Allocation
+                  </button>
+                </ng-container>
               </div>
             </div>
           </div>

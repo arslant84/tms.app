@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AccommodationService, AccommodationRequest } from '../../../core/services/accommodation.service';
 
 // This interface would typically come from a shared models directory
 interface Task {
@@ -73,12 +74,24 @@ export class ClerkPanelComponent implements OnInit {
     ]
   };
   
-  constructor() {}
+  constructor(private accommodationService: AccommodationService) {}
   
   ngOnInit(): void {
-    // In a real app, this would be fetched from an API
+    // Load mock data for non-accommodation tasks
     this.loadMockData();
-    this.applyFilters();
+    
+    // Subscribe to accommodation requests from the service
+    this.accommodationService.getAccommodationRequests().subscribe(requests => {
+      // Convert accommodation requests to tasks
+      const accommodationTasks = requests.map(request => this.convertAccommodationRequestToTask(request));
+      
+      // Filter out any existing accommodation tasks
+      const nonAccommodationTasks = this.tasks.filter(task => task.requestType !== 'accommodation');
+      
+      // Combine tasks and update filtered tasks
+      this.tasks = [...nonAccommodationTasks, ...accommodationTasks];
+      this.applyFilters();
+    });
   }
   
   // Load mock data for demonstration
@@ -278,20 +291,40 @@ export class ClerkPanelComponent implements OnInit {
     
     this.isProcessing = true;
     
-    // In a real app, this would be an API call
-    setTimeout(() => {
-      const index = this.tasks.findIndex(t => t.id === this.selectedTask!.id);
-      if (index !== -1) {
-        this.tasks[index].status = 'in_progress';
-        this.tasks[index].assignedTo = {
-          id: 301, // This would be the current user's ID
-          name: 'Sarah Johnson' // This would be the current user's name
-        };
-      }
-      
-      this.isProcessing = false;
-      this.applyFilters();
-    }, 1000);
+    // If it's an accommodation request, use the accommodation service
+    if (this.selectedTask.requestType === 'accommodation') {
+      this.accommodationService.updateRequestStatus(this.selectedTask.id, 'in_progress')
+        .subscribe(success => {
+          if (success) {
+            // Update local task data
+            const index = this.tasks.findIndex(t => t.id === this.selectedTask!.id);
+            if (index !== -1) {
+              this.tasks[index].status = 'in_progress';
+              this.tasks[index].assignedTo = {
+                id: 301, // This would be the current user's ID
+                name: 'Sarah Johnson' // This would be the current user's name
+              };
+            }
+          }
+          this.isProcessing = false;
+          this.applyFilters();
+        });
+    } else {
+      // For other request types, use the existing mock implementation
+      setTimeout(() => {
+        const index = this.tasks.findIndex(t => t.id === this.selectedTask!.id);
+        if (index !== -1) {
+          this.tasks[index].status = 'in_progress';
+          this.tasks[index].assignedTo = {
+            id: 301, // This would be the current user's ID
+            name: 'Sarah Johnson' // This would be the current user's name
+          };
+        }
+        
+        this.isProcessing = false;
+        this.applyFilters();
+      }, 1000);
+    }
   }
   
   // Complete a task
@@ -300,17 +333,34 @@ export class ClerkPanelComponent implements OnInit {
     
     this.isProcessing = true;
     
-    // In a real app, this would be an API call
-    setTimeout(() => {
-      const index = this.tasks.findIndex(t => t.id === this.selectedTask!.id);
-      if (index !== -1) {
-        this.tasks[index].status = 'completed';
-      }
-      
-      this.isProcessing = false;
-      this.selectedTask = null;
-      this.applyFilters();
-    }, 1000);
+    // If it's an accommodation request, use the accommodation service
+    if (this.selectedTask.requestType === 'accommodation') {
+      this.accommodationService.updateRequestStatus(this.selectedTask.id, 'completed')
+        .subscribe(success => {
+          if (success) {
+            // Update local task data
+            const index = this.tasks.findIndex(t => t.id === this.selectedTask!.id);
+            if (index !== -1) {
+              this.tasks[index].status = 'completed';
+            }
+          }
+          this.isProcessing = false;
+          this.selectedTask = null;
+          this.applyFilters();
+        });
+    } else {
+      // For other request types, use the existing mock implementation
+      setTimeout(() => {
+        const index = this.tasks.findIndex(t => t.id === this.selectedTask!.id);
+        if (index !== -1) {
+          this.tasks[index].status = 'completed';
+        }
+        
+        this.isProcessing = false;
+        this.selectedTask = null;
+        this.applyFilters();
+      }, 1000);
+    }
   }
   
   // Open vendor website
@@ -364,5 +414,37 @@ export class ClerkPanelComponent implements OnInit {
     const today = new Date();
     
     return deadlineDate < today;
+  }
+  
+  // Convert accommodation request to task format
+  private convertAccommodationRequestToTask(request: AccommodationRequest): Task {
+    // Calculate deadline based on check-in date (3 days before check-in)
+    const checkInDate = new Date(request.checkInDate);
+    const deadline = new Date(checkInDate);
+    deadline.setDate(deadline.getDate() - 3);
+    
+    return {
+      id: request.id,
+      requestId: parseInt(request.requestId.split('-')[2]), // Extract number from BT reference
+      requestType: 'accommodation',
+      title: `Book ${request.accommodationName} - Room ${request.roomNumber}`,
+      requester: request.requester,
+      dateAssigned: request.dateSubmitted,
+      deadline: deadline.toISOString().split('T')[0], // Format as YYYY-MM-DD
+      priority: request.priority,
+      status: request.status,
+      details: {
+        accommodationType: request.accommodationType,
+        accommodationName: request.accommodationName,
+        roomNumber: request.roomNumber,
+        checkInDate: request.checkInDate,
+        checkOutDate: request.checkOutDate,
+        gender: request.gender,
+        reason: request.reason,
+        specialRequirements: request.specialRequirements,
+        relatedTravelRequest: request.relatedTravelRequest
+      },
+      assignedTo: null // Initially unassigned
+    };
   }
 }

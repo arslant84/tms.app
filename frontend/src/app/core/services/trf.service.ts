@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { TravelRequestForm, TRFStatus, TravelType, ApprovalStatus } from '../models/trf.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TrfService {
+  private apiUrl = `${environment.apiUrl}/trf`;
+
   private mockTrfs: TravelRequestForm[] = [
     {
       id: '1',
@@ -58,10 +61,19 @@ export class TrfService {
 
   constructor(private http: HttpClient) { }
 
-  // Get all TRFs for the current user
-  getAllTrfs(): Observable<TravelRequestForm[]> {
-    // In a real app, this would make an API call
-    return of(this.mockTrfs);
+  // Get all TRFs for the current user with optional filters
+  getAllTrfs(filters?: any): Observable<any> {
+    let params = new HttpParams();
+
+    if (filters) {
+      Object.keys(filters).forEach(key => {
+        if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
+          params = params.set(key, filters[key].toString());
+        }
+      });
+    }
+
+    return this.http.get<any>(`${this.apiUrl}/`, { params });
   }
 
   // Get a specific TRF by ID

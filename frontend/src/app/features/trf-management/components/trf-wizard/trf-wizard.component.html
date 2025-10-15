@@ -1,0 +1,91 @@
+<!-- TRF Wizard - Matching React Design -->
+<div class="trf-wizard-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Create New Travel Request</h1>
+    <p class="page-subtitle">Complete the form below to submit a new travel request</p>
+  </div>
+
+  <!-- Stepper Navigation -->
+  <app-trf-stepper
+    [currentStep]="currentStep"
+    [steps]="stepLabels"
+    [completedSteps]="completedSteps"
+    (stepClick)="onStepClick($event)">
+  </app-trf-stepper>
+
+  <!-- Form Content -->
+  <div class="wizard-content">
+    <!-- Step 1: Requestor Information -->
+    <div class="step-content" *ngIf="currentStep === 1">
+      <app-requestor-information></app-requestor-information>
+    </div>
+
+    <!-- Step 2: Domestic Travel Details -->
+    <div class="step-content" *ngIf="currentStep === 2">
+      <app-domestic-travel-details></app-domestic-travel-details>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="submitError">
+      <i class="bi bi-exclamation-circle"></i>
+      <span>{{ submitError }}</span>
+    </div>
+  </div>
+
+  <!-- Navigation Buttons -->
+  <div class="wizard-actions">
+    <div class="actions-left">
+      <button
+        type="button"
+        class="btn btn-outline"
+        (click)="onCancel()"
+        [disabled]="isSubmitting">
+        <i class="bi bi-x-circle"></i>
+        <span>Cancel</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline"
+        (click)="onSaveDraft()"
+        [disabled]="isSubmitting">
+        <i class="bi bi-save"></i>
+        <span>Save Draft</span>
+      </button>
+    </div>
+
+    <div class="actions-right">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        *ngIf="currentStep > 1"
+        (click)="onPrevious()"
+        [disabled]="isSubmitting">
+        <i class="bi bi-chevron-left"></i>
+        <span>Previous</span>
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        *ngIf="currentStep < totalSteps"
+        (click)="onNext()"
+        [disabled]="isSubmitting">
+        <span>Next</span>
+        <i class="bi bi-chevron-right"></i>
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        *ngIf="currentStep === totalSteps"
+        (click)="onSubmit()"
+        [disabled]="isSubmitting">
+        <i class="bi bi-check-circle" *ngIf="!isSubmitting"></i>
+        <i class="bi bi-arrow-repeat spin" *ngIf="isSubmitting"></i>
+        <span>{{ isSubmitting ? 'Submitting...' : 'Submit Request' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

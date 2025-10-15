@@ -1,158 +1,466 @@
-from rest_framework import viewsets, permissions, status, filters
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q
-from django.contrib.auth import get_user_model
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from django.db.models import Q, Sum, Count, Avg
+from django.utils import timezone
+from datetime import datetime, timedelta
 
 from .models import FlightBooking, HotelBooking, BookingStatus
 from .serializers import (
-    FlightBookingSerializer, 
+    FlightBookingSerializer,
     FlightBookingCreateSerializer,
+    FlightBookingUpdateSerializer,
     HotelBookingSerializer,
     HotelBookingCreateSerializer,
-    BookingStatusUpdateSerializer
+    HotelBookingUpdateSerializer,
+    BookingStatusUpdateSerializer,
+    FlightTicketSerializer,
+    BookingStatsSerializer
 )
-
-User = get_user_model()
 
 
 class FlightBookingViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing flight bookings
+    """
     queryset = FlightBooking.objects.all()
     serializer_class = FlightBookingSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['airline', 'flight_number', 'departure_airport', 'arrival_airport']
-    ordering_fields = ['departure_time', 'arrival_time', 'created_at', 'status']
+    search_fields = [
+        'airline', 'flight_number', 'departure_airport', 'arrival_airport',
+        'booking_reference', 'ticket_number', 'user__email', 'user__first_name', 'user__last_name'
+    ]
+    ordering_fields = ['departure_time', 'arrival_time', 'created_at', 'status', 'cost']
     ordering = ['-created_at']
-    
+
     def get_queryset(self):
+        """Filter queryset based on user role"""
         user = self.request.user
-        
-        # Admin and ticketing clerks can see all bookings
-        if user.is_admin or user.role == 'ticketing_clerk':
-            return FlightBooking.objects.all()
-        
-        # Regular users can only see their own bookings
-        return FlightBooking.objects.filter(user=user)
-    
+        queryset = super().get_queryset()
+
+        # Admin and travel desk staff can see all bookings
+        if user.is_staff:
+            pass
+        else:
+            # Regular users can only see their own bookings
+            queryset = queryset.filter(user=user)
+
+        # Filter by TRF
+        trf_id = self.request.query_params.get('trf', None)
+        if trf_id:
+            queryset = queryset.filter(trf_id=trf_id)
+
+        # Filter by status
+        status_param = self.request.query_params.get('status', None)
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+
+        # Filter by date range
+        from_date = self.request.query_params.get('from_date', None)
+        to_date = self.request.query_params.get('to_date', None)
+        if from_date:
+            queryset = queryset.filter(departure_time__gte=from_date)
+        if to_date:
+            queryset = queryset.filter(departure_time__lte=to_date)
+
+        # Filter by airline
+        airline = self.request.query_params.get('airline', None)
+        if airline:
+            queryset = queryset.filter(airline__icontains=airline)
+
+        return queryset.select_related('user', 'trf', 'booked_by')
+
     def get_serializer_class(self):
+        """Return appropriate serializer based on action"""
         if self.action == 'create':
             return FlightBookingCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return FlightBookingUpdateSerializer
         return FlightBookingSerializer
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user, status=BookingStatus.REQUESTED)
-    
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+
+    @action(detail=True, methods=['post'])
     def confirm(self, request, pk=None):
-        booking = self.get_object()
-        
-        # Only ticketing clerks and admins can confirm bookings
-        if not (request.user.is_admin or request.user.role == 'ticketing_clerk'):
+        """Confirm a flight booking (admin/travel desk only)"""
+        if not request.user.is_staff:
             return Response(
-                {'error': 'Only ticketing clerks and admins can confirm bookings'}, 
+                {'error': 'Only travel desk staff can confirm bookings'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
-        # Update the booking status
-        booking.status = BookingStatus.CONFIRMED
-        booking.save()
-        
-        serializer = self.get_serializer(booking)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
-    def cancel(self, request, pk=None):
+
         booking = self.get_object()
-        
-        # Check if the booking can be cancelled
-        if booking.status == BookingStatus.CANCELLED:
+
+        if booking.status != BookingStatus.REQUESTED:
             return Response(
-                {'error': 'Booking is already cancelled'}, 
+                {'error': f'Cannot confirm booking with status {booking.status}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        # Check if the user is authorized to cancel
-        if booking.user != request.user and not (request.user.is_admin or request.user.role == 'ticketing_clerk'):
-            return Response(
-                {'error': 'You can only cancel your own bookings'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        # Update the booking status
-        booking.status = BookingStatus.CANCELLED
-        booking.save()
-        
+
+        booking.confirm_booking()
+
         serializer = self.get_serializer(booking)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def issue_ticket(self, request, pk=None):
+        """Issue ticket for a confirmed booking (admin/travel desk only)"""
+        if not request.user.is_staff:
+            return Response(
+                {'error': 'Only travel desk staff can issue tickets'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        booking = self.get_object()
+
+        serializer = FlightTicketSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            booking.issue_ticket(serializer.validated_data['ticket_number'])
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        response_serializer = self.get_serializer(booking)
+        return Response(response_serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """Cancel a flight booking"""
+        booking = self.get_object()
+
+        # Check permissions
+        if booking.user != request.user and not request.user.is_staff:
+            return Response(
+                {'error': 'You can only cancel your own bookings'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if booking.status == BookingStatus.CANCELLED:
+            return Response(
+                {'error': 'Booking is already cancelled'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        reason = request.data.get('reason', 'Cancelled by user')
+        booking.cancel_booking(reason)
+
+        serializer = self.get_serializer(booking)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['patch'])
+    def update_status(self, request, pk=None):
+        """Update booking status (admin/travel desk only)"""
+        if not request.user.is_staff:
+            return Response(
+                {'error': 'Only travel desk staff can update booking status'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        booking = self.get_object()
+
+        serializer = BookingStatusUpdateSerializer(
+            data=request.data,
+            context={'instance': booking}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        booking.status = serializer.validated_data['status']
+        if serializer.validated_data.get('reason'):
+            booking.notes = f"{booking.notes or ''}\n{serializer.validated_data['reason']}"
+        booking.save()
+
+        response_serializer = self.get_serializer(booking)
+        return Response(response_serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def my_bookings(self, request):
+        """Get current user's flight bookings"""
+        bookings = self.get_queryset().filter(user=request.user)
+        serializer = self.get_serializer(bookings, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def upcoming(self, request):
+        """Get upcoming flights"""
+        now = timezone.now()
+        bookings = self.get_queryset().filter(
+            departure_time__gte=now,
+            status__in=[BookingStatus.CONFIRMED, BookingStatus.TICKETED]
+        ).order_by('departure_time')
+
+        serializer = self.get_serializer(bookings, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """Get flight booking statistics"""
+        if not request.user.is_staff:
+            queryset = self.get_queryset().filter(user=request.user)
+        else:
+            queryset = self.get_queryset()
+
+        total = queryset.count()
+        pending = queryset.filter(status=BookingStatus.PENDING).count()
+        confirmed = queryset.filter(status=BookingStatus.CONFIRMED).count()
+        ticketed = queryset.filter(status=BookingStatus.TICKETED).count()
+        cancelled = queryset.filter(status=BookingStatus.CANCELLED).count()
+
+        total_cost = queryset.aggregate(
+            total=Sum('cost'),
+            total_tax=Sum('tax_amount')
+        )
+
+        # By airline
+        by_airline = dict(
+            queryset.values('airline')
+            .annotate(count=Count('id'))
+            .values_list('airline', 'count')
+        )
+
+        # By booking class
+        by_class = dict(
+            queryset.values('booking_class')
+            .annotate(count=Count('id'))
+            .values_list('booking_class', 'count')
+        )
+
+        stats = {
+            'total_bookings': total,
+            'pending_bookings': pending,
+            'confirmed_bookings': confirmed,
+            'ticketed_bookings': ticketed,
+            'cancelled_bookings': cancelled,
+            'total_flight_cost': total_cost['total'] or 0,
+            'total_tax': total_cost['total_tax'] or 0,
+            'by_airline': by_airline,
+            'by_class': by_class,
+            'by_status': {
+                'PENDING': pending,
+                'CONFIRMED': confirmed,
+                'TICKETED': ticketed,
+                'CANCELLED': cancelled,
+            }
+        }
+
+        return Response(stats)
 
 
 class HotelBookingViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing hotel bookings
+    """
     queryset = HotelBooking.objects.all()
     serializer_class = HotelBookingSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['hotel_name', 'location']
-    ordering_fields = ['check_in_date', 'check_out_date', 'created_at', 'status']
+    search_fields = [
+        'hotel_name', 'hotel_chain', 'location', 'booking_reference',
+        'user__email', 'user__first_name', 'user__last_name'
+    ]
+    ordering_fields = ['check_in_date', 'check_out_date', 'created_at', 'status', 'total_cost']
     ordering = ['-created_at']
-    
+
     def get_queryset(self):
+        """Filter queryset based on user role"""
         user = self.request.user
-        
-        # Admin and ticketing clerks can see all bookings
-        if user.is_admin or user.role == 'ticketing_clerk':
-            return HotelBooking.objects.all()
-        
-        # Regular users can only see their own bookings
-        return HotelBooking.objects.filter(user=user)
-    
+        queryset = super().get_queryset()
+
+        # Admin and travel desk staff can see all bookings
+        if user.is_staff:
+            pass
+        else:
+            # Regular users can only see their own bookings
+            queryset = queryset.filter(user=user)
+
+        # Filter by TRF
+        trf_id = self.request.query_params.get('trf', None)
+        if trf_id:
+            queryset = queryset.filter(trf_id=trf_id)
+
+        # Filter by status
+        status_param = self.request.query_params.get('status', None)
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+
+        # Filter by date range
+        from_date = self.request.query_params.get('from_date', None)
+        to_date = self.request.query_params.get('to_date', None)
+        if from_date:
+            queryset = queryset.filter(check_in_date__gte=from_date)
+        if to_date:
+            queryset = queryset.filter(check_in_date__lte=to_date)
+
+        # Filter by location
+        location = self.request.query_params.get('location', None)
+        if location:
+            queryset = queryset.filter(location__icontains=location)
+
+        return queryset.select_related('user', 'trf', 'booked_by')
+
     def get_serializer_class(self):
+        """Return appropriate serializer based on action"""
         if self.action == 'create':
             return HotelBookingCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return HotelBookingUpdateSerializer
         return HotelBookingSerializer
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user, status=BookingStatus.REQUESTED)
-    
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+
+    @action(detail=True, methods=['post'])
     def confirm(self, request, pk=None):
-        booking = self.get_object()
-        
-        # Only ticketing clerks and admins can confirm bookings
-        if not (request.user.is_admin or request.user.role == 'ticketing_clerk'):
+        """Confirm a hotel booking (admin/travel desk only)"""
+        if not request.user.is_staff:
             return Response(
-                {'error': 'Only ticketing clerks and admins can confirm bookings'}, 
+                {'error': 'Only travel desk staff can confirm bookings'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
-        # Update the booking status
-        booking.status = BookingStatus.CONFIRMED
-        booking.save()
-        
-        serializer = self.get_serializer(booking)
-        return Response(serializer.data)
-    
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
-    def cancel(self, request, pk=None):
+
         booking = self.get_object()
-        
-        # Check if the booking can be cancelled
-        if booking.status == BookingStatus.CANCELLED:
+
+        if booking.status != BookingStatus.REQUESTED:
             return Response(
-                {'error': 'Booking is already cancelled'}, 
+                {'error': f'Cannot confirm booking with status {booking.status}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        # Check if the user is authorized to cancel
-        if booking.user != request.user and not (request.user.is_admin or request.user.role == 'ticketing_clerk'):
-            return Response(
-                {'error': 'You can only cancel your own bookings'}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        # Update the booking status
-        booking.status = BookingStatus.CANCELLED
-        booking.save()
-        
+
+        booking.confirm_booking()
+
         serializer = self.get_serializer(booking)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """Cancel a hotel booking"""
+        booking = self.get_object()
+
+        # Check permissions
+        if booking.user != request.user and not request.user.is_staff:
+            return Response(
+                {'error': 'You can only cancel your own bookings'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if booking.status == BookingStatus.CANCELLED:
+            return Response(
+                {'error': 'Booking is already cancelled'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        reason = request.data.get('reason', 'Cancelled by user')
+        booking.cancel_booking(reason)
+
+        serializer = self.get_serializer(booking)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['patch'])
+    def update_status(self, request, pk=None):
+        """Update booking status (admin/travel desk only)"""
+        if not request.user.is_staff:
+            return Response(
+                {'error': 'Only travel desk staff can update booking status'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        booking = self.get_object()
+
+        serializer = BookingStatusUpdateSerializer(
+            data=request.data,
+            context={'instance': booking}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        booking.status = serializer.validated_data['status']
+        if serializer.validated_data.get('reason'):
+            booking.notes = f"{booking.notes or ''}\n{serializer.validated_data['reason']}"
+        booking.save()
+
+        response_serializer = self.get_serializer(booking)
+        return Response(response_serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def my_bookings(self, request):
+        """Get current user's hotel bookings"""
+        bookings = self.get_queryset().filter(user=request.user)
+        serializer = self.get_serializer(bookings, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def upcoming(self, request):
+        """Get upcoming hotel stays"""
+        today = timezone.now().date()
+        bookings = self.get_queryset().filter(
+            check_in_date__gte=today,
+            status__in=[BookingStatus.CONFIRMED, BookingStatus.TICKETED]
+        ).order_by('check_in_date')
+
+        serializer = self.get_serializer(bookings, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def current_stays(self, request):
+        """Get current active hotel stays"""
+        today = timezone.now().date()
+        bookings = self.get_queryset().filter(
+            check_in_date__lte=today,
+            check_out_date__gte=today,
+            status=BookingStatus.CONFIRMED
+        )
+
+        serializer = self.get_serializer(bookings, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """Get hotel booking statistics"""
+        if not request.user.is_staff:
+            queryset = self.get_queryset().filter(user=request.user)
+        else:
+            queryset = self.get_queryset()
+
+        total = queryset.count()
+        pending = queryset.filter(status=BookingStatus.PENDING).count()
+        confirmed = queryset.filter(status=BookingStatus.CONFIRMED).count()
+        cancelled = queryset.filter(status=BookingStatus.CANCELLED).count()
+
+        total_cost = queryset.aggregate(
+            total=Sum('total_cost'),
+            total_tax=Sum('tax_amount'),
+            total_service=Sum('service_charges')
+        )
+
+        # Total nights
+        total_nights = sum(b.number_of_nights for b in queryset)
+
+        # By hotel
+        by_hotel = dict(
+            queryset.values('hotel_name')
+            .annotate(count=Count('id'))
+            .values_list('hotel_name', 'count')
+        )
+
+        # By location
+        by_location = dict(
+            queryset.values('location')
+            .annotate(count=Count('id'))
+            .values_list('location', 'count')
+        )
+
+        stats = {
+            'total_bookings': total,
+            'pending_bookings': pending,
+            'confirmed_bookings': confirmed,
+            'cancelled_bookings': cancelled,
+            'total_hotel_cost': total_cost['total'] or 0,
+            'total_tax': total_cost['total_tax'] or 0,
+            'total_service_charges': total_cost['total_service'] or 0,
+            'total_nights': total_nights,
+            'by_hotel': by_hotel,
+            'by_location': by_location,
+            'by_status': {
+                'PENDING': pending,
+                'CONFIRMED': confirmed,
+                'CANCELLED': cancelled,
+            }
+        }
+
+        return Response(stats)

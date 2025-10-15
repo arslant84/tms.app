@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { TrfService } from '../../services/trf.service';
-import { DomesticTravelRequestForm } from '../../models/trf.model';
+import { DomesticTravelRequestForm, OverseasTravelRequestForm } from '../../models/trf.model';
 import { HttpClientModule } from '@angular/common/http';
 
 @Component({
@@ -22,10 +22,15 @@ export class TrfCreateComponent implements OnInit {
   submitError = false;
   errorMessage = '';
   logoPath: string = 'img/pet-logo-without-text.png';
+  formType: string = 'domestic'; // Default form type
+  requestorInfo: any;
+  domesticTravelDetails: any;
+  overseasTravelDetails: any;
 
   constructor(
     private fb: FormBuilder,
-    private trfService: TrfService
+    private trfService: TrfService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -211,6 +216,27 @@ export class TrfCreateComponent implements OnInit {
     }
     
     this.isSubmitting = true;
+    
+    switch (this.formType) {
+      case 'domestic':
+        this.submitDomesticForm();
+        break;
+      case 'overseas':
+        this.submitOverseasForm();
+        break;
+      case 'home-leave':
+        // Handle home leave form submission
+        this.handleSubmitSuccess();
+        break;
+      case 'external':
+        this.submitExternalForm();
+        break;
+      default:
+        this.submitDomesticForm();
+    }
+  }
+  
+  private submitDomesticForm(): void {
     const formData = this.trfForm.value;
     
     // Add status and timestamps
@@ -221,46 +247,118 @@ export class TrfCreateComponent implements OnInit {
       updatedAt: new Date().toISOString()
     };
     
-    this.trfService.createTrf(trf).subscribe({
-      next: (response) => {
-        this.isSubmitting = false;
-        this.submitSuccess = true;
-        // Navigate to success page or show success message
+    this.trfService.createDomesticTrf(trf).subscribe({
+      next: () => {
+        this.handleSubmitSuccess();
       },
-      error: (error) => {
-        this.isSubmitting = false;
-        this.submitError = true;
-        this.errorMessage = error.message || 'An error occurred while submitting the form';
+      error: (error: any) => {
+        this.handleSubmitError(error);
       }
     });
   }
   
-  // Save as draft
-  saveDraft(): void {
+  private submitOverseasForm(): void {
     const formData = this.trfForm.value;
     
     // Add status and timestamps
-    const trf: DomesticTravelRequestForm = {
+    const trf: OverseasTravelRequestForm = {
       ...formData,
+      status: 'Submitted',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    this.trfService.createOverseasTrf(trf).subscribe({
+      next: () => {
+        this.handleSubmitSuccess();
+      },
+      error: (error: any) => {
+        this.handleSubmitError(error);
+      }
+    });
+  }
+  
+  private submitExternalForm(): void {
+    // Handle external form submission
+    this.handleSubmitSuccess();
+  }
+  
+  private handleSubmitSuccess(): void {
+    this.isSubmitting = false;
+    this.submitSuccess = true;
+    
+    setTimeout(() => {
+      this.router.navigate(['/trf-management']);
+    }, 2000);
+  }
+  
+  private handleSubmitError(error: any): void {
+    this.isSubmitting = false;
+    this.submitError = true;
+    this.errorMessage = error.message || 'An error occurred while submitting the form';
+  }
+  
+  // Save as draft
+  saveDraft(): void {
+    // Create a draft object from the form data
+    let formData: any = {
+      requestorInfo: this.requestorInfo,
       status: 'Draft',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
     
-    this.trfService.createTrf(trf).subscribe({
-      next: (response) => {
-        // Show success message for draft saved
+    // Based on the form type, save the appropriate draft
+    switch (this.formType) {
+      case 'domestic':
+        formData = {
+          ...formData,
+          ...this.domesticTravelDetails
+        };
+        this.saveDomesticDraft(formData);
+        break;
+      case 'overseas':
+        this.saveOverseasDraft(formData);
+        break;
+      case 'home-leave':
+        // Handle home leave draft saving
+        break;
+      case 'external':
+        this.handleSubmitSuccess();
+        break;
+    }
+  }
+  
+  private saveDomesticDraft(formData: any): void {
+    const trf: DomesticTravelRequestForm = formData as DomesticTravelRequestForm;
+    
+    this.trfService.createDomesticTrf(trf).subscribe({
+      next: () => {
+        this.handleSubmitSuccess();
       },
-      error: (error) => {
-        // Show error message
+      error: (error: any) => {
+        this.handleSubmitError(error);
+      }
+    });
+  }
+  
+  private saveOverseasDraft(formData: any): void {
+    const trf: OverseasTravelRequestForm = formData as OverseasTravelRequestForm;
+    
+    this.trfService.createOverseasTrf(trf).subscribe({
+      next: () => {
+        this.handleSubmitSuccess();
+      },
+      error: (error: any) => {
+        this.handleSubmitError(error);
       }
     });
   }
   
   // Export to PDF
   exportToPdf(): void {
-    // This would typically be done after saving the form
-    // For demonstration, we'll just show how to call the service
+    console.log('Exporting to PDF');
+    
     if (this.trfForm.invalid) {
       this.markFormGroupTouched(this.trfForm);
       return;
@@ -269,7 +367,7 @@ export class TrfCreateComponent implements OnInit {
     // Assuming we have an ID after submission
     const trfId = 1; // This would come from the saved form
     
-    this.trfService.exportTrfToPdf(trfId).subscribe({
+    this.trfService.exportTrfToPdf(trfId, this.formType === 'overseas').subscribe({
       next: (blob: Blob) => {
         // Create a URL for the blob
         const url = window.URL.createObjectURL(blob);
@@ -289,7 +387,7 @@ export class TrfCreateComponent implements OnInit {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error exporting PDF:', error);
         // Show error message
       }
@@ -297,7 +395,7 @@ export class TrfCreateComponent implements OnInit {
   }
   
   // Helper to mark all controls as touched for validation display
-  private markFormGroupTouched(formGroup: FormGroup) {
+  private markFormGroupTouched(formGroup: FormGroup): void {
     Object.values(formGroup.controls).forEach(control => {
       control.markAsTouched();
       

@@ -51,6 +51,11 @@ INSTALLED_APPS = [
     'bookings',
     'expenses',
     'insights',
+    'visa',
+    'accommodation',
+    'transport',
+    'workflows',
+    'notifications',
 ]
 
 MIDDLEWARE = [

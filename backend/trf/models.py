@@ -1,86 +1,156 @@
 from django.db import models
 from django.conf import settings
-from django.utils.translation import gettext_lazy as _
 
-
-class TravelType(models.TextChoices):
-    DOMESTIC = 'DOMESTIC', _('Domestic')
-    INTERNATIONAL = 'INTERNATIONAL', _('International')
-
-
-class TRFStatus(models.TextChoices):
-    DRAFT = 'DRAFT', _('Draft')
-    SUBMITTED = 'SUBMITTED', _('Submitted')
-    PENDING_APPROVAL = 'PENDING_APPROVAL', _('Pending Approval')
-    APPROVED = 'APPROVED', _('Approved')
-    REJECTED = 'REJECTED', _('Rejected')
-    CANCELLED = 'CANCELLED', _('Cancelled')
-
-
-class ApprovalStatus(models.TextChoices):
-    PENDING = 'PENDING', _('Pending')
-    APPROVED = 'APPROVED', _('Approved')
-    REJECTED = 'REJECTED', _('Rejected')
-
-
-class TravelRequestForm(models.Model):
-    requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='travel_requests')
-    purpose = models.CharField(max_length=255)
-    destination = models.CharField(max_length=255)
-    departure_date = models.DateField()
-    return_date = models.DateField()
-    travel_type = models.CharField(
-        max_length=20,
-        choices=TravelType.choices,
-        default=TravelType.DOMESTIC,
-    )
-    accommodation_required = models.BooleanField(default=False)
-    estimated_cost = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(
-        max_length=20,
-        choices=TRFStatus.choices,
-        default=TRFStatus.DRAFT,
-    )
-    notes = models.TextField(blank=True, null=True)
+class TravelRequest(models.Model):
+    requestor_name = models.CharField(max_length=255)
+    staff_id = models.CharField(max_length=255, blank=True, null=True)
+    department = models.CharField(max_length=255, blank=True, null=True)
+    position = models.CharField(max_length=255, blank=True, null=True)
+    cost_center = models.CharField(max_length=255, blank=True, null=True)
+    tel_email = models.CharField(max_length=255, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    travel_type = models.CharField(max_length=255)
+    status = models.CharField(max_length=255, default='Pending Department Focal')
+    purpose = models.TextField(blank=True, null=True)
+    estimated_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    additional_comments = models.TextField(blank=True, null=True)
+    external_full_name = models.CharField(max_length=255, blank=True, null=True)
+    external_organization = models.CharField(max_length=255, blank=True, null=True)
+    external_ref_to_authority_letter = models.CharField(max_length=255, blank=True, null=True)
+    external_cost_center = models.CharField(max_length=255, blank=True, null=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-    
+    additional_data = models.JSONField(blank=True, null=True)
+
     def __str__(self):
-        return f"{self.requester.name}'s travel to {self.destination}"
-    
-    @property
-    def requester_name(self):
-        return self.requester.name
-    
-    @property
-    def requester_id(self):
-        return self.requester.id
+        return self.requestor_name
 
+class TrfAccommodationDetail(models.Model):
+    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
+    check_in_date = models.DateField(blank=True, null=True)
+    check_out_date = models.DateField(blank=True, null=True)
+    accommodation_type = models.CharField(max_length=255, blank=True, null=True)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    place_of_stay = models.CharField(max_length=255, blank=True, null=True)
+    estimated_cost_per_night = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    check_in_time = models.CharField(max_length=255, blank=True, null=True)
+    check_out_time = models.CharField(max_length=255, blank=True, null=True)
+    other_type_description = models.CharField(max_length=255, blank=True, null=True)
 
-class ApprovalStep(models.Model):
-    trf = models.ForeignKey(TravelRequestForm, on_delete=models.CASCADE, related_name='approval_chain')
-    approver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='trf_approvals')
-    status = models.CharField(
-        max_length=20,
-        choices=ApprovalStatus.choices,
-        default=ApprovalStatus.PENDING,
-    )
+class TrfAdvanceAmountRequestedItem(models.Model):
+    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
+    date_from = models.DateField(blank=True, null=True)
+    date_to = models.DateField(blank=True, null=True)
+    lh = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ma = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    oa = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    tr = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    oe = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    usd = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class TrfAdvanceBankDetail(models.Model):
+    trf = models.OneToOneField(TravelRequest, on_delete=models.CASCADE)
+    bank_name = models.CharField(max_length=255, blank=True, null=True)
+    account_number = models.CharField(max_length=255, blank=True, null=True)
+    account_name = models.CharField(max_length=255, blank=True, null=True)
+    swift_code = models.CharField(max_length=255, blank=True, null=True)
+    iban = models.CharField(max_length=255, blank=True, null=True)
+    branch_address = models.TextField(blank=True, null=True)
+    currency = models.CharField(max_length=255, blank=True, null=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class TrfApprovalStep(models.Model):
+    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
+    step_role = models.CharField(max_length=255)
+    step_name = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=255)
+    step_date = models.DateTimeField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
-    timestamp = models.DateTimeField(auto_now=True)
-    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class TrfCompanyTransportDetail(models.Model):
+    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
+    transport_date = models.DateField(blank=True, null=True)
+    day_of_week = models.CharField(max_length=255, blank=True, null=True)
+    from_location = models.CharField(max_length=255, blank=True, null=True)
+    to_location = models.CharField(max_length=255, blank=True, null=True)
+    bt_no_required = models.CharField(max_length=255, blank=True, null=True)
+    accommodation_type_n = models.CharField(max_length=255, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class TrfDailyMealSelection(models.Model):
+    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
+    meal_date = models.DateField()
+    breakfast = models.BooleanField(default=False)
+    lunch = models.BooleanField(default=False)
+    dinner = models.BooleanField(default=False)
+    supper = models.BooleanField(default=False)
+    refreshment = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
-        ordering = ['id']
-    
-    def __str__(self):
-        return f"{self.approver.name}'s approval for {self.trf}"
-    
-    @property
-    def approver_name(self):
-        return self.approver.name
-    
-    @property
-    def approver_id(self):
-        return self.approver.id
+        unique_together = ('trf', 'meal_date')
+
+class TrfFlightBooking(models.Model):
+    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
+    flight_number = models.CharField(max_length=20)
+    flight_class = models.CharField(max_length=20)
+    departure_location = models.CharField(max_length=100)
+    arrival_location = models.CharField(max_length=100)
+    departure_date = models.DateField()
+    arrival_date = models.DateField()
+    departure_time = models.TimeField()
+    arrival_time = models.TimeField()
+    booking_reference = models.CharField(max_length=50, blank=True, null=True)
+    status = models.CharField(max_length=20, default='Pending')
+    remarks = models.TextField(blank=True, null=True)
+    created_by = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    airline = models.CharField(max_length=100, blank=True, null=True)
+
+class TrfItinerarySegment(models.Model):
+    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
+    segment_date = models.DateField(blank=True, null=True)
+    day_of_week = models.CharField(max_length=255, blank=True, null=True)
+    from_location = models.CharField(max_length=255, blank=True, null=True)
+    to_location = models.CharField(max_length=255, blank=True, null=True)
+    departure_time = models.CharField(max_length=255, blank=True, null=True)
+    arrival_time = models.CharField(max_length=255, blank=True, null=True)
+    purpose = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    flight_number = models.CharField(max_length=255, blank=True, null=True)
+    flight_class = models.CharField(max_length=255, blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+
+class TrfMealProvision(models.Model):
+    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
+    date_from_to = models.CharField(max_length=255, blank=True, null=True)
+    breakfast = models.IntegerField(default=0)
+    lunch = models.IntegerField(default=0)
+    dinner = models.IntegerField(default=0)
+    supper = models.IntegerField(default=0)
+    refreshment = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class TrfPassportDetail(models.Model):
+    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=255, blank=True, null=True)
+    passport_number = models.CharField(max_length=255, blank=True, null=True)
+    nationality = models.CharField(max_length=255, blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    place_of_birth = models.CharField(max_length=255, blank=True, null=True)
+    passport_issue_date = models.DateField(blank=True, null=True)
+    passport_expiry_date = models.DateField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)

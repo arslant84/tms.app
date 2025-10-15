@@ -1,1 +1,319 @@
-<p>expense-create works!</p>
+<div class="expense-claim-container" [formGroup]="expenseForm">
+  <div class="header">
+    <div class="internal-use">
+      <p>For Internal Use - For Internal Distribution Only</p>
+    </div>
+    <div class="appendix">
+      <p>Appendix № 1</p>
+    </div>
+  </div>
+
+  <div class="form-header">
+    <div class="logo-section">
+      <img src="assets/images/petronas-logo.png" alt="Petronas Logo" class="petronas-logo">
+      <h1>PETRONAS</h1>
+    </div>
+    <div class="title-section">
+      <h2>STAFF</h2>
+      <h2>EXPENSE CLAIM</h2>
+      <h2>FORM</h2>
+    </div>
+    <div class="document-section">
+      <div class="document-number">
+        <label>DOCUMENT NUMBER</label>
+        <div class="document-types">
+          <div class="document-type" *ngFor="let type of claimTypes">
+            <label>
+              <input type="radio" [value]="type" formControlName="documentNumber">
+              <span>{{ type }}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="claim-month">
+        <label>CLAIM FOR THE MONTH OF</label>
+        <input type="month" formControlName="claimForMonthOf">
+      </div>
+    </div>
+  </div>
+
+  <div class="staff-info" formGroupName="staffInfo">
+    <div class="staff-name">
+      <label>STAFF NAME:</label>
+      <input type="text" formControlName="name">
+    </div>
+    <div class="staff-type">
+      <div *ngFor="let type of staffTypes">
+        <label>
+          <input type="radio" [value]="type" formControlName="staffType">
+          <span>{{ type }}</span>
+        </label>
+      </div>
+    </div>
+    <div class="staff-details">
+      <div class="staff-no">
+        <label>STAFF NO.</label>
+        <input type="text" formControlName="staffNo">
+      </div>
+      <div class="hired">
+        <label>HIRED</label>
+        <input type="text" formControlName="hired">
+      </div>
+      <div class="department-code">
+        <label>DEPARTMENT CODE:</label>
+        <input type="text" formControlName="departmentCode">
+      </div>
+      <div class="cost-center-code">
+        <label>DEPT COST CENTER CODE</label>
+        <input type="text" formControlName="costCenterCode">
+      </div>
+      <div class="location">
+        <label>LOCATION:</label>
+        <input type="text" formControlName="location">
+      </div>
+      <div class="telext">
+        <label>TEL/EXT:</label>
+        <input type="text" formControlName="telext">
+      </div>
+    </div>
+  </div>
+
+  <div class="bank-info" formGroupName="bankDetails">
+    <div class="bank-name">
+      <label>BANK NAME &</label>
+      <input type="text" formControlName="bankName">
+    </div>
+    <div class="account-number">
+      <label>ACCOUNT NUMBER:</label>
+      <input type="text" formControlName="accountNumber">
+    </div>
+    <div class="address">
+      <label>ADDRESS:</label>
+      <input type="text" formControlName="address">
+    </div>
+    <div class="purpose-of-claim">
+      <label>PURPOSE OF CLAIM:</label>
+      <input type="text" formControlName="purposeOfClaim">
+    </div>
+  </div>
+
+  <div class="travel-times" formGroupName="travelTimes">
+    <div class="date-time">
+      <label>DATE & TIME</label>
+    </div>
+    <div class="start-time">
+      <label>1. Start time from home to destination:</label>
+      <input type="datetime-local" formControlName="startTime">
+    </div>
+    <div class="arrival-time">
+      <label>2. Time of arrival at home from official duty:</label>
+      <input type="datetime-local" formControlName="arrivalTime">
+    </div>
+  </div>
+
+  <div class="medical-claim" formGroupName="medicalClaim">
+    <div class="medical-self">
+      <label>If you are applying for a medical claim, please select whichever is applicable >>></label>
+      <div class="options">
+        <label>Inpatient</label>
+        <input type="checkbox" formControlName="isApplying">
+        <label>Outpatient</label>
+        <input type="checkbox" formControlName="isApplying">
+      </div>
+    </div>
+    <div class="medical-family">
+      <label>If you are applying for a medical claim for your family, please select applicable family members:</label>
+      <div class="options">
+        <label>Spouse:</label>
+        <input type="checkbox" formControlName="spouse">
+        <label>Children</label>
+        <input type="checkbox" formControlName="children">
+        <label>Other</label>
+        <input type="checkbox" formControlName="other">
+      </div>
+    </div>
+  </div>
+
+  <div class="expense-table">
+    <div class="table-header">
+      <div class="date-col">DATE(S)</div>
+      <div class="from-to-col">CLAIM OR TRAVEL DETAILS<br>FROM - TO<br>(PLEASE STATE THE NAME OF THE CITY OR THE PLACE OF STAY)</div>
+      <div class="mileage-col">OFFICIAL MILEAGE<br>CALCULATION<br>PER DAY<br>(KM)</div>
+      <div class="transport-col">TRANSPORT</div>
+      <div class="accommodation-col">HOTEL ACCOMMODATION ALLOWANCE</div>
+      <div class="outstation-col">OUT-STATION ALLOWANCE<br>(MEAL)</div>
+      <div class="miscellaneous-col">MISCELLANEOUS ALLOWANCE<br>10%</div>
+      <div class="other-col">OTHER EXPENSES</div>
+    </div>
+
+    <div class="table-columns">
+      <div class="col-labels">
+        <div>A</div>
+        <div>B</div>
+        <div>C</div>
+        <div>D</div>
+        <div>E</div>
+        <div>F</div>
+        <div>G</div>
+      </div>
+    </div>
+
+    <div class="expense-items" formArrayName="expenseItems">
+      <div class="expense-row" *ngFor="let item of expenseItems.controls; let i = index" [formGroupName]="i">
+        <div class="date-col">
+          <input type="date" formControlName="date">
+        </div>
+        <div class="from-to-col">
+          <input type="text" formControlName="fromTo">
+        </div>
+        <div class="mileage-col">
+          <input type="number" formControlName="mileage">
+        </div>
+        <div class="transport-col">
+          <input type="number" step="0.01" formControlName="transport">
+        </div>
+        <div class="accommodation-col">
+          <input type="number" step="0.01" formControlName="accommodation">
+        </div>
+        <div class="outstation-col">
+          <input type="number" step="0.01" formControlName="outstation">
+        </div>
+        <div class="miscellaneous-col">
+          <input type="number" step="0.01" formControlName="miscellaneous">
+        </div>
+        <div class="other-col">
+          <input type="number" step="0.01" formControlName="other">
+        </div>
+        <div class="remove-btn">
+          <button type="button" *ngIf="expenseItems.controls.length > 1" (click)="removeExpenseItem(i)">X</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="add-expense-row">
+      <button type="button" (click)="addExpenseItem()">+ Add Expense Item</button>
+    </div>
+
+    <div class="total-row">
+      <div class="total-label">TOTAL</div>
+      <div class="total-value" *ngFor="let _ of [0,1,2,3,4,5,6]"></div>
+    </div>
+  </div>
+
+  <div class="foreign-exchange" formArrayName="foreignExchange">
+    <div class="exchange-header">
+      <label>INFORMATION ON FOREIGN MONEY EXCHANGE RATE (For overseas claim)</label>
+    </div>
+    <div class="exchange-table">
+      <div class="exchange-header-row">
+        <div>DATE</div>
+        <div>TYPE OF CURRENCY</div>
+        <div>SELLING RATE TO RM</div>
+        <div>TOTAL ADVANCE/CLAIM AMOUNT</div>
+      </div>
+      <div class="exchange-row" *ngFor="let rate of foreignExchange.controls; let i = index" [formGroupName]="i">
+        <div>
+          <input type="date" formControlName="date">
+        </div>
+        <div>
+          <select formControlName="currencyType">
+            <option *ngFor="let currency of currencyTypes" [value]="currency">{{ currency }}</option>
+          </select>
+        </div>
+        <div>
+          <input type="number" step="0.0001" formControlName="sellingRate">
+        </div>
+        <div>
+          <input type="number" step="0.01" formControlName="totalInForeignCurrency">
+        </div>
+        <div class="remove-btn">
+          <button type="button" *ngIf="foreignExchange.controls.length > 1" (click)="removeExchangeRate(i)">X</button>
+        </div>
+      </div>
+    </div>
+    <div class="add-exchange-row">
+      <button type="button" (click)="addExchangeRate()">+ Add Exchange Rate</button>
+    </div>
+  </div>
+
+  <div class="financial-summary">
+    <div class="total-amount">
+      <label>TOTAL ADVANCE/CLAIM AMOUNT</label>
+      <input type="number" step="0.01" formControlName="totalAmount" readonly>
+    </div>
+    <div class="less-advance">
+      <label>LESS: ADVANCE TAKEN</label>
+      <input type="number" step="0.01" formControlName="advanceTaken" (input)="calculateTotals()">
+    </div>
+    <div class="less-credit-card">
+      <label>LESS: CORPORATE CREDIT CARD PAYMENT</label>
+      <input type="number" step="0.01" formControlName="creditCardPayment" (input)="calculateTotals()">
+    </div>
+    <div class="balance">
+      <label>BALANCE OF CLAIM/REPAYMENT (CHEQUE / RECEIPT NO.)</label>
+      <input type="number" step="0.01" formControlName="balanceAmount" readonly>
+      <select formControlName="debitCredit">
+        <option value="DEBIT">DEBIT</option>
+        <option value="CREDIT">CREDIT</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="signatures">
+    <div class="signature">
+      <label>SIGNATURE</label>
+      <input type="text" formControlName="signature">
+    </div>
+    <div class="verified-by">
+      <label>VERIFIED BY</label>
+      <input type="text" formControlName="verifiedBy">
+    </div>
+    <div class="approved-by">
+      <label>APPROVED BY</label>
+      <input type="text" formControlName="approvedBy">
+    </div>
+  </div>
+
+  <div class="terms-conditions">
+    <div class="declaration">
+      <label>
+        <input type="checkbox" formControlName="termsAccepted">
+        I hereby understand all the terms and conditions stated below
+      </label>
+    </div>
+    <div class="terms-list">
+      <ol>
+        <li>I declare that all of the information contained in this Claim Form as well as all of the information contained in the supporting documents are true and complete.</li>
+        <li>I understand that providing false, fraudulent or incomplete information on this Claim Form and the related supporting documents may result in disciplinary action.</li>
+        <li>I am fully aware of the requirements of the related PETRONAS Policies and Orders, and hereby certify that all of the supporting documents are in accordance with the requirements of related statutory Policies.</li>
+        <li>For Travel Claims, I am fully aware of the Travel Policy and Supporting Documents as per form.</li>
+        <li>Should there be any false, fraudulent or incomplete information and/or documentation originating from the Claims Portal, PETRONAS reserves the right to recover from the employee and/or to take further action.</li>
+      </ol>
+    </div>
+    <div class="signature-date">
+      <div class="signature-field">
+        <label>Signature</label>
+        <input type="text">
+      </div>
+      <div class="date-field">
+        <label>Date:</label>
+        <input type="date" formControlName="dateSubmitted">
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <p><strong>NOTES FOR USERS:</strong></p>
+    <ol>
+      <li>The approved expense claim form in accordance to the LOA, shall be submitted to Finance & Accounts Dept together with all supporting documents including original receipts, official bills, etc.</li>
+      <li>Incomplete claim form shall be returned to the staff.</li>
+      <li>Finance & Accounts Dept shall effect salary deduction without notifying relevant staff if he/she does not submit his/her claim within seven (7) working days from return after completion of official duty.</li>
+      <li>Claim must be approved by Department Manager in accordance to terms and conditions as stated in the related "HUMAN RESOURCES MANAGEMENT POLICIES AND OPERATING PROCEDURES MANUAL / ORDERS" or relevant circulars issued out by the Company.</li>
+    </ol>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" (click)="calculateTotals()">Calculate Totals</button>
+    <button type="button" (click)="onSubmit()">Submit Claim</button>
+  </div>
+</div>

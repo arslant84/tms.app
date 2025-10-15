@@ -36,6 +36,8 @@ yarn-error.log
 /libpeerconnection.log
 testem.log
 /typings
+/pctsb.syntra
+/.windsurf
 
 # System files
 .DS_Store

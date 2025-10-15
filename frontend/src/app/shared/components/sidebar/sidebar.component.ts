@@ -17,13 +17,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
   pendingApprovals: number = 0;
   currentUser: User | null = null;
   private userSubscription: Subscription | null = null;
-  
-  // Sections can be collapsed/expanded
-  expandedSections = {
-    requests: true,
-    approvals: false,
-    admin: false
-  };
 
   constructor(private authService: AuthService) {}
 
@@ -36,36 +29,29 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.userRole = user.role || 'Employee';
         console.log('Current user role:', this.userRole);
         console.log('User is_admin flag:', user.is_admin);
-        
+
         // If user has is_admin flag set to true, ensure they have admin role
         if (user.is_admin) {
           console.log('User has admin flag, setting ADMIN role');
           this.userRole = UserRole.ADMIN;
         }
-        
+
         console.log('Final user role:', this.userRole);
         console.log('Has approval permissions:', this.hasApprovalPermissions);
         console.log('Has admin permissions:', this.hasAdminPermissions);
       }
     });
-    
+
     // Fetch pending approvals
     this.fetchPendingApprovals();
   }
-  
+
   ngOnDestroy(): void {
     // Clean up subscriptions to prevent memory leaks
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
   }
-
-  toggleSection(section: string): void {
-    this.expandedSections[section as keyof typeof this.expandedSections] = 
-      !this.expandedSections[section as keyof typeof this.expandedSections];
-  }
-
-  // No longer needed as we're getting the role from the auth service
 
   private fetchPendingApprovals(): void {
     // This would be replaced with an actual service call
