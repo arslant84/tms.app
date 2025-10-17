@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ExpenseListComponent } from './components/expense-list/expense-list.component';
 import { ExpenseCreateComponent } from './components/expense-create/expense-create.component';
+import { ExpenseDetailComponent } from './components/expense-detail/expense-detail.component';
 
 const routes: Routes = [
   {
@@ -13,8 +14,12 @@ const routes: Routes = [
     component: ExpenseCreateComponent
   },
   {
-    path: ':id',
+    path: 'edit/:id',
     component: ExpenseCreateComponent
+  },
+  {
+    path: ':id',
+    component: ExpenseDetailComponent
   }
 ];
 

@@ -14,9 +14,18 @@ export class TrfService {
 
   constructor(private http: HttpClient) { }
 
-  // Get all TRFs
-  getAllTrfs(): Observable<TravelRequestForm[]> {
-    return this.http.get<TravelRequestForm[]>(`${this.apiUrl}/all`)
+  // Get all TRFs (legacy method)
+  getAllTrfs(params?: any): Observable<any> {
+    let queryParams = '';
+    if (params) {
+      const queryString = Object.keys(params)
+        .filter(key => params[key] !== null && params[key] !== undefined && params[key] !== '')
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+        .join('&');
+      queryParams = queryString ? `?${queryString}` : '';
+    }
+
+    return this.http.get<any>(`${environment.apiUrl}/trf/travel-requests/${queryParams}`)
       .pipe(
         catchError(this.handleError)
       );
@@ -109,7 +118,7 @@ export class TrfService {
 
   // Create main Travel Request
   createTravelRequest(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/travel-requests/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/trf/travel-requests/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -117,7 +126,7 @@ export class TrfService {
 
   // Create Itinerary Segment
   createItinerarySegment(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/itinerary-segments/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/trf/itinerary-segments/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -125,7 +134,7 @@ export class TrfService {
 
   // Create Daily Meal Selection
   createDailyMeal(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/daily-meal-selections/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/trf/daily-meals/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -133,7 +142,7 @@ export class TrfService {
 
   // Create Accommodation Detail
   createAccommodation(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/accommodation-details/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/trf/accommodation-details/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -141,7 +150,7 @@ export class TrfService {
 
   // Create Company Transport Detail
   createTransport(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/company-transport-details/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/trf/transport-details/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -149,7 +158,7 @@ export class TrfService {
 
   // Create Meal Provision
   createMealProvision(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/meal-provisions/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/trf/meal-provisions/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -157,7 +166,7 @@ export class TrfService {
 
   // Create Passport Detail
   createPassportDetail(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/passport-details/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/trf/passport-details/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -165,7 +174,7 @@ export class TrfService {
 
   // Create Bank Detail
   createBankDetail(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/advance-bank-details/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/trf/bank-details/`, data)
       .pipe(
         catchError(this.handleError)
       );
@@ -173,7 +182,7 @@ export class TrfService {
 
   // Create Advance Amount Requested Item
   createAdvanceAmountItem(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/advance-amount-items/`, data)
+    return this.http.post<any>(`${environment.apiUrl}/trf/advance-amounts/`, data)
       .pipe(
         catchError(this.handleError)
       );

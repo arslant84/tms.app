@@ -1,0 +1,182 @@
+<div class="accommodation-create-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">
+        <i class="bi bi-house-door"></i>
+        {{ isEditMode ? 'Edit' : 'Create' }} Accommodation Request
+      </h1>
+      <p class="page-subtitle">Fill in the details below to request accommodation</p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Loading request data...</p>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="accommodationForm" (ngSubmit)="onSubmit()" *ngIf="!loading" class="accommodation-form">
+    <!-- Requestor Information Card -->
+    <div class="form-card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <i class="bi bi-person"></i>
+          Requestor Information
+        </h2>
+      </div>
+
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="requestor_name" class="form-label required">Requestor Name</label>
+            <input
+              type="text"
+              id="requestor_name"
+              class="form-control"
+              formControlName="requestor_name"
+              [class.is-invalid]="accommodationForm.get('requestor_name')?.invalid && accommodationForm.get('requestor_name')?.touched"
+              placeholder="Enter requestor name" />
+            <div class="invalid-feedback" *ngIf="accommodationForm.get('requestor_name')?.invalid && accommodationForm.get('requestor_name')?.touched">
+              Requestor name is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="staff_id" class="form-label">Staff ID</label>
+            <input
+              type="text"
+              id="staff_id"
+              class="form-control"
+              formControlName="staff_id"
+              placeholder="Enter staff ID" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="department" class="form-label">Department</label>
+            <input
+              type="text"
+              id="department"
+              class="form-control"
+              formControlName="department"
+              placeholder="Enter department" />
+          </div>
+
+          <div class="form-group">
+            <label for="position" class="form-label">Position</label>
+            <input
+              type="text"
+              id="position"
+              class="form-control"
+              formControlName="position"
+              placeholder="Enter position" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cost_center" class="form-label">Cost Center</label>
+            <input
+              type="text"
+              id="cost_center"
+              class="form-control"
+              formControlName="cost_center"
+              placeholder="Enter cost center" />
+          </div>
+
+          <div class="form-group">
+            <label for="tel_email" class="form-label">Tel/Email</label>
+            <input
+              type="text"
+              id="tel_email"
+              class="form-control"
+              formControlName="tel_email"
+              placeholder="Enter telephone or email" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input
+              type="email"
+              id="email"
+              class="form-control"
+              formControlName="email"
+              [class.is-invalid]="accommodationForm.get('email')?.invalid && accommodationForm.get('email')?.touched"
+              placeholder="Enter email address" />
+            <div class="invalid-feedback" *ngIf="accommodationForm.get('email')?.invalid && accommodationForm.get('email')?.touched">
+              Please enter a valid email address
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="estimated_cost" class="form-label">Estimated Cost (USD)</label>
+            <input
+              type="number"
+              id="estimated_cost"
+              class="form-control"
+              formControlName="estimated_cost"
+              min="0"
+              step="0.01"
+              placeholder="0.00" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label for="additional_comments" class="form-label">Additional Comments</label>
+            <textarea
+              id="additional_comments"
+              class="form-control"
+              formControlName="additional_comments"
+              rows="4"
+              placeholder="Enter any additional comments or requirements"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="onCancel()"
+        [disabled]="submitting">
+        <i class="bi bi-x-circle"></i>
+        Cancel
+      </button>
+
+      <div class="actions-right">
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          (click)="onSaveDraft()"
+          [disabled]="submitting">
+          <i class="bi bi-file-earmark"></i>
+          Save Draft
+        </button>
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="accommodationForm.invalid || submitting">
+          <span *ngIf="!submitting">
+            <i class="bi bi-check-circle"></i>
+            {{ isEditMode ? 'Update' : 'Submit' }} Request
+          </span>
+          <span *ngIf="submitting">
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            {{ isEditMode ? 'Updating...' : 'Submitting...' }}
+          </span>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

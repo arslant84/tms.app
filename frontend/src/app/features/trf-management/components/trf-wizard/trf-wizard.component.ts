@@ -1,13 +1,16 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { from, firstValueFrom } from 'rxjs';
 import { TrfStepperComponent } from '../trf-stepper/trf-stepper.component';
 import { RequestorInformationComponent } from '../requestor-information/requestor-information.component';
 import { DomesticTravelDetailsComponent } from '../domestic-travel-details/domestic-travel-details.component';
 import { OverseasTravelDetailsComponent } from '../overseas-travel-details/overseas-travel-details.component';
 import { HomeLeaveDetailsComponent } from '../home-leave-details/home-leave-details.component';
 import { ExternalPartiesDetailsComponent } from '../external-parties-details/external-parties-details.component';
+import { ApprovalSubmissionComponent } from '../approval-submission/approval-submission.component';
 import { TrfService } from '../../services/trf.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 @Component({
   selector: 'app-trf-wizard',
@@ -19,7 +22,8 @@ import { TrfService } from '../../services/trf.service';
     DomesticTravelDetailsComponent,
     OverseasTravelDetailsComponent,
     HomeLeaveDetailsComponent,
-    ExternalPartiesDetailsComponent
+    ExternalPartiesDetailsComponent,
+    ApprovalSubmissionComponent
   ],
   templateUrl: './trf-wizard.component.html',
   styleUrls: ['./trf-wizard.component.scss']
@@ -30,15 +34,22 @@ export class TrfWizardComponent implements OnInit {
   @ViewChild(OverseasTravelDetailsComponent) overseasTravelForm!: OverseasTravelDetailsComponent;
   @ViewChild(HomeLeaveDetailsComponent) homeLeaveForm!: HomeLeaveDetailsComponent;
   @ViewChild(ExternalPartiesDetailsComponent) externalPartiesForm!: ExternalPartiesDetailsComponent;
+  @ViewChild(ApprovalSubmissionComponent) approvalForm!: ApprovalSubmissionComponent;
 
   currentStep: number = 1;
-  totalSteps: number = 3; // Requestor Info + Travel Type Selection + Travel Details
-  stepLabels: string[] = ['Requestor Information', 'Travel Type', 'Travel Details'];
+  totalSteps: number = 3; // Requestor Info + Travel Details + Approval & Submission
+  stepLabels: string[] = ['Requestor Information', 'Travel Details', 'Approval & Submission'];
   completedSteps: boolean[] = [false, false, false];
   isSubmitting: boolean = false;
   submitError: string = '';
 
-  // Travel type selection
+  // Edit mode
+  isEditMode: boolean = false;
+  trfId: number | null = null;
+  existingTrfData: any = null;
+  isLoadingTrf: boolean = false;
+
+  // Travel type - determined by route
   selectedTravelType: 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties' | null = null;
 
   // Store form data from each step
@@ -47,17 +58,168 @@ export class TrfWizardComponent implements OnInit {
   overseasTravelData: any = null;
   homeLeaveData: any = null;
   externalPartiesData: any = null;
+  approvalSubmissionData: any = null;
 
   constructor(
     private trfService: TrfService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
+    // Determine travel type from route
+    const url = this.router.url;
+    if (url.includes('/create/domestic')) {
+      this.selectedTravelType = 'Domestic';
+    } else if (url.includes('/create/overseas')) {
+      this.selectedTravelType = 'Overseas';
+    } else if (url.includes('/create/home-leave')) {
+      this.selectedTravelType = 'Home Leave';
+    } else if (url.includes('/create/external-parties')) {
+      this.selectedTravelType = 'External Parties';
+    }
+
+    // Check if we're in edit mode
+    this.route.params.subscribe(params => {
+      if (params['id']) {
+        this.isEditMode = true;
+        this.trfId = +params['id'];
+        this.loadExistingTrf(this.trfId);
+      }
+    });
+
     console.log('TRF Wizard initialized');
     console.log('Current step:', this.currentStep);
     console.log('Total steps:', this.totalSteps);
     console.log('Selected travel type:', this.selectedTravelType);
+    console.log('Edit mode:', this.isEditMode);
+  }
+
+  /**
+   * Load existing TRF data for editing
+   */
+  private loadExistingTrf(id: number): void {
+    this.isLoadingTrf = true;
+
+    // TODO: Use the proper GET endpoint once available
+    // For now, this is a placeholder
+    this.trfService.getTrfById(id).subscribe({
+      next: (data: any) => {
+        this.existingTrfData = data;
+        this.selectedTravelType = data.travel_type || data.travelType;
+
+        // Pre-populate requestor data
+        this.requestorData = {
+          fullName: data.requestor_name || data.requestorName,
+          staffId: data.staff_id || data.staffId,
+          department: data.department,
+          position: data.position,
+          costCenter: data.cost_center || data.costCenter,
+          contactNo: data.tel_email || data.telEmail,
+          email: data.email
+        };
+
+        // Pre-populate travel-specific data based on type
+        this.prePopulateTravelData(data);
+
+        this.isLoadingTrf = false;
+      },
+      error: (err: any) => {
+        this.submitError = 'Failed to load TRF: ' + (err.error?.message || err.message || 'Unknown error');
+        this.isLoadingTrf = false;
+        console.error('Error loading TRF:', err);
+      }
+    });
+  }
+
+  /**
+   * Pre-populate travel-specific data
+   */
+  private prePopulateTravelData(data: any): void {
+    switch (this.selectedTravelType) {
+      case 'Domestic':
+        this.domesticTravelData = {
+          purpose: {
+            purposeOfTravel: data.purpose,
+            additionalComments: data.additional_comments || data.additionalComments
+          },
+          itinerary: {
+            segments: data.itinerary || []
+          },
+          meals: {
+            selections: data.daily_meal_selections || data.mealSelections || []
+          },
+          accommodation: data.accommodation_details?.[0] || null,
+          transport: {
+            details: data.company_transport_details || data.transportDetails || []
+          }
+        };
+        break;
+
+      case 'Overseas':
+        this.overseasTravelData = {
+          purpose: data.purpose,
+          tripType: 'Round Trip', // Default, adjust if data provides this
+          itinerary: data.itinerary || [],
+          advanceBankDetails: data.advance_bank_details || data.bankDetails,
+          advanceAmountRequested: data.advance_amount_items || data.advanceAmounts || []
+        };
+        break;
+
+      case 'Home Leave':
+        this.homeLeaveData = {
+          purpose: data.purpose,
+          itinerary: data.itinerary || [],
+          passportDetails: data.passport_details || data.passportDetails,
+          advanceBankDetails: data.advance_bank_details || data.bankDetails
+        };
+        break;
+
+      case 'External Parties':
+        this.externalPartiesData = {
+          purpose: data.purpose,
+          externalFullName: data.external_party_name || data.externalPartyName,
+          externalOrganization: data.external_party_organization || data.externalPartyOrganization,
+          externalRefToAuthorityLetter: data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter,
+          externalCostCenter: data.external_cost_center || data.externalCostCenter,
+          accommodation: data.accommodation_details || data.accommodationDetails || [],
+          transport: data.company_transport_details || data.transportDetails || []
+        };
+        break;
+    }
+  }
+
+  /**
+   * Handle requestor form submission
+   */
+  onRequestorSubmit(data: any): void {
+    this.requestorData = data;
+    this.completedSteps[0] = true;
+    this.currentStep = 2; // Move to travel details
+  }
+
+  /**
+   * Handle travel details form submission
+   */
+  onTravelDetailsSubmit(data: any): void {
+    // Save the data based on travel type
+    switch (this.selectedTravelType) {
+      case 'Domestic':
+        this.domesticTravelData = data;
+        break;
+      case 'Overseas':
+        this.overseasTravelData = data;
+        break;
+      case 'Home Leave':
+        this.homeLeaveData = data;
+        break;
+      case 'External Parties':
+        this.externalPartiesData = data;
+        break;
+    }
+    this.completedSteps[1] = true;
+    this.currentStep = 3; // Move to approval & submission
   }
 
   /**
@@ -84,14 +246,14 @@ export class TrfWizardComponent implements OnInit {
         return false;
       }
     } else if (this.currentStep === 2) {
-      // Validate travel type selection
-      if (!this.selectedTravelType) {
-        this.submitError = 'Please select a travel type';
-        return false;
-      }
-    } else if (this.currentStep === 3) {
       // Validate travel details based on selected type
       return this.validateTravelDetailsForm();
+    } else if (this.currentStep === 3) {
+      // Validate approval & submission
+      if (this.approvalForm && !this.approvalForm.isValid()) {
+        this.approvalForm.markAllAsTouched();
+        return false;
+      }
     }
     return true;
   }
@@ -131,15 +293,6 @@ export class TrfWizardComponent implements OnInit {
     return true;
   }
 
-  /**
-   * Handle travel type selection
-   */
-  onTravelTypeSelect(type: 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties'): void {
-    console.log('Travel type selected:', type);
-    this.selectedTravelType = type;
-    this.submitError = '';
-    console.log('Selected travel type now:', this.selectedTravelType);
-  }
 
   /**
    * Handle next button click
@@ -177,8 +330,6 @@ export class TrfWizardComponent implements OnInit {
     if (this.currentStep === 1 && this.requestorForm) {
       this.requestorData = this.requestorForm.getFormData();
     } else if (this.currentStep === 2) {
-      // Travel type selection - no data to save
-    } else if (this.currentStep === 3) {
       // Save appropriate travel details based on type
       switch (this.selectedTravelType) {
         case 'Domestic':
@@ -201,6 +352,11 @@ export class TrfWizardComponent implements OnInit {
             this.externalPartiesData = this.externalPartiesForm.getFormData();
           }
           break;
+      }
+    } else if (this.currentStep === 3) {
+      // Approval & Submission step
+      if (this.approvalForm) {
+        this.approvalSubmissionData = this.approvalForm.getFormData();
       }
     }
   }
@@ -242,17 +398,17 @@ export class TrfWizardComponent implements OnInit {
       isValid = false;
     }
 
-    // Validate travel type selection
-    if (!this.selectedTravelType) {
+    // Validate travel details form based on selected type
+    if (!this.validateTravelDetailsForm()) {
       if (isValid) {
         this.currentStep = 2;
-        this.submitError = 'Please select a travel type';
       }
       isValid = false;
     }
 
-    // Validate travel details form based on selected type
-    if (!this.validateTravelDetailsForm()) {
+    // Validate approval form
+    if (this.approvalForm && !this.approvalForm.isValid()) {
+      this.approvalForm.markAllAsTouched();
       if (isValid) {
         this.currentStep = 3;
       }
@@ -272,33 +428,71 @@ export class TrfWizardComponent implements OnInit {
     // Combine all form data
     const combinedData = this.prepareTrfData(isDraft);
 
-    // Step 1: Create main TRF
-    this.trfService.createTravelRequest(combinedData.mainTrf).subscribe({
-      next: (createdTrf: any) => {
-        console.log('TRF created successfully:', createdTrf);
+    if (this.isEditMode && this.trfId) {
+      // Update existing TRF
+      this.trfService.updateTrf(this.trfId, combinedData.mainTrf).subscribe({
+        next: (updatedTrf: any) => {
+          console.log('TRF updated successfully:', updatedTrf);
 
-        // Step 2: Create nested resources (itinerary, meals, accommodation, transport)
-        this.createNestedResources(createdTrf.id, combinedData).subscribe({
-          next: () => {
-            this.isSubmitting = false;
+          // For edit mode, we might need to delete and recreate nested resources
+          // This is a simplified approach - ideally, you'd update existing ones
+          from(this.createNestedResources(this.trfId!, combinedData)).subscribe({
+            next: () => {
+              this.isSubmitting = false;
 
-            // Show success message and navigate
-            alert(isDraft ? 'TRF saved as draft successfully!' : 'TRF submitted successfully!');
-            this.router.navigate(['/trf']);
-          },
-          error: (error: any) => {
-            this.isSubmitting = false;
-            this.submitError = 'Error creating nested resources: ' + (error.message || 'Unknown error');
-            console.error('Error creating nested resources:', error);
-          }
-        });
-      },
-      error: (error: any) => {
-        this.isSubmitting = false;
-        this.submitError = 'Error creating TRF: ' + (error.error?.message || error.message || 'Unknown error');
-        console.error('Error creating TRF:', error);
-      }
-    });
+              // Show success message and navigate
+              this.toastService.success(isDraft ? 'TRF updated and saved as draft!' : 'TRF updated successfully!');
+              this.router.navigate(['/trf']);
+            },
+            error: (error: any) => {
+              this.isSubmitting = false;
+              this.submitError = 'Error updating nested resources: ' + (error.message || 'Unknown error');
+              this.toastService.error(this.submitError);
+              console.error('Error updating nested resources:', error);
+            }
+          });
+        },
+        error: (error: any) => {
+          this.isSubmitting = false;
+          this.submitError = 'Error updating TRF: ' + (error.error?.message || error.message || 'Unknown error');
+          this.toastService.error(this.submitError);
+          console.error('Error updating TRF:', error);
+        }
+      });
+    } else {
+      // Create new TRF
+      this.trfService.createTravelRequest(combinedData.mainTrf).subscribe({
+        next: (createdTrf: any) => {
+          console.log('TRF created successfully:', createdTrf);
+          console.log('TRF response keys:', Object.keys(createdTrf));
+          console.log('TRF.id:', createdTrf.id);
+          console.log('TRF.pk:', createdTrf.pk);
+
+          // Step 2: Create nested resources (itinerary, meals, accommodation, transport)
+          from(this.createNestedResources(createdTrf.id, combinedData)).subscribe({
+            next: () => {
+              this.isSubmitting = false;
+
+              // Show success message and navigate
+              this.toastService.success(isDraft ? 'TRF saved as draft successfully!' : 'TRF submitted successfully!');
+              this.router.navigate(['/trf']);
+            },
+            error: (error: any) => {
+              this.isSubmitting = false;
+              this.submitError = 'Error creating nested resources: ' + (error.message || 'Unknown error');
+              this.toastService.error(this.submitError);
+              console.error('Error creating nested resources:', error);
+            }
+          });
+        },
+        error: (error: any) => {
+          this.isSubmitting = false;
+          this.submitError = 'Error creating TRF: ' + (error.error?.message || error.message || 'Unknown error');
+          this.toastService.error(this.submitError);
+          console.error('Error creating TRF:', error);
+        }
+      });
+    }
   }
 
   /**
@@ -338,15 +532,15 @@ export class TrfWizardComponent implements OnInit {
    * Prepare Domestic travel data
    */
   private prepareDomesticData(mainTrf: any, isDraft: boolean): any {
-    mainTrf.purpose = this.domesticTravelData?.purpose?.purposeOfTravel || '';
-    mainTrf.additional_comments = this.domesticTravelData?.purpose?.additionalComments || '';
+    mainTrf.purpose = this.domesticTravelData?.purposeOfTravel || '';
+    mainTrf.additional_comments = '';
 
     return {
       mainTrf,
-      itinerarySegments: this.domesticTravelData?.itinerary?.segments || [],
-      mealSelections: this.domesticTravelData?.meals?.selections || [],
+      itinerarySegments: this.domesticTravelData?.itinerary || [],
+      mealSelections: this.domesticTravelData?.mealProvisions?.dailySelections || [],
       accommodation: this.domesticTravelData?.accommodation || null,
-      transport: this.domesticTravelData?.transport?.details || [],
+      transport: this.domesticTravelData?.companyTransportation || [],
       passportDetails: null,
       bankDetails: null,
       advanceAmounts: []
@@ -417,18 +611,59 @@ export class TrfWizardComponent implements OnInit {
   }
 
   /**
+   * Convert Date object or ISO string to YYYY-MM-DD format
+   */
+  private formatDateForAPI(date: any): string {
+    if (!date) return '';
+
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+      console.warn('Invalid date:', date);
+      return '';
+    }
+
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
    * Create nested resources (itinerary, meals, passport, bank details, etc.)
    */
   private createNestedResources(trfId: number, data: any): any {
     return new Promise((resolve, reject) => {
+      console.log('=== Creating Nested Resources ===');
+      console.log('TRF ID:', trfId);
+      console.log('TRF ID type:', typeof trfId);
+      console.log('TRF ID is number:', typeof trfId === 'number');
+      console.log('TRF ID is valid:', trfId && trfId > 0);
+      console.log('Data:', JSON.stringify(data, null, 2));
+
+      // Guard: Ensure trfId is valid
+      if (!trfId || typeof trfId !== 'number' || trfId <= 0) {
+        const error = `Invalid TRF ID: ${trfId}`;
+        console.error(error);
+        reject(new Error(error));
+        return;
+      }
+
       const promises: Promise<any>[] = [];
 
       // Create itinerary segments
       if (data.itinerarySegments && data.itinerarySegments.length > 0) {
         data.itinerarySegments.forEach((segment: any) => {
+          // Skip segments with missing required fields
+          if (!segment.date || !segment.from || !segment.to) {
+            console.warn('Skipping itinerary segment with missing required fields:', segment);
+            return;
+          }
+
           const itineraryData = {
             trf: trfId,
-            segment_date: segment.date,
+            segment_date: this.formatDateForAPI(segment.date),
             day_of_week: segment.day || '',
             from_location: segment.from,
             to_location: segment.to,
@@ -438,8 +673,9 @@ export class TrfWizardComponent implements OnInit {
             remarks: segment.remarks || ''
           };
 
+          console.log('Creating itinerary segment:', itineraryData);
           promises.push(
-            this.trfService.createItinerarySegment(itineraryData).toPromise()
+            firstValueFrom(this.trfService.createItinerarySegment(itineraryData))
           );
         });
       }
@@ -447,9 +683,15 @@ export class TrfWizardComponent implements OnInit {
       // Create meal selections (Domestic only)
       if (data.mealSelections && data.mealSelections.length > 0) {
         data.mealSelections.forEach((meal: any) => {
+          // Skip meals with missing required meal_date
+          if (!meal.date) {
+            console.warn('Skipping meal selection with missing date:', meal);
+            return;
+          }
+
           const mealData = {
             trf: trfId,
-            meal_date: meal.date,
+            meal_date: this.formatDateForAPI(meal.date),
             breakfast: meal.breakfast || false,
             lunch: meal.lunch || false,
             dinner: meal.dinner || false,
@@ -457,8 +699,9 @@ export class TrfWizardComponent implements OnInit {
             refreshment: meal.refreshment || false
           };
 
+          console.log('Creating meal selection:', mealData);
           promises.push(
-            this.trfService.createDailyMeal(mealData).toPromise()
+            firstValueFrom(this.trfService.createDailyMeal(mealData))
           );
         });
       }
@@ -468,50 +711,69 @@ export class TrfWizardComponent implements OnInit {
         if (Array.isArray(data.accommodation)) {
           // External Parties accommodation (array)
           data.accommodation.forEach((acc: any) => {
+            // Skip accommodation with missing required fields
+            if (!acc.fromDate || !acc.toDate) {
+              console.warn('Skipping accommodation with missing dates:', acc);
+              return;
+            }
+
             const accommodationData = {
               trf: trfId,
               accommodation_type: acc.accommodationType || '',
-              check_in_date: acc.fromDate || '',
+              check_in_date: this.formatDateForAPI(acc.fromDate),
               check_in_time: '',
-              check_out_date: acc.toDate || '',
+              check_out_date: this.formatDateForAPI(acc.toDate),
               check_out_time: '',
-              from_location: acc.fromLocation || '',
-              to_location: acc.toLocation || '',
+              location: acc.fromLocation || '',
               address: acc.address || '',
+              place_of_stay: acc.toLocation || '',
               remarks: acc.remarks || ''
             };
 
+            console.log('Creating accommodation (array):', accommodationData);
             promises.push(
-              this.trfService.createAccommodation(accommodationData).toPromise()
+              firstValueFrom(this.trfService.createAccommodation(accommodationData))
             );
           });
         } else {
           // Domestic accommodation (single object)
-          const accommodationData = {
-            trf: trfId,
-            accommodation_type: data.accommodation.type || '',
-            check_in_date: data.accommodation.checkInDate || '',
-            check_in_time: data.accommodation.checkInTime || '',
-            check_out_date: data.accommodation.checkOutDate || '',
-            check_out_time: data.accommodation.checkOutTime || '',
-            from_location: '',
-            to_location: '',
-            address: '',
-            remarks: data.accommodation.remarks || ''
-          };
+          // Skip if missing required fields
+          if (!data.accommodation.checkInDate || !data.accommodation.checkOutDate) {
+            console.warn('Skipping accommodation with missing dates:', data.accommodation);
+          } else {
+            const accommodationData = {
+              trf: trfId,
+              accommodation_type: data.accommodation.type || '',
+              check_in_date: this.formatDateForAPI(data.accommodation.checkInDate),
+              check_in_time: data.accommodation.checkInTime || '',
+              check_out_date: this.formatDateForAPI(data.accommodation.checkOutDate),
+              check_out_time: data.accommodation.checkOutTime || '',
+              location: '',
+              address: '',
+              place_of_stay: '',
+              remarks: data.accommodation.remarks || ''
+            };
 
-          promises.push(
-            this.trfService.createAccommodation(accommodationData).toPromise()
-          );
+            console.log('Creating accommodation (single):', accommodationData);
+            promises.push(
+              firstValueFrom(this.trfService.createAccommodation(accommodationData))
+            );
+          }
         }
       }
 
       // Create transport details (can be single array or nested)
       if (data.transport && data.transport.length > 0) {
         data.transport.forEach((transport: any) => {
+          // Skip transport with missing required date
+          if (!transport.date) {
+            console.warn('Skipping transport with missing date:', transport);
+            return;
+          }
+
           const transportData = {
             trf: trfId,
-            transport_date: transport.date || '',
+            transport_date: this.formatDateForAPI(transport.date),
             day_of_week: transport.day || '',
             from_location: transport.from || transport.fromLocation || '',
             to_location: transport.to || transport.toLocation || '',
@@ -521,8 +783,9 @@ export class TrfWizardComponent implements OnInit {
             remarks: transport.remarks || ''
           };
 
+          console.log('Creating transport:', transportData);
           promises.push(
-            this.trfService.createTransport(transportData).toPromise()
+            firstValueFrom(this.trfService.createTransport(transportData))
           );
         });
       }
@@ -544,7 +807,7 @@ export class TrfWizardComponent implements OnInit {
         // For now, we'll skip if not available
         if (this.trfService.createPassportDetail) {
           promises.push(
-            this.trfService.createPassportDetail(passportData).toPromise()
+            firstValueFrom(this.trfService.createPassportDetail(passportData))
           );
         }
       }
@@ -558,7 +821,7 @@ export class TrfWizardComponent implements OnInit {
         };
 
         promises.push(
-          this.trfService.createBankDetail(bankData).toPromise()
+          firstValueFrom(this.trfService.createBankDetail(bankData))
         );
       }
 
@@ -579,16 +842,46 @@ export class TrfWizardComponent implements OnInit {
           };
 
           promises.push(
-            this.trfService.createAdvanceAmountItem(advanceData).toPromise()
+            firstValueFrom(this.trfService.createAdvanceAmountItem(advanceData))
           );
         });
       }
 
       // Wait for all nested resources to be created
+      console.log(`Created ${promises.length} promises for nested resources`);
+
       Promise.all(promises)
-        .then(() => resolve(true))
-        .catch((error) => reject(error));
+        .then(() => {
+          console.log('✓ All nested resources created successfully');
+          resolve(true);
+        })
+        .catch((error) => {
+          console.error('✗ Error creating nested resources:', error);
+          console.error('Error details:', JSON.stringify(error, null, 2));
+          if (error.error) {
+            console.error('Validation errors:', error.error);
+          }
+          reject(error);
+        });
     });
+  }
+
+  /**
+   * Get travel details for the approval component
+   */
+  getTravelDetailsForApproval(): any {
+    switch (this.selectedTravelType) {
+      case 'Domestic':
+        return this.domesticTravelData;
+      case 'Overseas':
+        return this.overseasTravelData;
+      case 'Home Leave':
+        return this.homeLeaveData;
+      case 'External Parties':
+        return this.externalPartiesData;
+      default:
+        return null;
+    }
   }
 
   /**

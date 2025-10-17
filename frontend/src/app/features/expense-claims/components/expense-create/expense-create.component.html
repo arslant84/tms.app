@@ -1,4 +1,26 @@
-<div class="expense-claim-container" [formGroup]="expenseForm">
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <div class="loading-spinner">
+    <i class="bi bi-arrow-clockwise spin-animation"></i>
+    <p>Loading claim data...</p>
+  </div>
+</div>
+
+<!-- Page Header -->
+<div *ngIf="!loading" class="page-header-section">
+  <div class="header-left">
+    <button class="btn-back" (click)="onCancel()">
+      <i class="bi bi-arrow-left"></i>
+      Back to List
+    </button>
+    <h1 class="page-title">
+      <i class="bi bi-receipt"></i>
+      {{ isEditMode ? 'Edit Expense Claim' : 'Create New Expense Claim' }}
+    </h1>
+  </div>
+</div>
+
+<div *ngIf="!loading" class="expense-claim-container" [formGroup]="expenseForm">
   <div class="header">
     <div class="internal-use">
       <p>For Internal Use - For Internal Distribution Only</p>
@@ -313,7 +335,21 @@
   </div>
 
   <div class="form-actions">
-    <button type="button" (click)="calculateTotals()">Calculate Totals</button>
-    <button type="button" (click)="onSubmit()">Submit Claim</button>
+    <button type="button" class="btn-calculate" (click)="calculateTotals()" [disabled]="submitting">
+      <i class="bi bi-calculator"></i>
+      Calculate Totals
+    </button>
+    <button type="button" class="btn-draft" (click)="onSaveDraft()" [disabled]="submitting">
+      <i class="bi bi-save"></i>
+      {{ submitting ? 'Saving...' : 'Save Draft' }}
+    </button>
+    <button type="button" class="btn-cancel" (click)="onCancel()" [disabled]="submitting">
+      <i class="bi bi-x-circle"></i>
+      Cancel
+    </button>
+    <button type="button" class="btn-submit" (click)="onSubmit()" [disabled]="submitting">
+      <i class="bi bi-send"></i>
+      {{ submitting ? 'Submitting...' : (isEditMode ? 'Update Claim' : 'Submit Claim') }}
+    </button>
   </div>
 </div>

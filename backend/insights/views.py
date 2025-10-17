@@ -154,7 +154,7 @@ def dashboard_summary(request):
 
     # Calculate total travel cost from TRFs
     total_travel_cost = trfs.aggregate(
-        total=Sum('estimated_total_cost')
+        total=Sum('estimated_cost')
     )['total'] or Decimal('0.00')
 
     # Calculate total expense claims
@@ -177,7 +177,7 @@ def dashboard_summary(request):
         recent_activities.append({
             'type': 'trf',
             'id': trf.id,
-            'title': f"TRF #{trf.trf_number}",
+            'title': f"TRF #{trf.id}",
             'status': trf.status,
             'date': trf.created_at
         })
@@ -227,7 +227,7 @@ def travel_spend_analytics(request):
         claims = claims.filter(created_at__lte=date_to)
 
     # Total spend
-    total_spend = trfs.aggregate(total=Sum('estimated_total_cost'))['total'] or Decimal('0.00')
+    total_spend = trfs.aggregate(total=Sum('estimated_cost'))['total'] or Decimal('0.00')
     total_spend += claims.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
 
     # By category (from expenses)
@@ -241,7 +241,7 @@ def travel_spend_analytics(request):
     by_department = {}
     if user.is_staff:
         dept_data = trfs.values('user__department__name').annotate(
-            total=Sum('estimated_total_cost')
+            total=Sum('estimated_cost')
         )
         for item in dept_data:
             dept_name = item['user__department__name'] or 'Unknown'
@@ -255,7 +255,7 @@ def travel_spend_analytics(request):
             created_at__year=month_start.year,
             created_at__month=month_start.month
         )
-        month_total = month_trfs.aggregate(total=Sum('estimated_total_cost'))['total'] or Decimal('0.00')
+        month_total = month_trfs.aggregate(total=Sum('estimated_cost'))['total'] or Decimal('0.00')
 
         by_month.append({
             'month': month_start.strftime('%b %Y'),
@@ -268,7 +268,7 @@ def travel_spend_analytics(request):
     top_spenders = []
     if user.is_staff:
         top_users = trfs.values('user__id', 'user__first_name', 'user__last_name').annotate(
-            total=Sum('estimated_total_cost')
+            total=Sum('estimated_cost')
         ).order_by('-total')[:10]
 
         for item in top_users:
@@ -496,9 +496,9 @@ def department_analytics(request):
         dept_trfs = TravelRequest.objects.filter(user__in=users_in_dept)
 
         total_trips = dept_trfs.count()
-        total_spend = dept_trfs.aggregate(total=Sum('estimated_total_cost'))['total'] or Decimal('0.00')
+        total_spend = dept_trfs.aggregate(total=Sum('estimated_cost'))['total'] or Decimal('0.00')
         active_travelers = users_in_dept.filter(travel_requests__isnull=False).distinct().count()
-        average_trip_cost = dept_trfs.aggregate(avg=Avg('estimated_total_cost'))['avg'] or Decimal('0.00')
+        average_trip_cost = dept_trfs.aggregate(avg=Avg('estimated_cost'))['avg'] or Decimal('0.00')
         pending_approvals = dept_trfs.filter(status='PENDING').count()
 
         departments.append({
@@ -527,7 +527,7 @@ def user_activity_report(request):
         total_trfs = user.travel_requests.count()
         total_bookings = user.flight_bookings.count() + user.hotel_bookings.count()
         total_claims = user.expense_claims.count()
-        total_spend = user.travel_requests.aggregate(total=Sum('estimated_total_cost'))['total'] or Decimal('0.00')
+        total_spend = user.travel_requests.aggregate(total=Sum('estimated_cost'))['total'] or Decimal('0.00')
 
         # Last activity
         last_activity = max(

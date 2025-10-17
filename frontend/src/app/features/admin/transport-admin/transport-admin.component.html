@@ -1,0 +1,270 @@
+<div class="transport-admin-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Transport Administration</h1>
+      <p class="page-subtitle">Manage transport requests and vehicle assignments</p>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="statusFilter" class="form-label">Status</label>
+          <select id="statusFilter" class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
+            <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label for="searchFilter" class="form-label">Search</label>
+          <input type="text" class="form-control" id="searchFilter" placeholder="Title or purpose..."
+                 [(ngModel)]="filterCriteria.search" (keyup.enter)="applyFilters()">
+        </div>
+
+        <div class="col-md-2">
+          <label for="dateFrom" class="form-label">Date From</label>
+          <input type="date" class="form-control" id="dateFrom" [(ngModel)]="filterCriteria.dateFrom">
+        </div>
+
+        <div class="col-md-2">
+          <label for="dateTo" class="form-label">Date To</label>
+          <input type="date" class="form-control" id="dateTo" [(ngModel)]="filterCriteria.dateTo">
+        </div>
+
+        <div class="col-md-1 d-flex align-items-end">
+          <button class="btn btn-primary w-100 me-2" (click)="applyFilters()">
+            <i class="bi bi-search"></i>
+          </button>
+          <button class="btn btn-outline-secondary" (click)="resetFilters()" title="Reset">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading requests...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadRequests()">
+      <i class="bi bi-arrow-clockwise"></i> Retry
+    </button>
+  </div>
+
+  <!-- Requests Table -->
+  <div *ngIf="!loading && !error" class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span class="fw-bold">Transport Requests ({{ totalRequests }})</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Request #</th>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Passengers</th>
+            <th>Cost</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let request of filteredRequests">
+            <td>
+              <a href="javascript:void(0)" (click)="viewRequest(request)" class="text-decoration-none">
+                #{{ request.id }}
+              </a>
+            </td>
+            <td>
+              <div class="fw-medium">{{ request.title }}</div>
+              <small class="text-muted">{{ request.purpose | slice:0:50 }}{{ request.purpose.length > 50 ? '...' : '' }}</small>
+            </td>
+            <td>{{ request.transport_type || 'N/A' }}</td>
+            <td>
+              <span class="badge bg-secondary">{{ request.number_of_passengers }}</span>
+            </td>
+            <td class="fw-medium">{{ formatCurrency(request.estimated_cost) }}</td>
+            <td>
+              <span [ngClass]="getStatusClass(request.status)">{{ request.status }}</span>
+            </td>
+            <td>{{ formatDate(request.submitted_at) }}</td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-primary" (click)="viewRequest(request)" title="View Details">
+                  <i class="bi bi-eye"></i>
+                </button>
+
+                <button *ngIf="canApprove(request)" class="btn btn-outline-success"
+                        (click)="approveRequest(request)"
+                        [disabled]="isProcessing(request.id)"
+                        title="Approve Request">
+                  <span *ngIf="!isProcessing(request.id)">
+                    <i class="bi bi-check-circle"></i>
+                  </span>
+                  <span *ngIf="isProcessing(request.id)" class="spinner-border spinner-border-sm"></span>
+                </button>
+
+                <button *ngIf="canApprove(request)" class="btn btn-outline-danger"
+                        (click)="rejectRequest(request)"
+                        [disabled]="isProcessing(request.id)"
+                        title="Reject Request">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+
+                <button *ngIf="canAssignVehicle(request)" class="btn btn-outline-info"
+                        (click)="openAssignVehicleModal(request)"
+                        [disabled]="isProcessing(request.id)"
+                        title="Assign Vehicle">
+                  <i class="bi bi-truck"></i>
+                </button>
+
+                <button *ngIf="canComplete(request)" class="btn btn-outline-success"
+                        (click)="completeRequest(request)"
+                        [disabled]="isProcessing(request.id)"
+                        title="Mark as Completed">
+                  <i class="bi bi-check2-all"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredRequests.length === 0">
+            <td colspan="8" class="text-center py-4">
+              <div class="text-muted">
+                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                <p class="mt-2">No requests found</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="card-footer">
+      <nav aria-label="Requests pagination">
+        <ul class="pagination pagination-sm mb-0 justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">Previous</a>
+          </li>
+
+          <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+            <a class="page-link" href="javascript:void(0)" (click)="changePage(page)">{{ page }}</a>
+          </li>
+
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">Next</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Vehicle Modal -->
+<div class="modal fade" [class.show]="showAssignVehicleModal" [style.display]="showAssignVehicleModal ? 'block' : 'none'"
+     tabindex="-1" role="dialog" *ngIf="showAssignVehicleModal">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Assign Vehicle</h5>
+        <button type="button" class="btn-close" (click)="closeAssignVehicleModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="selectedRequest" class="alert alert-info">
+          <strong>Request #{{ selectedRequest.id }}</strong> - {{ selectedRequest.title }}<br>
+          Passengers: {{ selectedRequest.number_of_passengers }}
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="vehicleNumber" class="form-label">Vehicle Number <span class="text-danger">*</span></label>
+            <input type="text" id="vehicleNumber" class="form-control"
+                   [(ngModel)]="vehicleData.vehicle_number"
+                   placeholder="e.g., ABC 1234"
+                   required>
+          </div>
+
+          <div class="col-md-6">
+            <label for="vehicleType" class="form-label">Vehicle Type <span class="text-danger">*</span></label>
+            <select id="vehicleType" class="form-select" [(ngModel)]="vehicleData.vehicle_type" required>
+              <option *ngFor="let type of vehicleTypes" [value]="type.value">{{ type.label }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="vehicleCapacity" class="form-label">Vehicle Capacity <span class="text-danger">*</span></label>
+            <input type="number" id="vehicleCapacity" class="form-control"
+                   [(ngModel)]="vehicleData.vehicle_capacity"
+                   min="1"
+                   required>
+          </div>
+
+          <div class="col-md-6">
+            <label for="assignmentDate" class="form-label">Assignment Date <span class="text-danger">*</span></label>
+            <input type="date" id="assignmentDate" class="form-control"
+                   [(ngModel)]="vehicleData.assignment_date"
+                   required>
+          </div>
+
+          <div class="col-md-6">
+            <label for="driverName" class="form-label">Driver Name <span class="text-danger">*</span></label>
+            <input type="text" id="driverName" class="form-control"
+                   [(ngModel)]="vehicleData.driver_name"
+                   placeholder="Full name"
+                   required>
+          </div>
+
+          <div class="col-md-6">
+            <label for="driverContact" class="form-label">Driver Contact <span class="text-danger">*</span></label>
+            <input type="tel" id="driverContact" class="form-control"
+                   [(ngModel)]="vehicleData.driver_contact"
+                   placeholder="Phone number"
+                   required>
+          </div>
+
+          <div class="col-md-6">
+            <label for="driverLicense" class="form-label">Driver License Number</label>
+            <input type="text" id="driverLicense" class="form-control"
+                   [(ngModel)]="vehicleData.driver_license"
+                   placeholder="License number">
+          </div>
+
+          <div class="col-md-6">
+            <label for="odometerStart" class="form-label">Odometer Start (km)</label>
+            <input type="number" id="odometerStart" class="form-control"
+                   [(ngModel)]="vehicleData.odometer_start"
+                   placeholder="Starting odometer reading">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAssignVehicleModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="assignVehicle()"
+                [disabled]="processingId !== null || !vehicleData.vehicle_number || !vehicleData.driver_name || !vehicleData.driver_contact">
+          <span *ngIf="processingId === null">
+            <i class="bi bi-truck"></i> Assign Vehicle
+          </span>
+          <span *ngIf="processingId !== null" class="spinner-border spinner-border-sm"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showAssignVehicleModal" *ngIf="showAssignVehicleModal"></div>

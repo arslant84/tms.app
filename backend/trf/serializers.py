@@ -262,16 +262,18 @@ class TravelRequestCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TravelRequest
         fields = [
-            'requestor_name', 'staff_id', 'department', 'position',
-            'cost_center', 'tel_email', 'email', 'travel_type', 'purpose',
+            'id', 'requestor_name', 'staff_id', 'department', 'position',
+            'cost_center', 'tel_email', 'email', 'travel_type', 'status', 'purpose',
             'estimated_cost', 'additional_comments', 'external_full_name',
             'external_organization', 'external_ref_to_authority_letter',
             'external_cost_center', 'additional_data'
         ]
+        read_only_fields = ['id']
 
     def create(self, validated_data):
-        # Set default status to Draft
-        validated_data['status'] = 'Draft'
+        # Set default status to Draft only if status not provided
+        if 'status' not in validated_data:
+            validated_data['status'] = 'Draft'
         return super().create(validated_data)
 
 

@@ -73,7 +73,10 @@ export class TrfService {
       });
     }
 
-    return this.http.get<any>(`${this.apiUrl}/`, { params });
+    const url = `${this.apiUrl}/travel-requests/`;
+    console.log('📡 TRF Service: Calling API URL:', url, 'with params:', params.toString());
+
+    return this.http.get<any>(url, { params });
   }
 
   // Get a specific TRF by ID

@@ -1,1 +1,144 @@
-<p>visa-list works!</p>
+<div class="visa-list-container">
+  <div class="page-header">
+    <h2>Visa Applications</h2>
+    <button class="btn btn-primary" routerLink="/visa/new">
+      <i class="bi bi-plus-circle"></i> New Visa Application
+    </button>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card card mb-4">
+    <div class="card-body">
+      <div class="filters-grid">
+        <div class="form-group">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Search by name, destination, or passport number..."
+            (input)="onSearchChange($any($event.target).value)"
+            [value]="searchTerm"
+          />
+        </div>
+        <div class="form-group">
+          <select class="form-select" [(ngModel)]="filterStatus" (change)="onFilterChange()">
+            <option value="">All Statuses</option>
+            <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <select class="form-select" [(ngModel)]="filterVisaType" (change)="onFilterChange()">
+            <option value="">All Visa Types</option>
+            <option *ngFor="let type of visaTypes" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Applications List -->
+  <div class="card">
+    <div class="card-body">
+      <div *ngIf="isLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading visa applications...</p>
+      </div>
+
+      <div *ngIf="!isLoading && applications.length === 0" class="text-center py-5">
+        <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+        <p class="mt-3 text-muted">No visa applications found</p>
+        <button class="btn btn-primary" routerLink="/visa/new">
+          Create New Application
+        </button>
+      </div>
+
+      <div *ngIf="!isLoading && applications.length > 0" class="table-responsive">
+        <table class="table table-hover applications-table">
+          <thead>
+            <tr>
+              <th>Applicant</th>
+              <th>Destination</th>
+              <th>Visa Type</th>
+              <th>Travel Date</th>
+              <th>Submitted</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let app of applications" [routerLink]="['/visa', app.id]" class="clickable-row">
+              <td>
+                <div class="applicant-info">
+                  <strong>{{ app.requestor_name }}</strong>
+                  <small class="text-muted d-block" *ngIf="app.staff_id">{{ app.staff_id }}</small>
+                </div>
+              </td>
+              <td>{{ app.destination }}</td>
+              <td>
+                <span class="badge bg-secondary">{{ app.visa_type }}</span>
+              </td>
+              <td>{{ formatDate(app.trip_start_date) }}</td>
+              <td>{{ formatDate(app.submitted_date) }}</td>
+              <td>
+                <span class="badge" [ngClass]="getStatusBadgeClass(app.status)">
+                  {{ app.status }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button
+                    class="btn btn-sm btn-outline-primary"
+                    [routerLink]="['/visa', app.id, 'edit']"
+                    (click)="$event.stopPropagation()"
+                    title="Edit"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="deleteApplication(app.id, $event)"
+                    title="Delete"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="!isLoading && totalCount > pageSize" class="pagination-container">
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="onPageChange(currentPage - 1)" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <li
+              class="page-item"
+              *ngFor="let page of [].constructor(Math.ceil(totalCount / pageSize)); let i = index"
+              [class.active]="currentPage === i + 1"
+            >
+              <a class="page-link" (click)="onPageChange(i + 1)">{{ i + 1 }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === Math.ceil(totalCount / pageSize)">
+              <a class="page-link" (click)="onPageChange(currentPage + 1)" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="text-center mt-2 text-muted">
+          <small>
+            Showing {{ (currentPage - 1) * pageSize + 1 }} -
+            {{ Math.min(currentPage * pageSize, totalCount) }} of {{ totalCount }} applications
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

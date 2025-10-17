@@ -1,0 +1,171 @@
+<div class="transport-list-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-left">
+      <div class="title-with-icon">
+        <i class="bi bi-truck header-icon"></i>
+        <h1 class="page-title">Transport Requests</h1>
+      </div>
+      <p class="page-subtitle">Manage your transport bookings and requests</p>
+    </div>
+    <button class="btn btn-create" (click)="navigateToCreate()">
+      <i class="bi bi-plus-circle"></i>
+      New Transport Request
+    </button>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card">
+    <div class="filters-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-funnel"></i>
+        <h3 class="card-title">Filters</h3>
+      </div>
+      <p class="card-description">Filter and search transport requests</p>
+    </div>
+    <div class="filters-card-content">
+      <div class="filters-grid">
+        <div class="search-container">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search by title, purpose, or location..."
+            [value]="searchTerm"
+            (input)="onSearchChange($any($event.target).value)"
+          >
+        </div>
+        <div class="filter-container">
+          <select
+            class="filter-select"
+            [(ngModel)]="statusFilter"
+            (change)="onStatusFilterChange()"
+          >
+            <option value="">All Statuses</option>
+            <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Requests List Card -->
+  <div class="requests-list-card">
+    <div class="requests-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-list-ul"></i>
+        <h3 class="card-title">Transport Requests</h3>
+      </div>
+      <p class="card-description">Total: {{ totalRequests }} requests</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <i class="bi bi-arrow-clockwise spin-animation"></i>
+      <p>Loading transport requests...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-state">
+      <i class="bi bi-exclamation-triangle error-icon"></i>
+      <h3 class="error-title">Error Loading Requests</h3>
+      <p class="error-message">{{ error }}</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && requests.length === 0" class="empty-state">
+      <i class="bi bi-inbox empty-icon"></i>
+      <h3 class="empty-message">No transport requests found</h3>
+      <p class="empty-subtitle">Create your first transport request to get started</p>
+    </div>
+
+    <!-- Requests Table -->
+    <div *ngIf="!loading && !error && requests.length > 0" class="requests-card-content">
+      <table class="requests-table">
+        <thead>
+          <tr>
+            <th class="sortable-header" (click)="onSort('title')">
+              <button class="sort-button">
+                Title
+                <i class="bi bi-arrow-down-up"></i>
+              </button>
+            </th>
+            <th>Purpose</th>
+            <th>Transport Type</th>
+            <th class="sortable-header" (click)="onSort('number_of_passengers')">
+              <button class="sort-button">
+                Passengers
+                <i class="bi bi-arrow-down-up"></i>
+              </button>
+            </th>
+            <th class="sortable-header" (click)="onSort('estimated_cost')">
+              <button class="sort-button">
+                Est. Cost
+                <i class="bi bi-arrow-down-up"></i>
+              </button>
+            </th>
+            <th class="sortable-header" (click)="onSort('status')">
+              <button class="sort-button">
+                Status
+                <i class="bi bi-arrow-down-up"></i>
+              </button>
+            </th>
+            <th class="sortable-header" (click)="onSort('created_at')">
+              <button class="sort-button">
+                Created
+                <i class="bi bi-arrow-down-up"></i>
+              </button>
+            </th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let request of requests">
+            <td class="title-cell">{{ request.title }}</td>
+            <td class="purpose-cell">{{ request.purpose }}</td>
+            <td>{{ request.transport_type }}</td>
+            <td class="text-center">{{ request.number_of_passengers }}</td>
+            <td class="amount-cell">{{ formatCurrency(request.estimated_cost, request.currency) }}</td>
+            <td>
+              <span class="badge" [ngClass]="getStatusClass(request.status)">
+                {{ request.status }}
+              </span>
+            </td>
+            <td>{{ formatDate(request.created_at) }}</td>
+            <td>
+              <button class="btn btn-view" (click)="navigateToView(request.id)">
+                <i class="bi bi-eye"></i>
+                View
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination-section">
+        <span class="pagination-info">
+          Showing {{ startIndex }} to {{ endIndex }} of {{ totalRequests }} requests
+        </span>
+        <div class="pagination-controls">
+          <button
+            class="btn btn-sm btn-secondary"
+            (click)="previousPage()"
+            [disabled]="currentPage === 1"
+          >
+            <i class="bi bi-chevron-left"></i>
+            Previous
+          </button>
+          <span class="page-indicator">Page {{ currentPage }} of {{ totalPages }}</span>
+          <button
+            class="btn btn-sm btn-secondary"
+            (click)="nextPage()"
+            [disabled]="currentPage >= totalPages"
+          >
+            Next
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

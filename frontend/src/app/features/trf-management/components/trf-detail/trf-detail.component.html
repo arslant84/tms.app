@@ -1,1 +1,419 @@
-<p>trf-detail works!</p>
+<!-- TRF Detail View - Matching React Design -->
+<div class="trf-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading TRF details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <h3>Error Loading TRF</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="goBack()">Back to List</button>
+  </div>
+
+  <!-- TRF Details -->
+  <div *ngIf="trfData && !loading" class="trf-detail-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <button class="btn-back" (click)="goBack()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Back to List
+        </button>
+        <h1 class="page-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          {{ trfData.travelType }} Travel Request
+        </h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" (click)="onPrint()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+          </svg>
+          Print
+        </button>
+        <button class="btn btn-outline" (click)="onExportPdf()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Export PDF
+        </button>
+        <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          Edit
+        </button>
+        <button class="btn btn-warning" (click)="onCancel()" *ngIf="canCancel()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Cancel
+        </button>
+        <button class="btn btn-danger" (click)="onDelete()" *ngIf="canDelete()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Badge -->
+    <div class="status-bar">
+      <span class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span>
+      <span class="text-muted">TRF ID: #{{ trfData.id }}</span>
+    </div>
+
+    <!-- Main Card -->
+    <div class="detail-card">
+      <!-- Employee/External Party Details -->
+      <section class="detail-section">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+          {{ isExternal ? 'External Party Details' : 'Employee Details' }}
+        </h3>
+        <div class="detail-grid">
+          <ng-container *ngIf="isExternal">
+            <div class="detail-item">
+              <label>Full Name</label>
+              <p>{{ trfData.externalPartyName || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Organization</label>
+              <p>{{ trfData.externalPartyOrganization || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Authority Letter Ref.</label>
+              <p>{{ trfData.externalRefToAuthorityLetter || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Cost Center</label>
+              <p>{{ trfData.externalCostCenter || 'N/A' }}</p>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="!isExternal">
+            <div class="detail-item">
+              <label>Requestor Name</label>
+              <p>{{ trfData.requestorName || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Staff ID</label>
+              <p>{{ trfData.staffId || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Department & Position</label>
+              <p>{{ trfData.department || 'N/A' }}{{ trfData.position ? ' / ' + trfData.position : '' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Cost Center</label>
+              <p>{{ trfData.costCenter || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Tel/Email</label>
+              <p>{{ trfData.telEmail || 'N/A' }}</p>
+            </div>
+          </ng-container>
+        </div>
+      </section>
+
+      <!-- Purpose of Travel -->
+      <section class="detail-section" *ngIf="trfData.purpose">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Purpose of Travel
+        </h3>
+        <div class="purpose-text">
+          <p>{{ trfData.purpose }}</p>
+        </div>
+      </section>
+
+      <!-- Itinerary -->
+      <section class="detail-section" *ngIf="trfData.itinerary && trfData.itinerary.length > 0">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+          </svg>
+          Itinerary
+        </h3>
+        <div class="table-container">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Day</th>
+                <th>From</th>
+                <th>To</th>
+                <th>ETD</th>
+                <th>ETA</th>
+                <th>Flight/Class</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let segment of trfData.itinerary">
+                <td>{{ formatDate(segment.segment_date || segment.date) }}</td>
+                <td>{{ segment.day_of_week || segment.day || 'N/A' }}</td>
+                <td>{{ segment.from_location || segment.from || 'N/A' }}</td>
+                <td>{{ segment.to_location || segment.to || 'N/A' }}</td>
+                <td>{{ formatTime(segment.departure_time || segment.etd) }}</td>
+                <td>{{ formatTime(segment.arrival_time || segment.eta) }}</td>
+                <td>{{ segment.flight_number || segment.flightNumber || 'N/A' }}</td>
+                <td>{{ segment.remarks || 'N/A' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Meal Provision (Domestic) -->
+      <section class="detail-section" *ngIf="isDomestic && trfData.mealSelections && trfData.mealSelections.length > 0">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
+          Meal Provision (Kiyanly)
+        </h3>
+        <div class="table-container">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th class="text-center">Breakfast</th>
+                <th class="text-center">Lunch</th>
+                <th class="text-center">Dinner</th>
+                <th class="text-center">Supper</th>
+                <th class="text-center">Refreshment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let meal of trfData.mealSelections">
+                <td>{{ formatDate(meal.meal_date) }}</td>
+                <td class="text-center">{{ meal.breakfast ? '✓' : '—' }}</td>
+                <td class="text-center">{{ meal.lunch ? '✓' : '—' }}</td>
+                <td class="text-center">{{ meal.dinner ? '✓' : '—' }}</td>
+                <td class="text-center">{{ meal.supper ? '✓' : '—' }}</td>
+                <td class="text-center">{{ meal.refreshment ? '✓' : '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="meal-summary">
+          <h4>Summary Totals:</h4>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span>Breakfast</span>
+              <strong>{{ getMealTotal('breakfast') }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Lunch</span>
+              <strong>{{ getMealTotal('lunch') }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Dinner</span>
+              <strong>{{ getMealTotal('dinner') }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Supper</span>
+              <strong>{{ getMealTotal('supper') }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Refreshment</span>
+              <strong>{{ getMealTotal('refreshment') }}</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Accommodation (Domestic/External) -->
+      <section class="detail-section" *ngIf="trfData.accommodationDetails && trfData.accommodationDetails.length > 0">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+          Accommodation
+        </h3>
+        <div *ngFor="let acc of trfData.accommodationDetails; let i = index" class="sub-section">
+          <h4 class="sub-title">Entry {{ i + 1 }}</h4>
+          <div class="detail-grid">
+            <div class="detail-item" *ngIf="acc.accommodation_type || acc.accommodationType">
+              <label>Type</label>
+              <p>{{ acc.accommodation_type || acc.accommodationType }}</p>
+            </div>
+            <div class="detail-item" *ngIf="acc.check_in_date || acc.checkInDate">
+              <label>Check-in Date</label>
+              <p>{{ formatDate(acc.check_in_date || acc.checkInDate) }}</p>
+            </div>
+            <div class="detail-item" *ngIf="acc.check_out_date || acc.checkOutDate">
+              <label>Check-out Date</label>
+              <p>{{ formatDate(acc.check_out_date || acc.checkOutDate) }}</p>
+            </div>
+            <div class="detail-item" *ngIf="acc.location || acc.from_location">
+              <label>Location</label>
+              <p>{{ acc.location || acc.from_location || 'N/A' }}</p>
+            </div>
+            <div class="detail-item full-width" *ngIf="acc.remarks">
+              <label>Remarks</label>
+              <p>{{ acc.remarks }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Company Transportation (Domestic) -->
+      <section class="detail-section" *ngIf="isDomestic && trfData.transportDetails && trfData.transportDetails.length > 0">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+          </svg>
+          Company Transportation
+        </h3>
+        <div *ngFor="let transport of trfData.transportDetails; let i = index" class="sub-section">
+          <h4 class="sub-title">Request {{ i + 1 }}</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Date</label>
+              <p>{{ formatDate(transport.transport_date || transport.date) }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Day</label>
+              <p>{{ transport.day_of_week || transport.day || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>From</label>
+              <p>{{ transport.from_location || transport.from || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>To</label>
+              <p>{{ transport.to_location || transport.to || 'N/A' }}</p>
+            </div>
+            <div class="detail-item full-width" *ngIf="transport.remarks">
+              <label>Remarks</label>
+              <p>{{ transport.remarks }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Advance Request (Overseas/Home Leave) -->
+      <section class="detail-section" *ngIf="isOverseas && (trfData.bankDetails || trfData.advanceAmounts?.length > 0)">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
+          Advance Request
+        </h3>
+
+        <div class="sub-section" *ngIf="trfData.bankDetails">
+          <h4 class="sub-title">Bank Details</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Bank Name</label>
+              <p>{{ trfData.bankDetails.bank_name || trfData.bankDetails.bankName || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Account Number</label>
+              <p>{{ trfData.bankDetails.account_number || trfData.bankDetails.accountNumber || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-section" *ngIf="trfData.advanceAmounts && trfData.advanceAmounts.length > 0">
+          <h4 class="sub-title">Amount Requested Details</h4>
+          <div class="table-container">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>Date From</th>
+                  <th>Date To</th>
+                  <th class="text-right">LH</th>
+                  <th class="text-right">MA</th>
+                  <th class="text-right">OA</th>
+                  <th class="text-right">TR</th>
+                  <th class="text-right">OE</th>
+                  <th class="text-right">USD</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let amount of trfData.advanceAmounts">
+                  <td>{{ formatDate(amount.date_from || amount.dateFrom) }}</td>
+                  <td>{{ formatDate(amount.date_to || amount.dateTo) }}</td>
+                  <td class="text-right">{{ formatNumber(amount.lh) }}</td>
+                  <td class="text-right">{{ formatNumber(amount.ma) }}</td>
+                  <td class="text-right">{{ formatNumber(amount.oa) }}</td>
+                  <td class="text-right">{{ formatNumber(amount.tr) }}</td>
+                  <td class="text-right">{{ formatNumber(amount.oe) }}</td>
+                  <td class="text-right font-semibold">{{ formatNumber(amount.usd, 2) }}</td>
+                  <td>{{ amount.remarks || 'N/A' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="table-legend">LH: Lodging & Hotel | MA: Meals Allowance | OA: Other Allowance | TR: Transportation | OE: Other Expenses</p>
+        </div>
+      </section>
+
+      <!-- Additional Comments -->
+      <section class="detail-section" *ngIf="trfData.additionalComments">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Additional Comments
+        </h3>
+        <div class="purpose-text">
+          <p>{{ trfData.additionalComments }}</p>
+        </div>
+      </section>
+
+      <!-- Approval Workflow -->
+      <section class="detail-section" *ngIf="trfData.approvalSteps && trfData.approvalSteps.length > 0">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Approval Workflow
+        </h3>
+        <div class="approval-timeline">
+          <div *ngFor="let step of trfData.approvalSteps; let i = index" class="approval-step"
+               [ngClass]="{'completed': step.status === 'Approved', 'rejected': step.status === 'Rejected', 'pending': step.status === 'Pending'}">
+            <div class="step-icon">
+              <svg *ngIf="step.status === 'Approved'" class="icon-success" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <svg *ngIf="step.status === 'Rejected'" class="icon-error" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+              </svg>
+              <svg *ngIf="step.status === 'Pending'" class="icon-pending" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+              </svg>
+              <span *ngIf="!step.status">{{ i + 1 }}</span>
+            </div>
+            <div class="step-content">
+              <h4>{{ step.role || 'Unknown Role' }}</h4>
+              <p class="step-status">{{ step.status || 'Pending' }}</p>
+              <p class="step-date" *ngIf="step.approvedAt || step.rejectedAt">
+                {{ formatDate(step.approvedAt || step.rejectedAt) }}
+              </p>
+              <p class="step-comments" *ngIf="step.comments">{{ step.comments }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

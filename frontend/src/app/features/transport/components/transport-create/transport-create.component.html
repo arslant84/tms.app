@@ -1,0 +1,265 @@
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <div class="loading-spinner">
+    <i class="bi bi-arrow-clockwise spin-animation"></i>
+    <p>Loading request data...</p>
+  </div>
+</div>
+
+<!-- Page Header -->
+<div *ngIf="!loading" class="page-header-section">
+  <div class="header-left">
+    <button class="btn-back" (click)="onCancel()">
+      <i class="bi bi-arrow-left"></i>
+      Back to List
+    </button>
+    <h1 class="page-title">
+      <i class="bi bi-truck"></i>
+      {{ isEditMode ? 'Edit Transport Request' : 'Create New Transport Request' }}
+    </h1>
+  </div>
+</div>
+
+<div *ngIf="!loading" class="transport-create-container" [formGroup]="transportForm">
+  <div class="form-card">
+    <!-- Request Information -->
+    <section class="form-section">
+      <h3 class="section-title">
+        <i class="bi bi-info-circle"></i>
+        Request Information
+      </h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="title">Title <span class="required">*</span></label>
+          <input
+            type="text"
+            id="title"
+            class="form-control"
+            formControlName="title"
+            placeholder="Brief title for transport request"
+          >
+          <div class="error-message" *ngIf="transportForm.get('title')?.invalid && transportForm.get('title')?.touched">
+            Title is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="transport_type">Transport Type <span class="required">*</span></label>
+          <select id="transport_type" class="form-control" formControlName="transport_type">
+            <option value="">Select transport type</option>
+            <option *ngFor="let type of transportTypes" [value]="type">{{ type }}</option>
+          </select>
+          <div class="error-message" *ngIf="transportForm.get('transport_type')?.invalid && transportForm.get('transport_type')?.touched">
+            Transport type is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="number_of_passengers">Number of Passengers <span class="required">*</span></label>
+          <input
+            type="number"
+            id="number_of_passengers"
+            class="form-control"
+            formControlName="number_of_passengers"
+            min="1"
+          >
+          <div class="error-message" *ngIf="transportForm.get('number_of_passengers')?.invalid && transportForm.get('number_of_passengers')?.touched">
+            Number of passengers is required and must be at least 1
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="vehicle_type">Preferred Vehicle Type</label>
+          <input
+            type="text"
+            id="vehicle_type"
+            class="form-control"
+            formControlName="vehicle_type"
+            placeholder="e.g., Van, Bus, Sedan"
+          >
+        </div>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="purpose">Purpose <span class="required">*</span></label>
+        <textarea
+          id="purpose"
+          class="form-control"
+          formControlName="purpose"
+          rows="3"
+          placeholder="Describe the purpose of this transport request"
+        ></textarea>
+        <div class="error-message" *ngIf="transportForm.get('purpose')?.invalid && transportForm.get('purpose')?.touched">
+          Purpose is required
+        </div>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="passenger_names">Passenger Names (comma-separated)</label>
+        <textarea
+          id="passenger_names"
+          class="form-control"
+          formControlName="passenger_names"
+          rows="2"
+          placeholder="John Doe, Jane Smith, etc."
+        ></textarea>
+      </div>
+    </section>
+
+    <!-- Journey Segments -->
+    <section class="form-section">
+      <div class="section-header">
+        <h3 class="section-title">
+          <i class="bi bi-signpost-split"></i>
+          Journey Segments
+        </h3>
+        <button type="button" class="btn btn-sm btn-secondary" (click)="addSegment()">
+          <i class="bi bi-plus-circle"></i>
+          Add Segment
+        </button>
+      </div>
+
+      <div formArrayName="segments" class="segments-container">
+        <div *ngFor="let segment of segments.controls; let i = index" [formGroupName]="i" class="segment-card">
+          <div class="segment-header">
+            <h4>Segment {{ i + 1 }}</h4>
+            <button
+              type="button"
+              class="btn-remove"
+              (click)="removeSegment(i)"
+              *ngIf="segments.length > 1"
+            >
+              <i class="bi bi-x-circle"></i>
+              Remove
+            </button>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>From Location <span class="required">*</span></label>
+              <input type="text" class="form-control" formControlName="from_location" placeholder="Starting location">
+            </div>
+
+            <div class="form-group">
+              <label>To Location <span class="required">*</span></label>
+              <input type="text" class="form-control" formControlName="to_location" placeholder="Destination">
+            </div>
+
+            <div class="form-group">
+              <label>Departure Date <span class="required">*</span></label>
+              <input type="date" class="form-control" formControlName="departure_date">
+            </div>
+
+            <div class="form-group">
+              <label>Departure Time <span class="required">*</span></label>
+              <input type="time" class="form-control" formControlName="departure_time">
+            </div>
+
+            <div class="form-group">
+              <label>Arrival Date</label>
+              <input type="date" class="form-control" formControlName="arrival_date">
+            </div>
+
+            <div class="form-group">
+              <label>Arrival Time</label>
+              <input type="time" class="form-control" formControlName="arrival_time">
+            </div>
+
+            <div class="form-group">
+              <label>Distance (km)</label>
+              <input type="number" class="form-control" formControlName="distance_km" step="0.1">
+            </div>
+
+            <div class="form-group">
+              <label>Duration (hours)</label>
+              <input type="number" class="form-control" formControlName="estimated_duration_hours" step="0.1">
+            </div>
+
+            <div class="form-group full-width">
+              <label>Route Description</label>
+              <textarea class="form-control" formControlName="route_description" rows="2" placeholder="Detailed route information"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Segment Cost</label>
+              <input type="number" class="form-control" formControlName="segment_cost" step="0.01">
+            </div>
+
+            <div class="form-group">
+              <label>Remarks</label>
+              <input type="text" class="form-control" formControlName="remarks" placeholder="Additional notes for this segment">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cost & Additional Information -->
+    <section class="form-section">
+      <h3 class="section-title">
+        <i class="bi bi-calculator"></i>
+        Cost & Additional Information
+      </h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="estimated_cost">Estimated Total Cost</label>
+          <input
+            type="number"
+            id="estimated_cost"
+            class="form-control"
+            formControlName="estimated_cost"
+            step="0.01"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="currency">Currency</label>
+          <select id="currency" class="form-control" formControlName="currency">
+            <option value="USD">USD</option>
+            <option value="MYR">MYR</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="special_requirements">Special Requirements</label>
+        <textarea
+          id="special_requirements"
+          class="form-control"
+          formControlName="special_requirements"
+          rows="3"
+          placeholder="Any special requirements or considerations"
+        ></textarea>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="additional_comments">Additional Comments</label>
+        <textarea
+          id="additional_comments"
+          class="form-control"
+          formControlName="additional_comments"
+          rows="3"
+          placeholder="Any other information relevant to this request"
+        ></textarea>
+      </div>
+    </section>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-cancel" (click)="onCancel()" [disabled]="submitting">
+        <i class="bi bi-x-circle"></i>
+        Cancel
+      </button>
+      <button type="button" class="btn btn-draft" (click)="onSaveDraft()" [disabled]="submitting">
+        <i class="bi bi-save"></i>
+        {{ submitting ? 'Saving...' : 'Save Draft' }}
+      </button>
+      <button type="button" class="btn btn-submit" (click)="onSubmit()" [disabled]="submitting">
+        <i class="bi bi-send"></i>
+        {{ submitting ? 'Submitting...' : (isEditMode ? 'Update Request' : 'Submit Request') }}
+      </button>
+    </div>
+  </div>
+</div>

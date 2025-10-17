@@ -145,6 +145,11 @@ export class AuthService {
     return this.currentUser$;
   }
 
+  getCurrentUserId(): number | null {
+    const user = this.currentUserSubject.value;
+    return user?.id || null;
+  }
+
   hasRole(allowedRoles: UserRole[]): boolean {
     const user = this.currentUserSubject.value;
     if (!user) return false;

@@ -127,8 +127,8 @@ $transition-speed: 0.3s;
 .sidebar {
   width: $sidebar-width;
   height: 100%;
-  background: linear-gradient(180deg, $dark-color 0%, color.adjust($dark-color, $lightness: -10%) 100%);
-  color: white;
+  background: white;
+  color: var(--bs-body-color);
   transition: width $transition-speed ease;
   display: flex;
   flex-direction: column;
@@ -145,20 +145,20 @@ $transition-speed: 0.3s;
   }
   
   &::-webkit-scrollbar-thumb {
-    background-color: white;
+    background-color: var(--bs-gray-400);
     border-radius: 10px;
   }
-  
+
   .sidebar-header {
     height: $header-height;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 1rem;
-    border-bottom: 1px solid white;
+    border-bottom: 1px solid var(--bs-border-color);
     position: relative;
     z-index: 1005;
-    background-color: $dark-color;
+    background-color: white;
     
     .logo-container {
       display: flex;
@@ -176,18 +176,18 @@ $transition-speed: 0.3s;
       
       .logo-text {
         font-size: 1.25rem;
-        color: white;
+        color: var(--bs-primary);
         font-weight: 700;
         margin: 0;
         white-space: nowrap;
         transition: opacity $transition-speed ease, width $transition-speed ease;
       }
     }
-    
+
     .sidebar-toggle-btn {
       background: none;
       border: none;
-      color: white;
+      color: var(--bs-body-color);
       font-size: 1.5rem;
       cursor: pointer;
       display: none;
@@ -269,7 +269,11 @@ $transition-speed: 0.3s;
 
 // Footer Styles
 .footer-wrapper {
-  background-color: white;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   padding: 0.75rem 1.5rem;
   z-index: 10;
   width: 100%;
@@ -277,17 +281,17 @@ $transition-speed: 0.3s;
   flex-shrink: 0;
   display: flex;
   justify-content: center;
-  
+
   .main-footer {
     .footer-content {
       display: flex;
       justify-content: center;
       align-items: center;
       text-align: center;
-      
+
       p {
         margin: 0;
-        color: black;
+        color: rgba(0, 0, 0, 0.7);
         font-size: 0.875rem;
       }
       

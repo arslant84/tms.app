@@ -1,1 +1,329 @@
-<p>visa-form works!</p>
+<div class="visa-form-container">
+  <div class="page-header">
+    <h2>{{ isEditMode ? 'Edit' : 'New' }} Visa Application</h2>
+    <button class="btn btn-outline-secondary" routerLink="/visa">
+      <i class="bi bi-arrow-left"></i> Back to List
+    </button>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Step Progress Indicator -->
+  <div class="step-indicator mb-4" *ngIf="!isLoading">
+    <div class="step" *ngFor="let step of [1,2,3,4,5,6]"
+         [class.active]="currentStep === step"
+         [class.completed]="step < currentStep"
+         (click)="goToStep(step)">
+      <div class="step-number">{{ step }}</div>
+      <div class="step-label">
+        <span *ngIf="step === 1">Personal</span>
+        <span *ngIf="step === 2">Travel</span>
+        <span *ngIf="step === 3">Visa Info</span>
+        <span *ngIf="step === 4">Passport</span>
+        <span *ngIf="step === 5">Approval</span>
+        <span *ngIf="step === 6">Additional</span>
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="visaForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+
+    <!-- Step 1: Personal Information -->
+    <div class="card mb-4" *ngIf="currentStep === 1">
+      <div class="card-header">
+        <h5><i class="bi bi-person"></i> Personal Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Applicant Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="requestor_name" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Staff ID</label>
+            <input type="text" class="form-control" formControlName="staff_id">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" formControlName="email">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Contact Telephone</label>
+            <input type="text" class="form-control" formControlName="contact_telephone">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Department</label>
+            <input type="text" class="form-control" formControlName="department">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Position</label>
+            <input type="text" class="form-control" formControlName="position">
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Home Address</label>
+            <textarea class="form-control" formControlName="home_address" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Travel Details -->
+    <div class="card mb-4" *ngIf="currentStep === 2">
+      <div class="card-header">
+        <h5><i class="bi bi-airplane"></i> Travel Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Destination <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="destination" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Duration of Stay</label>
+            <input type="text" class="form-control" formControlName="duration_of_stay">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Trip Start Date</label>
+            <input type="date" class="form-control" formControlName="trip_start_date">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Trip End Date</label>
+            <input type="date" class="form-control" formControlName="trip_end_date">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Approximate Arrival Date</label>
+            <input type="date" class="form-control" formControlName="approximately_arrival_date">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">TRF Reference Number</label>
+            <input type="text" class="form-control" formControlName="trf_reference_number">
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Travel Purpose <span class="text-danger">*</span></label>
+            <textarea class="form-control" formControlName="travel_purpose" rows="3" required></textarea>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Itinerary Details</label>
+            <textarea class="form-control" formControlName="itinerary_details" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Visa Information -->
+    <div class="card mb-4" *ngIf="currentStep === 3">
+      <div class="card-header">
+        <h5><i class="bi bi-file-earmark-text"></i> Visa Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Visa Type <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="visa_type" required>
+              <option value="">Select Visa Type</option>
+              <option *ngFor="let type of visaTypes" [value]="type">{{ type }}</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Visa Entry Type</label>
+            <select class="form-select" formControlName="visa_entry_type">
+              <option value="">Select Entry Type</option>
+              <option *ngFor="let type of entryTypes" [value]="type">{{ type }}</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Work Visit Category</label>
+            <input type="text" class="form-control" formControlName="work_visit_category">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Request Type</label>
+            <input type="text" class="form-control" formControlName="request_type" readonly>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Passport Details -->
+    <div class="card mb-4" *ngIf="currentStep === 4">
+      <div class="card-header">
+        <h5><i class="bi bi-passport"></i> Passport & Personal Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Passport Number</label>
+            <input type="text" class="form-control" formControlName="passport_number">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Passport Expiry Date</label>
+            <input type="date" class="form-control" formControlName="passport_expiry_date">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Place of Issuance</label>
+            <input type="text" class="form-control" formControlName="passport_place_of_issuance">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Date of Issuance</label>
+            <input type="date" class="form-control" formControlName="passport_date_of_issuance">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Date of Birth</label>
+            <input type="date" class="form-control" formControlName="date_of_birth">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Place of Birth</label>
+            <input type="text" class="form-control" formControlName="place_of_birth">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Citizenship</label>
+            <input type="text" class="form-control" formControlName="citizenship">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Marital Status</label>
+            <select class="form-select" formControlName="marital_status">
+              <option value="">Select Status</option>
+              <option *ngFor="let status of maritalStatuses" [value]="status">{{ status }}</option>
+            </select>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Family Information</label>
+            <textarea class="form-control" formControlName="family_information" rows="3"></textarea>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Education Details</label>
+            <textarea class="form-control" formControlName="education_details" rows="3"></textarea>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Current Employer Name</label>
+            <input type="text" class="form-control" formControlName="current_employer_name">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Current Employer Address</label>
+            <input type="text" class="form-control" formControlName="current_employer_address">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: Approval Information -->
+    <div class="card mb-4" *ngIf="currentStep === 5">
+      <div class="card-header">
+        <h5><i class="bi bi-check-circle"></i> Approval Information</h5>
+      </div>
+      <div class="card-body">
+        <h6 class="mb-3">Line Focal Person</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" formControlName="line_focal_person">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Department</label>
+            <input type="text" class="form-control" formControlName="line_focal_dept">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Contact</label>
+            <input type="text" class="form-control" formControlName="line_focal_contact">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" formControlName="line_focal_date">
+          </div>
+        </div>
+
+        <h6 class="mb-3 mt-4">Sponsoring Department Head</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" formControlName="sponsoring_dept_head">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Department</label>
+            <input type="text" class="form-control" formControlName="sponsoring_dept_head_dept">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Contact</label>
+            <input type="text" class="form-control" formControlName="sponsoring_dept_head_contact">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" formControlName="sponsoring_dept_head_date">
+          </div>
+        </div>
+
+        <h6 class="mb-3 mt-4">CEO Approval</h6>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" formControlName="ceo_approval_name">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" formControlName="ceo_approval_date">
+          </div>
+        </div>
+
+        <h6 class="mb-3 mt-4">Cost Information</h6>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Application Fees Borne By</label>
+            <input type="text" class="form-control" formControlName="application_fees_borne_by">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Cost Centre Number</label>
+            <input type="text" class="form-control" formControlName="cost_centre_number">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 6: Additional Information -->
+    <div class="card mb-4" *ngIf="currentStep === 6">
+      <div class="card-header">
+        <h5><i class="bi bi-chat-left-text"></i> Additional Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-12 mb-3">
+            <label class="form-label">Additional Comments</label>
+            <textarea class="form-control" formControlName="additional_comments" rows="4"></textarea>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Supporting Documents Notes</label>
+            <textarea class="form-control" formControlName="supporting_documents_notes" rows="4"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="form-actions">
+      <div class="step-navigation">
+        <button type="button" class="btn btn-outline-secondary" (click)="previousStep()"
+                *ngIf="currentStep > 1" [disabled]="isSubmitting">
+          <i class="bi bi-arrow-left"></i> Previous
+        </button>
+        <button type="button" class="btn btn-primary" (click)="nextStep()"
+                *ngIf="currentStep < totalSteps" [disabled]="isSubmitting">
+          Next <i class="bi bi-arrow-right"></i>
+        </button>
+      </div>
+
+      <div class="form-buttons" *ngIf="currentStep === totalSteps">
+        <button type="button" class="btn btn-outline-secondary" (click)="onCancel()" [disabled]="isSubmitting">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-outline-primary" (click)="onSaveDraft()" [disabled]="isSubmitting">
+          <i class="bi bi-save"></i> Save Draft
+        </button>
+        <button type="submit" class="btn btn-success" [disabled]="isSubmitting">
+          <i class="bi bi-check-circle"></i> {{ isSubmitting ? 'Submitting...' : 'Submit Application' }}
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

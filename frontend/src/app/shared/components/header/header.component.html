@@ -56,7 +56,7 @@
         <span>Accommodation</span>
       </a>
       <a
-        routerLink="/claims"
+        routerLink="/expenses"
         routerLinkActive="active"
         class="nav-link">
         <i class="bi bi-receipt"></i>
@@ -64,8 +64,77 @@
       </a>
     </nav>
 
-    <!-- Right Section: User Menu -->
+    <!-- Right Section: Notifications + User Menu -->
     <div class="header-right">
+      <!-- Notifications Bell -->
+      <div class="notifications-dropdown dropdown" *ngIf="currentUser$ | async">
+        <button
+          class="notification-button"
+          type="button"
+          id="notificationsDropdown"
+          aria-expanded="false"
+          (click)="toggleNotificationsDropdown($event)">
+          <i class="bi bi-bell"></i>
+          <span class="notification-badge" *ngIf="(notificationCount$ | async) as count">
+            {{ count > 99 ? '99+' : count }}
+          </span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end notifications-menu" aria-labelledby="notificationsDropdown">
+          <li class="dropdown-header">
+            <div class="notifications-header">
+              <span class="fw-bold">Notifications</span>
+              <button
+                class="btn btn-link btn-sm text-decoration-none p-0"
+                (click)="markAllAsRead($event)"
+                *ngIf="(notificationCount$ | async) as count">
+                Mark all read
+              </button>
+            </div>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+
+          <!-- Notification Items -->
+          <ng-container *ngIf="notifications.length > 0; else noNotifications">
+            <li *ngFor="let notification of notifications">
+              <a
+                class="dropdown-item notification-item"
+                [class.unread]="!notification.is_read"
+                (click)="onNotificationClick(notification)"
+                href="javascript:void(0)">
+                <div class="notification-content">
+                  <div class="notification-icon">
+                    <i [class]="getNotificationIcon(notification.priority)"></i>
+                  </div>
+                  <div class="notification-body">
+                    <div class="notification-title">{{ notification.title }}</div>
+                    <div class="notification-message">{{ notification.message }}</div>
+                    <div class="notification-time">{{ getTimeAgo(notification.created_at) }}</div>
+                  </div>
+                  <div class="notification-indicator" *ngIf="!notification.is_read">
+                    <span class="unread-dot"></span>
+                  </div>
+                </div>
+              </a>
+            </li>
+          </ng-container>
+
+          <ng-template #noNotifications>
+            <li class="dropdown-item text-center text-muted py-3">
+              <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+              No new notifications
+            </li>
+          </ng-template>
+
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item text-center text-primary" (click)="viewAllNotifications($event)" href="javascript:void(0)">
+              View All Notifications
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- User Menu -->
       <div class="user-menu" *ngIf="currentUser$ | async as user; else loginButton">
         <div class="dropdown">
           <button

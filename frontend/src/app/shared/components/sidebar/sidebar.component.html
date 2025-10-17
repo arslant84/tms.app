@@ -2,96 +2,107 @@
 <div class="sidebar-container">
   <!-- Navigation Menu -->
   <nav class="nav-menu">
-    <!-- Main Navigation Items -->
+    <!-- Reports (For users with reporting permissions) -->
     <a
-      routerLink="/dashboard"
+      *ngIf="hasReportPermissions"
+      routerLink="/admin/reports"
       routerLinkActive="active"
-      [routerLinkActiveOptions]="{exact: true}"
       class="nav-item"
-      [attr.title]="'Dashboard'">
-      <i class="bi bi-house"></i>
-      <span class="nav-label">Dashboard</span>
+      [attr.title]="'Reports'">
+      <i class="bi bi-bar-chart"></i>
+      <span class="nav-label">Reports</span>
     </a>
 
+    <!-- Flights Admin -->
     <a
-      routerLink="/trf"
+      *ngIf="hasFlightsAdminPermission"
+      routerLink="/admin/flights"
       routerLinkActive="active"
       class="nav-item"
-      [attr.title]="'Travel Requests'">
-      <i class="bi bi-file-text"></i>
-      <span class="nav-label">Travel Requests</span>
+      [attr.title]="'Flights Admin'">
+      <i class="bi bi-airplane"></i>
+      <span class="nav-label">Flights Admin</span>
     </a>
 
+    <!-- Accommodation Admin -->
     <a
-      routerLink="/transport"
+      *ngIf="hasAccommodationAdminPermission"
+      routerLink="/admin/accommodation"
       routerLinkActive="active"
       class="nav-item"
-      [attr.title]="'Transport Requests'">
-      <i class="bi bi-truck"></i>
-      <span class="nav-label">Transport Requests</span>
-    </a>
-
-    <a
-      routerLink="/visa"
-      routerLinkActive="active"
-      class="nav-item"
-      [attr.title]="'Visa Applications'">
-      <i class="bi bi-file-earmark-text"></i>
-      <span class="nav-label">Visa Applications</span>
-    </a>
-
-    <a
-      routerLink="/accommodation"
-      routerLinkActive="active"
-      class="nav-item"
-      [attr.title]="'Accommodation Requests'">
+      [attr.title]="'Accommodation Admin'">
       <i class="bi bi-building"></i>
-      <span class="nav-label">Accommodation Requests</span>
+      <span class="nav-label">Accommodation Admin</span>
     </a>
 
+    <!-- Visa Admin -->
     <a
-      routerLink="/claims"
+      *ngIf="hasVisaAdminPermission"
+      routerLink="/admin/visa"
       routerLinkActive="active"
       class="nav-item"
-      [attr.title]="'Expense Claims'">
-      <i class="bi bi-receipt"></i>
-      <span class="nav-label">Expense Claims</span>
+      [attr.title]="'Visa Admin'">
+      <i class="bi bi-file-text"></i>
+      <span class="nav-label">Visa Admin</span>
     </a>
 
-    <!-- Admin Items (Conditional) -->
-    <ng-container *ngIf="hasApprovalPermissions || hasAdminPermissions">
-      <div class="nav-divider"></div>
+    <!-- Claims Admin -->
+    <a
+      *ngIf="hasClaimsAdminPermission"
+      routerLink="/admin/claims"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'Claims Admin'">
+      <i class="bi bi-file-text"></i>
+      <span class="nav-label">Claims Admin</span>
+    </a>
 
-      <a
-        *ngIf="hasApprovalPermissions"
-        routerLink="/approvals"
-        routerLinkActive="active"
-        class="nav-item"
-        [attr.title]="'Approvals'">
-        <i class="bi bi-check-square"></i>
-        <span class="nav-label">Approvals</span>
-        <span class="nav-badge" *ngIf="pendingApprovals > 0">{{ pendingApprovals }}</span>
-      </a>
+    <!-- Transport Admin -->
+    <a
+      *ngIf="hasTransportAdminPermission"
+      routerLink="/admin/transport"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'Transport Admin'">
+      <i class="bi bi-truck"></i>
+      <span class="nav-label">Transport Admin</span>
+    </a>
 
-      <a
-        *ngIf="hasAdminPermissions"
-        routerLink="/admin/clerk-panel"
-        routerLinkActive="active"
-        class="nav-item"
-        [attr.title]="'Clerk Panel'">
-        <i class="bi bi-people"></i>
-        <span class="nav-label">Clerk Panel</span>
-      </a>
+    <!-- Approvals Queue -->
+    <a
+      *ngIf="hasApprovalPermissions"
+      routerLink="/admin/approvals"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'Approvals'">
+      <i class="bi bi-check-square"></i>
+      <span class="nav-label">Approvals</span>
+      <span class="nav-badge" *ngIf="pendingApprovals > 0">{{ pendingApprovals }}</span>
+    </a>
 
-      <a
-        *ngIf="hasAdminPermissions"
-        routerLink="/admin/reports"
-        routerLinkActive="active"
-        class="nav-item"
-        [attr.title]="'Reports'">
-        <i class="bi bi-bar-chart"></i>
-        <span class="nav-label">Reports</span>
-      </a>
-    </ng-container>
+    <!-- User Management (Admin only) -->
+    <a
+      *ngIf="hasAdminPermissions"
+      routerLink="/users/admin"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'User Management'">
+      <i class="bi bi-people"></i>
+      <span class="nav-label">User Management</span>
+    </a>
   </nav>
+
+  <!-- Footer Section -->
+  <div class="sidebar-footer">
+    <!-- System Settings (Admin only) -->
+    <a
+      *ngIf="hasAdminPermissions"
+      routerLink="/admin/settings"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'System Settings'">
+      <i class="bi bi-gear"></i>
+      <span class="nav-label">System Settings</span>
+    </a>
+  </div>
 </div>

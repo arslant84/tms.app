@@ -156,13 +156,13 @@ export class VisaRequestComponent implements OnInit {
   submitRequest(): void {
     if (this.visaForm.valid) {
       this.isSubmitting = true;
-      this.visaService.create(this.visaForm.value).subscribe({
+      this.visaService.createApplication(this.visaForm.value).subscribe({
         next: () => {
           console.log('Visa request submitted:', this.visaForm.value);
           this.clearDraft();
           this.isSubmitting = false;
-          this.router.navigate(['/requests/success'], { 
-            state: { message: 'Visa request submitted successfully!' } 
+          this.router.navigate(['/requests/success'], {
+            state: { message: 'Visa request submitted successfully!' }
           });
         },
         error: (error) => {

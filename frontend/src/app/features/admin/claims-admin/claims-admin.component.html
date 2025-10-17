@@ -1,0 +1,237 @@
+<div class="claims-admin-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Claims Administration</h1>
+      <p class="page-subtitle">Manage and process expense claims</p>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="statusFilter" class="form-label">Status</label>
+          <select id="statusFilter" class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
+            <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label for="searchFilter" class="form-label">Search</label>
+          <input type="text" class="form-control" id="searchFilter" placeholder="Staff name or number..."
+                 [(ngModel)]="filterCriteria.search" (keyup.enter)="applyFilters()">
+        </div>
+
+        <div class="col-md-2">
+          <label for="dateFrom" class="form-label">Date From</label>
+          <input type="date" class="form-control" id="dateFrom" [(ngModel)]="filterCriteria.dateFrom">
+        </div>
+
+        <div class="col-md-2">
+          <label for="dateTo" class="form-label">Date To</label>
+          <input type="date" class="form-control" id="dateTo" [(ngModel)]="filterCriteria.dateTo">
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn btn-primary w-100 me-2" (click)="applyFilters()">
+            <i class="bi bi-search"></i> Search
+          </button>
+          <button class="btn btn-outline-secondary" (click)="resetFilters()" title="Reset Filters">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading claims...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadClaims()">
+      <i class="bi bi-arrow-clockwise"></i> Retry
+    </button>
+  </div>
+
+  <!-- Claims Table -->
+  <div *ngIf="!loading && !error" class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span class="fw-bold">Expense Claims ({{ totalClaims }})</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Claim #</th>
+            <th>Staff</th>
+            <th>Department</th>
+            <th>Purpose</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let claim of filteredClaims">
+            <td>
+              <a href="javascript:void(0)" (click)="viewClaim(claim)" class="text-decoration-none">
+                #{{ claim.id }}
+              </a>
+            </td>
+            <td>
+              <div class="fw-medium">{{ claim.staff_name }}</div>
+              <small class="text-muted">{{ claim.staff_no }}</small>
+            </td>
+            <td>{{ claim.department_code || 'N/A' }}</td>
+            <td>
+              <div class="text-truncate" style="max-width: 200px;" [title]="claim.purpose_of_claim">
+                {{ claim.purpose_of_claim }}
+              </div>
+            </td>
+            <td class="fw-medium">{{ formatCurrency(claim.total_advance_claim_amount) }}</td>
+            <td>
+              <span [ngClass]="getStatusClass(claim.status)">{{ claim.status }}</span>
+            </td>
+            <td>{{ formatDate(claim.submitted_at) }}</td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-primary" (click)="viewClaim(claim)" title="View Details">
+                  <i class="bi bi-eye"></i>
+                </button>
+
+                <button *ngIf="canApprove(claim)" class="btn btn-outline-success"
+                        (click)="approveClaim(claim)"
+                        [disabled]="isProcessing(claim.id)"
+                        title="Approve Claim">
+                  <span *ngIf="!isProcessing(claim.id)">
+                    <i class="bi bi-check-circle"></i>
+                  </span>
+                  <span *ngIf="isProcessing(claim.id)" class="spinner-border spinner-border-sm"></span>
+                </button>
+
+                <button *ngIf="canApprove(claim)" class="btn btn-outline-danger"
+                        (click)="rejectClaim(claim)"
+                        [disabled]="isProcessing(claim.id)"
+                        title="Reject Claim">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+
+                <button *ngIf="canMarkAsPaid(claim)" class="btn btn-outline-info"
+                        (click)="openMarkAsPaidModal(claim)"
+                        [disabled]="isProcessing(claim.id)"
+                        title="Mark as Paid">
+                  <i class="bi bi-currency-dollar"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredClaims.length === 0">
+            <td colspan="8" class="text-center py-4">
+              <div class="text-muted">
+                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                <p class="mt-2">No claims found</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="card-footer">
+      <nav aria-label="Claims pagination">
+        <ul class="pagination pagination-sm mb-0 justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">Previous</a>
+          </li>
+
+          <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+            <a class="page-link" href="javascript:void(0)" (click)="changePage(page)">{{ page }}</a>
+          </li>
+
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">Next</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Mark as Paid Modal -->
+<div class="modal fade" [class.show]="showMarkAsPaidModal" [style.display]="showMarkAsPaidModal ? 'block' : 'none'"
+     tabindex="-1" role="dialog" *ngIf="showMarkAsPaidModal">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Mark Claim as Paid</h5>
+        <button type="button" class="btn-close" (click)="closeMarkAsPaidModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="selectedClaim" class="alert alert-info">
+          <strong>Claim #{{ selectedClaim.id }}</strong><br>
+          Staff: {{ selectedClaim.staff_name }} ({{ selectedClaim.staff_no }})<br>
+          Amount: {{ formatCurrency(selectedClaim.total_advance_claim_amount) }}
+        </div>
+
+        <div class="mb-3">
+          <label for="paymentMethod" class="form-label">Payment Method <span class="text-danger">*</span></label>
+          <select id="paymentMethod" class="form-select" [(ngModel)]="paymentData.payment_method" required>
+            <option value="CHEQUE">Cheque</option>
+            <option value="BANK_TRANSFER">Bank Transfer</option>
+            <option value="CASH">Cash</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="chequeReceiptNo" class="form-label">
+            Payment Reference / Cheque No <span class="text-danger">*</span>
+          </label>
+          <input type="text" id="chequeReceiptNo" class="form-control"
+                 [(ngModel)]="paymentData.cheque_receipt_no"
+                 placeholder="Enter cheque number or payment reference"
+                 required>
+        </div>
+
+        <div class="mb-3">
+          <label for="paymentDate" class="form-label">Payment Date <span class="text-danger">*</span></label>
+          <input type="date" id="paymentDate" class="form-control"
+                 [(ngModel)]="paymentData.payment_date"
+                 required>
+        </div>
+
+        <div class="mb-3">
+          <label for="paymentComments" class="form-label">Comments (Optional)</label>
+          <textarea id="paymentComments" class="form-control" rows="3"
+                    [(ngModel)]="paymentData.comments"
+                    placeholder="Add any additional notes..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeMarkAsPaidModal()">Cancel</button>
+        <button type="button" class="btn btn-success" (click)="markAsPaid()"
+                [disabled]="processingId !== null || !paymentData.cheque_receipt_no || !paymentData.payment_date">
+          <span *ngIf="processingId === null">
+            <i class="bi bi-check-circle"></i> Mark as Paid
+          </span>
+          <span *ngIf="processingId !== null" class="spinner-border spinner-border-sm"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showMarkAsPaidModal" *ngIf="showMarkAsPaidModal"></div>

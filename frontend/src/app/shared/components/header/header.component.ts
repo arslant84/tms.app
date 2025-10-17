@@ -1,18 +1,10 @@
-import { Component, OnInit, Output, EventEmitter, HostListener } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { Observable, map } from 'rxjs';
+import { RouterModule, Router } from '@angular/router';
+import { Observable, map, Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { User, UserRole } from '../../../core/models/user.model';
-
-interface Notification {
-  id: number;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'danger';
-  time: Date;
-  read: boolean;
-  link: string;
-}
+import { NotificationService, UserNotification } from '../../../features/notifications/services/notification.service';
 
 @Component({
   selector: 'app-header',
@@ -21,30 +13,50 @@ interface Notification {
   standalone: true,
   imports: [CommonModule, RouterModule]
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
   isCollapsed = true;
   currentUser$: Observable<User | null>;
   isAdmin$: Observable<boolean>;
-  notifications: Notification[] = [];
-  notificationCount = 0;
+  notifications: UserNotification[] = [];
+  notificationCount$: Observable<number>;
   isNotificationsOpen = false;
   isProfileOpen = false;
-  
+
+  private destroy$ = new Subject<void>();
+
   @Output() toggleSidebarEvent = new EventEmitter<void>();
 
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private notificationService: NotificationService,
+    private router: Router
+  ) {
     this.currentUser$ = this.authService.currentUser$;
     this.isAdmin$ = this.currentUser$.pipe(
       map(user => user?.is_admin === true)
     );
+    this.notificationCount$ = this.notificationService.unreadCount$;
   }
 
   ngOnInit(): void {
-    // Mock notifications for demonstration
-    this.loadNotifications();
-    
+    // Initialize notification service
+    this.notificationService.initialize();
+
+    // Subscribe to notifications updates
+    this.notificationService.notifications$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(notifications => {
+        // Only show first 5 recent notifications in dropdown
+        this.notifications = notifications.slice(0, 5);
+      });
+
     // Add click event listener to close dropdowns when clicking outside
     this.setupClickOutsideListener();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
   
   /**
@@ -85,80 +97,86 @@ export class HeaderComponent implements OnInit {
   }
   
   /**
-   * Load notifications from service
-   * This is a mock implementation - would be replaced with actual API call
+   * Mark a notification as read and navigate to its action URL
    */
-  loadNotifications(): void {
-    // Mock data - in a real app, this would come from a service
-    this.notifications = [
-      {
-        id: 1,
-        message: 'Your travel request TRF-2025-001 has been approved',
-        type: 'success',
-        time: new Date(),
-        read: false,
-        link: '/trf/view/1'
-      },
-      {
-        id: 2,
-        message: 'New expense claim requires your approval',
-        type: 'info',
-        time: new Date(Date.now() - 3600000), // 1 hour ago
-        read: false,
-        link: '/approvals/pending'
-      },
-      {
-        id: 3,
-        message: 'Your flight booking has been confirmed',
-        type: 'info',
-        time: new Date(Date.now() - 86400000), // 1 day ago
-        read: true,
-        link: '/booking/view/1'
+  onNotificationClick(notification: UserNotification): void {
+    if (!notification.is_read) {
+      this.notificationService.markAsRead(notification.id).subscribe({
+        next: () => {
+          // Navigate to action URL if provided
+          if (notification.action_url) {
+            this.router.navigate([notification.action_url]);
+          }
+          this.isNotificationsOpen = false;
+        },
+        error: (err) => {
+          console.error('Error marking notification as read:', err);
+        }
+      });
+    } else {
+      // Just navigate if already read
+      if (notification.action_url) {
+        this.router.navigate([notification.action_url]);
       }
-    ];
-    
-    this.updateNotificationCount();
-  }
-  
-  /**
-   * Update the notification count badge
-   */
-  updateNotificationCount(): void {
-    this.notificationCount = this.notifications.filter(n => !n.read).length;
-  }
-  
-  /**
-   * Mark a notification as read
-   */
-  markAsRead(id: number): void {
-    const notification = this.notifications.find(n => n.id === id);
-    if (notification) {
-      notification.read = true;
-      this.updateNotificationCount();
+      this.isNotificationsOpen = false;
     }
   }
-  
+
   /**
-   * Get the appropriate icon for notification type
+   * Mark all notifications as read
    */
-  getNotificationIcon(type: string): string {
-    switch (type) {
-      case 'success': return 'bi-check-circle-fill';
-      case 'warning': return 'bi-exclamation-triangle-fill';
-      case 'danger': return 'bi-x-circle-fill';
-      case 'info':
-      default: return 'bi-info-circle-fill';
-    }
+  markAllAsRead(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.notificationService.markAllAsRead().subscribe({
+      next: () => {
+        console.log('All notifications marked as read');
+      },
+      error: (err) => {
+        console.error('Error marking all as read:', err);
+      }
+    });
   }
-  
+
   /**
-   * View all notifications
+   * Navigate to notifications page
    */
   viewAllNotifications(event: Event): void {
     event.preventDefault();
-    // Navigate to notifications page or mark all as read
-    this.notifications.forEach(n => n.read = true);
-    this.updateNotificationCount();
+    event.stopPropagation();
+    this.router.navigate(['/notifications']);
+    this.isNotificationsOpen = false;
+  }
+
+  /**
+   * Get the appropriate icon for notification priority
+   */
+  getNotificationIcon(priority: string): string {
+    switch (priority) {
+      case 'urgent': return 'bi-exclamation-triangle-fill text-danger';
+      case 'high': return 'bi-exclamation-circle-fill text-warning';
+      case 'normal': return 'bi-info-circle-fill text-info';
+      case 'low':
+      default: return 'bi-bell-fill text-secondary';
+    }
+  }
+
+  /**
+   * Get formatted time difference
+   */
+  getTimeAgo(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
   }
   
   /**

@@ -60,24 +60,49 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   // Check if user has approval permissions
   get hasApprovalPermissions(): boolean {
-    // Use the enum values from UserRole
-    return this.userRole === UserRole.FOCAL || 
-           this.userRole === UserRole.HOD || 
-           this.userRole === UserRole.ADMIN || 
-           this.userRole === 'admin' || // Fallback for string values
-           this.userRole === 'focal' || 
+    return this.userRole === UserRole.FOCAL ||
+           this.userRole === UserRole.HOD ||
+           this.userRole === UserRole.ADMIN ||
+           this.userRole === 'admin' ||
+           this.userRole === 'focal' ||
            this.userRole === 'hod';
   }
 
-  // Check if user has admin permissions
+  // Check if user has admin permissions (general)
   get hasAdminPermissions(): boolean {
-    // Use the enum values from UserRole
-    return this.userRole === UserRole.ADMIN || 
-           this.userRole === UserRole.TICKETING_CLERK || 
-           this.userRole === 'admin' || // Fallback for string values
+    return this.userRole === UserRole.ADMIN ||
+           this.userRole === UserRole.TICKETING_CLERK ||
+           this.userRole === 'admin' ||
            this.userRole === 'ticketing_clerk';
   }
-  
+
+  // Individual module admin permissions
+  get hasFlightsAdminPermission(): boolean {
+    // For now, use admin role. TODO: Implement permission-based checks
+    return this.hasAdminPermissions;
+  }
+
+  get hasAccommodationAdminPermission(): boolean {
+    return this.hasAdminPermissions;
+  }
+
+  get hasVisaAdminPermission(): boolean {
+    return this.hasAdminPermissions;
+  }
+
+  get hasClaimsAdminPermission(): boolean {
+    return this.hasAdminPermissions;
+  }
+
+  get hasTransportAdminPermission(): boolean {
+    return this.hasAdminPermissions;
+  }
+
+  get hasReportPermissions(): boolean {
+    // Reports accessible to HOD, Focal, and Admins
+    return this.hasApprovalPermissions || this.hasAdminPermissions;
+  }
+
   // Get user name safely
   getUserName(): string {
     return this.currentUser?.name || 'User';

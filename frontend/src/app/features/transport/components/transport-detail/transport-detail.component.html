@@ -1,0 +1,230 @@
+<div class="transport-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading transport request details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <i class="bi bi-exclamation-triangle error-icon"></i>
+    <h3>Error Loading Request</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="goBack()">Back to List</button>
+  </div>
+
+  <!-- Request Details -->
+  <div *ngIf="request && !loading" class="transport-detail-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <button class="btn-back" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i>
+          Back to List
+        </button>
+        <h1 class="page-title">
+          <i class="bi bi-truck"></i>
+          Transport Request Details
+        </h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" (click)="onPrint()">
+          <i class="bi bi-printer"></i>
+          Print
+        </button>
+        <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
+          <i class="bi bi-pencil"></i>
+          Edit
+        </button>
+        <button class="btn btn-warning" (click)="onCancel()" *ngIf="canCancel()">
+          <i class="bi bi-x-circle"></i>
+          Cancel
+        </button>
+        <button class="btn btn-danger" (click)="onDelete()" *ngIf="canDelete()">
+          <i class="bi bi-trash"></i>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Badge -->
+    <div class="status-bar">
+      <span class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span>
+      <span class="text-muted">Created: {{ formatDate(request.created_at) }}</span>
+    </div>
+
+    <!-- Main Card -->
+    <div class="detail-card">
+      <!-- Request Information -->
+      <section class="detail-section">
+        <h3 class="section-title">
+          <i class="bi bi-info-circle"></i>
+          Request Information
+        </h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Title</label>
+            <p>{{ request.title || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Transport Type</label>
+            <p>{{ request.transport_type || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Number of Passengers</label>
+            <p>{{ request.number_of_passengers || 0 }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Estimated Cost</label>
+            <p>{{ formatCurrency(request.estimated_cost, request.currency) }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Purpose -->
+      <section class="detail-section">
+        <h3 class="section-title">
+          <i class="bi bi-file-text"></i>
+          Purpose
+        </h3>
+        <div class="purpose-text">
+          <p>{{ request.purpose || 'N/A' }}</p>
+        </div>
+      </section>
+
+      <!-- Passenger Names -->
+      <section class="detail-section" *ngIf="request.passenger_names">
+        <h3 class="section-title">
+          <i class="bi bi-people"></i>
+          Passengers
+        </h3>
+        <div class="purpose-text">
+          <p>{{ request.passenger_names }}</p>
+        </div>
+      </section>
+
+      <!-- Vehicle & Requirements -->
+      <section class="detail-section" *ngIf="request.vehicle_type || request.special_requirements">
+        <h3 class="section-title">
+          <i class="bi bi-car-front"></i>
+          Vehicle & Requirements
+        </h3>
+        <div class="detail-grid">
+          <div class="detail-item" *ngIf="request.vehicle_type">
+            <label>Vehicle Type</label>
+            <p>{{ request.vehicle_type }}</p>
+          </div>
+        </div>
+        <div *ngIf="request.special_requirements" class="purpose-text">
+          <label>Special Requirements</label>
+          <p>{{ request.special_requirements }}</p>
+        </div>
+      </section>
+
+      <!-- Transport Segments -->
+      <section class="detail-section" *ngIf="request.segments && request.segments.length > 0">
+        <h3 class="section-title">
+          <i class="bi bi-signpost-split"></i>
+          Journey Segments
+        </h3>
+        <div class="table-container">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Time</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Distance</th>
+                <th>Duration</th>
+                <th class="text-right">Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let segment of request.segments">
+                <td>{{ formatDate(segment.departure_date) }}</td>
+                <td>{{ formatTime(segment.departure_time) }}</td>
+                <td>{{ segment.from_location }}</td>
+                <td>{{ segment.to_location }}</td>
+                <td>{{ segment.distance_km ? segment.distance_km + ' km' : 'N/A' }}</td>
+                <td>{{ segment.estimated_duration_hours ? segment.estimated_duration_hours + ' hrs' : 'N/A' }}</td>
+                <td class="text-right">{{ formatCurrency(segment.segment_cost, request.currency) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Additional Comments -->
+      <section class="detail-section" *ngIf="request.additional_comments">
+        <h3 class="section-title">
+          <i class="bi bi-chat-left-text"></i>
+          Additional Comments
+        </h3>
+        <div class="purpose-text">
+          <p>{{ request.additional_comments }}</p>
+        </div>
+      </section>
+
+      <!-- Vehicle Assignments -->
+      <section class="detail-section" *ngIf="request.vehicle_assignments && request.vehicle_assignments.length > 0">
+        <h3 class="section-title">
+          <i class="bi bi-car-front-fill"></i>
+          Vehicle Assignments
+        </h3>
+        <div *ngFor="let assignment of request.vehicle_assignments" class="assignment-card">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Vehicle Number</label>
+              <p>{{ assignment.vehicle_number }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Vehicle Type</label>
+              <p>{{ assignment.vehicle_type }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Driver Name</label>
+              <p>{{ assignment.driver_name }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Driver Contact</label>
+              <p>{{ assignment.driver_contact }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Status</label>
+              <p><span class="badge badge-info">{{ assignment.status }}</span></p>
+            </div>
+            <div class="detail-item">
+              <label>Assignment Date</label>
+              <p>{{ formatDate(assignment.assignment_date) }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Approval Workflow -->
+      <section class="detail-section" *ngIf="request.approval_steps && request.approval_steps.length > 0">
+        <h3 class="section-title">
+          <i class="bi bi-check-circle"></i>
+          Approval Workflow
+        </h3>
+        <div class="approval-timeline">
+          <div *ngFor="let step of request.approval_steps" class="approval-step"
+               [ngClass]="{'completed': step.status === 'Approved', 'rejected': step.status === 'Rejected', 'pending': step.status === 'Pending'}">
+            <div class="step-icon">
+              <i *ngIf="step.status === 'Approved'" class="bi bi-check-circle-fill icon-success"></i>
+              <i *ngIf="step.status === 'Rejected'" class="bi bi-x-circle-fill icon-error"></i>
+              <i *ngIf="step.status === 'Pending'" class="bi bi-clock-fill icon-pending"></i>
+            </div>
+            <div class="step-content">
+              <h4>{{ step.step_role || 'Unknown Role' }}</h4>
+              <p class="step-status">{{ step.status || 'Pending' }}</p>
+              <p class="step-date" *ngIf="step.step_date">{{ formatDate(step.step_date) }}</p>
+              <p class="step-comments" *ngIf="step.comments">{{ step.comments }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

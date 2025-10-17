@@ -10,6 +10,11 @@ import { ExpenseClaimComponent } from './features/requests/expense/expense-claim
 import { PendingApprovalsComponent } from './features/approvals/pending/pending-approvals.component';
 import { ClerkPanelComponent } from './features/admin/clerk-panel/clerk-panel.component';
 import { AdminReportsComponent } from './features/admin/reports/admin-reports.component';
+import { ClaimsAdminComponent } from './features/admin/claims-admin/claims-admin.component';
+import { TransportAdminComponent } from './features/admin/transport-admin/transport-admin.component';
+import { FlightsAdminComponent } from './features/admin/flights-admin/flights-admin.component';
+import { AccommodationAdminComponent } from './features/admin/accommodation-admin/accommodation-admin.component';
+import { VisaAdminComponent } from './features/admin/visa-admin/visa-admin.component';
 import { SuccessComponent } from './features/requests/success/success.component';
 import { RequestTypeSelectionComponent } from './features/requests/components/request-type-selection/request-type-selection.component';
 
@@ -72,9 +77,15 @@ export const routes: Routes = [
         children: [
           { path: '', redirectTo: 'clerk-panel', pathMatch: 'full' },
           { path: 'clerk-panel', component: ClerkPanelComponent },
-          { path: 'reports', component: AdminReportsComponent }
+          { path: 'reports', component: AdminReportsComponent },
+          { path: 'approvals', component: PendingApprovalsComponent },
+          { path: 'claims', component: ClaimsAdminComponent },
+          { path: 'transport', component: TransportAdminComponent },
+          { path: 'flights', component: FlightsAdminComponent },
+          { path: 'accommodation', component: AccommodationAdminComponent },
+          { path: 'visa', component: VisaAdminComponent }
         ],
-        data: { roles: [UserRole.ADMIN, UserRole.TICKETING_CLERK] }
+        data: { roles: [UserRole.ADMIN, UserRole.TICKETING_CLERK, UserRole.HOD, UserRole.FOCAL] }
       },
       // TRF Management
       {
@@ -88,6 +99,18 @@ export const routes: Routes = [
         loadChildren: () => import('./features/expense-claims/expense-claims.module').then(m => m.ExpenseClaimsModule)
       },
 
+      // Transport Management
+      {
+        path: 'transport',
+        loadChildren: () => import('./features/transport/transport.module').then(m => m.TransportModule)
+      },
+
+      // Accommodation Management
+      {
+        path: 'accommodation',
+        loadChildren: () => import('./features/accommodation/accommodation.module').then(m => m.AccommodationModule)
+      },
+
       // User Management
       {
         path: 'users',
@@ -98,6 +121,24 @@ export const routes: Routes = [
       {
         path: 'profile',
         loadChildren: () => import('./features/user-management/user-management.module').then(m => m.UserManagementModule)
+      },
+
+      // Notifications
+      {
+        path: 'notifications',
+        loadChildren: () => import('./features/notifications/notifications.module').then(m => m.NotificationsModule)
+      },
+
+      // Bookings (Flights & Hotels)
+      {
+        path: 'bookings',
+        loadChildren: () => import('./features/bookings/bookings.module').then(m => m.BookingsModule)
+      },
+
+      // Visa Management
+      {
+        path: 'visa',
+        loadChildren: () => import('./visa/visa.module').then(m => m.VisaModule)
       }
     ]
   },

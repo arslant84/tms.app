@@ -1,1 +1,182 @@
-<p>expense-list works!</p>
+<div class="expense-list-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-left">
+      <div class="title-with-icon">
+        <i class="bi bi-receipt header-icon"></i>
+        <h1 class="page-title">Expense Claims</h1>
+      </div>
+      <p class="page-subtitle">Manage your expense claims and reimbursements</p>
+    </div>
+    <button class="btn btn-primary btn-create" (click)="navigateToCreate()">
+      <i class="bi bi-plus-circle me-2"></i>Create New Claim
+    </button>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card shadow-lg">
+    <div class="filters-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-funnel"></i>
+        <h2 class="card-title">Filter & Search Claims</h2>
+      </div>
+      <p class="card-description">Search and filter your expense claims by various criteria.</p>
+    </div>
+    <div class="filters-card-content">
+      <div class="filters-grid">
+        <input
+          type="text"
+          class="form-control search-input"
+          placeholder="Search by document number, staff name, purpose..."
+          [value]="searchTerm"
+          (input)="onSearchChange($any($event.target).value)">
+
+        <select
+          class="form-select filter-select"
+          [(ngModel)]="statusFilter"
+          (change)="onStatusFilterChange()">
+          <option value="">All Statuses</option>
+          <option *ngFor="let status of CLAIM_STATUSES" [value]="status">
+            {{ formatStatusDisplay(status) }}
+          </option>
+        </select>
+      </div>
+
+      <div *ngIf="hasActiveFilters()" class="clear-filters-section">
+        <button class="btn btn-outline-secondary btn-sm btn-clear" (click)="clearFilters()">
+          <i class="bi bi-x me-1"></i>Clear All Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Claims List Card -->
+  <div class="claims-list-card shadow-lg">
+    <div class="claims-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-receipt"></i>
+        <h2 class="card-title">My Expense Claims</h2>
+      </div>
+      <p class="card-description">
+        List of your submitted expense claims. Total:
+        <span *ngIf="isLoading && totalClaims === 0" class="loading-inline">
+          <i class="bi bi-arrow-clockwise spin-animation"></i>
+        </span>
+        <span *ngIf="!isLoading || totalClaims > 0">{{ totalClaims }}</span>
+      </p>
+    </div>
+
+    <div class="claims-card-content">
+      <!-- Loading State -->
+      <div *ngIf="isLoading && claims.length === 0" class="loading-state">
+        <i class="bi bi-arrow-clockwise spin-animation"></i>
+        <p class="loading-text">Loading expense claims...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="!isLoading && error" class="error-state">
+        <i class="bi bi-exclamation-triangle error-icon"></i>
+        <h3 class="error-title">Error Loading Claims</h3>
+        <p class="error-message">{{ error }}</p>
+        <button class="btn btn-primary" (click)="fetchClaims()">Try Again</button>
+      </div>
+
+      <!-- Table with Data -->
+      <div *ngIf="!isLoading && !error && claims.length > 0" class="table-container">
+        <div class="table-responsive">
+          <table class="claims-table">
+            <thead>
+              <tr>
+                <th class="sortable-header" (click)="handleSort('document_number')">
+                  <button class="sort-button">
+                    Document #
+                    <i *ngIf="sortKey === 'document_number'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="sortable-header" (click)="handleSort('staff_name')">
+                  <button class="sort-button">
+                    Staff Name
+                    <i *ngIf="sortKey === 'staff_name'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="sortable-header" (click)="handleSort('purpose_of_claim')">
+                  <button class="sort-button">
+                    Purpose
+                    <i *ngIf="sortKey === 'purpose_of_claim'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="sortable-header" (click)="handleSort('total_advance_claim_amount')">
+                  <button class="sort-button">
+                    Amount
+                    <i *ngIf="sortKey === 'total_advance_claim_amount'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="sortable-header" (click)="handleSort('status')">
+                  <button class="sort-button">
+                    Status
+                    <i *ngIf="sortKey === 'status'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="sortable-header" (click)="handleSort('submitted_at')">
+                  <button class="sort-button">
+                    Submitted
+                    <i *ngIf="sortKey === 'submitted_at'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let claim of claims" class="table-row">
+                <td class="font-medium">{{ claim.document_number || 'CLM-' + claim.id }}</td>
+                <td>{{ claim.staff_name || 'N/A' }}</td>
+                <td class="purpose-cell">{{ claim.purpose_of_claim || 'N/A' }}</td>
+                <td class="amount-cell">{{ formatCurrency(claim.total_advance_claim_amount) }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(claim.status)">
+                    {{ formatStatusDisplay(claim.status) }}
+                  </span>
+                </td>
+                <td>{{ formatDate(claim.submitted_at) }}</td>
+                <td>
+                  <button class="btn btn-outline-primary btn-sm btn-view" (click)="navigateToView(claim.id)">
+                    <i class="bi bi-eye me-1"></i>View
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div *ngIf="totalPages > 1" class="pagination-section">
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            (click)="previousPage()"
+            [disabled]="currentPage <= 1 || isLoading">
+            Previous
+          </button>
+          <span class="pagination-info">Page {{ currentPage }} of {{ totalPages }}</span>
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            (click)="nextPage()"
+            [disabled]="currentPage >= totalPages || isLoading">
+            Next
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && !error && claims.length === 0" class="empty-state">
+        <i class="bi bi-receipt empty-icon"></i>
+        <p class="empty-message">
+          {{ hasActiveFilters() ? 'No expense claims found matching your criteria.' : 'No expense claims found.' }}
+        </p>
+        <p class="empty-subtitle">Click "Create New Claim" to submit your first expense claim.</p>
+        <button *ngIf="hasActiveFilters()" class="btn btn-link" (click)="clearFilters()">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

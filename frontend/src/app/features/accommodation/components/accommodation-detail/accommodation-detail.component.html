@@ -1,0 +1,143 @@
+<div class="accommodation-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Loading accommodation request details...</p>
+  </div>
+
+  <!-- Request Details -->
+  <div *ngIf="request && !isLoading" class="accommodation-detail-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <button class="btn-back" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i>
+          Back to List
+        </button>
+        <h1 class="page-title">
+          <i class="bi bi-house-door"></i>
+          Accommodation Request Details
+        </h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline-secondary" (click)="goBack()">
+          <i class="bi bi-printer"></i>
+          Print
+        </button>
+        <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
+          <i class="bi bi-pencil"></i>
+          Edit
+        </button>
+        <button class="btn btn-warning" (click)="onCancel()" *ngIf="canCancel()">
+          <i class="bi bi-x-circle"></i>
+          Cancel
+        </button>
+        <button class="btn btn-danger" (click)="onDelete()" *ngIf="canDelete()">
+          <i class="bi bi-trash"></i>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Badge -->
+    <div class="status-bar">
+      <span class="badge" [ngClass]="getStatusBadgeClass(request.status)">{{ request.status }}</span>
+      <span class="text-muted">Created: {{ formatDateTime(request.created_at) }}</span>
+      <span class="text-muted" *ngIf="request.submitted_at">Submitted: {{ formatDateTime(request.submitted_at) }}</span>
+    </div>
+
+    <!-- Main Card -->
+    <div class="detail-card">
+      <!-- Requestor Information -->
+      <section class="detail-section">
+        <h3 class="section-title">
+          <i class="bi bi-person"></i>
+          Requestor Information
+        </h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Name</label>
+            <p>{{ request.requestor_name || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Staff ID</label>
+            <p>{{ request.staff_id || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Department</label>
+            <p>{{ request.department || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Position</label>
+            <p>{{ request.position || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Cost Center</label>
+            <p>{{ request.cost_center || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Email</label>
+            <p>{{ request.email || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Tel/Email</label>
+            <p>{{ request.tel_email || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Estimated Cost</label>
+            <p>{{ formatCurrency(request.estimated_cost) }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Additional Comments -->
+      <section class="detail-section" *ngIf="request.additional_comments">
+        <h3 class="section-title">
+          <i class="bi bi-chat-left-text"></i>
+          Additional Comments
+        </h3>
+        <div class="purpose-text">
+          <p>{{ request.additional_comments }}</p>
+        </div>
+      </section>
+
+      <!-- Additional Data -->
+      <section class="detail-section" *ngIf="request.additional_data">
+        <h3 class="section-title">
+          <i class="bi bi-info-circle"></i>
+          Additional Information
+        </h3>
+        <div class="detail-grid">
+          <div class="detail-item" *ngFor="let item of request.additional_data | keyvalue">
+            <label>{{ $any(item.key) | titlecase }}</label>
+            <p>{{ item.value }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Timeline -->
+      <section class="detail-section">
+        <h3 class="section-title">
+          <i class="bi bi-clock-history"></i>
+          Timeline
+        </h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Created At</label>
+            <p>{{ formatDateTime(request.created_at) }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Last Updated</label>
+            <p>{{ formatDateTime(request.updated_at) }}</p>
+          </div>
+          <div class="detail-item" *ngIf="request.submitted_at">
+            <label>Submitted At</label>
+            <p>{{ formatDateTime(request.submitted_at) }}</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

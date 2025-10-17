@@ -13,13 +13,17 @@ export interface ItinerarySegment {
   remarks?: string;
 }
 
+export interface DailyMealSelection {
+  date: Date | string;
+  breakfast: boolean;
+  lunch: boolean;
+  dinner: boolean;
+  supper: boolean;
+  refreshment: boolean;
+}
+
 export interface MealProvisionDetails {
-  dateFromTo: string;
-  breakfast?: number;
-  lunch?: number;
-  dinner?: number;
-  supper?: number;
-  refreshment?: number;
+  dailySelections: DailyMealSelection[];
 }
 
 export type AccommodationType = 'Hotel/Otels' | 'Staff House/PKC Kampung/Kinyahli camp' | 'Other';
@@ -48,7 +52,7 @@ export interface CompanyTransportDetail {
 export interface DomesticTravelSpecificDetails {
   purposeOfTravel: string;
   itinerary: ItinerarySegment[];
-  mealProvisions: MealProvisionDetails[];
+  mealProvisions: MealProvisionDetails;
   accommodation: AccommodationDetail;
   companyTransportation: CompanyTransportDetail[];
 }
@@ -63,10 +67,20 @@ export interface DomesticTravelSpecificDetails {
 export class DomesticTravelDetailsComponent implements OnInit {
   @Input() initialData: Partial<DomesticTravelSpecificDetails> = {};
   @Output() formSubmit = new EventEmitter<DomesticTravelSpecificDetails>();
-  
+  @Output() backClick = new EventEmitter<void>();
+
   travelForm!: FormGroup;
   timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
   accommodationTypes: AccommodationType[] = ['Hotel/Otels', 'Staff House/PKC Kampung/Kinyahli camp', 'Other'];
+
+  dailyMealDates: Date[] = [];
+  mealSummary = {
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+    supper: 0,
+    refreshment: 0
+  };
 
   constructor(private fb: FormBuilder) {}
 
@@ -78,29 +92,27 @@ export class DomesticTravelDetailsComponent implements OnInit {
     this.travelForm = this.fb.group({
       purposeOfTravel: [this.initialData.purposeOfTravel || '', Validators.required],
       itinerary: this.fb.array(
-        this.initialData.itinerary?.length 
+        this.initialData.itinerary?.length
           ? this.initialData.itinerary.map(item => this.createItinerarySegment(item))
           : [this.createItinerarySegment()]
       ),
-      mealProvisions: this.fb.array(
-        this.initialData.mealProvisions?.length
-          ? this.initialData.mealProvisions.map(item => this.createMealProvision(item))
-          : [this.createMealProvision()]
-      ),
+      mealProvisions: this.fb.group({
+        dailySelections: this.fb.array([])
+      }),
       accommodation: this.fb.group({
         accommodationType: [
-          this.initialData.accommodation?.accommodationType || 'Hotel/Otels', 
+          this.initialData.accommodation?.accommodationType || 'Hotel/Otels',
           Validators.required
         ],
         otherTypeDescription: [this.initialData.accommodation?.otherTypeDescription || ''],
         checkInDate: [this.initialData.accommodation?.checkInDate || null, Validators.required],
         checkInTime: [
-          this.initialData.accommodation?.checkInTime || '', 
+          this.initialData.accommodation?.checkInTime || '',
           [Validators.required, Validators.pattern(this.timeRegex)]
         ],
         checkOutDate: [this.initialData.accommodation?.checkOutDate || null, Validators.required],
         checkOutTime: [
-          this.initialData.accommodation?.checkOutTime || '', 
+          this.initialData.accommodation?.checkOutTime || '',
           [Validators.required, Validators.pattern(this.timeRegex)]
         ],
         remarks: [this.initialData.accommodation?.remarks || '']
@@ -124,6 +136,14 @@ export class DomesticTravelDetailsComponent implements OnInit {
         otherTypeControl?.updateValueAndValidity();
       }
     );
+
+    // Watch itinerary changes to auto-generate meal dates
+    this.itineraryArray.valueChanges.subscribe(() => {
+      this.updateMealDatesFromItinerary();
+    });
+
+    // Initial meal dates generation
+    this.updateMealDatesFromItinerary();
   }
 
   // Form array getters
@@ -131,8 +151,8 @@ export class DomesticTravelDetailsComponent implements OnInit {
     return this.travelForm.get('itinerary') as FormArray;
   }
 
-  get mealProvisionsArray(): FormArray {
-    return this.travelForm.get('mealProvisions') as FormArray;
+  get dailyMealSelectionsArray(): FormArray {
+    return this.travelForm.get('mealProvisions.dailySelections') as FormArray;
   }
 
   get transportationArray(): FormArray {
@@ -153,15 +173,22 @@ export class DomesticTravelDetailsComponent implements OnInit {
     });
   }
 
-  createMealProvision(data?: Partial<MealProvisionDetails>): FormGroup {
-    return this.fb.group({
-      dateFromTo: [data?.dateFromTo || '', Validators.required],
-      breakfast: [data?.breakfast || 0, [Validators.min(0)]],
-      lunch: [data?.lunch || 0, [Validators.min(0)]],
-      dinner: [data?.dinner || 0, [Validators.min(0)]],
-      supper: [data?.supper || 0, [Validators.min(0)]],
-      refreshment: [data?.refreshment || 0, [Validators.min(0)]]
+  createDailyMealSelection(data?: Partial<DailyMealSelection>): FormGroup {
+    const formGroup = this.fb.group({
+      date: [data?.date || null, Validators.required],
+      breakfast: [data?.breakfast || false],
+      lunch: [data?.lunch || false],
+      dinner: [data?.dinner || false],
+      supper: [data?.supper || false],
+      refreshment: [data?.refreshment || false]
     });
+
+    // Watch changes to update summary
+    formGroup.valueChanges.subscribe(() => {
+      this.updateMealSummary();
+    });
+
+    return formGroup;
   }
 
   createTransportationDetail(data?: Partial<CompanyTransportDetail>): FormGroup {
@@ -188,16 +215,6 @@ export class DomesticTravelDetailsComponent implements OnInit {
     }
   }
 
-  addMealProvision(): void {
-    this.mealProvisionsArray.push(this.createMealProvision());
-  }
-
-  removeMealProvision(index: number): void {
-    if (this.mealProvisionsArray.length > 1) {
-      this.mealProvisionsArray.removeAt(index);
-    }
-  }
-
   addTransportationDetail(): void {
     this.transportationArray.push(this.createTransportationDetail());
   }
@@ -208,6 +225,98 @@ export class DomesticTravelDetailsComponent implements OnInit {
     }
   }
 
+  // Meal provisions logic
+  private updateMealDatesFromItinerary(): void {
+    const itinerary = this.itineraryArray.value;
+    if (!itinerary || itinerary.length === 0) {
+      this.dailyMealDates = [];
+      this.dailyMealSelectionsArray.clear();
+      this.updateMealSummary();
+      return;
+    }
+
+    // Extract dates from itinerary
+    const dates: Date[] = [];
+    itinerary.forEach((segment: ItinerarySegment) => {
+      if (segment.date) {
+        const date = new Date(segment.date);
+        if (!isNaN(date.getTime())) {
+          dates.push(date);
+        }
+      }
+    });
+
+    if (dates.length === 0) {
+      this.dailyMealDates = [];
+      this.dailyMealSelectionsArray.clear();
+      this.updateMealSummary();
+      return;
+    }
+
+    // Sort dates
+    dates.sort((a, b) => a.getTime() - b.getTime());
+
+    // Generate all dates between first and last date (inclusive)
+    const startDate = dates[0];
+    const endDate = dates[dates.length - 1];
+    const allDates: Date[] = [];
+
+    for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+      allDates.push(new Date(date));
+    }
+
+    this.dailyMealDates = allDates;
+
+    // Update form array to match dates
+    const currentSelections = this.dailyMealSelectionsArray.value;
+    this.dailyMealSelectionsArray.clear();
+
+    allDates.forEach(date => {
+      // Check if we have existing selection for this date
+      const existing = currentSelections.find((sel: DailyMealSelection) => {
+        const selDate = new Date(sel.date);
+        return selDate.toDateString() === date.toDateString();
+      });
+
+      if (existing) {
+        this.dailyMealSelectionsArray.push(this.createDailyMealSelection(existing));
+      } else {
+        this.dailyMealSelectionsArray.push(this.createDailyMealSelection({ date: date.toISOString() }));
+      }
+    });
+
+    this.updateMealSummary();
+  }
+
+  private updateMealSummary(): void {
+    const selections = this.dailyMealSelectionsArray.value;
+    this.mealSummary = {
+      breakfast: selections.filter((s: DailyMealSelection) => s.breakfast).length,
+      lunch: selections.filter((s: DailyMealSelection) => s.lunch).length,
+      dinner: selections.filter((s: DailyMealSelection) => s.dinner).length,
+      supper: selections.filter((s: DailyMealSelection) => s.supper).length,
+      refreshment: selections.filter((s: DailyMealSelection) => s.refreshment).length
+    };
+  }
+
+  selectAllMealType(mealType: 'breakfast' | 'lunch' | 'dinner' | 'supper' | 'refreshment'): void {
+    this.dailyMealSelectionsArray.controls.forEach(control => {
+      control.patchValue({ [mealType]: true });
+    });
+  }
+
+  resetMealType(mealType: 'breakfast' | 'lunch' | 'dinner' | 'supper' | 'refreshment'): void {
+    this.dailyMealSelectionsArray.controls.forEach(control => {
+      control.patchValue({ [mealType]: false });
+    });
+  }
+
+  formatDate(date: Date | string): string {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
   // Form submission
   onSubmit(): void {
     if (this.travelForm.valid) {
@@ -215,6 +324,11 @@ export class DomesticTravelDetailsComponent implements OnInit {
     } else {
       this.markFormGroupTouched(this.travelForm);
     }
+  }
+
+  // Navigation
+  onBack(): void {
+    this.backClick.emit();
   }
 
   // Public methods for wizard integration

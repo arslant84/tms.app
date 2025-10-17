@@ -35,122 +35,106 @@
       <div class="card-body">
         <div formArrayName="itinerary">
           <div *ngFor="let segment of itineraryArray.controls; let i = index" [formGroupName]="i" class="itinerary-segment">
-            <div class="row g-3">
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'date-' + i" class="form-label">Date</label>
-                  <input 
-                    type="date" 
-                    class="form-control" 
-                    [id]="'date-' + i" 
-                    formControlName="date"
-                    [ngClass]="{'is-invalid': segment.get('date')?.invalid && segment.get('date')?.touched}">
-                  <div class="invalid-feedback" *ngIf="segment.get('date')?.errors?.['required'] && segment.get('date')?.touched">
-                    Date is required
-                  </div>
+            <div class="itinerary-grid">
+              <div class="form-group">
+                <label [for]="'date-' + i" class="form-label">Date</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  [id]="'date-' + i"
+                  formControlName="date"
+                  [ngClass]="{'is-invalid': segment.get('date')?.invalid && segment.get('date')?.touched}">
+                <div class="invalid-feedback" *ngIf="segment.get('date')?.errors?.['required'] && segment.get('date')?.touched">
+                  Date is required
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'day-' + i" class="form-label">Day</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [id]="'day-' + i" 
-                    formControlName="day"
-                    [ngClass]="{'is-invalid': segment.get('day')?.invalid && segment.get('day')?.touched}">
-                  <div class="invalid-feedback" *ngIf="segment.get('day')?.errors?.['required'] && segment.get('day')?.touched">
-                    Day is required
-                  </div>
+              <div class="form-group">
+                <label [for]="'day-' + i" class="form-label">Day</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'day-' + i"
+                  formControlName="day"
+                  [ngClass]="{'is-invalid': segment.get('day')?.invalid && segment.get('day')?.touched}">
+                <div class="invalid-feedback" *ngIf="segment.get('day')?.errors?.['required'] && segment.get('day')?.touched">
+                  Day is required
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'from-' + i" class="form-label">From</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [id]="'from-' + i" 
-                    formControlName="from"
-                    [ngClass]="{'is-invalid': segment.get('from')?.invalid && segment.get('from')?.touched}">
-                  <div class="invalid-feedback" *ngIf="segment.get('from')?.errors?.['required'] && segment.get('from')?.touched">
-                    Origin is required
-                  </div>
+              <div class="form-group">
+                <label [for]="'from-' + i" class="form-label">From</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'from-' + i"
+                  formControlName="from"
+                  [ngClass]="{'is-invalid': segment.get('from')?.invalid && segment.get('from')?.touched}">
+                <div class="invalid-feedback" *ngIf="segment.get('from')?.errors?.['required'] && segment.get('from')?.touched">
+                  Origin is required
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'to-' + i" class="form-label">To</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [id]="'to-' + i" 
-                    formControlName="to"
-                    [ngClass]="{'is-invalid': segment.get('to')?.invalid && segment.get('to')?.touched}">
-                  <div class="invalid-feedback" *ngIf="segment.get('to')?.errors?.['required'] && segment.get('to')?.touched">
-                    Destination is required
-                  </div>
+              <div class="form-group">
+                <label [for]="'to-' + i" class="form-label">To</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'to-' + i"
+                  formControlName="to"
+                  [ngClass]="{'is-invalid': segment.get('to')?.invalid && segment.get('to')?.touched}">
+                <div class="invalid-feedback" *ngIf="segment.get('to')?.errors?.['required'] && segment.get('to')?.touched">
+                  Destination is required
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'etd-' + i" class="form-label">ETD (HH:MM)</label>
-                  <input 
-                    type="time" 
-                    class="form-control" 
-                    [id]="'etd-' + i" 
-                    formControlName="etd"
-                    [ngClass]="{'is-invalid': segment.get('etd')?.invalid && segment.get('etd')?.touched}">
-                  <div class="invalid-feedback" *ngIf="segment.get('etd')?.errors?.['pattern'] && segment.get('etd')?.touched">
-                    Invalid ETD format (HH:MM)
-                  </div>
+              <div class="form-group">
+                <label [for]="'etd-' + i" class="form-label">ETD</label>
+                <input
+                  type="time"
+                  class="form-control"
+                  [id]="'etd-' + i"
+                  formControlName="etd"
+                  [ngClass]="{'is-invalid': segment.get('etd')?.invalid && segment.get('etd')?.touched}">
+                <div class="invalid-feedback" *ngIf="segment.get('etd')?.errors?.['pattern'] && segment.get('etd')?.touched">
+                  Invalid format
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'eta-' + i" class="form-label">ETA (HH:MM)</label>
-                  <input 
-                    type="time" 
-                    class="form-control" 
-                    [id]="'eta-' + i" 
-                    formControlName="eta"
-                    [ngClass]="{'is-invalid': segment.get('eta')?.invalid && segment.get('eta')?.touched}">
-                  <div class="invalid-feedback" *ngIf="segment.get('eta')?.errors?.['pattern'] && segment.get('eta')?.touched">
-                    Invalid ETA format (HH:MM)
-                  </div>
+              <div class="form-group">
+                <label [for]="'eta-' + i" class="form-label">ETA</label>
+                <input
+                  type="time"
+                  class="form-control"
+                  [id]="'eta-' + i"
+                  formControlName="eta"
+                  [ngClass]="{'is-invalid': segment.get('eta')?.invalid && segment.get('eta')?.touched}">
+                <div class="invalid-feedback" *ngIf="segment.get('eta')?.errors?.['pattern'] && segment.get('eta')?.touched">
+                  Invalid format
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'flightNumber-' + i" class="form-label">Flight/Rein</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [id]="'flightNumber-' + i" 
-                    formControlName="flightNumber"
-                    [ngClass]="{'is-invalid': segment.get('flightNumber')?.invalid && segment.get('flightNumber')?.touched}">
-                  <div class="invalid-feedback" *ngIf="segment.get('flightNumber')?.errors?.['required'] && segment.get('flightNumber')?.touched">
-                    Flight/Rein is required
-                  </div>
+              <div class="form-group">
+                <label [for]="'flightNumber-' + i" class="form-label">Flight/Rein</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'flightNumber-' + i"
+                  formControlName="flightNumber"
+                  [ngClass]="{'is-invalid': segment.get('flightNumber')?.invalid && segment.get('flightNumber')?.touched}">
+                <div class="invalid-feedback" *ngIf="segment.get('flightNumber')?.errors?.['required'] && segment.get('flightNumber')?.touched">
+                  Flight/Rein is required
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'remarks-' + i" class="form-label">Remarks</label>
-                  <div class="d-flex">
-                    <input 
-                      type="text" 
-                      class="form-control" 
-                      [id]="'remarks-' + i" 
-                      formControlName="remarks">
-                    <button 
-                      type="button" 
-                      class="btn btn-danger ms-2" 
-                      *ngIf="itineraryArray.length > 1" 
-                      (click)="removeItinerarySegment(i)">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
+              <div class="form-group itinerary-remarks">
+                <label [for]="'remarks-' + i" class="form-label">Remarks</label>
+                <div class="remarks-input-wrapper">
+                  <input
+                    type="text"
+                    class="form-control"
+                    [id]="'remarks-' + i"
+                    formControlName="remarks">
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-remove"
+                    *ngIf="itineraryArray.length > 1"
+                    (click)="removeItinerarySegment(i)">
+                    <i class="bi bi-trash"></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -170,108 +154,161 @@
       <div class="card-header bg-light">
         <div class="d-flex align-items-center">
           <i class="bi bi-cup-hot me-2"></i>
-          <h5 class="mb-0">Meal Provisions</h5>
+          <h5 class="mb-0">Meal Provision in Kiyanly / Питание в Киянлы</h5>
         </div>
       </div>
-      <div class="card-body">
-        <div formArrayName="mealProvisions">
-          <div *ngFor="let meal of mealProvisionsArray.controls; let i = index" [formGroupName]="i" class="meal-provision">
-            <div class="row g-3">
-              <div class="col-md-4">
-                <div class="form-group">
-                  <label [for]="'dateFromTo-' + i" class="form-label">Date From/To</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [id]="'dateFromTo-' + i" 
-                    formControlName="dateFromTo"
-                    [ngClass]="{'is-invalid': meal.get('dateFromTo')?.invalid && meal.get('dateFromTo')?.touched}">
-                  <div class="invalid-feedback" *ngIf="meal.get('dateFromTo')?.errors?.['required'] && meal.get('dateFromTo')?.touched">
-                    Date From/To is required
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-8">
-                <div class="row g-2">
-                  <div class="col">
-                    <div class="form-group">
-                      <label [for]="'breakfast-' + i" class="form-label">Breakfast</label>
-                      <input 
-                        type="number" 
-                        class="form-control" 
-                        [id]="'breakfast-' + i" 
-                        formControlName="breakfast"
-                        min="0"
-                        [ngClass]="{'is-invalid': meal.get('breakfast')?.invalid && meal.get('breakfast')?.touched}">
-                    </div>
-                  </div>
-                  <div class="col">
-                    <div class="form-group">
-                      <label [for]="'lunch-' + i" class="form-label">Lunch</label>
-                      <input 
-                        type="number" 
-                        class="form-control" 
-                        [id]="'lunch-' + i" 
-                        formControlName="lunch"
-                        min="0"
-                        [ngClass]="{'is-invalid': meal.get('lunch')?.invalid && meal.get('lunch')?.touched}">
-                    </div>
-                  </div>
-                  <div class="col">
-                    <div class="form-group">
-                      <label [for]="'dinner-' + i" class="form-label">Dinner</label>
-                      <input 
-                        type="number" 
-                        class="form-control" 
-                        [id]="'dinner-' + i" 
-                        formControlName="dinner"
-                        min="0"
-                        [ngClass]="{'is-invalid': meal.get('dinner')?.invalid && meal.get('dinner')?.touched}">
-                    </div>
-                  </div>
-                  <div class="col">
-                    <div class="form-group">
-                      <label [for]="'supper-' + i" class="form-label">Supper</label>
-                      <input 
-                        type="number" 
-                        class="form-control" 
-                        [id]="'supper-' + i" 
-                        formControlName="supper"
-                        min="0"
-                        [ngClass]="{'is-invalid': meal.get('supper')?.invalid && meal.get('supper')?.touched}">
-                    </div>
-                  </div>
-                  <div class="col">
-                    <div class="form-group">
-                      <label [for]="'refreshment-' + i" class="form-label">Refreshment</label>
-                      <div class="d-flex">
-                        <input 
-                          type="number" 
-                          class="form-control" 
-                          [id]="'refreshment-' + i" 
-                          formControlName="refreshment"
-                          min="0"
-                          [ngClass]="{'is-invalid': meal.get('refreshment')?.invalid && meal.get('refreshment')?.touched}">
-                        <button 
-                          type="button" 
-                          class="btn btn-danger ms-2" 
-                          *ngIf="mealProvisionsArray.length > 1" 
-                          (click)="removeMealProvision(i)">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <div class="card-body" formGroupName="mealProvisions">
+        <!-- Travel Period Info -->
+        <div *ngIf="dailyMealDates.length > 0" class="travel-period-info mb-4">
+          <div class="info-icon">
+            <i class="bi bi-cup-hot-fill"></i>
+          </div>
+          <div class="info-content">
+            <div class="period-header">Travel Period</div>
+            <div class="period-details">
+              <span class="days-count">{{ dailyMealDates.length }} {{ dailyMealDates.length === 1 ? 'day' : 'days' }}</span>
+              <span class="date-range">{{ formatDate(dailyMealDates[0]) }} → {{ formatDate(dailyMealDates[dailyMealDates.length - 1]) }}</span>
             </div>
-            <hr *ngIf="i < mealProvisionsArray.length - 1" class="my-3">
           </div>
         </div>
-        <div class="mt-3">
-          <button type="button" class="btn btn-outline-primary" (click)="addMealProvision()">
-            <i class="bi bi-plus-circle me-1"></i> Add Meal Provision
-          </button>
+
+        <!-- No itinerary dates message -->
+        <div *ngIf="dailyMealDates.length === 0" class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>
+          Please add itinerary dates to enable meal selection
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div *ngIf="dailyMealDates.length > 0" class="quick-actions mb-3">
+          <div class="quick-action-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('breakfast')">
+              All Breakfast
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('breakfast')">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
+          <div class="quick-action-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('lunch')">
+              All Lunch
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('lunch')">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
+          <div class="quick-action-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('dinner')">
+              All Dinner
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('dinner')">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
+          <div class="quick-action-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('supper')">
+              All Supper
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('supper')">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
+          <div class="quick-action-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('refreshment')">
+              All Refreshment
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('refreshment')">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Daily Meal Selection Grid -->
+        <div *ngIf="dailyMealDates.length > 0" class="meal-selection-grid" formArrayName="dailySelections">
+          <!-- Grid Header -->
+          <div class="meal-grid-header">
+            <div class="grid-cell grid-header-cell">Date</div>
+            <div class="grid-cell grid-header-cell text-center">Breakfast</div>
+            <div class="grid-cell grid-header-cell text-center">Lunch</div>
+            <div class="grid-cell grid-header-cell text-center">Dinner</div>
+            <div class="grid-cell grid-header-cell text-center">Supper</div>
+            <div class="grid-cell grid-header-cell text-center">Refreshment</div>
+          </div>
+
+          <!-- Grid Rows -->
+          <div *ngFor="let selection of dailyMealSelectionsArray.controls; let i = index"
+               [formGroupName]="i"
+               class="meal-grid-row">
+            <div class="grid-cell date-cell">
+              {{ formatDate(selection.get('date')?.value) }}
+            </div>
+            <div class="grid-cell checkbox-cell">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                formControlName="breakfast"
+                [id]="'breakfast-' + i">
+              <label [for]="'breakfast-' + i" class="visually-hidden">Breakfast</label>
+            </div>
+            <div class="grid-cell checkbox-cell">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                formControlName="lunch"
+                [id]="'lunch-' + i">
+              <label [for]="'lunch-' + i" class="visually-hidden">Lunch</label>
+            </div>
+            <div class="grid-cell checkbox-cell">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                formControlName="dinner"
+                [id]="'dinner-' + i">
+              <label [for]="'dinner-' + i" class="visually-hidden">Dinner</label>
+            </div>
+            <div class="grid-cell checkbox-cell">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                formControlName="supper"
+                [id]="'supper-' + i">
+              <label [for]="'supper-' + i" class="visually-hidden">Supper</label>
+            </div>
+            <div class="grid-cell checkbox-cell">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                formControlName="refreshment"
+                [id]="'refreshment-' + i">
+              <label [for]="'refreshment-' + i" class="visually-hidden">Refreshment</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div *ngIf="dailyMealDates.length > 0" class="meal-summary mt-4">
+          <div class="summary-header">Summary Totals:</div>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-label">Breakfast</div>
+              <div class="summary-value">{{ mealSummary.breakfast }}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Lunch</div>
+              <div class="summary-value">{{ mealSummary.lunch }}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Dinner</div>
+              <div class="summary-value">{{ mealSummary.dinner }}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Supper</div>
+              <div class="summary-value">{{ mealSummary.supper }}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Refreshment</div>
+              <div class="summary-value">{{ mealSummary.refreshment }}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -400,118 +437,99 @@
       <div class="card-body">
         <div formArrayName="companyTransportation">
           <div *ngFor="let transport of transportationArray.controls; let i = index" [formGroupName]="i" class="transportation-detail">
-            <div class="row g-3">
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'transportDate-' + i" class="form-label">Date</label>
-                  <input 
-                    type="date" 
-                    class="form-control" 
-                    [id]="'transportDate-' + i" 
-                    formControlName="date"
-                    [ngClass]="{'is-invalid': transport.get('date')?.invalid && transport.get('date')?.touched}">
-                  <div class="invalid-feedback" *ngIf="transport.get('date')?.errors?.['required'] && transport.get('date')?.touched">
-                    Date is required
-                  </div>
+            <div class="transport-grid">
+              <div class="form-group">
+                <label [for]="'transportDate-' + i" class="form-label">Date</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  [id]="'transportDate-' + i"
+                  formControlName="date"
+                  [ngClass]="{'is-invalid': transport.get('date')?.invalid && transport.get('date')?.touched}">
+                <div class="invalid-feedback" *ngIf="transport.get('date')?.errors?.['required'] && transport.get('date')?.touched">
+                  Date is required
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'transportDay-' + i" class="form-label">Day</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [id]="'transportDay-' + i" 
-                    formControlName="day"
-                    [ngClass]="{'is-invalid': transport.get('day')?.invalid && transport.get('day')?.touched}">
-                  <div class="invalid-feedback" *ngIf="transport.get('day')?.errors?.['required'] && transport.get('day')?.touched">
-                    Day is required
-                  </div>
+              <div class="form-group">
+                <label [for]="'transportDay-' + i" class="form-label">Day</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'transportDay-' + i"
+                  formControlName="day"
+                  [ngClass]="{'is-invalid': transport.get('day')?.invalid && transport.get('day')?.touched}">
+                <div class="invalid-feedback" *ngIf="transport.get('day')?.errors?.['required'] && transport.get('day')?.touched">
+                  Day is required
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'transportFrom-' + i" class="form-label">From</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [id]="'transportFrom-' + i" 
-                    formControlName="from"
-                    [ngClass]="{'is-invalid': transport.get('from')?.invalid && transport.get('from')?.touched}">
-                  <div class="invalid-feedback" *ngIf="transport.get('from')?.errors?.['required'] && transport.get('from')?.touched">
-                    Origin is required
-                  </div>
+              <div class="form-group">
+                <label [for]="'transportFrom-' + i" class="form-label">From</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'transportFrom-' + i"
+                  formControlName="from"
+                  [ngClass]="{'is-invalid': transport.get('from')?.invalid && transport.get('from')?.touched}">
+                <div class="invalid-feedback" *ngIf="transport.get('from')?.errors?.['required'] && transport.get('from')?.touched">
+                  Origin is required
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'transportTo-' + i" class="form-label">To</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [id]="'transportTo-' + i" 
-                    formControlName="to"
-                    [ngClass]="{'is-invalid': transport.get('to')?.invalid && transport.get('to')?.touched}">
-                  <div class="invalid-feedback" *ngIf="transport.get('to')?.errors?.['required'] && transport.get('to')?.touched">
-                    Destination is required
-                  </div>
+              <div class="form-group">
+                <label [for]="'transportTo-' + i" class="form-label">To</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'transportTo-' + i"
+                  formControlName="to"
+                  [ngClass]="{'is-invalid': transport.get('to')?.invalid && transport.get('to')?.touched}">
+                <div class="invalid-feedback" *ngIf="transport.get('to')?.errors?.['required'] && transport.get('to')?.touched">
+                  Destination is required
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'transportEtd-' + i" class="form-label">ETD (HH:MM)</label>
-                  <input 
-                    type="time" 
-                    class="form-control" 
-                    [id]="'transportEtd-' + i" 
-                    formControlName="etd"
-                    [ngClass]="{'is-invalid': transport.get('etd')?.invalid && transport.get('etd')?.touched}">
-                  <div class="invalid-feedback" *ngIf="transport.get('etd')?.errors?.['required'] && transport.get('etd')?.touched">
-                    ETD is required
-                  </div>
-                  <div class="invalid-feedback" *ngIf="transport.get('etd')?.errors?.['pattern'] && transport.get('etd')?.touched">
-                    Invalid ETD format (HH:MM)
-                  </div>
+              <div class="form-group">
+                <label [for]="'transportEtd-' + i" class="form-label">ETD</label>
+                <input
+                  type="time"
+                  class="form-control"
+                  [id]="'transportEtd-' + i"
+                  formControlName="etd"
+                  [ngClass]="{'is-invalid': transport.get('etd')?.invalid && transport.get('etd')?.touched}">
+                <div class="invalid-feedback" *ngIf="transport.get('etd')?.errors?.['required'] && transport.get('etd')?.touched">
+                  ETD is required
                 </div>
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'accommodationType-' + i" class="form-label">Accommodation Type</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [id]="'accommodationType-' + i" 
-                    formControlName="accommodationType">
-                </div>
+              <div class="form-group">
+                <label [for]="'accommodationType-' + i" class="form-label">Accommodation Type</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'accommodationType-' + i"
+                  formControlName="accommodationType">
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'address-' + i" class="form-label">Address</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    [id]="'address-' + i" 
-                    formControlName="address">
-                </div>
+              <div class="form-group transport-address">
+                <label [for]="'address-' + i" class="form-label">Address</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'address-' + i"
+                  formControlName="address">
               </div>
-              <div class="col-md-6 col-lg-3">
-                <div class="form-group">
-                  <label [for]="'transportRemarks-' + i" class="form-label">Remarks</label>
-                  <div class="d-flex">
-                    <input 
-                      type="text" 
-                      class="form-control" 
-                      [id]="'transportRemarks-' + i" 
-                      formControlName="remarks">
-                    <button 
-                      type="button" 
-                      class="btn btn-danger ms-2" 
-                      *ngIf="transportationArray.length > 1" 
-                      (click)="removeTransportationDetail(i)">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-                </div>
+            </div>
+            <div class="form-group mt-3">
+              <label [for]="'transportRemarks-' + i" class="form-label">Remarks</label>
+              <div class="remarks-input-wrapper">
+                <input
+                  type="text"
+                  class="form-control"
+                  [id]="'transportRemarks-' + i"
+                  formControlName="remarks">
+                <button
+                  type="button"
+                  class="btn btn-danger btn-remove"
+                  *ngIf="transportationArray.length > 1"
+                  (click)="removeTransportationDetail(i)">
+                  <i class="bi bi-trash"></i>
+                </button>
               </div>
             </div>
             <hr *ngIf="i < transportationArray.length - 1" class="my-3">
@@ -525,10 +543,15 @@
       </div>
     </div>
 
-    <!-- Form Submission -->
-    <div class="d-flex justify-content-end mt-4">
+    <!-- Navigation Buttons -->
+    <div class="d-flex justify-content-between pt-4 mt-4 border-top">
+      <button type="button" class="btn btn-outline-secondary" (click)="onBack()">
+        <i class="bi bi-chevron-left me-1"></i>
+        Back: Requestor Info
+      </button>
       <button type="submit" class="btn btn-primary">
-        Continue
+        Next: Approval &amp; Submission
+        <i class="bi bi-chevron-right ms-1"></i>
       </button>
     </div>
   </form>

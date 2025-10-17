@@ -1,0 +1,144 @@
+<div class="accommodation-list-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-left">
+      <div class="title-with-icon">
+        <i class="bi bi-house-door header-icon"></i>
+        <h1 class="page-title">Accommodation Requests</h1>
+      </div>
+      <p class="page-subtitle">Manage your accommodation bookings and requests</p>
+    </div>
+    <button class="btn btn-create" (click)="navigateToCreate()">
+      <i class="bi bi-plus-circle"></i>
+      New Accommodation Request
+    </button>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card">
+    <div class="filters-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-funnel"></i>
+        <h3 class="card-title">Filters</h3>
+      </div>
+      <p class="card-description">Filter and search accommodation requests</p>
+    </div>
+    <div class="filters-card-content">
+      <div class="filters-grid">
+        <div class="search-container">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search by name, department, or location..."
+            [value]="searchTerm"
+            (input)="onSearchChange($any($event.target).value)"
+          >
+        </div>
+        <div class="filter-container">
+          <select
+            class="filter-select"
+            [(ngModel)]="statusFilter"
+            (change)="onStatusFilterChange()"
+          >
+            <option value="">All Statuses</option>
+            <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Requests List Card -->
+  <div class="requests-list-card">
+    <div class="requests-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-list-ul"></i>
+        <h3 class="card-title">Accommodation Requests</h3>
+      </div>
+      <p class="card-description">Total: {{ totalRequests }} requests</p>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <i class="bi bi-arrow-clockwise spin-animation"></i>
+      <p>Loading accommodation requests...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-state">
+      <i class="bi bi-exclamation-triangle error-icon"></i>
+      <h3 class="error-title">Error Loading Requests</h3>
+      <p class="error-message">{{ error }}</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && requests.length === 0" class="empty-state">
+      <i class="bi bi-inbox empty-icon"></i>
+      <h3 class="empty-message">No accommodation requests found</h3>
+      <p class="empty-subtitle">Create your first accommodation request to get started</p>
+    </div>
+
+    <!-- Requests Table -->
+    <div *ngIf="!loading && !error && requests.length > 0" class="requests-card-content">
+      <table class="requests-table">
+        <thead>
+          <tr>
+            <th>Requestor Name</th>
+            <th>Department</th>
+            <th>Position</th>
+            <th>Est. Cost</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let request of requests">
+            <td class="name-cell">{{ request.requestor_name }}</td>
+            <td>{{ request.department || 'N/A' }}</td>
+            <td>{{ request.position || 'N/A' }}</td>
+            <td class="amount-cell">{{ formatCurrency(request.estimated_cost) }}</td>
+            <td>
+              <span class="badge" [ngClass]="getStatusClass(request.status)">
+                {{ request.status }}
+              </span>
+            </td>
+            <td>{{ formatDate(request.created_at) }}</td>
+            <td>
+              <button class="btn btn-view" (click)="navigateToView(request.id)">
+                <i class="bi bi-eye"></i>
+                View
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination-section">
+        <span class="pagination-info">
+          Showing {{ startIndex }} to {{ endIndex }} of {{ totalRequests }} requests
+        </span>
+        <div class="pagination-controls">
+          <button
+            class="btn btn-sm btn-secondary"
+            (click)="previousPage()"
+            [disabled]="currentPage === 1"
+          >
+            <i class="bi bi-chevron-left"></i>
+            Previous
+          </button>
+          <span class="page-indicator">Page {{ currentPage }} of {{ totalPages }}</span>
+          <button
+            class="btn btn-sm btn-secondary"
+            (click)="nextPage()"
+            [disabled]="currentPage >= totalPages"
+          >
+            Next
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

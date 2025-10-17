@@ -1,0 +1,162 @@
+<div class="notifications-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-left">
+      <div class="title-with-icon">
+        <i class="bi bi-bell header-icon"></i>
+        <h1 class="page-title">Notifications</h1>
+      </div>
+      <p class="page-subtitle">Stay updated with all your important notifications</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline-primary" routerLink="/notifications/preferences">
+        <i class="bi bi-gear"></i>
+        Preferences
+      </button>
+      <button
+        class="btn btn-primary"
+        (click)="markAllAsRead()"
+        [disabled]="filteredNotifications.length === 0">
+        <i class="bi bi-check2-all"></i>
+        Mark All Read
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label for="statusFilter">Status:</label>
+      <select
+        id="statusFilter"
+        class="form-select"
+        [(ngModel)]="filterStatus"
+        (change)="onFilterChange()">
+        <option value="all">All Notifications</option>
+        <option value="unread">Unread</option>
+        <option value="read">Read</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="priorityFilter">Priority:</label>
+      <select
+        id="priorityFilter"
+        class="form-select"
+        [(ngModel)]="filterPriority"
+        (change)="onFilterChange()">
+        <option value="all">All Priorities</option>
+        <option value="urgent">Urgent</option>
+        <option value="high">High</option>
+        <option value="normal">Normal</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Notifications List -->
+  <div class="notifications-list">
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p>Loading notifications...</p>
+    </div>
+
+    <div *ngIf="!isLoading && filteredNotifications.length === 0" class="empty-state">
+      <i class="bi bi-inbox empty-icon"></i>
+      <h3>No Notifications</h3>
+      <p>You're all caught up! No notifications to display.</p>
+    </div>
+
+    <div class="notification-cards" *ngIf="!isLoading && filteredNotifications.length > 0">
+      <div
+        *ngFor="let notification of filteredNotifications"
+        class="notification-card"
+        [class.unread]="!notification.is_read"
+        (click)="onNotificationClick(notification)">
+
+        <!-- Notification Icon -->
+        <div class="notification-icon-wrapper">
+          <i [class]="getNotificationIcon(notification.priority)"></i>
+        </div>
+
+        <!-- Notification Content -->
+        <div class="notification-content">
+          <div class="notification-header">
+            <h4 class="notification-title">{{ notification.title }}</h4>
+            <span class="badge" [ngClass]="getPriorityBadgeClass(notification.priority)">
+              {{ notification.priority | titlecase }}
+            </span>
+          </div>
+
+          <p class="notification-message">{{ notification.message }}</p>
+
+          <div class="notification-footer">
+            <span class="notification-time">
+              <i class="bi bi-clock"></i>
+              {{ getTimeAgo(notification.created_at) }}
+            </span>
+            <span class="notification-action" *ngIf="notification.action_text">
+              {{ notification.action_text }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Notification Actions -->
+        <div class="notification-actions">
+          <button
+            class="action-btn"
+            *ngIf="!notification.is_read"
+            (click)="markAsRead(notification, $event)"
+            title="Mark as read">
+            <i class="bi bi-check2"></i>
+          </button>
+          <button
+            class="action-btn action-delete"
+            (click)="deleteNotification(notification.id, $event)"
+            title="Delete">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+
+        <!-- Unread Indicator -->
+        <div class="unread-indicator" *ngIf="!notification.is_read"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-section" *ngIf="!isLoading && totalPages > 1">
+    <div class="pagination-info">
+      Showing {{ (currentPage - 1) * pageSize + 1 }} to
+      {{ Math.min(currentPage * pageSize, totalNotifications) }} of
+      {{ totalNotifications }} notifications
+    </div>
+
+    <nav aria-label="Notification pagination">
+      <ul class="pagination">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <a class="page-link" (click)="previousPage()" href="javascript:void(0)">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+
+        <li
+          *ngFor="let page of paginationPages"
+          class="page-item"
+          [class.active]="page === currentPage">
+          <a class="page-link" (click)="goToPage(page)" href="javascript:void(0)">
+            {{ page }}
+          </a>
+        </li>
+
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <a class="page-link" (click)="nextPage()" href="javascript:void(0)">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>

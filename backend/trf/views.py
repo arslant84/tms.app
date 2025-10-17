@@ -67,9 +67,24 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             return TravelRequestUpdateSerializer
         return TravelRequestSerializer
 
+    def create(self, request, *args, **kwargs):
+        """Create a new TRF with logging"""
+        print(f"\n=== TravelRequest CREATE ===")
+        print(f"Request data: {request.data}")
+        response = super().create(request, *args, **kwargs)
+        print(f"Response status: {response.status_code}")
+        print(f"Response data: {response.data}")
+        print(f"Response data keys: {list(response.data.keys()) if hasattr(response.data, 'keys') else 'N/A'}")
+        return response
+
     def get_queryset(self):
         """Filter TRFs based on query parameters"""
         queryset = self.queryset
+
+        print(f"\n=== TravelRequest GET_QUERYSET ===")
+        print(f"Total TRFs in database: {TravelRequest.objects.count()}")
+        print(f"Query params: {dict(self.request.query_params)}")
+        print(f"User: {self.request.user}")
 
         # Filter by status
         status_filter = self.request.query_params.get('status', None)
@@ -101,7 +116,10 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 Q(staff_id__icontains=search)
             )
 
-        return queryset.order_by('-created_at')
+        result = queryset.order_by('-created_at')
+        print(f"Filtered queryset count: {result.count()}")
+        print(f"=== END GET_QUERYSET ===\n")
+        return result
 
     @action(detail=True, methods=['post'])
     def submit(self, request, pk=None):
@@ -311,6 +329,13 @@ class TrfDailyMealSelectionViewSet(viewsets.ModelViewSet):
     serializer_class = TrfDailyMealSelectionSerializer
     permission_classes = [IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        print(f"\n=== TrfDailyMealSelection CREATE ===")
+        print(f"Request data: {request.data}")
+        print(f"TRF field value: {request.data.get('trf')}")
+        print(f"Meal date value: {request.data.get('meal_date')}")
+        return super().create(request, *args, **kwargs)
+
     def get_queryset(self):
         trf_id = self.request.query_params.get('trf', None)
         if trf_id:
@@ -336,6 +361,12 @@ class TrfItinerarySegmentViewSet(viewsets.ModelViewSet):
     queryset = TrfItinerarySegment.objects.all()
     serializer_class = TrfItinerarySegmentSerializer
     permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        print(f"\n=== TrfItinerarySegment CREATE ===")
+        print(f"Request data: {request.data}")
+        print(f"TRF field value: {request.data.get('trf')}")
+        return super().create(request, *args, **kwargs)
 
     def get_queryset(self):
         trf_id = self.request.query_params.get('trf', None)

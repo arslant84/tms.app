@@ -1,1 +1,474 @@
-<p>visa-detail works!</p>
+<div class="visa-detail-container">
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading visa application details...</p>
+  </div>
+
+  <div *ngIf="!isLoading && application">
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <button class="btn btn-outline-secondary mb-2" routerLink="/visa">
+          <i class="bi bi-arrow-left"></i> Back to List
+        </button>
+        <h2>Visa Application Details</h2>
+        <p class="text-muted">Application #{{ application.id }}</p>
+      </div>
+      <div class="header-actions">
+        <span class="badge" [ngClass]="getStatusBadgeClass(application.status)">
+          {{ application.status }}
+        </span>
+        <button class="btn btn-primary" *ngIf="canEdit()" (click)="onEdit()">
+          <i class="bi bi-pencil"></i> Edit
+        </button>
+        <button class="btn btn-warning" *ngIf="canCancel()" (click)="onCancel()">
+          <i class="bi bi-x-circle"></i> Cancel
+        </button>
+        <button class="btn btn-danger" (click)="onDelete()">
+          <i class="bi bi-trash"></i> Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Personal Information -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-person"></i> Personal Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Applicant Name</label>
+              <p>{{ application.requestor_name }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Staff ID</label>
+              <p>{{ application.staff_id || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Email</label>
+              <p>{{ application.email || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Contact Telephone</label>
+              <p>{{ application.contact_telephone || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Department</label>
+              <p>{{ application.department || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Position</label>
+              <p>{{ application.position || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="info-group">
+              <label>Home Address</label>
+              <p>{{ application.home_address || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Travel Details -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-airplane"></i> Travel Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Destination</label>
+              <p>{{ application.destination }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Duration of Stay</label>
+              <p>{{ application.duration_of_stay || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Trip Start Date</label>
+              <p>{{ formatDate(application.trip_start_date) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Trip End Date</label>
+              <p>{{ formatDate(application.trip_end_date) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Approximate Arrival Date</label>
+              <p>{{ formatDate(application.approximately_arrival_date) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>TRF Reference Number</label>
+              <p>{{ application.trf_reference_number || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="info-group">
+              <label>Travel Purpose</label>
+              <p>{{ application.travel_purpose }}</p>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="info-group">
+              <label>Itinerary Details</label>
+              <p>{{ application.itinerary_details || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visa Information -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-file-earmark-text"></i> Visa Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Visa Type</label>
+              <p><span class="badge bg-secondary">{{ application.visa_type }}</span></p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Visa Entry Type</label>
+              <p>{{ application.visa_entry_type || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Work Visit Category</label>
+              <p>{{ application.work_visit_category || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Request Type</label>
+              <p>{{ application.request_type }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passport Details -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-passport"></i> Passport Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Passport Number</label>
+              <p>{{ application.passport_number || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Passport Expiry Date</label>
+              <p>{{ formatDate(application.passport_expiry_date) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Place of Issuance</label>
+              <p>{{ application.passport_place_of_issuance || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Date of Issuance</label>
+              <p>{{ formatDate(application.passport_date_of_issuance) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Date of Birth</label>
+              <p>{{ formatDate(application.date_of_birth) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Place of Birth</label>
+              <p>{{ application.place_of_birth || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Citizenship</label>
+              <p>{{ application.citizenship || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Marital Status</label>
+              <p>{{ application.marital_status || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employment & Education -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-briefcase"></i> Employment & Education</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Current Employer Name</label>
+              <p>{{ application.current_employer_name || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Current Employer Address</label>
+              <p>{{ application.current_employer_address || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="info-group">
+              <label>Family Information</label>
+              <p>{{ application.family_information || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="info-group">
+              <label>Education Details</label>
+              <p>{{ application.education_details || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approval Information -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-check-circle"></i> Approval Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Line Focal Person</label>
+              <p>{{ application.line_focal_person || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Line Focal Department</label>
+              <p>{{ application.line_focal_dept || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Line Focal Contact</label>
+              <p>{{ application.line_focal_contact || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Line Focal Date</label>
+              <p>{{ formatDate(application.line_focal_date) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Sponsoring Department Head</label>
+              <p>{{ application.sponsoring_dept_head || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Sponsoring Dept Head Department</label>
+              <p>{{ application.sponsoring_dept_head_dept || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Sponsoring Dept Head Contact</label>
+              <p>{{ application.sponsoring_dept_head_contact || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Sponsoring Dept Head Date</label>
+              <p>{{ formatDate(application.sponsoring_dept_head_date) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>CEO Approval Name</label>
+              <p>{{ application.ceo_approval_name || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>CEO Approval Date</label>
+              <p>{{ formatDate(application.ceo_approval_date) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cost Information -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-currency-dollar"></i> Cost Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Application Fees Borne By</label>
+              <p>{{ application.application_fees_borne_by || 'N/A' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Cost Centre Number</label>
+              <p>{{ application.cost_centre_number || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents -->
+    <div class="card mb-4" *ngIf="documents.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-paperclip"></i> Supporting Documents</h5>
+      </div>
+      <div class="card-body">
+        <div class="list-group">
+          <div class="list-group-item" *ngFor="let doc of documents">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ doc.document_name }}</strong>
+                <small class="text-muted d-block">{{ doc.document_type || 'Document' }}</small>
+                <small class="text-muted">Uploaded: {{ formatDateTime(doc.uploaded_at) }}</small>
+              </div>
+              <a [href]="doc.document_path" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-download"></i> Download
+              </a>
+            </div>
+          </div>
+        </div>
+        <p class="text-muted mt-2" *ngIf="application.supporting_documents_notes">
+          <strong>Notes:</strong> {{ application.supporting_documents_notes }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Approval Steps Timeline -->
+    <div class="card mb-4" *ngIf="approvalSteps.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-list-check"></i> Approval Timeline</h5>
+      </div>
+      <div class="card-body">
+        <div class="timeline">
+          <div class="timeline-item" *ngFor="let step of approvalSteps">
+            <div class="timeline-marker"></div>
+            <div class="timeline-content">
+              <h6>{{ step.step_name }}</h6>
+              <p class="text-muted mb-1">Role: {{ step.step_role }}</p>
+              <p class="mb-1"><span class="badge bg-info">{{ step.status }}</span></p>
+              <small class="text-muted">{{ formatDateTime(step.step_date) }}</small>
+              <p class="mt-2" *ngIf="step.comments">{{ step.comments }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Comments -->
+    <div class="card mb-4" *ngIf="application.additional_comments">
+      <div class="card-header">
+        <h5><i class="bi bi-chat-left-text"></i> Additional Comments</h5>
+      </div>
+      <div class="card-body">
+        <p>{{ application.additional_comments }}</p>
+      </div>
+    </div>
+
+    <!-- Status & Timestamps -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-clock-history"></i> Status & Tracking</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Current Status</label>
+              <p><span class="badge" [ngClass]="getStatusBadgeClass(application.status)">{{ application.status }}</span></p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Submitted Date</label>
+              <p>{{ formatDateTime(application.submitted_date) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Last Updated</label>
+              <p>{{ formatDateTime(application.last_updated_date) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Created At</label>
+              <p>{{ formatDateTime(application.created_at) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="application.processing_started_at">
+            <div class="info-group">
+              <label>Processing Started</label>
+              <p>{{ formatDateTime(application.processing_started_at) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="application.processing_completed_at">
+            <div class="info-group">
+              <label>Processing Completed</label>
+              <p>{{ formatDateTime(application.processing_completed_at) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

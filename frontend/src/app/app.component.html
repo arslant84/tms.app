@@ -177,13 +177,16 @@
   }
 </style>
 
+<!-- Toast notifications -->
+<app-toast-container></app-toast-container>
+
 <!-- Main application container -->
 <div class="app-container">
   <!-- Show main layout with sidebar for authenticated users -->
   <ng-container *ngIf="(isAuthenticated$ | async)">
     <router-outlet></router-outlet>
   </ng-container>
-  
+
   <!-- Clean login page for visitors (no sidebar/header/footer) -->
   <ng-container *ngIf="!(isAuthenticated$ | async)">
     <div class="login-container">

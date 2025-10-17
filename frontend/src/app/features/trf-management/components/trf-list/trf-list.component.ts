@@ -1,33 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TrfService } from '../../../../core/services/trf.service';
 import { TravelRequestForm } from '../../../../core/models/trf.model';
 import { finalize } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 
 // Status and type constants matching backend
 export const TRF_STATUSES = [
-  'DRAFT',
-  'PENDING_DEPARTMENT_FOCAL',
-  'PENDING_LINE_MANAGER',
-  'PENDING_HOD',
-  'APPROVED',
-  'REJECTED',
-  'CANCELLED',
-  'PROCESSING_FLIGHTS',
-  'PROCESSING_ACCOMMODATION',
-  'AWAITING_VISA',
-  'TSR_PROCESSED'
+  'Draft',
+  'Pending Department Focal',
+  'Pending HOD',
+  'Pending Travel Desk',
+  'Pending Finance',
+  'Approved',
+  'Rejected',
+  'Cancelled',
+  'Completed'
 ];
 
 export const TRAVEL_TYPES = [
-  'DOMESTIC',
-  'OVERSEAS',
-  'HOME_LEAVE_PASSAGE',
-  'EXTERNAL_PARTIES'
+  'Domestic',
+  'International',
+  'Local',
+  'Field Visit'
 ];
 
 export interface TrfListItem {
@@ -48,7 +46,7 @@ export interface TrfListItem {
   templateUrl: './trf-list.component.html',
   styleUrls: ['./trf-list.component.scss']
 })
-export class TrfListComponent implements OnInit {
+export class TrfListComponent implements OnInit, OnDestroy {
   // Pagination
   currentPage = 1;
   totalPages = 1;
@@ -62,6 +60,7 @@ export class TrfListComponent implements OnInit {
 
   // Search debouncing
   private searchSubject = new Subject<string>();
+  private routerSubscription?: Subscription;
 
   // TRF data
   trfs: TrfListItem[] = [];
@@ -94,8 +93,25 @@ export class TrfListComponent implements OnInit {
       this.fetchTrfs();
     });
 
+    // Refresh list when navigating back to this page
+    this.routerSubscription = this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        filter((event: any) => event.url === '/trf' || event.url.startsWith('/trf?'))
+      )
+      .subscribe(() => {
+        console.log('TRF list refreshing due to navigation');
+        this.fetchTrfs();
+      });
+
     // Load initial data
     this.fetchTrfs();
+  }
+
+  ngOnDestroy(): void {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
   }
 
   onSearchChange(value: string): void {
@@ -137,9 +153,21 @@ export class TrfListComponent implements OnInit {
       .subscribe({
         next: (response: any) => {
           console.log('✅ TRFs loaded:', response);
-          this.trfs = response.results || response.trfs || [];
-          this.totalTrfs = response.count || response.totalCount || 0;
+
+          // Handle both array response and paginated response
+          if (Array.isArray(response)) {
+            // Direct array response from Django
+            this.trfs = response;
+            this.totalTrfs = response.length;
+          } else {
+            // Paginated response
+            this.trfs = response.results || response.trfs || [];
+            this.totalTrfs = response.count || response.totalCount || 0;
+          }
+
           this.totalPages = Math.ceil(this.totalTrfs / this.limit);
+          console.log('Total TRFs:', this.totalTrfs);
+          console.log('TRFs array:', this.trfs);
         },
         error: (err) => {
           console.error('❌ Error fetching TRFs:', err);
@@ -190,7 +218,7 @@ export class TrfListComponent implements OnInit {
   }
 
   navigateToView(id: number): void {
-    this.router.navigate(['/trf/view', id]);
+    this.router.navigate(['/trf', id]);
   }
 
   previousPage(): void {
@@ -213,17 +241,15 @@ export class TrfListComponent implements OnInit {
 
   getStatusBadgeClass(status: string): string {
     const statusMap: { [key: string]: string } = {
-      'DRAFT': 'badge-secondary',
-      'PENDING_DEPARTMENT_FOCAL': 'badge-warning',
-      'PENDING_LINE_MANAGER': 'badge-warning',
-      'PENDING_HOD': 'badge-warning',
-      'APPROVED': 'badge-success',
-      'REJECTED': 'badge-danger',
-      'CANCELLED': 'badge-secondary',
-      'PROCESSING_FLIGHTS': 'badge-info',
-      'PROCESSING_ACCOMMODATION': 'badge-info',
-      'AWAITING_VISA': 'badge-info',
-      'TSR_PROCESSED': 'badge-success'
+      'Draft': 'badge-secondary',
+      'Pending Department Focal': 'badge-warning',
+      'Pending HOD': 'badge-warning',
+      'Pending Travel Desk': 'badge-warning',
+      'Pending Finance': 'badge-warning',
+      'Approved': 'badge-success',
+      'Rejected': 'badge-danger',
+      'Cancelled': 'badge-secondary',
+      'Completed': 'badge-success'
     };
     return statusMap[status] || 'badge-secondary';
   }
