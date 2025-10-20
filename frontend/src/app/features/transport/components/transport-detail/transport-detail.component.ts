@@ -217,9 +217,9 @@ export class TransportDetailComponent implements OnInit {
     }).format(amount);
   }
 
-  formatDate(dateString: string | undefined): string {
+  formatDate(dateString: string | Date | undefined): string {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
+    const date = dateString instanceof Date ? dateString : new Date(dateString);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 

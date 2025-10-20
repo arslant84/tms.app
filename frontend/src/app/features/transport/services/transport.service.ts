@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -8,6 +7,16 @@ import {
   TransportRequestForm,
   toFrontendFormat
 } from '../models/transport.model';
+
+// Type aliases for backward compatibility
+export type TransportRequest = TransportRequestForm;
+export interface VehicleAssignment {
+  id?: number;
+  vehicle_id?: number;
+  driver_name?: string;
+  vehicle_plate?: string;
+  assigned_at?: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -37,7 +46,7 @@ export class TransportService {
   }
 
   // Get single transport request by ID
-  getRequestById(id: number): Observable<TransportRequestForm> {
+  getRequestById(id: number | string): Observable<TransportRequestForm> {
     return this.http.get<any>(`${this.apiUrl}/${id}/`).pipe(
       map(response => toFrontendFormat(response))
     );
@@ -51,44 +60,44 @@ export class TransportService {
   }
 
   // Update existing transport request
-  updateRequest(id: number, data: any): Observable<TransportRequestForm> {
+  updateRequest(id: number | string, data: any): Observable<TransportRequestForm> {
     return this.http.put<any>(`${this.apiUrl}/${id}/`, data).pipe(
       map(response => toFrontendFormat(response))
     );
   }
 
   // Delete transport request
-  deleteRequest(id: number): Observable<void> {
+  deleteRequest(id: number | string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}/`);
   }
 
   // Submit transport request (change status from Draft to Pending)
-  submitRequest(id: number): Observable<any> {
+  submitRequest(id: number | string): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/submit/`, {});
   }
 
   // Cancel transport request
-  cancelRequest(id: number, reason?: string): Observable<any> {
+  cancelRequest(id: number | string, reason?: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/cancel/`, { reason });
   }
 
   // Approve transport request
-  approveRequest(id: number, comments?: string): Observable<any> {
+  approveRequest(id: number | string, comments?: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/approve/`, { comments });
   }
 
   // Reject transport request
-  rejectRequest(id: number, reason: string): Observable<any> {
+  rejectRequest(id: number | string, reason: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/reject/`, { reason });
   }
 
   // Complete transport request
-  completeRequest(id: number): Observable<any> {
+  completeRequest(id: number | string): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/complete/`, {});
   }
 
   // Assign vehicle to transport request
-  assignVehicle(id: number, data: any): Observable<any> {
+  assignVehicle(id: number | string, data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/${id}/assign_vehicle/`, data);
   }
 }

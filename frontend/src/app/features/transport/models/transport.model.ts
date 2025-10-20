@@ -62,6 +62,7 @@ export interface TransportRequestForm extends TransportRequestData, TransportApp
   id: string;
   status: TransportRequestStatus;
   approvalWorkflow: TransportApprovalStep[];
+  approval_steps?: any[]; // Legacy field for backward compatibility
   submittedAt?: Date | string;
   updatedAt?: Date | string;
   createdBy?: string;
@@ -188,6 +189,9 @@ export function toFrontendFormat(backendData: any): TransportRequestForm {
       date: step.date || step.step_date,
       comments: step.comments
     })) || [],
+    
+    // Legacy approval_steps for backward compatibility
+    approval_steps: backendData.approval_steps || backendData.approval_workflow || [],
 
     // Booking details
     bookingDetails: backendData.booking_details ? {
