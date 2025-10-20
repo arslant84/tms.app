@@ -344,6 +344,11 @@ export class TransportAdminComponent implements OnInit {
     return request.transportDetails.reduce((sum, detail) => sum + (detail.numberOfPassengers || 0), 0);
   }
 
+  getFirstTransportType(request: TransportRequest): string {
+    if (!request.transportDetails || request.transportDetails.length === 0) return 'N/A';
+    return request.transportDetails[0].transportType || 'N/A';
+  }
+
   /**
    * Get total pages
    */

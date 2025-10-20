@@ -112,7 +112,7 @@
           <tr *ngFor="let request of requests">
             <td class="title-cell">{{ request.requestorName || 'N/A' }}</td>
             <td class="purpose-cell">{{ request.purpose || 'N/A' }}</td>
-            <td>{{ request.transportDetails[0]?.transportType || 'N/A' }}</td>
+            <td>{{ getFirstTransportType(request) }}</td>
             <td class="text-center">{{ getTotalPassengers(request) }}</td>
             <td>{{ request.department || 'N/A' }}</td>
             <td>

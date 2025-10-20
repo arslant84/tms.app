@@ -176,6 +176,11 @@ export class TransportListComponent implements OnInit, OnDestroy {
     return request.transportDetails.reduce((sum, detail) => sum + (detail.numberOfPassengers || 0), 0);
   }
 
+  getFirstTransportType(request: TransportRequest): string {
+    if (!request.transportDetails || request.transportDetails.length === 0) return 'N/A';
+    return request.transportDetails[0].transportType || 'N/A';
+  }
+
   formatCurrency(amount: number, currency: string = 'USD'): string {
     if (!amount && amount !== 0) return '$0.00';
     return new Intl.NumberFormat('en-US', {

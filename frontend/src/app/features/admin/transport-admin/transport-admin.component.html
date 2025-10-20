@@ -93,7 +93,7 @@
               <div class="fw-medium">{{ request.requestorName || 'N/A' }}</div>
               <small class="text-muted">{{ request.purpose | slice:0:50 }}{{ request.purpose.length > 50 ? '...' : '' }}</small>
             </td>
-            <td>{{ request.transportDetails[0]?.transportType || 'N/A' }}</td>
+            <td>{{ getFirstTransportType(request) }}</td>
             <td>
               <span class="badge bg-secondary">{{ getTotalPassengers(request) }}</span>
             </td>
