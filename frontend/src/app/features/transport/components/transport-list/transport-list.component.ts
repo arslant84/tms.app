@@ -141,7 +141,7 @@ export class TransportListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/transport/create']);
   }
 
-  navigateToView(id: number): void {
+  navigateToView(id: number | string): void {
     this.router.navigate(['/transport', id]);
   }
 
@@ -165,10 +165,15 @@ export class TransportListComponent implements OnInit, OnDestroy {
     return 'badge-info';
   }
 
-  formatDate(dateString: string): string {
+  formatDate(dateString: string | Date | undefined): string {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString);
+    const date = dateString instanceof Date ? dateString : new Date(dateString);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  getTotalPassengers(request: TransportRequest): number {
+    if (!request.transportDetails || request.transportDetails.length === 0) return 0;
+    return request.transportDetails.reduce((sum, detail) => sum + (detail.numberOfPassengers || 0), 0);
   }
 
   formatCurrency(amount: number, currency: string = 'USD'): string {

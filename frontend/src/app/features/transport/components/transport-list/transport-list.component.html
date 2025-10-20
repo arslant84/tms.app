@@ -120,17 +120,17 @@
         </thead>
         <tbody>
           <tr *ngFor="let request of requests">
-            <td class="title-cell">{{ request.title }}</td>
+            <td class="title-cell">{{ request.requestorName || 'N/A' }}</td>
             <td class="purpose-cell">{{ request.purpose }}</td>
-            <td>{{ request.transport_type }}</td>
-            <td class="text-center">{{ request.number_of_passengers }}</td>
-            <td class="amount-cell">{{ formatCurrency(request.estimated_cost, request.currency) }}</td>
+            <td>{{ request.transportDetails?.[0]?.transportType || 'N/A' }}</td>
+            <td class="text-center">{{ getTotalPassengers(request) }}</td>
+            <td class="amount-cell">N/A</td>
             <td>
               <span class="badge" [ngClass]="getStatusClass(request.status)">
                 {{ request.status }}
               </span>
             </td>
-            <td>{{ formatDate(request.created_at) }}</td>
+            <td>{{ formatDate(request.submittedAt) }}</td>
             <td>
               <button class="btn btn-view" (click)="navigateToView(request.id)">
                 <i class="bi bi-eye"></i>

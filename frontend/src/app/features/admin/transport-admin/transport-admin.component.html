@@ -90,18 +90,18 @@
               </a>
             </td>
             <td>
-              <div class="fw-medium">{{ request.title }}</div>
+              <div class="fw-medium">{{ request.requestorName || 'N/A' }}</div>
               <small class="text-muted">{{ request.purpose | slice:0:50 }}{{ request.purpose.length > 50 ? '...' : '' }}</small>
             </td>
-            <td>{{ request.transport_type || 'N/A' }}</td>
+            <td>{{ request.transportDetails?.[0]?.transportType || 'N/A' }}</td>
             <td>
-              <span class="badge bg-secondary">{{ request.number_of_passengers }}</span>
+              <span class="badge bg-secondary">{{ getTotalPassengers(request) }}</span>
             </td>
-            <td class="fw-medium">{{ formatCurrency(request.estimated_cost) }}</td>
+            <td class="fw-medium">N/A</td>
             <td>
               <span [ngClass]="getStatusClass(request.status)">{{ request.status }}</span>
             </td>
-            <td>{{ formatDate(request.submitted_at) }}</td>
+            <td>{{ formatDate(request.submittedAt) }}</td>
             <td class="text-end">
               <div class="btn-group btn-group-sm" role="group">
                 <button class="btn btn-outline-primary" (click)="viewRequest(request)" title="View Details">
@@ -186,8 +186,8 @@
       </div>
       <div class="modal-body">
         <div *ngIf="selectedRequest" class="alert alert-info">
-          <strong>Request #{{ selectedRequest.id }}</strong> - {{ selectedRequest.title }}<br>
-          Passengers: {{ selectedRequest.number_of_passengers }}
+          <strong>Request #{{ selectedRequest.id }}</strong> - {{ selectedRequest.requestorName }}<br>
+          Passengers: {{ getTotalPassengers(selectedRequest) }}
         </div>
 
         <div class="row g-3">

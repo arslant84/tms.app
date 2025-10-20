@@ -13,9 +13,16 @@ export type TransportRequest = TransportRequestForm;
 export interface VehicleAssignment {
   id?: number;
   vehicle_id?: number;
-  driver_name?: string;
+  vehicle_number?: string;
   vehicle_plate?: string;
+  vehicle_type?: string;
+  vehicle_capacity?: number;
+  driver_name?: string;
+  driver_contact?: string;
+  driver_license?: string;
   assigned_at?: string;
+  assignment_date?: string;
+  odometer_start?: number;
 }
 
 @Injectable({

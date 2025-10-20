@@ -33,7 +33,7 @@ export class TransportAdminComponent implements OnInit {
   // Loading states
   loading: boolean = true;
   error: string = '';
-  processingId: number | null = null;
+  processingId: number | string | null = null;
 
   // Assign vehicle modal
   showAssignVehicleModal: boolean = false;
@@ -44,7 +44,6 @@ export class TransportAdminComponent implements OnInit {
     driver_name: '',
     driver_contact: '',
     driver_license: '',
-    status: 'ASSIGNED',
     assignment_date: new Date().toISOString().split('T')[0]
   };
 
@@ -160,7 +159,6 @@ export class TransportAdminComponent implements OnInit {
       driver_name: '',
       driver_contact: '',
       driver_license: '',
-      status: 'ASSIGNED',
       assignment_date: new Date().toISOString().split('T')[0]
     };
     this.showAssignVehicleModal = true;
@@ -315,28 +313,35 @@ export class TransportAdminComponent implements OnInit {
    * Check if request can be approved
    */
   canApprove(request: TransportRequest): boolean {
-    return request.status === 'Pending Approval';
+    return request.status === 'Pending Department Focal' || 
+           request.status === 'Pending Line Manager' || 
+           request.status === 'Pending HOD';
   }
 
   /**
    * Check if vehicle can be assigned
    */
   canAssignVehicle(request: TransportRequest): boolean {
-    return request.status === 'Approved' || request.status === 'In Progress';
+    return request.status === 'Approved' || request.status === 'Processing with Transport Admin';
   }
 
   /**
    * Check if request can be completed
    */
   canComplete(request: TransportRequest): boolean {
-    return request.status === 'In Progress';
+    return request.status === 'Processing with Transport Admin';
   }
 
   /**
    * Check if request is processing
    */
-  isProcessing(requestId: number): boolean {
+  isProcessing(requestId: number | string): boolean {
     return this.processingId === requestId;
+  }
+
+  getTotalPassengers(request: TransportRequest): number {
+    if (!request.transportDetails || request.transportDetails.length === 0) return 0;
+    return request.transportDetails.reduce((sum, detail) => sum + (detail.numberOfPassengers || 0), 0);
   }
 
   /**
