@@ -39,7 +39,7 @@ export class TransportListComponent implements OnInit, OnDestroy {
   totalRequests = 0;
 
   // Sorting
-  sortField = 'created_at';
+  sortField = 'submittedAt';
   sortDirection: 'asc' | 'desc' = 'desc';
 
   private searchSubject = new Subject<string>();

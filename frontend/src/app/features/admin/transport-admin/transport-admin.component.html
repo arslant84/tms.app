@@ -73,10 +73,10 @@
         <thead>
           <tr>
             <th>Request #</th>
-            <th>Title</th>
+            <th>Requestor / Purpose</th>
             <th>Type</th>
             <th>Passengers</th>
-            <th>Cost</th>
+            <th>Department</th>
             <th>Status</th>
             <th>Submitted</th>
             <th class="text-end">Actions</th>
@@ -97,7 +97,7 @@
             <td>
               <span class="badge bg-secondary">{{ getTotalPassengers(request) }}</span>
             </td>
-            <td class="fw-medium">N/A</td>
+            <td>{{ request.department || 'N/A' }}</td>
             <td>
               <span [ngClass]="getStatusClass(request.status)">{{ request.status }}</span>
             </td>

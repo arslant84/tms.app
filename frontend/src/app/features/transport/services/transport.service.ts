@@ -49,7 +49,22 @@ export class TransportService {
       if (filters.page_size) params = params.set('page_size', filters.page_size.toString());
     }
 
-    return this.http.get<any>(this.apiUrl + '/', { params });
+    return this.http.get<any>(this.apiUrl + '/', { params }).pipe(
+      map(response => {
+        // Handle paginated response
+        if (response.results && Array.isArray(response.results)) {
+          return {
+            ...response,
+            results: response.results.map((item: any) => toFrontendFormat(item))
+          };
+        }
+        // Handle array response
+        if (Array.isArray(response)) {
+          return response.map((item: any) => toFrontendFormat(item));
+        }
+        return response;
+      })
+    );
   }
 
   // Get single transport request by ID

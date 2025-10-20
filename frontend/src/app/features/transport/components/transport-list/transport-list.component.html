@@ -29,7 +29,7 @@
           <input
             type="text"
             class="search-input"
-            placeholder="Search by title, purpose, or location..."
+            placeholder="Search by requestor, purpose, or location..."
             [value]="searchTerm"
             (input)="onSearchChange($any($event.target).value)"
           >
@@ -83,35 +83,25 @@
       <table class="requests-table">
         <thead>
           <tr>
-            <th class="sortable-header" (click)="onSort('title')">
+            <th class="sortable-header" (click)="onSort('requestorName')">
               <button class="sort-button">
-                Title
+                Requestor
                 <i class="bi bi-arrow-down-up"></i>
               </button>
             </th>
             <th>Purpose</th>
             <th>Transport Type</th>
-            <th class="sortable-header" (click)="onSort('number_of_passengers')">
-              <button class="sort-button">
-                Passengers
-                <i class="bi bi-arrow-down-up"></i>
-              </button>
-            </th>
-            <th class="sortable-header" (click)="onSort('estimated_cost')">
-              <button class="sort-button">
-                Est. Cost
-                <i class="bi bi-arrow-down-up"></i>
-              </button>
-            </th>
+            <th class="text-center">Passengers</th>
+            <th>Department</th>
             <th class="sortable-header" (click)="onSort('status')">
               <button class="sort-button">
                 Status
                 <i class="bi bi-arrow-down-up"></i>
               </button>
             </th>
-            <th class="sortable-header" (click)="onSort('created_at')">
+            <th class="sortable-header" (click)="onSort('submittedAt')">
               <button class="sort-button">
-                Created
+                Submitted
                 <i class="bi bi-arrow-down-up"></i>
               </button>
             </th>
@@ -121,10 +111,10 @@
         <tbody>
           <tr *ngFor="let request of requests">
             <td class="title-cell">{{ request.requestorName || 'N/A' }}</td>
-            <td class="purpose-cell">{{ request.purpose }}</td>
+            <td class="purpose-cell">{{ request.purpose || 'N/A' }}</td>
             <td>{{ request.transportDetails[0]?.transportType || 'N/A' }}</td>
             <td class="text-center">{{ getTotalPassengers(request) }}</td>
-            <td class="amount-cell">N/A</td>
+            <td>{{ request.department || 'N/A' }}</td>
             <td>
               <span class="badge" [ngClass]="getStatusClass(request.status)">
                 {{ request.status }}
