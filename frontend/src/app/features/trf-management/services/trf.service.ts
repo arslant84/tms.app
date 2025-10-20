@@ -49,8 +49,7 @@ export class TrfService {
 
   // Get TRF by ID and type
   getTrfById(id: number, isOverseas: boolean = false): Observable<TravelRequestForm> {
-    const url = isOverseas ? this.overseasApiUrl : this.apiUrl;
-    return this.http.get<TravelRequestForm>(`${url}/${id}`)
+    return this.http.get<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/`)
       .pipe(
         catchError(this.handleError)
       );
@@ -83,8 +82,7 @@ export class TrfService {
 
   // Delete TRF
   deleteTrf(id: number, isOverseas: boolean = false): Observable<any> {
-    const url = isOverseas ? this.overseasApiUrl : this.apiUrl;
-    return this.http.delete(`${url}/${id}/`)
+    return this.http.delete(`${environment.apiUrl}/trf/travel-requests/${id}/`)
       .pipe(
         catchError(this.handleError)
       );
@@ -94,6 +92,14 @@ export class TrfService {
   submitTrf(id: number, isOverseas: boolean = false): Observable<TravelRequestForm> {
     const url = isOverseas ? this.overseasApiUrl : this.apiUrl;
     return this.http.post<TravelRequestForm>(`${url}/${id}/submit/`, {})
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  // Cancel TRF
+  cancelTrf(id: number, isOverseas: boolean = false): Observable<TravelRequestForm> {
+    return this.http.post<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/cancel/`, {})
       .pipe(
         catchError(this.handleError)
       );

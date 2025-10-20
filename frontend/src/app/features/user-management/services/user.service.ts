@@ -98,8 +98,10 @@ export class UserService {
   }
 
   // Role operations
-  getAllRoles(): Observable<Role[]> {
-    return this.http.get<Role[]>(`${this.apiUrl}/roles/`);
+  getAllRoles(): Observable<any> {
+    // Disable pagination for roles by requesting a large page size
+    const params = new HttpParams().set('page_size', '1000');
+    return this.http.get<any>(`${this.apiUrl}/roles/`, { params });
   }
 
   getRoleById(id: number): Observable<Role> {

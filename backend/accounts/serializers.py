@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from .models import Role, Permission
+from .models import Role, Permission, ApplicationSetting
 
 User = get_user_model()
 
@@ -52,4 +52,70 @@ class UserCreateSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(required=True, style={'input_type': 'password'})
+
+
+class ApplicationSettingSerializer(serializers.ModelSerializer):
+    """Serializer for ApplicationSetting model with typed values"""
+    value = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ApplicationSetting
+        fields = ['id', 'setting_key', 'setting_value', 'value', 'setting_type', 'description', 'is_public', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_value(self, obj):
+        """Return the typed value instead of string"""
+        return obj.get_value()
+
+
+class ApplicationSettingCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating application settings"""
+    value = serializers.JSONField(write_only=True, required=False)
+
+    class Meta:
+        model = ApplicationSetting
+        fields = ['setting_key', 'value', 'setting_value', 'setting_type', 'description', 'is_public']
+
+    def validate(self, attrs):
+        """Allow setting value either as typed 'value' or raw 'setting_value'"""
+        if 'value' in attrs and 'setting_value' not in attrs:
+            # Convert typed value to string
+            value = attrs.pop('value')
+            setting_type = attrs.get('setting_type', 'string')
+            if setting_type == 'boolean':
+                attrs['setting_value'] = 'true' if value else 'false'
+            elif setting_type == 'number':
+                attrs['setting_value'] = str(value)
+            elif setting_type == 'json':
+                import json
+                attrs['setting_value'] = json.dumps(value)
+            else:
+                attrs['setting_value'] = str(value)
+        return attrs
+
+
+class ApplicationSettingUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating application settings"""
+    value = serializers.JSONField(write_only=True, required=False)
+
+    class Meta:
+        model = ApplicationSetting
+        fields = ['setting_value', 'value', 'setting_type', 'description', 'is_public']
+
+    def validate(self, attrs):
+        """Allow setting value either as typed 'value' or raw 'setting_value'"""
+        if 'value' in attrs and 'setting_value' not in attrs:
+            # Convert typed value to string
+            value = attrs.pop('value')
+            setting_type = attrs.get('setting_type', self.instance.setting_type if self.instance else 'string')
+            if setting_type == 'boolean':
+                attrs['setting_value'] = 'true' if value else 'false'
+            elif setting_type == 'number':
+                attrs['setting_value'] = str(value)
+            elif setting_type == 'json':
+                import json
+                attrs['setting_value'] = json.dumps(value)
+            else:
+                attrs['setting_value'] = str(value)
+        return attrs
 

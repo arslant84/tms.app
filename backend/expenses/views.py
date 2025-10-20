@@ -225,6 +225,44 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
         return Response(expense_serializer.data)
 
     @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """Cancel an expense claim"""
+        expense = self.get_object()
+
+        # Check if the user is the owner
+        if expense.user != request.user:
+            return Response(
+                {'error': 'You can only cancel your own expense claims'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Check if the expense claim can be cancelled
+        if expense.status in [ExpenseStatus.APPROVED, ExpenseStatus.PAID]:
+            return Response(
+                {'error': 'Cannot cancel approved or paid expense claims'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update status to CANCELLED (need to add this to ExpenseStatus enum)
+        # For now, use REJECTED as a placeholder
+        expense.status = ExpenseStatus.REJECTED
+        expense.save()
+
+        # Optionally create an approval step to track cancellation
+        comments = request.data.get('comments', 'Cancelled by user')
+        ClaimsApprovalStep.objects.create(
+            claim=expense,
+            step_role='User',
+            step_name='Cancellation',
+            status='Cancelled',
+            comments=comments,
+            step_date=datetime.now()
+        )
+
+        serializer = self.get_serializer(expense)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
     def mark_as_paid(self, request, pk=None):
         """Mark an expense claim as paid (Finance role only)"""
         expense = self.get_object()
@@ -249,6 +287,16 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
         expense.save()
 
         serializer = self.get_serializer(expense)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='pending-approvals')
+    def pending_approvals(self, request):
+        """Get expense claims pending approval"""
+        queryset = ExpenseClaim.objects.filter(
+            status__in=[ExpenseStatus.SUBMITTED, ExpenseStatus.UNDER_REVIEW]
+        ).order_by('-created_at')
+
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
 

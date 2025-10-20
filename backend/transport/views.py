@@ -12,8 +12,8 @@ from .models import (
 from .serializers import (
     TransportRequestSerializer, TransportRequestDetailSerializer,
     TransportRequestCreateSerializer, TransportRequestUpdateSerializer,
-    TransportSegmentSerializer, TransportApprovalStepSerializer,
-    VehicleAssignmentSerializer, ApprovalActionSerializer
+    TransportApprovalStepSerializer, VehicleAssignmentSerializer,
+    ApprovalActionSerializer
 )
 
 
@@ -87,8 +87,29 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         return TransportRequestSerializer
 
     def perform_create(self, serializer):
-        """Set requestor to current user when creating"""
-        serializer.save(requestor=self.request.user, status='Draft')
+        """Set requestor to current user and auto-populate requestor info"""
+        user = self.request.user
+
+        # Auto-populate requestor information if not provided
+        validated_data = serializer.validated_data
+        if not validated_data.get('requestor_name'):
+            validated_data['requestor_name'] = user.get_full_name() or user.email
+        if not validated_data.get('staff_id'):
+            validated_data['staff_id'] = getattr(user, 'employee_id', '') or getattr(user, 'staff_id', '')
+        if not validated_data.get('department'):
+            validated_data['department'] = getattr(user, 'department', '')
+        if not validated_data.get('position'):
+            validated_data['position'] = getattr(user, 'position', '') or getattr(user, 'job_title', '')
+
+        # Get status from request data, default to 'Draft' if not provided
+        status_value = validated_data.get('status', 'Draft')
+
+        # Set submitted_at timestamp if status is being set to 'Pending' or 'Submitted'
+        extra_kwargs = {}
+        if status_value in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
+            extra_kwargs['submitted_at'] = timezone.now()
+
+        serializer.save(requestor=user, **extra_kwargs)
 
     @action(detail=True, methods=['post'])
     def submit(self, request, pk=None):
@@ -112,15 +133,15 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Validate has at least one segment
-        if not transport_request.segments.exists():
+        # Validate has at least one transport detail
+        if not transport_request.transport_details or len(transport_request.transport_details) == 0:
             return Response(
-                {'error': 'Transport request must have at least one segment'},
+                {'error': 'Transport request must have at least one transport detail'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         # Update status
-        transport_request.status = 'Pending'
+        transport_request.status = 'Pending Department Focal'
         transport_request.submitted_at = timezone.now()
         transport_request.save()
 
@@ -306,7 +327,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], url_path='pending-approvals')
     def pending_approvals(self, request):
         """
         Get all transport requests pending approval by current user's role
@@ -330,34 +351,35 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class TransportSegmentViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for managing transport segments
-    """
-    queryset = TransportSegment.objects.all()
-    serializer_class = TransportSegmentSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """Filter segments by transport request if specified"""
-        queryset = super().get_queryset()
-        transport_request_id = self.request.query_params.get('transport_request', None)
-
-        if transport_request_id:
-            queryset = queryset.filter(transport_request_id=transport_request_id)
-
-        return queryset.select_related('transport_request', 'transport_request__requestor')
-
-    def perform_create(self, serializer):
-        """Validate transport request is in Draft status"""
-        transport_request = serializer.validated_data['transport_request']
-
-        if transport_request.status not in ['Draft', 'Rejected']:
-            raise serializers.ValidationError(
-                f'Cannot add segments to transport request with status {transport_request.status}'
-            )
-
-        serializer.save()
+# Deprecated - TransportSegment model replaced with JSON field transport_details
+# class TransportSegmentViewSet(viewsets.ModelViewSet):
+#     """
+#     ViewSet for managing transport segments
+#     """
+#     queryset = TransportSegment.objects.all()
+#     serializer_class = TransportSegmentSerializer
+#     permission_classes = [IsAuthenticated]
+#
+#     def get_queryset(self):
+#         """Filter segments by transport request if specified"""
+#         queryset = super().get_queryset()
+#         transport_request_id = self.request.query_params.get('transport_request', None)
+#
+#         if transport_request_id:
+#             queryset = queryset.filter(transport_request_id=transport_request_id)
+#
+#         return queryset.select_related('transport_request', 'transport_request__requestor')
+#
+#     def perform_create(self, serializer):
+#         """Validate transport request is in Draft status"""
+#         transport_request = serializer.validated_data['transport_request']
+#
+#         if transport_request.status not in ['Draft', 'Rejected']:
+#             raise serializers.ValidationError(
+#                 f'Cannot add segments to transport request with status {transport_request.status}'
+#             )
+#
+#         serializer.save()
 
 
 class TransportApprovalStepViewSet(viewsets.ReadOnlyModelViewSet):

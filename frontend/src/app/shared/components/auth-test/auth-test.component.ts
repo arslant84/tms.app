@@ -125,7 +125,7 @@ export class AuthTestComponent implements OnInit {
     this.authService.isAuthenticated().subscribe(isAuth => {
       this.isLoggedIn = isAuth;
       if (isAuth) {
-        this.authService.getCurrentUser().subscribe(user => {
+        this.authService.getCurrentUser$Obs().subscribe(user => {
           this.currentUser = user;
         });
       }

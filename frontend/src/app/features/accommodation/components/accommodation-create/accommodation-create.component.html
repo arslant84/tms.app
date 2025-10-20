@@ -1,182 +1,213 @@
 <div class="accommodation-create-container">
-  <!-- Page Header -->
-  <div class="page-header">
-    <div class="header-left">
-      <h1 class="page-title">
-        <i class="bi bi-house-door"></i>
-        {{ isEditMode ? 'Edit' : 'Create' }} Accommodation Request
-      </h1>
-      <p class="page-subtitle">Fill in the details below to request accommodation</p>
-    </div>
-  </div>
-
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-state">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
+    <div class="spinner"></div>
     <p>Loading request data...</p>
   </div>
 
-  <!-- Form -->
-  <form [formGroup]="accommodationForm" (ngSubmit)="onSubmit()" *ngIf="!loading" class="accommodation-form">
-    <!-- Requestor Information Card -->
+  <!-- Main Form Card -->
+  <div *ngIf="!loading" class="form-card-wrapper">
     <div class="form-card">
+      <!-- Card Header with Title -->
       <div class="card-header">
-        <h2 class="card-title">
-          <i class="bi bi-person"></i>
-          Requestor Information
-        </h2>
+        <h1 class="card-title">
+          <i class="bi bi-house-door"></i>
+          New Accommodation Request
+        </h1>
+        <p class="card-description">Fill in the details below to request accommodation.</p>
       </div>
 
-      <div class="card-body">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="requestor_name" class="form-label required">Requestor Name</label>
-            <input
-              type="text"
-              id="requestor_name"
-              class="form-control"
-              formControlName="requestor_name"
-              [class.is-invalid]="accommodationForm.get('requestor_name')?.invalid && accommodationForm.get('requestor_name')?.touched"
-              placeholder="Enter requestor name" />
-            <div class="invalid-feedback" *ngIf="accommodationForm.get('requestor_name')?.invalid && accommodationForm.get('requestor_name')?.touched">
-              Requestor name is required
+      <!-- Card Content -->
+      <div class="card-content">
+        <form [formGroup]="accommodationForm" (ngSubmit)="onSubmit()" class="accommodation-form">
+          <!-- 2-Column Grid Layout -->
+          <div class="form-grid">
+            <!-- Requestor Name -->
+            <div class="form-group">
+              <label for="requestorName" class="form-label required">Requestor Name*</label>
+              <input
+                type="text"
+                id="requestorName"
+                class="form-control"
+                formControlName="requestorName"
+                [class.is-invalid]="accommodationForm.get('requestorName')?.invalid && accommodationForm.get('requestorName')?.touched"
+                placeholder="Arslan Tekayev" />
+              <div class="invalid-feedback" *ngIf="accommodationForm.get('requestorName')?.invalid && accommodationForm.get('requestorName')?.touched">
+                Requestor name is required
+              </div>
+            </div>
+
+            <!-- Staff ID -->
+            <div class="form-group">
+              <label for="requestorId" class="form-label">Staff ID</label>
+              <input
+                type="text"
+                id="requestorId"
+                class="form-control"
+                formControlName="requestorId"
+                placeholder="1049681" />
+            </div>
+
+            <!-- Gender -->
+            <div class="form-group">
+              <label for="requestorGender" class="form-label required">Gender*</label>
+              <select
+                id="requestorGender"
+                class="form-control"
+                formControlName="requestorGender"
+                [class.is-invalid]="accommodationForm.get('requestorGender')?.invalid && accommodationForm.get('requestorGender')?.touched">
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+              <div class="invalid-feedback" *ngIf="accommodationForm.get('requestorGender')?.invalid && accommodationForm.get('requestorGender')?.touched">
+                Please select gender
+              </div>
+            </div>
+
+            <!-- Department -->
+            <div class="form-group">
+              <label for="department" class="form-label">Department</label>
+              <input
+                type="text"
+                id="department"
+                class="form-control"
+                formControlName="department"
+                placeholder="TBE" />
+            </div>
+
+            <!-- Location -->
+            <div class="form-group">
+              <label for="location" class="form-label required">Location*</label>
+              <select
+                id="location"
+                class="form-control"
+                formControlName="location"
+                [class.is-invalid]="accommodationForm.get('location')?.invalid && accommodationForm.get('location')?.touched">
+                <option value="">Select location</option>
+                <option value="Ashgabat">Ashgabat</option>
+                <option value="Kiyanly">Kiyanly</option>
+                <option value="Turkmenbashy">Turkmenbashy</option>
+              </select>
+              <div class="invalid-feedback" *ngIf="accommodationForm.get('location')?.invalid && accommodationForm.get('location')?.touched">
+                Please select location
+              </div>
+            </div>
+
+            <!-- TSR ID -->
+            <div class="form-group">
+              <label for="trfId" class="form-label">TSR ID (if applicable)</label>
+              <input
+                type="text"
+                id="trfId"
+                class="form-control"
+                formControlName="trfId"
+                placeholder="e.g., TSR-DOM-001" />
+              <small class="form-text">Link this request to an existing Travel & Service Request</small>
+            </div>
+
+            <!-- Check-in Date -->
+            <div class="form-group">
+              <label for="requestedCheckInDate" class="form-label required">Check-in Date*</label>
+              <input
+                type="date"
+                id="requestedCheckInDate"
+                class="form-control"
+                formControlName="requestedCheckInDate"
+                [class.is-invalid]="accommodationForm.get('requestedCheckInDate')?.invalid && accommodationForm.get('requestedCheckInDate')?.touched" />
+              <div class="invalid-feedback" *ngIf="accommodationForm.get('requestedCheckInDate')?.invalid && accommodationForm.get('requestedCheckInDate')?.touched">
+                Check-in date is required
+              </div>
+            </div>
+
+            <!-- Check-out Date -->
+            <div class="form-group">
+              <label for="requestedCheckOutDate" class="form-label required">Check-out Date*</label>
+              <input
+                type="date"
+                id="requestedCheckOutDate"
+                class="form-control"
+                formControlName="requestedCheckOutDate"
+                [class.is-invalid]="accommodationForm.get('requestedCheckOutDate')?.invalid && accommodationForm.get('requestedCheckOutDate')?.touched" />
+              <div class="invalid-feedback" *ngIf="accommodationForm.get('requestedCheckOutDate')?.invalid && accommodationForm.get('requestedCheckOutDate')?.touched">
+                Check-out date is required
+              </div>
+            </div>
+
+            <!-- Preferred Room Type -->
+            <div class="form-group">
+              <label for="requestedRoomType" class="form-label">Preferred Room Type</label>
+              <select
+                id="requestedRoomType"
+                class="form-control"
+                formControlName="requestedRoomType">
+                <option value="">Select room type (optional)</option>
+                <option value="Single">Single</option>
+                <option value="Double">Double</option>
+                <option value="Suite">Suite</option>
+                <option value="Tent">Tent</option>
+              </select>
+              <small class="form-text">Select your preferred room type (subject to availability)</small>
+            </div>
+
+            <!-- Flight/Train Arrival Time -->
+            <div class="form-group">
+              <label for="flightArrivalTime" class="form-label">Flight/Train Arrival Time</label>
+              <input
+                type="time"
+                id="flightArrivalTime"
+                class="form-control"
+                formControlName="flightArrivalTime" />
+              <small class="form-text">Time of arrival (HH:MM)</small>
+            </div>
+
+            <!-- Flight/Train Departure Time -->
+            <div class="form-group">
+              <label for="flightDepartureTime" class="form-label">Flight/Train Departure Time</label>
+              <input
+                type="time"
+                id="flightDepartureTime"
+                class="form-control"
+                formControlName="flightDepartureTime" />
+              <small class="form-text">Time of departure (HH:MM)</small>
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="staff_id" class="form-label">Staff ID</label>
-            <input
-              type="text"
-              id="staff_id"
-              class="form-control"
-              formControlName="staff_id"
-              placeholder="Enter staff ID" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="department" class="form-label">Department</label>
-            <input
-              type="text"
-              id="department"
-              class="form-control"
-              formControlName="department"
-              placeholder="Enter department" />
-          </div>
-
-          <div class="form-group">
-            <label for="position" class="form-label">Position</label>
-            <input
-              type="text"
-              id="position"
-              class="form-control"
-              formControlName="position"
-              placeholder="Enter position" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="cost_center" class="form-label">Cost Center</label>
-            <input
-              type="text"
-              id="cost_center"
-              class="form-control"
-              formControlName="cost_center"
-              placeholder="Enter cost center" />
-          </div>
-
-          <div class="form-group">
-            <label for="tel_email" class="form-label">Tel/Email</label>
-            <input
-              type="text"
-              id="tel_email"
-              class="form-control"
-              formControlName="tel_email"
-              placeholder="Enter telephone or email" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="email" class="form-label">Email</label>
-            <input
-              type="email"
-              id="email"
-              class="form-control"
-              formControlName="email"
-              [class.is-invalid]="accommodationForm.get('email')?.invalid && accommodationForm.get('email')?.touched"
-              placeholder="Enter email address" />
-            <div class="invalid-feedback" *ngIf="accommodationForm.get('email')?.invalid && accommodationForm.get('email')?.touched">
-              Please enter a valid email address
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="estimated_cost" class="form-label">Estimated Cost (USD)</label>
-            <input
-              type="number"
-              id="estimated_cost"
-              class="form-control"
-              formControlName="estimated_cost"
-              min="0"
-              step="0.01"
-              placeholder="0.00" />
-          </div>
-        </div>
-
-        <div class="form-row">
+          <!-- Special Requests (Full Width) -->
           <div class="form-group full-width">
-            <label for="additional_comments" class="form-label">Additional Comments</label>
+            <label for="specialRequests" class="form-label">Special Requests</label>
             <textarea
-              id="additional_comments"
+              id="specialRequests"
               class="form-control"
-              formControlName="additional_comments"
+              formControlName="specialRequests"
               rows="4"
-              placeholder="Enter any additional comments or requirements"></textarea>
+              placeholder="Any special requirements or preferences"></textarea>
+            <small class="form-text">E.g., dietary restrictions, accessibility needs, etc.</small>
           </div>
-        </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn btn-outline"
+              (click)="onCancel()"
+              [disabled]="submitting">
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="accommodationForm.invalid || submitting">
+              <span *ngIf="!submitting">Submit Request</span>
+              <span *ngIf="submitting">
+                <i class="bi bi-arrow-repeat spin"></i>
+                Submitting...
+              </span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
-
-    <!-- Form Actions -->
-    <div class="form-actions">
-      <button
-        type="button"
-        class="btn btn-outline-secondary"
-        (click)="onCancel()"
-        [disabled]="submitting">
-        <i class="bi bi-x-circle"></i>
-        Cancel
-      </button>
-
-      <div class="actions-right">
-        <button
-          type="button"
-          class="btn btn-outline-primary"
-          (click)="onSaveDraft()"
-          [disabled]="submitting">
-          <i class="bi bi-file-earmark"></i>
-          Save Draft
-        </button>
-
-        <button
-          type="submit"
-          class="btn btn-primary"
-          [disabled]="accommodationForm.invalid || submitting">
-          <span *ngIf="!submitting">
-            <i class="bi bi-check-circle"></i>
-            {{ isEditMode ? 'Update' : 'Submit' }} Request
-          </span>
-          <span *ngIf="submitting">
-            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-            {{ isEditMode ? 'Updating...' : 'Submitting...' }}
-          </span>
-        </button>
-      </div>
-    </div>
-  </form>
+  </div>
 </div>

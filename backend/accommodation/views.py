@@ -214,6 +214,16 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(accommodation_request)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='pending-approvals')
+    def pending_approvals(self, request):
+        """Get accommodation requests pending approval"""
+        queryset = AccommodationRequest.objects.filter(
+            status='Pending'
+        ).order_by('-submitted_at')
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 class AccommodationBookingViewSet(viewsets.ModelViewSet):
     """

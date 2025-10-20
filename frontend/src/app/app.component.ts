@@ -4,6 +4,7 @@ import { AuthService } from './core/services/auth.service';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
+import { ConfirmationDialogComponent } from './shared/components/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   selector: 'app-root',
@@ -11,7 +12,8 @@ import { ToastContainerComponent } from './shared/components/toast-container/toa
   imports: [
     CommonModule,
     RouterOutlet,
-    ToastContainerComponent
+    ToastContainerComponent,
+    ConfirmationDialogComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']

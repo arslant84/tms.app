@@ -1,3 +1,5 @@
+@use "sass:color";
+
 .container-fluid {
   max-width: 1400px;
   margin: 0 auto;
@@ -93,8 +95,8 @@
   border-color: var(--bs-primary);
 
   &:hover:not(:disabled) {
-    background-color: darken(#0d6efd, 10%);
-    border-color: darken(#0d6efd, 10%);
+    background-color: color.scale(#0d6efd, $lightness: -10%);
+    border-color: color.scale(#0d6efd, $lightness: -10%);
   }
 }
 
@@ -104,8 +106,8 @@
   color: #000;
 
   &:hover:not(:disabled) {
-    background-color: darken(#ffc107, 10%);
-    border-color: darken(#ffc107, 10%);
+    background-color: color.scale(#ffc107, $lightness: -10%);
+    border-color: color.scale(#ffc107, $lightness: -10%);
   }
 }
 

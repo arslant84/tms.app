@@ -48,3 +48,70 @@ h2 {
 .text-highlight { color: colors.$highlight-color; }
 
 // Add your custom global styles below
+
+// ========== GLOBAL PRINT STYLES ==========
+@media print {
+  // Global print settings
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-size: 10pt;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  // Hide all navigation, header, footer, and sidebar elements
+  header,
+  footer,
+  nav,
+  .sidebar,
+  .sidebar-wrapper,
+  .header,
+  .header-wrapper,
+  .footer-wrapper,
+  .navigation,
+  .app-sidebar,
+  .right-panel,
+  .sidebar-overlay,
+  app-header,
+  app-sidebar,
+  app-navigation,
+  app-toast-container {
+    display: none !important;
+  }
+
+  // App container should have no constraints
+  .app-container {
+    display: block !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  // Ensure main content takes full width
+  main,
+  .main-content,
+  .content,
+  .content-area,
+  .app-content {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  // Remove shadows and borders for cleaner print
+  * {
+    box-shadow: none !important;
+  }
+
+  // Page breaks
+  .page-break {
+    page-break-before: always;
+  }
+
+  .no-page-break {
+    page-break-inside: avoid;
+  }
+}

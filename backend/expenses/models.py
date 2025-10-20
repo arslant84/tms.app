@@ -55,6 +55,7 @@ class ExpenseClaim(models.Model):
         default=ExpenseStatus.DRAFT,
     )
     receipt_urls = models.JSONField(default=list)
+    additional_data = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     items = models.ManyToManyField(ExpenseItem, related_name='expense_claim')

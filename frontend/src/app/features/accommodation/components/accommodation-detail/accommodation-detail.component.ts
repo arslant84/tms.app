@@ -1,64 +1,137 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { AccommodationService, AccommodationRequest } from '../../services/accommodation.service';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { AccommodationService } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { WorkflowService } from '../../../../core/services/workflow.service';
+import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
+import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
+import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
+import {
+  AccommodationRequestDetails,
+  DailyBooking,
+  ApprovalStep,
+  accommodationToFrontend,
+  calculateNights,
+  getStatusBadgeClass,
+  isEditable,
+  isCancellable,
+  isDeletable,
+  formatTime12Hour
+} from '../../models/accommodation.model';
 
 @Component({
   selector: 'app-accommodation-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, WorkflowStatusComponent, ApprovalActionsComponent],
   templateUrl: './accommodation-detail.component.html',
   styleUrls: ['./accommodation-detail.component.scss']
 })
 export class AccommodationDetailComponent implements OnInit {
-  request!: AccommodationRequest;
+  request: AccommodationRequestDetails | null = null;
+  loading: boolean = true;
+  error: string = '';
   requestId!: number;
-  isLoading = false;
 
-  // Status-based visibility
-  private readonly EDITABLE_STATUSES = ['Draft', 'Pending', 'Rejected'];
-  private readonly CANCELLABLE_STATUSES = ['Pending', 'Confirmed'];
-  private readonly DELETABLE_STATUSES = ['Draft', 'Rejected'];
+  // Calculated values
+  numberOfNights: number = 0;
+  hasAssignment: boolean = false;
+  hasBookingRecords: boolean = false;
+  isRejected: boolean = false;
+  hasAdminNotes: boolean = false;
+
+  // Workflow properties
+  workflow: WorkflowInstance | null = null;
+  workflowLoading: boolean = false;
+  currentStepExecution: WorkflowStepExecution | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private accommodationService: AccommodationService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private confirmationService: ConfirmationService,
+    public workflowService: WorkflowService
   ) {}
 
   ngOnInit(): void {
-    this.requestId = Number(this.route.snapshot.paramMap.get('id'));
-    this.loadRequestDetails();
-  }
-
-  loadRequestDetails(): void {
-    this.isLoading = true;
-    this.accommodationService.getRequestById(this.requestId).subscribe({
-      next: (request) => {
-        this.request = request;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading accommodation request:', err);
-        this.toastService.error('Failed to load accommodation request details');
-        this.isLoading = false;
-        this.router.navigate(['/accommodation']);
+    this.route.params.subscribe(params => {
+      this.requestId = +params['id'];
+      if (this.requestId) {
+        this.loadRequestDetails();
+        this.loadWorkflow();
       }
     });
   }
 
+  loadRequestDetails(): void {
+    this.loading = true;
+    this.error = '';
+
+    this.accommodationService.getRequestById(this.requestId).subscribe({
+      next: (data) => {
+        // Convert backend format to frontend format
+        this.request = accommodationToFrontend(data as any);
+        this.calculateDerivedValues();
+        this.loading = false;
+      },
+      error: (err) => {
+        this.error = 'Failed to load accommodation request: ' + (err.error?.message || err.message || 'Unknown error');
+        this.loading = false;
+        console.error('Error loading accommodation request:', err);
+      }
+    });
+  }
+
+  calculateDerivedValues(): void {
+    if (!this.request) return;
+
+    // Calculate nights
+    this.numberOfNights = calculateNights(
+      this.request.requestedCheckInDate,
+      this.request.requestedCheckOutDate
+    );
+
+    // Check if has assignment
+    this.hasAssignment = !!(
+      this.request.assignedRoomId &&
+      this.request.assignedRoomName &&
+      this.request.assignedStaffHouseId &&
+      this.request.assignedStaffHouseName
+    );
+
+    // Check if has booking records
+    this.hasBookingRecords = !!(
+      this.request.dailyBookings &&
+      this.request.dailyBookings.length > 0
+    );
+
+    // Check if rejected
+    this.isRejected = this.request.status === 'Rejected' && !!this.request.rejectionDetails;
+
+    // Check if has admin notes
+    this.hasAdminNotes = !!(this.request.notes && this.request.notes.trim().length > 0);
+  }
+
   canEdit(): boolean {
-    return this.EDITABLE_STATUSES.includes(this.request?.status || '');
+    return this.request ? isEditable(this.request.status) : false;
   }
 
   canCancel(): boolean {
-    return this.CANCELLABLE_STATUSES.includes(this.request?.status || '');
+    return this.request ? isCancellable(this.request.status) : false;
   }
 
   canDelete(): boolean {
-    return this.DELETABLE_STATUSES.includes(this.request?.status || '');
+    return this.request ? isDeletable(this.request.status) : false;
+  }
+
+  getStatusClass(): string {
+    return this.request ? getStatusBadgeClass(this.request.status) : 'badge-secondary';
+  }
+
+  goBack(): void {
+    this.router.navigate(['/accommodation']);
   }
 
   onEdit(): void {
@@ -66,81 +139,252 @@ export class AccommodationDetailComponent implements OnInit {
   }
 
   onCancel(): void {
-    if (confirm('Are you sure you want to cancel this accommodation request?')) {
-      this.accommodationService.cancelRequest(this.requestId).subscribe({
-        next: () => {
-          this.toastService.success('Accommodation request cancelled successfully');
-          this.loadRequestDetails();
-        },
-        error: (err) => {
-          console.error('Error cancelling request:', err);
-          this.toastService.error('Failed to cancel accommodation request');
-        }
-      });
-    }
+    this.confirmationService.confirmDestructive('Cancel', 'this accommodation request').subscribe(confirmed => {
+      if (confirmed) {
+        this.accommodationService.cancelRequest(this.requestId).subscribe({
+          next: () => {
+            this.toastService.success('Accommodation request cancelled successfully');
+            this.router.navigate(['/accommodation']);
+          },
+          error: (err) => {
+            this.toastService.error('Failed to cancel request: ' + (err.error?.message || err.message));
+            console.error('Error cancelling request:', err);
+          }
+        });
+      }
+    });
   }
 
   onDelete(): void {
-    if (confirm('Are you sure you want to delete this accommodation request? This action cannot be undone.')) {
-      this.accommodationService.deleteRequest(this.requestId).subscribe({
-        next: () => {
-          this.toastService.success('Accommodation request deleted successfully');
-          this.router.navigate(['/accommodation']);
-        },
-        error: (err) => {
-          console.error('Error deleting request:', err);
-          this.toastService.error('Failed to delete accommodation request');
-        }
-      });
-    }
+    this.confirmationService.confirmDelete('this accommodation request').subscribe(confirmed => {
+      if (confirmed) {
+        this.accommodationService.deleteRequest(this.requestId).subscribe({
+          next: () => {
+            this.toastService.success('Accommodation request deleted successfully');
+            this.router.navigate(['/accommodation']);
+          },
+          error: (err) => {
+            this.toastService.error('Failed to delete request: ' + (err.error?.message || err.message));
+            console.error('Error deleting request:', err);
+          }
+        });
+      }
+    });
   }
 
-  getStatusBadgeClass(status: string): string {
-    switch (status) {
-      case 'Draft': return 'badge-secondary';
-      case 'Pending': return 'badge-warning';
-      case 'Confirmed': return 'badge-success';
-      case 'Checked In': return 'badge-info';
-      case 'Checked Out': return 'badge-primary';
-      case 'Cancelled': return 'badge-danger';
-      case 'Rejected': return 'badge-danger';
-      default: return 'badge-secondary';
-    }
+  onPrint(): void {
+    window.print();
   }
 
-  formatCurrency(amount: number | null | undefined): string {
-    if (amount === null || amount === undefined) {
-      return 'N/A';
-    }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+  // ========== HELPER METHODS ==========
+
+  formatDate(dateValue: Date | string | null | undefined): string {
+    if (!dateValue) return 'N/A';
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
-  formatDate(dateString: string | null | undefined): string {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
+  formatDateTime(dateValue: Date | string | null | undefined): string {
+    if (!dateValue) return 'N/A';
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+    if (isNaN(date.getTime())) return 'Invalid Date';
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  }
-
-  formatDateTime(dateString: string | null | undefined): string {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
     });
   }
 
-  goBack(): void {
-    this.router.navigate(['/accommodation']);
+  formatTime(timeStr: string | null | undefined): string {
+    return formatTime12Hour(timeStr || undefined);
+  }
+
+  formatCurrency(amount: number | string | null | undefined): string {
+    if (!amount && amount !== 0) return '$0.00';
+    const num = Number(amount);
+    return isNaN(num) ? '$0.00' : new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(num);
+  }
+
+  getCheckInStatus(booking: DailyBooking): { label: string; class: string } {
+    if (booking.status === 'Checked-in' || booking.status === 'Checked-out') {
+      return {
+        label: 'Checked In',
+        class: 'status-checked-in'
+      };
+    }
+    return {
+      label: 'Not Checked In',
+      class: 'status-not-checked-in'
+    };
+  }
+
+  getCheckOutStatus(booking: DailyBooking): { label: string; class: string } {
+    if (booking.status === 'Checked-out') {
+      return {
+        label: 'Checked Out',
+        class: 'status-checked-out'
+      };
+    }
+    return {
+      label: 'Not Checked Out',
+      class: 'status-not-checked-out'
+    };
+  }
+
+  getApprovalStepStatus(step: ApprovalStep): { icon: string; class: string } {
+    if (step.status === 'Approved') {
+      return { icon: 'bi-check-circle-fill', class: 'status-approved' };
+    } else if (step.status === 'Rejected') {
+      return { icon: 'bi-x-circle-fill', class: 'status-rejected' };
+    } else {
+      return { icon: 'bi-clock', class: 'status-pending' };
+    }
+  }
+
+  // Status badge variant for template
+  getStatusBadge(): { text: string; class: string } {
+    if (!this.request) {
+      return { text: 'Unknown', class: 'badge-secondary' };
+    }
+
+    return {
+      text: this.request.status,
+      class: getStatusBadgeClass(this.request.status)
+    };
+  }
+
+  // Check if there's a TRF link to display
+  hasTrfLink(): boolean {
+    return !!(this.request?.trfId);
+  }
+
+  getTrfLink(): string {
+    return `/trf/${this.request?.trfId}`;
+  }
+
+  // Get location icon based on location type
+  getLocationIcon(): string {
+    if (!this.request) return 'bi-geo-alt';
+
+    const locationIcons: Record<string, string> = {
+      'Ashgabat': 'bi-building',
+      'Kiyanly': 'bi-house',
+      'Turkmenbashy': 'bi-bank'
+    };
+
+    return locationIcons[this.request.location] || 'bi-geo-alt';
+  }
+
+  // Get room type icon
+  getRoomTypeIcon(roomType?: string): string {
+    if (!roomType) return 'bi-door-open';
+
+    const roomTypeIcons: Record<string, string> = {
+      'Single': 'bi-person',
+      'Double': 'bi-people',
+      'Suite': 'bi-house-door',
+      'Tent': 'bi-triangle'
+    };
+
+    return roomTypeIcons[roomType] || 'bi-door-open';
+  }
+
+  // Group bookings by date for better display
+  getBookingsByDate(): { date: string; bookings: DailyBooking[] }[] {
+    if (!this.request?.dailyBookings) return [];
+
+    const grouped = new Map<string, DailyBooking[]>();
+
+    this.request.dailyBookings.forEach(booking => {
+      const dateKey = this.formatDate(booking.date);
+      if (!grouped.has(dateKey)) {
+        grouped.set(dateKey, []);
+      }
+      grouped.get(dateKey)!.push(booking);
+    });
+
+    return Array.from(grouped.entries()).map(([date, bookings]) => ({
+      date,
+      bookings
+    }));
+  }
+
+  // Calculate total nights from daily bookings
+  getTotalNightsFromBookings(): number {
+    if (!this.request?.dailyBookings) return 0;
+    return this.request.dailyBookings.length;
+  }
+
+  // ==================== Workflow Methods ====================
+
+  loadWorkflow(): void {
+    this.workflowLoading = true;
+
+    this.workflowService.getInstances({
+      entity_type: 'accommodationrequest'
+    }).subscribe({
+      next: (instances) => {
+        const instance = instances.find((i: any) =>
+          i.entity_info?.id === this.requestId
+        );
+
+        if (instance && instance.id) {
+          this.workflowService.getInstance(instance.id).subscribe({
+            next: (workflow) => {
+              this.workflow = workflow;
+              this.updateCurrentStepExecution();
+              this.workflowLoading = false;
+            },
+            error: (err) => {
+              console.error('Error loading workflow details:', err);
+              this.workflowLoading = false;
+            }
+          });
+        } else {
+          this.workflowLoading = false;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading workflow:', err);
+        this.workflowLoading = false;
+      }
+    });
+  }
+
+  updateCurrentStepExecution(): void {
+    if (!this.workflow?.step_executions) {
+      this.currentStepExecution = null;
+      return;
+    }
+
+    this.currentStepExecution = this.workflow.step_executions.find(
+      step => step.status === 'pending' &&
+              step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
+              step.can_action === true
+    ) || null;
+  }
+
+  onWorkflowApproved(): void {
+    this.toastService.success('Approval successful');
+    this.loadRequestDetails();
+    this.loadWorkflow();
+  }
+
+  onWorkflowRejected(): void {
+    this.toastService.success('Request rejected');
+    this.loadRequestDetails();
+    this.loadWorkflow();
+  }
+
+  onWorkflowDelegated(): void {
+    this.toastService.success('Successfully delegated');
+    this.loadWorkflow();
   }
 }

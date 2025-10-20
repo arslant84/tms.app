@@ -1,15 +1,21 @@
 <div class="accommodation-detail-container">
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="loading-state">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
     <p>Loading accommodation request details...</p>
   </div>
 
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <i class="bi bi-exclamation-triangle error-icon"></i>
+    <h3>Error Loading Request</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="goBack()">Back to List</button>
+  </div>
+
   <!-- Request Details -->
-  <div *ngIf="request && !isLoading" class="accommodation-detail-content">
-    <!-- Page Header -->
+  <div *ngIf="request && !loading" class="accommodation-detail-content">
+    <!-- Page Header with Actions -->
     <div class="page-header">
       <div class="header-left">
         <button class="btn-back" (click)="goBack()">
@@ -22,122 +28,344 @@
         </h1>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline-secondary" (click)="goBack()">
-          <i class="bi bi-printer"></i>
-          Print
+        <button class="btn btn-outline" (click)="onPrint()">
+          <i class="bi bi-printer"></i> Print
         </button>
         <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
-          <i class="bi bi-pencil"></i>
-          Edit
+          <i class="bi bi-pencil"></i> Edit
         </button>
         <button class="btn btn-warning" (click)="onCancel()" *ngIf="canCancel()">
-          <i class="bi bi-x-circle"></i>
-          Cancel
+          <i class="bi bi-x-circle"></i> Cancel
         </button>
         <button class="btn btn-danger" (click)="onDelete()" *ngIf="canDelete()">
-          <i class="bi bi-trash"></i>
-          Delete
+          <i class="bi bi-trash"></i> Delete
         </button>
       </div>
     </div>
 
     <!-- Status Badge -->
     <div class="status-bar">
-      <span class="badge" [ngClass]="getStatusBadgeClass(request.status)">{{ request.status }}</span>
-      <span class="text-muted">Created: {{ formatDateTime(request.created_at) }}</span>
-      <span class="text-muted" *ngIf="request.submitted_at">Submitted: {{ formatDateTime(request.submitted_at) }}</span>
+      <span class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span>
+      <span class="text-muted">Request ID: #{{ request.id }}</span>
+      <span class="text-muted">Submitted: {{ formatDate(request.submittedDate) }}</span>
     </div>
 
-    <!-- Main Card -->
+    <!-- CARD 1: Requestor & Trip Information -->
     <div class="detail-card">
-      <!-- Requestor Information -->
-      <section class="detail-section">
-        <h3 class="section-title">
-          <i class="bi bi-person"></i>
-          Requestor Information
-        </h3>
+      <div class="card-header">
+        <i class="bi bi-person-circle"></i>
+        <h3>Requestor & Trip Information</h3>
+      </div>
+      <div class="card-body">
         <div class="detail-grid">
           <div class="detail-item">
-            <label>Name</label>
-            <p>{{ request.requestor_name || 'N/A' }}</p>
+            <label>Request ID</label>
+            <span class="value">#{{ request.id }}</span>
+          </div>
+          <div class="detail-item" *ngIf="hasTrfLink()">
+            <label>TSR Reference</label>
+            <a [routerLink]="getTrfLink()" class="value link">
+              <i class="bi bi-file-text"></i> TRF-{{ request.trfId }}
+            </a>
+          </div>
+          <div class="detail-item">
+            <label>Requestor Name</label>
+            <span class="value">{{ request.requestorName }}</span>
           </div>
           <div class="detail-item">
             <label>Staff ID</label>
-            <p>{{ request.staff_id || 'N/A' }}</p>
+            <span class="value">{{ request.requestorId }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Gender</label>
+            <span class="value">{{ request.requestorGender }}</span>
           </div>
           <div class="detail-item">
             <label>Department</label>
-            <p>{{ request.department || 'N/A' }}</p>
+            <span class="value">{{ request.department }}</span>
           </div>
           <div class="detail-item">
-            <label>Position</label>
-            <p>{{ request.position || 'N/A' }}</p>
-          </div>
-          <div class="detail-item">
-            <label>Cost Center</label>
-            <p>{{ request.cost_center || 'N/A' }}</p>
-          </div>
-          <div class="detail-item">
-            <label>Email</label>
-            <p>{{ request.email || 'N/A' }}</p>
-          </div>
-          <div class="detail-item">
-            <label>Tel/Email</label>
-            <p>{{ request.tel_email || 'N/A' }}</p>
-          </div>
-          <div class="detail-item">
-            <label>Estimated Cost</label>
-            <p>{{ formatCurrency(request.estimated_cost) }}</p>
+            <label><i [class]="getLocationIcon()"></i> Location</label>
+            <span class="value">{{ request.location }}</span>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Additional Comments -->
-      <section class="detail-section" *ngIf="request.additional_comments">
-        <h3 class="section-title">
-          <i class="bi bi-chat-left-text"></i>
-          Additional Comments
-        </h3>
-        <div class="purpose-text">
-          <p>{{ request.additional_comments }}</p>
+    <!-- CARD 2: Booking Details -->
+    <div class="detail-card">
+      <div class="card-header">
+        <i class="bi bi-calendar-check"></i>
+        <h3>Booking Details</h3>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Check-In Date</label>
+            <span class="value">{{ formatDate(request.requestedCheckInDate) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Check-Out Date</label>
+            <span class="value">{{ formatDate(request.requestedCheckOutDate) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Number of Nights</label>
+            <span class="value highlight">{{ numberOfNights }} night{{ numberOfNights !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="request.requestedRoomType">
+            <label><i [class]="getRoomTypeIcon(request.requestedRoomType)"></i> Requested Room Type</label>
+            <span class="value">{{ request.requestedRoomType }}</span>
+          </div>
+          <div class="detail-item" *ngIf="request.flightArrivalTime">
+            <label><i class="bi bi-airplane-fill"></i> Flight Arrival Time</label>
+            <span class="value">{{ formatTime(request.flightArrivalTime) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="request.flightDepartureTime">
+            <label><i class="bi bi-airplane"></i> Flight Departure Time</label>
+            <span class="value">{{ formatTime(request.flightDepartureTime) }}</span>
+          </div>
         </div>
-      </section>
 
-      <!-- Additional Data -->
-      <section class="detail-section" *ngIf="request.additional_data">
-        <h3 class="section-title">
+        <!-- Special Requests -->
+        <div class="special-requests" *ngIf="request.specialRequests">
+          <label class="section-label"><i class="bi bi-star"></i> Special Requests</label>
+          <p class="requests-text">{{ request.specialRequests }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 3: Accommodation Assignment (Conditional) -->
+    <div class="detail-card" *ngIf="hasAssignment">
+      <div class="card-header assignment-header">
+        <i class="bi bi-house-check"></i>
+        <h3>Accommodation Assignment</h3>
+      </div>
+      <div class="card-body">
+        <div class="assignment-info">
+          <div class="assignment-item">
+            <i class="bi bi-building"></i>
+            <div class="assignment-details">
+              <label>Staff House</label>
+              <span class="value">{{ request.assignedStaffHouseName }}</span>
+            </div>
+          </div>
+          <div class="assignment-item">
+            <i class="bi bi-door-open"></i>
+            <div class="assignment-details">
+              <label>Room</label>
+              <span class="value">{{ request.assignedRoomName }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 4: Room Booking Details (Daily Records) -->
+    <div class="detail-card" *ngIf="hasBookingRecords">
+      <div class="card-header">
+        <i class="bi bi-calendar3"></i>
+        <h3>Room Booking Details</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="booking-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Staff House</th>
+                <th>Room</th>
+                <th>Check-In Status</th>
+                <th>Check-Out Status</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let booking of request.dailyBookings">
+                <td>{{ formatDate(booking.date) }}</td>
+                <td>{{ booking.staffHouseName || 'N/A' }}</td>
+                <td>{{ booking.roomName || 'N/A' }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="getCheckInStatus(booking).class">
+                    {{ getCheckInStatus(booking).label }}
+                  </span>
+                  <span class="time-text" *ngIf="booking.checkInTime">
+                    {{ formatTime(booking.checkInTime) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge" [ngClass]="getCheckOutStatus(booking).class">
+                    {{ getCheckOutStatus(booking).label }}
+                  </span>
+                  <span class="time-text" *ngIf="booking.checkOutTime">
+                    {{ formatTime(booking.checkOutTime) }}
+                  </span>
+                </td>
+                <td>{{ booking.notes || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Summary -->
+        <div class="booking-summary">
+          <div class="summary-item">
+            <label>Total Booking Days:</label>
+            <span class="value">{{ getTotalNightsFromBookings() }} day{{ getTotalNightsFromBookings() !== 1 ? 's' : '' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 5: Rejection Details (Conditional) -->
+    <div class="detail-card rejection-card" *ngIf="isRejected">
+      <div class="card-header rejection-header">
+        <i class="bi bi-x-circle"></i>
+        <h3>Rejection Details</h3>
+      </div>
+      <div class="card-body">
+        <div class="rejection-info">
+          <div class="detail-item" *ngIf="request.rejectionDetails?.rejectedBy">
+            <label>Rejected By</label>
+            <span class="value">{{ request.rejectionDetails?.rejectedBy }}</span>
+          </div>
+          <div class="detail-item" *ngIf="request.rejectionDetails?.rejectedAt">
+            <label>Rejected At</label>
+            <span class="value">{{ formatDateTime(request.rejectionDetails?.rejectedAt) }}</span>
+          </div>
+          <div class="rejection-reason" *ngIf="request.rejectionDetails?.reason">
+            <label>Reason</label>
+            <p class="reason-text">{{ request.rejectionDetails?.reason }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 6: Admin Notes (Conditional) -->
+    <div class="detail-card" *ngIf="hasAdminNotes">
+      <div class="card-header">
+        <i class="bi bi-sticky"></i>
+        <h3>Admin Notes</h3>
+      </div>
+      <div class="card-body">
+        <div class="notes-content">
+          <p>{{ request.notes }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 7: Additional Comments -->
+    <div class="detail-card" *ngIf="request.additionalComments">
+      <div class="card-header">
+        <i class="bi bi-chat-left-text"></i>
+        <h3>Additional Comments</h3>
+      </div>
+      <div class="card-body">
+        <div class="comments-content">
+          <p>{{ request.additionalComments }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 8: Approval Workflow (Timeline) -->
+    <div class="detail-card" *ngIf="request.approvalWorkflow && request.approvalWorkflow.length > 0">
+      <div class="card-header">
+        <i class="bi bi-diagram-3"></i>
+        <h3>Approval Workflow</h3>
+      </div>
+      <div class="card-body">
+        <div class="approval-timeline">
+          <div class="timeline-item" *ngFor="let step of request.approvalWorkflow; let i = index">
+            <div class="timeline-marker" [ngClass]="getApprovalStepStatus(step).class">
+              <i [class]="'bi ' + getApprovalStepStatus(step).icon"></i>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-header">
+                <span class="step-number">Step {{ step.step }}</span>
+                <span class="step-role">{{ step.role }}</span>
+                <span class="step-status" [ngClass]="getApprovalStepStatus(step).class">
+                  {{ step.status }}
+                </span>
+              </div>
+              <div class="timeline-details">
+                <div class="detail-row" *ngIf="step.approver">
+                  <i class="bi bi-person"></i>
+                  <span>{{ step.approver }}</span>
+                </div>
+                <div class="detail-row" *ngIf="step.timestamp">
+                  <i class="bi bi-clock"></i>
+                  <span>{{ formatDateTime(step.timestamp) }}</span>
+                </div>
+                <div class="detail-row" *ngIf="step.comments">
+                  <i class="bi bi-chat"></i>
+                  <span>{{ step.comments }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modern Workflow Status -->
+    <div class="detail-card" *ngIf="workflow || workflowLoading">
+      <div class="card-header">
+        <i class="bi bi-diagram-3"></i>
+        <h3>Approval Workflow</h3>
+      </div>
+      <div class="card-body">
+        <!-- Loading State -->
+        <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading workflow...</span>
+          </div>
+          <p class="text-muted mt-2">Loading workflow status...</p>
+        </div>
+
+        <!-- Workflow Status Timeline -->
+        <app-workflow-status
+          *ngIf="workflow && !workflowLoading"
+          [workflowInstance]="workflow">
+        </app-workflow-status>
+
+        <!-- Approval Action Buttons -->
+        <app-approval-actions
+          *ngIf="currentStepExecution && !workflowLoading"
+          [stepExecution]="currentStepExecution"
+          (approved)="onWorkflowApproved()"
+          (rejected)="onWorkflowRejected()"
+          (delegated)="onWorkflowDelegated()">
+        </app-approval-actions>
+
+        <!-- No Workflow Message -->
+        <div *ngIf="!workflow && !workflowLoading" class="alert alert-info">
           <i class="bi bi-info-circle"></i>
-          Additional Information
-        </h3>
-        <div class="detail-grid">
-          <div class="detail-item" *ngFor="let item of request.additional_data | keyvalue">
-            <label>{{ $any(item.key) | titlecase }}</label>
-            <p>{{ item.value }}</p>
-          </div>
+          No workflow has been initiated for this accommodation request yet.
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Timeline -->
-      <section class="detail-section">
-        <h3 class="section-title">
-          <i class="bi bi-clock-history"></i>
-          Timeline
-        </h3>
+    <!-- Timeline Card (Created/Updated) -->
+    <div class="detail-card">
+      <div class="card-header">
+        <i class="bi bi-clock-history"></i>
+        <h3>Timeline</h3>
+      </div>
+      <div class="card-body">
         <div class="detail-grid">
           <div class="detail-item">
-            <label>Created At</label>
-            <p>{{ formatDateTime(request.created_at) }}</p>
+            <label>Created</label>
+            <span class="value">{{ formatDateTime(request.createdAt) }}</span>
           </div>
           <div class="detail-item">
             <label>Last Updated</label>
-            <p>{{ formatDateTime(request.updated_at) }}</p>
+            <span class="value">{{ formatDateTime(request.lastUpdatedDate) }}</span>
           </div>
-          <div class="detail-item" *ngIf="request.submitted_at">
-            <label>Submitted At</label>
-            <p>{{ formatDateTime(request.submitted_at) }}</p>
+          <div class="detail-item">
+            <label>Submitted</label>
+            <span class="value">{{ formatDateTime(request.submittedDate) }}</span>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   </div>
 </div>

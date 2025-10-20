@@ -255,6 +255,25 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(trf)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='pending-approvals')
+    def pending_approvals(self, request):
+        """Get TRFs pending approval for the current user"""
+        user = request.user
+
+        # Filter based on user role/permissions
+        # For now, return all pending TRFs (can be refined based on user role)
+        queryset = TravelRequest.objects.filter(
+            status__in=[
+                'Pending Department Focal',
+                'Pending HOD',
+                'Pending Travel Desk',
+                'Pending Finance'
+            ]
+        ).order_by('-submitted_at')
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
 
 # =============== NESTED RESOURCE VIEWSETS ===============
 

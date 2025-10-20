@@ -1,355 +1,534 @@
-<!-- Loading State -->
-<div *ngIf="loading" class="loading-container">
-  <div class="loading-spinner">
-    <i class="bi bi-arrow-clockwise spin-animation"></i>
+<div class="expense-form-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner"></div>
     <p>Loading claim data...</p>
   </div>
-</div>
 
-<!-- Page Header -->
-<div *ngIf="!loading" class="page-header-section">
-  <div class="header-left">
-    <button class="btn-back" (click)="onCancel()">
-      <i class="bi bi-arrow-left"></i>
-      Back to List
-    </button>
-    <h1 class="page-title">
-      <i class="bi bi-receipt"></i>
-      {{ isEditMode ? 'Edit Expense Claim' : 'Create New Expense Claim' }}
-    </h1>
+  <!-- Page Header -->
+  <div *ngIf="!loading" class="form-header">
+    <div class="header-left">
+      <button type="button" class="btn-back" (click)="onCancel()">
+        <i class="bi bi-arrow-left"></i>
+        Back to List
+      </button>
+      <h1 class="page-title">
+        <i class="bi bi-receipt"></i>
+        {{ isEditMode ? 'Edit' : 'New' }} Expense Claim
+      </h1>
+    </div>
+    <div class="form-actions-top">
+      <button type="button" class="btn btn-outline" (click)="onCancel()">
+        <i class="bi bi-x"></i> Cancel
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="onSaveDraft()" [disabled]="submitting">
+        <i class="bi bi-save"></i> Save Draft
+      </button>
+      <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="submitting || expenseForm.invalid">
+        <i class="bi bi-send"></i> {{ submitting ? 'Submitting...' : 'Submit' }}
+      </button>
+    </div>
   </div>
-</div>
 
-<div *ngIf="!loading" class="expense-claim-container" [formGroup]="expenseForm">
-  <div class="header">
-    <div class="internal-use">
-      <p>For Internal Use - For Internal Distribution Only</p>
-    </div>
-    <div class="appendix">
-      <p>Appendix № 1</p>
-    </div>
-  </div>
+  <!-- Form Content -->
+  <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()" class="expense-form" *ngIf="!loading">
 
-  <div class="form-header">
-    <div class="logo-section">
-      <img src="assets/images/petronas-logo.png" alt="Petronas Logo" class="petronas-logo">
-      <h1>PETRONAS</h1>
-    </div>
-    <div class="title-section">
-      <h2>STAFF</h2>
-      <h2>EXPENSE CLAIM</h2>
-      <h2>FORM</h2>
-    </div>
-    <div class="document-section">
-      <div class="document-number">
-        <label>DOCUMENT NUMBER</label>
-        <div class="document-types">
-          <div class="document-type" *ngFor="let type of claimTypes">
-            <label>
-              <input type="radio" [value]="type" formControlName="documentNumber">
-              <span>{{ type }}</span>
-            </label>
+    <!-- Section 1: Header Details -->
+    <div class="form-card" formGroupName="headerDetails">
+      <div class="card-header">
+        <i class="bi bi-person-badge"></i>
+        <h2>Staff & Claim Information</h2>
+      </div>
+      <div class="card-body">
+
+        <!-- Row 1 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label required">Document</label>
+            <div class="radio-group">
+              <label *ngFor="let type of documentTypes" class="radio-label">
+                <input type="radio" formControlName="documentType" [value]="type">
+                <span>{{ type }}</span>
+              </label>
+            </div>
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.documentType')?.invalid && expenseForm.get('headerDetails.documentType')?.touched">
+              Document type is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Number</label>
+            <input type="text" class="form-control" formControlName="documentNumber" placeholder="Enter document number">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.documentNumber')?.invalid && expenseForm.get('headerDetails.documentNumber')?.touched">
+              Document number is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Claim for the Month of</label>
+            <input type="month" class="form-control" formControlName="claimForMonthOf">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.claimForMonthOf')?.invalid && expenseForm.get('headerDetails.claimForMonthOf')?.touched">
+              Claim month is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Staff Name</label>
+            <input type="text" class="form-control" formControlName="staffName" placeholder="Enter staff name">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.staffName')?.invalid && expenseForm.get('headerDetails.staffName')?.touched">
+              Staff name is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Staff No.</label>
+            <input type="text" class="form-control" formControlName="staffNo" placeholder="Enter staff number">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.staffNo')?.invalid && expenseForm.get('headerDetails.staffNo')?.touched">
+              Staff number is required
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label required">Gred</label>
+            <input type="text" class="form-control" formControlName="gred" placeholder="Enter gred">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.gred')?.invalid && expenseForm.get('headerDetails.gred')?.touched">
+              Gred is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Staff Type</label>
+            <div class="radio-group">
+              <label *ngFor="let type of staffTypes" class="radio-label">
+                <input type="radio" formControlName="staffType" [value]="type">
+                <span>{{ type }}</span>
+              </label>
+            </div>
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.staffType')?.invalid && expenseForm.get('headerDetails.staffType')?.touched">
+              Staff type is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Executive Status</label>
+            <div class="radio-group">
+              <label *ngFor="let status of executiveStatuses" class="radio-label">
+                <input type="radio" formControlName="executiveStatus" [value]="status">
+                <span>{{ status }}</span>
+              </label>
+            </div>
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.executiveStatus')?.invalid && expenseForm.get('headerDetails.executiveStatus')?.touched">
+              Executive status is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Department Code</label>
+            <input type="text" class="form-control" formControlName="departmentCode" placeholder="Enter department code">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.departmentCode')?.invalid && expenseForm.get('headerDetails.departmentCode')?.touched">
+              Department code is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Dept. Cost Center Code</label>
+            <input type="text" class="form-control" formControlName="deptCostCenterCode" placeholder="Enter cost center code">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.deptCostCenterCode')?.invalid && expenseForm.get('headerDetails.deptCostCenterCode')?.touched">
+              Cost center code is required
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label required">Location</label>
+            <input type="text" class="form-control" formControlName="location" placeholder="Enter location">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.location')?.invalid && expenseForm.get('headerDetails.location')?.touched">
+              Location is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">Tel/Ext.</label>
+            <input type="text" class="form-control" formControlName="telExt" placeholder="Enter telephone/extension">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.telExt')?.invalid && expenseForm.get('headerDetails.telExt')?.touched">
+              Tel/Ext is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">1. Start time from home</label>
+            <input type="time" class="form-control" formControlName="startTimeFromHome">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.startTimeFromHome')?.invalid && expenseForm.get('headerDetails.startTimeFromHome')?.touched">
+              Valid start time is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">2. Time of arrival at home</label>
+            <input type="time" class="form-control" formControlName="timeOfArrivalAtHome">
+            <div class="form-error" *ngIf="expenseForm.get('headerDetails.timeOfArrivalAtHome')?.invalid && expenseForm.get('headerDetails.timeOfArrivalAtHome')?.touched">
+              Valid arrival time is required
+            </div>
           </div>
         </div>
       </div>
-      <div class="claim-month">
-        <label>CLAIM FOR THE MONTH OF</label>
-        <input type="month" formControlName="claimForMonthOf">
-      </div>
-    </div>
-  </div>
-
-  <div class="staff-info" formGroupName="staffInfo">
-    <div class="staff-name">
-      <label>STAFF NAME:</label>
-      <input type="text" formControlName="name">
-    </div>
-    <div class="staff-type">
-      <div *ngFor="let type of staffTypes">
-        <label>
-          <input type="radio" [value]="type" formControlName="staffType">
-          <span>{{ type }}</span>
-        </label>
-      </div>
-    </div>
-    <div class="staff-details">
-      <div class="staff-no">
-        <label>STAFF NO.</label>
-        <input type="text" formControlName="staffNo">
-      </div>
-      <div class="hired">
-        <label>HIRED</label>
-        <input type="text" formControlName="hired">
-      </div>
-      <div class="department-code">
-        <label>DEPARTMENT CODE:</label>
-        <input type="text" formControlName="departmentCode">
-      </div>
-      <div class="cost-center-code">
-        <label>DEPT COST CENTER CODE</label>
-        <input type="text" formControlName="costCenterCode">
-      </div>
-      <div class="location">
-        <label>LOCATION:</label>
-        <input type="text" formControlName="location">
-      </div>
-      <div class="telext">
-        <label>TEL/EXT:</label>
-        <input type="text" formControlName="telext">
-      </div>
-    </div>
-  </div>
-
-  <div class="bank-info" formGroupName="bankDetails">
-    <div class="bank-name">
-      <label>BANK NAME &</label>
-      <input type="text" formControlName="bankName">
-    </div>
-    <div class="account-number">
-      <label>ACCOUNT NUMBER:</label>
-      <input type="text" formControlName="accountNumber">
-    </div>
-    <div class="address">
-      <label>ADDRESS:</label>
-      <input type="text" formControlName="address">
-    </div>
-    <div class="purpose-of-claim">
-      <label>PURPOSE OF CLAIM:</label>
-      <input type="text" formControlName="purposeOfClaim">
-    </div>
-  </div>
-
-  <div class="travel-times" formGroupName="travelTimes">
-    <div class="date-time">
-      <label>DATE & TIME</label>
-    </div>
-    <div class="start-time">
-      <label>1. Start time from home to destination:</label>
-      <input type="datetime-local" formControlName="startTime">
-    </div>
-    <div class="arrival-time">
-      <label>2. Time of arrival at home from official duty:</label>
-      <input type="datetime-local" formControlName="arrivalTime">
-    </div>
-  </div>
-
-  <div class="medical-claim" formGroupName="medicalClaim">
-    <div class="medical-self">
-      <label>If you are applying for a medical claim, please select whichever is applicable >>></label>
-      <div class="options">
-        <label>Inpatient</label>
-        <input type="checkbox" formControlName="isApplying">
-        <label>Outpatient</label>
-        <input type="checkbox" formControlName="isApplying">
-      </div>
-    </div>
-    <div class="medical-family">
-      <label>If you are applying for a medical claim for your family, please select applicable family members:</label>
-      <div class="options">
-        <label>Spouse:</label>
-        <input type="checkbox" formControlName="spouse">
-        <label>Children</label>
-        <input type="checkbox" formControlName="children">
-        <label>Other</label>
-        <input type="checkbox" formControlName="other">
-      </div>
-    </div>
-  </div>
-
-  <div class="expense-table">
-    <div class="table-header">
-      <div class="date-col">DATE(S)</div>
-      <div class="from-to-col">CLAIM OR TRAVEL DETAILS<br>FROM - TO<br>(PLEASE STATE THE NAME OF THE CITY OR THE PLACE OF STAY)</div>
-      <div class="mileage-col">OFFICIAL MILEAGE<br>CALCULATION<br>PER DAY<br>(KM)</div>
-      <div class="transport-col">TRANSPORT</div>
-      <div class="accommodation-col">HOTEL ACCOMMODATION ALLOWANCE</div>
-      <div class="outstation-col">OUT-STATION ALLOWANCE<br>(MEAL)</div>
-      <div class="miscellaneous-col">MISCELLANEOUS ALLOWANCE<br>10%</div>
-      <div class="other-col">OTHER EXPENSES</div>
     </div>
 
-    <div class="table-columns">
-      <div class="col-labels">
-        <div>A</div>
-        <div>B</div>
-        <div>C</div>
-        <div>D</div>
-        <div>E</div>
-        <div>F</div>
-        <div>G</div>
+    <!-- Section 2: Bank Details -->
+    <div class="form-card" formGroupName="bankDetails">
+      <div class="card-header">
+        <i class="bi bi-bank"></i>
+        <h2>Bank Details</h2>
       </div>
-    </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label required">Bank Name</label>
+            <input type="text" class="form-control" formControlName="bankName" placeholder="Enter bank name">
+            <div class="form-error" *ngIf="expenseForm.get('bankDetails.bankName')?.invalid && expenseForm.get('bankDetails.bankName')?.touched">
+              Bank name is required
+            </div>
+          </div>
 
-    <div class="expense-items" formArrayName="expenseItems">
-      <div class="expense-row" *ngFor="let item of expenseItems.controls; let i = index" [formGroupName]="i">
-        <div class="date-col">
-          <input type="date" formControlName="date">
-        </div>
-        <div class="from-to-col">
-          <input type="text" formControlName="fromTo">
-        </div>
-        <div class="mileage-col">
-          <input type="number" formControlName="mileage">
-        </div>
-        <div class="transport-col">
-          <input type="number" step="0.01" formControlName="transport">
-        </div>
-        <div class="accommodation-col">
-          <input type="number" step="0.01" formControlName="accommodation">
-        </div>
-        <div class="outstation-col">
-          <input type="number" step="0.01" formControlName="outstation">
-        </div>
-        <div class="miscellaneous-col">
-          <input type="number" step="0.01" formControlName="miscellaneous">
-        </div>
-        <div class="other-col">
-          <input type="number" step="0.01" formControlName="other">
-        </div>
-        <div class="remove-btn">
-          <button type="button" *ngIf="expenseItems.controls.length > 1" (click)="removeExpenseItem(i)">X</button>
+          <div class="form-group">
+            <label class="form-label required">Account Number</label>
+            <input type="text" class="form-control" formControlName="accountNumber" placeholder="Enter account number">
+            <div class="form-error" *ngIf="expenseForm.get('bankDetails.accountNumber')?.invalid && expenseForm.get('bankDetails.accountNumber')?.touched">
+              Account number is required
+            </div>
+          </div>
+
+          <div class="form-group form-group-wide">
+            <label class="form-label required">Purpose of Claim</label>
+            <textarea class="form-control" formControlName="purposeOfClaim" rows="3" placeholder="Describe the purpose of this claim"></textarea>
+            <div class="form-error" *ngIf="expenseForm.get('bankDetails.purposeOfClaim')?.invalid && expenseForm.get('bankDetails.purposeOfClaim')?.touched">
+              Purpose of claim is required
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="add-expense-row">
-      <button type="button" (click)="addExpenseItem()">+ Add Expense Item</button>
-    </div>
-
-    <div class="total-row">
-      <div class="total-label">TOTAL</div>
-      <div class="total-value" *ngFor="let _ of [0,1,2,3,4,5,6]"></div>
-    </div>
-  </div>
-
-  <div class="foreign-exchange" formArrayName="foreignExchange">
-    <div class="exchange-header">
-      <label>INFORMATION ON FOREIGN MONEY EXCHANGE RATE (For overseas claim)</label>
-    </div>
-    <div class="exchange-table">
-      <div class="exchange-header-row">
-        <div>DATE</div>
-        <div>TYPE OF CURRENCY</div>
-        <div>SELLING RATE TO RM</div>
-        <div>TOTAL ADVANCE/CLAIM AMOUNT</div>
+    <!-- Section 3: Medical Claim Details -->
+    <div class="form-card" formGroupName="medicalClaimDetails">
+      <div class="card-header">
+        <i class="bi bi-heart-pulse"></i>
+        <h2>Medical Claim Information</h2>
+        <span class="card-subtitle">(Optional)</span>
       </div>
-      <div class="exchange-row" *ngFor="let rate of foreignExchange.controls; let i = index" [formGroupName]="i">
-        <div>
-          <input type="date" formControlName="date">
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isMedicalClaim">
+              <span>This is a medical claim</span>
+            </label>
+          </div>
         </div>
-        <div>
-          <select formControlName="currencyType">
-            <option *ngFor="let currency of currencyTypes" [value]="currency">{{ currency }}</option>
-          </select>
-        </div>
-        <div>
-          <input type="number" step="0.0001" formControlName="sellingRate">
-        </div>
-        <div>
-          <input type="number" step="0.01" formControlName="totalInForeignCurrency">
-        </div>
-        <div class="remove-btn">
-          <button type="button" *ngIf="foreignExchange.controls.length > 1" (click)="removeExchangeRate(i)">X</button>
-        </div>
-      </div>
-    </div>
-    <div class="add-exchange-row">
-      <button type="button" (click)="addExchangeRate()">+ Add Exchange Rate</button>
-    </div>
-  </div>
 
-  <div class="financial-summary">
-    <div class="total-amount">
-      <label>TOTAL ADVANCE/CLAIM AMOUNT</label>
-      <input type="number" step="0.01" formControlName="totalAmount" readonly>
-    </div>
-    <div class="less-advance">
-      <label>LESS: ADVANCE TAKEN</label>
-      <input type="number" step="0.01" formControlName="advanceTaken" (input)="calculateTotals()">
-    </div>
-    <div class="less-credit-card">
-      <label>LESS: CORPORATE CREDIT CARD PAYMENT</label>
-      <input type="number" step="0.01" formControlName="creditCardPayment" (input)="calculateTotals()">
-    </div>
-    <div class="balance">
-      <label>BALANCE OF CLAIM/REPAYMENT (CHEQUE / RECEIPT NO.)</label>
-      <input type="number" step="0.01" formControlName="balanceAmount" readonly>
-      <select formControlName="debitCredit">
-        <option value="DEBIT">DEBIT</option>
-        <option value="CREDIT">CREDIT</option>
-      </select>
-    </div>
-  </div>
+        <div *ngIf="isMedicalClaim" class="medical-claim-section">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Applicable Medical Type</label>
+              <div class="radio-group">
+                <label *ngFor="let type of medicalTypes" class="radio-label">
+                  <input type="radio" formControlName="applicableMedicalType" [value]="type">
+                  <span>{{ type }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
 
-  <div class="signatures">
-    <div class="signature">
-      <label>SIGNATURE</label>
-      <input type="text" formControlName="signature">
-    </div>
-    <div class="verified-by">
-      <label>VERIFIED BY</label>
-      <input type="text" formControlName="verifiedBy">
-    </div>
-    <div class="approved-by">
-      <label>APPROVED BY</label>
-      <input type="text" formControlName="approvedBy">
-    </div>
-  </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="isForFamily">
+                <span>Claim is for family member(s)</span>
+              </label>
+            </div>
+          </div>
 
-  <div class="terms-conditions">
-    <div class="declaration">
-      <label>
-        <input type="checkbox" formControlName="termsAccepted">
-        I hereby understand all the terms and conditions stated below
-      </label>
-    </div>
-    <div class="terms-list">
-      <ol>
-        <li>I declare that all of the information contained in this Claim Form as well as all of the information contained in the supporting documents are true and complete.</li>
-        <li>I understand that providing false, fraudulent or incomplete information on this Claim Form and the related supporting documents may result in disciplinary action.</li>
-        <li>I am fully aware of the requirements of the related PETRONAS Policies and Orders, and hereby certify that all of the supporting documents are in accordance with the requirements of related statutory Policies.</li>
-        <li>For Travel Claims, I am fully aware of the Travel Policy and Supporting Documents as per form.</li>
-        <li>Should there be any false, fraudulent or incomplete information and/or documentation originating from the Claims Portal, PETRONAS reserves the right to recover from the employee and/or to take further action.</li>
-      </ol>
-    </div>
-    <div class="signature-date">
-      <div class="signature-field">
-        <label>Signature</label>
-        <input type="text">
-      </div>
-      <div class="date-field">
-        <label>Date:</label>
-        <input type="date" formControlName="dateSubmitted">
+          <div *ngIf="isForFamily" class="family-members-section">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="familyMemberSpouse">
+                  <span>Spouse</span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="familyMemberChildren">
+                  <span>Children</span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Other Family Member</label>
+                <input type="text" class="form-control" formControlName="familyMemberOther" placeholder="Specify other family member">
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="notes">
-    <p><strong>NOTES FOR USERS:</strong></p>
-    <ol>
-      <li>The approved expense claim form in accordance to the LOA, shall be submitted to Finance & Accounts Dept together with all supporting documents including original receipts, official bills, etc.</li>
-      <li>Incomplete claim form shall be returned to the staff.</li>
-      <li>Finance & Accounts Dept shall effect salary deduction without notifying relevant staff if he/she does not submit his/her claim within seven (7) working days from return after completion of official duty.</li>
-      <li>Claim must be approved by Department Manager in accordance to terms and conditions as stated in the related "HUMAN RESOURCES MANAGEMENT POLICIES AND OPERATING PROCEDURES MANUAL / ORDERS" or relevant circulars issued out by the Company.</li>
-    </ol>
-  </div>
+    <!-- Section 4: Expense Items -->
+    <div class="form-card">
+      <div class="card-header">
+        <i class="bi bi-table"></i>
+        <h2>Expense Items</h2>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="expense-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Travel Details<br><small>From / To / Place of Stay</small></th>
+                <th>Mileage<br>(KM)</th>
+                <th>Transport<br>(RM)</th>
+                <th>Hotel<br>(RM)</th>
+                <th>Out-Station<br>(RM)</th>
+                <th>Misc. 10%<br>(RM)</th>
+                <th>Other<br>(RM)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody formArrayName="expenseItems">
+              <tr *ngFor="let item of expenseItems.controls; let i = index" [formGroupName]="i">
+                <td>
+                  <input type="date" class="form-control form-control-sm" formControlName="date">
+                </td>
+                <td>
+                  <div [formGroupName]="'claimOrTravelDetails'" class="travel-details-group">
+                    <input type="text" class="form-control form-control-sm mb-1" formControlName="from" placeholder="From">
+                    <input type="text" class="form-control form-control-sm mb-1" formControlName="to" placeholder="To">
+                    <input type="text" class="form-control form-control-sm" formControlName="placeOfStay" placeholder="Place of Stay">
+                  </div>
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="officialMileageKM" step="0.01">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="transport" step="0.01">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="hotelAccommodationAllowance" step="0.01">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="outStationAllowanceMeal" step="0.01">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="miscellaneousAllowance10Percent" step="0.01">
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="otherExpenses" step="0.01">
+                </td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-danger" (click)="removeExpenseItem(i)" *ngIf="expenseItems.length > 0">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="expenseItems.length === 0">
+                <td colspan="9" class="text-center text-muted">No expense items added yet. Click "Add Expense Item" to begin.</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="totals-row">
+                <td colspan="2" class="text-end"><strong>TOTALS:</strong></td>
+                <td><strong>{{ formatNumber(totalMileage, 2) }}</strong></td>
+                <td><strong>{{ formatNumber(totalTransport, 2) }}</strong></td>
+                <td><strong>{{ formatNumber(totalHotel, 2) }}</strong></td>
+                <td><strong>{{ formatNumber(totalOutstation, 2) }}</strong></td>
+                <td><strong>{{ formatNumber(totalMisc, 2) }}</strong></td>
+                <td><strong>{{ formatNumber(totalOther, 2) }}</strong></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="mt-3">
+          <button type="button" class="btn btn-outline-primary" (click)="addExpenseItem()">
+            <i class="bi bi-plus-circle"></i> Add Expense Item
+          </button>
+        </div>
+      </div>
+    </div>
 
-  <div class="form-actions">
-    <button type="button" class="btn-calculate" (click)="calculateTotals()" [disabled]="submitting">
-      <i class="bi bi-calculator"></i>
-      Calculate Totals
-    </button>
-    <button type="button" class="btn-draft" (click)="onSaveDraft()" [disabled]="submitting">
-      <i class="bi bi-save"></i>
-      {{ submitting ? 'Saving...' : 'Save Draft' }}
-    </button>
-    <button type="button" class="btn-cancel" (click)="onCancel()" [disabled]="submitting">
-      <i class="bi bi-x-circle"></i>
-      Cancel
-    </button>
-    <button type="button" class="btn-submit" (click)="onSubmit()" [disabled]="submitting">
-      <i class="bi bi-send"></i>
-      {{ submitting ? 'Submitting...' : (isEditMode ? 'Update Claim' : 'Submit Claim') }}
-    </button>
-  </div>
+    <!-- Section 5: Foreign Exchange Rates -->
+    <div class="form-card">
+      <div class="card-header">
+        <i class="bi bi-currency-exchange"></i>
+        <h2>Foreign Exchange Information</h2>
+        <span class="card-subtitle">(For overseas claims)</span>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="fx-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Currency Type</th>
+                <th>Selling Rate (TT/OD)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody formArrayName="informationOnForeignExchangeRate">
+              <tr *ngFor="let rate of foreignExchangeRates.controls; let i = index" [formGroupName]="i">
+                <td>
+                  <input type="date" class="form-control form-control-sm" formControlName="date">
+                </td>
+                <td>
+                  <select class="form-select form-select-sm" formControlName="typeOfCurrency">
+                    <option value="">Select currency</option>
+                    <option *ngFor="let currency of currencyTypes" [value]="currency">{{ currency }}</option>
+                  </select>
+                </td>
+                <td>
+                  <input type="number" class="form-control form-control-sm" formControlName="sellingRateTTOD" step="0.0001" placeholder="0.0000">
+                </td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-danger" (click)="removeForeignExchangeRate(i)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="foreignExchangeRates.length === 0">
+                <td colspan="4" class="text-center text-muted">No exchange rates added. Add one if this is an overseas claim.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-3">
+          <button type="button" class="btn btn-outline-primary" (click)="addForeignExchangeRate()">
+            <i class="bi bi-plus-circle"></i> Add Exchange Rate
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 6: Financial Summary -->
+    <div class="form-card" formGroupName="financialSummary">
+      <div class="card-header">
+        <i class="bi bi-calculator"></i>
+        <h2>Financial Summary</h2>
+      </div>
+      <div class="card-body">
+        <div class="financial-summary-grid">
+          <div class="summary-row">
+            <label class="summary-label">Total Advance/Claim Amount:</label>
+            <div class="summary-value">
+              <span class="currency">RM</span>
+              <input type="text" class="form-control form-control-readonly" formControlName="totalAdvanceClaimAmount" readonly>
+            </div>
+          </div>
+
+          <div class="summary-row">
+            <label class="summary-label">Less: Advance Taken</label>
+            <div class="summary-value">
+              <span class="currency">RM</span>
+              <input type="number" class="form-control" formControlName="lessAdvanceTaken" step="0.01" placeholder="0.00">
+            </div>
+          </div>
+
+          <div class="summary-row">
+            <label class="summary-label">Less: Corporate Credit Card Payment</label>
+            <div class="summary-value">
+              <span class="currency">RM</span>
+              <input type="number" class="form-control" formControlName="lessCorporateCreditCardPayment" step="0.01" placeholder="0.00">
+            </div>
+          </div>
+
+          <div class="summary-row summary-total">
+            <label class="summary-label"><strong>Balance (Claim/Repayment):</strong></label>
+            <div class="summary-value">
+              <span class="currency">RM</span>
+              <input type="text" class="form-control form-control-readonly balance-amount" formControlName="balanceClaimRepayment" readonly>
+            </div>
+          </div>
+
+          <div class="summary-row">
+            <label class="summary-label">Cheque/Receipt No.</label>
+            <div class="summary-value">
+              <input type="text" class="form-control" formControlName="chequeReceiptNo" placeholder="Enter cheque/receipt number">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 7: Declaration -->
+    <div class="form-card" formGroupName="declaration">
+      <div class="card-header">
+        <i class="bi bi-file-text"></i>
+        <h2>Declaration</h2>
+      </div>
+      <div class="card-body">
+        <div class="declaration-section">
+          <div class="terms-conditions">
+            <h4>Terms & Conditions</h4>
+            <ol>
+              <li>I declare that all of the information contained in this Claim Form as well as all of the information contained in the supporting documents are true and complete.</li>
+              <li>I understand that providing false, fraudulent or incomplete information on this Claim Form and the related supporting documents may result in disciplinary action.</li>
+              <li>I am fully aware of the requirements of the related PETRONAS Policies and Orders, and hereby certify that all of the supporting documents are in accordance with the requirements of related statutory Policies.</li>
+              <li>For Travel Claims, I am fully aware of the Travel Policy and Supporting Documents as per form.</li>
+              <li>Should there be any false, fraudulent or incomplete information and/or documentation originating from the Claims Portal, PETRONAS reserves the right to recover from the employee and/or to take further action.</li>
+            </ol>
+          </div>
+
+          <div class="declaration-checkbox">
+            <label class="checkbox-label required">
+              <input type="checkbox" formControlName="iDeclare">
+              <span><strong>I hereby declare that I understand and accept all the terms and conditions stated above</strong></span>
+            </label>
+            <div class="form-error" *ngIf="expenseForm.get('declaration.iDeclare')?.invalid && expenseForm.get('declaration.iDeclare')?.touched">
+              You must accept the declaration to submit this claim
+            </div>
+          </div>
+
+          <div class="form-row mt-3">
+            <div class="form-group">
+              <label class="form-label required">Declaration Date</label>
+              <input type="date" class="form-control" formControlName="date">
+              <div class="form-error" *ngIf="expenseForm.get('declaration.date')?.invalid && expenseForm.get('declaration.date')?.touched">
+                Declaration date is required
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="notes-section mt-4">
+          <h4>Notes for Users:</h4>
+          <ol>
+            <li>The approved expense claim form in accordance to the LOA, shall be submitted to Finance & Accounts Dept together with all supporting documents including original receipts, official bills, etc.</li>
+            <li>Incomplete claim form shall be returned to the staff.</li>
+            <li>Finance & Accounts Dept shall effect salary deduction without notifying relevant staff if he/she does not submit his/her claim within seven (7) working days from return after completion of official duty.</li>
+            <li>Claim must be approved by Department Manager in accordance to terms and conditions as stated in the related "HUMAN RESOURCES MANAGEMENT POLICIES AND OPERATING PROCEDURES MANUAL / ORDERS" or relevant circulars issued out by the Company.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions (Bottom) -->
+    <div class="form-actions-bottom">
+      <button type="button" class="btn btn-outline" (click)="onCancel()">
+        <i class="bi bi-x-circle"></i> Cancel
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="onSaveDraft()" [disabled]="submitting">
+        <i class="bi bi-save"></i> {{ submitting ? 'Saving...' : 'Save Draft' }}
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="submitting || expenseForm.invalid">
+        <i class="bi bi-send"></i> {{ submitting ? 'Submitting...' : (isEditMode ? 'Update Claim' : 'Submit Claim') }}
+      </button>
+    </div>
+
+  </form>
 </div>

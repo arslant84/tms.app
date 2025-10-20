@@ -11,6 +11,7 @@ import { ExternalPartiesDetailsComponent } from '../external-parties-details/ext
 import { ApprovalSubmissionComponent } from '../approval-submission/approval-submission.component';
 import { TrfService } from '../../services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 
 @Component({
   selector: 'app-trf-wizard',
@@ -64,7 +65,8 @@ export class TrfWizardComponent implements OnInit {
     private trfService: TrfService,
     private router: Router,
     private route: ActivatedRoute,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private confirmationService: ConfirmationService
   ) {}
 
   ngOnInit(): void {
@@ -888,8 +890,10 @@ export class TrfWizardComponent implements OnInit {
    * Handle cancel
    */
   onCancel(): void {
-    if (confirm('Are you sure you want to cancel? All unsaved data will be lost.')) {
-      this.router.navigate(['/trf']);
-    }
+    this.confirmationService.confirmCancel().subscribe(confirmed => {
+      if (confirmed) {
+        this.router.navigate(['/trf']);
+      }
+    });
   }
 }

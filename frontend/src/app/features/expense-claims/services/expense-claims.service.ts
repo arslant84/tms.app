@@ -246,6 +246,12 @@ export class ExpenseClaimsService {
    */
   private handleError(error: any): Observable<never> {
     console.error('Expense Claims Service Error:', error);
+    if (error.error) {
+      console.error('Error response body:', error.error);
+    }
+    if (error.status) {
+      console.error('Error status:', error.status);
+    }
     throw error;
   }
 }

@@ -4,22 +4,21 @@ from trf.models import TravelRequest
 
 
 class TransportRequest(models.Model):
-    """Main transport request model"""
+    """
+    Main transport request model
+    Matches React source project structure - NO cost fields
+    """
 
     STATUS_CHOICES = [
         ('Draft', 'Draft'),
-        ('Pending', 'Pending'),
+        ('Pending Department Focal', 'Pending Department Focal'),
+        ('Pending Line Manager', 'Pending Line Manager'),
+        ('Pending HOD', 'Pending HOD'),
         ('Approved', 'Approved'),
-        ('Rejected', 'Rejected'),
+        ('Processing with Transport Admin', 'Processing with Transport Admin'),
         ('Completed', 'Completed'),
+        ('Rejected', 'Rejected'),
         ('Cancelled', 'Cancelled'),
-    ]
-
-    TRANSPORT_TYPE_CHOICES = [
-        ('Company Vehicle', 'Company Vehicle'),
-        ('Hired Vehicle', 'Hired Vehicle'),
-        ('Personal Vehicle', 'Personal Vehicle'),
-        ('Public Transport', 'Public Transport'),
     ]
 
     requestor = models.ForeignKey(
@@ -35,27 +34,29 @@ class TransportRequest(models.Model):
         related_name='transport_requests'
     )
 
+    # Requestor information (embedded for display)
+    requestor_name = models.CharField(max_length=255)
+    staff_id = models.CharField(max_length=50)
+    department = models.CharField(max_length=255)
+    position = models.CharField(max_length=255)
+
     # Request details
-    title = models.CharField(max_length=255)
     purpose = models.TextField()
-    transport_type = models.CharField(max_length=50, choices=TRANSPORT_TYPE_CHOICES)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Draft')
+    tsr_reference = models.CharField(max_length=100, blank=True, null=True, help_text="TSR Reference if created from TSR")
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Draft')
 
-    # Passenger information
-    number_of_passengers = models.IntegerField(default=1)
-    passenger_names = models.TextField(blank=True, null=True, help_text="Comma-separated list of passengers")
+    # Transport details array (stored as JSON)
+    # Each item has: date, day, from, to, departureTime, transportType, numberOfPassengers
+    transport_details = models.JSONField(default=list, help_text="Array of transport detail objects")
 
-    # Vehicle preferences
-    vehicle_type = models.CharField(max_length=100, blank=True, null=True)
-    special_requirements = models.TextField(blank=True, null=True)
-
-    # Cost estimation
-    estimated_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    currency = models.CharField(max_length=3, default='USD')
-
-    # Additional info
+    # Approval submission data
     additional_comments = models.TextField(blank=True, null=True)
-    additional_data = models.JSONField(blank=True, null=True)
+    confirm_policy = models.BooleanField(default=False)
+    confirm_manager_approval = models.BooleanField(default=False)
+    confirm_terms_and_conditions = models.BooleanField(default=False)
+
+    # Booking details (filled by transport admin)
+    booking_details = models.JSONField(blank=True, null=True, help_text="Booking details filled by transport admin")
 
     # Timestamps
     submitted_at = models.DateTimeField(blank=True, null=True)
@@ -66,7 +67,7 @@ class TransportRequest(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.title} - {self.requestor.email}"
+        return f"{self.requestor_name} - {self.purpose[:50]}"
 
 
 class TransportSegment(models.Model):

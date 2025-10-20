@@ -8,33 +8,39 @@ from .models import (
 class TransportRequestAdmin(admin.ModelAdmin):
     """Admin configuration for TransportRequest model"""
     list_display = [
-        'id', 'title', 'requestor', 'transport_type', 'status',
-        'number_of_passengers', 'estimated_cost', 'currency',
+        'id', 'requestor_name', 'department', 'purpose_short', 'status',
         'submitted_at', 'created_at'
     ]
-    list_filter = ['status', 'transport_type', 'currency', 'created_at', 'submitted_at']
+    list_filter = ['status', 'department', 'created_at', 'submitted_at']
     search_fields = [
-        'title', 'purpose', 'requestor__email', 'requestor__first_name',
-        'requestor__last_name', 'passenger_names'
+        'purpose', 'requestor_name', 'staff_id', 'department',
+        'requestor__email', 'requestor__first_name', 'requestor__last_name'
     ]
     readonly_fields = ['created_at', 'updated_at', 'submitted_at']
     ordering = ['-created_at']
 
+    def purpose_short(self, obj):
+        """Return truncated purpose for list display"""
+        return obj.purpose[:50] + '...' if len(obj.purpose) > 50 else obj.purpose
+    purpose_short.short_description = 'Purpose'
+
     fieldsets = (
+        ('Requestor Information', {
+            'fields': ('requestor', 'requestor_name', 'staff_id', 'department', 'position')
+        }),
         ('Basic Information', {
-            'fields': ('requestor', 'trf', 'title', 'purpose', 'status')
+            'fields': ('trf', 'purpose', 'tsr_reference', 'status')
         }),
-        ('Transport Details', {
-            'fields': (
-                'transport_type', 'vehicle_type', 'number_of_passengers',
-                'passenger_names', 'special_requirements'
-            )
+        ('Transport Details (JSON)', {
+            'fields': ('transport_details',),
+            'description': 'Array of transport detail objects with date, from, to, departureTime, transportType, numberOfPassengers'
         }),
-        ('Cost Information', {
-            'fields': ('estimated_cost', 'currency')
+        ('Submission Confirmations', {
+            'fields': ('confirm_policy', 'confirm_manager_approval', 'confirm_terms_and_conditions', 'additional_comments')
         }),
-        ('Additional Information', {
-            'fields': ('additional_comments', 'additional_data')
+        ('Booking Details (Admin)', {
+            'fields': ('booking_details',),
+            'description': 'Booking details filled by transport admin'
         }),
         ('Timestamps', {
             'fields': ('submitted_at', 'created_at', 'updated_at'),

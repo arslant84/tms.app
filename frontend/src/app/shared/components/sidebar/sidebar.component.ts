@@ -21,8 +21,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   constructor(private authService: AuthService) {}
 
   ngOnInit(): void {
-    // Fetch the current user from the auth service
-    this.userSubscription = this.authService.getCurrentUser().subscribe(user => {
+    // Fetch the current user from the auth service (using Observable for reactive updates)
+    this.userSubscription = this.authService.getCurrentUser$Obs().subscribe(user => {
       this.currentUser = user;
       if (user) {
         // Handle the role properly

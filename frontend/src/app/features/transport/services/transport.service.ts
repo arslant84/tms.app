@@ -1,82 +1,13 @@
 import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-
-// Transport Request Interfaces
-export interface TransportRequest {
-  id: number;
-  requestor?: number;
-  trf?: number;
-  title: string;
-  purpose: string;
-  transport_type: string;
-  status: string;
-  number_of_passengers: number;
-  passenger_names?: string;
-  vehicle_type?: string;
-  special_requirements?: string;
-  estimated_cost: number;
-  currency: string;
-  additional_comments?: string;
-  additional_data?: any;
-  submitted_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TransportRequestDetail extends TransportRequest {
-  segments?: TransportSegment[];
-  approval_steps?: TransportApprovalStep[];
-  vehicle_assignments?: VehicleAssignment[];
-}
-
-export interface TransportSegment {
-  id?: number;
-  transport_request?: number;
-  from_location: string;
-  to_location: string;
-  departure_date: string;
-  departure_time: string;
-  arrival_date?: string;
-  arrival_time?: string;
-  distance_km?: number;
-  estimated_duration_hours?: number;
-  route_description?: string;
-  vehicle_number?: string;
-  driver_name?: string;
-  driver_contact?: string;
-  segment_cost: number;
-  remarks?: string;
-}
-
-export interface TransportApprovalStep {
-  id?: number;
-  transport_request?: number;
-  step_role: string;
-  step_name?: string;
-  status: string;
-  step_date?: string;
-  comments?: string;
-}
-
-export interface VehicleAssignment {
-  id?: number;
-  transport_request?: number;
-  vehicle_number: string;
-  vehicle_type: string;
-  vehicle_capacity: number;
-  driver_name: string;
-  driver_contact: string;
-  driver_license?: string;
-  assigned_by?: number;
-  status: string;
-  odometer_start?: number;
-  odometer_end?: number;
-  fuel_used_liters?: number;
-  assignment_date: string;
-  completion_date?: string;
-}
+import {
+  TransportRequestForm,
+  toFrontendFormat
+} from '../models/transport.model';
 
 @Injectable({
   providedIn: 'root'
@@ -106,18 +37,24 @@ export class TransportService {
   }
 
   // Get single transport request by ID
-  getRequestById(id: number): Observable<TransportRequestDetail> {
-    return this.http.get<TransportRequestDetail>(`${this.apiUrl}/${id}/`);
+  getRequestById(id: number): Observable<TransportRequestForm> {
+    return this.http.get<any>(`${this.apiUrl}/${id}/`).pipe(
+      map(response => toFrontendFormat(response))
+    );
   }
 
   // Create new transport request
-  createRequest(data: any): Observable<TransportRequestDetail> {
-    return this.http.post<TransportRequestDetail>(this.apiUrl + '/', data);
+  createRequest(data: any): Observable<TransportRequestForm> {
+    return this.http.post<any>(this.apiUrl + '/', data).pipe(
+      map(response => toFrontendFormat(response))
+    );
   }
 
   // Update existing transport request
-  updateRequest(id: number, data: any): Observable<TransportRequestDetail> {
-    return this.http.put<TransportRequestDetail>(`${this.apiUrl}/${id}/`, data);
+  updateRequest(id: number, data: any): Observable<TransportRequestForm> {
+    return this.http.put<any>(`${this.apiUrl}/${id}/`, data).pipe(
+      map(response => toFrontendFormat(response))
+    );
   }
 
   // Delete transport request

@@ -16,8 +16,8 @@
 .header-container {
   position: relative;
   width: 100%;
-  min-height: 4rem; // min-h-16 (64px)
-  height: 4rem; // h-16
+  min-height: 60px; // Match sidebar header height
+  height: 60px; // Match sidebar header height
   display: flex;
   align-items: center;
   padding: 0 1rem; // px-4

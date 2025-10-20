@@ -48,14 +48,56 @@ class ExpenseClaimSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.get_full_name', read_only=True)
     trf_reference = serializers.CharField(source='trf.id', read_only=True)
 
+    # Computed fields for backward compatibility with frontend
+    document_number = serializers.SerializerMethodField()
+    staff_name = serializers.SerializerMethodField()
+    purpose_of_claim = serializers.SerializerMethodField()
+    total_advance_claim_amount = serializers.SerializerMethodField()
+    submitted_at = serializers.SerializerMethodField()
+
     class Meta:
         model = ExpenseClaim
         fields = [
             'id', 'user', 'user_name', 'user_id', 'trf', 'trf_reference', 'trf_id',
             'title', 'description', 'total_amount', 'currency', 'expense_date',
-            'category', 'status', 'receipt_urls', 'created_at', 'updated_at', 'items'
+            'category', 'status', 'receipt_urls', 'additional_data', 'created_at', 'updated_at', 'items',
+            # Computed fields for list view
+            'document_number', 'staff_name', 'purpose_of_claim', 'total_advance_claim_amount', 'submitted_at'
         ]
         read_only_fields = ['id', 'user_id', 'trf_id', 'created_at', 'updated_at']
+
+    def get_document_number(self, obj):
+        """Extract document number from additional_data or generate from title"""
+        if obj.additional_data and 'headerDetails' in obj.additional_data:
+            header = obj.additional_data['headerDetails']
+            doc_type = header.get('documentType', '')
+            doc_number = header.get('documentNumber', '')
+            if doc_type and doc_number:
+                return f"{doc_type}-{doc_number}"
+        # Fallback: extract from title or use claim ID
+        if ' - ' in obj.title:
+            return obj.title.split(' - ')[-1]
+        return f"CLM-{obj.id}"
+
+    def get_staff_name(self, obj):
+        """Extract staff name from additional_data or use user name"""
+        if obj.additional_data and 'headerDetails' in obj.additional_data:
+            return obj.additional_data['headerDetails'].get('staffName', '')
+        return obj.user.get_full_name() if obj.user else ''
+
+    def get_purpose_of_claim(self, obj):
+        """Extract purpose from additional_data or use description"""
+        if obj.additional_data and 'bankDetails' in obj.additional_data:
+            return obj.additional_data['bankDetails'].get('purposeOfClaim', '')
+        return obj.description
+
+    def get_total_advance_claim_amount(self, obj):
+        """Return total_amount for backward compatibility"""
+        return obj.total_amount
+
+    def get_submitted_at(self, obj):
+        """Return created_at as submitted_at"""
+        return obj.created_at.isoformat() if obj.created_at else None
 
     def validate_status(self, value):
         """Validate expense claim status"""
@@ -90,7 +132,7 @@ class ExpenseClaimDetailSerializer(serializers.ModelSerializer):
             'id', 'user', 'user_name', 'user_email', 'user_id', 'trf',
             'trf_reference', 'trf_id', 'title', 'description', 'total_amount',
             'currency', 'expense_date', 'category', 'status', 'receipt_urls',
-            'created_at', 'updated_at', 'items', 'approval_steps'
+            'additional_data', 'created_at', 'updated_at', 'items', 'approval_steps'
         ]
         read_only_fields = ['id', 'user_id', 'trf_id', 'created_at', 'updated_at']
 
@@ -103,7 +145,7 @@ class ExpenseClaimCreateSerializer(serializers.ModelSerializer):
         model = ExpenseClaim
         fields = [
             'trf', 'title', 'description', 'total_amount', 'currency',
-            'expense_date', 'category', 'receipt_urls', 'items'
+            'expense_date', 'category', 'receipt_urls', 'additional_data', 'items'
         ]
 
     def validate_items(self, value):
@@ -139,7 +181,7 @@ class ExpenseClaimUpdateSerializer(serializers.ModelSerializer):
         model = ExpenseClaim
         fields = [
             'title', 'description', 'total_amount', 'currency',
-            'expense_date', 'category', 'receipt_urls', 'items'
+            'expense_date', 'category', 'receipt_urls', 'additional_data', 'items'
         ]
 
     def validate(self, attrs):

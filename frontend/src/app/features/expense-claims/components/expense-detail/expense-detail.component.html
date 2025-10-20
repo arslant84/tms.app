@@ -15,7 +15,7 @@
 
   <!-- Claim Details -->
   <div *ngIf="claim && !loading" class="expense-detail-content">
-    <!-- Page Header -->
+    <!-- Page Header with Actions -->
     <div class="page-header">
       <div class="header-left">
         <button class="btn-back" (click)="goBack()">
@@ -29,20 +29,16 @@
       </div>
       <div class="header-actions">
         <button class="btn btn-outline" (click)="onPrint()">
-          <i class="bi bi-printer"></i>
-          Print
+          <i class="bi bi-printer"></i> Print
         </button>
         <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
-          <i class="bi bi-pencil"></i>
-          Edit
+          <i class="bi bi-pencil"></i> Edit
         </button>
         <button class="btn btn-warning" (click)="onCancel()" *ngIf="canCancel()">
-          <i class="bi bi-x-circle"></i>
-          Cancel
+          <i class="bi bi-x-circle"></i> Cancel
         </button>
         <button class="btn btn-danger" (click)="onDelete()" *ngIf="canDelete()">
-          <i class="bi bi-trash"></i>
-          Delete
+          <i class="bi bi-trash"></i> Delete
         </button>
       </div>
     </div>
@@ -50,149 +46,327 @@
     <!-- Status Badge -->
     <div class="status-bar">
       <span class="badge" [ngClass]="getStatusClass()">{{ claim.status }}</span>
-      <span class="text-muted">Document #: {{ claim.document_number || 'CLM-' + claim.id }}</span>
+      <span class="text-muted">Submitted: {{ formatDate(claim.submittedAt) }}</span>
     </div>
 
-    <!-- Main Card -->
-    <div class="detail-card">
-      <!-- Staff Information -->
-      <section class="detail-section">
-        <h3 class="section-title">
-          <i class="bi bi-person"></i>
-          Staff Information
-        </h3>
-        <div class="detail-grid">
-          <div class="detail-item">
-            <label>Staff Name</label>
-            <p>{{ claim.staff_name || 'N/A' }}</p>
-          </div>
-          <div class="detail-item">
-            <label>Staff No</label>
-            <p>{{ claim.staff_no || 'N/A' }}</p>
-          </div>
-          <div class="detail-item">
-            <label>Department</label>
-            <p>{{ claim.department_code || 'N/A' }}</p>
-          </div>
-          <div class="detail-item">
-            <label>Grade</label>
-            <p>{{ claim.gred || 'N/A' }}</p>
-          </div>
+    <!-- Claim Form Header (Mimic PDF structure) -->
+    <div class="claim-form-header">
+      <div class="header-row">
+        <div class="logo-section">
+          <img src="https://placehold.co/150x50.png?text=PETRONAS&font=roboto" alt="Company Logo" class="company-logo">
         </div>
-      </section>
+        <div class="title-section">
+          <h2>STAFF</h2>
+          <h1>EXPENSE CLAIM</h1>
+          <h2>FORM</h2>
+        </div>
+        <div class="meta-section">
+          <p>For Internal Use Only</p>
+          <p>Appendix № 1</p>
+        </div>
+      </div>
 
-      <!-- Bank Details -->
-      <section class="detail-section" *ngIf="claim.bank_name || claim.account_number">
-        <h3 class="section-title">
-          <i class="bi bi-bank"></i>
-          Bank Details
-        </h3>
-        <div class="detail-grid">
+      <div class="header-content">
+        <!-- Bank Details Column -->
+        <div class="bank-column">
           <div class="detail-item">
-            <label>Bank Name</label>
-            <p>{{ claim.bank_name || 'N/A' }}</p>
+            <label>Bank</label>
+            <span>{{ claim.bankDetails.bankName || 'N/A' }}</span>
           </div>
           <div class="detail-item">
             <label>Account Number</label>
-            <p>{{ claim.account_number || 'N/A' }}</p>
+            <span>{{ claim.bankDetails.accountNumber || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Purpose of Claim</label>
+            <span>{{ claim.bankDetails.purposeOfClaim || 'N/A' }}</span>
           </div>
         </div>
-      </section>
 
-      <!-- Purpose -->
-      <section class="detail-section" *ngIf="claim.purpose_of_claim">
-        <h3 class="section-title">
-          <i class="bi bi-file-text"></i>
-          Purpose of Claim
-        </h3>
-        <div class="purpose-text">
-          <p>{{ claim.purpose_of_claim }}</p>
+        <!-- Staff Details Column -->
+        <div class="staff-column">
+          <div class="staff-grid">
+            <div class="grid-label">DOCUMENT</div>
+            <div class="grid-value">{{ claim.headerDetails.documentType || 'N/A' }}</div>
+
+            <div class="grid-label">NUMBER</div>
+            <div class="grid-value">{{ claim.headerDetails.documentNumber || 'N/A' }}</div>
+
+            <div class="grid-label">STAFF NAME:</div>
+            <div class="grid-value">{{ claim.headerDetails.staffName }}</div>
+
+            <div class="staff-type-section">
+              <span class="label-text">Select whichever is applicable:</span>
+              <div class="type-options">
+                <span [class.active]="claim.headerDetails.staffType === 'PERMANENT STAFF'">PERMANENT STAFF</span>
+                <span [class.active]="claim.headerDetails.staffType === 'CONTRACT STAFF'">CONTRACT STAFF</span>
+              </div>
+              <div class="type-options">
+                <span [class.active]="claim.headerDetails.executiveStatus === 'EXECUTIVE'">EXECUTIVE</span>
+                <span [class.active]="claim.headerDetails.executiveStatus === 'NON-EXECUTIVE'">NON-EXECUTIVE</span>
+              </div>
+            </div>
+
+            <div class="grid-label">STAFF NO:</div>
+            <div class="grid-value">{{ claim.headerDetails.staffNo }}</div>
+
+            <div class="grid-label">GRED:</div>
+            <div class="grid-value">{{ claim.headerDetails.gred }}</div>
+
+            <div class="grid-label">DEPARTMENT CODE:</div>
+            <div class="grid-value">{{ claim.headerDetails.departmentCode }}</div>
+
+            <div class="grid-label">DEPT COST CENTER CODE:</div>
+            <div class="grid-value">{{ claim.headerDetails.deptCostCenterCode }}</div>
+
+            <div class="grid-label">LOCATION:</div>
+            <div class="grid-value">{{ claim.headerDetails.location }}</div>
+
+            <div class="grid-label">TEL/EXT:</div>
+            <div class="grid-value">{{ claim.headerDetails.telExt }}</div>
+
+            <div class="grid-label">CLAIM FOR THE MONTH OF:</div>
+            <div class="grid-value">{{ formatMonthYear(claim.headerDetails.claimForMonthOf) }}</div>
+
+            <div class="full-width">
+              <span class="grid-label">1. Start time from home to destination: </span>
+              <span class="grid-value">{{ formatTime(claim.headerDetails.startTimeFromHome) }}</span>
+            </div>
+
+            <div class="full-width">
+              <span class="grid-label">2. Time of arrival at home from official duty: </span>
+              <span class="grid-value">{{ formatTime(claim.headerDetails.timeOfArrivalAtHome) }}</span>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Financial Summary -->
-      <section class="detail-section">
-        <h3 class="section-title">
-          <i class="bi bi-calculator"></i>
-          Financial Summary
-        </h3>
-        <div class="financial-summary">
-          <div class="summary-row">
-            <span class="label">Total Advance/Claim Amount:</span>
-            <span class="value">{{ formatCurrency(claim.total_advance_claim_amount) }}</span>
+    <!-- Medical Claim Details -->
+    <div class="detail-card" *ngIf="claim.medicalClaimDetails.isMedicalClaim">
+      <div class="card-header">
+        <i class="bi bi-heart-pulse"></i>
+        <h3>Medical Claim Details</h3>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Applicable Medical Type</label>
+            <span>{{ claim.medicalClaimDetails.applicableMedicalType || 'N/A' }}</span>
           </div>
-          <div class="summary-row" *ngIf="claim.less_advance_taken">
-            <span class="label">Less Advance Taken:</span>
-            <span class="value">{{ formatCurrency(claim.less_advance_taken) }}</span>
+          <div class="detail-item">
+            <label>For Family?</label>
+            <span>{{ claim.medicalClaimDetails.isForFamily ? 'Yes' : 'No' }}</span>
           </div>
-          <div class="summary-row" *ngIf="claim.less_corporate_credit_card_payment">
-            <span class="label">Less Corporate Credit Card:</span>
-            <span class="value">{{ formatCurrency(claim.less_corporate_credit_card_payment) }}</span>
+          <div class="detail-item" *ngIf="claim.medicalClaimDetails.isForFamily">
+            <label>Spouse</label>
+            <input type="checkbox" [checked]="claim.medicalClaimDetails.familyMemberSpouse" disabled>
           </div>
-          <div class="summary-row total">
-            <span class="label">Balance Claim/Repayment:</span>
-            <span class="value">{{ formatCurrency(claim.balance_claim_repayment) }}</span>
+          <div class="detail-item" *ngIf="claim.medicalClaimDetails.isForFamily">
+            <label>Children</label>
+            <input type="checkbox" [checked]="claim.medicalClaimDetails.familyMemberChildren" disabled>
+          </div>
+          <div class="detail-item" *ngIf="claim.medicalClaimDetails.isForFamily && claim.medicalClaimDetails.familyMemberOther">
+            <label>Other Family Member</label>
+            <span>{{ claim.medicalClaimDetails.familyMemberOther }}</span>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Expense Items -->
-      <section class="detail-section" *ngIf="claim.expense_items && claim.expense_items.length > 0">
-        <h3 class="section-title">
-          <i class="bi bi-list-ul"></i>
-          Expense Items
-        </h3>
-        <div class="table-container">
-          <table class="detail-table">
+    <!-- Expense Items Table -->
+    <div class="detail-card">
+      <div class="card-header">
+        <i class="bi bi-table"></i>
+        <h3>Expense Details (USD)</h3>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="expense-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Details</th>
-                <th class="text-right">Transport</th>
-                <th class="text-right">Hotel</th>
-                <th class="text-right">Meal</th>
-                <th class="text-right">Misc</th>
-                <th class="text-right">Other</th>
+                <th>Date(s)</th>
+                <th>Claim or Travel Details<br><small>(From - To / Place of Stay)</small></th>
+                <th class="text-center">Official Mileage<br>(KM) (B)</th>
+                <th class="text-right">Transport<br>(C)</th>
+                <th class="text-right">Hotel Accom.<br>Allowance (D)</th>
+                <th class="text-right">Out-Station<br>Allowance (Meal) (E)</th>
+                <th class="text-right">Misc. Allowance<br>(10%) (F)</th>
+                <th class="text-right">Other<br>Expenses (G)</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let item of claim.expense_items">
-                <td>{{ formatDate(item.item_date) }}</td>
-                <td>{{ item.claim_or_travel_details || 'N/A' }}</td>
-                <td class="text-right">{{ formatCurrency(item.transport) }}</td>
-                <td class="text-right">{{ formatCurrency(item.hotel_accommodation_allowance) }}</td>
-                <td class="text-right">{{ formatCurrency(item.out_station_allowance_meal) }}</td>
-                <td class="text-right">{{ formatCurrency(item.miscellaneous_allowance_10_percent) }}</td>
-                <td class="text-right">{{ formatCurrency(item.other_expenses) }}</td>
+              <tr *ngFor="let item of claim.expenseItems; let i = index">
+                <td>{{ formatDate(item.date) }}</td>
+                <td>{{ getTravelDetails(item) }}</td>
+                <td class="text-center">{{ formatNumber(item.officialMileageKM, 0) }}</td>
+                <td class="text-right">{{ formatNumber(item.transport) }}</td>
+                <td class="text-right">{{ formatNumber(item.hotelAccommodationAllowance) }}</td>
+                <td class="text-right">{{ formatNumber(item.outStationAllowanceMeal) }}</td>
+                <td class="text-right">{{ formatNumber(item.miscellaneousAllowance10Percent) }}</td>
+                <td class="text-right">{{ formatNumber(item.otherExpenses) }}</td>
+              </tr>
+              <tr class="totals-row">
+                <td colspan="2" class="text-right"><strong>TOTAL</strong></td>
+                <td class="text-center"><strong>{{ formatNumber(totalMileage, 0) }}</strong></td>
+                <td class="text-right"><strong>{{ formatNumber(totalTransport) }}</strong></td>
+                <td class="text-right"><strong>{{ formatNumber(totalHotel) }}</strong></td>
+                <td class="text-right"><strong>{{ formatNumber(totalOutstation) }}</strong></td>
+                <td class="text-right"><strong>{{ formatNumber(totalMisc) }}</strong></td>
+                <td class="text-right"><strong>{{ formatNumber(totalOther) }}</strong></td>
               </tr>
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Approval Workflow -->
-      <section class="detail-section" *ngIf="claim.approval_steps && claim.approval_steps.length > 0">
-        <h3 class="section-title">
-          <i class="bi bi-check-circle"></i>
-          Approval Workflow
-        </h3>
-        <div class="approval-timeline">
-          <div *ngFor="let step of claim.approval_steps" class="approval-step"
-               [ngClass]="{'completed': step.status === 'Approved', 'rejected': step.status === 'Rejected', 'pending': step.status === 'Pending'}">
-            <div class="step-icon">
-              <i *ngIf="step.status === 'Approved'" class="bi bi-check-circle-fill icon-success"></i>
-              <i *ngIf="step.status === 'Rejected'" class="bi bi-x-circle-fill icon-error"></i>
-              <i *ngIf="step.status === 'Pending'" class="bi bi-clock-fill icon-pending"></i>
+    <!-- Foreign Exchange & Financial Summary Grid -->
+    <div class="two-column-grid">
+      <!-- Foreign Exchange Rate -->
+      <div class="detail-card" *ngIf="claim.informationOnForeignExchangeRate.length > 0">
+        <div class="card-header">
+          <i class="bi bi-currency-exchange"></i>
+          <h3>Foreign Exchange Rate</h3>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="fx-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type of Currency</th>
+                  <th class="text-right">Selling Rate TT/OD</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let fx of claim.informationOnForeignExchangeRate">
+                  <td>{{ formatDate(fx.date) }}</td>
+                  <td>{{ fx.typeOfCurrency }}</td>
+                  <td class="text-right">{{ formatNumber(fx.sellingRateTTOD, 4) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Summary -->
+      <div class="detail-card" [class.full-width]="claim.informationOnForeignExchangeRate.length === 0">
+        <div class="card-header">
+          <i class="bi bi-calculator"></i>
+          <h3>Financial Summary</h3>
+        </div>
+        <div class="card-body">
+          <div class="financial-summary">
+            <div class="summary-row">
+              <label>Total Advance/Claim Amount (USD)</label>
+              <span class="value">${{ formatNumber(claim.financialSummary.totalAdvanceClaimAmount) }}</span>
             </div>
-            <div class="step-content">
-              <h4>{{ step.step_role || 'Unknown Role' }}</h4>
-              <p class="step-status">{{ step.status || 'Pending' }}</p>
-              <p class="step-date" *ngIf="step.step_date">{{ formatDate(step.step_date) }}</p>
-              <p class="step-comments" *ngIf="step.comments">{{ step.comments }}</p>
+            <div class="summary-row">
+              <label>Less: Advance Taken (USD)</label>
+              <span class="value">${{ formatNumber(claim.financialSummary.lessAdvanceTaken) }}</span>
+            </div>
+            <div class="summary-row">
+              <label>Less: Corporate Credit Card Payment (USD)</label>
+              <span class="value">${{ formatNumber(claim.financialSummary.lessCorporateCreditCardPayment) }}</span>
+            </div>
+            <div class="summary-row total">
+              <label>Balance of Claim/Repayment (USD)<br><small>(Cheque/Receipt No.)</small></label>
+              <span class="value">${{ formatNumber(claim.financialSummary.balanceClaimRepayment) }} <br><small>({{ claim.financialSummary.chequeReceiptNo || 'N/A' }})</small></span>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
+
+    <!-- Declaration & Notes -->
+    <div class="detail-card">
+      <div class="card-header">
+        <i class="bi bi-file-text"></i>
+        <h3>Declaration & Notes</h3>
+      </div>
+      <div class="card-body">
+        <div class="declaration-box">
+          <div class="declaration-check">
+            <input type="checkbox" [checked]="claim.declaration.iDeclare" disabled>
+            <label>
+              I hereby declare that all of the information provided in the Claim Form, as well as all of the information contained in the supporting documents and materials are true and complete.
+              I understand that any false, fraudulent, or incomplete information on this Claim Form and the related supporting documents may serve as grounds for disciplinary action.
+              I am fully aware of the requirements of the related PC(T)SB HR Policies and Orders, and hereby certify that all of the supporting documents are in compliance with the requirements of related company Policies.
+              PC(T)SB reserves the right to check submitted Claim Form and Supporting Documents at any time.
+              Should there be any false, fraudulent or incomplete information and/or documentation originating from the Claims Form(a), PC(T)SB reserves the right to recover from the Employee any/all sums that has been paid out.
+            </label>
+          </div>
+          <div class="declaration-date">
+            <strong>Date:</strong> {{ formatDate(claim.declaration.date) }}
+          </div>
+        </div>
+
+        <div class="signature-grid">
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <label>Signature</label>
+            <p class="date-text">Date: {{ formatDate(claim.declaration.date) }}</p>
+          </div>
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <label>Verified By (LINE MANAGER)</label>
+            <p class="date-text">Date: (Pending Verification)</p>
+          </div>
+          <div class="signature-box">
+            <div class="signature-line"></div>
+            <label>Approved By (HOD)</label>
+            <p class="date-text">Date: (Pending Approval)</p>
+          </div>
+        </div>
+
+        <div class="notes-section">
+          <p class="note-item">(REV 3/93) *Please see the terms and conditions on next page.</p>
+          <p class="note-item">1) The approved expenses claim form in accordance to the LOA shall be submitted to Finance & Accounts Dept together with all supporting documents including original receipts, official bills, air fare tickets, boarding pass and others.</p>
+          <p class="note-item">2) Incomplete expense claim form shall be returned to the staff.</p>
+          <p class="note-item">3) Finance & Accounts Dept shall effect salary deduction without notifying relevant staff if she/he does not submit her/his claim within seven (7) working days from return after completion of official duty.</p>
+          <p class="note-item">4) Claim must be approved by Departmental Manager in accordance to terms and conditions as stated in the related "HUMAN RESOURCE MANAGEMENT POLICIES AND OPERATING PROCEDURES MANUAL/ORDERS" or relevant circulars issued out by the Human Resource Department from time to time.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modern Workflow Status -->
+    <section class="detail-card" *ngIf="workflow || workflowLoading">
+      <div class="card-header">
+        <i class="bi bi-diagram-3"></i>
+        <h3>Approval Workflow</h3>
+      </div>
+      <div class="card-body">
+        <!-- Loading State -->
+        <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading workflow...</span>
+          </div>
+          <p class="text-muted mt-2">Loading workflow status...</p>
+        </div>
+
+        <!-- Workflow Status Timeline -->
+        <app-workflow-status
+          *ngIf="workflow && !workflowLoading"
+          [workflowInstance]="workflow">
+        </app-workflow-status>
+
+        <!-- Approval Action Buttons -->
+        <app-approval-actions
+          *ngIf="currentStepExecution && !workflowLoading"
+          [stepExecution]="currentStepExecution"
+          (approved)="onWorkflowApproved()"
+          (rejected)="onWorkflowRejected()"
+          (delegated)="onWorkflowDelegated()">
+        </app-approval-actions>
+
+        <!-- No Workflow Message -->
+        <div *ngIf="!workflow && !workflowLoading" class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          No workflow has been initiated for this claim yet.
+        </div>
+      </div>
+    </section>
   </div>
 </div>

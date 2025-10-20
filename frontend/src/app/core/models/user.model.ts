@@ -6,6 +6,11 @@ export interface User {
   department: string;
   is_admin: boolean;
   is_active: boolean;
+  // Permissions array for RBAC
+  permissions?: string[];
+  // Staff identifiers
+  staff_id?: string;
+  staff_no?: string;
   // These fields are computed from name when needed
   firstName?: string;
   lastName?: string;

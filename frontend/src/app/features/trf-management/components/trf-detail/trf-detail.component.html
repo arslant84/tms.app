@@ -380,13 +380,50 @@
         </div>
       </section>
 
-      <!-- Approval Workflow -->
-      <section class="detail-section" *ngIf="trfData.approvalSteps && trfData.approvalSteps.length > 0">
+      <!-- Modern Workflow Status -->
+      <section class="detail-section" *ngIf="workflow || workflowLoading">
+        <h3 class="section-title">
+          <i class="bi bi-diagram-3"></i>
+          Approval Workflow
+        </h3>
+
+        <!-- Loading State -->
+        <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading workflow...</span>
+          </div>
+          <p class="text-muted mt-2">Loading workflow status...</p>
+        </div>
+
+        <!-- Workflow Status Timeline -->
+        <app-workflow-status
+          *ngIf="workflow && !workflowLoading"
+          [workflowInstance]="workflow">
+        </app-workflow-status>
+
+        <!-- Approval Action Buttons -->
+        <app-approval-actions
+          *ngIf="currentStepExecution && !workflowLoading"
+          [stepExecution]="currentStepExecution"
+          (approved)="onWorkflowApproved()"
+          (rejected)="onWorkflowRejected()"
+          (delegated)="onWorkflowDelegated()">
+        </app-approval-actions>
+
+        <!-- No Workflow Message -->
+        <div *ngIf="!workflow && !workflowLoading" class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          No workflow has been initiated for this TRF yet.
+        </div>
+      </section>
+
+      <!-- Fallback: Old Approval Workflow (if no modern workflow exists) -->
+      <section class="detail-section" *ngIf="!workflow && !workflowLoading && trfData.approvalSteps && trfData.approvalSteps.length > 0">
         <h3 class="section-title">
           <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-          Approval Workflow
+          Approval Workflow (Legacy)
         </h3>
         <div class="approval-timeline">
           <div *ngFor="let step of trfData.approvalSteps; let i = index" class="approval-step"

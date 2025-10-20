@@ -1,9 +1,11 @@
+"""
+Transport Serializers
+Redesigned to match React source project structure (pctsb.syntra)
+NO cost fields - only basic transport details
+"""
 from rest_framework import serializers
-from .models import (
-    TransportRequest, TransportSegment, TransportApprovalStep, VehicleAssignment
-)
+from .models import TransportRequest, TransportApprovalStep, VehicleAssignment
 from accounts.models import User
-from trf.models import TravelRequest
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -12,39 +14,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'first_name', 'last_name', 'department']
         read_only_fields = ['id', 'email', 'first_name', 'last_name', 'department']
-
-
-class TransportSegmentSerializer(serializers.ModelSerializer):
-    """Serializer for transport segments"""
-    class Meta:
-        model = TransportSegment
-        fields = [
-            'id', 'transport_request', 'from_location', 'to_location',
-            'departure_date', 'departure_time', 'arrival_date', 'arrival_time',
-            'distance_km', 'estimated_duration_hours', 'route_description',
-            'vehicle_number', 'driver_name', 'driver_contact', 'segment_cost',
-            'remarks', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
-
-    def validate(self, data):
-        """Validate segment data"""
-        # Validate arrival is after departure
-        if data.get('arrival_date') and data.get('departure_date'):
-            if data['arrival_date'] < data['departure_date']:
-                raise serializers.ValidationError(
-                    "Arrival date cannot be before departure date"
-                )
-
-        # Validate distance is positive
-        if data.get('distance_km') and data['distance_km'] <= 0:
-            raise serializers.ValidationError("Distance must be positive")
-
-        # Validate duration is positive
-        if data.get('estimated_duration_hours') and data['estimated_duration_hours'] <= 0:
-            raise serializers.ValidationError("Duration must be positive")
-
-        return data
 
 
 class TransportApprovalStepSerializer(serializers.ModelSerializer):
@@ -58,142 +27,133 @@ class TransportApprovalStepSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
-class VehicleAssignmentSerializer(serializers.ModelSerializer):
-    """Serializer for vehicle assignments"""
-    assigned_by_user = UserSerializer(source='assigned_by', read_only=True)
-
-    class Meta:
-        model = VehicleAssignment
-        fields = [
-            'id', 'transport_request', 'vehicle_number', 'vehicle_type',
-            'vehicle_capacity', 'driver_name', 'driver_contact', 'driver_license',
-            'assigned_by', 'assigned_by_user', 'status', 'odometer_start',
-            'odometer_end', 'fuel_used_liters', 'assignment_date',
-            'completion_date', 'created_at', 'updated_at'
-        ]
-        read_only_fields = [
-            'id', 'assigned_by', 'assignment_date', 'created_at', 'updated_at'
-        ]
-
-    def validate(self, data):
-        """Validate vehicle assignment data"""
-        # Validate vehicle capacity
-        if data.get('vehicle_capacity') and data['vehicle_capacity'] < 1:
-            raise serializers.ValidationError("Vehicle capacity must be at least 1")
-
-        # Validate odometer readings
-        if data.get('odometer_end') and data.get('odometer_start'):
-            if data['odometer_end'] < data['odometer_start']:
-                raise serializers.ValidationError(
-                    "Ending odometer reading cannot be less than starting reading"
-                )
-
-        # Validate fuel used
-        if data.get('fuel_used_liters') and data['fuel_used_liters'] < 0:
-            raise serializers.ValidationError("Fuel used cannot be negative")
-
-        return data
-
-
 class TransportRequestSerializer(serializers.ModelSerializer):
-    """Basic serializer for transport requests (list view)"""
-    requestor_name = serializers.CharField(source='requestor.get_full_name', read_only=True)
+    """
+    Main serializer for TransportRequest
+    Matches React source structure exactly
+    """
     requestor_email = serializers.EmailField(source='requestor.email', read_only=True)
-    segment_count = serializers.SerializerMethodField()
+    detail_count = serializers.SerializerMethodField()
 
     class Meta:
         model = TransportRequest
         fields = [
-            'id', 'requestor', 'requestor_name', 'requestor_email', 'trf',
-            'title', 'purpose', 'transport_type', 'status',
-            'number_of_passengers', 'vehicle_type', 'estimated_cost',
-            'currency', 'segment_count', 'submitted_at', 'created_at', 'updated_at'
+            'id', 'requestor', 'requestor_email',
+            'requestor_name', 'staff_id', 'department', 'position',
+            'purpose', 'tsr_reference', 'status',
+            'transport_details', 'detail_count',
+            'additional_comments',
+            'confirm_policy', 'confirm_manager_approval', 'confirm_terms_and_conditions',
+            'booking_details',
+            'submitted_at', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'requestor']
+        read_only_fields = ['id', 'requestor', 'created_at', 'updated_at']
 
-    def get_segment_count(self, obj):
-        """Get the number of transport segments"""
-        return obj.segments.count()
+    def get_detail_count(self, obj):
+        """Get the number of transport details"""
+        if isinstance(obj.transport_details, list):
+            return len(obj.transport_details)
+        return 0
 
-    def validate_number_of_passengers(self, value):
-        """Validate number of passengers"""
-        if value < 1:
-            raise serializers.ValidationError("Number of passengers must be at least 1")
-        return value
+    def validate_transport_details(self, value):
+        """Validate transport details array"""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("transport_details must be an array")
 
-    def validate_estimated_cost(self, value):
-        """Validate estimated cost"""
-        if value < 0:
-            raise serializers.ValidationError("Estimated cost cannot be negative")
+        if len(value) == 0:
+            raise serializers.ValidationError("At least one transport detail is required")
+
+        # Validate each transport detail object
+        required_fields = ['from', 'to', 'departureTime', 'transportType', 'numberOfPassengers']
+        for i, detail in enumerate(value):
+            for field in required_fields:
+                if field not in detail or not detail[field]:
+                    raise serializers.ValidationError(
+                        f"Transport detail #{i+1}: '{field}' is required"
+                    )
+
+            # Validate numberOfPassengers is positive
+            if detail.get('numberOfPassengers', 0) < 1:
+                raise serializers.ValidationError(
+                    f"Transport detail #{i+1}: numberOfPassengers must be at least 1"
+                )
+
         return value
 
 
 class TransportRequestDetailSerializer(TransportRequestSerializer):
-    """Detailed serializer with nested data for retrieve operations"""
+    """Detailed serializer with nested data"""
     requestor = UserSerializer(read_only=True)
-    segments = TransportSegmentSerializer(many=True, read_only=True)
     approval_steps = TransportApprovalStepSerializer(many=True, read_only=True)
-    vehicle_assignments = VehicleAssignmentSerializer(many=True, read_only=True)
 
     class Meta(TransportRequestSerializer.Meta):
-        fields = TransportRequestSerializer.Meta.fields + [
-            'passenger_names', 'special_requirements', 'additional_comments',
-            'additional_data', 'segments', 'approval_steps', 'vehicle_assignments'
-        ]
+        fields = TransportRequestSerializer.Meta.fields + ['approval_steps']
 
 
 class TransportRequestCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating transport requests"""
-    segments = TransportSegmentSerializer(many=True, required=False)
-
+    """
+    Serializer for creating transport requests
+    Matches React source exactly - NO cost fields
+    """
     class Meta:
         model = TransportRequest
         fields = [
-            'trf', 'title', 'purpose', 'transport_type',
-            'number_of_passengers', 'passenger_names', 'vehicle_type',
-            'special_requirements', 'estimated_cost', 'currency',
-            'additional_comments', 'additional_data', 'segments'
+            'trf',
+            'requestor_name', 'staff_id', 'department', 'position',
+            'purpose', 'tsr_reference', 'status',
+            'transport_details',
+            'additional_comments',
+            'confirm_policy', 'confirm_manager_approval', 'confirm_terms_and_conditions'
         ]
 
     def validate(self, data):
         """Validate transport request data"""
-        # Validate passenger names match number of passengers
-        if data.get('passenger_names'):
-            names = [name.strip() for name in data['passenger_names'].split(',')]
-            if len(names) != data.get('number_of_passengers', 1):
-                raise serializers.ValidationError(
-                    f"Number of passenger names ({len(names)}) must match "
-                    f"number of passengers ({data.get('number_of_passengers', 1)})"
-                )
+        # Validate transport_details
+        transport_details = data.get('transport_details', [])
+        if not isinstance(transport_details, list) or len(transport_details) == 0:
+            raise serializers.ValidationError({
+                'transport_details': 'At least one transport detail is required'
+            })
+
+        # Validate each detail - accept both camelCase (from React) and snake_case (from Angular)
+        required_fields = [
+            ('date', 'date'),  # Date field (same in both)
+            ('from', 'from'),
+            ('to', 'to'),
+            ('departure_time', 'departureTime'),
+            ('transport_type', 'transportType'),
+            ('number_of_passengers', 'numberOfPassengers')
+        ]
+        
+        for i, detail in enumerate(transport_details):
+            for snake_case, camel_case in required_fields:
+                # Check if either snake_case or camelCase field exists and has value
+                snake_value = detail.get(snake_case)
+                camel_value = detail.get(camel_case)
+                
+                if not snake_value and not camel_value:
+                    raise serializers.ValidationError({
+                        'transport_details': f"Detail #{i+1}: '{snake_case}' is required"
+                    })
 
         return data
 
     def create(self, validated_data):
-        """Create transport request with segments"""
-        segments_data = validated_data.pop('segments', [])
-
-        # Create the transport request
+        """Create transport request"""
         transport_request = TransportRequest.objects.create(**validated_data)
-
-        # Create segments
-        for segment_data in segments_data:
-            TransportSegment.objects.create(
-                transport_request=transport_request,
-                **segment_data
-            )
-
         return transport_request
 
 
 class TransportRequestUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating transport requests"""
-
     class Meta:
         model = TransportRequest
         fields = [
-            'title', 'purpose', 'transport_type', 'number_of_passengers',
-            'passenger_names', 'vehicle_type', 'special_requirements',
-            'estimated_cost', 'currency', 'additional_comments', 'additional_data'
+            'requestor_name', 'staff_id', 'department', 'position',
+            'purpose', 'tsr_reference',
+            'transport_details',
+            'additional_comments',
+            'confirm_policy', 'confirm_manager_approval', 'confirm_terms_and_conditions'
         ]
 
     def validate(self, data):
@@ -204,17 +164,13 @@ class TransportRequestUpdateSerializer(serializers.ModelSerializer):
                 f"Cannot update transport request with status '{instance.status}'"
             )
 
-        # Validate passenger names match number of passengers
-        number_of_passengers = data.get('number_of_passengers', instance.number_of_passengers)
-        passenger_names = data.get('passenger_names', instance.passenger_names)
-
-        if passenger_names:
-            names = [name.strip() for name in passenger_names.split(',')]
-            if len(names) != number_of_passengers:
-                raise serializers.ValidationError(
-                    f"Number of passenger names ({len(names)}) must match "
-                    f"number of passengers ({number_of_passengers})"
-                )
+        # Validate transport_details if provided
+        if 'transport_details' in data:
+            transport_details = data['transport_details']
+            if not isinstance(transport_details, list) or len(transport_details) == 0:
+                raise serializers.ValidationError({
+                    'transport_details': 'At least one transport detail is required'
+                })
 
         return data
 
@@ -231,3 +187,21 @@ class ApprovalActionSerializer(serializers.Serializer):
                 "Comments are required when rejecting a transport request"
             )
         return value
+
+
+class VehicleAssignmentSerializer(serializers.ModelSerializer):
+    """Serializer for vehicle assignments (deprecated - use booking_details instead)"""
+    assigned_by_user = UserSerializer(source='assigned_by', read_only=True)
+
+    class Meta:
+        model = VehicleAssignment
+        fields = [
+            'id', 'transport_request', 'vehicle_number', 'vehicle_type',
+            'vehicle_capacity', 'driver_name', 'driver_contact', 'driver_license',
+            'assigned_by', 'assigned_by_user', 'status', 'odometer_start',
+            'odometer_end', 'fuel_used_liters', 'assignment_date',
+            'completion_date', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'assigned_by', 'assignment_date', 'created_at', 'updated_at'
+        ]

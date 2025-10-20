@@ -50,7 +50,7 @@
     <!-- Status Badge -->
     <div class="status-bar">
       <span class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span>
-      <span class="text-muted">Created: {{ formatDate(request.created_at) }}</span>
+      <span class="text-muted">Created: {{ formatDate(request.updatedAt) }}</span>
     </div>
 
     <!-- Main Card -->
@@ -58,25 +58,25 @@
       <!-- Request Information -->
       <section class="detail-section">
         <h3 class="section-title">
-          <i class="bi bi-info-circle"></i>
-          Request Information
+          <i class="bi bi-person-circle"></i>
+          Requestor Information
         </h3>
         <div class="detail-grid">
           <div class="detail-item">
-            <label>Title</label>
-            <p>{{ request.title || 'N/A' }}</p>
+            <label>Requestor Name</label>
+            <p>{{ request.requestorName || 'N/A' }}</p>
           </div>
           <div class="detail-item">
-            <label>Transport Type</label>
-            <p>{{ request.transport_type || 'N/A' }}</p>
+            <label>Staff ID</label>
+            <p>{{ request.staffId || 'N/A' }}</p>
           </div>
           <div class="detail-item">
-            <label>Number of Passengers</label>
-            <p>{{ request.number_of_passengers || 0 }}</p>
+            <label>Department</label>
+            <p>{{ request.department || 'N/A' }}</p>
           </div>
           <div class="detail-item">
-            <label>Estimated Cost</label>
-            <p>{{ formatCurrency(request.estimated_cost, request.currency) }}</p>
+            <label>Position</label>
+            <p>{{ request.position || 'N/A' }}</p>
           </div>
         </div>
       </section>
@@ -92,121 +92,150 @@
         </div>
       </section>
 
-      <!-- Passenger Names -->
-      <section class="detail-section" *ngIf="request.passenger_names">
+      <!-- TSR Reference -->
+      <section class="detail-section" *ngIf="request.tsrReference">
         <h3 class="section-title">
-          <i class="bi bi-people"></i>
-          Passengers
+          <i class="bi bi-link"></i>
+          TSR Reference
         </h3>
         <div class="purpose-text">
-          <p>{{ request.passenger_names }}</p>
+          <p>{{ request.tsrReference }}</p>
         </div>
       </section>
 
-      <!-- Vehicle & Requirements -->
-      <section class="detail-section" *ngIf="request.vehicle_type || request.special_requirements">
+      <!-- Transport Details -->
+      <section class="detail-section" *ngIf="request.transportDetails && request.transportDetails.length > 0">
         <h3 class="section-title">
-          <i class="bi bi-car-front"></i>
-          Vehicle & Requirements
-        </h3>
-        <div class="detail-grid">
-          <div class="detail-item" *ngIf="request.vehicle_type">
-            <label>Vehicle Type</label>
-            <p>{{ request.vehicle_type }}</p>
-          </div>
-        </div>
-        <div *ngIf="request.special_requirements" class="purpose-text">
-          <label>Special Requirements</label>
-          <p>{{ request.special_requirements }}</p>
-        </div>
-      </section>
-
-      <!-- Transport Segments -->
-      <section class="detail-section" *ngIf="request.segments && request.segments.length > 0">
-        <h3 class="section-title">
-          <i class="bi bi-signpost-split"></i>
-          Journey Segments
+          <i class="bi bi-geo-alt"></i>
+          Transport Journey Details
         </h3>
         <div class="table-container">
           <table class="detail-table">
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Time</th>
+                <th>Day</th>
                 <th>From</th>
                 <th>To</th>
-                <th>Distance</th>
-                <th>Duration</th>
-                <th class="text-right">Cost</th>
+                <th>Departure Time</th>
+                <th>Transport Type</th>
+                <th>Passengers</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let segment of request.segments">
-                <td>{{ formatDate(segment.departure_date) }}</td>
-                <td>{{ formatTime(segment.departure_time) }}</td>
-                <td>{{ segment.from_location }}</td>
-                <td>{{ segment.to_location }}</td>
-                <td>{{ segment.distance_km ? segment.distance_km + ' km' : 'N/A' }}</td>
-                <td>{{ segment.estimated_duration_hours ? segment.estimated_duration_hours + ' hrs' : 'N/A' }}</td>
-                <td class="text-right">{{ formatCurrency(segment.segment_cost, request.currency) }}</td>
+              <tr *ngFor="let detail of request.transportDetails">
+                <td>{{ detail.date ? formatDate(detail.date.toString()) : 'N/A' }}</td>
+                <td>{{ detail.day }}</td>
+                <td>{{ detail.from }}</td>
+                <td>{{ detail.to }}</td>
+                <td>{{ detail.departureTime }}</td>
+                <td>{{ detail.transportType }}</td>
+                <td>{{ detail.numberOfPassengers }}</td>
               </tr>
             </tbody>
           </table>
         </div>
       </section>
 
+      <!-- Booking Details (if assigned by admin) -->
+      <section class="detail-section" *ngIf="request.bookingDetails">
+        <h3 class="section-title">
+          <i class="bi bi-car-front-fill"></i>
+          Booking Details
+        </h3>
+        <div class="detail-grid">
+          <div class="detail-item" *ngIf="request.bookingDetails.vehicleType">
+            <label>Vehicle Type</label>
+            <p>{{ request.bookingDetails.vehicleType }}</p>
+          </div>
+          <div class="detail-item" *ngIf="request.bookingDetails.vehicleNumber">
+            <label>Vehicle Number</label>
+            <p>{{ request.bookingDetails.vehicleNumber }}</p>
+          </div>
+          <div class="detail-item" *ngIf="request.bookingDetails.driverName">
+            <label>Driver Name</label>
+            <p>{{ request.bookingDetails.driverName }}</p>
+          </div>
+          <div class="detail-item" *ngIf="request.bookingDetails.driverContact">
+            <label>Driver Contact</label>
+            <p>{{ request.bookingDetails.driverContact }}</p>
+          </div>
+          <div class="detail-item" *ngIf="request.bookingDetails.pickupTime">
+            <label>Pickup Time</label>
+            <p>{{ request.bookingDetails.pickupTime }}</p>
+          </div>
+          <div class="detail-item" *ngIf="request.bookingDetails.dropoffTime">
+            <label>Dropoff Time</label>
+            <p>{{ request.bookingDetails.dropoffTime }}</p>
+          </div>
+        </div>
+        <div *ngIf="request.bookingDetails.actualRoute" class="purpose-text">
+          <label>Route</label>
+          <p>{{ request.bookingDetails.actualRoute }}</p>
+        </div>
+        <div *ngIf="request.bookingDetails.additionalNotes" class="purpose-text">
+          <label>Notes</label>
+          <p>{{ request.bookingDetails.additionalNotes }}</p>
+        </div>
+      </section>
+
       <!-- Additional Comments -->
-      <section class="detail-section" *ngIf="request.additional_comments">
+      <section class="detail-section" *ngIf="request.additionalComments">
         <h3 class="section-title">
           <i class="bi bi-chat-left-text"></i>
           Additional Comments
         </h3>
         <div class="purpose-text">
-          <p>{{ request.additional_comments }}</p>
+          <p>{{ request.additionalComments }}</p>
         </div>
       </section>
 
-      <!-- Vehicle Assignments -->
-      <section class="detail-section" *ngIf="request.vehicle_assignments && request.vehicle_assignments.length > 0">
+      <!-- Removed vehicle_assignments section - using bookingDetails instead -->
+        </div>
+      </section>
+
+      <!-- Modern Workflow Status -->
+      <section class="detail-section" *ngIf="workflow || workflowLoading">
         <h3 class="section-title">
-          <i class="bi bi-car-front-fill"></i>
-          Vehicle Assignments
+          <i class="bi bi-diagram-3"></i>
+          Approval Workflow
         </h3>
-        <div *ngFor="let assignment of request.vehicle_assignments" class="assignment-card">
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Vehicle Number</label>
-              <p>{{ assignment.vehicle_number }}</p>
-            </div>
-            <div class="detail-item">
-              <label>Vehicle Type</label>
-              <p>{{ assignment.vehicle_type }}</p>
-            </div>
-            <div class="detail-item">
-              <label>Driver Name</label>
-              <p>{{ assignment.driver_name }}</p>
-            </div>
-            <div class="detail-item">
-              <label>Driver Contact</label>
-              <p>{{ assignment.driver_contact }}</p>
-            </div>
-            <div class="detail-item">
-              <label>Status</label>
-              <p><span class="badge badge-info">{{ assignment.status }}</span></p>
-            </div>
-            <div class="detail-item">
-              <label>Assignment Date</label>
-              <p>{{ formatDate(assignment.assignment_date) }}</p>
-            </div>
+
+        <!-- Loading State -->
+        <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading workflow...</span>
           </div>
+          <p class="text-muted mt-2">Loading workflow status...</p>
+        </div>
+
+        <!-- Workflow Status Timeline -->
+        <app-workflow-status
+          *ngIf="workflow && !workflowLoading"
+          [workflowInstance]="workflow">
+        </app-workflow-status>
+
+        <!-- Approval Action Buttons -->
+        <app-approval-actions
+          *ngIf="currentStepExecution && !workflowLoading"
+          [stepExecution]="currentStepExecution"
+          (approved)="onWorkflowApproved()"
+          (rejected)="onWorkflowRejected()"
+          (delegated)="onWorkflowDelegated()">
+        </app-approval-actions>
+
+        <!-- No Workflow Message -->
+        <div *ngIf="!workflow && !workflowLoading" class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          No workflow has been initiated for this transport request yet.
         </div>
       </section>
 
-      <!-- Approval Workflow -->
-      <section class="detail-section" *ngIf="request.approval_steps && request.approval_steps.length > 0">
+      <!-- Fallback: Old Approval Workflow (if no modern workflow exists) -->
+      <section class="detail-section" *ngIf="!workflow && !workflowLoading && request.approval_steps && request.approval_steps.length > 0">
         <h3 class="section-title">
           <i class="bi bi-check-circle"></i>
-          Approval Workflow
+          Approval Workflow (Legacy)
         </h3>
         <div class="approval-timeline">
           <div *ngFor="let step of request.approval_steps" class="approval-step"

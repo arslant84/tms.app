@@ -3,11 +3,16 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TrfService } from '../../services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { WorkflowService } from '../../../../core/services/workflow.service';
+import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
+import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
+import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
 
 @Component({
   selector: 'app-trf-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, WorkflowStatusComponent, ApprovalActionsComponent],
   templateUrl: './trf-detail.component.html',
   styleUrls: ['./trf-detail.component.scss']
 })
@@ -16,6 +21,11 @@ export class TrfDetailComponent implements OnInit {
   loading: boolean = true;
   error: string = '';
   trfId!: number;
+
+  // Workflow properties
+  workflow: WorkflowInstance | null = null;
+  workflowLoading: boolean = false;
+  currentStepExecution: WorkflowStepExecution | null = null;
 
   // Status-based visibility constants (from pctsb.syntra)
   private readonly EDITABLE_STATUSES = ['Pending Department Focal', 'Rejected', 'Draft'];
@@ -26,7 +36,9 @@ export class TrfDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private trfService: TrfService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private confirmationService: ConfirmationService,
+    public workflowService: WorkflowService
   ) {}
 
   ngOnInit(): void {
@@ -35,6 +47,7 @@ export class TrfDetailComponent implements OnInit {
       this.trfId = +params['id'];
       if (this.trfId) {
         this.loadTrfDetails();
+        this.loadWorkflow();
       }
     });
   }
@@ -43,28 +56,17 @@ export class TrfDetailComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    // Fetch TRF details from the backend
-    fetch(`http://localhost:8000/api/trf/travel-requests/${this.trfId}/`, {
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+    // Fetch TRF details from the backend using TrfService
+    this.trfService.getTrfById(this.trfId).subscribe({
+      next: (data) => {
+        this.trfData = this.transformTrfData(data);
+        this.loading = false;
+      },
+      error: (err) => {
+        this.error = 'Failed to load TRF details: ' + (err.message || 'Unknown error');
+        this.loading = false;
+        console.error('Error loading TRF:', err);
       }
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      this.trfData = this.transformTrfData(data);
-      this.loading = false;
-    })
-    .catch(err => {
-      this.error = 'Failed to load TRF details: ' + (err.message || 'Unknown error');
-      this.loading = false;
-      console.error('Error loading TRF:', err);
     });
   }
 
@@ -229,57 +231,42 @@ export class TrfDetailComponent implements OnInit {
    * Cancel TRF
    */
   onCancel(): void {
-    if (confirm('Are you sure you want to cancel this TRF? This action cannot be undone.')) {
-      // Call the cancel action endpoint (from Django backend)
-      const url = `http://localhost:8000/api/trf/travel-requests/${this.trfId}/cancel/`;
-
-      // Use HttpClient directly for custom endpoint
-      const headers = { 'Content-Type': 'application/json' };
-
-      // Make the POST request
-      fetch(url, {
-        method: 'POST',
-        headers: headers,
-        credentials: 'include',
-        body: JSON.stringify({})
-      }).then(response => {
-        if (response.ok) {
-          this.toastService.success('TRF cancelled successfully');
-          // Refresh the TRF data to show updated status
-          this.loadTrfDetails();
-        } else {
-          throw new Error('Failed to cancel TRF');
-        }
-      }).catch(err => {
-        this.toastService.error('Failed to cancel TRF: ' + (err.message || 'Unknown error'));
-        console.error('Error cancelling TRF:', err);
-      });
-    }
+    this.confirmationService.confirmDestructive('Cancel', 'this TRF').subscribe(confirmed => {
+      if (confirmed) {
+        // Call the cancel action endpoint using TrfService
+        this.trfService.cancelTrf(this.trfId).subscribe({
+          next: () => {
+            this.toastService.success('TRF cancelled successfully');
+            this.router.navigate(['/trf']);
+          },
+          error: (err) => {
+            this.toastService.error('Failed to cancel TRF: ' + (err.message || 'Unknown error'));
+            console.error('Error cancelling TRF:', err);
+          }
+        });
+      }
+    });
   }
 
   /**
    * Delete TRF
    */
   onDelete(): void {
-    if (confirm('Are you sure you want to delete this TRF? This action cannot be undone.')) {
-      // Call delete endpoint
-      const url = `http://localhost:8000/api/trf/travel-requests/${this.trfId}/`;
-
-      fetch(url, {
-        method: 'DELETE',
-        credentials: 'include'
-      }).then(response => {
-        if (response.ok || response.status === 204) {
-          this.toastService.success('TRF deleted successfully');
-          this.router.navigate(['/trf']);
-        } else {
-          throw new Error('Failed to delete TRF');
-        }
-      }).catch(err => {
-        this.toastService.error('Failed to delete TRF: ' + (err.message || 'Unknown error'));
-        console.error('Error deleting TRF:', err);
-      });
-    }
+    this.confirmationService.confirmDelete('this TRF').subscribe(confirmed => {
+      if (confirmed) {
+        // Call delete endpoint using TrfService
+        this.trfService.deleteTrf(this.trfId).subscribe({
+          next: () => {
+            this.toastService.success('TRF deleted successfully');
+            this.router.navigate(['/trf']);
+          },
+          error: (err) => {
+            this.toastService.error('Failed to delete TRF: ' + (err.message || 'Unknown error'));
+            console.error('Error deleting TRF:', err);
+          }
+        });
+      }
+    });
   }
 
   /**
@@ -301,11 +288,78 @@ export class TrfDetailComponent implements OnInit {
         link.download = `TRF-${this.trfId}.pdf`;
         link.click();
         window.URL.revokeObjectURL(url);
+        this.toastService.success('PDF exported successfully');
       },
       error: (err: any) => {
-        alert('Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.toastService.error('Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error'));
         console.error('Error exporting PDF:', err);
       }
     });
+  }
+
+  // ==================== Workflow Methods ====================
+
+  loadWorkflow(): void {
+    this.workflowLoading = true;
+
+    this.workflowService.getInstances({
+      entity_type: 'travelrequest'
+    }).subscribe({
+      next: (instances) => {
+        const instance = instances.find((i: any) =>
+          i.entity_info?.id === this.trfId
+        );
+
+        if (instance && instance.id) {
+          this.workflowService.getInstance(instance.id).subscribe({
+            next: (workflow) => {
+              this.workflow = workflow;
+              this.updateCurrentStepExecution();
+              this.workflowLoading = false;
+            },
+            error: (err) => {
+              console.error('Error loading workflow details:', err);
+              this.workflowLoading = false;
+            }
+          });
+        } else {
+          this.workflowLoading = false;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading workflow:', err);
+        this.workflowLoading = false;
+      }
+    });
+  }
+
+  updateCurrentStepExecution(): void {
+    if (!this.workflow?.step_executions) {
+      this.currentStepExecution = null;
+      return;
+    }
+
+    this.currentStepExecution = this.workflow.step_executions.find(
+      step => step.status === 'pending' &&
+              step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
+              step.can_action === true
+    ) || null;
+  }
+
+  onWorkflowApproved(): void {
+    this.toastService.success('Approval successful');
+    this.loadTrfDetails();
+    this.loadWorkflow();
+  }
+
+  onWorkflowRejected(): void {
+    this.toastService.success('Request rejected');
+    this.loadTrfDetails();
+    this.loadWorkflow();
+  }
+
+  onWorkflowDelegated(): void {
+    this.toastService.success('Successfully delegated');
+    this.loadWorkflow();
   }
 }

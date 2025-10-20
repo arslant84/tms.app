@@ -1,21 +1,32 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TransportService, TransportRequestDetail } from '../../services/transport.service';
+import { TransportService } from '../../services/transport.service';
+import { TransportRequestForm } from '../../models/transport.model';
+import { WorkflowService } from '../../../../core/services/workflow.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
+import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
+import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
 
 @Component({
   selector: 'app-transport-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ApprovalActionsComponent, WorkflowStatusComponent],
   templateUrl: './transport-detail.component.html',
   styleUrls: ['./transport-detail.component.scss']
 })
 export class TransportDetailComponent implements OnInit {
-  request: TransportRequestDetail | null = null;
+  request: TransportRequestForm | null = null;
   loading: boolean = true;
   error: string = '';
   requestId!: number;
+
+  // Workflow properties
+  workflow: WorkflowInstance | null = null;
+  workflowLoading: boolean = false;
+  currentStepExecution: WorkflowStepExecution | null = null;
 
   // Status-based visibility constants
   private readonly EDITABLE_STATUSES = ['Draft', 'Rejected'];
@@ -26,7 +37,9 @@ export class TransportDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private transportService: TransportService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private confirmationService: ConfirmationService,
+    public workflowService: WorkflowService
   ) {}
 
   ngOnInit(): void {
@@ -34,6 +47,7 @@ export class TransportDetailComponent implements OnInit {
       this.requestId = +params['id'];
       if (this.requestId) {
         this.loadRequestDetails();
+        this.loadWorkflow();
       }
     });
   }
@@ -53,6 +67,78 @@ export class TransportDetailComponent implements OnInit {
         console.error('Error loading request:', err);
       }
     });
+  }
+
+  loadWorkflow(): void {
+    this.workflowLoading = true;
+
+    // Try to get workflow for this transport request
+    this.workflowService.getInstances({
+      entity_type: 'transportrequest'
+    }).subscribe({
+      next: (response: any) => {
+        // Check if response is an array or paginated object
+        const instances = Array.isArray(response) ? response : (response.results || []);
+
+        // Find workflow instance for this specific request
+        const instance = instances.find((i: any) =>
+          i.entity_info?.id === this.requestId ||
+          i.entity_id === this.requestId
+        );
+
+        if (instance && instance.id) {
+          // Load full workflow details
+          this.workflowService.getInstance(instance.id).subscribe({
+            next: (workflow) => {
+              this.workflow = workflow;
+              this.updateCurrentStepExecution();
+              this.workflowLoading = false;
+            },
+            error: (err) => {
+              console.error('Error loading workflow details:', err);
+              this.workflowLoading = false;
+            }
+          });
+        } else {
+          this.workflowLoading = false;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading workflow:', err);
+        this.workflowLoading = false;
+      }
+    });
+  }
+
+  updateCurrentStepExecution(): void {
+    if (!this.workflow?.step_executions) {
+      this.currentStepExecution = null;
+      return;
+    }
+
+    // Find the current pending step that the user can action
+    this.currentStepExecution = this.workflow.step_executions.find(
+      step => step.status === 'pending' &&
+              step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
+              step.can_action === true
+    ) || null;
+  }
+
+  onWorkflowApproved(): void {
+    this.toastService.success('Approval successful');
+    this.loadRequestDetails();
+    this.loadWorkflow();
+  }
+
+  onWorkflowRejected(): void {
+    this.toastService.success('Request rejected');
+    this.loadRequestDetails();
+    this.loadWorkflow();
+  }
+
+  onWorkflowDelegated(): void {
+    this.toastService.success('Successfully delegated');
+    this.loadWorkflow();
   }
 
   canEdit(): boolean {
@@ -86,33 +172,37 @@ export class TransportDetailComponent implements OnInit {
   }
 
   onCancel(): void {
-    if (confirm('Are you sure you want to cancel this transport request? This action cannot be undone.')) {
-      this.transportService.cancelRequest(this.requestId).subscribe({
-        next: () => {
-          this.toastService.success('Transport request cancelled successfully');
-          this.loadRequestDetails();
-        },
-        error: (err) => {
-          this.toastService.error('Failed to cancel request: ' + (err.error?.message || err.message));
-          console.error('Error cancelling request:', err);
-        }
-      });
-    }
+    this.confirmationService.confirmDestructive('Cancel', 'this transport request').subscribe(confirmed => {
+      if (confirmed) {
+        this.transportService.cancelRequest(this.requestId).subscribe({
+          next: () => {
+            this.toastService.success('Transport request cancelled successfully');
+            this.router.navigate(['/transport']);
+          },
+          error: (err) => {
+            this.toastService.error('Failed to cancel request: ' + (err.error?.message || err.message));
+            console.error('Error cancelling request:', err);
+          }
+        });
+      }
+    });
   }
 
   onDelete(): void {
-    if (confirm('Are you sure you want to delete this transport request? This action cannot be undone.')) {
-      this.transportService.deleteRequest(this.requestId).subscribe({
-        next: () => {
-          this.toastService.success('Transport request deleted successfully');
-          this.router.navigate(['/transport']);
-        },
-        error: (err) => {
-          this.toastService.error('Failed to delete request: ' + (err.error?.message || err.message));
-          console.error('Error deleting request:', err);
-        }
-      });
-    }
+    this.confirmationService.confirmDelete('this transport request').subscribe(confirmed => {
+      if (confirmed) {
+        this.transportService.deleteRequest(this.requestId).subscribe({
+          next: () => {
+            this.toastService.success('Transport request deleted successfully');
+            this.router.navigate(['/transport']);
+          },
+          error: (err) => {
+            this.toastService.error('Failed to delete request: ' + (err.error?.message || err.message));
+            console.error('Error deleting request:', err);
+          }
+        });
+      }
+    });
   }
 
   onPrint(): void {

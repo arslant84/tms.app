@@ -1,3 +1,5 @@
+@use "sass:color";
+
 .container-fluid {
   max-width: 1400px;
   margin: 0 auto;
@@ -88,8 +90,8 @@ label.small {
   border-color: var(--bs-primary);
 
   &:hover {
-    background-color: darken(#0d6efd, 10%);
-    border-color: darken(#0d6efd, 10%);
+    background-color: color.scale(#0d6efd, $lightness: -10%);
+    border-color: color.scale(#0d6efd, $lightness: -10%);
   }
 }
 
@@ -98,8 +100,8 @@ label.small {
   border-color: var(--bs-success);
 
   &:hover {
-    background-color: darken(#198754, 10%);
-    border-color: darken(#198754, 10%);
+    background-color: color.scale(#198754, $lightness: -10%);
+    border-color: color.scale(#198754, $lightness: -10%);
   }
 }
 
@@ -109,8 +111,8 @@ label.small {
   color: #000;
 
   &:hover {
-    background-color: darken(#ffc107, 10%);
-    border-color: darken(#ffc107, 10%);
+    background-color: color.scale(#ffc107, $lightness: -10%);
+    border-color: color.scale(#ffc107, $lightness: -10%);
   }
 }
 
@@ -119,8 +121,8 @@ label.small {
   border-color: var(--bs-danger);
 
   &:hover {
-    background-color: darken(#dc3545, 10%);
-    border-color: darken(#dc3545, 10%);
+    background-color: color.scale(#dc3545, $lightness: -10%);
+    border-color: color.scale(#dc3545, $lightness: -10%);
   }
 }
 

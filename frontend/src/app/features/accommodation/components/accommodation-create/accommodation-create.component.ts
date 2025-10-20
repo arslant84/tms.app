@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccommodationService } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 
 @Component({
   selector: 'app-accommodation-create',
@@ -24,7 +25,8 @@ export class AccommodationCreateComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private accommodationService: AccommodationService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private confirmationService: ConfirmationService
   ) {}
 
   ngOnInit(): void {
@@ -42,32 +44,38 @@ export class AccommodationCreateComponent implements OnInit {
 
   initForm(): void {
     this.accommodationForm = this.fb.group({
-      requestor_name: ['', Validators.required],
-      staff_id: [''],
+      requestorName: ['', Validators.required],
+      requestorId: [''],
+      requestorGender: ['', Validators.required],
       department: [''],
-      position: [''],
-      cost_center: [''],
-      tel_email: [''],
-      email: ['', Validators.email],
-      estimated_cost: [0],
-      additional_comments: ['']
+      location: ['', Validators.required],
+      trfId: [''],
+      requestedCheckInDate: ['', Validators.required],
+      requestedCheckOutDate: ['', Validators.required],
+      requestedRoomType: [''],
+      flightArrivalTime: [''],
+      flightDepartureTime: [''],
+      specialRequests: ['']
     });
   }
 
   loadRequestData(id: number): void {
     this.loading = true;
     this.accommodationService.getRequestById(id).subscribe({
-      next: (request) => {
+      next: (request: any) => {
         this.accommodationForm.patchValue({
-          requestor_name: request.requestor_name,
-          staff_id: request.staff_id,
+          requestorName: request.requestor_name,
+          requestorId: request.staff_id,
+          requestorGender: request.requestor_gender || request.additional_data?.requestor_gender,
           department: request.department,
-          position: request.position,
-          cost_center: request.cost_center,
-          tel_email: request.tel_email,
-          email: request.email,
-          estimated_cost: request.estimated_cost,
-          additional_comments: request.additional_comments
+          location: request.location || request.additional_data?.location,
+          trfId: request.trf,
+          requestedCheckInDate: request.requested_check_in_date || request.additional_data?.requested_check_in_date,
+          requestedCheckOutDate: request.requested_check_out_date || request.additional_data?.requested_check_out_date,
+          requestedRoomType: request.requested_room_type || request.additional_data?.requested_room_type,
+          flightArrivalTime: request.flight_arrival_time || request.additional_data?.flight_arrival_time,
+          flightDepartureTime: request.flight_departure_time || request.additional_data?.flight_departure_time,
+          specialRequests: request.special_requests || request.additional_data?.special_requests
         });
         this.loading = false;
       },
@@ -137,24 +145,39 @@ export class AccommodationCreateComponent implements OnInit {
   }
 
   onCancel(): void {
-    if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      this.router.navigate(['/accommodation']);
-    }
+    this.confirmationService.confirmCancel().subscribe(confirmed => {
+      if (confirmed) {
+        this.router.navigate(['/accommodation']);
+      }
+    });
   }
 
   prepareFormData(): any {
     const formValue = this.accommodationForm.value;
 
     return {
-      requestor_name: formValue.requestor_name,
-      staff_id: formValue.staff_id,
+      requestor_name: formValue.requestorName,
+      staff_id: formValue.requestorId,
+      requestor_gender: formValue.requestorGender,
       department: formValue.department,
-      position: formValue.position,
-      cost_center: formValue.cost_center,
-      tel_email: formValue.tel_email,
-      email: formValue.email,
-      estimated_cost: parseFloat(formValue.estimated_cost || 0),
-      additional_comments: formValue.additional_comments
+      location: formValue.location,
+      trf: formValue.trfId ? parseInt(formValue.trfId) : null,
+      requested_check_in_date: formValue.requestedCheckInDate,
+      requested_check_out_date: formValue.requestedCheckOutDate,
+      requested_room_type: formValue.requestedRoomType,
+      flight_arrival_time: formValue.flightArrivalTime,
+      flight_departure_time: formValue.flightDepartureTime,
+      special_requests: formValue.specialRequests,
+      additional_data: {
+        requestor_gender: formValue.requestorGender,
+        location: formValue.location,
+        requested_check_in_date: formValue.requestedCheckInDate,
+        requested_check_out_date: formValue.requestedCheckOutDate,
+        requested_room_type: formValue.requestedRoomType,
+        flight_arrival_time: formValue.flightArrivalTime,
+        flight_departure_time: formValue.flightDepartureTime,
+        special_requests: formValue.specialRequests
+      }
     };
   }
 
