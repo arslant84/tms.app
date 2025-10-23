@@ -1,7 +1,12 @@
 .visa-admin-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  /* Full-width like TSR */
+  width: 100%;
+  max-width: none;
+  margin: 0; /* remove auto-centering */
+  padding: 1.5rem 2rem; /* consistent with app content spacing */
+  box-sizing: border-box;
+  // Flexbox properties are set globally in styles.scss
+  // min-height: 100% ensures the container fills the content area
 }
 
 .page-header {

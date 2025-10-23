@@ -1,8 +1,11 @@
 // TRF Detail Component - Matching React Design
 .trf-detail-container {
-  padding: 1.5rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  /* Full-width adaptive layout */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
 }
 
 // Loading & Error States

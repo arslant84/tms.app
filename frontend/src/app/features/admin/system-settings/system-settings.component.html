@@ -1,371 +1,185 @@
-<!-- System Settings - Matching React pctsb.syntra design -->
+<!-- System Settings - Matching pctsb.syntra source design -->
 <div class="container-fluid py-4">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <!-- Page Header -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <i class="bi bi-gear" style="font-size: 2rem; color: var(--bs-primary);"></i>
     <div>
-      <h2 class="mb-1">
-        <i class="bi bi-gear me-2"></i>System Settings
-      </h2>
-      <p class="text-muted mb-0">Configure system-wide settings and preferences</p>
-    </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary" (click)="resetSettings()" [disabled]="loading">
-        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset to Defaults
-      </button>
-      <button class="btn btn-primary" (click)="saveSettings()" [disabled]="loading">
-        <i class="bi bi-save me-1"></i>
-        {{ loading ? 'Saving...' : 'Save Settings' }}
-      </button>
+      <h1 class="h3 mb-1 fw-bold">System Settings</h1>
+      <p class="text-muted mb-0">Manage application settings, user roles, permissions, and workflow configurations.</p>
     </div>
   </div>
 
-  <!-- Tab Navigation -->
-  <ul class="nav nav-tabs mb-4">
-    <li class="nav-item">
-      <a
-        class="nav-link"
-        [class.active]="activeTab === 'general'"
-        (click)="setActiveTab('general')"
-        href="javascript:void(0)">
-        <i class="bi bi-info-circle me-1"></i>General
-      </a>
-    </li>
-    <li class="nav-item">
-      <a
-        class="nav-link"
-        [class.active]="activeTab === 'email'"
-        (click)="setActiveTab('email')"
-        href="javascript:void(0)">
-        <i class="bi bi-envelope me-1"></i>Email
-      </a>
-    </li>
-    <li class="nav-item">
-      <a
-        class="nav-link"
-        [class.active]="activeTab === 'notifications'"
-        (click)="setActiveTab('notifications')"
-        href="javascript:void(0)">
-        <i class="bi bi-bell me-1"></i>Notifications
-      </a>
-    </li>
-    <li class="nav-item">
-      <a
-        class="nav-link"
-        [class.active]="activeTab === 'approvals'"
-        (click)="setActiveTab('approvals')"
-        href="javascript:void(0)">
-        <i class="bi bi-check-circle me-1"></i>Approvals
-      </a>
-    </li>
-    <li class="nav-item">
-      <a
-        class="nav-link"
-        [class.active]="activeTab === 'maintenance'"
-        (click)="setActiveTab('maintenance')"
-        href="javascript:void(0)">
-        <i class="bi bi-tools me-1"></i>Maintenance
-      </a>
-    </li>
-  </ul>
-
-  <!-- Tab Content -->
-  <div class="card">
+  <!-- General Application Settings Card -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-gear text-primary"></i>
+        <h4 class="card-title mb-0">General Application Settings</h4>
+      </div>
+      <p class="text-muted mb-0 mt-1" style="font-size: 0.875rem;">Configure global settings for the application.</p>
+    </div>
     <div class="card-body">
       <!-- Loading State -->
-      <div *ngIf="loadingSettings" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading settings...</span>
-        </div>
-        <p class="mt-2 text-muted">Loading settings...</p>
-      </div>
-
-      <!-- General Settings -->
-      <div *ngIf="activeTab === 'general' && !loadingSettings">
-        <h5 class="card-title mb-4">General Settings</h5>
-
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="siteName" class="form-label">Application Name</label>
-            <input
-              type="text"
-              class="form-control"
-              id="siteName"
-              [(ngModel)]="siteName"
-              placeholder="Enter application name">
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label for="supportEmail" class="form-label">Support Email</label>
-            <input
-              type="email"
-              class="form-control"
-              id="supportEmail"
-              [(ngModel)]="supportEmail"
-              placeholder="support@example.com">
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label for="siteDescription" class="form-label">Application Description</label>
-          <textarea
-            class="form-control"
-            id="siteDescription"
-            rows="2"
-            [(ngModel)]="siteDescription"
-            placeholder="Enter application description"></textarea>
-        </div>
-
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="defaultCurrency" class="form-label">Default Currency</label>
-            <input
-              type="text"
-              class="form-control"
-              id="defaultCurrency"
-              [(ngModel)]="defaultCurrency"
-              placeholder="USD">
-            <div class="form-text">Currency code for financial calculations</div>
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label for="timezone" class="form-label">System Timezone</label>
-            <input
-              type="text"
-              class="form-control"
-              id="timezone"
-              [(ngModel)]="timezone"
-              placeholder="UTC">
-            <div class="form-text">Timezone for date/time display</div>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label for="sessionTimeout" class="form-label">Session Timeout (minutes)</label>
-            <input
-              type="number"
-              class="form-control"
-              id="sessionTimeout"
-              [(ngModel)]="sessionTimeout"
-              placeholder="30">
-            <div class="form-text">User session timeout duration</div>
-          </div>
-
-          <div class="col-md-6 mb-3">
-            <label for="maxFileUploadSize" class="form-label">Max File Upload Size (MB)</label>
-            <input
-              type="number"
-              class="form-control"
-              id="maxFileUploadSize"
-              [(ngModel)]="maxFileUploadSize"
-              placeholder="10">
-            <div class="form-text">Maximum file size for uploads</div>
-          </div>
+      <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
+        <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;">
+          <span class="visually-hidden">Loading...</span>
         </div>
       </div>
 
-      <!-- Email Settings -->
-      <div *ngIf="activeTab === 'email' && !loadingSettings">
-        <h5 class="card-title mb-4">Email Configuration</h5>
-
-        <div class="mb-3 form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="emailEnabled"
-            [(ngModel)]="emailEnabled">
-          <label class="form-check-label" for="emailEnabled">
-            <strong>Enable Email System</strong>
-          </label>
-          <div class="form-text">Master switch for all email functionality</div>
+      <!-- Settings Form -->
+      <ng-container *ngIf="!isLoading">
+        <!-- Basic Configuration -->
+        <div class="mb-4">
+          <h5 class="mb-3" style="font-size: 0.875rem; font-weight: 600;">Basic Configuration</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="appName" class="form-label">Application Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="appName"
+                [(ngModel)]="formData.application_name"
+                placeholder="Enter application name">
+            </div>
+            <div class="col-md-6">
+              <label for="supportEmail" class="form-label">Support Email</label>
+              <input
+                type="email"
+                class="form-control"
+                id="supportEmail"
+                [(ngModel)]="formData.support_email"
+                placeholder="support@example.com">
+            </div>
+            <div class="col-md-6">
+              <label for="defaultCurrency" class="form-label">Default Currency</label>
+              <input
+                type="text"
+                class="form-control"
+                id="defaultCurrency"
+                [(ngModel)]="formData.default_currency"
+                placeholder="USD">
+            </div>
+            <div class="col-md-6">
+              <label for="timezone" class="form-label">Timezone</label>
+              <input
+                type="text"
+                class="form-control"
+                id="timezone"
+                [(ngModel)]="formData.timezone"
+                placeholder="UTC">
+            </div>
+          </div>
         </div>
 
         <hr class="my-4">
 
-        <div class="row">
-          <div class="col-md-8 mb-3">
-            <label for="smtpHost" class="form-label">SMTP Host</label>
-            <input
-              type="text"
-              class="form-control"
-              id="smtpHost"
-              [(ngModel)]="smtpHost"
-              [disabled]="!emailEnabled"
-              placeholder="smtp.gmail.com">
-          </div>
-
-          <div class="col-md-4 mb-3">
-            <label for="smtpPort" class="form-label">SMTP Port</label>
-            <input
-              type="number"
-              class="form-control"
-              id="smtpPort"
-              [(ngModel)]="smtpPort"
-              [disabled]="!emailEnabled"
-              placeholder="587">
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label for="smtpUsername" class="form-label">SMTP Username</label>
-          <input
-            type="text"
-            class="form-control"
-            id="smtpUsername"
-            [(ngModel)]="smtpUsername"
-            [disabled]="!emailEnabled"
-            placeholder="username@example.com"
-            autocomplete="off">
-        </div>
-
-        <div class="mb-3">
-          <label for="smtpPassword" class="form-label">SMTP Password</label>
-          <input
-            type="password"
-            class="form-control"
-            id="smtpPassword"
-            [(ngModel)]="smtpPassword"
-            [disabled]="!emailEnabled"
-            placeholder="Enter SMTP password"
-            autocomplete="new-password">
-          <div class="form-text">Leave blank to keep existing password</div>
-        </div>
-
-        <div class="mb-3">
-          <label for="defaultFromEmail" class="form-label">Default From Email</label>
-          <input
-            type="email"
-            class="form-control"
-            id="defaultFromEmail"
-            [(ngModel)]="defaultFromEmail"
-            [disabled]="!emailEnabled"
-            placeholder="noreply@example.com">
-          <div class="form-text">Email address used as sender for system emails</div>
-        </div>
-
-        <div class="mb-3 form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="smtpUseTLS"
-            [(ngModel)]="smtpUseTLS"
-            [disabled]="!emailEnabled">
-          <label class="form-check-label" for="smtpUseTLS">
-            Use TLS/SSL Encryption
-          </label>
-        </div>
-      </div>
-
-      <!-- Notification Settings -->
-      <div *ngIf="activeTab === 'notifications' && !loadingSettings">
-        <h5 class="card-title mb-4">Notification Settings</h5>
-
-        <div class="mb-3 form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="notificationEnabled"
-            [(ngModel)]="notificationEnabled">
-          <label class="form-check-label" for="notificationEnabled">
-            <strong>Enable In-App Notifications</strong>
-          </label>
-          <div class="form-text">Master switch for in-app notification system</div>
-        </div>
-
-        <div class="mb-3 form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="emailNotifications"
-            [(ngModel)]="emailNotifications"
-            [disabled]="!notificationEnabled">
-          <label class="form-check-label" for="emailNotifications">
-            <strong>Enable Email Notifications</strong>
-          </label>
-          <div class="form-text">Send email notifications for important events</div>
-        </div>
-
-        <div class="alert alert-info mt-4">
-          <i class="bi bi-info-circle me-2"></i>
-          <strong>Note:</strong> Email notifications require email configuration to be completed in the Email tab.
-        </div>
-      </div>
-
-      <!-- Approval Settings -->
-      <div *ngIf="activeTab === 'approvals' && !loadingSettings">
-        <h5 class="card-title mb-4">Approval Workflow Settings</h5>
-
+        <!-- System Configuration -->
         <div class="mb-4">
-          <label for="autoApprovalThreshold" class="form-label">
-            Auto-Approval Threshold (USD)
-          </label>
-          <input
-            type="number"
-            class="form-control"
-            id="autoApprovalThreshold"
-            [(ngModel)]="autoApprovalThreshold"
-            placeholder="1000">
-          <div class="form-text">Requests below this amount may be auto-approved based on policy</div>
+          <h5 class="mb-3" style="font-size: 0.875rem; font-weight: 600;">System Configuration</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="sessionTimeout" class="form-label">Session Timeout (Minutes)</label>
+              <input
+                type="number"
+                class="form-control"
+                id="sessionTimeout"
+                [(ngModel)]="formData.session_timeout_minutes"
+                min="15"
+                max="1440">
+            </div>
+            <div class="col-md-6">
+              <label for="maxUploadSize" class="form-label">Max File Upload Size (MB)</label>
+              <input
+                type="number"
+                class="form-control"
+                id="maxUploadSize"
+                [ngModel]="formData.max_file_upload_size / 1048576"
+                (ngModelChange)="formData.max_file_upload_size = $event * 1048576"
+                min="1"
+                max="100">
+            </div>
+          </div>
+          <div class="row g-3 mt-3">
+            <div class="col-md-6">
+              <div class="d-flex align-items-center gap-3">
+                <div class="form-check form-switch">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    id="maintenanceMode"
+                    [(ngModel)]="formData.maintenance_mode">
+                </div>
+                <label class="cursor-pointer mb-0" for="maintenanceMode">
+                  <div>Maintenance Mode</div>
+                  <small class="text-muted">Prevent user access to the application</small>
+                </label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex align-items-center gap-3">
+                <div class="form-check form-switch">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    id="emailNotifications"
+                    [(ngModel)]="formData.enable_email_notifications">
+                </div>
+                <label class="cursor-pointer mb-0" for="emailNotifications">
+                  <div>Email Notifications</div>
+                  <small class="text-muted">Enable system-wide email notifications</small>
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="mb-3 form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="requireManagerApproval"
-            [(ngModel)]="requireManagerApproval">
-          <label class="form-check-label" for="requireManagerApproval">
-            <strong>Require Manager Approval</strong>
-          </label>
-          <div class="form-text">All requests must be approved by direct manager</div>
-        </div>
+        <hr class="my-4">
 
-        <div class="mb-3 form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="requireFinanceApproval"
-            [(ngModel)]="requireFinanceApproval">
-          <label class="form-check-label" for="requireFinanceApproval">
-            <strong>Require Finance Department Approval</strong>
-          </label>
-          <div class="form-text">All requests must be approved by finance team</div>
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span *ngIf="hasChanges" class="d-flex align-items-center gap-2" style="font-size: 0.75rem;">
+              <span class="d-inline-block rounded-circle bg-warning" style="width: 8px; height: 8px;"></span>
+              <span class="text-muted">Unsaved changes</span>
+            </span>
+          </div>
+          <div class="d-flex gap-2">
+            <button
+              class="btn btn-outline-secondary"
+              (click)="handleReset()"
+              [disabled]="!hasChanges || isSaving">
+              <i class="bi bi-arrow-counterclockwise me-2"></i>
+              Reset
+            </button>
+            <button
+              class="btn btn-primary"
+              (click)="handleSaveSettings()"
+              [disabled]="!hasChanges || isSaving">
+              <i *ngIf="!isSaving" class="bi bi-save me-2"></i>
+              <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              {{ isSaving ? 'Saving...' : 'Save Settings' }}
+            </button>
+          </div>
         </div>
-      </div>
+      </ng-container>
+    </div>
+  </div>
+  <!-- Roles and Permissions -->
+  <tmsapp-admin-systemsettings-role-management></tmsapp-admin-systemsettings-role-management>
 
-      <!-- Maintenance Settings -->
-      <div *ngIf="activeTab === 'maintenance' && !loadingSettings">
-        <h5 class="card-title mb-4">System Maintenance</h5>
+  <!-- Workflow Configuration -->
+  <tmsapp-admin-systemsettings-workflow-configuration></tmsapp-admin-systemsettings-workflow-configuration>
 
-        <div class="alert alert-warning" *ngIf="maintenanceMode">
-          <i class="bi bi-exclamation-triangle me-2"></i>
-          <strong>Warning:</strong> Maintenance mode is currently enabled. Users will see the maintenance message when accessing the system.
-        </div>
-
-        <div class="mb-4 form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="maintenanceMode"
-            [(ngModel)]="maintenanceMode">
-          <label class="form-check-label" for="maintenanceMode">
-            <strong>Enable Maintenance Mode</strong>
-          </label>
-          <div class="form-text">This will display a maintenance message to all users and may restrict access</div>
-        </div>
-
-        <div class="mb-3">
-          <label for="maintenanceMessage" class="form-label">Maintenance Message</label>
-          <textarea
-            class="form-control"
-            id="maintenanceMessage"
-            rows="4"
-            [(ngModel)]="maintenanceMessage"
-            [disabled]="!maintenanceMode"
-            placeholder="Enter the message users will see during maintenance"></textarea>
-          <div class="form-text">This message will be displayed to users when maintenance mode is active</div>
-        </div>
-      </div>
+  <!-- Notification Templates Link Card -->
+  <div class="card">
+    <div class="card-header">
+      <h4 class="card-title">Notification Templates</h4>
+      <p class="text-muted mb-0">Manage email and system notification templates</p>
+    </div>
+    <div class="card-body">
+      <a class="btn btn-outline-primary" routerLink="/admin/settings/notifications">Manage Templates</a>
     </div>
   </div>
 </div>

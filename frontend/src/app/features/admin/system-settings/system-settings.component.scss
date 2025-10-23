@@ -1,7 +1,15 @@
 // System Settings - Bootstrap Design
 
 .container-fluid {
-  max-width: 1200px;
+  /* Full-width adaptive layout */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 h2 {

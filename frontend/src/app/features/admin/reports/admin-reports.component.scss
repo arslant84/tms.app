@@ -1,5 +1,12 @@
 .admin-reports-container {
-  padding: 1.5rem;
+  /* Full-width adaptive layout */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+  // Flexbox properties are set globally in styles.scss
+  // min-height: 100% ensures the container fills the content area
 }
 
 .reports-header {

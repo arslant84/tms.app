@@ -16,6 +16,7 @@ import { FlightsAdminComponent } from './features/admin/flights-admin/flights-ad
 import { AccommodationAdminComponent } from './features/admin/accommodation-admin/accommodation-admin.component';
 import { VisaAdminComponent } from './features/admin/visa-admin/visa-admin.component';
 import { SystemSettingsComponent } from './features/admin/system-settings/system-settings.component';
+import { TmsApp_Admin_SystemSettings_NotificationTemplatesComponent } from './features/admin/system-settings/notification-templates/notification-templates.component';
 import { SuccessComponent } from './features/requests/success/success.component';
 import { RequestTypeSelectionComponent } from './features/requests/components/request-type-selection/request-type-selection.component';
 
@@ -85,7 +86,8 @@ export const routes: Routes = [
           { path: 'flights', component: FlightsAdminComponent },
           { path: 'accommodation', component: AccommodationAdminComponent },
           { path: 'visa', component: VisaAdminComponent },
-          { path: 'settings', component: SystemSettingsComponent }
+          { path: 'settings', component: SystemSettingsComponent },
+          { path: 'settings/notifications', component: TmsApp_Admin_SystemSettings_NotificationTemplatesComponent }
         ],
         data: { roles: [UserRole.ADMIN, UserRole.TICKETING_CLERK, UserRole.HOD, UserRole.FOCAL] }
       },
@@ -142,6 +144,9 @@ export const routes: Routes = [
         path: 'visa',
         loadChildren: () => import('./visa/visa.module').then(m => m.VisaModule)
       }
+      ,
+      // Secondary Settings entry from avatar menu
+      { path: 'settings', component: SystemSettingsComponent }
     ]
   },
   { 

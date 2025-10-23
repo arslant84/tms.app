@@ -12,6 +12,7 @@ from .models import (
 )
 from .serializers import (
     NotificationEventTypeSerializer, NotificationTemplateSerializer,
+    NotificationTemplateListSerializer,
     UserNotificationPreferenceSerializer, UserNotificationSubscriptionSerializer,
     UserNotificationSerializer, UserNotificationCreateSerializer,
     NotificationBatchSerializer, NotificationStatsSerializer
@@ -26,6 +27,7 @@ class NotificationEventTypeViewSet(viewsets.ModelViewSet):
     queryset = NotificationEventType.objects.all()
     serializer_class = NotificationEventTypeSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+    pagination_class = None  # Disable pagination
 
     def get_queryset(self):
         """Filter event types by module and status"""
@@ -39,7 +41,7 @@ class NotificationEventTypeViewSet(viewsets.ModelViewSet):
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == 'true')
 
-        return queryset
+        return queryset.order_by('module', 'category', 'name')
 
 
 class NotificationTemplateViewSet(viewsets.ModelViewSet):
@@ -49,20 +51,39 @@ class NotificationTemplateViewSet(viewsets.ModelViewSet):
     queryset = NotificationTemplate.objects.all()
     serializer_class = NotificationTemplateSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+    pagination_class = None  # Disable pagination
+
+    def get_serializer_class(self):
+        """Use list serializer for list action (without body field)"""
+        if self.action == 'list':
+            return NotificationTemplateListSerializer
+        return NotificationTemplateSerializer
 
     def get_queryset(self):
-        """Filter templates by event type"""
+        """Filter templates by event type, module, and status"""
         queryset = super().get_queryset()
 
         event_type_id = self.request.query_params.get('event_type', None)
         if event_type_id:
             queryset = queryset.filter(event_type_id=event_type_id)
 
+        module = self.request.query_params.get('module', None)
+        if module:
+            queryset = queryset.filter(event_type__module=module)
+
+        notification_type = self.request.query_params.get('notification_type', None)
+        if notification_type:
+            queryset = queryset.filter(notification_type=notification_type)
+
+        recipient_type = self.request.query_params.get('recipient_type', None)
+        if recipient_type:
+            queryset = queryset.filter(recipient_type=recipient_type)
+
         is_active = self.request.query_params.get('is_active', None)
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == 'true')
 
-        return queryset.select_related('event_type')
+        return queryset.select_related('event_type').order_by('name')
 
 
 class UserNotificationPreferenceViewSet(viewsets.ModelViewSet):

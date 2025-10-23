@@ -2,50 +2,33 @@ from django.db import models
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import ArrayField
+import uuid
 
 
 class NotificationEventType(models.Model):
     """
     Defines types of events that can trigger notifications
-    (e.g., 'trf_submitted', 'approval_required', 'claim_approved')
+    Matches syntra database: notification_event_types table
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(
-        max_length=100,
+        max_length=255,
         unique=True,
         help_text="Unique identifier for the event type (e.g., 'trf_submitted')"
-    )
-    display_name = models.CharField(
-        max_length=255,
-        help_text="Human-readable name for the event"
     )
     description = models.TextField(blank=True, null=True)
 
     # Event categorization
     category = models.CharField(
         max_length=50,
-        choices=[
-            ('approval', 'Approval Required'),
-            ('status_change', 'Status Change'),
-            ('reminder', 'Reminder'),
-            ('deadline', 'Deadline Alert'),
-            ('system', 'System Notification'),
-            ('info', 'Information'),
-        ],
-        default='info'
+        help_text="Category: approval, status_update, reminder, system"
     )
 
     # Module association
     module = models.CharField(
         max_length=50,
-        choices=[
-            ('trf', 'TRF'),
-            ('visa', 'Visa'),
-            ('accommodation', 'Accommodation'),
-            ('transport', 'Transport'),
-            ('expenses', 'Expenses'),
-            ('workflows', 'Workflows'),
-            ('system', 'System'),
-        ]
+        help_text="Module: trf, visa, accommodation, transport, claims, general"
     )
 
     is_active = models.BooleanField(default=True)
@@ -53,65 +36,70 @@ class NotificationEventType(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['module', 'name']
+        ordering = ['module', 'category', 'name']
+        db_table = 'notification_event_types'
+        indexes = [
+            models.Index(fields=['category']),
+            models.Index(fields=['module']),
+        ]
 
     def __str__(self):
-        return f"{self.display_name} ({self.module})"
+        return f"{self.name} ({self.module})"
 
 
 class NotificationTemplate(models.Model):
     """
-    Templates for notification content
-    Supports variable substitution for dynamic content
+    Templates for notification content with HTML email support
+    Matches syntra database: notification_templates table
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="Unique template name identifier"
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Template description and purpose"
+    )
+
+    subject = models.TextField(
+        help_text="Email subject line with variables like {userName}, {entityId}"
+    )
+
+    body = models.TextField(
+        help_text="HTML email body template with variables"
+    )
+
     event_type = models.ForeignKey(
         NotificationEventType,
-        on_delete=models.CASCADE,
-        related_name='templates'
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='templates',
+        db_column='event_type_id'
     )
 
-    name = models.CharField(max_length=255)
+    notification_type = models.CharField(
+        max_length=50,
+        default='email',
+        help_text="Type: email, system, or both"
+    )
 
-    # Email template
-    email_subject = models.CharField(
-        max_length=255,
+    recipient_type = models.CharField(
+        max_length=50,
+        default='approver',
+        help_text="Recipient: approver, requestor, or both"
+    )
+
+    variables_available = ArrayField(
+        models.TextField(),
         blank=True,
         null=True,
-        help_text="Email subject with variables like {{user_name}}, {{item_title}}"
-    )
-    email_body = models.TextField(
-        blank=True,
-        null=True,
-        help_text="Email body HTML template"
-    )
-
-    # In-app notification template
-    in_app_title = models.CharField(
-        max_length=255,
-        help_text="Short title for in-app notification"
-    )
-    in_app_message = models.TextField(
-        help_text="Notification message with variable substitution"
-    )
-
-    # Action URL template
-    action_url_template = models.CharField(
-        max_length=500,
-        blank=True,
-        null=True,
-        help_text="URL template for notification action (e.g., /trf/{{trf_id}})"
-    )
-
-    # Priority and behavior
-    priority = models.CharField(
-        max_length=20,
-        choices=[
-            ('low', 'Low'),
-            ('normal', 'Normal'),
-            ('high', 'High'),
-            ('urgent', 'Urgent'),
-        ],
-        default='normal'
+        help_text="Array of available template variables"
     )
 
     is_active = models.BooleanField(default=True)
@@ -119,10 +107,17 @@ class NotificationTemplate(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['event_type', 'name']
+        ordering = ['name']
+        db_table = 'notification_templates'
+        indexes = [
+            models.Index(fields=['event_type']),
+            models.Index(fields=['notification_type']),
+            models.Index(fields=['recipient_type']),
+            models.Index(fields=['is_active']),
+        ]
 
     def __str__(self):
-        return f"{self.name} - {self.event_type.display_name}"
+        return f"{self.name}"
 
 
 class UserNotificationPreference(models.Model):

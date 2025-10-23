@@ -17,10 +17,12 @@ $danger: #ef4444;
 
 // ========== CONTAINER ==========
 .accommodation-create-container {
+  /* Full-width adaptive layout */
   width: 100%;
-  padding: 1rem 1.5rem 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
 }
 
 // ========== LOADING STATE ==========

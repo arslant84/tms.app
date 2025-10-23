@@ -116,12 +116,14 @@ class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
     permission_classes = [permissions.IsAdminUser]
+    pagination_class = None  # Disable pagination for roles
 
 
 class PermissionViewSet(viewsets.ModelViewSet):
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
     permission_classes = [permissions.IsAdminUser]
+    pagination_class = None  # Disable pagination for permissions
 
 
 class ApplicationSettingViewSet(viewsets.ModelViewSet):
@@ -137,6 +139,7 @@ class ApplicationSettingViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationSettingSerializer
     lookup_field = 'setting_key'
     lookup_value_regex = '[^/]+'  # Allow dots and other chars in setting_key
+    pagination_class = None  # Disable pagination for settings
 
     def get_permissions(self):
         """Allow public access for public settings"""

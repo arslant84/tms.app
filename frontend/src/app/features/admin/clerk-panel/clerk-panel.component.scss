@@ -1,7 +1,13 @@
 .clerk-panel-container {
-  padding: 1.5rem;
-  height: calc(100vh - 70px);
+  /* Full-width adaptive layout */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+  height: 100%; // Use 100% instead of calc to work with flexbox
   overflow: hidden;
+  // Flexbox properties are set globally in styles.scss
 }
 
 .row {

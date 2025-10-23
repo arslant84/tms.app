@@ -1,8 +1,11 @@
 // Expense Create Component Styles
 .expense-form-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 1.5rem;
+  /* Full-width adaptive layout */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
   background-color: #f9fafb;
 }
 

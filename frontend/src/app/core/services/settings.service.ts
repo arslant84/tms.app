@@ -4,12 +4,12 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface ApplicationSetting {
-  id: number;
+  id: string;
   setting_key: string;
-  setting_value: string;
-  value: any;
+  setting_value: any; // Raw string value from database
+  value?: any; // Typed value (if returned by backend)
   setting_type: 'string' | 'boolean' | 'number' | 'json';
-  description: string;
+  description?: string;
   is_public: boolean;
   created_at: string;
   updated_at: string;
@@ -29,7 +29,7 @@ export interface BulkUpdateResponse {
   providedIn: 'root'
 })
 export class SettingsService {
-  private apiUrl = `${environment.apiUrl}/accounts/settings`;
+  private apiUrl = `${environment.apiUrl}/settings`;
 
   constructor(private http: HttpClient) {}
 
@@ -38,14 +38,6 @@ export class SettingsService {
    */
   getAllSettings(): Observable<ApplicationSetting[]> {
     return this.http.get<ApplicationSetting[]>(`${this.apiUrl}/`);
-  }
-
-  /**
-   * Get all settings as a key-value object
-   */
-  getSettingsAsObject(publicOnly: boolean = false): Observable<Record<string, any>> {
-    const options = publicOnly ? { params: { public: 'true' } } : {};
-    return this.http.get<Record<string, any>>(`${this.apiUrl}/as_object/`, options);
   }
 
   /**

@@ -14,10 +14,48 @@ class PermissionSerializer(serializers.ModelSerializer):
 
 class RoleSerializer(serializers.ModelSerializer):
     permissions = PermissionSerializer(many=True, read_only=True)
+    permissionIds = serializers.ListField(
+        child=serializers.UUIDField(),
+        write_only=True,
+        required=False
+    )
 
     class Meta:
         model = Role
-        fields = '__all__'
+        fields = ['id', 'name', 'description', 'permissions', 'permissionIds', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        """Create role with permissions"""
+        permission_ids = validated_data.pop('permissionIds', [])
+        role = Role.objects.create(**validated_data)
+
+        if permission_ids:
+            permissions = Permission.objects.filter(id__in=permission_ids)
+            role.permissions.set(permissions)
+
+        return role
+
+    def update(self, instance, validated_data):
+        """Update role with permissions"""
+        permission_ids = validated_data.pop('permissionIds', None)
+
+        # Update basic fields
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get('description', instance.description)
+        instance.save()
+
+        # Update permissions if provided
+        if permission_ids is not None:
+            permissions = Permission.objects.filter(id__in=permission_ids)
+            instance.permissions.set(permissions)
+
+        return instance
+
+    def to_representation(self, instance):
+        """Add permissionIds to response"""
+        data = super().to_representation(instance)
+        data['permissionIds'] = [str(p.id) for p in instance.permissions.all()]
+        return data
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -2,6 +2,7 @@
 /* Bootstrap CSS is imported in angular.json */
 @use './styles/typography' as typography;
 @use './styles/colors' as colors;
+@use './styles/buttons';
 
 // We're using Google Fonts for Raleway instead of local font files
 // The font is loaded in index.html
@@ -48,6 +49,137 @@ h2 {
 .text-highlight { color: colors.$highlight-color; }
 
 // Add your custom global styles below
+
+// ========== PAGE CONTAINER HEIGHT FIX ==========
+// Ensure all page containers fill the full height of the content area
+// This prevents pages from displaying with empty space below content
+.flights-admin-container,
+.accommodation-admin-container,
+.claims-admin-container,
+.clerk-panel-container,
+.transport-admin-container,
+.visa-admin-container,
+.admin-reports-container,
+.notification-templates-container,
+.role-management-container,
+.workflow-configuration-container,
+.trf-list-container,
+.trf-create-container,
+.trf-detail-container,
+.dashboard-container,
+// Also apply to any other admin or feature containers
+[class*="-admin-container"],
+[class*="-panel-container"],
+[class*="-list-container"],
+[class*="admin-"][class*="-container"],
+[class*="trf-"][class*="-container"] {
+  min-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f9fa; // Match content-area background
+  
+  // Make the last card grow to fill remaining space
+  > .card:last-of-type,
+  > div:last-child > .card:last-of-type {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    
+    .card-body {
+      flex: 1;
+    }
+    
+    .table-responsive {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      
+      table {
+        flex: 1;
+      }
+    }
+  }
+  
+  // Also handle cards that are not last but should still expand
+  > .card {
+    &:has(.table-responsive) {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      
+      .table-responsive {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+    }
+  }
+}
+
+// Apply to container-fluid used in feature pages
+// This is scoped to feature pages only to avoid affecting other Bootstrap layouts
+app-user-admin,
+app-flights-admin,
+app-accommodation-admin,
+app-claims-admin,
+app-transport-admin,
+app-visa-admin,
+app-system-settings,
+tmsapp-admin-systemsettings-notification-templates,
+tmsapp-admin-systemsettings-role-management,
+tmsapp-admin-systemsettings-workflow-configuration,
+// Catch-all for any admin components
+[class*="app-"][class*="-admin"],
+[class*="tmsapp-admin"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  
+  > .container-fluid {
+    min-height: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa; // Match content-area background
+    
+    // Make the last card grow to fill remaining space
+    > .card:last-of-type {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      
+      .card-body {
+        flex: 1;
+      }
+      
+      .table-responsive {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        
+        table {
+          flex: 1;
+        }
+      }
+    }
+    
+    // Also handle cards that are not last but should still expand
+    > .card {
+      &:has(.table-responsive) {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        
+        .table-responsive {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+      }
+    }
+  }
+}
 
 // ========== GLOBAL PRINT STYLES ==========
 @media print {

@@ -8,19 +8,19 @@ from .models import (
 @admin.register(NotificationEventType)
 class NotificationEventTypeAdmin(admin.ModelAdmin):
     """Admin configuration for NotificationEventType model"""
-    list_display = ['id', 'name', 'display_name', 'category', 'module', 'is_active']
+    list_display = ['id', 'name', 'description', 'category', 'module', 'is_active']
     list_filter = ['category', 'module', 'is_active']
-    search_fields = ['name', 'display_name', 'description']
+    search_fields = ['name', 'description']
     ordering = ['module', 'name']
 
 
 @admin.register(NotificationTemplate)
 class NotificationTemplateAdmin(admin.ModelAdmin):
     """Admin configuration for NotificationTemplate model"""
-    list_display = ['id', 'name', 'event_type', 'priority', 'is_active']
-    list_filter = ['priority', 'is_active', 'event_type__module']
-    search_fields = ['name', 'in_app_title', 'email_subject']
-    ordering = ['event_type', 'name']
+    list_display = ['id', 'name', 'event_type', 'notification_type', 'recipient_type', 'is_active']
+    list_filter = ['notification_type', 'recipient_type', 'is_active', 'event_type__module']
+    search_fields = ['name', 'subject', 'description']
+    ordering = ['name']
 
 
 @admin.register(UserNotificationPreference)

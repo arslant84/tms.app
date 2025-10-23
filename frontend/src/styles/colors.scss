@@ -1,5 +1,10 @@
-// Primary Colors
-$primary-teal: rgb(0, 177, 169);     // R: 000 G: 177 B: 169
+// Primary Colors - New Teal Scheme
+$primary-teal: #0d9488;              // Main teal color for primary buttons
+$primary-teal-hover: #0f766e;        // Darker teal for hover states
+$primary-teal-active: #115e59;       // Even darker for active/pressed states
+$primary-teal-light: #5eead4;        // Light teal for subtle backgrounds
+$primary-teal-lightest: #ccfbf1;     // Very light teal for backgrounds
+
 $primary-brown: rgb(255, 255, 255);  // R: 255 G: 255 B: 255 (This appears to be white in the image)
 $primary-dark-gray: rgb(60, 56, 53); // R: 060 G: 056 B: 053
 
@@ -17,10 +22,16 @@ $highlight-color: rgb(217, 39, 44);     // R: 217 G: 039 B: 044
 // Utility color variables
 $text-primary: $primary-dark-gray;
 $text-inverse: white;
-$background-primary: white;
-$background-secondary: #f5f5f5;
+$background-primary: #F5F6F7;  // SAP Fiori enterprise background
+$background-secondary: #EDEFF0; // SAP Fiori shell background
+$background-card: white;        // Card/container background
 $accent-color: $primary-teal;
 $error-color: $highlight-color;
 $success-color: $secondary-green;
 $warning-color: $secondary-orange;
 $info-color: $secondary-light-blue;
+
+// SAP Fiori Navigation Colors
+$sap-shell-header: #354A5F;     // SAP Fiori shell header dark blue-gray
+$sap-shell-sidebar: #FAFAFA;    // SAP Fiori sidebar light gray
+$sap-shell-footer: #354A5F;     // SAP Fiori footer matching header

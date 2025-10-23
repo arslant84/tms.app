@@ -3,6 +3,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export interface VisaApplicationDetail extends VisaApplication {
+  applicant_name?: string;
+  user_email?: string;
+  approval_workflow?: VisaApprovalStep[];
+  documents?: VisaDocument[];
+}
+
 export interface VisaApplication {
   id: number;
   user: number | null;
@@ -151,10 +158,33 @@ export class VisaService {
     return this.http.delete<void>(`${this.apiUrl}${id}/`);
   }
 
-  // Status update methods
+  // New endpoints matching backend
+  getPendingApprovals(): Observable<VisaApplication[]> {
+    return this.http.get<VisaApplication[]>(`${this.apiUrl}pending-approvals/`);
+  }
+
+  getMyApplications(): Observable<VisaApplication[]> {
+    return this.http.get<VisaApplication[]>(`${this.apiUrl}my-applications/`);
+  }
+
+  approveAtStep(id: number, stepRole: string, comments: string = ''): Observable<VisaApplicationDetail> {
+    return this.http.post<VisaApplicationDetail>(`${this.apiUrl}${id}/approve/`, {
+      step_role: stepRole,
+      comments: comments
+    });
+  }
+
+  rejectAtStep(id: number, stepRole: string, comments: string = ''): Observable<VisaApplicationDetail> {
+    return this.http.post<VisaApplicationDetail>(`${this.apiUrl}${id}/reject/`, {
+      step_role: stepRole,
+      comments: comments
+    });
+  }
+
+  // Legacy status update methods (kept for compatibility)
   submitApplication(id: number): Observable<VisaApplication> {
     return this.http.patch<VisaApplication>(`${this.apiUrl}${id}/`, {
-      status: 'Submitted'
+      status: 'Pending Department Focal'
     });
   }
 

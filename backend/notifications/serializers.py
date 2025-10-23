@@ -24,33 +24,54 @@ class NotificationEventTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationEventType
         fields = [
-            'id', 'name', 'display_name', 'description', 'category',
+            'id', 'name', 'description', 'category',
             'module', 'is_active', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class NotificationTemplateSerializer(serializers.ModelSerializer):
-    """Serializer for notification templates"""
+    """Serializer for notification templates with full details"""
     event_type_detail = NotificationEventTypeSerializer(source='event_type', read_only=True)
+    event_type_name = serializers.CharField(source='event_type.name', read_only=True)
+    event_type_module = serializers.CharField(source='event_type.module', read_only=True)
 
     class Meta:
         model = NotificationTemplate
         fields = [
-            'id', 'event_type', 'event_type_detail', 'name',
-            'email_subject', 'email_body', 'in_app_title', 'in_app_message',
-            'action_url_template', 'priority', 'is_active',
-            'created_at', 'updated_at'
+            'id', 'name', 'description', 'subject', 'body',
+            'event_type', 'event_type_detail', 'event_type_name', 'event_type_module',
+            'notification_type', 'recipient_type', 'variables_available',
+            'is_active', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
-    def validate(self, data):
-        """Validate template has at least one notification channel"""
-        if not data.get('email_subject') and not data.get('in_app_title'):
-            raise serializers.ValidationError(
-                "Template must have either email or in-app notification content"
-            )
-        return data
+    def validate_name(self, value):
+        """Ensure template name is unique"""
+        instance = self.instance
+        if instance:
+            # Editing existing template - exclude self from uniqueness check
+            if NotificationTemplate.objects.exclude(pk=instance.pk).filter(name=value).exists():
+                raise serializers.ValidationError("A template with this name already exists.")
+        else:
+            # Creating new template
+            if NotificationTemplate.objects.filter(name=value).exists():
+                raise serializers.ValidationError("A template with this name already exists.")
+        return value
+
+
+class NotificationTemplateListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for listing templates (without body)"""
+    event_type_name = serializers.CharField(source='event_type.name', read_only=True)
+    event_type_module = serializers.CharField(source='event_type.module', read_only=True)
+
+    class Meta:
+        model = NotificationTemplate
+        fields = [
+            'id', 'name', 'subject', 'event_type', 'event_type_name',
+            'event_type_module', 'notification_type', 'recipient_type',
+            'is_active', 'created_at', 'updated_at'
+        ]
 
 
 class UserNotificationPreferenceSerializer(serializers.ModelSerializer):

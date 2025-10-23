@@ -17,10 +17,8 @@ export class VisaFormComponent implements OnInit {
   applicationId: number | null = null;
   isLoading = false;
   isSubmitting = false;
-  currentStep = 1;
-  totalSteps = 6;
 
-  visaTypes = ['Tourist', 'Business', 'Work', 'Student', 'Transit', 'Diplomatic', 'Official'];
+  visaTypes = ['Tourist', 'Business', 'Work', 'Student', 'Transit', 'Diplomatic', 'Official', 'Other'];
   entryTypes = ['Single Entry', 'Multiple Entry', 'Transit'];
   maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
 
@@ -192,35 +190,5 @@ export class VisaFormComponent implements OnInit {
       const control = formGroup.get(key);
       control?.markAsTouched();
     });
-  }
-
-  nextStep(): void {
-    if (this.currentStep < this.totalSteps) {
-      this.currentStep++;
-    }
-  }
-
-  previousStep(): void {
-    if (this.currentStep > 1) {
-      this.currentStep--;
-    }
-  }
-
-  goToStep(step: number): void {
-    this.currentStep = step;
-  }
-
-  isStepValid(step: number): boolean {
-    // Basic validation for each step
-    switch(step) {
-      case 1: // Personal Info
-        return !!(this.visaForm.get('requestor_name')?.value);
-      case 2: // Travel Details
-        return !!(this.visaForm.get('destination')?.value && this.visaForm.get('travel_purpose')?.value);
-      case 3: // Visa Info
-        return !!(this.visaForm.get('visa_type')?.value);
-      default:
-        return true;
-    }
   }
 }

@@ -1,15 +1,15 @@
 <!-- Header - Matching React pctsb.syntra design -->
 <header class="app-header">
   <div class="header-container">
-    <!-- Left Section: Mobile Menu + Logo -->
+    <!-- Left Section: Toggle + Logo -->
     <div class="header-left">
-      <!-- Mobile Menu Button -->
-      <button class="mobile-menu-button" (click)="toggleSidebar()">
+      <!-- Sidebar Toggle Button (All screens) -->
+      <button class="sidebar-toggle-button" (click)="toggleSidebar()" title="Toggle Sidebar">
         <i class="bi bi-list"></i>
         <span class="sr-only">Toggle Menu</span>
       </button>
 
-      <!-- Logo (Desktop) -->
+      <!-- Logo -->
       <div class="logo-desktop">
         <a routerLink="/dashboard" class="logo-link">
           <span class="logo-text">SynTra</span>
@@ -19,14 +19,6 @@
 
     <!-- Center Section: Main Navigation (Desktop Only) -->
     <nav class="header-nav">
-      <a
-        routerLink="/dashboard"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{exact: true}"
-        class="nav-link">
-        <i class="bi bi-house"></i>
-        <span>Home</span>
-      </a>
       <a
         routerLink="/trf"
         routerLinkActive="active"
@@ -136,7 +128,7 @@
 
       <!-- User Menu -->
       <div class="user-menu" *ngIf="currentUser$ | async as user; else loginButton">
-        <div class="dropdown">
+        <div class="dropdown profile-dropdown">
           <button
             class="user-button"
             type="button"

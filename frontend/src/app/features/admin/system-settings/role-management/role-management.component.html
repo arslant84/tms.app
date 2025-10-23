@@ -1,0 +1,80 @@
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title d-flex align-items-center gap-2">
+      <i class="bi bi-shield-check text-primary"></i>
+      User Roles and Permissions
+    </h4>
+    <button class="btn btn-primary" (click)="openCreate()" [disabled]="isLoading || isSaving">Add New Role</button>
+  </div>
+  <div class="card-body">
+    <div *ngIf="isLoading" class="d-flex justify-content-center py-4">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+      <div class="mb-3">
+        <h6 class="text-muted">Existing Roles</h6>
+        <div class="list-group">
+          <div class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let role of roles">
+            <div>
+              <div class="fw-semibold">{{ role.name }}</div>
+              <div class="small text-muted">{{ role.description || 'No description' }}</div>
+              <div class="small text-muted">Permissions: {{ (role.permissionIds || []).length }}</div>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-secondary" (click)="openEdit(role)">Manage</button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteRole(role)">Delete</button>
+            </div>
+          </div>
+          <div class="list-group-item text-center text-muted" *ngIf="roles.length === 0">No roles defined</div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <h6 class="text-muted">Available System Permissions</h6>
+        <div class="row g-2">
+          <div class="col-md-6" *ngFor="let p of permissions">
+            <div class="border rounded p-2 bg-light">
+              <div class="fw-semibold">{{ p.name }}</div>
+              <div class="small text-muted" *ngIf="p.description">{{ p.description }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="showForm" class="mt-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Role Name</label>
+            <input class="form-control" [(ngModel)]="form.name" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Description</label>
+            <input class="form-control" [(ngModel)]="form.description" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Permissions</label>
+            <div class="row g-2">
+              <div class="col-md-4" *ngFor="let p of permissions">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" [checked]="form.permissionIds?.includes(p.id)" (change)="togglePermission(p.id)"/>
+                  <label class="form-check-label">{{ p.name }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12" *ngIf="submitError">
+            <div class="alert alert-danger">{{ submitError }}</div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <button class="btn btn-secondary" (click)="cancelForm()" [disabled]="isSaving">Cancel</button>
+          <button class="btn btn-primary" (click)="submitForm()" [disabled]="isSaving">
+            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+            {{ editId ? 'Update Role' : 'Create Role' }}
+          </button>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>

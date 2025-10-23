@@ -48,57 +48,34 @@ $transition-speed: 0.3s;
         
         // Ensure icons are centered and visible in collapsed state
         app-sidebar ::ng-deep {
-          .nav-section {
-            .section-header {
-              padding: 0.75rem 0.5rem;
-              justify-content: center;
-              
-              .section-title {
-                justify-content: center;
-                gap: 0;
-                
-                i {
-                  font-size: 1.3rem;
-                  margin: 0;
-                  color: $primary-color;
-                }
-                
-                span {
-                  display: none;
-                }
-              }
-              
-              .section-toggle {
-                display: none;
-              }
+          .nav-item {
+            padding: 0.7rem 0.5rem;
+            justify-content: center;
+            
+            .nav-label {
+              display: none;
             }
             
-            .section-items {
-              .nav-item {
-                padding: 0.7rem 0.5rem;
-                justify-content: center;
-                
-                .nav-label {
-                  display: none;
-                }
-                
-                .nav-icon {
-                  margin-right: 0;
-                  width: 32px;
-                  height: 32px;
-                  
-                  i {
-                    font-size: 1.2rem;
-                  }
-                }
-                
-                .badge {
-                  position: absolute;
-                  top: 0.2rem;
-                  right: 0.2rem;
-                  padding: 0.15rem 0.3rem;
-                  font-size: 0.6rem;
-                }
+            i {
+              margin-right: 0;
+              font-size: 1.2rem;
+            }
+            
+            .nav-badge {
+              position: absolute;
+              top: 0.2rem;
+              right: 0.2rem;
+              padding: 0.15rem 0.3rem;
+              font-size: 0.6rem;
+            }
+          }
+
+          .sidebar-footer {
+            .settings-item {
+              justify-content: center;
+              
+              .nav-label {
+                display: none;
               }
             }
           }
@@ -115,7 +92,7 @@ $transition-speed: 0.3s;
 // Sidebar Styles
 .sidebar-wrapper {
   width: $sidebar-width;
-  height: 100vh;
+  height: 100%;
   transition: width $transition-speed ease;
   z-index: 1000;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
@@ -127,14 +104,21 @@ $transition-speed: 0.3s;
 .sidebar {
   width: $sidebar-width;
   height: 100%;
-  background: white;
-  color: var(--bs-body-color);
+  background: #2C3E50; // Darker SAP Fiori color, slightly different from header
+  color: rgba(255, 255, 255, 0.9);
   transition: width $transition-speed ease;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   position: relative;
+
+  app-sidebar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
   
   &::-webkit-scrollbar {
     width: 5px;
@@ -155,10 +139,10 @@ $transition-speed: 0.3s;
     align-items: center;
     justify-content: space-between;
     padding: 0 1rem;
-    border-bottom: 1px solid var(--bs-border-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     z-index: 1005;
-    background-color: white;
+    background-color: #2C3E50; // Match sidebar color
     
     .logo-container {
       display: flex;
@@ -176,7 +160,7 @@ $transition-speed: 0.3s;
       
       .logo-text {
         font-size: 1.25rem;
-        color: var(--bs-primary);
+        color: white;
         font-weight: 700;
         margin: 0;
         white-space: nowrap;
@@ -185,12 +169,27 @@ $transition-speed: 0.3s;
     }
 
     .sidebar-toggle-btn {
-      background: none;
-      border: none;
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       color: var(--bs-body-color);
-      font-size: 1.5rem;
+      font-size: 1.125rem;
       cursor: pointer;
-      display: none;
+      padding: 0.375rem;
+      border-radius: 0.25rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      @media (max-width: 992px) {
+        display: flex;
+      }
     }
   }
 }
@@ -269,17 +268,18 @@ $transition-speed: 0.3s;
 
 // Footer Styles
 .footer-wrapper {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-  padding: 0.75rem 1.5rem;
+  background: #354A5F; // SAP Fiori footer color
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  height: $footer-height; // keep footer at fixed height
+  padding: 0 1.5rem; // horizontal padding only; vertical via fixed height
+  box-sizing: border-box;
   z-index: 10;
   width: 100%;
   margin-top: auto;
   flex-shrink: 0;
   display: flex;
+  align-items: center; // vertically center
   justify-content: center;
 
   .main-footer {
@@ -291,7 +291,7 @@ $transition-speed: 0.3s;
 
       p {
         margin: 0;
-        color: rgba(0, 0, 0, 0.7);
+        color: rgba(255, 255, 255, 0.85);
         font-size: 0.875rem;
       }
       

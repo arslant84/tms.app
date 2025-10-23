@@ -1,7 +1,10 @@
 .visa-detail-container {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  /* Full-width adaptive layout */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
 }
 
 .page-header {
