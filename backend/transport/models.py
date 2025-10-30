@@ -9,17 +9,9 @@ class TransportRequest(models.Model):
     Matches React source project structure - NO cost fields
     """
 
-    STATUS_CHOICES = [
-        ('Draft', 'Draft'),
-        ('Pending Department Focal', 'Pending Department Focal'),
-        ('Pending Line Manager', 'Pending Line Manager'),
-        ('Pending HOD', 'Pending HOD'),
-        ('Approved', 'Approved'),
-        ('Processing with Transport Admin', 'Processing with Transport Admin'),
-        ('Completed', 'Completed'),
-        ('Rejected', 'Rejected'),
-        ('Cancelled', 'Cancelled'),
-    ]
+    # Note: STATUS_CHOICES removed to support dynamic workflow statuses
+    # Status will be set by workflow engine based on configured approval roles
+    # Examples: "Draft", "Pending HOD", "Pending Line Manager", "Approved", etc.
 
     requestor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -43,7 +35,7 @@ class TransportRequest(models.Model):
     # Request details
     purpose = models.TextField()
     tsr_reference = models.CharField(max_length=100, blank=True, null=True, help_text="TSR Reference if created from TSR")
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Draft')
+    status = models.CharField(max_length=100, default='Draft', help_text="Dynamic status set by workflow engine")
 
     # Transport details array (stored as JSON)
     # Each item has: date, day, from, to, departureTime, transportType, numberOfPassengers

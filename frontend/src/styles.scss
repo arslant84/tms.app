@@ -247,3 +247,165 @@ tmsapp-admin-systemsettings-workflow-configuration,
     page-break-inside: avoid;
   }
 }
+
+// ========== REQUEST LISTS UNIFIED STYLES ==========
+// Standardize button sizes and empty state typography across all request list pages
+// Applied to: Visa, Transport, Accommodation, Expense Claims, TRF lists
+
+// Unified button styling for all "Create New" buttons in list pages
+.visa-list-container,
+.transport-list-container,
+.accommodation-list-container,
+.expense-list-container,
+.trf-list-container {
+
+  // Standardize header button width and styling
+  .header-section {
+    .btn-primary {
+      width: 220px; // Fixed width for consistency across all request buttons
+      min-width: 220px; // Also set min-width as fallback
+      max-width: 220px; // Prevent expansion beyond fixed width
+      padding: 0.625rem 1rem; // Consistent padding
+      font-size: 0.9375rem; // 15px - consistent font size
+      font-weight: 500; // Consistent font weight
+      white-space: nowrap; // Prevent text wrapping
+      display: inline-flex; // Ensure proper alignment
+      align-items: center; // Center content vertically
+      justify-content: center; // Center content horizontally
+      line-height: 1.5; // Consistent line height
+      min-height: 44px; // Consistent minimum height
+
+      i {
+        font-size: 1.125rem; // Consistent icon size
+        flex-shrink: 0; // Prevent icon from shrinking
+      }
+    }
+  }
+  
+  // Unified empty state typography
+  .empty-state {
+    padding: 4rem 1.5rem; // Consistent padding
+    
+    .empty-icon {
+      font-size: 4rem; // 64px - consistent icon size
+      color: #d1d5db; // gray-300
+      margin-bottom: 1rem;
+    }
+    
+    .empty-title,
+    .empty-message,
+    h3 {
+      font-size: 1.125rem; // 18px - consistent title size
+      font-weight: 600; // semibold
+      color: #1f2937; // gray-800
+      margin: 0 0 0.5rem 0;
+      line-height: 1.5;
+    }
+    
+    .empty-description,
+    .empty-subtitle,
+    p {
+      font-size: 0.875rem; // 14px - consistent description size
+      color: #6b7280; // gray-500
+      margin: 0.5rem 0 0 0;
+      line-height: 1.5;
+      max-width: 32rem; // Limit width for readability
+    }
+  }
+  
+  // Ensure consistent card title sizes
+  .card-title {
+    font-size: 1.125rem; // 18px
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+  }
+  
+  // Consistent page title styling
+  .page-title {
+    font-size: 1.875rem; // 30px
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #1f2937;
+    margin: 0;
+  }
+  
+  .page-subtitle {
+    font-size: 0.875rem; // 14px
+    color: #6b7280;
+    margin: 0;
+  }
+}
+
+// Override any component-specific button styles to ensure consistency
+.btn-create {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  padding: 0.625rem 1rem !important;
+  font-size: 0.9375rem !important;
+  font-weight: 500 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 44px !important;
+}
+
+// ==================== Unified Badge Styles ====================
+// Used across all request lists for consistent status display
+.badge {
+  display: inline-flex;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  align-items: center;
+  justify-content: center;
+}
+
+// Status badge colors - unified across all modules
+.badge-pending,
+.badge-warning {
+  background-color: #fef3c7; // amber-100
+  color: #92400e; // amber-900
+  border: 1px solid #fbbf24; // amber-400
+}
+
+.badge-info {
+  background-color: #dbeafe; // blue-100
+  color: #1e3a8a; // blue-900
+  border: 1px solid #3b82f6; // blue-500
+}
+
+.badge-success {
+  background-color: #d1fae5; // green-100
+  color: #065f46; // green-900
+  border: 1px solid #10b981; // green-500
+}
+
+.badge-danger {
+  background-color: #fee2e2; // red-100
+  color: #991b1b; // red-900
+  border: 1px solid #ef4444; // red-500
+}
+
+.badge-secondary,
+.badge-draft {
+  background-color: #f3f4f6; // gray-100
+  color: #6b7280; // gray-500
+  border: 1px solid #d1d5db; // gray-300
+}
+
+.badge-processing {
+  background-color: #e0e7ff; // indigo-100
+  color: #3730a3; // indigo-800
+  border: 1px solid #6366f1; // indigo-500
+}
+
+// Special badge for visa types
+.badge-visa-type {
+  background-color: #f3e8ff; // purple-100
+  color: #6b21a8; // purple-800
+  border: 1px solid #a855f7; // purple-500
+  font-weight: 600;
+}

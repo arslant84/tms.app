@@ -9,8 +9,8 @@ import { environment } from '../../../../environments/environment';
   providedIn: 'root'
 })
 export class TrfService {
-  private apiUrl = `${environment.apiUrl}/api/trf`;
-  private overseasApiUrl = `${environment.apiUrl}/api/overseas-trf`;
+  private apiUrl = `${environment.apiUrl}/trf`;
+  private overseasApiUrl = `${environment.apiUrl}/overseas-trf`;
 
   constructor(private http: HttpClient) { }
 

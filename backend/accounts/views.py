@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
 
 from .serializers import (
-    UserSerializer, UserCreateSerializer, RoleSerializer, PermissionSerializer,
+    UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, RoleSerializer, PermissionSerializer,
     ApplicationSettingSerializer, ApplicationSettingCreateSerializer, ApplicationSettingUpdateSerializer
 )
 from .models import Role, Permission, ApplicationSetting
@@ -62,18 +62,68 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create':
             return UserCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            # Check if user is updating their own profile
+            user_id = self.kwargs.get('pk')
+            if user_id and str(self.request.user.id) == str(user_id):
+                print(f"User {self.request.user.id} updating own profile, using UserProfileUpdateSerializer")
+                return UserProfileUpdateSerializer
+            print(f"Admin updating user {user_id}, using UserSerializer")
         return UserSerializer
-    
+
     def get_permissions(self):
         if self.action == 'create':
             return [permissions.IsAdminUser()]
+        elif self.action in ['update', 'partial_update']:
+            # Users can update their own profile, admins can update any profile
+            user_id = self.kwargs.get('pk')
+            if user_id and str(self.request.user.id) == str(user_id):
+                return [permissions.IsAuthenticated()]
+            return [permissions.IsAdminUser()]
         return super().get_permissions()
-    
+
+    def update(self, request, *args, **kwargs):
+        """Override update to add logging"""
+        print(f"Update called by user {request.user.id} for user {kwargs.get('pk')}")
+        print(f"Request data: {request.data}")
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        if not serializer.is_valid():
+            print(f"Validation errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_update(serializer)
+
+        # Return full user data with role
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+
+        return_serializer = UserSerializer(instance)
+        return Response(return_serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Override partial_update"""
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def me(self, request):
         """Get the current user's profile"""
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['patch', 'put'], permission_classes=[permissions.IsAuthenticated])
+    def update_profile(self, request):
+        """Update the current user's profile"""
+        serializer = UserProfileUpdateSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            # Return full user data
+            user_serializer = UserSerializer(request.user)
+            return Response(user_serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAdminUser])
     def change_role(self, request, pk=None):

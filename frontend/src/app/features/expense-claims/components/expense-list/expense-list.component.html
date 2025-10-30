@@ -8,7 +8,7 @@
       </div>
       <p class="page-subtitle">Manage your expense claims and reimbursements</p>
     </div>
-    <button class="btn btn-primary btn-create" (click)="navigateToCreate()">
+    <button class="btn btn-primary" (click)="navigateToCreate()">
       <i class="bi bi-plus-circle me-2"></i>Create New Claim
     </button>
   </div>
@@ -18,7 +18,7 @@
     <div class="filters-card-header">
       <div class="card-title-with-icon">
         <i class="bi bi-funnel"></i>
-        <h2 class="card-title">Filter & Search Claims</h2>
+        <h3 class="card-title">Filter & Search Claims</h3>
       </div>
       <p class="card-description">Search and filter your expense claims by various criteria.</p>
     </div>
@@ -55,7 +55,7 @@
     <div class="claims-card-header">
       <div class="card-title-with-icon">
         <i class="bi bi-receipt"></i>
-        <h2 class="card-title">My Expense Claims</h2>
+        <h3 class="card-title">My Expense Claims</h3>
       </div>
       <p class="card-description">
         List of your submitted expense claims. Total:
@@ -138,10 +138,30 @@
                   </span>
                 </td>
                 <td>{{ formatDate(claim.submitted_at) }}</td>
-                <td>
-                  <button class="btn btn-outline-primary btn-sm btn-view" (click)="navigateToView(claim.id)">
-                    <i class="bi bi-eye me-1"></i>View
-                  </button>
+                <td class="text-end">
+                  <div class="action-buttons">
+                    <button
+                      class="btn btn-sm btn-outline-primary action-btn"
+                      (click)="navigateToView(claim.id)"
+                      title="View Details"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-primary action-btn"
+                      (click)="navigateToEdit(claim.id)"
+                      title="Edit Request"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger action-btn"
+                      (click)="deleteClaim(claim.id, $event)"
+                      title="Delete Request"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>

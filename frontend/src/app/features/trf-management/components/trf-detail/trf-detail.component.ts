@@ -86,6 +86,7 @@ export class TrfDetailComponent implements OnInit {
       telEmail: data.tel_email || data.telEmail,
       purpose: data.purpose,
       additionalComments: data.additional_comments || data.additionalComments,
+      estimatedCost: data.estimated_cost || data.estimatedCost || 0,
       // External party fields
       externalPartyName: data.external_party_name || data.externalPartyName,
       externalPartyOrganization: data.external_party_organization || data.externalPartyOrganization,
@@ -101,7 +102,8 @@ export class TrfDetailComponent implements OnInit {
       advanceAmounts: data.advance_amount_items || data.advanceAmounts || [],
       approvalSteps: data.approval_steps || data.approvalSteps || [],
       createdAt: data.created_at || data.createdAt,
-      updatedAt: data.updated_at || data.updatedAt
+      updatedAt: data.updated_at || data.updatedAt,
+      submittedAt: data.submitted_at || data.submittedAt
     };
   }
 
@@ -305,7 +307,10 @@ export class TrfDetailComponent implements OnInit {
     this.workflowService.getInstances({
       entity_type: 'travelrequest'
     }).subscribe({
-      next: (instances) => {
+      next: (response: any) => {
+        // Handle both paginated response and array response
+        const instances = Array.isArray(response) ? response : (response.results || []);
+
         const instance = instances.find((i: any) =>
           i.entity_info?.id === this.trfId
         );

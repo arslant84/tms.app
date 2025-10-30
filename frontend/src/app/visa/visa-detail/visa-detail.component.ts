@@ -2,11 +2,15 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { VisaService, VisaApplication, VisaApprovalStep, VisaDocument } from '../visa.service';
+import { WorkflowService } from '../../core/services/workflow.service';
+import { ApprovalActionsComponent } from '../../shared/components/approval-actions/approval-actions.component';
+import { WorkflowStatusComponent } from '../../shared/components/workflow-status/workflow-status.component';
+import { WorkflowInstance, WorkflowStepExecution } from '../../core/models/workflow.models';
 
 @Component({
   selector: 'app-visa-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ApprovalActionsComponent, WorkflowStatusComponent],
   templateUrl: './visa-detail.component.html',
   styleUrl: './visa-detail.component.scss'
 })
@@ -17,19 +21,28 @@ export class VisaDetailComponent implements OnInit {
   isLoading = true;
   applicationId!: number;
 
-  private readonly EDITABLE_STATUSES = ['Pending Department Focal', 'Rejected'];
-  private readonly CANCELLABLE_STATUSES = ['Pending Department Focal', 'Submitted', 'Under Review'];
+  // Workflow properties
+  workflow: WorkflowInstance | null = null;
+  workflowLoading: boolean = false;
+  currentStepExecution: WorkflowStepExecution | null = null;
+
+  private readonly EDITABLE_STATUSES = ['Draft', 'Rejected'];
+  private readonly CANCELLABLE_STATUSES = ['Pending'];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private visaService: VisaService
+    private visaService: VisaService,
+    public workflowService: WorkflowService
   ) {}
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       this.applicationId = +params['id'];
-      this.loadApplicationDetails();
+      if (this.applicationId) {
+        this.loadApplicationDetails();
+        this.loadWorkflow();
+      }
     });
   }
 
@@ -48,6 +61,80 @@ export class VisaDetailComponent implements OnInit {
         alert('Failed to load visa application details');
       }
     });
+  }
+
+
+  loadWorkflow(): void {
+    this.workflowLoading = true;
+
+    // Try to get workflow for this visa application
+    this.workflowService.getInstances({
+      entity_type: 'visaapplication'
+    }).subscribe({
+      next: (response: any) => {
+        // Check if response is an array or paginated object
+        const instances = Array.isArray(response) ? response : (response.results || []);
+
+        // Find workflow instance for this specific request
+        const instance = instances.find((i: any) =>
+          i.object_id === this.applicationId ||
+          i.entity_info?.id === this.applicationId ||
+          i.entity_id === this.applicationId
+        );
+
+        if (instance && instance.id) {
+          // Load full workflow details
+          this.workflowService.getInstance(instance.id).subscribe({
+            next: (workflow) => {
+              this.workflow = workflow;
+              this.updateCurrentStepExecution();
+              this.workflowLoading = false;
+            },
+            error: (err) => {
+              console.error('Error loading workflow details:', err);
+              this.workflowLoading = false;
+            }
+          });
+        } else {
+          this.workflowLoading = false;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading workflow:', err);
+        this.workflowLoading = false;
+      }
+    });
+  }
+
+  updateCurrentStepExecution(): void {
+    if (!this.workflow?.step_executions) {
+      this.currentStepExecution = null;
+      return;
+    }
+
+    // Find the current pending step that the user can action
+    this.currentStepExecution = this.workflow.step_executions.find(
+      step => step.status === 'pending' &&
+              step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
+              step.can_action === true
+    ) || null;
+  }
+
+  onWorkflowApproved(): void {
+    alert('Approval successful');
+    this.loadApplicationDetails();
+    this.loadWorkflow();
+  }
+
+  onWorkflowRejected(): void {
+    alert('Request rejected');
+    this.loadApplicationDetails();
+    this.loadWorkflow();
+  }
+
+  onWorkflowDelegated(): void {
+    alert('Successfully delegated');
+    this.loadWorkflow();
   }
 
   loadApprovalSteps(): void {
@@ -137,16 +224,46 @@ export class VisaDetailComponent implements OnInit {
   }
 
   getStatusBadgeClass(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'Pending Department Focal': 'bg-warning',
-      'Submitted': 'bg-info',
-      'Under Review': 'bg-primary',
-      'Approved': 'bg-success',
-      'Rejected': 'bg-danger',
-      'Cancelled': 'bg-secondary',
-      'Processing': 'bg-info',
-      'Completed': 'bg-success'
-    };
-    return statusMap[status] || 'bg-secondary';
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('approved') || statusLower.includes('completed')) return 'badge-success';
+    if (statusLower.includes('rejected')) return 'badge-danger';
+    if (statusLower.includes('pending')) return 'badge-warning';
+    if (statusLower.includes('draft')) return 'badge-secondary';
+    if (statusLower.includes('cancelled')) return 'badge-secondary';
+    return 'badge-info';
   }
+
+  getWorkflowStatus(): string {
+    if (!this.workflow) return '';
+
+    const status = this.workflow.status;
+    const currentStep = this.workflow.current_step_order;
+    const totalSteps = this.workflow.step_executions?.length || 0;
+
+    if (status === 'approved') return 'Approved';
+    if (status === 'rejected') return 'Rejected';
+    if (status === 'cancelled') return 'Cancelled';
+    if (status === 'in_progress') {
+      if (currentStep && totalSteps) {
+        return `In Progress (Step ${currentStep} of ${totalSteps})`;
+      }
+      return 'In Progress';
+    }
+    if (status === 'pending') return 'Pending Approval';
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  getWorkflowStatusClass(): string {
+    if (!this.workflow) return 'badge-secondary';
+
+    const status = this.workflow.status;
+    if (status === 'approved') return 'badge-success';
+    if (status === 'rejected') return 'badge-danger';
+    if (status === 'cancelled') return 'badge-secondary';
+    if (status === 'in_progress' || status === 'pending') return 'badge-warning';
+
+    return 'badge-info';
+  }
+
 }

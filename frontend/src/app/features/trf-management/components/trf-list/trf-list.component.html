@@ -8,8 +8,8 @@
       </div>
       <p class="page-subtitle">Viewing your travel requests</p>
     </div>
-    <button class="btn btn-primary btn-create" (click)="navigateToCreate()">
-      <i class="bi bi-plus-circle me-2"></i>Create New TSR
+    <button class="btn btn-primary" (click)="navigateToCreate()">
+      <i class="bi bi-plus-circle me-2"></i>Travel Request
     </button>
   </div>
 
@@ -18,7 +18,7 @@
     <div class="filters-card-header">
       <div class="card-title-with-icon">
         <i class="bi bi-funnel"></i>
-        <h2 class="card-title">Filter & Search TSRs</h2>
+        <h3 class="card-title">Filter & Search TSRs</h3>
       </div>
       <p class="card-description">Search and filter your travel requests by various criteria.</p>
     </div>
@@ -65,7 +65,7 @@
     <div class="tsr-card-header">
       <div class="card-title-with-icon">
         <i class="bi bi-file-text"></i>
-        <h2 class="card-title">My TSRs</h2>
+        <h3 class="card-title">My TSRs</h3>
       </div>
       <p class="card-description">
         List of your submitted travel requests. Total:
@@ -148,10 +148,30 @@
                   </span>
                 </td>
                 <td>{{ formatDate(trf.submitted_at) }}</td>
-                <td>
-                  <button class="btn btn-outline-primary btn-sm btn-view" (click)="navigateToView(trf.id)">
-                    <i class="bi bi-eye me-1"></i>View
-                  </button>
+                <td class="text-end">
+                  <div class="action-buttons">
+                    <button
+                      class="btn btn-sm btn-outline-primary action-btn"
+                      (click)="navigateToView(trf.id)"
+                      title="View Details"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-primary action-btn"
+                      (click)="navigateToEdit(trf.id)"
+                      title="Edit Request"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger action-btn"
+                      (click)="deleteTrf(trf.id, $event)"
+                      title="Delete Request"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>

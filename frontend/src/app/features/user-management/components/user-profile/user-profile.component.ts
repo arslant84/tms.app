@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { UserService, User } from '../../services/user.service';
@@ -13,12 +13,18 @@ import { AuthService } from '../../../../core/services/auth.service';
   styleUrls: ['./user-profile.component.scss']
 })
 export class UserProfileComponent implements OnInit {
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   currentUser: User | null = null;
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
   loading = false;
   submitting = false;
   showPasswordModal = false;
+  isEditing = false;
+
+  previewImage: string | null = null;
+  selectedFile: File | null = null;
 
   genders = [
     { value: 'Male', label: 'Male' },
@@ -43,7 +49,8 @@ export class UserProfileComponent implements OnInit {
     this.profileForm = this.fb.group({
       name: ['', Validators.required],
       phone: [''],
-      gender: ['']
+      gender: [''],
+      profile_photo: [null]
     });
 
     // Password change form
@@ -67,10 +74,12 @@ export class UserProfileComponent implements OnInit {
     this.userService.getUserById(userId).subscribe({
       next: (user) => {
         this.currentUser = user;
+        this.previewImage = user.profile_photo || null;
         this.profileForm.patchValue({
           name: user.name,
           phone: user.phone,
-          gender: user.gender
+          gender: user.gender,
+          profile_photo: user.profile_photo
         });
         this.loading = false;
       },
@@ -80,6 +89,73 @@ export class UserProfileComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  toggleEdit(): void {
+    if (this.isEditing) {
+      this.handleCancel();
+    } else {
+      this.isEditing = true;
+    }
+  }
+
+  handleCancel(): void {
+    this.isEditing = false;
+    this.previewImage = this.currentUser?.profile_photo || null;
+    this.selectedFile = null;
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = '';
+    }
+    this.profileForm.patchValue({
+      name: this.currentUser?.name,
+      phone: this.currentUser?.phone,
+      gender: this.currentUser?.gender,
+      profile_photo: this.currentUser?.profile_photo
+    });
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      this.toastService.error('Please select an image file');
+      input.value = '';
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      this.toastService.error('Image size must be less than 2MB');
+      input.value = '';
+      return;
+    }
+
+    this.selectedFile = file;
+
+    // Preview the image
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      this.previewImage = e.target?.result as string;
+      this.profileForm.patchValue({ profile_photo: this.previewImage });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  triggerFileInput(): void {
+    this.fileInput.nativeElement.click();
+  }
+
+  removePhoto(): void {
+    this.previewImage = null;
+    this.selectedFile = null;
+    this.profileForm.patchValue({ profile_photo: null });
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = '';
+    }
   }
 
   onSubmitProfile(): void {
@@ -99,15 +175,21 @@ export class UserProfileComponent implements OnInit {
     this.submitting = true;
     const formData = this.profileForm.value;
 
+    // Debug: Log the data being sent
+    console.log('Sending profile update:', formData);
+
     this.userService.updateUser(this.currentUser.id, formData).subscribe({
-      next: () => {
+      next: (response) => {
+        console.log('Profile updated successfully:', response);
         this.toastService.success('Profile updated successfully');
+        this.isEditing = false;
         this.loadCurrentUser();
         this.submitting = false;
       },
       error: (error) => {
         console.error('Error updating profile:', error);
-        this.toastService.error(error.error?.detail || 'Failed to update profile');
+        console.error('Error details:', error.error);
+        this.toastService.error(error.error?.detail || JSON.stringify(error.error) || 'Failed to update profile');
         this.submitting = false;
       }
     });
@@ -165,7 +247,9 @@ export class UserProfileComponent implements OnInit {
   }
 
   getInitials(): string {
-    return this.currentUser?.name?.charAt(0).toUpperCase() || 'U';
+    if (!this.currentUser?.name) return 'U';
+    const names = this.currentUser.name.split(' ');
+    return names.map(n => n[0]).join('').toUpperCase();
   }
 
   getStatusBadgeClass(): string {

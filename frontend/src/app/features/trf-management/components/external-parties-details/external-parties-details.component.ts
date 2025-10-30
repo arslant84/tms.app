@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -8,6 +8,7 @@ export interface ExternalPartiesDetails {
   externalOrganization: string;
   externalRefToAuthorityLetter?: string;
   externalCostCenter: string;
+  itinerary: any[];
   accommodation: any[];
   transport: any[];
 }
@@ -19,11 +20,12 @@ export interface ExternalPartiesDetails {
   templateUrl: './external-parties-details.component.html',
   styleUrls: ['./external-parties-details.component.scss']
 })
-export class ExternalPartiesDetailsComponent implements OnInit {
+export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   @Input() initialData: Partial<ExternalPartiesDetails> = {};
   @Output() formSubmit = new EventEmitter<ExternalPartiesDetails>();
 
   externalForm!: FormGroup;
+  weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   constructor(private fb: FormBuilder) {}
 
@@ -31,21 +33,45 @@ export class ExternalPartiesDetailsComponent implements OnInit {
     this.initForm();
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    // When initialData changes (e.g., loaded from API in edit mode), rebuild the form
+    if (changes['initialData'] && !changes['initialData'].firstChange && this.externalForm) {
+      this.initForm();  // Rebuild form with new data
+    }
+  }
+
   private initForm(): void {
     this.externalForm = this.fb.group({
       purpose: [this.initialData.purpose || '', [Validators.required, Validators.minLength(10)]],
-      externalFullName: ['', Validators.required],
-      externalOrganization: ['', Validators.required],
-      externalRefToAuthorityLetter: [''],
-      externalCostCenter: ['', Validators.required],
+      externalFullName: [this.initialData.externalFullName || '', Validators.required],
+      externalOrganization: [this.initialData.externalOrganization || '', Validators.required],
+      externalRefToAuthorityLetter: [this.initialData.externalRefToAuthorityLetter || ''],
+      externalCostCenter: [this.initialData.externalCostCenter || '', Validators.required],
+      itinerary: this.fb.array([]),
       accommodation: this.fb.array([]),
       transport: this.fb.array([])
     });
 
-    // Initialize with one accommodation entry
-    this.addAccommodation();
-    // Initialize with one transport entry
-    this.addTransport();
+    // Initialize itinerary from initialData or add one empty entry
+    if (this.initialData.itinerary && this.initialData.itinerary.length > 0) {
+      this.initialData.itinerary.forEach(segment => this.addItinerarySegment(segment));
+    } else {
+      this.addItinerarySegment();
+    }
+
+    // Initialize accommodation from initialData or add one empty entry
+    if (this.initialData.accommodation && this.initialData.accommodation.length > 0) {
+      this.initialData.accommodation.forEach(acc => this.addAccommodation(acc));
+    } else {
+      this.addAccommodation();
+    }
+
+    // Initialize transport from initialData or add one empty entry
+    if (this.initialData.transport && this.initialData.transport.length > 0) {
+      this.initialData.transport.forEach(trans => this.addTransport(trans));
+    } else {
+      this.addTransport();
+    }
   }
 
   get accommodation(): FormArray {

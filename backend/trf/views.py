@@ -3,7 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
+from django.utils import timezone
 from datetime import datetime
+from workflows.router import WorkflowRouter
 
 from .models import (
     TravelRequest,
@@ -77,6 +79,53 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         print(f"Response data keys: {list(response.data.keys()) if hasattr(response.data, 'keys') else 'N/A'}")
         return response
 
+    def perform_create(self, serializer):
+        """Set creator and auto-populate requestor info, start workflow if submitted"""
+        user = self.request.user
+
+        # Auto-populate requestor information if not provided
+        validated_data = serializer.validated_data
+        if not validated_data.get('requestor_name'):
+            validated_data['requestor_name'] = user.get_full_name() or user.email
+        if not validated_data.get('staff_id'):
+            validated_data['staff_id'] = getattr(user, 'employee_id', '') or getattr(user, 'staff_id', '')
+        if not validated_data.get('department'):
+            validated_data['department'] = getattr(user, 'department', '')
+        if not validated_data.get('position'):
+            validated_data['position'] = getattr(user, 'position', '') or getattr(user, 'job_title', '')
+
+        # Get status from request data, default to 'Draft' if not provided
+        status_value = validated_data.get('status', 'Draft')
+
+        # Set submitted_at timestamp if status is being submitted (not Draft)
+        extra_kwargs = {}
+        if status_value not in ['Draft']:
+            extra_kwargs['submitted_at'] = timezone.now()
+
+        # Save the travel request
+        trf = serializer.save(created_by=user, **extra_kwargs)
+
+        # Start workflow if status is submitted (not Draft)
+        if status_value not in ['Draft']:
+            try:
+                workflow_instance = WorkflowRouter.start_workflow_for_request(
+                    entity=trf,
+                    entity_type='travelrequest',
+                    initiated_by=user
+                )
+
+                if workflow_instance:
+                    # Reload the TRF to get the updated status from workflow
+                    trf.refresh_from_db()
+                    print(f"✅ Workflow started for TRF #{trf.id}: Workflow Instance #{workflow_instance.id}")
+                    print(f"✅ Status updated to: {trf.status}")
+                else:
+                    print(f"⚠️ No active workflow configured for travelrequest - using legacy approval system")
+            except Exception as e:
+                print(f"❌ Error starting workflow for TRF #{trf.id}: {str(e)}")
+                # Don't fail the request creation if workflow fails
+                pass
+
     def get_queryset(self):
         """Filter TRFs based on query parameters"""
         queryset = self.queryset
@@ -89,7 +138,9 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         # Filter by status
         status_filter = self.request.query_params.get('status', None)
         if status_filter:
-            queryset = queryset.filter(status=status_filter)
+            # Use startswith to match workflow statuses like "Pending Line Manager"
+            # when filter is "Pending"
+            queryset = queryset.filter(status__istartswith=status_filter)
 
         # Filter by travel type
         travel_type = self.request.query_params.get('travel_type', None)
@@ -123,7 +174,10 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def submit(self, request, pk=None):
-        """Submit a TRF for approval"""
+        """
+        Submit a TRF for approval
+        Changes status from Draft to Pending and starts workflow
+        """
         trf = self.get_object()
 
         if trf.status != 'Draft':
@@ -132,20 +186,50 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Update status to first approval stage
-        trf.status = 'Pending Department Focal'
-        trf.submitted_at = datetime.now()
+        # Update status and submitted_at
+        trf.status = 'Pending'
+        trf.submitted_at = timezone.now()
         trf.save()
 
-        # Create initial approval step
-        TrfApprovalStep.objects.create(
-            trf=trf,
-            step_role='Department Focal',
-            step_name='Department Focal Review',
-            status='Pending'
-        )
+        # Start workflow using WorkflowRouter
+        try:
+            workflow_instance = WorkflowRouter.start_workflow_for_request(
+                entity=trf,
+                entity_type='travelrequest',
+                initiated_by=request.user
+            )
 
-        serializer = self.get_serializer(trf)
+            if workflow_instance:
+                # Reload the TRF to get the updated status from workflow
+                trf.refresh_from_db()
+                print(f"✅ Workflow started for TRF #{trf.id}: Workflow Instance #{workflow_instance.id}")
+                print(f"✅ Status updated to: {trf.status}")
+            else:
+                # Fallback to legacy approval system if no workflow configured
+                print(f"⚠️ No active workflow configured - creating legacy approval step")
+                TrfApprovalStep.objects.create(
+                    trf=trf,
+                    step_role='Department Focal',
+                    step_name='Department Focal Review',
+                    status='Pending'
+                )
+                trf.status = 'Pending Department Focal'
+                trf.save()
+        except Exception as e:
+            print(f"❌ Error starting workflow: {str(e)}")
+            # Fallback to legacy system on error
+            TrfApprovalStep.objects.create(
+                trf=trf,
+                step_role='Department Focal',
+                step_name='Department Focal Review',
+                status='Pending'
+            )
+            trf.status = 'Pending Department Focal'
+            trf.save()
+
+        # Ensure we have the latest status before serializing
+        trf.refresh_from_db()
+        serializer = TravelRequestDetailSerializer(trf)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])

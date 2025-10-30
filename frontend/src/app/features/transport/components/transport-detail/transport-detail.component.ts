@@ -82,6 +82,7 @@ export class TransportDetailComponent implements OnInit {
 
         // Find workflow instance for this specific request
         const instance = instances.find((i: any) =>
+          i.object_id === this.requestId ||
           i.entity_info?.id === this.requestId ||
           i.entity_id === this.requestId
         );
@@ -160,6 +161,34 @@ export class TransportDetailComponent implements OnInit {
     if (status.includes('pending')) return 'badge-warning';
     if (status.includes('draft')) return 'badge-secondary';
     if (status.includes('cancelled')) return 'badge-secondary';
+    return 'badge-info';
+  }
+
+  getWorkflowStatus(): string {
+    if (!this.workflow) return '';
+
+    const status = this.workflow.status;
+    const currentStep = this.workflow.current_step_order;
+    const totalSteps = this.workflow.step_executions?.length || 0;
+
+    if (status === 'approved') return 'Approved';
+    if (status === 'rejected') return 'Rejected';
+    if (status === 'cancelled') return 'Cancelled';
+    if (status === 'in_progress') return `Pending Approval (Step ${currentStep} of ${totalSteps})`;
+    if (status === 'pending') return 'Pending Approval';
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  getWorkflowStatusClass(): string {
+    if (!this.workflow) return 'badge-secondary';
+
+    const status = this.workflow.status;
+    if (status === 'approved') return 'badge-success';
+    if (status === 'rejected') return 'badge-danger';
+    if (status === 'cancelled') return 'badge-secondary';
+    if (status === 'in_progress' || status === 'pending') return 'badge-warning';
+
     return 'badge-info';
   }
 

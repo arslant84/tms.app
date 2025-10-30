@@ -76,7 +76,7 @@ class User(AbstractUser):
     status = models.CharField(max_length=50, default='Active')  # Matches syntra schema
     staff_id = models.CharField(max_length=50, blank=True, null=True, unique=True)
     phone = models.CharField(max_length=50, blank=True, null=True)
-    profile_photo = models.CharField(max_length=255, blank=True, null=True)
+    profile_photo = models.TextField(blank=True, null=True)  # Changed to TextField for base64 images
     gender = models.CharField(max_length=10, blank=True, null=True)
     last_login_at = models.DateTimeField(blank=True, null=True)
     

@@ -67,6 +67,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Custom middleware for dynamic settings
+    'tms_project.middleware.MaintenanceModeMiddleware',
+    'tms_project.middleware.SessionTimeoutMiddleware',
+    'tms_project.middleware.FileSizeValidationMiddleware',
+    'tms_project.middleware.DynamicSettingsMiddleware',
 ]
 
 ROOT_URLCONF = 'tms_project.urls'
@@ -189,3 +194,48 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# Email configuration - loaded from ApplicationSetting model
+# Default values in case settings are not yet configured
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = '8994af002@smtp-brevo.com'
+EMAIL_HOST_PASSWORD = 'JfadTIjcZABH0xXY'
+DEFAULT_FROM_EMAIL = 'SynTra TMS <no-reply@pctsb-travel.site>'
+SERVER_EMAIL = 'SynTra TMS <no-reply@pctsb-travel.site>'
+EMAIL_TIMEOUT = 10  # seconds
+
+# Function to dynamically load email settings from database
+def load_email_settings():
+    """
+    Load email configuration from ApplicationSetting model.
+    This function is called after Django is fully initialized.
+    """
+    try:
+        from accounts.models import ApplicationSetting
+
+        # Load settings from database
+        settings_map = {
+            'smtp_host': 'EMAIL_HOST',
+            'smtp_port': 'EMAIL_PORT',
+            'smtp_use_tls': 'EMAIL_USE_TLS',
+            'smtp_use_ssl': 'EMAIL_USE_SSL',
+            'smtp_username': 'EMAIL_HOST_USER',
+            'smtp_password': 'EMAIL_HOST_PASSWORD',
+            'default_from_email': 'DEFAULT_FROM_EMAIL',
+            'server_email': 'SERVER_EMAIL',
+        }
+
+        for db_key, setting_key in settings_map.items():
+            value = ApplicationSetting.get_setting(db_key)
+            if value is not None:
+                globals()[setting_key] = value
+
+    except Exception as e:
+        # Fail silently during migrations or if ApplicationSetting doesn't exist yet
+        pass
+
+# Note: Call load_email_settings() in AppConfig.ready() method to load settings after startup

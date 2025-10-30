@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -64,7 +64,7 @@ export interface DomesticTravelSpecificDetails {
   templateUrl: './domestic-travel-details.component.html',
   styleUrls: ['./domestic-travel-details.component.scss']
 })
-export class DomesticTravelDetailsComponent implements OnInit {
+export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   @Input() initialData: Partial<DomesticTravelSpecificDetails> = {};
   @Output() formSubmit = new EventEmitter<DomesticTravelSpecificDetails>();
   @Output() backClick = new EventEmitter<void>();
@@ -86,6 +86,13 @@ export class DomesticTravelDetailsComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // When initialData changes (e.g., loaded from API in edit mode), rebuild the form
+    if (changes['initialData'] && !changes['initialData'].firstChange && this.travelForm) {
+      this.initForm();  // Rebuild form with new data
+    }
   }
 
   private initForm(): void {

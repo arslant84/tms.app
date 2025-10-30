@@ -2,6 +2,14 @@ from django.db import models
 from django.conf import settings
 
 class TravelRequest(models.Model):
+    """
+    Travel Request model with dynamic workflow status support
+
+    Note: STATUS_CHOICES removed to support dynamic workflow statuses
+    Status will be set by workflow engine based on configured approval roles
+    Examples: "Draft", "Pending HOD", "Pending Line Manager", "Approved", etc.
+    """
+
     requestor_name = models.CharField(max_length=255)
     staff_id = models.CharField(max_length=255, blank=True, null=True)
     department = models.CharField(max_length=255, blank=True, null=True)
@@ -10,7 +18,7 @@ class TravelRequest(models.Model):
     tel_email = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     travel_type = models.CharField(max_length=255)
-    status = models.CharField(max_length=255, default='Pending Department Focal')
+    status = models.CharField(max_length=100, default='Draft', help_text="Dynamic status set by workflow engine")
     purpose = models.TextField(blank=True, null=True)
     estimated_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     additional_comments = models.TextField(blank=True, null=True)
@@ -18,10 +26,19 @@ class TravelRequest(models.Model):
     external_organization = models.CharField(max_length=255, blank=True, null=True)
     external_ref_to_authority_letter = models.CharField(max_length=255, blank=True, null=True)
     external_cost_center = models.CharField(max_length=255, blank=True, null=True)
-    submitted_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     additional_data = models.JSONField(blank=True, null=True)
+
+    # ForeignKey to User who created the request
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='travel_requests_created',
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
         return self.requestor_name

@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TmsApp_Admin_SystemSettings_RoleManagementComponent } from './role-management/role-management.component';
-import { TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent } from './workflow-configuration/workflow-configuration.component';
+import { EnhancedWorkflowConfigComponent } from './enhanced-workflow-config/enhanced-workflow-config.component';
 import { ToastService } from '../../../core/services/toast.service';
 import { SettingsService, ApplicationSetting, SettingUpdate } from '../../../core/services/settings.service';
+import { AppSettingsService } from '../../../core/services/app-settings.service';
 
 interface SettingsForm {
   application_name: string;
@@ -16,12 +17,22 @@ interface SettingsForm {
   enable_email_notifications: boolean;
   session_timeout_minutes: number;
   max_file_upload_size: number;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_use_tls: boolean;
+  smtp_use_ssl: boolean;
+  smtp_username: string;
+  smtp_password: string;
+  default_from_email: string;
+  server_email: string;
+  email_admin: string;
+  brevo_api_key: string;
 }
 
 @Component({
   selector: 'app-system-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TmsApp_Admin_SystemSettings_RoleManagementComponent, TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent],
+  imports: [CommonModule, FormsModule, RouterModule, TmsApp_Admin_SystemSettings_RoleManagementComponent, EnhancedWorkflowConfigComponent],
   templateUrl: './system-settings.component.html',
   styleUrls: ['./system-settings.component.scss']
 })
@@ -39,13 +50,24 @@ export class SystemSettingsComponent implements OnInit, DoCheck {
     timezone: '',
     enable_email_notifications: true,
     session_timeout_minutes: 480,
-    max_file_upload_size: 10485760
+    max_file_upload_size: 10485760,
+    smtp_host: '',
+    smtp_port: 587,
+    smtp_use_tls: true,
+    smtp_use_ssl: false,
+    smtp_username: '',
+    smtp_password: '',
+    default_from_email: '',
+    server_email: '',
+    email_admin: '',
+    brevo_api_key: ''
   };
   originalData: SettingsForm = { ...this.formData };
 
   constructor(
     private toastService: ToastService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private appSettingsService: AppSettingsService
   ) {}
 
   ngOnInit(): void {
@@ -151,6 +173,7 @@ export class SystemSettingsComponent implements OnInit, DoCheck {
       next: () => {
         this.toastService.success(`${updates.length} setting${updates.length > 1 ? 's' : ''} updated successfully`);
         this.loadSettings(); // Reload to sync state
+        this.appSettingsService.refresh(); // Refresh app-wide settings
       },
       error: (err) => {
         console.error('Error saving settings:', err);

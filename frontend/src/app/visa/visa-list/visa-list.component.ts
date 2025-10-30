@@ -2,8 +2,10 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
 import { VisaService, VisaApplication } from '../visa.service';
+import { WorkflowService } from '../../core/services/workflow.service';
+import { WorkflowInstanceList } from '../../core/models/workflow.models';
 
 @Component({
   selector: 'app-visa-list',
@@ -18,6 +20,9 @@ export class VisaListComponent implements OnInit, OnDestroy {
   searchTerm = '';
   filterStatus = '';
   filterVisaType = '';
+
+  // Workflow data
+  workflowMap: Map<number, WorkflowInstanceList> = new Map();
 
   // Pagination
   currentPage = 1;
@@ -50,7 +55,10 @@ export class VisaListComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
 
-  constructor(private visaService: VisaService) {}
+  constructor(
+    private visaService: VisaService,
+    public workflowService: WorkflowService
+  ) {}
 
   ngOnInit(): void {
     this.setupSearch();
@@ -97,12 +105,62 @@ export class VisaListComponent implements OnInit, OnDestroy {
         this.applications = response.results || response;
         this.totalCount = response.count || this.applications.length;
         this.isLoading = false;
+
+        // Load workflow instances for each application
+        this.loadWorkflowInstances();
       },
       error: (error) => {
         console.error('Error fetching visa applications:', error);
         this.isLoading = false;
       }
     });
+  }
+
+  loadWorkflowInstances(): void {
+    if (this.applications.length === 0) return;
+
+    // Fetch all workflow instances for visa applications
+    this.workflowService.getInstances({
+      entity_type: 'visaapplication'
+    }).subscribe({
+      next: (response: any) => {
+        // Handle both paginated response and array response
+        const instances = Array.isArray(response) ? response : (response.results || []);
+
+        // Create a map of entity_id to workflow instance
+        this.workflowMap.clear();
+
+        instances.forEach((instance: any) => {
+          const entityId = instance.object_id || instance.entity_info?.id || instance.entity_id;
+          if (entityId) {
+            this.workflowMap.set(entityId, instance);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Error loading workflow instances:', err);
+      }
+    });
+  }
+
+  getWorkflowForApplication(appId: number): WorkflowInstanceList | undefined {
+    return this.workflowMap.get(appId);
+  }
+
+  getDisplayStatus(app: VisaApplication): string {
+    const workflow = this.getWorkflowForApplication(app.id!);
+    if (workflow) {
+      return this.workflowService.getWorkflowStatus(workflow);
+    }
+    return app.status || 'Draft';
+  }
+
+  getDisplayStatusClass(app: VisaApplication): string {
+    const workflow = this.getWorkflowForApplication(app.id!);
+    if (workflow) {
+      return this.workflowService.getWorkflowStatusClass(workflow);
+    }
+    return this.getStatusBadgeClass(app.status || 'Draft');
   }
 
   resetToFirstPage(): void {
@@ -149,15 +207,37 @@ export class VisaListComponent implements OnInit, OnDestroy {
 
   getStatusBadgeClass(status: string): string {
     const statusMap: { [key: string]: string } = {
-      'Pending Department Focal': 'bg-warning',
-      'Submitted': 'bg-info',
-      'Under Review': 'bg-primary',
-      'Approved': 'bg-success',
-      'Rejected': 'bg-danger',
-      'Cancelled': 'bg-secondary',
-      'Processing': 'bg-info',
-      'Completed': 'bg-success'
+      'Pending Department Focal': 'badge-pending',
+      'Pending Manager': 'badge-pending',
+      'Pending HOD': 'badge-pending',
+      'Pending Visa Clerk': 'badge-pending',
+      'Submitted': 'badge-info',
+      'Under Review': 'badge-info',
+      'Approved': 'badge-success',
+      'Rejected': 'badge-danger',
+      'Cancelled': 'badge-secondary',
+      'Processing': 'badge-processing',
+      'Completed': 'badge-success',
+      'Draft': 'badge-draft'
     };
-    return statusMap[status] || 'bg-secondary';
+    return statusMap[status] || 'badge-secondary';
+  }
+
+  /**
+   * Check if any filters are currently active
+   */
+  hasActiveFilters(): boolean {
+    return this.searchTerm !== '' || this.filterStatus !== '' || this.filterVisaType !== '';
+  }
+
+  /**
+   * Clear all active filters and reset to first page
+   */
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.filterStatus = '';
+    this.filterVisaType = '';
+    this.resetToFirstPage();
+    this.fetchApplications();
   }
 }

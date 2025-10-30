@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -45,7 +45,7 @@ export interface OverseasTravelDetails {
   templateUrl: './overseas-travel-details.component.html',
   styleUrls: ['./overseas-travel-details.component.scss']
 })
-export class OverseasTravelDetailsComponent implements OnInit {
+export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
   @Input() initialData: Partial<OverseasTravelDetails> = {};
   @Output() formSubmit = new EventEmitter<OverseasTravelDetails>();
 
@@ -56,6 +56,13 @@ export class OverseasTravelDetailsComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // When initialData changes (e.g., loaded from API in edit mode), rebuild the form
+    if (changes['initialData'] && !changes['initialData'].firstChange && this.overseasForm) {
+      this.initForm();  // Rebuild form with new data
+    }
   }
 
   private initForm(): void {

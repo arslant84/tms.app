@@ -150,14 +150,19 @@ export class TrfService {
     // In a real app, this would make an API call
     const index = this.mockTrfs.findIndex(t => t.id === id);
     if (index === -1) return of(undefined);
-    
-    const updatedTrf = { 
-      ...this.mockTrfs[index], 
-      status: TRFStatus.CANCELLED, 
-      updatedAt: new Date() 
+
+    const updatedTrf = {
+      ...this.mockTrfs[index],
+      status: TRFStatus.CANCELLED,
+      updatedAt: new Date()
     };
-    
+
     this.mockTrfs[index] = updatedTrf;
     return of(updatedTrf);
+  }
+
+  // Delete a TRF
+  deleteTrf(id: number): Observable<any> {
+    return this.http.delete(`${environment.apiUrl}/trf/travel-requests/${id}/`);
   }
 }

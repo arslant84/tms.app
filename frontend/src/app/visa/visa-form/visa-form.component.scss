@@ -91,11 +91,32 @@
   border: 1px solid #d1d5db;
   padding: 0.625rem 0.875rem;
   font-size: 0.9375rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
+
+  // Invalid field styling
+  &.ng-invalid.ng-touched {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+
+    &:focus {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+  }
+}
+
+// Add validation feedback
+.invalid-feedback {
+  display: block;
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
 }
 
 textarea.form-control {

@@ -31,6 +31,7 @@
     <!-- Step 1: Requestor Information -->
     <div class="step-content" *ngIf="currentStep === 1">
       <app-requestor-information
+        [initialData]="requestorData"
         (formSubmit)="onRequestorSubmit($event)">
       </app-requestor-information>
     </div>
@@ -39,21 +40,25 @@
     <div class="step-content" *ngIf="currentStep === 2">
       <app-domestic-travel-details
         *ngIf="selectedTravelType === 'Domestic'"
+        [initialData]="domesticTravelData"
         (formSubmit)="onTravelDetailsSubmit($event)"
         (backClick)="onPrevious()">
       </app-domestic-travel-details>
       <app-overseas-travel-details
         *ngIf="selectedTravelType === 'Overseas'"
+        [initialData]="overseasTravelData"
         (formSubmit)="onTravelDetailsSubmit($event)"
         (backClick)="onPrevious()">
       </app-overseas-travel-details>
       <app-home-leave-details
         *ngIf="selectedTravelType === 'Home Leave'"
+        [initialData]="homeLeaveData"
         (formSubmit)="onTravelDetailsSubmit($event)"
         (backClick)="onPrevious()">
       </app-home-leave-details>
       <app-external-parties-details
         *ngIf="selectedTravelType === 'External Parties'"
+        [initialData]="externalPartiesData"
         (formSubmit)="onTravelDetailsSubmit($event)"
         (backClick)="onPrevious()">
       </app-external-parties-details>

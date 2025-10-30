@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AccommodationService, AccommodationRequest } from '../../services/accommodation.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
 export const ACCOMMODATION_STATUSES = [
   'Draft',
@@ -45,7 +46,8 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
 
   constructor(
     private accommodationService: AccommodationService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -129,6 +131,26 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
 
   navigateToView(id: number): void {
     this.router.navigate(['/accommodation', id]);
+  }
+
+  navigateToEdit(id: number): void {
+    this.router.navigate(['/accommodation/edit', id]);
+  }
+
+  deleteRequest(id: number, event: Event): void {
+    event.stopPropagation();
+    if (confirm('Are you sure you want to delete this accommodation request?')) {
+      this.accommodationService.deleteRequest(id).subscribe({
+        next: () => {
+          this.toastService.success('Accommodation request deleted successfully');
+          this.fetchRequests();
+        },
+        error: (error) => {
+          console.error('Error deleting accommodation request:', error);
+          this.toastService.error('Failed to delete accommodation request');
+        }
+      });
+    }
   }
 
   getStatusClass(status: string): string {

@@ -1,0 +1,11 @@
+<footer class="app-footer">
+  <div class="footer-content">
+    <p class="copyright-text">
+      © {{ currentYear }} <strong>{{ applicationName$ | async }}</strong>. All rights reserved.
+    </p>
+    <span class="footer-separator">•</span>
+    <a [href]="'mailto:' + (supportEmail$ | async)" class="footer-link">
+      <i class="bi bi-envelope me-1"></i>{{ supportEmail$ | async }}
+    </a>
+  </div>
+</footer>
