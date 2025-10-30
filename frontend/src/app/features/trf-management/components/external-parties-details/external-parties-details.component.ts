@@ -74,6 +74,10 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
     }
   }
 
+  get itinerary(): FormArray {
+    return this.externalForm.get('itinerary') as FormArray;
+  }
+
   get accommodation(): FormArray {
     return this.externalForm.get('accommodation') as FormArray;
   }
@@ -82,30 +86,53 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
     return this.externalForm.get('transport') as FormArray;
   }
 
-  private createAccommodation(): FormGroup {
+  private createItinerarySegment(data?: any): FormGroup {
     return this.fb.group({
-      fromDate: ['', Validators.required],
-      toDate: ['', Validators.required],
-      fromLocation: ['', Validators.required],
-      toLocation: ['', Validators.required],
-      accommodationType: ['', Validators.required],
-      address: [''],
-      remarks: ['']
+      departureDate: [data?.departureDate || '', Validators.required],
+      departureTime: [data?.departureTime || ''],
+      departureLocation: [data?.departureLocation || '', Validators.required],
+      arrivalDate: [data?.arrivalDate || '', Validators.required],
+      arrivalTime: [data?.arrivalTime || ''],
+      arrivalLocation: [data?.arrivalLocation || '', Validators.required],
+      modeOfTransport: [data?.modeOfTransport || '', Validators.required],
+      remarks: [data?.remarks || '']
     });
   }
 
-  private createTransport(): FormGroup {
+  private createAccommodation(data?: any): FormGroup {
     return this.fb.group({
-      date: ['', Validators.required],
-      fromLocation: ['', Validators.required],
-      toLocation: ['', Validators.required],
-      btNoRequired: [''],
-      remarks: ['']
+      fromDate: [data?.fromDate || '', Validators.required],
+      toDate: [data?.toDate || '', Validators.required],
+      fromLocation: [data?.fromLocation || '', Validators.required],
+      toLocation: [data?.toLocation || '', Validators.required],
+      accommodationType: [data?.accommodationType || '', Validators.required],
+      address: [data?.address || ''],
+      remarks: [data?.remarks || '']
     });
   }
 
-  addAccommodation(): void {
-    this.accommodation.push(this.createAccommodation());
+  private createTransport(data?: any): FormGroup {
+    return this.fb.group({
+      date: [data?.date || '', Validators.required],
+      fromLocation: [data?.fromLocation || '', Validators.required],
+      toLocation: [data?.toLocation || '', Validators.required],
+      btNoRequired: [data?.btNoRequired || ''],
+      remarks: [data?.remarks || '']
+    });
+  }
+
+  addItinerarySegment(data?: any): void {
+    this.itinerary.push(this.createItinerarySegment(data));
+  }
+
+  removeItinerarySegment(index: number): void {
+    if (this.itinerary.length > 1) {
+      this.itinerary.removeAt(index);
+    }
+  }
+
+  addAccommodation(data?: any): void {
+    this.accommodation.push(this.createAccommodation(data));
   }
 
   removeAccommodation(index: number): void {
@@ -114,8 +141,8 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
     }
   }
 
-  addTransport(): void {
-    this.transport.push(this.createTransport());
+  addTransport(data?: any): void {
+    this.transport.push(this.createTransport(data));
   }
 
   removeTransport(index: number): void {
