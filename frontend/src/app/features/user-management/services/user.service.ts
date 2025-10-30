@@ -90,7 +90,7 @@ export class UserService {
   }
 
   updateUser(id: number, data: Partial<User>): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/users/${id}/`, data);
+    return this.http.patch<User>(`${this.apiUrl}/users/${id}/`, data);
   }
 
   deleteUser(id: number): Observable<void> {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ExpenseClaimsService, ExpenseClaim } from '../../services/expense-claims.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { finalize } from 'rxjs/operators';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
@@ -58,7 +59,8 @@ export class ExpenseListComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private expenseService: ExpenseClaimsService
+    private expenseService: ExpenseClaimsService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -188,6 +190,26 @@ export class ExpenseListComponent implements OnInit, OnDestroy {
 
   navigateToView(id: number): void {
     this.router.navigate(['/expenses', id]);
+  }
+
+  navigateToEdit(id: number): void {
+    this.router.navigate(['/expenses/edit', id]);
+  }
+
+  deleteClaim(id: number, event: Event): void {
+    event.stopPropagation();
+    if (confirm('Are you sure you want to delete this expense claim?')) {
+      this.expenseService.deleteClaim(id).subscribe({
+        next: () => {
+          this.toastService.success('Expense claim deleted successfully');
+          this.fetchClaims();
+        },
+        error: (error) => {
+          console.error('Error deleting expense claim:', error);
+          this.toastService.error('Failed to delete expense claim');
+        }
+      });
+    }
   }
 
   previousPage(): void {

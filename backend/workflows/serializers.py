@@ -102,7 +102,12 @@ class WorkflowTemplateDetailSerializer(WorkflowTemplateSerializer):
 
 class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating workflow templates with steps"""
-    steps = WorkflowStepSerializer(many=True, required=False)
+    steps = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        allow_empty=True,
+        write_only=True  # Only used for input, not output
+    )
 
     class Meta:
         model = WorkflowTemplate
@@ -111,19 +116,71 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
             'allow_parallel_steps', 'auto_approve_on_condition', 'steps'
         ]
 
+    def to_representation(self, instance):
+        """Use WorkflowTemplateDetailSerializer for output"""
+        return WorkflowTemplateDetailSerializer(instance, context=self.context).data
+
     def create(self, validated_data):
         """Create workflow template with steps"""
         steps_data = validated_data.pop('steps', [])
+
+        # Get created_by from validated_data (passed via perform_create) or context
+        if 'created_by' not in validated_data:
+            request = self.context.get('request')
+            if request and hasattr(request, 'user'):
+                validated_data['created_by'] = request.user
+
         workflow_template = WorkflowTemplate.objects.create(**validated_data)
 
         # Create steps
         for step_data in steps_data:
             WorkflowStep.objects.create(
                 workflow_template=workflow_template,
-                **step_data
+                step_order=step_data.get('step_order'),
+                step_name=step_data.get('step_name'),
+                step_description=step_data.get('step_description', ''),
+                approver_role=step_data.get('approver_role'),
+                approver_user_id=step_data.get('approver_user') if step_data.get('approver_user') else None,
+                is_required=step_data.get('is_required', True),
+                can_skip=step_data.get('can_skip', False),
+                requires_comments=step_data.get('requires_comments', False),
+                sla_hours=step_data.get('sla_hours'),
+                escalation_hours=step_data.get('escalation_hours')
             )
 
         return workflow_template
+
+    def update(self, instance, validated_data):
+        """Update workflow template and steps"""
+        steps_data = validated_data.pop('steps', None)
+
+        # Update template fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update steps if provided
+        if steps_data is not None:
+            # Delete existing steps
+            instance.steps.all().delete()
+
+            # Create new steps
+            for step_data in steps_data:
+                WorkflowStep.objects.create(
+                    workflow_template=instance,
+                    step_order=step_data.get('step_order'),
+                    step_name=step_data.get('step_name'),
+                    step_description=step_data.get('step_description', ''),
+                    approver_role=step_data.get('approver_role'),
+                    approver_user_id=step_data.get('approver_user') if step_data.get('approver_user') else None,
+                    is_required=step_data.get('is_required', True),
+                    can_skip=step_data.get('can_skip', False),
+                    requires_comments=step_data.get('requires_comments', False),
+                    sla_hours=step_data.get('sla_hours'),
+                    escalation_hours=step_data.get('escalation_hours')
+                )
+
+        return instance
 
 
 class WorkflowStepExecutionSerializer(serializers.ModelSerializer):

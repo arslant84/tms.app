@@ -1,38 +1,43 @@
-<!-- System Settings - Matching pctsb.syntra source design -->
-<div class="container-fluid py-4">
+<!-- System Settings - Modern Card Design -->
+<div class="settings-page-container">
   <!-- Page Header -->
-  <div class="d-flex align-items-center gap-3 mb-4">
-    <i class="bi bi-gear" style="font-size: 2rem; color: var(--bs-primary);"></i>
-    <div>
-      <h1 class="h3 mb-1 fw-bold">System Settings</h1>
-      <p class="text-muted mb-0">Manage application settings, user roles, permissions, and workflow configurations.</p>
+  <div class="page-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <i class="bi bi-gear page-icon"></i>
+      <div>
+        <h1 class="page-title mb-1">System Settings</h1>
+        <p class="page-description mb-0">Manage application settings, user roles, permissions, and workflow configurations.</p>
+      </div>
     </div>
   </div>
 
   <!-- General Application Settings Card -->
-  <div class="card mb-4">
+  <div class="settings-card shadow-lg mb-4">
     <div class="card-header">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-gear text-primary"></i>
-        <h4 class="card-title mb-0">General Application Settings</h4>
+      <div>
+        <h2 class="card-title">
+          <i class="bi bi-gear me-2"></i>General Application Settings
+        </h2>
+        <p class="card-description mb-0">Configure global settings for the application.</p>
       </div>
-      <p class="text-muted mb-0 mt-1" style="font-size: 0.875rem;">Configure global settings for the application.</p>
     </div>
+
     <div class="card-body">
       <!-- Loading State -->
-      <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
-        <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;">
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
+        <p class="mt-3 text-muted">Loading settings...</p>
       </div>
 
       <!-- Settings Form -->
       <ng-container *ngIf="!isLoading">
         <!-- Basic Configuration -->
-        <div class="mb-4">
-          <h5 class="mb-3" style="font-size: 0.875rem; font-weight: 600;">Basic Configuration</h5>
-          <div class="row g-3">
-            <div class="col-md-6">
+        <div class="settings-section">
+          <h4 class="section-title">Basic Configuration</h4>
+          <div class="settings-grid">
+            <div class="form-group">
               <label for="appName" class="form-label">Application Name</label>
               <input
                 type="text"
@@ -41,7 +46,8 @@
                 [(ngModel)]="formData.application_name"
                 placeholder="Enter application name">
             </div>
-            <div class="col-md-6">
+
+            <div class="form-group">
               <label for="supportEmail" class="form-label">Support Email</label>
               <input
                 type="email"
@@ -50,7 +56,8 @@
                 [(ngModel)]="formData.support_email"
                 placeholder="support@example.com">
             </div>
-            <div class="col-md-6">
+
+            <div class="form-group">
               <label for="defaultCurrency" class="form-label">Default Currency</label>
               <input
                 type="text"
@@ -59,7 +66,8 @@
                 [(ngModel)]="formData.default_currency"
                 placeholder="USD">
             </div>
-            <div class="col-md-6">
+
+            <div class="form-group">
               <label for="timezone" class="form-label">Timezone</label>
               <input
                 type="text"
@@ -71,13 +79,13 @@
           </div>
         </div>
 
-        <hr class="my-4">
+        <hr class="section-divider">
 
         <!-- System Configuration -->
-        <div class="mb-4">
-          <h5 class="mb-3" style="font-size: 0.875rem; font-weight: 600;">System Configuration</h5>
-          <div class="row g-3">
-            <div class="col-md-6">
+        <div class="settings-section">
+          <h4 class="section-title">System Configuration</h4>
+          <div class="settings-grid">
+            <div class="form-group">
               <label for="sessionTimeout" class="form-label">Session Timeout (Minutes)</label>
               <input
                 type="number"
@@ -87,7 +95,8 @@
                 min="15"
                 max="1440">
             </div>
-            <div class="col-md-6">
+
+            <div class="form-group">
               <label for="maxUploadSize" class="form-label">Max File Upload Size (MB)</label>
               <input
                 type="number"
@@ -99,53 +108,203 @@
                 max="100">
             </div>
           </div>
-          <div class="row g-3 mt-3">
-            <div class="col-md-6">
-              <div class="d-flex align-items-center gap-3">
-                <div class="form-check form-switch">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    role="switch"
-                    id="maintenanceMode"
-                    [(ngModel)]="formData.maintenance_mode">
-                </div>
-                <label class="cursor-pointer mb-0" for="maintenanceMode">
-                  <div>Maintenance Mode</div>
-                  <small class="text-muted">Prevent user access to the application</small>
+
+          <div class="settings-grid mt-3">
+            <div class="form-switch-group">
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="maintenanceMode"
+                  [(ngModel)]="formData.maintenance_mode">
+                <label class="form-check-label" for="maintenanceMode">
+                  <div class="switch-title">Maintenance Mode</div>
+                  <div class="switch-description">Prevent user access to the application</div>
                 </label>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="d-flex align-items-center gap-3">
-                <div class="form-check form-switch">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    role="switch"
-                    id="emailNotifications"
-                    [(ngModel)]="formData.enable_email_notifications">
-                </div>
-                <label class="cursor-pointer mb-0" for="emailNotifications">
-                  <div>Email Notifications</div>
-                  <small class="text-muted">Enable system-wide email notifications</small>
+
+            <div class="form-switch-group">
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="emailNotifications"
+                  [(ngModel)]="formData.enable_email_notifications">
+                <label class="form-check-label" for="emailNotifications">
+                  <div class="switch-title">Email Notifications</div>
+                  <div class="switch-description">Enable system-wide email notifications</div>
                 </label>
               </div>
             </div>
           </div>
         </div>
 
-        <hr class="my-4">
+        <!-- Email Configuration Section (shown when email notifications enabled) -->
+        <div class="settings-section" *ngIf="formData.enable_email_notifications">
+          <h4 class="section-title">Email Configuration (SMTP Settings)</h4>
+          <div class="alert alert-info mb-3">
+            <i class="bi bi-info-circle me-2"></i>
+            Configure SMTP server settings for sending email notifications. Changes take effect immediately.
+          </div>
+
+          <div class="settings-grid">
+            <!-- SMTP Host -->
+            <div class="form-group">
+              <label for="smtpHost" class="form-label">SMTP Host *</label>
+              <input
+                type="text"
+                class="form-control"
+                id="smtpHost"
+                [(ngModel)]="formData.smtp_host"
+                placeholder="smtp-relay.brevo.com"
+                [disabled]="!formData.enable_email_notifications">
+              <small class="form-text text-muted">SMTP server hostname (e.g., smtp.gmail.com)</small>
+            </div>
+
+            <!-- SMTP Port -->
+            <div class="form-group">
+              <label for="smtpPort" class="form-label">SMTP Port *</label>
+              <input
+                type="number"
+                class="form-control"
+                id="smtpPort"
+                [(ngModel)]="formData.smtp_port"
+                placeholder="587"
+                [disabled]="!formData.enable_email_notifications">
+              <small class="form-text text-muted">Port 587 for TLS or 465 for SSL</small>
+            </div>
+
+            <!-- SMTP Username -->
+            <div class="form-group">
+              <label for="smtpUsername" class="form-label">SMTP Username *</label>
+              <input
+                type="text"
+                class="form-control"
+                id="smtpUsername"
+                [(ngModel)]="formData.smtp_username"
+                placeholder="your-email@example.com"
+                [disabled]="!formData.enable_email_notifications">
+              <small class="form-text text-muted">SMTP authentication username</small>
+            </div>
+
+            <!-- SMTP Password -->
+            <div class="form-group">
+              <label for="smtpPassword" class="form-label">SMTP Password *</label>
+              <input
+                type="password"
+                class="form-control"
+                id="smtpPassword"
+                [(ngModel)]="formData.smtp_password"
+                placeholder="••••••••"
+                [disabled]="!formData.enable_email_notifications">
+              <small class="form-text text-muted">SMTP authentication password</small>
+            </div>
+
+            <!-- Default From Email -->
+            <div class="form-group">
+              <label for="defaultFromEmail" class="form-label">From Email Address *</label>
+              <input
+                type="email"
+                class="form-control"
+                id="defaultFromEmail"
+                [(ngModel)]="formData.default_from_email"
+                placeholder="SynTra TMS <no-reply@example.com>"
+                [disabled]="!formData.enable_email_notifications">
+              <small class="form-text text-muted">Default sender address for system emails</small>
+            </div>
+
+            <!-- Server Email -->
+            <div class="form-group">
+              <label for="serverEmail" class="form-label">Server Email *</label>
+              <input
+                type="email"
+                class="form-control"
+                id="serverEmail"
+                [(ngModel)]="formData.server_email"
+                placeholder="SynTra TMS <no-reply@example.com>"
+                [disabled]="!formData.enable_email_notifications">
+              <small class="form-text text-muted">Email for server error notifications</small>
+            </div>
+          </div>
+
+          <!-- TLS/SSL Options -->
+          <div class="mt-3">
+            <label class="form-label d-block mb-2">Connection Security</label>
+            <div class="d-flex gap-4">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="smtpUseTls"
+                  [(ngModel)]="formData.smtp_use_tls"
+                  [disabled]="!formData.enable_email_notifications">
+                <label class="form-check-label" for="smtpUseTls">
+                  Use TLS (Port 587)
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="smtpUseSsl"
+                  [(ngModel)]="formData.smtp_use_ssl"
+                  [disabled]="!formData.enable_email_notifications">
+                <label class="form-check-label" for="smtpUseSsl">
+                  Use SSL (Port 465)
+                </label>
+              </div>
+            </div>
+            <small class="form-text text-muted">TLS is recommended for most SMTP servers</small>
+          </div>
+
+          <!-- Advanced Options (Optional) -->
+          <div class="mt-4">
+            <h5 class="section-subtitle">Advanced Options (Optional)</h5>
+            <div class="settings-grid">
+              <!-- Email Admin -->
+              <div class="form-group">
+                <label for="emailAdmin" class="form-label">Admin Email</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  id="emailAdmin"
+                  [(ngModel)]="formData.email_admin"
+                  placeholder="admin@example.com"
+                  [disabled]="!formData.enable_email_notifications">
+                <small class="form-text text-muted">Admin email for system notifications</small>
+              </div>
+
+              <!-- Brevo API Key -->
+              <div class="form-group">
+                <label for="brevoApiKey" class="form-label"> API Key</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="brevoApiKey"
+                  [(ngModel)]="formData.brevo_api_key"
+                  placeholder="xkeysib-..."
+                  [disabled]="!formData.enable_email_notifications">
+                <small class="form-text text-muted">Optional: API key for advanced features</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="section-divider">
 
         <!-- Action Buttons -->
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <span *ngIf="hasChanges" class="d-flex align-items-center gap-2" style="font-size: 0.75rem;">
-              <span class="d-inline-block rounded-circle bg-warning" style="width: 8px; height: 8px;"></span>
-              <span class="text-muted">Unsaved changes</span>
+        <div class="form-actions">
+          <div class="unsaved-indicator">
+            <span *ngIf="hasChanges" class="d-flex align-items-center gap-2">
+              <span class="indicator-dot"></span>
+              <span class="indicator-text">Unsaved changes</span>
             </span>
           </div>
-          <div class="d-flex gap-2">
+
+          <div class="action-buttons">
             <button
               class="btn btn-outline-secondary"
               (click)="handleReset()"
@@ -158,7 +317,7 @@
               (click)="handleSaveSettings()"
               [disabled]="!hasChanges || isSaving">
               <i *ngIf="!isSaving" class="bi bi-save me-2"></i>
-              <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
               {{ isSaving ? 'Saving...' : 'Save Settings' }}
             </button>
           </div>
@@ -166,20 +325,27 @@
       </ng-container>
     </div>
   </div>
+
   <!-- Roles and Permissions -->
   <tmsapp-admin-systemsettings-role-management></tmsapp-admin-systemsettings-role-management>
 
-  <!-- Workflow Configuration -->
-  <tmsapp-admin-systemsettings-workflow-configuration></tmsapp-admin-systemsettings-workflow-configuration>
+  <!-- Enhanced Workflow Configuration -->
+  <app-enhanced-workflow-config></app-enhanced-workflow-config>
 
-  <!-- Notification Templates Link Card -->
-  <div class="card">
+  <!-- Notification Templates Card -->
+  <div class="settings-card shadow-lg">
     <div class="card-header">
-      <h4 class="card-title">Notification Templates</h4>
-      <p class="text-muted mb-0">Manage email and system notification templates</p>
+      <div>
+        <h2 class="card-title">
+          <i class="bi bi-bell me-2"></i>Notification Templates
+        </h2>
+        <p class="card-description mb-0">Manage email and system notification templates</p>
+      </div>
     </div>
     <div class="card-body">
-      <a class="btn btn-outline-primary" routerLink="/admin/settings/notifications">Manage Templates</a>
+      <a class="btn btn-outline-primary" routerLink="/admin/settings/notifications">
+        <i class="bi bi-arrow-right me-2"></i>Manage Templates
+      </a>
     </div>
   </div>
 </div>

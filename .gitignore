@@ -20,9 +20,12 @@ migrate_*.py
 *.csv
 event_types_export.csv
 
-# ========== Submodules ==========
+# ========== Submodules & External Projects ==========
 # Exclude pctsb.syntra submodule content
 pctsb.syntra/
+pctsb.syntra
+Claude Code v2.0.21.txt
+Claude*.txt
 
 # ========== Python Cache & Compiled Files ==========
 # Byte-compiled / optimized / DLL files
@@ -76,6 +79,10 @@ out-tsc/
 Thumbs.db
 Desktop.ini
 nul
+
+# ========== Temporary Files ==========
+*.bat
+*.tmp
 
 # ========== Keep These Directories ==========
 # Force include important directories

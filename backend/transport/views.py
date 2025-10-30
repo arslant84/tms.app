@@ -15,6 +15,7 @@ from .serializers import (
     TransportApprovalStepSerializer, VehicleAssignmentSerializer,
     ApprovalActionSerializer
 )
+from workflows.router import WorkflowRouter
 
 
 class TransportRequestViewSet(viewsets.ModelViewSet):
@@ -39,7 +40,9 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # Query parameter filters
         status_filter = self.request.query_params.get('status', None)
         if status_filter:
-            queryset = queryset.filter(status=status_filter)
+            # Use startswith to match workflow statuses like "Pending Line Manager"
+            # when filter is "Pending"
+            queryset = queryset.filter(status__istartswith=status_filter)
 
         transport_type = self.request.query_params.get('transport_type', None)
         if transport_type:
@@ -104,18 +107,40 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # Get status from request data, default to 'Draft' if not provided
         status_value = validated_data.get('status', 'Draft')
 
-        # Set submitted_at timestamp if status is being set to 'Pending' or 'Submitted'
+        # Set submitted_at timestamp if status is being submitted (not Draft)
         extra_kwargs = {}
         if status_value in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
             extra_kwargs['submitted_at'] = timezone.now()
 
-        serializer.save(requestor=user, **extra_kwargs)
+        # Save the transport request
+        transport_request = serializer.save(requestor=user, **extra_kwargs)
+
+        # Start workflow if status is submitted (not Draft)
+        if status_value in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
+            try:
+                workflow_instance = WorkflowRouter.start_workflow_for_request(
+                    entity=transport_request,
+                    entity_type='transportrequest',
+                    initiated_by=user
+                )
+
+                if workflow_instance:
+                    # Reload the transport request to get the updated status from workflow
+                    transport_request.refresh_from_db()
+                    print(f"✅ Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}")
+                    print(f"✅ Status updated to: {transport_request.status}")
+                else:
+                    print(f"⚠️ No active workflow configured for transportrequest - using legacy approval system")
+            except Exception as e:
+                print(f"❌ Error starting workflow for Transport Request #{transport_request.id}: {str(e)}")
+                # Don't fail the request creation if workflow fails
+                pass
 
     @action(detail=True, methods=['post'])
     def submit(self, request, pk=None):
         """
         Submit a transport request for approval
-        Changes status from Draft to Pending
+        Changes status from Draft to Pending and starts workflow
         """
         transport_request = self.get_object()
 
@@ -140,19 +165,49 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Update status
-        transport_request.status = 'Pending Department Focal'
+        # Update status and submitted_at
+        transport_request.status = 'Pending'
         transport_request.submitted_at = timezone.now()
         transport_request.save()
 
-        # Create first approval step
-        TransportApprovalStep.objects.create(
-            transport_request=transport_request,
-            step_role='HOD',
-            step_name='HOD Approval',
-            status='Pending'
-        )
+        # Start workflow using WorkflowRouter
+        try:
+            workflow_instance = WorkflowRouter.start_workflow_for_request(
+                entity=transport_request,
+                entity_type='transportrequest',
+                initiated_by=request.user
+            )
 
+            if workflow_instance:
+                # Reload the transport request to get the updated status from workflow
+                transport_request.refresh_from_db()
+                print(f"✅ Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}")
+                print(f"✅ Status updated to: {transport_request.status}")
+            else:
+                # Fallback to legacy approval system if no workflow configured
+                print(f"⚠️ No active workflow configured - creating legacy approval step")
+                TransportApprovalStep.objects.create(
+                    transport_request=transport_request,
+                    step_role='HOD',
+                    step_name='HOD Approval',
+                    status='Pending'
+                )
+                transport_request.status = 'Pending Department Focal'
+                transport_request.save()
+        except Exception as e:
+            print(f"❌ Error starting workflow: {str(e)}")
+            # Fallback to legacy system on error
+            TransportApprovalStep.objects.create(
+                transport_request=transport_request,
+                step_role='HOD',
+                step_name='HOD Approval',
+                status='Pending'
+            )
+            transport_request.status = 'Pending Department Focal'
+            transport_request.save()
+
+        # Ensure we have the latest status before serializing
+        transport_request.refresh_from_db()
         serializer = TransportRequestDetailSerializer(transport_request)
         return Response(serializer.data)
 

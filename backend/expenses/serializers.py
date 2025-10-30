@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import ExpenseClaim, ExpenseItem, ClaimsApprovalStep, ExpenseStatus, ExpenseCategory
+from .models import ExpenseClaim, ExpenseItem, ClaimsApprovalStep, ExpenseCategory
 from trf.models import TravelRequest
 
 User = get_user_model()
@@ -100,11 +100,8 @@ class ExpenseClaimSerializer(serializers.ModelSerializer):
         return obj.created_at.isoformat() if obj.created_at else None
 
     def validate_status(self, value):
-        """Validate expense claim status"""
-        if value not in ExpenseStatus.values:
-            raise serializers.ValidationError(
-                f"Status must be one of: {', '.join(ExpenseStatus.values)}"
-            )
+        """Validate expense claim status - now using dynamic workflow statuses"""
+        # No strict validation needed - workflow engine sets valid statuses dynamically
         return value
 
     def validate_category(self, value):
@@ -156,12 +153,13 @@ class ExpenseClaimCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
-        user = self.context['request'].user
+        # Get user from validated_data (passed from view's perform_create)
+        user = validated_data.pop('user')
 
-        # Create expense claim
+        # Create expense claim with default Draft status
         expense_claim = ExpenseClaim.objects.create(
             user=user,
-            status=ExpenseStatus.DRAFT,
+            status='Draft',
             **validated_data
         )
 
@@ -186,7 +184,7 @@ class ExpenseClaimUpdateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         instance = getattr(self, 'instance', None)
-        if instance and instance.status not in [ExpenseStatus.DRAFT, ExpenseStatus.REJECTED]:
+        if instance and instance.status not in ['Draft', 'Rejected']:
             raise serializers.ValidationError(
                 "Only draft or rejected expense claims can be updated."
             )

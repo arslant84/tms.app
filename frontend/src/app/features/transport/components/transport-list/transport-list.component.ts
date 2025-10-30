@@ -5,11 +5,12 @@ import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TransportService, TransportRequest } from '../../services/transport.service';
+import { ToastService } from '../../../../core/services/toast.service';
 
-// Status constants matching backend
+// Status constants for filtering (broad categories to match workflow statuses)
 export const TRANSPORT_STATUSES = [
   'Draft',
-  'Pending',
+  'Pending', // Matches "Pending", "Pending Line Manager", "Pending Department Focal", etc.
   'Approved',
   'Rejected',
   'Completed',
@@ -47,7 +48,8 @@ export class TransportListComponent implements OnInit, OnDestroy {
 
   constructor(
     private transportService: TransportService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -143,6 +145,26 @@ export class TransportListComponent implements OnInit, OnDestroy {
 
   navigateToView(id: number | string): void {
     this.router.navigate(['/transport', id]);
+  }
+
+  navigateToEdit(id: number | string): void {
+    this.router.navigate(['/transport/edit', id]);
+  }
+
+  deleteRequest(id: number | string, event: Event): void {
+    event.stopPropagation();
+    if (confirm('Are you sure you want to delete this transport request?')) {
+      this.transportService.deleteRequest(id).subscribe({
+        next: () => {
+          this.toastService.success('Transport request deleted successfully');
+          this.fetchRequests();
+        },
+        error: (error) => {
+          console.error('Error deleting transport request:', error);
+          this.toastService.error('Failed to delete transport request');
+        }
+      });
+    }
   }
 
   getStatusClass(status: string): string {

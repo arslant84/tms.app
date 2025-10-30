@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { InsightsService, DashboardSummary, RecentActivity } from '../../../../core/services/insights.service';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { Observable, map } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -36,7 +38,17 @@ export class DashboardHomeComponent implements OnInit {
   isFetching = false;
   error = '';
 
-  constructor(private insightsService: InsightsService) {}
+  // Application name
+  applicationName$: Observable<string>;
+
+  constructor(
+    private insightsService: InsightsService,
+    private appSettingsService: AppSettingsService
+  ) {
+    this.applicationName$ = this.appSettingsService.settings$.pipe(
+      map(settings => settings.application_name || 'TMS')
+    );
+  }
 
   ngOnInit(): void {
     // Small delay to ensure component is mounted

@@ -6,7 +6,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TransportService } from '../../services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -23,12 +23,15 @@ export class TransportCreateComponent implements OnInit {
   transportForm!: FormGroup;
   loading = false;
   submitting = false;
+  isEditMode = false;
+  requestId: number | null = null;
 
   transportTypes: TransportType[] = ['Local', 'Intercity', 'Airport Transfer', 'Charter', 'Other'];
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private transportService: TransportService,
     private toastService: ToastService,
     private authService: AuthService
@@ -36,7 +39,17 @@ export class TransportCreateComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    this.loadUserDetails();
+
+    // Check if we're in edit mode
+    this.route.params.subscribe(params => {
+      if (params['id']) {
+        this.isEditMode = true;
+        this.requestId = +params['id'];
+        this.loadRequestData(this.requestId);
+      } else {
+        this.loadUserDetails();
+      }
+    });
   }
 
   initForm(): void {
@@ -75,6 +88,55 @@ export class TransportCreateComponent implements OnInit {
         position: '' // Position not available in User model
       });
     }
+  }
+
+  loadRequestData(id: number): void {
+    this.loading = true;
+    this.transportService.getRequestById(id).subscribe({
+      next: (request) => {
+        // Patch basic form fields
+        this.transportForm.patchValue({
+          requestorName: request.requestorName,
+          staffId: request.staffId,
+          department: request.department,
+          position: request.position || '',
+          purpose: request.purpose,
+          tsrReference: request.tsrReference || '',
+          additionalComments: request.additionalComments || '',
+          confirmPolicy: true,
+          confirmManagerApproval: true,
+          confirmTermsAndConditions: true
+        });
+
+        // Clear default transport detail and load existing ones
+        this.transportDetails.clear();
+        if (request.transportDetails && request.transportDetails.length > 0) {
+          request.transportDetails.forEach((detail: any) => {
+            const detailGroup = this.fb.group({
+              date: [detail.date, Validators.required],
+              day: [detail.day || ''],
+              from: [detail.from, Validators.required],
+              to: [detail.to, Validators.required],
+              departureTime: [detail.departureTime, Validators.required],
+              transportType: [detail.transportType || 'Local', Validators.required],
+              numberOfPassengers: [detail.numberOfPassengers || 1, [Validators.required, Validators.min(1)]]
+            });
+            this.transportDetails.push(detailGroup);
+          });
+        } else {
+          // If no transport details, add one default
+          this.addTransportDetail();
+        }
+
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading transport request:', error);
+        this.toastService.error('Failed to load transport request');
+        this.loading = false;
+        this.router.navigate(['/transport']);
+      }
+    });
   }
 
   get transportDetails(): FormArray {
@@ -124,17 +186,25 @@ export class TransportCreateComponent implements OnInit {
     this.submitting = true;
     const formData: Partial<TransportRequestForm> = {
       ...this.transportForm.value,
-      status: 'Pending Department Focal' // Submit directly to workflow
+      status: 'Pending' // Let workflow system determine actual status
     };
 
     const backendData = toBackendFormat(formData);
     console.log('📤 Sending to backend:', JSON.stringify(backendData, null, 2));
 
-    this.transportService.createRequest(backendData).subscribe({
+    const saveOperation = this.isEditMode && this.requestId
+      ? this.transportService.updateRequest(this.requestId, backendData)
+      : this.transportService.createRequest(backendData);
+
+    saveOperation.subscribe({
       next: (response) => {
         this.submitting = false;
-        this.toastService.success('Transport request submitted successfully');
-        this.router.navigate(['/transport', response.id]);
+        const message = this.isEditMode
+          ? 'Transport request updated successfully'
+          : 'Transport request submitted successfully and sent for approval';
+        this.toastService.success(message);
+        // Redirect to transport list instead of detail page to avoid loading issues
+        this.router.navigate(['/transport']);
       },
       error: (err) => {
         this.submitting = false;
@@ -161,7 +231,11 @@ export class TransportCreateComponent implements OnInit {
 
     const backendData = toBackendFormat(formData);
 
-    this.transportService.createRequest(backendData).subscribe({
+    const saveOperation = this.isEditMode && this.requestId
+      ? this.transportService.updateRequest(this.requestId, backendData)
+      : this.transportService.createRequest(backendData);
+
+    saveOperation.subscribe({
       next: () => {
         this.submitting = false;
         this.toastService.success('Draft saved successfully');

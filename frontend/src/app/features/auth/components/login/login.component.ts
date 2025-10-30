@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { Observable, map } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -15,12 +17,18 @@ export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   isSubmitting = false;
   errorMessage = '';
+  applicationName$: Observable<string>;
 
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private appSettingsService: AppSettingsService
+  ) {
+    this.applicationName$ = this.appSettingsService.settings$.pipe(
+      map(settings => settings.application_name || 'TMS')
+    );
+  }
 
   ngOnInit(): void {
     this.loginForm = this.formBuilder.group({

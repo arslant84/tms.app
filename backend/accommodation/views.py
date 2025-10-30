@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
+from django.utils import timezone
 from datetime import datetime, timedelta
 from .models import (
     AccommodationStaffHouse,
@@ -18,6 +19,7 @@ from .serializers import (
     AccommodationBookingDetailSerializer,
     RoomAvailabilitySerializer
 )
+from workflows.router import WorkflowRouter
 
 
 class AccommodationStaffHouseViewSet(viewsets.ModelViewSet):
@@ -147,12 +149,14 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
         """Filter requests by status, department, etc."""
         queryset = self.queryset
 
-        status = self.request.query_params.get('status', None)
+        status_filter = self.request.query_params.get('status', None)
         department = self.request.query_params.get('department', None)
         requestor_name = self.request.query_params.get('requestor_name', None)
 
-        if status:
-            queryset = queryset.filter(status=status)
+        if status_filter:
+            # Use startswith to match workflow statuses like "Pending Line Manager"
+            # when filter is "Pending"
+            queryset = queryset.filter(status__istartswith=status_filter)
 
         if department:
             queryset = queryset.filter(department__icontains=department)
@@ -162,21 +166,83 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
         return queryset.order_by('-created_at')
 
+    def perform_create(self, serializer):
+        """Create accommodation request and optionally start workflow if submitted"""
+        # Get status from request data, default to 'Draft' if not provided
+        status_value = serializer.validated_data.get('status', 'Draft')
+
+        # Set submitted_at timestamp if status is being submitted (not Draft)
+        extra_kwargs = {}
+        if status_value in ['Pending', 'Submitted']:
+            extra_kwargs['submitted_at'] = timezone.now()
+
+        # Save the accommodation request
+        accommodation_request = serializer.save(**extra_kwargs)
+
+        # Start workflow if status is submitted (not Draft)
+        if status_value in ['Pending', 'Submitted']:
+            try:
+                workflow_instance = WorkflowRouter.start_workflow_for_request(
+                    entity=accommodation_request,
+                    entity_type='accommodation',
+                    initiated_by=self.request.user
+                )
+
+                if workflow_instance:
+                    # Reload the accommodation request to get the updated status from workflow
+                    accommodation_request.refresh_from_db()
+                    print(f"✅ Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}")
+                    print(f"✅ Status updated to: {accommodation_request.status}")
+                else:
+                    print(f"⚠️ No active workflow configured for accommodation - using legacy approval system")
+            except Exception as e:
+                print(f"❌ Error starting workflow for Accommodation Request #{accommodation_request.id}: {str(e)}")
+                # Don't fail the request creation if workflow fails
+                pass
+
     @action(detail=True, methods=['post'])
     def submit(self, request, pk=None):
-        """Submit an accommodation request"""
+        """
+        Submit an accommodation request for approval
+        Changes status from Draft to Pending and starts workflow
+        """
         accommodation_request = self.get_object()
 
+        # Validate status
         if accommodation_request.status != 'Draft':
             return Response(
-                {'error': 'Only draft requests can be submitted'},
+                {'error': f'Cannot submit accommodation request with status {accommodation_request.status}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Update status and submitted_at
         accommodation_request.status = 'Pending'
-        accommodation_request.submitted_at = datetime.now()
+        accommodation_request.submitted_at = timezone.now()
         accommodation_request.save()
 
+        # Start workflow using WorkflowRouter
+        try:
+            workflow_instance = WorkflowRouter.start_workflow_for_request(
+                entity=accommodation_request,
+                entity_type='accommodation',
+                initiated_by=request.user
+            )
+
+            if workflow_instance:
+                # Reload the accommodation request to get the updated status from workflow
+                accommodation_request.refresh_from_db()
+                print(f"✅ Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}")
+                print(f"✅ Status updated to: {accommodation_request.status}")
+            else:
+                # Fallback to legacy approval system if no workflow configured
+                print(f"⚠️ No active workflow configured - keeping status as Pending")
+        except Exception as e:
+            print(f"❌ Error starting workflow: {str(e)}")
+            # Fallback to legacy system on error - status remains 'Pending'
+            pass
+
+        # Ensure we have the latest status before serializing
+        accommodation_request.refresh_from_db()
         serializer = self.get_serializer(accommodation_request)
         return Response(serializer.data)
 

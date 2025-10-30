@@ -20,12 +20,12 @@ class VisaApprovalStepSerializer(serializers.ModelSerializer):
 
 class VisaApplicationListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for listing visa applications"""
-    applicant_name = serializers.CharField(source='requestor_name')
+    applicant_name = serializers.CharField(source='requestor_name', read_only=True)
 
     class Meta:
         model = VisaApplication
         fields = [
-            'id', 'applicant_name', 'destination', 'visa_type', 'request_type',
+            'id', 'applicant_name', 'requestor_name', 'staff_id', 'destination', 'visa_type', 'request_type',
             'status', 'trip_start_date', 'trip_end_date', 'submitted_date',
             'last_updated_date'
         ]
@@ -86,8 +86,8 @@ class VisaApplicationCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisaApplication
         fields = [
-            # Basic Info
-            'user', 'requestor_name', 'staff_id', 'department', 'position', 'email',
+            # Basic Info - user is set automatically in perform_create
+            'requestor_name', 'staff_id', 'department', 'position', 'email',
 
             # Section A: Personal Information
             'date_of_birth', 'place_of_birth', 'citizenship',
@@ -105,15 +105,27 @@ class VisaApplicationCreateUpdateSerializer(serializers.ModelSerializer):
             'destination', 'travel_purpose', 'visa_type',
             'trip_start_date', 'trip_end_date', 'itinerary_details',
 
+            # Approvals (for admin/management use)
+            'line_focal_person', 'line_focal_dept', 'line_focal_contact', 'line_focal_date',
+            'sponsoring_dept_head', 'sponsoring_dept_head_dept', 'sponsoring_dept_head_contact',
+            'sponsoring_dept_head_date', 'ceo_approval_name', 'ceo_approval_date',
+
+            # Status
+            'status',
+
             # Additional
             'additional_comments', 'supporting_documents_notes', 'trf_reference_number'
         ]
 
     def validate(self, data):
         """Validate visa application data"""
+        from datetime import date
+
         # Check passport expiry
-        if data.get('passport_expiry_date') and data['passport_expiry_date'] < serializers.DateField().to_representation(serializers.DateField().to_internal_value('today')):
-            raise serializers.ValidationError({'passport_expiry_date': 'Passport has expired'})
+        if data.get('passport_expiry_date'):
+            today = date.today()
+            if data['passport_expiry_date'] < today:
+                raise serializers.ValidationError({'passport_expiry_date': 'Passport has expired'})
 
         # Check trip dates
         if data.get('trip_start_date') and data.get('trip_end_date'):

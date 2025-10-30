@@ -97,6 +97,16 @@ class NotificationService:
             notification: UserNotification instance
         """
         try:
+            # Check if email notifications are globally enabled
+            from accounts.models import ApplicationSetting
+            email_notifications_enabled = ApplicationSetting.get_setting('enable_email_notifications', True)
+
+            if not email_notifications_enabled:
+                # Email notifications are disabled globally
+                notification.email_error = 'Email notifications are disabled globally'
+                notification.save(update_fields=['email_error'])
+                return
+
             # Get email template if event type has one
             subject = notification.title
             message_body = notification.message

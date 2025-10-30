@@ -70,7 +70,20 @@
 
     <!-- Status Badge -->
     <div class="status-bar">
-      <span class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span>
+      <!-- Show workflow status if workflow exists -->
+      <span *ngIf="workflow" class="badge" [ngClass]="workflowService.getWorkflowStatusClass(workflow)">
+        <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; display: inline;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        {{ workflowService.getWorkflowStatus(workflow) }}
+      </span>
+      <!-- Fallback to request status if no workflow -->
+      <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span>
+      <!-- Loading state -->
+      <span *ngIf="workflowLoading" class="badge badge-secondary">
+        <span class="spinner-sm"></span>
+        Loading workflow...
+      </span>
       <span class="text-muted">TRF ID: #{{ trfData.id }}</span>
     </div>
 
@@ -308,6 +321,46 @@
         </div>
       </section>
 
+      <!-- Passport Details (Overseas/Home Leave) -->
+      <section class="detail-section" *ngIf="isOverseas && trfData.passportDetails">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
+          </svg>
+          Passport Details
+        </h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Full Name</label>
+            <p>{{ trfData.passportDetails.full_name || trfData.passportDetails.fullName || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Passport Number</label>
+            <p>{{ trfData.passportDetails.passport_number || trfData.passportDetails.passportNumber || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Nationality</label>
+            <p>{{ trfData.passportDetails.nationality || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Date of Birth</label>
+            <p>{{ formatDate(trfData.passportDetails.date_of_birth || trfData.passportDetails.dateOfBirth) }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Place of Birth</label>
+            <p>{{ trfData.passportDetails.place_of_birth || trfData.passportDetails.placeOfBirth || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Passport Issue Date</label>
+            <p>{{ formatDate(trfData.passportDetails.passport_issue_date || trfData.passportDetails.passportIssueDate) }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Passport Expiry Date</label>
+            <p>{{ formatDate(trfData.passportDetails.passport_expiry_date || trfData.passportDetails.passportExpiryDate) }}</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Advance Request (Overseas/Home Leave) -->
       <section class="detail-section" *ngIf="isOverseas && (trfData.bankDetails || trfData.advanceAmounts?.length > 0)">
         <h3 class="section-title">
@@ -321,12 +374,32 @@
           <h4 class="sub-title">Bank Details</h4>
           <div class="detail-grid">
             <div class="detail-item">
+              <label>Account Name</label>
+              <p>{{ trfData.bankDetails.account_name || trfData.bankDetails.accountName || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
               <label>Bank Name</label>
               <p>{{ trfData.bankDetails.bank_name || trfData.bankDetails.bankName || 'N/A' }}</p>
             </div>
             <div class="detail-item">
               <label>Account Number</label>
               <p>{{ trfData.bankDetails.account_number || trfData.bankDetails.accountNumber || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>SWIFT Code</label>
+              <p>{{ trfData.bankDetails.swift_code || trfData.bankDetails.swiftCode || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>IBAN</label>
+              <p>{{ trfData.bankDetails.iban || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Currency</label>
+              <p>{{ trfData.bankDetails.currency || 'N/A' }}</p>
+            </div>
+            <div class="detail-item full-width" *ngIf="trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress">
+              <label>Branch Address</label>
+              <p>{{ trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress }}</p>
             </div>
           </div>
         </div>
@@ -377,6 +450,42 @@
         </h3>
         <div class="purpose-text">
           <p>{{ trfData.additionalComments }}</p>
+        </div>
+      </section>
+
+      <!-- Request Metadata -->
+      <section class="detail-section">
+        <h3 class="section-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Request Information
+        </h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Request ID</label>
+            <p>#{{ trfData.id }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Travel Type</label>
+            <p>{{ trfData.travelType }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Estimated Cost</label>
+            <p>{{ formatNumber(trfData.estimatedCost, 2) }} USD</p>
+          </div>
+          <div class="detail-item">
+            <label>Current Status</label>
+            <p><span class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span></p>
+          </div>
+          <div class="detail-item">
+            <label>Created At</label>
+            <p>{{ formatDate(trfData.createdAt) }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Last Updated</label>
+            <p>{{ formatDate(trfData.updatedAt) }}</p>
+          </div>
         </div>
       </section>
 

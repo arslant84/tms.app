@@ -5,13 +5,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ExpenseClaimsService } from '../../services/expense-claims.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import {
   ExpenseClaim,
   DocumentType,
   StaffType,
   ExecutiveStatus,
   MedicalClaimApplicable,
-  toBackendFormat
+  toBackendFormat,
+  toFrontendFormat
 } from '../../models/expense-claim.model';
 
 // Time validation regex
@@ -44,6 +46,7 @@ export class ExpenseCreateComponent implements OnInit {
   claimId: string | number | null = null;
   loading = false;
   submitting = false;
+  defaultCurrency = 'USD';
 
   // Calculated totals
   totalMileage = 0;
@@ -59,10 +62,16 @@ export class ExpenseCreateComponent implements OnInit {
     private router: Router,
     private expenseService: ExpenseClaimsService,
     private toastService: ToastService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private appSettingsService: AppSettingsService
   ) {}
 
   ngOnInit(): void {
+    // Load default currency from settings
+    this.appSettingsService.settings$.subscribe(settings => {
+      this.defaultCurrency = settings.default_currency || 'USD';
+    });
+
     this.initForm();
 
     // Check if we're in edit mode
@@ -150,20 +159,20 @@ export class ExpenseCreateComponent implements OnInit {
     return this.expenseForm.get('expenseItems') as FormArray;
   }
 
-  createExpenseItem(): FormGroup {
+  createExpenseItem(data?: any): FormGroup {
     return this.fb.group({
-      date: ['', [Validators.required]],
+      date: [data?.date || '', [Validators.required]],
       claimOrTravelDetails: this.fb.group({
-        from: [''],
-        to: [''],
-        placeOfStay: ['']
+        from: [data?.claimOrTravelDetails?.from || ''],
+        to: [data?.claimOrTravelDetails?.to || ''],
+        placeOfStay: [data?.claimOrTravelDetails?.placeOfStay || '']
       }),
-      officialMileageKM: [null],
-      transport: [null],
-      hotelAccommodationAllowance: [null],
-      outStationAllowanceMeal: [null],
-      miscellaneousAllowance10Percent: [null],
-      otherExpenses: [null]
+      officialMileageKM: [data?.officialMileageKM || null],
+      transport: [data?.transport || null],
+      hotelAccommodationAllowance: [data?.hotelAccommodationAllowance || null],
+      outStationAllowanceMeal: [data?.outStationAllowanceMeal || null],
+      miscellaneousAllowance10Percent: [data?.miscellaneousAllowance10Percent || null],
+      otherExpenses: [data?.otherExpenses || null]
     });
   }
 
@@ -182,12 +191,17 @@ export class ExpenseCreateComponent implements OnInit {
     return this.expenseForm.get('informationOnForeignExchangeRate') as FormArray;
   }
 
-  createForeignExchangeRate(): FormGroup {
+  createForeignExchangeRate(data?: any): FormGroup {
     return this.fb.group({
-      date: ['', [Validators.required]],
-      typeOfCurrency: ['', [Validators.required]],
-      sellingRateTTOD: [null]
+      date: [data?.date || '', [Validators.required]],
+      typeOfCurrency: [data?.typeOfCurrency || '', [Validators.required]],
+      sellingRateTTOD: [data?.sellingRateTTOD || null]
     });
+  }
+
+  // Alias for consistency with loadClaimData
+  createForeignExchangeRateItem(data?: any): FormGroup {
+    return this.createForeignExchangeRate(data);
   }
 
   addForeignExchangeRate(): void {
@@ -335,7 +349,7 @@ export class ExpenseCreateComponent implements OnInit {
       informationOnForeignExchangeRate: formValue.informationOnForeignExchangeRate,
       financialSummary: formValue.financialSummary,
       declaration: formValue.declaration,
-      status: 'Pending Verification'
+      status: 'Draft'
     };
   }
 
@@ -344,16 +358,49 @@ export class ExpenseCreateComponent implements OnInit {
 
     this.loading = true;
     this.expenseService.getClaimById(Number(id)).subscribe({
-      next: (claim) => {
-        // TODO: Convert backend format to frontend format and patch form
-        // For now, just log
-        console.log('Loaded claim data:', claim);
+      next: (backendClaim: any) => {
+        console.log('Loaded claim data from backend:', backendClaim);
+
+        // Convert backend format to frontend format
+        const frontendClaim = toFrontendFormat(backendClaim as any);
+        console.log('Converted to frontend format:', frontendClaim);
+
+        // Patch header details
+        this.expenseForm.patchValue({
+          headerDetails: frontendClaim.headerDetails,
+          bankDetails: frontendClaim.bankDetails,
+          medicalClaimDetails: frontendClaim.medicalClaimDetails,
+          financialSummary: frontendClaim.financialSummary,
+          declaration: frontendClaim.declaration
+        });
+
+        // Clear and rebuild expense items array
+        this.expenseItems.clear();
+        if (frontendClaim.expenseItems && frontendClaim.expenseItems.length > 0) {
+          frontendClaim.expenseItems.forEach((item: any) => {
+            this.expenseItems.push(this.createExpenseItem(item));
+          });
+        } else {
+          // Add one default item if none exist
+          this.addExpenseItem();
+        }
+
+        // Clear and rebuild foreign exchange rate array
+        this.foreignExchangeRates.clear();
+        if (frontendClaim.informationOnForeignExchangeRate && frontendClaim.informationOnForeignExchangeRate.length > 0) {
+          frontendClaim.informationOnForeignExchangeRate.forEach((fx: any) => {
+            this.foreignExchangeRates.push(this.createForeignExchangeRateItem(fx));
+          });
+        }
+
+        this.calculateTotals();
         this.loading = false;
       },
       error: (err) => {
         this.toastService.error('Failed to load claim data');
         this.loading = false;
         console.error('Error loading claim:', err);
+        this.router.navigate(['/expenses']);
       }
     });
   }

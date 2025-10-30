@@ -67,6 +67,27 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for user profile updates - only editable fields"""
+    # Make all fields optional for partial updates
+    name = serializers.CharField(required=False)
+    phone = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    gender = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    profile_photo = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    class Meta:
+        model = User
+        fields = ['name', 'phone', 'gender', 'profile_photo']
+
+    def validate_profile_photo(self, value):
+        """Validate profile photo - can be None or a base64 string"""
+        if value and isinstance(value, str) and value.strip():
+            # Basic validation for base64 image data
+            if not value.startswith('data:image/'):
+                raise serializers.ValidationError('Invalid image format. Must be a base64 data URL.')
+        return value
+
+
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True, required=True)

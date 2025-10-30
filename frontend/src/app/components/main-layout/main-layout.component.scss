@@ -268,55 +268,9 @@ $transition-speed: 0.3s;
 
 // Footer Styles
 .footer-wrapper {
-  background: #354A5F; // SAP Fiori footer color
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-  height: $footer-height; // keep footer at fixed height
-  padding: 0 1.5rem; // horizontal padding only; vertical via fixed height
-  box-sizing: border-box;
-  z-index: 10;
   width: 100%;
   margin-top: auto;
   flex-shrink: 0;
-  display: flex;
-  align-items: center; // vertically center
-  justify-content: center;
-
-  .main-footer {
-    .footer-content {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-
-      p {
-        margin: 0;
-        color: rgba(255, 255, 255, 0.85);
-        font-size: 0.875rem;
-      }
-      
-      .footer-links {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-        
-        a {
-          color: rgba(255, 255, 255, 0.85);
-          text-decoration: none;
-          font-size: 0.875rem;
-          
-          &:hover {
-            text-decoration: underline;
-            color: white;
-          }
-        }
-        
-        .separator {
-          color: rgba(255, 255, 255, 0.4);
-        }
-      }
-    }
-  }
 }
 
 // Right Panel Styles
@@ -381,16 +335,5 @@ $transition-speed: 0.3s;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1040;
-  }
-  
-  .footer-wrapper {
-    .main-footer {
-      .footer-content {
-        flex-direction: column;
-        gap: 0.5rem;
-        text-align: center;
-        justify-content: center;
-      }
-    }
   }
 }

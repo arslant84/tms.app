@@ -26,6 +26,14 @@ class AccommodationRoom(models.Model):
         return self.name
 
 class AccommodationRequest(models.Model):
+    """
+    Accommodation request model
+    Status will be set by workflow engine based on configured approval roles
+    Examples: "Draft", "Pending HOD", "Pending Line Manager", "Approved", etc.
+    """
+
+    # Note: STATUS_CHOICES removed to support dynamic workflow statuses
+
     requestor_name = models.CharField(max_length=255)
     staff_id = models.CharField(max_length=255, blank=True, null=True)
     department = models.CharField(max_length=255, blank=True, null=True)
@@ -33,7 +41,7 @@ class AccommodationRequest(models.Model):
     cost_center = models.CharField(max_length=255, blank=True, null=True)
     tel_email = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
-    status = models.CharField(max_length=255)
+    status = models.CharField(max_length=100, default='Draft', help_text="Dynamic status set by workflow engine")
     estimated_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     additional_comments = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(blank=True, null=True)

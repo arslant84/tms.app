@@ -356,6 +356,9 @@ class WorkflowEngine:
             performed_by=initiator
         )
 
+        # Update entity status to reflect current step
+        WorkflowEngine._update_entity_status_from_step(workflow_instance, step)
+
         return step_execution
 
     @staticmethod
@@ -504,6 +507,25 @@ class WorkflowEngine:
         entity = workflow_instance.content_object
         if entity and hasattr(entity, 'status'):
             entity.status = status
+            entity.save(update_fields=['status'])
+
+    @staticmethod
+    def _update_entity_status_from_step(workflow_instance: WorkflowInstance, step: WorkflowStep):
+        """Update entity status to reflect current workflow step"""
+        from accounts.models import Role
+
+        entity = workflow_instance.content_object
+        if entity and hasattr(entity, 'status'):
+            # Generate status based on approver role
+            if step.approver_role:
+                # approver_role is stored as UUID, need to get role name
+                try:
+                    role = Role.objects.get(id=step.approver_role)
+                    entity.status = f"Pending {role.name}"
+                except Role.DoesNotExist:
+                    entity.status = "Pending Approval"
+            else:
+                entity.status = "Pending Approval"
             entity.save(update_fields=['status'])
 
     @staticmethod

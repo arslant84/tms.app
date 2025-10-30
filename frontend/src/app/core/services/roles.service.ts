@@ -40,8 +40,8 @@ export interface TmsApp_Roles_RoleFormValues {
 @Injectable({ providedIn: 'root' })
 export class TmsApp_Core_Services_RolesService {
   private apiBase = environment.apiUrl;
-  private rolesUrl = `${this.apiBase}/roles`;
-  private permissionsUrl = `${this.apiBase}/permissions`;
+  private rolesUrl = `${this.apiBase}/roles/`;
+  private permissionsUrl = `${this.apiBase}/permissions/`;
 
   constructor(private http: HttpClient) {}
 
@@ -57,12 +57,12 @@ export class TmsApp_Core_Services_RolesService {
 
   /** Update role, expects payload plus id */
   updateRole(id: string, payload: TmsApp_Roles_RoleFormValues): Observable<TmsApp_Roles_RoleWithPermissions> {
-    return this.http.put<TmsApp_Roles_RoleWithPermissions>(`${this.rolesUrl}/${id}/`, payload);
+    return this.http.put<TmsApp_Roles_RoleWithPermissions>(`${this.rolesUrl}${id}/`, payload);
   }
 
   /** Delete role by id */
   deleteRole(id: string): Observable<{ success: boolean }> {
-    return this.http.delete<{ success: boolean }>(`${this.rolesUrl}/${id}/`);
+    return this.http.delete<{ success: boolean }>(`${this.rolesUrl}${id}/`);
   }
 
   /** Get all permissions */

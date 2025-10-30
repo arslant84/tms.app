@@ -46,7 +46,7 @@ class WorkflowTemplateViewSet(viewsets.ModelViewSet):
         """Return appropriate serializer based on action"""
         if self.action == 'retrieve':
             return WorkflowTemplateDetailSerializer
-        elif self.action == 'create':
+        elif self.action in ['create', 'update', 'partial_update']:
             return WorkflowTemplateCreateSerializer
         return WorkflowTemplateSerializer
 
@@ -311,6 +311,31 @@ class WorkflowStepExecutionViewSet(viewsets.ModelViewSet):
         return queryset.select_related(
             'workflow_instance', 'workflow_step', 'assigned_to', 'actioned_by'
         )
+
+    @action(detail=False, methods=['get'])
+    def my_pending(self, request):
+        """
+        Get pending approvals for current user
+        Returns all step executions assigned to this user or their role
+        """
+        user = request.user
+        user_role = user.role if hasattr(user, 'role') and user.role else None
+
+        # Build query for user's pending approvals
+        queryset = WorkflowStepExecution.objects.filter(
+            status='pending'
+        ).filter(
+            Q(assigned_to=user) |
+            Q(workflow_step__approver_role=str(user_role.id) if user_role else None, assigned_to__isnull=True)
+        ).select_related(
+            'workflow_instance',
+            'workflow_instance__initiated_by',
+            'workflow_step',
+            'assigned_to'
+        ).order_by('-created_at')
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def take_action(self, request, pk=None):

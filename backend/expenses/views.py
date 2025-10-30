@@ -4,9 +4,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from datetime import datetime
 
-from .models import ExpenseClaim, ExpenseItem, ClaimsApprovalStep, ExpenseStatus, ExpenseCategory
+from .models import ExpenseClaim, ExpenseItem, ClaimsApprovalStep, ExpenseCategory
+from workflows.router import WorkflowRouter
 from .serializers import (
     ExpenseClaimSerializer,
     ExpenseClaimDetailSerializer,
@@ -50,6 +52,37 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
             return ExpenseClaimUpdateSerializer
         return ExpenseClaimSerializer
 
+    def perform_create(self, serializer):
+        """Create expense claim and start workflow if submitted"""
+        user = self.request.user
+
+        # Get status from request data, default to 'Draft' if not provided
+        status_value = serializer.validated_data.get('status', 'Draft')
+
+        # Save the expense claim
+        expense_claim = serializer.save(user=user)
+
+        # Start workflow if status is submitted (not Draft)
+        if status_value in ['Pending', 'Pending Verification', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
+            try:
+                workflow_instance = WorkflowRouter.start_workflow_for_request(
+                    entity=expense_claim,
+                    entity_type='expenseclaim',
+                    initiated_by=user
+                )
+
+                if workflow_instance:
+                    # Reload the expense claim to get the updated status from workflow
+                    expense_claim.refresh_from_db()
+                    print(f"✅ Workflow started for Expense Claim #{expense_claim.id}: Workflow Instance #{workflow_instance.id}")
+                    print(f"✅ Status updated to: {expense_claim.status}")
+                else:
+                    print(f"⚠️ No active workflow configured for expenseclaim - using legacy approval system")
+            except Exception as e:
+                print(f"❌ Error starting workflow for Expense Claim #{expense_claim.id}: {str(e)}")
+                # Don't fail the request creation if workflow fails
+                pass
+
     def get_queryset(self):
         """Filter expense claims based on query parameters and user role"""
         queryset = self.queryset.select_related('user', 'trf').prefetch_related('items')
@@ -66,7 +99,9 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
         # Filter by status
         status_filter = self.request.query_params.get('status', None)
         if status_filter:
-            queryset = queryset.filter(status=status_filter)
+            # Use startswith to match workflow statuses like "Pending Line Manager"
+            # when filter is "Pending"
+            queryset = queryset.filter(status__istartswith=status_filter)
 
         # Filter by category
         category = self.request.query_params.get('category', None)
@@ -100,7 +135,7 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
         expense = self.get_object()
 
         # Check if the expense claim is in draft status
-        if expense.status != ExpenseStatus.DRAFT:
+        if expense.status != 'Draft':
             return Response(
                 {'error': 'Only draft expense claims can be submitted'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -120,19 +155,49 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Update status
-        expense.status = ExpenseStatus.SUBMITTED
+        # Update status to Pending
+        expense.status = 'Pending'
         expense.save()
 
-        # Create initial approval step
-        ClaimsApprovalStep.objects.create(
-            claim=expense,
-            step_role='HOD',
-            step_name='HOD Approval',
-            status='Pending'
-        )
+        # Start workflow using WorkflowRouter
+        try:
+            workflow_instance = WorkflowRouter.start_workflow_for_request(
+                entity=expense,
+                entity_type='expenseclaim',
+                initiated_by=request.user
+            )
 
-        serializer = self.get_serializer(expense)
+            if workflow_instance:
+                # Reload the expense claim to get the updated status from workflow
+                expense.refresh_from_db()
+                print(f"✅ Workflow started for Expense Claim #{expense.id}: Workflow Instance #{workflow_instance.id}")
+                print(f"✅ Status updated to: {expense.status}")
+            else:
+                # Fallback to legacy approval system if no workflow configured
+                print(f"⚠️ No active workflow configured - creating legacy approval step")
+                ClaimsApprovalStep.objects.create(
+                    claim=expense,
+                    step_role='HOD',
+                    step_name='HOD Approval',
+                    status='Pending'
+                )
+                expense.status = 'Pending Verification'
+                expense.save()
+        except Exception as e:
+            print(f"❌ Error starting workflow: {str(e)}")
+            # Fallback to legacy system on error
+            ClaimsApprovalStep.objects.create(
+                claim=expense,
+                step_role='HOD',
+                step_name='HOD Approval',
+                status='Pending'
+            )
+            expense.status = 'Pending Verification'
+            expense.save()
+
+        # Ensure we have the latest status before serializing
+        expense.refresh_from_db()
+        serializer = ExpenseClaimDetailSerializer(expense)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
@@ -165,8 +230,8 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
 
         # Update expense claim status based on approval workflow
         status_progression = {
-            'HOD': 'UNDER_REVIEW',
-            'Finance': 'APPROVED'
+            'HOD': 'Under Review',
+            'Finance': 'Approved'
         }
 
         if step_role in status_progression:
@@ -174,7 +239,7 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
             expense.save()
 
             # Create next approval step if not final
-            if expense.status != ExpenseStatus.APPROVED:
+            if expense.status != 'Approved':
                 next_role = 'Finance' if step_role == 'HOD' else None
                 if next_role:
                     ClaimsApprovalStep.objects.get_or_create(
@@ -218,7 +283,7 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
         approval_step.save()
 
         # Update expense claim status
-        expense.status = ExpenseStatus.REJECTED
+        expense.status = 'Rejected'
         expense.save()
 
         expense_serializer = ExpenseClaimDetailSerializer(expense)
@@ -237,15 +302,14 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
             )
 
         # Check if the expense claim can be cancelled
-        if expense.status in [ExpenseStatus.APPROVED, ExpenseStatus.PAID]:
+        if expense.status in ['Approved', 'Paid']:
             return Response(
                 {'error': 'Cannot cancel approved or paid expense claims'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Update status to CANCELLED (need to add this to ExpenseStatus enum)
-        # For now, use REJECTED as a placeholder
-        expense.status = ExpenseStatus.REJECTED
+        # Update status to Cancelled
+        expense.status = 'Cancelled'
         expense.save()
 
         # Optionally create an approval step to track cancellation
@@ -276,14 +340,14 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
             )
 
         # Check if the expense claim is approved
-        if expense.status != ExpenseStatus.APPROVED:
+        if expense.status != 'Approved':
             return Response(
                 {'error': 'Only approved expense claims can be marked as paid'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         # Update status
-        expense.status = ExpenseStatus.PAID
+        expense.status = 'Paid'
         expense.save()
 
         serializer = self.get_serializer(expense)
@@ -293,7 +357,7 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
     def pending_approvals(self, request):
         """Get expense claims pending approval"""
         queryset = ExpenseClaim.objects.filter(
-            status__in=[ExpenseStatus.SUBMITTED, ExpenseStatus.UNDER_REVIEW]
+            status__in=['Submitted', 'Under Review', 'Pending', 'Pending Verification', 'Pending Line Manager', 'Pending HOD']
         ).order_by('-created_at')
 
         serializer = self.get_serializer(queryset, many=True)

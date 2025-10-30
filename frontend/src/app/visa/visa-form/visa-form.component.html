@@ -28,6 +28,9 @@
             <div class="col-md-6 mb-3">
               <label class="form-label">Full Name <span class="text-danger">*</span></label>
               <input type="text" class="form-control" formControlName="requestor_name" required>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('requestor_name')">
+                Full Name is required
+              </div>
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Staff ID</label>
@@ -188,6 +191,9 @@
           <div class="col-md-4 mb-3">
             <label class="form-label">Destination Country <span class="text-danger">*</span></label>
             <input type="text" class="form-control" formControlName="destination" required>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('destination')">
+              Destination is required
+            </div>
           </div>
           <div class="col-md-4 mb-3">
             <label class="form-label">Visa Type <span class="text-danger">*</span></label>
@@ -195,6 +201,9 @@
               <option value="">Select Visa Type</option>
               <option *ngFor="let type of visaTypes" [value]="type">{{ type }}</option>
             </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('visa_type')">
+              Visa Type is required
+            </div>
           </div>
           <div class="col-md-4 mb-3">
             <label class="form-label">TRF Reference Number</label>
@@ -211,6 +220,9 @@
           <div class="col-12 mb-3">
             <label class="form-label">Travel Purpose <span class="text-danger">*</span></label>
             <textarea class="form-control" formControlName="travel_purpose" rows="3" required placeholder="Describe the purpose of your visit..."></textarea>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('travel_purpose')">
+              Travel Purpose is required
+            </div>
           </div>
           <div class="col-12 mb-3">
             <label class="form-label">Itinerary Details</label>

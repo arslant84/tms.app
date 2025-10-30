@@ -54,12 +54,12 @@ export class TrfWizardComponent implements OnInit {
   selectedTravelType: 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties' | null = null;
 
   // Store form data from each step
-  requestorData: any = null;
-  domesticTravelData: any = null;
-  overseasTravelData: any = null;
-  homeLeaveData: any = null;
-  externalPartiesData: any = null;
-  approvalSubmissionData: any = null;
+  requestorData: any = {};
+  domesticTravelData: any = {};
+  overseasTravelData: any = {};
+  homeLeaveData: any = {};
+  externalPartiesData: any = {};
+  approvalSubmissionData: any = {};
 
   constructor(
     private trfService: TrfService,
@@ -181,12 +181,13 @@ export class TrfWizardComponent implements OnInit {
       case 'External Parties':
         this.externalPartiesData = {
           purpose: data.purpose,
-          externalFullName: data.external_party_name || data.externalPartyName,
-          externalOrganization: data.external_party_organization || data.externalPartyOrganization,
-          externalRefToAuthorityLetter: data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter,
-          externalCostCenter: data.external_cost_center || data.externalCostCenter,
-          accommodation: data.accommodation_details || data.accommodationDetails || [],
-          transport: data.company_transport_details || data.transportDetails || []
+          externalFullName: data.external_full_name || '',
+          externalOrganization: data.external_organization || '',
+          externalRefToAuthorityLetter: data.external_ref_to_authority_letter || '',
+          externalCostCenter: data.external_cost_center || '',
+          itinerary: data.itinerary_segments || data.itinerary || [],
+          accommodation: data.accommodation_details || [],
+          transport: data.transport_details || []
         };
         break;
     }
@@ -594,15 +595,15 @@ export class TrfWizardComponent implements OnInit {
     mainTrf.purpose = this.externalPartiesData?.purpose || '';
     mainTrf.additional_comments = '';
 
-    // Add external party specific fields
-    mainTrf.external_party_name = this.externalPartiesData?.externalFullName || '';
-    mainTrf.external_party_organization = this.externalPartiesData?.externalOrganization || '';
+    // Add external party specific fields - CORRECTED FIELD NAMES
+    mainTrf.external_full_name = this.externalPartiesData?.externalFullName || '';
+    mainTrf.external_organization = this.externalPartiesData?.externalOrganization || '';
     mainTrf.external_ref_to_authority_letter = this.externalPartiesData?.externalRefToAuthorityLetter || '';
     mainTrf.external_cost_center = this.externalPartiesData?.externalCostCenter || '';
 
     return {
       mainTrf,
-      itinerarySegments: [],
+      itinerarySegments: this.externalPartiesData?.itinerary || [],
       mealSelections: [],
       accommodation: this.externalPartiesData?.accommodation || [],
       transport: this.externalPartiesData?.transport || [],

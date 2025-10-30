@@ -15,9 +15,13 @@ class VisaApplication(models.Model):
     trip_end_date = models.DateField(blank=True, null=True)
     passport_number = models.CharField(max_length=255, blank=True, null=True)
     passport_expiry_date = models.DateField(blank=True, null=True)
-    status = models.CharField(max_length=255, default='Pending Department Focal')
+
+    # Note: STATUS_CHOICES removed to support dynamic workflow statuses
+    # Status will be set by workflow engine based on configured approval roles
+    # Examples: "Draft", "Pending HOD", "Pending Line Manager", "Approved", etc.
+    status = models.CharField(max_length=100, default='Draft', help_text="Dynamic status set by workflow engine")
     additional_comments = models.TextField(blank=True, null=True)
-    submitted_date = models.DateTimeField(auto_now_add=True)
+    submitted_date = models.DateTimeField(blank=True, null=True)
     last_updated_date = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -57,6 +61,9 @@ class VisaApplication(models.Model):
     itinerary_details = models.TextField(blank=True, null=True)
     supporting_documents_notes = models.TextField(blank=True, null=True)
 
+    class Meta:
+        ordering = ['-created_at']
+
     def __str__(self):
         return self.requestor_name
 
@@ -66,13 +73,13 @@ class VisaApprovalStep(models.Model):
     step_role = models.CharField(max_length=255)
     step_name = models.CharField(max_length=255)
     status = models.CharField(max_length=255)
-    step_date = models.DateTimeField(auto_now_add=True)
+    step_date = models.DateTimeField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('visa', 'step_role')
+        ordering = ['-created_at']
 
     def __str__(self):
         return f'{self.visa} - {self.step_name}'

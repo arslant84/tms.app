@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -26,7 +26,7 @@ export interface HomeLeaveDetails {
   templateUrl: './home-leave-details.component.html',
   styleUrls: ['./home-leave-details.component.scss']
 })
-export class HomeLeaveDetailsComponent implements OnInit {
+export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   @Input() initialData: Partial<HomeLeaveDetails> = {};
   @Output() formSubmit = new EventEmitter<HomeLeaveDetails>();
 
@@ -37,6 +37,13 @@ export class HomeLeaveDetailsComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // When initialData changes (e.g., loaded from API in edit mode), rebuild the form
+    if (changes['initialData'] && !changes['initialData'].firstChange && this.homeLeaveForm) {
+      this.initForm();  // Rebuild form with new data
+    }
   }
 
   private initForm(): void {

@@ -49,7 +49,18 @@
 
     <!-- Status Badge -->
     <div class="status-bar">
-      <span class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span>
+      <!-- Show workflow status if workflow exists -->
+      <span *ngIf="workflow" class="badge" [ngClass]="getWorkflowStatusClass()">
+        <i class="bi bi-diagram-3 me-1"></i>
+        {{ getWorkflowStatus() }}
+      </span>
+      <!-- Fallback to request status if no workflow -->
+      <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span>
+      <!-- Loading state -->
+      <span *ngIf="workflowLoading" class="badge bg-secondary">
+        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        Loading workflow...
+      </span>
       <span class="text-muted">Created: {{ formatDate(request.updatedAt) }}</span>
     </div>
 

@@ -238,15 +238,16 @@ export class TrfCreateComponent implements OnInit {
   
   private submitDomesticForm(): void {
     const formData = this.trfForm.value;
-    
+
     // Add status and timestamps
+    // Use 'Pending' status to trigger workflow
     const trf: DomesticTravelRequestForm = {
       ...formData,
-      status: 'Submitted',
+      status: 'Pending',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+
     this.trfService.createDomesticTrf(trf).subscribe({
       next: () => {
         this.handleSubmitSuccess();
@@ -259,15 +260,16 @@ export class TrfCreateComponent implements OnInit {
   
   private submitOverseasForm(): void {
     const formData = this.trfForm.value;
-    
+
     // Add status and timestamps
+    // Use 'Pending' status to trigger workflow
     const trf: OverseasTravelRequestForm = {
       ...formData,
-      status: 'Submitted',
+      status: 'Pending',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+
     this.trfService.createOverseasTrf(trf).subscribe({
       next: () => {
         this.handleSubmitSuccess();
@@ -286,9 +288,9 @@ export class TrfCreateComponent implements OnInit {
   private handleSubmitSuccess(): void {
     this.isSubmitting = false;
     this.submitSuccess = true;
-    
+
     setTimeout(() => {
-      this.router.navigate(['/trf-management']);
+      this.router.navigate(['/trf']);
     }, 2000);
   }
   

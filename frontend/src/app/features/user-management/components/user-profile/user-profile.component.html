@@ -1,178 +1,151 @@
-<div class="container-fluid p-4">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h2 class="mb-1">My Profile</h2>
-      <p class="text-muted mb-0">View and edit your personal information</p>
+<div class="profile-page-container">
+  <!-- Page Header -->
+  <div class="page-header mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <i class="bi bi-person-circle page-icon"></i>
+      <h1 class="page-title mb-0">User Profile</h1>
     </div>
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="loading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
+  <div *ngIf="loading" class="loading-container">
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3 text-muted">Loading profile...</p>
     </div>
-    <p class="mt-3 text-muted">Loading profile...</p>
   </div>
 
-  <!-- Profile Content -->
-  <div *ngIf="!loading && currentUser" class="row">
-    <!-- Left Column - Profile Card -->
-    <div class="col-md-4 mb-4">
-      <div class="card profile-card">
-        <div class="card-body text-center">
-          <div class="profile-avatar mb-3">
-            <div class="avatar-circle-large">
-              {{ getInitials() }}
-            </div>
-          </div>
-          <h4 class="mb-1">{{ currentUser.name }}</h4>
-          <p class="text-muted mb-2">{{ currentUser.email }}</p>
-          <span class="badge {{ getStatusBadgeClass() }} mb-3">
-            {{ getStatusText() }}
-          </span>
-          <hr>
-          <div class="profile-info">
-            <div class="info-row">
-              <span class="info-label">Role:</span>
-              <span class="info-value">{{ currentUser.role?.name || 'No Role' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Department:</span>
-              <span class="info-value">{{ currentUser.department || 'N/A' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Staff ID:</span>
-              <span class="info-value">{{ currentUser.staff_id || 'N/A' }}</span>
-            </div>
-            <div class="info-row" *ngIf="currentUser.phone">
-              <span class="info-label">Phone:</span>
-              <span class="info-value">{{ currentUser.phone }}</span>
-            </div>
-            <div class="info-row" *ngIf="currentUser.gender">
-              <span class="info-label">Gender:</span>
-              <span class="info-value">{{ currentUser.gender }}</span>
-            </div>
-            <div class="info-row" *ngIf="currentUser.is_admin">
-              <span class="info-label">Administrator:</span>
-              <span class="info-value">
-                <i class="bi bi-check-circle-fill text-success"></i> Yes
-              </span>
-            </div>
-          </div>
-        </div>
+  <!-- Profile Card -->
+  <div *ngIf="!loading && currentUser" class="profile-card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Personal Information</h2>
+        <p class="card-description">View and manage your profile details.</p>
       </div>
+      <button *ngIf="!isEditing" type="button" class="btn btn-outline-primary" (click)="toggleEdit()">
+        <i class="bi bi-pencil me-2"></i>Edit Profile
+      </button>
     </div>
 
-    <!-- Right Column - Edit Form -->
-    <div class="col-md-8">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">Edit Profile</h5>
+    <div class="card-content">
+      <!-- Profile Photo Section -->
+      <div class="profile-photo-section">
+        <div class="avatar-container">
+          <div class="avatar-circle" *ngIf="!previewImage">
+            {{ getInitials() }}
+          </div>
+          <img *ngIf="previewImage" [src]="previewImage" alt="{{ currentUser.name }}" class="avatar-image">
+
+          <button *ngIf="isEditing" type="button" class="camera-button" (click)="triggerFileInput()" title="Upload photo">
+            <i class="bi bi-camera-fill"></i>
+          </button>
         </div>
-        <div class="card-body">
-          <form [formGroup]="profileForm" (ngSubmit)="onSubmitProfile()">
-            <div class="row g-3">
-              <!-- Name -->
-              <div class="col-12">
-                <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
-                <input
-                  type="text"
-                  id="name"
-                  class="form-control"
-                  formControlName="name"
-                  [class.is-invalid]="isFieldInvalid('profile', 'name')"
-                  placeholder="Enter your full name">
-                <div class="invalid-feedback" *ngIf="isFieldInvalid('profile', 'name')">
-                  {{ getFieldError('profile', 'name') }}
-                </div>
-              </div>
 
-              <!-- Phone -->
-              <div class="col-md-6">
-                <label for="phone" class="form-label">Phone Number</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  class="form-control"
-                  formControlName="phone"
-                  placeholder="+1 234 567 8900">
-              </div>
+        <div class="user-info">
+          <h2 class="user-name">{{ currentUser.name }}</h2>
+          <p class="user-email">{{ currentUser.email }}</p>
 
-              <!-- Gender -->
-              <div class="col-md-6">
-                <label for="gender" class="form-label">Gender</label>
-                <select
-                  id="gender"
-                  class="form-select"
-                  formControlName="gender">
-                  <option value="">Select Gender</option>
-                  <option *ngFor="let g of genders" [value]="g.value">{{ g.label }}</option>
-                </select>
-              </div>
-
-              <!-- Read-only fields -->
-              <div class="col-12">
-                <hr class="my-4">
-                <h6 class="text-muted mb-3">Account Information (Read-only)</h6>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">Email Address</label>
-                <input
-                  type="email"
-                  class="form-control"
-                  [value]="currentUser.email"
-                  disabled>
-                <small class="text-muted">Contact admin to change email</small>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">Department</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [value]="currentUser.department || 'N/A'"
-                  disabled>
-                <small class="text-muted">Contact admin to change department</small>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">Staff ID</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [value]="currentUser.staff_id || 'N/A'"
-                  disabled>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">Role</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [value]="currentUser.role?.name || 'No Role'"
-                  disabled>
-                <small class="text-muted">Contact admin to change role</small>
-              </div>
-            </div>
-
-            <div class="d-flex gap-2 mt-4">
-              <button type="submit" class="btn btn-primary" [disabled]="submitting || profileForm.invalid">
-                <span *ngIf="!submitting">
-                  <i class="bi bi-save me-2"></i>Save Changes
-                </span>
-                <span *ngIf="submitting">
-                  <span class="spinner-border spinner-border-sm me-2"></span>Saving...
-                </span>
-              </button>
-              <button type="button" class="btn btn-outline-secondary" (click)="openPasswordModal()">
-                <i class="bi bi-key me-2"></i>Change Password
-              </button>
-            </div>
-          </form>
+          <div *ngIf="isEditing" class="photo-actions">
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="triggerFileInput()">
+              <i class="bi bi-upload me-1"></i>Upload Photo
+            </button>
+            <button *ngIf="previewImage" type="button" class="btn btn-sm btn-outline-danger" (click)="removePhoto()">
+              <i class="bi bi-x-lg me-1"></i>Remove
+            </button>
+          </div>
         </div>
+
+        <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" class="d-none">
       </div>
+
+      <!-- Profile Form -->
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmitProfile()" class="profile-form">
+        <div class="form-grid">
+          <!-- Editable Fields -->
+          <div class="form-group">
+            <label for="name" class="form-label">Full Name</label>
+            <input
+              type="text"
+              id="name"
+              class="form-control"
+              formControlName="name"
+              [attr.disabled]="!isEditing ? '' : null"
+              [class.form-control-disabled]="!isEditing">
+          </div>
+
+          <div class="form-group">
+            <label for="phone" class="form-label">Phone Number</label>
+            <input
+              type="tel"
+              id="phone"
+              class="form-control"
+              formControlName="phone"
+              placeholder="Enter phone number"
+              [attr.disabled]="!isEditing ? '' : null"
+              [class.form-control-disabled]="!isEditing">
+          </div>
+
+          <div class="form-group">
+            <label for="gender" class="form-label">Gender</label>
+            <input
+              *ngIf="!isEditing"
+              type="text"
+              class="form-control form-control-disabled"
+              [value]="currentUser.gender || 'Not provided'"
+              disabled>
+            <select
+              *ngIf="isEditing"
+              id="gender"
+              class="form-select"
+              formControlName="gender">
+              <option value="">Select gender</option>
+              <option *ngFor="let g of genders" [value]="g.value">{{ g.label }}</option>
+            </select>
+          </div>
+
+          <!-- Read-only Fields -->
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control form-control-disabled" [value]="currentUser.email" disabled>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Role</label>
+            <input type="text" class="form-control form-control-disabled" [value]="currentUser.role?.name || 'N/A'" disabled>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <input type="text" class="form-control form-control-disabled" [value]="currentUser.department || 'N/A'" disabled>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Staff ID</label>
+            <input type="text" class="form-control form-control-disabled" [value]="currentUser.staff_id || 'N/A'" disabled>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <input type="text" class="form-control form-control-disabled" [value]="getStatusText()" disabled>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div *ngIf="isEditing" class="form-actions">
+          <button type="button" class="btn btn-outline-secondary" (click)="handleCancel()" [disabled]="submitting">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting || profileForm.invalid">
+            <i *ngIf="!submitting" class="bi bi-save me-2"></i>
+            <span *ngIf="!submitting">Save Changes</span>
+            <span *ngIf="submitting">
+              <span class="spinner-border spinner-border-sm me-2"></span>Saving...
+            </span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -194,6 +167,7 @@
               id="current_password"
               class="form-control"
               formControlName="current_password"
+              autocomplete="current-password"
               [class.is-invalid]="isFieldInvalid('password', 'current_password')"
               placeholder="Enter current password">
             <div class="invalid-feedback" *ngIf="isFieldInvalid('password', 'current_password')">
@@ -208,6 +182,7 @@
               id="new_password"
               class="form-control"
               formControlName="new_password"
+              autocomplete="new-password"
               [class.is-invalid]="isFieldInvalid('password', 'new_password')"
               placeholder="Min 8 characters">
             <div class="invalid-feedback" *ngIf="isFieldInvalid('password', 'new_password')">
@@ -222,6 +197,7 @@
               id="confirm_password"
               class="form-control"
               formControlName="confirm_password"
+              autocomplete="new-password"
               [class.is-invalid]="isFieldInvalid('password', 'confirm_password')"
               placeholder="Re-enter new password">
             <div class="invalid-feedback" *ngIf="isFieldInvalid('password', 'confirm_password')">

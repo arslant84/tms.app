@@ -1,3 +1,244 @@
-.card-title { font-weight: 600; }
-.list-group-item { background: #fff; }
-.form-check-label { cursor: pointer; }
+// Card styling matching React shadcn/ui design
+.card {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  transition: box-shadow 0.3s ease;
+
+  &.shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: none;
+
+  &.gradient-header {
+    background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+
+    .card-title {
+      color: white;
+      display: flex;
+      align-items: center;
+
+      i {
+        font-size: 1.25rem;
+      }
+    }
+
+    .card-description {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.95);
+    }
+  }
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #1a202c;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+// Scroll areas matching React ScrollArea component
+.roles-scroll-area {
+  max-height: 240px;
+  overflow-y: auto;
+  background-color: #f9fafb;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+
+    &:hover {
+      background: #a0aec0;
+    }
+  }
+}
+
+.permissions-scroll-area {
+  max-height: 160px;
+  overflow-y: auto;
+  background-color: #f9fafb;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+
+    &:hover {
+      background: #a0aec0;
+    }
+  }
+}
+
+.permissions-form-scroll {
+  max-height: 192px;
+  overflow-y: auto;
+  background-color: #fff;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+
+    &:hover {
+      background: #a0aec0;
+    }
+  }
+}
+
+// Role item styling
+.role-item {
+  background-color: #ffffff;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #f7fafc;
+  }
+
+  &:last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+// Form elements
+.form-check-label {
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.form-check-input {
+  cursor: pointer;
+}
+
+// Modal styling to match React Dialog
+.modal {
+  &.show {
+    display: block !important;
+  }
+
+  .modal-dialog {
+    max-width: 600px;
+  }
+
+  .modal-content {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .modal-header {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1.25rem 1.5rem;
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .btn-close {
+      padding: 0.5rem;
+    }
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  .modal-footer {
+    border-top: 1px solid #e5e7eb;
+    padding: 1rem 1.5rem;
+  }
+}
+
+.modal-backdrop {
+  &.show {
+    opacity: 0.5;
+  }
+}
+
+// Button styling enhancements
+.btn {
+  transition: all 0.2s ease;
+  font-weight: 500;
+
+  &:focus {
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+  }
+
+  &.btn-primary {
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  &.btn-outline-secondary,
+  &.btn-outline-danger {
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+  }
+}
+
+// Text utilities
+.text-muted {
+  color: #6b7280 !important;
+}
+
+.fw-semibold {
+  font-weight: 600;
+}
+
+.fw-medium {
+  font-weight: 500;
+}
+
+// Spacing utilities
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-3 {
+  gap: 0.75rem;
+}
+
+// Responsive improvements
+@media (max-width: 768px) {
+  .roles-scroll-area,
+  .permissions-scroll-area {
+    max-height: 200px;
+  }
+
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+}

@@ -12,13 +12,9 @@ class ExpenseCategory(models.TextChoices):
     MISCELLANEOUS = 'MISCELLANEOUS', _('Miscellaneous')
 
 
-class ExpenseStatus(models.TextChoices):
-    DRAFT = 'DRAFT', _('Draft')
-    SUBMITTED = 'SUBMITTED', _('Submitted')
-    UNDER_REVIEW = 'UNDER_REVIEW', _('Under Review')
-    APPROVED = 'APPROVED', _('Approved')
-    REJECTED = 'REJECTED', _('Rejected')
-    PAID = 'PAID', _('Paid')
+# Note: ExpenseStatus removed to support dynamic workflow statuses
+# Status will be set by workflow engine based on configured approval roles
+# Examples: "Draft", "Pending", "Pending Department Focal", "Pending Line Manager", "Pending HOD", "Approved", "Rejected", etc.
 
 
 class ExpenseItem(models.Model):
@@ -49,11 +45,7 @@ class ExpenseClaim(models.Model):
         choices=ExpenseCategory.choices,
         default=ExpenseCategory.MISCELLANEOUS,
     )
-    status = models.CharField(
-        max_length=20,
-        choices=ExpenseStatus.choices,
-        default=ExpenseStatus.DRAFT,
-    )
+    status = models.CharField(max_length=100, default='Draft', help_text="Dynamic status set by workflow engine")
     receipt_urls = models.JSONField(default=list)
     additional_data = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

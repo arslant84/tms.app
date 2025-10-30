@@ -426,7 +426,7 @@
           <div class="summary-row">
             <label class="summary-label">Total Advance/Claim Amount:</label>
             <div class="summary-value">
-              <span class="currency">RM</span>
+              <span class="currency">{{ defaultCurrency }}</span>
               <input type="text" class="form-control form-control-readonly" formControlName="totalAdvanceClaimAmount" readonly>
             </div>
           </div>
@@ -434,7 +434,7 @@
           <div class="summary-row">
             <label class="summary-label">Less: Advance Taken</label>
             <div class="summary-value">
-              <span class="currency">RM</span>
+              <span class="currency">{{ defaultCurrency }}</span>
               <input type="number" class="form-control" formControlName="lessAdvanceTaken" step="0.01" placeholder="0.00">
             </div>
           </div>
@@ -442,7 +442,7 @@
           <div class="summary-row">
             <label class="summary-label">Less: Corporate Credit Card Payment</label>
             <div class="summary-value">
-              <span class="currency">RM</span>
+              <span class="currency">{{ defaultCurrency }}</span>
               <input type="number" class="form-control" formControlName="lessCorporateCreditCardPayment" step="0.01" placeholder="0.00">
             </div>
           </div>
@@ -450,7 +450,7 @@
           <div class="summary-row summary-total">
             <label class="summary-label"><strong>Balance (Claim/Repayment):</strong></label>
             <div class="summary-value">
-              <span class="currency">RM</span>
+              <span class="currency">{{ defaultCurrency }}</span>
               <input type="text" class="form-control form-control-readonly balance-amount" formControlName="balanceClaimRepayment" readonly>
             </div>
           </div>

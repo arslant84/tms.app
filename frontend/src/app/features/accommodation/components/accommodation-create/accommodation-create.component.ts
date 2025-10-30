@@ -97,7 +97,8 @@ export class AccommodationCreateComponent implements OnInit {
 
     this.submitting = true;
     const formData = this.prepareFormData();
-    formData.status = 'Pending'; // Set status to Pending on submit
+    // Set status to Pending to trigger workflow on submit
+    formData.status = 'Pending';
 
     const saveOperation = this.isEditMode && this.requestId
       ? this.accommodationService.updateRequest(this.requestId, formData)
@@ -107,9 +108,10 @@ export class AccommodationCreateComponent implements OnInit {
       next: (response) => {
         this.submitting = false;
         const message = this.isEditMode
-          ? 'Accommodation request updated successfully'
-          : 'Accommodation request created successfully';
+          ? 'Accommodation request updated and submitted successfully'
+          : 'Accommodation request created and submitted successfully';
         this.toastService.success(message);
+        // Redirect to detail page to see workflow status
         this.router.navigate(['/accommodation', response.id]);
       },
       error: (err) => {
@@ -124,6 +126,7 @@ export class AccommodationCreateComponent implements OnInit {
   onSaveDraft(): void {
     this.submitting = true;
     const formData = this.prepareFormData();
+    // Explicitly set status to Draft - workflow will not be triggered
     formData.status = 'Draft';
 
     const saveOperation = this.isEditMode && this.requestId
@@ -131,10 +134,11 @@ export class AccommodationCreateComponent implements OnInit {
       : this.accommodationService.createRequest(formData);
 
     saveOperation.subscribe({
-      next: () => {
+      next: (response) => {
         this.submitting = false;
         this.toastService.success('Draft saved successfully');
-        this.router.navigate(['/accommodation']);
+        // Redirect to detail page to view the draft
+        this.router.navigate(['/accommodation', response.id]);
       },
       error: (err) => {
         this.submitting = false;

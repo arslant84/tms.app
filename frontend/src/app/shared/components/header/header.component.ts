@@ -5,6 +5,7 @@ import { Observable, map, Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { User, UserRole } from '../../../core/models/user.model';
 import { NotificationService, UserNotification } from '../../../features/notifications/services/notification.service';
+import { AppSettingsService } from '../../../core/services/app-settings.service';
 
 @Component({
   selector: 'app-header',
@@ -21,6 +22,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   notificationCount$: Observable<number>;
   isNotificationsOpen = false;
   isProfileOpen = false;
+  applicationName$: Observable<string>;
 
   private destroy$ = new Subject<void>();
 
@@ -29,13 +31,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
+    private appSettingsService: AppSettingsService
   ) {
     this.currentUser$ = this.authService.currentUser$;
     this.isAdmin$ = this.currentUser$.pipe(
       map(user => user?.is_admin === true)
     );
     this.notificationCount$ = this.notificationService.unreadCount$;
+    this.applicationName$ = this.appSettingsService.settings$.pipe(
+      map(settings => settings.application_name || 'TMS')
+    );
   }
 
   ngOnInit(): void {

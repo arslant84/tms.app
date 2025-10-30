@@ -234,7 +234,10 @@ export class ExpenseDetailComponent implements OnInit {
     this.workflowService.getInstances({
       entity_type: 'expenseclaim'
     }).subscribe({
-      next: (instances) => {
+      next: (response: any) => {
+        // Handle both paginated response and array response
+        const instances = Array.isArray(response) ? response : (response.results || []);
+
         const instance = instances.find((i: any) =>
           i.entity_info?.id === this.claimId
         );
@@ -290,5 +293,33 @@ export class ExpenseDetailComponent implements OnInit {
   onWorkflowDelegated(): void {
     this.toastService.success('Successfully delegated');
     this.loadWorkflow();
+  }
+
+  getWorkflowStatus(): string {
+    if (!this.workflow) return '';
+
+    const status = this.workflow.status;
+    const currentStep = this.workflow.current_step_order;
+    const totalSteps = this.workflow.step_executions?.length || 0;
+
+    if (status === 'approved') return 'Approved';
+    if (status === 'rejected') return 'Rejected';
+    if (status === 'cancelled') return 'Cancelled';
+    if (status === 'in_progress') return `Pending Approval (Step ${currentStep} of ${totalSteps})`;
+    if (status === 'pending') return 'Pending Approval';
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  getWorkflowStatusClass(): string {
+    if (!this.workflow) return 'badge-secondary';
+
+    const status = this.workflow.status;
+    if (status === 'approved') return 'badge-success';
+    if (status === 'rejected') return 'badge-danger';
+    if (status === 'cancelled') return 'badge-secondary';
+    if (status === 'in_progress' || status === 'pending') return 'badge-warning';
+
+    return 'badge-info';
   }
 }

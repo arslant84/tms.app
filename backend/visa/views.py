@@ -2,6 +2,9 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
+from django.db.models import Q
+
 from .models import VisaApplication, VisaApprovalStep, VisaDocument
 from .serializers import (
     VisaApplicationListSerializer,
@@ -10,8 +13,7 @@ from .serializers import (
     VisaApprovalStepSerializer,
     VisaDocumentSerializer
 )
-
-
+from workflows.router import WorkflowRouter
 class VisaApplicationViewSet(viewsets.ModelViewSet):
     """ViewSet for visa applications with different serializers for list/detail/create"""
     queryset = VisaApplication.objects.all().select_related('user').prefetch_related(
@@ -28,8 +30,74 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         return VisaApplicationDetailSerializer
 
     def perform_create(self, serializer):
-        """Set user when creating visa application"""
-        serializer.save(user=self.request.user)
+        """Set user and submitted_date when creating visa application"""
+        from django.utils import timezone
+
+        # Get the status from validated data
+        status_value = serializer.validated_data.get('status', 'Draft')
+
+        # Set submitted_date if status is not Draft
+        extra_kwargs = {}
+        if status_value != 'Draft':
+            extra_kwargs['submitted_date'] = timezone.now()
+
+        # Save the visa application
+        visa_application = serializer.save(user=self.request.user, **extra_kwargs)
+
+        # Start workflow if status is submitted (not Draft)
+        if status_value in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
+            try:
+                workflow_instance = WorkflowRouter.start_workflow_for_request(
+                    entity=visa_application,
+                    entity_type='visaapplication',
+                    initiated_by=self.request.user
+                )
+
+                if workflow_instance:
+                    # Reload the visa application to get the updated status from workflow
+                    visa_application.refresh_from_db()
+                    print(f"✅ Workflow started for Visa Application #{visa_application.id}: Workflow Instance #{workflow_instance.id}")
+                    print(f"✅ Status updated to: {visa_application.status}")
+                else:
+                    print(f"⚠️ No active workflow configured for visaapplication - using legacy approval system")
+            except Exception as e:
+                print(f"❌ Error starting workflow for Visa Application #{visa_application.id}: {str(e)}")
+                # Don't fail the request creation if workflow fails
+                pass
+
+    def perform_update(self, serializer):
+        """Update submitted_date when status changes from Draft and start workflow"""
+        from django.utils import timezone
+
+        instance = serializer.instance
+        old_status = instance.status
+        new_status = serializer.validated_data.get('status', old_status)
+
+        # Set submitted_date if changing from Draft and not already set
+        extra_kwargs = {}
+        if old_status == 'Draft' and new_status != 'Draft' and not instance.submitted_date:
+            extra_kwargs['submitted_date'] = timezone.now()
+
+        # Save the visa application
+        visa_application = serializer.save(**extra_kwargs)
+
+        # Start workflow if transitioning from Draft to submitted status
+        if old_status == 'Draft' and new_status in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
+            try:
+                workflow_instance = WorkflowRouter.start_workflow_for_request(
+                    entity=visa_application,
+                    entity_type='visaapplication',
+                    initiated_by=self.request.user
+                )
+
+                if workflow_instance:
+                    visa_application.refresh_from_db()
+                    print(f"✅ Workflow started for Visa Application #{visa_application.id}: Workflow Instance #{workflow_instance.id}")
+                else:
+                    print(f"⚠️ No active workflow configured for visaapplication")
+            except Exception as e:
+                print(f"❌ Error starting workflow for Visa Application #{visa_application.id}: {str(e)}")
+                pass
 
     @action(detail=False, methods=['get'], url_path='pending-approvals')
     def pending_approvals(self, request):

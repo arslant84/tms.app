@@ -335,4 +335,36 @@ export class WorkflowService {
       return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} remaining`;
     }
   }
+
+  /**
+   * Get status display text for workflow instance
+   */
+  getWorkflowStatus(workflow: WorkflowInstance | WorkflowInstanceList | null): string {
+    if (!workflow) return '';
+
+    const status = workflow.status;
+    const currentStep = 'current_step_order' in workflow ? workflow.current_step_order : undefined;
+    const totalSteps = 'step_executions' in workflow ? workflow.step_executions?.length || 0 : 0;
+
+    if (status === 'approved') return 'Approved';
+    if (status === 'rejected') return 'Rejected';
+    if (status === 'cancelled') return 'Cancelled';
+    if (status === 'in_progress') {
+      if (currentStep && totalSteps) {
+        return `In Progress (Step ${currentStep} of ${totalSteps})`;
+      }
+      return 'In Progress';
+    }
+    if (status === 'pending') return 'Pending Approval';
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  /**
+   * Get status badge class for workflow instance
+   */
+  getWorkflowStatusClass(workflow: WorkflowInstance | WorkflowInstanceList | null): string {
+    if (!workflow) return 'badge-secondary';
+    return this.getStatusClass(workflow.status);
+  }
 }
