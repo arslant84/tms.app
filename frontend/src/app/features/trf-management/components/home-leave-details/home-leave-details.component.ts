@@ -87,8 +87,22 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
 
     // Set passport details if provided
     if (this.initialData.passportDetails) {
-      this.homeLeaveForm.patchValue({
-        passportDetails: this.initialData.passportDetails
+      this.homeLeaveForm.get('passportDetails')?.patchValue({
+        fullName: this.initialData.passportDetails.fullName || '',
+        passportNumber: this.initialData.passportDetails.passportNumber || '',
+        nationality: this.initialData.passportDetails.nationality || '',
+        dateOfBirth: this.initialData.passportDetails.dateOfBirth || '',
+        placeOfBirth: this.initialData.passportDetails.placeOfBirth || '',
+        passportIssueDate: this.initialData.passportDetails.passportIssueDate || '',
+        passportExpiryDate: this.initialData.passportDetails.passportExpiryDate || ''
+      });
+    }
+
+    // Set bank details if provided
+    if (this.initialData.advanceBankDetails) {
+      this.homeLeaveForm.get('advanceBankDetails')?.patchValue({
+        bankName: this.initialData.advanceBankDetails.bankName || '',
+        accountNumber: this.initialData.advanceBankDetails.accountNumber || ''
       });
     }
   }

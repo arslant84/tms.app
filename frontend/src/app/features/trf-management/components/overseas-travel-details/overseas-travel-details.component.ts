@@ -91,6 +91,14 @@ export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
       this.addAdvanceAmountItem();
     }
 
+    // Set bank details if provided
+    if (this.initialData.advanceBankDetails) {
+      this.overseasForm.get('advanceBankDetails')?.patchValue({
+        bankName: this.initialData.advanceBankDetails.bankName || '',
+        accountNumber: this.initialData.advanceBankDetails.accountNumber || ''
+      });
+    }
+
     // Watch trip type changes
     this.overseasForm.get('tripType')?.valueChanges.subscribe(tripType => {
       const itineraryArray = this.itinerary;
