@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } fr
 
 export interface ExternalPartiesDetails {
   purpose: string;
+  tripType: 'One Way' | 'Round Trip';
   externalFullName: string;
   externalOrganization: string;
   externalRefToAuthorityLetter?: string;
@@ -43,6 +44,7 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   private initForm(): void {
     this.externalForm = this.fb.group({
       purpose: [this.initialData.purpose || '', [Validators.required, Validators.minLength(10)]],
+      tripType: [this.initialData.tripType || 'One Way', Validators.required],
       externalFullName: [this.initialData.externalFullName || '', Validators.required],
       externalOrganization: [this.initialData.externalOrganization || '', Validators.required],
       externalRefToAuthorityLetter: [this.initialData.externalRefToAuthorityLetter || ''],
@@ -50,6 +52,17 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
       itinerary: this.fb.array([]),
       accommodation: this.fb.array([]),
       transport: this.fb.array([])
+    });
+
+    // Watch trip type changes to manage itinerary segments
+    this.externalForm.get('tripType')?.valueChanges.subscribe(tripType => {
+      const itineraryArray = this.itinerary;
+      if (tripType === 'One Way' && itineraryArray.length > 1) {
+        // Keep only first segment for one way
+        while (itineraryArray.length > 1) {
+          itineraryArray.removeAt(itineraryArray.length - 1);
+        }
+      }
     });
 
     // Initialize itinerary from initialData or add one empty entry
@@ -122,7 +135,18 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   }
 
   addItinerarySegment(data?: any): void {
+    const tripType = this.externalForm.get('tripType')?.value;
+    if (tripType === 'One Way' && this.itinerary.length >= 1) {
+      return; // Don't allow more than 1 segment for one way
+    }
     this.itinerary.push(this.createItinerarySegment(data));
+  }
+
+  onDateChange(index: number, event: any): void {
+    const date = new Date(event.target.value);
+    const dayIndex = date.getDay();
+    const dayName = this.weekdays[dayIndex];
+    this.itinerary.at(index).get('day')?.setValue(dayName);
   }
 
   removeItinerarySegment(index: number): void {

@@ -9,16 +9,35 @@
         </div>
       </div>
       <div class="card-body">
-        <div class="form-group">
+        <div class="form-group mb-3">
           <label for="purposeOfTravel" class="form-label">Please describe the purpose of your travel</label>
-          <textarea 
-            class="form-control" 
-            id="purposeOfTravel" 
-            formControlName="purposeOfTravel" 
+          <textarea
+            class="form-control"
+            id="purposeOfTravel"
+            formControlName="purposeOfTravel"
             rows="3"
             [ngClass]="{'is-invalid': travelForm.get('purposeOfTravel')?.invalid && travelForm.get('purposeOfTravel')?.touched}"></textarea>
           <div class="invalid-feedback" *ngIf="travelForm.get('purposeOfTravel')?.errors?.['required'] && travelForm.get('purposeOfTravel')?.touched">
             Purpose of travel is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="tripType" class="form-label d-flex align-items-center gap-2">
+            <i class="bi bi-card-checklist"></i>
+            Trip Type <span class="text-danger">*</span>
+          </label>
+          <select
+            id="tripType"
+            formControlName="tripType"
+            class="form-select"
+            [ngClass]="{'is-invalid': travelForm.get('tripType')?.invalid && travelForm.get('tripType')?.touched}"
+          >
+            <option value="One Way">One Way</option>
+            <option value="Round Trip">Round Trip</option>
+          </select>
+          <div class="invalid-feedback" *ngIf="travelForm.get('tripType')?.errors?.['required'] && travelForm.get('tripType')?.touched">
+            Trip type is required
           </div>
         </div>
       </div>

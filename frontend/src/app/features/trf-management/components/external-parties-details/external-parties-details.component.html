@@ -25,6 +25,136 @@
         ></textarea>
       </div>
 
+      <!-- Trip Type -->
+      <div class="mb-4">
+        <label class="form-label fw-medium d-flex align-items-center gap-2">
+          <i class="bi bi-card-checklist"></i>
+          Trip Type <span class="text-danger">*</span>
+        </label>
+        <select
+          formControlName="tripType"
+          class="form-select"
+        >
+          <option value="One Way">One Way</option>
+          <option value="Round Trip">Round Trip</option>
+        </select>
+      </div>
+
+      <!-- Itinerary Section -->
+      <div class="mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h3 class="h5 mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-map text-primary"></i>
+            Travel Itinerary
+          </h3>
+        </div>
+
+        <div formArrayName="itinerary">
+          <div *ngFor="let segment of itinerary.controls; let i = index" [formGroupName]="i" class="position-relative border rounded bg-light p-3 mb-3">
+            <!-- Date and Day -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Date <span class="text-danger">*</span></label>
+                <input
+                  type="date"
+                  formControlName="departureDate"
+                  (change)="onDateChange(i, $event)"
+                  class="form-control"
+                />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-medium">Day</label>
+                <div class="form-control bg-secondary bg-opacity-10">
+                  {{ segment.get('day')?.value || '—' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- From and To -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-medium">From <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  formControlName="departureLocation"
+                  placeholder="Origin city/airport"
+                  class="form-control"
+                />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-medium">To <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  formControlName="arrivalLocation"
+                  placeholder="Destination city/airport"
+                  class="form-control"
+                />
+              </div>
+            </div>
+
+            <!-- Times and Transport Mode -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label class="form-label fw-medium">Departure Time</label>
+                <input
+                  type="time"
+                  formControlName="departureTime"
+                  class="form-control"
+                />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-medium">Arrival Time</label>
+                <input
+                  type="time"
+                  formControlName="arrivalTime"
+                  class="form-control"
+                />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-medium">Mode of Transport <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  formControlName="modeOfTransport"
+                  placeholder="e.g., Flight, Train, Car"
+                  class="form-control"
+                />
+              </div>
+            </div>
+
+            <!-- Remarks -->
+            <div class="mb-3">
+              <label class="form-label fw-medium">Remarks</label>
+              <textarea
+                formControlName="remarks"
+                rows="2"
+                placeholder="Any additional information"
+                class="form-control"
+              ></textarea>
+            </div>
+
+            <!-- Remove Button -->
+            <button
+              *ngIf="itinerary.length > 1 && externalForm.get('tripType')?.value === 'Round Trip'"
+              type="button"
+              (click)="removeItinerarySegment(i)"
+              class="position-absolute top-0 end-0 m-2 btn btn-sm btn-outline-danger"
+            >
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <button
+          *ngIf="externalForm.get('tripType')?.value === 'Round Trip'"
+          type="button"
+          (click)="addItinerarySegment()"
+          class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+        >
+          <i class="bi bi-plus-circle"></i>
+          Add Itinerary Segment
+        </button>
+      </div>
+
       <!-- External Party Information -->
       <div class="mb-4">
         <h3 class="h5 mb-3 d-flex align-items-center gap-2">

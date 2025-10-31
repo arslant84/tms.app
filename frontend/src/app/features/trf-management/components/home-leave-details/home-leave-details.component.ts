@@ -14,6 +14,7 @@ export interface PassportDetails {
 
 export interface HomeLeaveDetails {
   purpose: string;
+  tripType: 'One Way' | 'Round Trip';
   itinerary: any[];
   passportDetails: PassportDetails;
   advanceBankDetails?: any;
@@ -49,6 +50,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   private initForm(): void {
     this.homeLeaveForm = this.fb.group({
       purpose: [this.initialData.purpose || '', [Validators.required, Validators.minLength(10)]],
+      tripType: [this.initialData.tripType || 'Round Trip', Validators.required],
       itinerary: this.fb.array([]),
       passportDetails: this.fb.group({
         fullName: ['', Validators.required],
@@ -63,6 +65,17 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
         bankName: [''],
         accountNumber: ['']
       })
+    });
+
+    // Watch trip type changes to manage itinerary segments
+    this.homeLeaveForm.get('tripType')?.valueChanges.subscribe(tripType => {
+      const itineraryArray = this.itinerary;
+      if (tripType === 'One Way' && itineraryArray.length > 1) {
+        // Keep only first segment for one way
+        while (itineraryArray.length > 1) {
+          itineraryArray.removeAt(itineraryArray.length - 1);
+        }
+      }
     });
 
     // Initialize with one itinerary segment
@@ -96,13 +109,11 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   }
 
   addItinerarySegment(data?: any): void {
-    this.itinerary.push(this.createItinerarySegment(data));
-  }
-
-  removeItinerarySegment(index: number): void {
-    if (this.itinerary.length > 1) {
-      this.itinerary.removeAt(index);
+    const tripType = this.homeLeaveForm.get('tripType')?.value;
+    if (tripType === 'One Way' && this.itinerary.length >= 1) {
+      return; // Don't allow more than 1 segment for one way
     }
+    this.itinerary.push(this.createItinerarySegment(data));
   }
 
   onDateChange(index: number, event: any): void {
@@ -110,6 +121,12 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     const dayIndex = date.getDay();
     const dayName = this.weekdays[dayIndex];
     this.itinerary.at(index).get('day')?.setValue(dayName);
+  }
+
+  removeItinerarySegment(index: number): void {
+    if (this.itinerary.length > 1) {
+      this.itinerary.removeAt(index);
+    }
   }
 
   onSubmit(): void {
