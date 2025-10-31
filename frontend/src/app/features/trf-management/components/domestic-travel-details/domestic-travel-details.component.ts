@@ -51,6 +51,7 @@ export interface CompanyTransportDetail {
 
 export interface DomesticTravelSpecificDetails {
   purposeOfTravel: string;
+  tripType: 'One Way' | 'Round Trip';
   itinerary: ItinerarySegment[];
   mealProvisions: MealProvisionDetails;
   accommodation: AccommodationDetail;
@@ -98,6 +99,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   private initForm(): void {
     this.travelForm = this.fb.group({
       purposeOfTravel: [this.initialData.purposeOfTravel || '', Validators.required],
+      tripType: [this.initialData.tripType || 'Round Trip', Validators.required],
       itinerary: this.fb.array(
         this.initialData.itinerary?.length
           ? this.initialData.itinerary.map(item => this.createItinerarySegment(item))
@@ -143,6 +145,17 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
         otherTypeControl?.updateValueAndValidity();
       }
     );
+
+    // Watch trip type changes to manage itinerary segments
+    this.travelForm.get('tripType')?.valueChanges.subscribe(tripType => {
+      const itineraryArray = this.itineraryArray;
+      if (tripType === 'One Way' && itineraryArray.length > 1) {
+        // Keep only first segment for one way
+        while (itineraryArray.length > 1) {
+          itineraryArray.removeAt(itineraryArray.length - 1);
+        }
+      }
+    });
 
     // Watch itinerary changes to auto-generate meal dates
     this.itineraryArray.valueChanges.subscribe(() => {
