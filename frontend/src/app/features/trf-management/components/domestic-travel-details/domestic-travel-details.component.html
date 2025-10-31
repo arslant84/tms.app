@@ -62,6 +62,7 @@
                   class="form-control"
                   [id]="'date-' + i"
                   formControlName="date"
+                  (change)="onItineraryDateChange(i, $event)"
                   [ngClass]="{'is-invalid': segment.get('date')?.invalid && segment.get('date')?.touched}">
                 <div class="invalid-feedback" *ngIf="segment.get('date')?.errors?.['required'] && segment.get('date')?.touched">
                   Date is required
@@ -464,6 +465,7 @@
                   class="form-control"
                   [id]="'transportDate-' + i"
                   formControlName="date"
+                  (change)="onTransportDateChange(i, $event)"
                   [ngClass]="{'is-invalid': transport.get('date')?.invalid && transport.get('date')?.touched}">
                 <div class="invalid-feedback" *ngIf="transport.get('date')?.errors?.['required'] && transport.get('date')?.touched">
                   Date is required

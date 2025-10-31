@@ -73,6 +73,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   travelForm!: FormGroup;
   timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
   accommodationTypes: AccommodationType[] = ['Hotel/Otels', 'Staff House/PKC Kampung/Kinyahli camp', 'Other'];
+  weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   dailyMealDates: Date[] = [];
   mealSummary = {
@@ -242,6 +243,27 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   removeTransportationDetail(index: number): void {
     if (this.transportationArray.length > 1) {
       this.transportationArray.removeAt(index);
+    }
+  }
+
+  // Date change handlers to auto-fill day of week
+  onItineraryDateChange(index: number, event: any): void {
+    const dateValue = event.target.value;
+    if (dateValue) {
+      const date = new Date(dateValue);
+      const dayIndex = date.getDay();
+      const dayName = this.weekdays[dayIndex];
+      this.itineraryArray.at(index).get('day')?.setValue(dayName);
+    }
+  }
+
+  onTransportDateChange(index: number, event: any): void {
+    const dateValue = event.target.value;
+    if (dateValue) {
+      const date = new Date(dateValue);
+      const dayIndex = date.getDay();
+      const dayName = this.weekdays[dayIndex];
+      this.transportationArray.at(index).get('day')?.setValue(dayName);
     }
   }
 
