@@ -142,29 +142,23 @@ export class TrfWizardComponent implements OnInit {
     switch (this.selectedTravelType) {
       case 'Domestic':
         this.domesticTravelData = {
-          purpose: {
-            purposeOfTravel: data.purpose,
-            additionalComments: data.additional_comments || data.additionalComments
+          purposeOfTravel: data.purpose,
+          tripType: data.trip_type || data.tripType || 'Round Trip',
+          itinerary: data.itinerary || [],
+          mealProvisions: {
+            dailySelections: data.daily_meal_selections || data.mealSelections || []
           },
-          itinerary: {
-            segments: data.itinerary || []
-          },
-          meals: {
-            selections: data.daily_meal_selections || data.mealSelections || []
-          },
-          accommodation: data.accommodation_details?.[0] || null,
-          transport: {
-            details: data.company_transport_details || data.transportDetails || []
-          }
+          accommodation: data.accommodation_details?.[0] || data.accommodation || {},
+          companyTransportation: data.company_transport_details || data.transportDetails || []
         };
         break;
 
       case 'Overseas':
         this.overseasTravelData = {
           purpose: data.purpose,
-          tripType: 'Round Trip', // Default, adjust if data provides this
+          tripType: data.trip_type || data.tripType || 'Round Trip',
           itinerary: data.itinerary || [],
-          advanceBankDetails: data.advance_bank_details || data.bankDetails,
+          advanceBankDetails: data.advance_bank_details || data.bankDetails || {},
           advanceAmountRequested: data.advance_amount_items || data.advanceAmounts || []
         };
         break;
@@ -172,22 +166,24 @@ export class TrfWizardComponent implements OnInit {
       case 'Home Leave':
         this.homeLeaveData = {
           purpose: data.purpose,
+          tripType: data.trip_type || data.tripType || 'Round Trip',
           itinerary: data.itinerary || [],
-          passportDetails: data.passport_details || data.passportDetails,
-          advanceBankDetails: data.advance_bank_details || data.bankDetails
+          passportDetails: data.passport_details || data.passportDetails || {},
+          advanceBankDetails: data.advance_bank_details || data.bankDetails || {}
         };
         break;
 
       case 'External Parties':
         this.externalPartiesData = {
           purpose: data.purpose,
-          externalFullName: data.external_full_name || '',
-          externalOrganization: data.external_organization || '',
-          externalRefToAuthorityLetter: data.external_ref_to_authority_letter || '',
-          externalCostCenter: data.external_cost_center || '',
+          tripType: data.trip_type || data.tripType || 'One Way',
+          externalFullName: data.external_full_name || data.externalFullName || '',
+          externalOrganization: data.external_organization || data.externalOrganization || '',
+          externalRefToAuthorityLetter: data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter || '',
+          externalCostCenter: data.external_cost_center || data.externalCostCenter || '',
           itinerary: data.itinerary_segments || data.itinerary || [],
-          accommodation: data.accommodation_details || [],
-          transport: data.transport_details || []
+          accommodation: data.accommodation_details || data.accommodation || [],
+          transport: data.transport_details || data.transport || []
         };
         break;
     }
