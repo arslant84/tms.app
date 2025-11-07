@@ -84,7 +84,8 @@
         <span class="spinner-sm"></span>
         Loading workflow...
       </span>
-      <span class="text-muted">TRF ID: #{{ trfData.id }}</span>
+      <span *ngIf="trfData.requestNumber" class="text-muted">Request Number: {{ trfData.requestNumber }}</span>
+      <span *ngIf="!trfData.requestNumber" class="text-muted">TRF ID: #{{ trfData.id }}</span>
     </div>
 
     <!-- Main Card -->
@@ -313,6 +314,18 @@
               <label>To</label>
               <p>{{ transport.to_location || transport.to || 'N/A' }}</p>
             </div>
+            <div class="detail-item">
+              <label>BT No./Time Required</label>
+              <p>{{ transport.bt_no_required || transport.etd || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Accommodation Type</label>
+              <p>{{ transport.accommodation_type_n || transport.accommodationType || 'N/A' }}</p>
+            </div>
+            <div class="detail-item full-width" *ngIf="transport.address">
+              <label>Address</label>
+              <p>{{ transport.address }}</p>
+            </div>
             <div class="detail-item full-width" *ngIf="transport.remarks">
               <label>Remarks</label>
               <p>{{ transport.remarks }}</p>
@@ -322,7 +335,7 @@
       </section>
 
       <!-- Passport Details (Overseas/Home Leave) -->
-      <section class="detail-section" *ngIf="isOverseas && trfData.passportDetails">
+      <section class="detail-section" *ngIf="isOverseas && trfData.passportDetails && trfData.passportDetails.length > 0">
         <h3 class="section-title">
           <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
@@ -332,31 +345,31 @@
         <div class="detail-grid">
           <div class="detail-item">
             <label>Full Name</label>
-            <p>{{ trfData.passportDetails.full_name || trfData.passportDetails.fullName || 'N/A' }}</p>
+            <p>{{ trfData.passportDetails[0]?.full_name || trfData.passportDetails[0]?.fullName || 'N/A' }}</p>
           </div>
           <div class="detail-item">
             <label>Passport Number</label>
-            <p>{{ trfData.passportDetails.passport_number || trfData.passportDetails.passportNumber || 'N/A' }}</p>
+            <p>{{ trfData.passportDetails[0]?.passport_number || trfData.passportDetails[0]?.passportNumber || 'N/A' }}</p>
           </div>
           <div class="detail-item">
             <label>Nationality</label>
-            <p>{{ trfData.passportDetails.nationality || 'N/A' }}</p>
+            <p>{{ trfData.passportDetails[0]?.nationality || 'N/A' }}</p>
           </div>
           <div class="detail-item">
             <label>Date of Birth</label>
-            <p>{{ formatDate(trfData.passportDetails.date_of_birth || trfData.passportDetails.dateOfBirth) }}</p>
+            <p>{{ formatDate(trfData.passportDetails[0]?.date_of_birth || trfData.passportDetails[0]?.dateOfBirth) }}</p>
           </div>
           <div class="detail-item">
             <label>Place of Birth</label>
-            <p>{{ trfData.passportDetails.place_of_birth || trfData.passportDetails.placeOfBirth || 'N/A' }}</p>
+            <p>{{ trfData.passportDetails[0]?.place_of_birth || trfData.passportDetails[0]?.placeOfBirth || 'N/A' }}</p>
           </div>
           <div class="detail-item">
             <label>Passport Issue Date</label>
-            <p>{{ formatDate(trfData.passportDetails.passport_issue_date || trfData.passportDetails.passportIssueDate) }}</p>
+            <p>{{ formatDate(trfData.passportDetails[0]?.passport_issue_date || trfData.passportDetails[0]?.passportIssueDate) }}</p>
           </div>
           <div class="detail-item">
             <label>Passport Expiry Date</label>
-            <p>{{ formatDate(trfData.passportDetails.passport_expiry_date || trfData.passportDetails.passportExpiryDate) }}</p>
+            <p>{{ formatDate(trfData.passportDetails[0]?.passport_expiry_date || trfData.passportDetails[0]?.passportExpiryDate) }}</p>
           </div>
         </div>
       </section>
@@ -463,8 +476,9 @@
         </h3>
         <div class="detail-grid">
           <div class="detail-item">
-            <label>Request ID</label>
-            <p>#{{ trfData.id }}</p>
+            <label>Request Number</label>
+            <p *ngIf="trfData.requestNumber">{{ trfData.requestNumber }}</p>
+            <p *ngIf="!trfData.requestNumber" class="text-muted">#{{ trfData.id }} (Not submitted)</p>
           </div>
           <div class="detail-item">
             <label>Travel Type</label>

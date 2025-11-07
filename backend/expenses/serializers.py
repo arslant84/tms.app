@@ -58,13 +58,15 @@ class ExpenseClaimSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExpenseClaim
         fields = [
-            'id', 'user', 'user_name', 'user_id', 'trf', 'trf_reference', 'trf_id',
+            'id', 'request_number', 'user', 'user_name', 'user_id', 'trf', 'trf_reference', 'trf_id',
             'title', 'description', 'total_amount', 'currency', 'expense_date',
-            'category', 'status', 'receipt_urls', 'additional_data', 'created_at', 'updated_at', 'items',
+            'category', 'status', 'receipt_urls', 'additional_data',
+            'payment_method', 'cheque_receipt_no', 'payment_date',
+            'created_at', 'updated_at', 'items',
             # Computed fields for list view
             'document_number', 'staff_name', 'purpose_of_claim', 'total_advance_claim_amount', 'submitted_at'
         ]
-        read_only_fields = ['id', 'user_id', 'trf_id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'request_number', 'user_id', 'trf_id', 'created_at', 'updated_at']
 
     def get_document_number(self, obj):
         """Extract document number from additional_data or generate from title"""
@@ -126,12 +128,13 @@ class ExpenseClaimDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExpenseClaim
         fields = [
-            'id', 'user', 'user_name', 'user_email', 'user_id', 'trf',
+            'id', 'request_number', 'user', 'user_name', 'user_email', 'user_id', 'trf',
             'trf_reference', 'trf_id', 'title', 'description', 'total_amount',
             'currency', 'expense_date', 'category', 'status', 'receipt_urls',
-            'additional_data', 'created_at', 'updated_at', 'items', 'approval_steps'
+            'additional_data', 'payment_method', 'cheque_receipt_no', 'payment_date',
+            'created_at', 'updated_at', 'items', 'approval_steps'
         ]
-        read_only_fields = ['id', 'user_id', 'trf_id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'request_number', 'user_id', 'trf_id', 'created_at', 'updated_at']
 
 
 class ExpenseClaimCreateSerializer(serializers.ModelSerializer):
@@ -215,13 +218,5 @@ class ApprovalActionSerializer(serializers.Serializer):
     comments = serializers.CharField(required=False, allow_blank=True)
     step_role = serializers.CharField(required=True)
 
-    def validate_step_role(self, value):
-        """Validate step role"""
-        valid_roles = [
-            'Department Focal', 'HOD', 'Finance', 'Director', 'Country Director'
-        ]
-        if value not in valid_roles:
-            raise serializers.ValidationError(
-                f"Step role must be one of: {', '.join(valid_roles)}"
-            )
-        return value
+    # Note: step_role validation is handled by WorkflowEngine
+    # which checks if the user is authorized for the current workflow step

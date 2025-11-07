@@ -50,12 +50,12 @@ class AccommodationRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccommodationRequest
         fields = [
-            'id', 'requestor_name', 'staff_id', 'department', 'position',
+            'id', 'request_number', 'requestor_name', 'staff_id', 'department', 'position',
             'cost_center', 'tel_email', 'email', 'status', 'estimated_cost',
             'additional_comments', 'submitted_at', 'created_at', 'updated_at',
             'additional_data'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'request_number', 'created_at', 'updated_at']
 
     def validate_status(self, value):
         """Validate request status"""

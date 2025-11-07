@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { VisaService, VisaApplication } from '../visa.service';
 import { ToastService } from '../../core/services/toast.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-visa-form',
@@ -58,7 +59,8 @@ export class VisaFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private visaService: VisaService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -69,8 +71,31 @@ export class VisaFormComponent implements OnInit {
         this.isEditMode = true;
         this.applicationId = +params['id'];
         this.loadApplication();
+      } else {
+        // Only auto-populate in create mode
+        this.populateUserDetails();
       }
     });
+  }
+
+  private populateUserDetails(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      const position = this.authService.getUserPosition(currentUser);
+
+      // Auto-populate user details from logged-in user
+      console.log('Visa - Current user data:', currentUser);
+      console.log('Visa - Extracted position:', position);
+
+      this.visaForm.patchValue({
+        requestor_name: currentUser.name || '',
+        staff_id: currentUser.staff_id || '',
+        department: currentUser.department || '',
+        position: position || '',
+        email: currentUser.email || '',
+        contact_telephone: currentUser.phone || ''
+      });
+    }
   }
 
   initForm(): void {

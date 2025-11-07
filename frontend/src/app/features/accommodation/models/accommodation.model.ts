@@ -251,6 +251,7 @@ export interface DailyBookingBackend {
  */
 export interface AccommodationRequestBackend {
   id: number;
+  request_number?: string;
   requestor_name: string;
   staff_id?: string;
   department?: string;

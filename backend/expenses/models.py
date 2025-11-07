@@ -33,6 +33,13 @@ class ExpenseItem(models.Model):
 
 
 class ExpenseClaim(models.Model):
+    request_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Auto-generated request number (e.g., CLM-20251102-1423-XJKLM-PCYX)"
+    )
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='expense_claims')
     trf = models.ForeignKey(TravelRequest, on_delete=models.SET_NULL, related_name='expense_claims', null=True, blank=True)
     title = models.CharField(max_length=255)
@@ -48,6 +55,12 @@ class ExpenseClaim(models.Model):
     status = models.CharField(max_length=100, default='Draft', help_text="Dynamic status set by workflow engine")
     receipt_urls = models.JSONField(default=list)
     additional_data = models.JSONField(default=dict, blank=True)
+
+    # Payment fields
+    payment_method = models.CharField(max_length=20, blank=True, null=True, help_text="BANK_TRANSFER, CHEQUE, or CASH")
+    cheque_receipt_no = models.CharField(max_length=100, blank=True, null=True, help_text="Payment reference or cheque number")
+    payment_date = models.DateField(blank=True, null=True, help_text="Date when payment was made")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     items = models.ManyToManyField(ExpenseItem, related_name='expense_claim')

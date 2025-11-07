@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ExpenseClaimsService, ExpenseClaim } from '../../expense-claims/services/expense-claims.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AppSettingsService } from '../../../core/services/app-settings.service';
 
 @Component({
   selector: 'app-claims-admin',
@@ -13,13 +14,22 @@ import { ToastService } from '../../../core/services/toast.service';
   styleUrl: './claims-admin.component.scss'
 })
 export class ClaimsAdminComponent implements OnInit {
+  // Stats
+  stats = {
+    total: 0,
+    pendingReview: 0,
+    approved: 0,
+    processing: 0
+  };
+
+  // Claims
   claims: ExpenseClaim[] = [];
   filteredClaims: ExpenseClaim[] = [];
-  selectedClaim: ExpenseClaim | null = null;
+  loadingClaims = false;
 
   // Filter criteria
   filterCriteria = {
-    status: 'all',
+    status: '',
     search: '',
     dateFrom: '',
     dateTo: ''
@@ -31,45 +41,50 @@ export class ClaimsAdminComponent implements OnInit {
   totalClaims = 0;
 
   // Loading states
-  loading: boolean = true;
   error: string = '';
-  processingId: number | null = null;
-
-  // Mark as paid modal
-  showMarkAsPaidModal: boolean = false;
-  paymentData = {
-    cheque_receipt_no: '',
-    payment_date: '',
-    payment_method: 'CHEQUE',
-    comments: ''
-  };
-
-  // Status options for filter
-  statusOptions = [
-    { value: 'all', label: 'All Statuses' },
-    { value: 'Pending Approval', label: 'Pending Approval' },
-    { value: 'Approved', label: 'Approved' },
-    { value: 'Pending Payment', label: 'Pending Payment' },
-    { value: 'Paid', label: 'Paid' },
-    { value: 'Rejected', label: 'Rejected' },
-    { value: 'Cancelled', label: 'Cancelled' }
-  ];
 
   constructor(
     private expenseClaimsService: ExpenseClaimsService,
     private toastService: ToastService,
-    private router: Router
+    public router: Router,
+    private appSettingsService: AppSettingsService
   ) {}
 
   ngOnInit(): void {
+    this.fetchStats();
     this.loadClaims();
+  }
+
+  /**
+   * Fetch expense claims statistics
+   */
+  fetchStats(): void {
+    this.expenseClaimsService.getAllClaims({}).subscribe({
+      next: (response: any) => {
+        const claims = response.results || response || [];
+
+        this.stats.total = claims.length;
+        this.stats.pendingReview = claims.filter((claim: any) =>
+          claim.status && (claim.status.toLowerCase().includes('pending') || claim.status === 'Submitted')
+        ).length;
+        this.stats.approved = claims.filter((claim: any) =>
+          claim.status === 'Approved'
+        ).length;
+        this.stats.processing = claims.filter((claim: any) =>
+          claim.status && (claim.status.toLowerCase().includes('processing') || claim.status === 'Pending Payment' || claim.status === 'Paid')
+        ).length;
+      },
+      error: (err) => {
+        console.error('Error fetching stats:', err);
+      }
+    });
   }
 
   /**
    * Load claims from API
    */
   loadClaims(): void {
-    this.loading = true;
+    this.loadingClaims = true;
     this.error = '';
 
     const params: any = {
@@ -77,7 +92,7 @@ export class ClaimsAdminComponent implements OnInit {
       page_size: this.pageSize
     };
 
-    if (this.filterCriteria.status !== 'all') {
+    if (this.filterCriteria.status) {
       params.status = this.filterCriteria.status;
     }
 
@@ -98,11 +113,11 @@ export class ClaimsAdminComponent implements OnInit {
         this.claims = response.results || response;
         this.totalClaims = response.count || this.claims.length;
         this.filteredClaims = [...this.claims];
-        this.loading = false;
+        this.loadingClaims = false;
       },
       error: (err) => {
         this.error = 'Failed to load expense claims: ' + (err.error?.message || err.message || 'Unknown error');
-        this.loading = false;
+        this.loadingClaims = false;
         console.error('Error loading claims:', err);
       }
     });
@@ -117,11 +132,11 @@ export class ClaimsAdminComponent implements OnInit {
   }
 
   /**
-   * Reset filters
+   * Clear filters
    */
-  resetFilters(): void {
+  clearFilters(): void {
     this.filterCriteria = {
-      status: 'all',
+      status: '',
       search: '',
       dateFrom: '',
       dateTo: ''
@@ -134,6 +149,7 @@ export class ClaimsAdminComponent implements OnInit {
    * Change page
    */
   changePage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
     this.currentPage = page;
     this.loadClaims();
   }
@@ -146,129 +162,23 @@ export class ClaimsAdminComponent implements OnInit {
   }
 
   /**
-   * Open mark as paid modal
+   * Navigate to claims processing
    */
-  openMarkAsPaidModal(claim: ExpenseClaim): void {
-    this.selectedClaim = claim;
-    this.paymentData = {
-      cheque_receipt_no: '',
-      payment_date: new Date().toISOString().split('T')[0],
-      payment_method: 'CHEQUE',
-      comments: ''
-    };
-    this.showMarkAsPaidModal = true;
-  }
-
-  /**
-   * Close mark as paid modal
-   */
-  closeMarkAsPaidModal(): void {
-    this.showMarkAsPaidModal = false;
-    this.selectedClaim = null;
-    this.paymentData = {
-      cheque_receipt_no: '',
-      payment_date: '',
-      payment_method: 'CHEQUE',
-      comments: ''
-    };
-  }
-
-  /**
-   * Mark claim as paid
-   */
-  markAsPaid(): void {
-    if (!this.selectedClaim) return;
-
-    if (!this.paymentData.cheque_receipt_no || !this.paymentData.payment_date) {
-      this.toastService.error('Please provide payment reference and date');
-      return;
-    }
-
-    this.processingId = this.selectedClaim.id;
-
-    this.expenseClaimsService.markAsPaid(this.selectedClaim.id, this.paymentData).subscribe({
-      next: () => {
-        this.toastService.success('Claim marked as paid successfully');
-        this.closeMarkAsPaidModal();
-        this.processingId = null;
-        this.loadClaims();
-      },
-      error: (err) => {
-        this.toastService.error('Failed to mark claim as paid: ' + (err.error?.message || err.message || 'Unknown error'));
-        this.processingId = null;
-        console.error('Error marking claim as paid:', err);
-      }
-    });
-  }
-
-  /**
-   * Approve claim
-   */
-  approveClaim(claim: ExpenseClaim): void {
-    if (!confirm(`Are you sure you want to approve claim #${claim.id}?`)) {
-      return;
-    }
-
-    this.processingId = claim.id;
-
-    this.expenseClaimsService.approveClaim(claim.id, {
-      step_role: 'FINANCE',
-      comments: 'Approved by Finance Admin'
-    }).subscribe({
-      next: () => {
-        this.toastService.success('Claim approved successfully');
-        this.processingId = null;
-        this.loadClaims();
-      },
-      error: (err) => {
-        this.toastService.error('Failed to approve claim: ' + (err.error?.message || err.message || 'Unknown error'));
-        this.processingId = null;
-        console.error('Error approving claim:', err);
-      }
-    });
-  }
-
-  /**
-   * Reject claim
-   */
-  rejectClaim(claim: ExpenseClaim): void {
-    const reason = prompt('Please provide a reason for rejection:');
-
-    if (!reason || reason.trim() === '') {
-      this.toastService.error('Rejection reason is required');
-      return;
-    }
-
-    this.processingId = claim.id;
-
-    this.expenseClaimsService.rejectClaim(claim.id, {
-      step_role: 'FINANCE',
-      comments: reason
-    }).subscribe({
-      next: () => {
-        this.toastService.success('Claim rejected successfully');
-        this.processingId = null;
-        this.loadClaims();
-      },
-      error: (err) => {
-        this.toastService.error('Failed to reject claim: ' + (err.error?.message || err.message || 'Unknown error'));
-        this.processingId = null;
-        console.error('Error rejecting claim:', err);
-      }
-    });
+  goToProcessing(): void {
+    this.router.navigate(['/admin/claims/processing']);
   }
 
   /**
    * Get status badge class
    */
-  getStatusClass(status: string): string {
+  getStatusBadgeClass(status: string): string {
     const statusLower = status.toLowerCase();
-    if (statusLower.includes('paid')) return 'badge bg-success';
-    if (statusLower.includes('approved')) return 'badge bg-info';
-    if (statusLower.includes('rejected')) return 'badge bg-danger';
-    if (statusLower.includes('cancelled')) return 'badge bg-secondary';
-    if (statusLower.includes('pending')) return 'badge bg-warning';
-    return 'badge bg-secondary';
+    if (statusLower.includes('paid')) return 'badge-success';
+    if (statusLower.includes('approved')) return 'badge-info';
+    if (statusLower.includes('rejected')) return 'badge-danger';
+    if (statusLower.includes('cancelled')) return 'badge-secondary';
+    if (statusLower.includes('pending') || statusLower.includes('submitted')) return 'badge-warning';
+    return 'badge-secondary';
   }
 
   /**
@@ -276,7 +186,8 @@ export class ClaimsAdminComponent implements OnInit {
    */
   formatCurrency(amount: number | null | undefined): string {
     if (amount === null || amount === undefined) return 'N/A';
-    return amount.toLocaleString('en-MY', { style: 'currency', currency: 'MYR' });
+    const currency = this.appSettingsService.getDefaultCurrency();
+    return amount.toLocaleString('en-US', { style: 'currency', currency: currency });
   }
 
   /**
@@ -286,31 +197,10 @@ export class ClaimsAdminComponent implements OnInit {
     if (!date) return 'N/A';
     try {
       const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
     } catch {
       return 'Invalid Date';
     }
-  }
-
-  /**
-   * Check if claim can be approved
-   */
-  canApprove(claim: ExpenseClaim): boolean {
-    return claim.status === 'Pending Approval' || claim.status === 'Approved';
-  }
-
-  /**
-   * Check if claim can be marked as paid
-   */
-  canMarkAsPaid(claim: ExpenseClaim): boolean {
-    return claim.status === 'Approved' || claim.status === 'Pending Payment';
-  }
-
-  /**
-   * Check if claim is processing
-   */
-  isProcessing(claimId: number): boolean {
-    return this.processingId === claimId;
   }
 
   /**

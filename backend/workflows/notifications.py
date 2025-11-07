@@ -24,10 +24,10 @@ class WorkflowNotifications:
             NotificationService.create_notification(
                 user=workflow_instance.initiated_by,
                 title=f"Workflow Started: {workflow_instance.workflow_template.name}",
-                message=f"Your {workflow_instance.workflow_template.module_name} request has been submitted and the approval workflow has started.",
+                message=f"Your {workflow_instance.workflow_template.entity_type} request has been submitted and the approval workflow has started.",
                 notification_type='WORKFLOW_STARTED',
                 priority='NORMAL',
-                action_url=f"/{workflow_instance.workflow_template.module_name}/{workflow_instance.entity_id}"
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}"
             )
 
             # Notify the first approver (if step executions exist)
@@ -41,10 +41,10 @@ class WorkflowNotifications:
                     NotificationService.create_notification(
                         user=first_step.assigned_to_user,
                         title=f"New Approval Required: {workflow_instance.workflow_template.name}",
-                        message=f"You have been assigned to approve {first_step.workflow_step.step_name} for a {workflow_instance.workflow_template.module_name} request.",
+                        message=f"You have been assigned to approve {first_step.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request.",
                         notification_type='APPROVAL_REQUESTED',
                         priority='HIGH',
-                        action_url=f"/{workflow_instance.workflow_template.module_name}/{workflow_instance.entity_id}"
+                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}"
                     )
 
             print(f"✅ Notifications sent for workflow start: {workflow_instance.id}")
@@ -66,10 +66,10 @@ class WorkflowNotifications:
             NotificationService.create_notification(
                 user=workflow_instance.initiated_by,
                 title=f"Step Approved: {step_execution.workflow_step.step_name}",
-                message=f"{step_execution.workflow_step.step_name} has been approved by {step_execution.actioned_by_user.get_full_name() if step_execution.actioned_by_user else 'Unknown'}. Your request is progressing.",
+                message=f"{step_execution.workflow_step.step_name} has been approved by {step_execution.actioned_by.get_full_name() if step_execution.actioned_by else 'Unknown'}. Your request is progressing.",
                 notification_type='WORKFLOW_UPDATED',
                 priority='NORMAL',
-                action_url=f"/{workflow_instance.workflow_template.module_name}/{workflow_instance.entity_id}"
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}"
             )
 
             # Notify the next approver (if exists)
@@ -82,10 +82,10 @@ class WorkflowNotifications:
                 NotificationService.create_notification(
                     user=next_step.assigned_to_user,
                     title=f"New Approval Required: {next_step.workflow_step.step_name}",
-                    message=f"You have been assigned to approve {next_step.workflow_step.step_name} for a {workflow_instance.workflow_template.module_name} request.",
+                    message=f"You have been assigned to approve {next_step.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request.",
                     notification_type='APPROVAL_REQUESTED',
                     priority='HIGH',
-                    action_url=f"/{workflow_instance.workflow_template.module_name}/{workflow_instance.entity_id}"
+                    action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}"
                 )
 
             print(f"✅ Notifications sent for step approval: {step_execution.id}")
@@ -107,10 +107,10 @@ class WorkflowNotifications:
             NotificationService.create_notification(
                 user=workflow_instance.initiated_by,
                 title=f"Request Rejected: {workflow_instance.workflow_template.name}",
-                message=f"Your {workflow_instance.workflow_template.module_name} request has been rejected at {step_execution.workflow_step.step_name}. Reason: {step_execution.comments or 'No reason provided'}",
+                message=f"Your {workflow_instance.workflow_template.entity_type} request has been rejected at {step_execution.workflow_step.step_name}. Reason: {step_execution.comments or 'No reason provided'}",
                 notification_type='WORKFLOW_REJECTED',
                 priority='URGENT',
-                action_url=f"/{workflow_instance.workflow_template.module_name}/{workflow_instance.entity_id}"
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}"
             )
 
             print(f"✅ Notification sent for step rejection: {step_execution.id}")
@@ -133,10 +133,10 @@ class WorkflowNotifications:
             NotificationService.create_notification(
                 user=new_assignee,
                 title=f"Approval Delegated to You: {step_execution.workflow_step.step_name}",
-                message=f"An approval for {workflow_instance.workflow_template.module_name} has been delegated to you. Please review and take action.",
+                message=f"An approval for {workflow_instance.workflow_template.entity_type} has been delegated to you. Please review and take action.",
                 notification_type='APPROVAL_DELEGATED',
                 priority='HIGH',
-                action_url=f"/{workflow_instance.workflow_template.module_name}/{workflow_instance.entity_id}"
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}"
             )
 
             # Notify the requester
@@ -146,7 +146,7 @@ class WorkflowNotifications:
                 message=f"The approval step has been delegated to {new_assignee.get_full_name()}.",
                 notification_type='WORKFLOW_UPDATED',
                 priority='NORMAL',
-                action_url=f"/{workflow_instance.workflow_template.module_name}/{workflow_instance.entity_id}"
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}"
             )
 
             print(f"✅ Notifications sent for step delegation: {step_execution.id}")
@@ -166,10 +166,10 @@ class WorkflowNotifications:
             NotificationService.create_notification(
                 user=workflow_instance.initiated_by,
                 title=f"Request Approved: {workflow_instance.workflow_template.name}",
-                message=f"Your {workflow_instance.workflow_template.module_name} request has been fully approved! All approval steps are complete.",
+                message=f"Your {workflow_instance.workflow_template.entity_type} request has been fully approved! All approval steps are complete.",
                 notification_type='WORKFLOW_APPROVED',
                 priority='HIGH',
-                action_url=f"/{workflow_instance.workflow_template.module_name}/{workflow_instance.entity_id}"
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}"
             )
 
             print(f"✅ Notification sent for workflow completion: {workflow_instance.id}")
@@ -192,10 +192,10 @@ class WorkflowNotifications:
                 NotificationService.create_notification(
                     user=workflow_instance.initiated_by,
                     title=f"Request Cancelled: {workflow_instance.workflow_template.name}",
-                    message=f"Your {workflow_instance.workflow_template.module_name} request has been cancelled. {f'Reason: {reason}' if reason else ''}",
+                    message=f"Your {workflow_instance.workflow_template.entity_type} request has been cancelled. {f'Reason: {reason}' if reason else ''}",
                     notification_type='WORKFLOW_CANCELLED',
                     priority='NORMAL',
-                    action_url=f"/{workflow_instance.workflow_template.module_name}/{workflow_instance.entity_id}"
+                    action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}"
                 )
 
             print(f"✅ Notification sent for workflow cancellation: {workflow_instance.id}")

@@ -31,6 +31,7 @@ export const TRAVEL_TYPES = [
 
 export interface TrfListItem {
   id: number;
+  request_number?: string;
   requestor_name: string;
   travel_type: string;
   purpose: string;

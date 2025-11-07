@@ -144,6 +144,7 @@ export interface ExpenseClaimDetail extends ExpenseClaim {
 // Backend compatibility interfaces (for API communication)
 export interface ExpenseClaimBackend {
   id: number;
+  request_number?: string;
   title: string;
   description: string;
   total_amount: number;
@@ -187,7 +188,7 @@ export interface ExpenseClaimFXRateBackend {
 }
 
 // Helper function to convert frontend model to backend format
-export function toBackendFormat(claim: ExpenseClaim): any {
+export function toBackendFormat(claim: ExpenseClaim, defaultCurrency: string = 'USD'): any {
   // Convert travel details object to string if needed
   const convertTravelDetails = (details: string | ClaimOrTravelDetails): string => {
     if (typeof details === 'string') return details;
@@ -318,7 +319,7 @@ export function toBackendFormat(claim: ExpenseClaim): any {
     title: buildTitle(),
     description: buildDescription(),
     total_amount: calculateTotalAmount(),
-    currency: 'MYR', // Default currency, adjust as needed
+    currency: defaultCurrency, // Use currency from settings
     expense_date: getExpenseDate(),
     category: getClaimCategory(),
     receipt_urls: [],

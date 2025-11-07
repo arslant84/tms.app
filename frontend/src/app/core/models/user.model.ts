@@ -1,8 +1,15 @@
+export interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  permissions?: any[];
+}
+
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: UserRole;
+  role: Role | UserRole | any; // Can be Role object or simple string
   department: string;
   is_admin: boolean;
   is_active: boolean;
@@ -14,8 +21,15 @@ export interface User {
   // These fields are computed from name when needed
   firstName?: string;
   lastName?: string;
-  // Profile image URL
+  // Profile image URL (or base64 data)
   avatar?: string;
+  profile_photo?: string;
+  // Gender
+  gender?: string;
+  // Phone number
+  phone?: string;
+  // Last login timestamp
+  last_login_at?: string;
 }
 
 export enum UserRole {
@@ -29,13 +43,5 @@ export enum UserRole {
 
 export interface AuthResponse {
   token: string;
-  user: {
-    id: number;
-    username?: string;
-    name?: string;
-    email: string;
-    role: UserRole;
-    department?: string;
-    is_admin?: boolean;
-  };
+  user: Partial<User>;
 }

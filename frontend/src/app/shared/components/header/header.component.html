@@ -137,8 +137,15 @@
             aria-expanded="false"
             (click)="toggleProfileDropdown($event)">
             <div class="user-avatar">
-              <i class="bi bi-person-circle" *ngIf="!user.avatar"></i>
-              <img *ngIf="user.avatar" [src]="user.avatar" [alt]="user.name">
+              <img
+                *ngIf="getUserAvatar(user)"
+                [src]="getUserAvatar(user)!"
+                [alt]="user.name"
+                class="avatar-img"
+                (error)="$any($event.target).style.display='none'">
+              <div class="avatar-initials" *ngIf="!getUserAvatar(user)">
+                {{ getUserInitials(user.name) }}
+              </div>
             </div>
             <span class="user-name">{{ user.name }}</span>
             <i class="bi bi-chevron-down chevron-icon"></i>

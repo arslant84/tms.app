@@ -148,27 +148,26 @@ def dashboard_summary(request):
 
     # Calculate statistics
     total_trfs = trfs.count()
-    pending_trfs = trfs.filter(status='PENDING').count()
-    approved_trfs = trfs.filter(status='APPROVED').count()
-    rejected_trfs = trfs.filter(status='REJECTED').count()
+    # Use case-insensitive contains for dynamic workflow statuses
+    pending_trfs = trfs.filter(status__icontains='Pending').count()
+    approved_trfs = trfs.filter(status='Approved').count()
+    rejected_trfs = trfs.filter(status='Rejected').count()
 
     # Calculate total travel cost from TRFs
     total_travel_cost = trfs.aggregate(
         total=Sum('estimated_cost')
     )['total'] or Decimal('0.00')
 
-    # Calculate total expense claims
-    total_expense_claims = claims.aggregate(
-        total=Sum('total_amount')
-    )['total'] or Decimal('0.00')
+    # Calculate total expense claims (count of draft claims, not sum)
+    total_expense_claims = claims.filter(status='Draft').count()
 
     # Active bookings
     active_bookings = flights.filter(status__in=['CONFIRMED', 'TICKETED']).count()
     active_bookings += hotels.filter(status__in=['CONFIRMED']).count()
 
-    # Pending approvals
-    pending_approvals = trfs.filter(status='PENDING').count()
-    pending_approvals += claims.filter(status='PENDING').count()
+    # Pending approvals (use case-insensitive contains for dynamic statuses)
+    pending_approvals = trfs.filter(status__icontains='Pending').count()
+    pending_approvals += claims.filter(status__icontains='Pending').count()
 
     # Recent activities (last 5)
     recent_activities = []

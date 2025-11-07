@@ -26,7 +26,7 @@ export interface MealProvisionDetails {
   dailySelections: DailyMealSelection[];
 }
 
-export type AccommodationType = 'Hotel/Otels' | 'Staff House/PKC Kampung/Kinyahli camp' | 'Other';
+export type AccommodationType = 'Hotel/Otels' | 'Staff House/Kiyanli camp' | 'Other';
 
 export interface AccommodationDetail {
   accommodationType: AccommodationType;
@@ -72,7 +72,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
 
   travelForm!: FormGroup;
   timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-  accommodationTypes: AccommodationType[] = ['Hotel/Otels', 'Staff House/PKC Kampung/Kinyahli camp', 'Other'];
+  accommodationTypes: AccommodationType[] = ['Hotel/Otels', 'Staff House/Kiyanli camp', 'Other'];
   weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   dailyMealDates: Date[] = [];
@@ -93,6 +93,10 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     // When initialData changes (e.g., loaded from API in edit mode), rebuild the form
     if (changes['initialData'] && !changes['initialData'].firstChange && this.travelForm) {
+      console.log('=== DOMESTIC TRAVEL DETAILS ngOnChanges ===');
+      console.log('initialData changed:', changes['initialData']);
+      console.log('New initialData:', this.initialData);
+      console.log('companyTransportation:', this.initialData.companyTransportation);
       this.initForm();  // Rebuild form with new data
     }
   }
@@ -107,7 +111,11 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
           : [this.createItinerarySegment()]
       ),
       mealProvisions: this.fb.group({
-        dailySelections: this.fb.array([])
+        dailySelections: this.fb.array(
+          this.initialData.mealProvisions?.dailySelections?.length
+            ? this.initialData.mealProvisions.dailySelections.map(item => this.createDailyMealSelection(item))
+            : []
+        )
       }),
       accommodation: this.fb.group({
         accommodationType: [
@@ -129,7 +137,16 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
       }),
       companyTransportation: this.fb.array(
         this.initialData.companyTransportation?.length
-          ? this.initialData.companyTransportation.map(item => this.createTransportationDetail(item))
+          ? (() => {
+              console.log('=== INITIALIZING COMPANY TRANSPORTATION ===');
+              console.log('companyTransportation array:', this.initialData.companyTransportation);
+              this.initialData.companyTransportation.forEach((item: any, index: number) => {
+                console.log(`Item ${index}:`, item);
+                console.log(`  - etd: ${item.etd}`);
+                console.log(`  - accommodationType: ${item.accommodationType}`);
+              });
+              return this.initialData.companyTransportation.map((item: any) => this.createTransportationDetail(item));
+            })()
           : [this.createTransportationDetail()]
       )
     });
@@ -213,16 +230,25 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   }
 
   createTransportationDetail(data?: Partial<CompanyTransportDetail>): FormGroup {
-    return this.fb.group({
+    console.log('=== createTransportationDetail ===');
+    console.log('Received data:', data);
+    console.log('  - etd value:', data?.etd);
+    console.log('  - accommodationType value:', data?.accommodationType);
+
+    const formGroup = this.fb.group({
       date: [data?.date || null, Validators.required],
       day: [data?.day || '', Validators.required],
       from: [data?.from || '', Validators.required],
       to: [data?.to || '', Validators.required],
-      etd: [data?.etd || '', [Validators.required, Validators.pattern(this.timeRegex)]],
+      // BT No./Time Required - can be any text (BT number, time, or description)
+      etd: [data?.etd || ''],
       accommodationType: [data?.accommodationType || ''],
       address: [data?.address || ''],
       remarks: [data?.remarks || '']
     });
+
+    console.log('Created form group value:', formGroup.value);
+    return formGroup;
   }
 
   // Array manipulation methods

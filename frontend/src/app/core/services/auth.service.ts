@@ -56,21 +56,30 @@ export class AuthService {
     return this.http.post<AuthResponse>(url, body, { headers }).pipe(
       map(response => {
         console.log('Login successful, response:', response);
-        
+        console.log('Full user data from backend:', response.user);
+
         // Store token in local storage
         localStorage.setItem(this.tokenKey, response.token);
-        
-        // Create user object from response
+
+        // Store ALL user data from backend response
         const user: User = {
-          id: response.user.id,
-          name: response.user.name || response.user.username || email.split('@')[0], // Fallback to email username
-          email: email,
-          role: response.user.role as UserRole,
-          department: response.user.department || '', 
+          id: response.user.id!,
+          name: response.user.name || email.split('@')[0],
+          email: response.user.email || email,
+          role: response.user.role || '' as any,
+          department: response.user.department || '',
           is_admin: response.user.is_admin || false,
-          is_active: true
+          is_active: response.user.is_active !== undefined ? response.user.is_active : true,
+          // Include all additional fields from backend
+          staff_id: response.user.staff_id,
+          phone: response.user.phone,
+          gender: response.user.gender,
+          profile_photo: response.user.profile_photo,
+          last_login_at: response.user.last_login_at
         };
-        
+
+        console.log('Stored user data:', user);
+
         // Store user data
         localStorage.setItem('user_data', JSON.stringify(user));
         this.currentUserSubject.next(user);
@@ -191,5 +200,25 @@ export class AuthService {
         return throwError(() => new Error(error.error?.detail || 'Failed to create user'));
       })
     );
+  }
+
+  /**
+   * Get user's position/role name
+   * The role can be either a string or an object with {id, name, description, permissions}
+   */
+  getUserPosition(user: User | null): string {
+    if (!user || !user.role) return '';
+
+    // If role is an object, return the name property
+    if (typeof user.role === 'object' && user.role.name) {
+      return user.role.name;
+    }
+
+    // If role is a string, return it directly
+    if (typeof user.role === 'string') {
+      return user.role;
+    }
+
+    return '';
   }
 }

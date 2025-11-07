@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AccommodationService, AccommodationRequest } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
 
 export const ACCOMMODATION_STATUSES = [
   'Draft',
@@ -47,7 +48,8 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
   constructor(
     private accommodationService: AccommodationService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private appSettingsService: AppSettingsService
   ) {}
 
   ngOnInit(): void {
@@ -178,10 +180,21 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
 
   formatCurrency(amount: number | undefined): string {
     if (!amount && amount !== 0) return '$0.00';
-    return new Intl.NumberFormat('en-US', {
+    const currency = this.appSettingsService.getDefaultCurrency();
+    return new Intl.NumberFormat('en-MY', {
       style: 'currency',
-      currency: 'USD'
+      currency: currency
     }).format(amount);
+  }
+
+  canEdit(request: AccommodationRequest): boolean {
+    const status = request.status.toLowerCase();
+    return status.includes('draft') || status.includes('pending');
+  }
+
+  canDelete(request: AccommodationRequest): boolean {
+    const status = request.status.toLowerCase();
+    return status.includes('draft') || status.includes('rejected') || status.includes('cancelled');
   }
 
   get totalPages(): number {

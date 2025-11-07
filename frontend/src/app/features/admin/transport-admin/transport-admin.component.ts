@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TransportService, TransportRequest, VehicleAssignment } from '../../transport/services/transport.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AppSettingsService } from '../../../core/services/app-settings.service';
 
 @Component({
   selector: 'app-transport-admin',
@@ -68,7 +69,8 @@ export class TransportAdminComponent implements OnInit {
   constructor(
     private transportService: TransportService,
     private toastService: ToastService,
-    private router: Router
+    public router: Router,
+    private appSettingsService: AppSettingsService
   ) {}
 
   ngOnInit(): void {
@@ -293,7 +295,8 @@ export class TransportAdminComponent implements OnInit {
    */
   formatCurrency(amount: number | null | undefined): string {
     if (amount === null || amount === undefined) return 'N/A';
-    return amount.toLocaleString('en-MY', { style: 'currency', currency: 'MYR' });
+    const currency = this.appSettingsService.getDefaultCurrency();
+    return amount.toLocaleString('en-MY', { style: 'currency', currency: currency });
   }
 
   /**

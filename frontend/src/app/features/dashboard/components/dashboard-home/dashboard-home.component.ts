@@ -147,4 +147,32 @@ export class DashboardHomeComponent implements OnInit {
   getActivityIconBg(status: string): string {
     return status.toUpperCase() === 'APPROVED' ? 'bg-success-light' : 'bg-muted-light';
   }
+
+  /**
+   * Get the correct route for viewing an activity item based on its type
+   */
+  getActivityRoute(item: RecentActivity): string {
+    const type = item.type.toUpperCase();
+
+    switch (type) {
+      case 'TRF':
+      case 'TSR':
+        return `/trf/view/${item.id}`;
+      case 'EXPENSE_CLAIM':
+      case 'CLAIM':
+        return `/expenses/${item.id}`;
+      case 'VISA':
+        return `/visa/${item.id}`;
+      case 'FLIGHT':
+        return `/bookings/flights/${item.id}`;
+      case 'HOTEL':
+      case 'ACCOMMODATION':
+        return `/accommodation/${item.id}`;
+      case 'TRANSPORT':
+        return `/transport/${item.id}`;
+      default:
+        // Fallback to TRF view if type is unknown
+        return `/trf/view/${item.id}`;
+    }
+  }
 }

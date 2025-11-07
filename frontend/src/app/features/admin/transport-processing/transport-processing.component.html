@@ -1,0 +1,320 @@
+<div class="transport-processing-container">
+  <!-- Header -->
+  <div class="processing-header">
+    <button class="back-button" (click)="goToOverview()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      Back to Overview
+    </button>
+    <h1>Transport Processing Dashboard</h1>
+    <p class="subtitle">Manage transport requests and vehicle assignments</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button
+      class="tab-button"
+      [class.active]="activeTab === 'pending'"
+      (click)="switchTab('pending')">
+      Pending Assignments
+      <span class="badge" *ngIf="pendingTransports.length > 0">{{ pendingTransports.length }}</span>
+    </button>
+    <button
+      class="tab-button"
+      [class.active]="activeTab === 'assigned'"
+      (click)="switchTab('assigned')">
+      Assigned Transports
+      <span class="badge" *ngIf="assignedTransports.length > 0">{{ assignedTransports.length }}</span>
+    </button>
+  </div>
+
+  <!-- Pending Assignments Tab -->
+  <div *ngIf="activeTab === 'pending'" class="tab-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingPending" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading pending transport requests...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="errorPending && !isLoadingPending" class="error-container">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+      <p>{{ errorPending }}</p>
+      <button class="retry-button" (click)="retryPending()">Retry</button>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingPending && !errorPending && pendingTransports.length === 0" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h3>All caught up!</h3>
+      <p>No pending transport requests require processing at this time.</p>
+    </div>
+
+    <!-- Pending Transports List -->
+    <div *ngIf="!isLoadingPending && !errorPending && pendingTransports.length > 0" class="content-grid">
+      <!-- Left: Requests List -->
+      <div class="requests-list">
+        <h2>Approved Requests ({{ pendingTransports.length }})</h2>
+        <div class="request-cards">
+          <div
+            *ngFor="let request of pendingTransports"
+            class="request-card"
+            [class.selected]="selectedRequest?.id === request.id"
+            (click)="selectRequest(request)">
+            <div class="request-header">
+              <div>
+                <h3>{{ request.requestorName }}</h3>
+                <p class="request-number">{{ request.request_number }}</p>
+              </div>
+              <span class="badge" [class]="getStatusClass(request.status)">{{ request.status }}</span>
+            </div>
+            <div class="request-details">
+              <div class="detail-row">
+                <span class="label">Department:</span>
+                <span class="value">{{ request.department }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Purpose:</span>
+                <span class="value">{{ request.purpose }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Transport Type:</span>
+                <span class="badge badge-blue">{{ request.transportType }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Passengers:</span>
+                <span class="value">{{ request.passengers }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Pickup:</span>
+                <span class="value">{{ request.pickupLocation }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Dropoff:</span>
+                <span class="value">{{ request.dropoffLocation }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Scheduled:</span>
+                <span class="value">{{ formatDate(request.scheduledDate) }} {{ request.scheduledTime }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Assignment Form -->
+      <div class="assignment-form">
+        <div *ngIf="!selectedRequest" class="no-selection">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+          </svg>
+          <p>Select a request from the list to assign a vehicle</p>
+        </div>
+
+        <div *ngIf="selectedRequest" class="form-container">
+          <h2>Assign Vehicle</h2>
+
+          <div class="selected-request-info">
+            <h3>{{ selectedRequest.requestorName }}</h3>
+            <p>{{ selectedRequest.request_number }} - {{ selectedRequest.purpose }}</p>
+          </div>
+
+          <form (ngSubmit)="assignVehicle()">
+            <!-- Vehicle Number -->
+            <div class="form-group">
+              <label for="vehicleNumber">Vehicle Number *</label>
+              <input
+                type="text"
+                id="vehicleNumber"
+                [(ngModel)]="vehicleData.vehicle_number"
+                name="vehicleNumber"
+                placeholder="Enter vehicle number (e.g., TMN-1234)"
+                required>
+            </div>
+
+            <!-- Vehicle Type -->
+            <div class="form-group">
+              <label for="vehicleType">Vehicle Type *</label>
+              <select
+                id="vehicleType"
+                [(ngModel)]="vehicleData.vehicle_type"
+                name="vehicleType"
+                required>
+                <option *ngFor="let type of vehicleTypes" [value]="type.value">
+                  {{ type.label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Vehicle Capacity -->
+            <div class="form-group">
+              <label for="vehicleCapacity">Vehicle Capacity *</label>
+              <input
+                type="number"
+                id="vehicleCapacity"
+                [(ngModel)]="vehicleData.vehicle_capacity"
+                name="vehicleCapacity"
+                min="1"
+                max="50"
+                required>
+              <p class="helper-text">Required passengers: {{ selectedRequest.passengers }}</p>
+            </div>
+
+            <!-- Driver Name -->
+            <div class="form-group">
+              <label for="driverName">Driver Name *</label>
+              <input
+                type="text"
+                id="driverName"
+                [(ngModel)]="vehicleData.driver_name"
+                name="driverName"
+                placeholder="Enter driver's full name"
+                required>
+            </div>
+
+            <!-- Driver Contact -->
+            <div class="form-group">
+              <label for="driverContact">Driver Contact *</label>
+              <input
+                type="text"
+                id="driverContact"
+                [(ngModel)]="vehicleData.driver_contact"
+                name="driverContact"
+                placeholder="Enter driver's contact number"
+                required>
+            </div>
+
+            <!-- Driver License -->
+            <div class="form-group">
+              <label for="driverLicense">Driver License (Optional)</label>
+              <input
+                type="text"
+                id="driverLicense"
+                [(ngModel)]="vehicleData.driver_license"
+                name="driverLicense"
+                placeholder="Enter driver's license number">
+            </div>
+
+            <!-- Assignment Date -->
+            <div class="form-group">
+              <label for="assignmentDate">Assignment Date *</label>
+              <input
+                type="date"
+                id="assignmentDate"
+                [(ngModel)]="vehicleData.assignment_date"
+                name="assignmentDate"
+                required>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+              <button
+                type="submit"
+                class="btn-primary"
+                [disabled]="!vehicleData.vehicle_number || !vehicleData.driver_name || !vehicleData.driver_contact || isProcessing">
+                <span *ngIf="!isProcessing">Assign Vehicle</span>
+                <span *ngIf="isProcessing">
+                  <div class="btn-spinner"></div>
+                  Assigning...
+                </span>
+              </button>
+              <button
+                type="button"
+                class="btn-danger"
+                (click)="noVehiclesAvailable()"
+                [disabled]="isProcessing">
+                No Vehicles Available
+              </button>
+              <button
+                type="button"
+                class="btn-secondary"
+                (click)="cancelSelection()"
+                [disabled]="isProcessing">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assigned Transports Tab -->
+  <div *ngIf="activeTab === 'assigned'" class="tab-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingAssigned" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading assigned transport requests...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingAssigned && assignedTransports.length === 0" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+      </svg>
+      <h3>No Assigned Transports</h3>
+      <p>There are no transport requests with assigned vehicles at this time.</p>
+    </div>
+
+    <!-- Assigned Transports Table -->
+    <div *ngIf="!isLoadingAssigned && assignedTransports.length > 0" class="bookings-table-container">
+      <h2>Assigned Transports ({{ assignedTransports.length }})</h2>
+      <table class="bookings-table">
+        <thead>
+          <tr>
+            <th>Request #</th>
+            <th>Requestor</th>
+            <th>Vehicle Number</th>
+            <th>Vehicle Type</th>
+            <th>Driver</th>
+            <th>Driver Contact</th>
+            <th>Scheduled Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let transport of assignedTransports">
+            <td>{{ transport.request_number }}</td>
+            <td>{{ transport.requestorName }}</td>
+            <td>{{ transport.vehicleNumber }}</td>
+            <td>
+              <span class="badge" [class]="getVehicleTypeBadgeClass(transport.vehicleType)">
+                {{ transport.vehicleType.replace('_', ' ') }}
+              </span>
+            </td>
+            <td>{{ transport.driverName }}</td>
+            <td>{{ transport.driverContact }}</td>
+            <td>{{ formatDate(transport.scheduledDate) }}</td>
+            <td>
+              <span class="badge" [class]="getStatusClass(transport.status)">{{ transport.status }}</span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button
+                  class="btn-small btn-success"
+                  (click)="completeTransport(transport)"
+                  [disabled]="isProcessing"
+                  title="Mark as completed">
+                  <i class="bi bi-check-circle"></i>
+                  Complete
+                </button>
+                <button
+                  class="btn-small btn-view"
+                  (click)="viewRequest(transport.id)"
+                  title="View details">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,264 @@
+================================================================================
+REQUEST LISTS - BUTTON & TYPOGRAPHY STANDARDS
+================================================================================
+
+OVERVIEW:
+---------
+This document defines the unified button and typography standards applied 
+across all request list pages to ensure visual consistency.
+
+================================================================================
+BUTTON STANDARDS
+================================================================================
+
+HEADER "CREATE NEW" BUTTONS:
+-----------------------------
+Property              | Value                    | Notes
+---------------------|--------------------------|---------------------------
+Class                | btn btn-primary          | Bootstrap primary button
+Min-width            | 200px                    | Fixed minimum width
+Padding              | 0.625rem 1.25rem         | 10px 20px
+Font-size            | 1rem                     | 16px
+Font-weight          | 500                      | Medium weight
+White-space          | nowrap                   | Prevents text wrapping
+Icon class           | bi bi-plus-circle me-2   | Bootstrap icon with margin
+Icon size            | 1.125rem                 | 18px
+
+EXAMPLE HTML:
+<button class="btn btn-primary" (click)="navigateToCreate()">
+  <i class="bi bi-plus-circle me-2"></i>New Request
+</button>
+
+BEFORE vs AFTER:
+----------------
+BEFORE: Button widths varied based on text length
+  - "Create New TSR" = ~150px
+  - "New Visa Application" = ~180px
+  - "New Transport Request" = ~200px
+  
+AFTER: All buttons have consistent 200px minimum width
+  - All buttons = 200px minimum (can expand if text is longer)
+
+================================================================================
+TYPOGRAPHY STANDARDS
+================================================================================
+
+PAGE TITLES (H1):
+-----------------
+Property              | Value                    | Usage
+---------------------|--------------------------|---------------------------
+Font-size            | 1.875rem                 | 30px - Main page heading
+Font-weight          | 700                      | Bold
+Letter-spacing       | -0.025em                 | Tight tracking
+Color                | #1f2937                  | Gray-800
+Margin               | 0                        | No default margin
+Class                | page-title               | Applied to <h1>
+
+EXAMPLE:
+<h1 class="page-title">Transport Requests</h1>
+
+---
+
+CARD TITLES (H3):
+-----------------
+Property              | Value                    | Usage
+---------------------|--------------------------|---------------------------
+Font-size            | 1.125rem                 | 18px - Card headings
+Font-weight          | 600                      | Semibold
+Color                | #1f2937                  | Gray-800
+Margin               | 0                        | No default margin
+Class                | card-title               | Applied to <h3>
+
+EXAMPLE:
+<h3 class="card-title">Filter & Search Requests</h3>
+
+---
+
+PAGE SUBTITLES:
+---------------
+Property              | Value                    | Usage
+---------------------|--------------------------|---------------------------
+Font-size            | 0.875rem                 | 14px - Descriptive text
+Color                | #6b7280                  | Gray-500
+Margin               | 0                        | No default margin
+Class                | page-subtitle            | Below page title
+
+EXAMPLE:
+<p class="page-subtitle">Manage your transport bookings and requests</p>
+
+---
+
+EMPTY STATE TITLES:
+-------------------
+Property              | Value                    | Usage
+---------------------|--------------------------|---------------------------
+Font-size            | 1.125rem                 | 18px - Empty state heading
+Font-weight          | 600                      | Semibold
+Color                | #1f2937                  | Gray-800
+Margin               | 0 0 0.5rem 0             | Bottom margin only
+Line-height          | 1.5                      | Comfortable reading
+Classes              | empty-title, empty-message, h3
+
+EXAMPLE:
+<h3 class="empty-title">No Transport Requests Found</h3>
+
+BEFORE vs AFTER:
+----------------
+BEFORE: Empty state titles had varying font sizes
+  - Some pages: 1.25rem (20px)
+  - Some pages: 1rem (16px)
+  - Some pages: 1.125rem (18px)
+  
+AFTER: All empty state titles = 1.125rem (18px)
+
+---
+
+EMPTY STATE DESCRIPTIONS:
+--------------------------
+Property              | Value                    | Usage
+---------------------|--------------------------|---------------------------
+Font-size            | 0.875rem                 | 14px - Empty state text
+Color                | #6b7280                  | Gray-500
+Margin               | 0.5rem 0 0 0             | Top margin only
+Line-height          | 1.5                      | Comfortable reading
+Max-width            | 32rem                    | 512px - Readability limit
+Classes              | empty-description, empty-subtitle, p
+
+EXAMPLE:
+<p class="empty-description">
+  Create your first transport request to get started
+</p>
+
+BEFORE vs AFTER:
+----------------
+BEFORE: Empty state descriptions had varying font sizes
+  - Some pages: 1rem (16px)
+  - Some pages: 0.875rem (14px)
+  - Some pages: 0.75rem (12px)
+  
+AFTER: All empty state descriptions = 0.875rem (14px)
+
+================================================================================
+EMPTY STATE STANDARDS
+================================================================================
+
+ICON:
+-----
+Property              | Value                    | Notes
+---------------------|--------------------------|---------------------------
+Font-size            | 4rem                     | 64px - Large icon
+Color                | #d1d5db                  | Gray-300 (light gray)
+Margin-bottom        | 1rem                     | Space below icon
+Class                | empty-icon               | Usually bi-inbox
+
+LAYOUT:
+-------
+Property              | Value                    | Notes
+---------------------|--------------------------|---------------------------
+Display              | flex                     | Flexbox container
+Flex-direction       | column                   | Vertical stacking
+Align-items          | center                   | Horizontally centered
+Justify-content      | center                   | Vertically centered
+Padding              | 4rem 1.5rem              | 64px top/bottom, 24px sides
+Text-align           | center                   | Centered text
+
+EXAMPLE STRUCTURE:
+<div class="empty-state">
+  <i class="bi bi-inbox empty-icon"></i>
+  <h3 class="empty-title">No Requests Found</h3>
+  <p class="empty-description">
+    You haven't submitted any requests yet or none match your current filters.
+  </p>
+</div>
+
+================================================================================
+COLOR PALETTE
+================================================================================
+
+Primary Colors:
+---------------
+- Primary Teal:    #0d9488  (Buttons, icons, links)
+- Dark Gray:       #1f2937  (Headings, primary text)
+
+Text Colors:
+------------
+- Primary Text:    #1f2937  (Headings, important text)
+- Secondary Text:  #6b7280  (Subtitles, descriptions)
+- Muted Text:      #9ca3af  (Placeholder, disabled)
+
+Background Colors:
+------------------
+- White:           #ffffff  (Cards, containers)
+- Light Gray:      #f9fafb  (Table headers, hover states)
+- Border Gray:     #e5e7eb  (Borders, dividers)
+
+Empty State Colors:
+-------------------
+- Icon:            #d1d5db  (Light gray for empty icon)
+- Title:           #1f2937  (Dark gray for heading)
+- Description:     #6b7280  (Medium gray for text)
+
+================================================================================
+IMPLEMENTATION DETAILS
+================================================================================
+
+GLOBAL STYLES LOCATION:
+-----------------------
+File: frontend/src/styles.scss
+Section: "REQUEST LISTS UNIFIED STYLES"
+Lines: 251-338
+
+AFFECTED CONTAINERS:
+--------------------
+- .visa-list-container
+- .transport-list-container
+- .accommodation-list-container
+- .expense-list-container
+- .trf-list-container
+
+OVERRIDE APPROACH:
+------------------
+Global styles in styles.scss override component-specific styles to ensure
+consistency. This means:
+1. Component SCSS files can define base styles
+2. Global unified styles take precedence for standardization
+3. Future list pages automatically inherit unified styling
+
+MAINTENANCE:
+------------
+To modify button or typography standards:
+1. Update values in frontend/src/styles.scss (lines 251-338)
+2. Changes automatically apply to all request list pages
+3. No need to modify individual component files
+
+================================================================================
+TESTING CHECKLIST
+================================================================================
+
+Visual Consistency:
+-------------------
+☐ All "Create New" buttons have same width (200px minimum)
+☐ All "Create New" buttons have same padding and font size
+☐ All page titles (h1) are same size (1.875rem / 30px)
+☐ All card titles (h3) are same size (1.125rem / 18px)
+☐ All empty state titles are same size (1.125rem / 18px)
+☐ All empty state descriptions are same size (0.875rem / 14px)
+☐ All icons in buttons have consistent spacing (me-2 class)
+☐ No duplicate buttons on any page
+
+Pages to Test:
+--------------
+☐ Visa Applications List (/visa)
+☐ Transport Requests List (/transport)
+☐ Accommodation Requests List (/accommodation)
+☐ Expense Claims List (/expense-claims)
+☐ Travel & Service Requests List (/trf)
+
+Responsive Testing:
+-------------------
+☐ Desktop view (1920px+)
+☐ Tablet view (768px - 1024px)
+☐ Mobile view (< 768px)
+☐ Button widths adjust appropriately on small screens
+
+================================================================================

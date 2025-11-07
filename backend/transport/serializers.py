@@ -38,7 +38,7 @@ class TransportRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransportRequest
         fields = [
-            'id', 'requestor', 'requestor_email',
+            'id', 'request_number', 'requestor', 'requestor_email',
             'requestor_name', 'staff_id', 'department', 'position',
             'purpose', 'tsr_reference', 'status',
             'transport_details', 'detail_count',
@@ -47,7 +47,7 @@ class TransportRequestSerializer(serializers.ModelSerializer):
             'booking_details',
             'submitted_at', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'requestor', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'request_number', 'requestor', 'created_at', 'updated_at']
 
     def get_detail_count(self, obj):
         """Get the number of transport details"""

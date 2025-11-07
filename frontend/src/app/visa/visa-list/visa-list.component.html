@@ -99,6 +99,7 @@
         <table class="table table-hover applications-table">
           <thead>
             <tr>
+              <th>Request #</th>
               <th>Applicant</th>
               <th>Destination</th>
               <th>Visa Type</th>
@@ -110,6 +111,10 @@
           </thead>
           <tbody>
             <tr *ngFor="let app of applications" [routerLink]="['/visa', app.id]" class="clickable-row">
+              <td class="id-cell">
+                <span *ngIf="app.request_number" class="request-number">{{ app.request_number }}</span>
+                <span *ngIf="!app.request_number" class="text-muted">VIS-{{ app.id }}</span>
+              </td>
               <td>
                 <div class="applicant-info">
                   <strong>{{ app.requestor_name }}</strong>

@@ -31,8 +31,10 @@
     <!-- Requestor Information -->
     <section class="form-section">
       <h3 class="section-title">
-        <i class="bi bi-person-circle"></i>
-        Requestor Information
+        <span class="title-text">
+          <i class="bi bi-person-circle"></i>
+          Requestor Information
+        </span>
       </h3>
       <div class="form-grid">
         <div class="form-group">
@@ -93,8 +95,10 @@
     <!-- Request Details -->
     <section class="form-section">
       <h3 class="section-title">
-        <i class="bi bi-file-text"></i>
-        Request Details
+        <span class="title-text">
+          <i class="bi bi-file-text"></i>
+          Request Details
+        </span>
       </h3>
       <div class="form-group full-width">
         <label for="purpose">Purpose of Transport <span class="required">*</span></label>
@@ -124,16 +128,16 @@
 
     <!-- Transport Details -->
     <section class="form-section">
-      <div class="section-header">
-        <h3 class="section-title">
+      <h3 class="section-title">
+        <span class="title-text">
           <i class="bi bi-geo-alt"></i>
           Transport Details
-        </h3>
-        <button type="button" class="btn btn-sm btn-secondary" (click)="addTransportDetail()">
+        </span>
+        <button type="button" class="btn btn-sm btn-add-journey" (click)="addTransportDetail()">
           <i class="bi bi-plus-circle"></i>
           Add Journey
         </button>
-      </div>
+      </h3>
 
       <div formArrayName="transportDetails" class="details-container">
         <div *ngFor="let detail of transportDetails.controls; let i = index" [formGroupName]="i" class="detail-card">
@@ -244,8 +248,10 @@
     <!-- Approval & Submission Confirmations -->
     <section class="form-section">
       <h3 class="section-title">
-        <i class="bi bi-check-circle"></i>
-        Approval & Submission
+        <span class="title-text">
+          <i class="bi bi-check-circle"></i>
+          Approval & Submission
+        </span>
       </h3>
 
       <div class="form-group full-width">

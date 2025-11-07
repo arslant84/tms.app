@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from approvals.views import unified_approvals
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,6 +32,8 @@ urlpatterns = [
     path('api/transport/', include('transport.urls')),
     path('api/workflows/', include('workflows.urls')),
     path('api/notifications/', include('notifications.urls')),
+    # Unified approvals endpoint
+    path('api/admin/approvals/', unified_approvals, name='unified-approvals'),
 ]
 
 # Serve media files in development

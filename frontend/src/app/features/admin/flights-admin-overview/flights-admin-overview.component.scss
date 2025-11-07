@@ -1,0 +1,301 @@
+.flights-overview-container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+}
+
+// Page Header
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 1rem;
+
+  .header-content {
+    flex: 1;
+
+    .page-title {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: var(--bs-dark);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      i {
+        font-size: 2rem;
+        color: var(--bs-primary);
+      }
+    }
+
+    .page-subtitle {
+      color: var(--bs-secondary);
+      margin-bottom: 0;
+      font-size: 1rem;
+    }
+  }
+
+  .header-actions {
+    flex-shrink: 0;
+  }
+}
+
+// Stats Grid
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  .stat-card {
+    background: white;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    transition: box-shadow 0.2s;
+
+    &:hover {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+
+      .stat-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--bs-dark);
+        line-height: 1.2;
+      }
+
+      .stat-icon {
+        font-size: 1rem;
+        color: var(--bs-secondary);
+        opacity: 0.5;
+      }
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--bs-dark);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-description {
+      font-size: 0.75rem;
+      color: var(--bs-secondary);
+      line-height: 1.3;
+    }
+  }
+}
+
+// Card Styles
+.card-header {
+  background-color: white;
+  border-bottom: 1px solid var(--bs-border-color);
+  padding: 1rem 1.5rem;
+
+  .card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--bs-dark);
+  }
+
+  .card-description {
+    font-size: 0.875rem;
+    color: var(--bs-secondary);
+    margin-top: 0.25rem;
+  }
+}
+
+// Loading State
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+
+  p {
+    margin-top: 1rem;
+    color: var(--bs-secondary);
+  }
+}
+
+// Applications List
+.applications-list {
+  .application-item {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: background-color 0.15s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .application-content {
+      flex: 1;
+
+      .application-badges {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+
+        .application-id {
+          font-weight: 600;
+          color: var(--bs-dark);
+        }
+
+        .badge {
+          font-size: 0.75rem;
+          font-weight: 600;
+          padding: 0.25rem 0.5rem;
+          border-radius: 9999px;
+        }
+      }
+
+      .application-details {
+        margin-bottom: 0.75rem;
+
+        .requestor-name {
+          font-weight: 600;
+          color: var(--bs-dark);
+          margin-bottom: 0.25rem;
+        }
+
+        .department {
+          font-size: 0.875rem;
+          margin-bottom: 0;
+        }
+      }
+
+      .application-info {
+        margin-bottom: 0.75rem;
+
+        .purpose {
+          font-size: 0.875rem;
+          color: var(--bs-dark);
+          margin-bottom: 0.25rem;
+        }
+
+        .destination {
+          font-size: 0.75rem;
+          margin-bottom: 0;
+        }
+      }
+
+      .submitted-date {
+        font-size: 0.75rem;
+        margin-bottom: 0;
+      }
+    }
+
+    .application-actions {
+      flex-shrink: 0;
+      display: flex;
+      gap: 0.5rem;
+    }
+  }
+
+  .load-more-container {
+    display: flex;
+    justify-content: center;
+    padding-top: 1rem;
+  }
+}
+
+// Empty State
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+
+  .empty-icon {
+    font-size: 3rem;
+    color: var(--bs-secondary);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+  }
+
+  .empty-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--bs-dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-description {
+    color: var(--bs-secondary);
+    margin-bottom: 0;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .flights-overview-container {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+
+    .page-title {
+      font-size: 1.5rem;
+
+      i {
+        font-size: 1.5rem;
+      }
+    }
+
+    .header-actions {
+      width: 100%;
+
+      .btn {
+        width: 100%;
+      }
+    }
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .application-item {
+    flex-direction: column;
+
+    .application-actions {
+      width: 100%;
+
+      .btn {
+        width: 100%;
+      }
+    }
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}

@@ -147,7 +147,7 @@
             </div>
             <div class="activity-item-right">
               <span class="badge" [ngClass]="getStatusBadgeClass(item.status)">{{ item.status }}</span>
-              <a [routerLink]="[item.id]" class="view-details-link">View Details →</a>
+              <a [routerLink]="getActivityRoute(item)" class="view-details-link">View Details →</a>
             </div>
           </div>
         </div>

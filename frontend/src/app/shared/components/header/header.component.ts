@@ -260,4 +260,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
     event.preventDefault();
     this.authService.logout();
   }
+
+  /**
+   * Get user initials from name for avatar fallback
+   */
+  getUserInitials(name: string): string {
+    if (!name) return 'U';
+
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
+  /**
+   * Get user avatar URL (supports both avatar and profile_photo fields)
+   */
+  getUserAvatar(user: User): string | null {
+    return user.avatar || user.profile_photo || null;
+  }
 }

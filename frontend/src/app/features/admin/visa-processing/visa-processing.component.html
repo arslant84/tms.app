@@ -1,0 +1,276 @@
+<div class="visa-processing-container">
+  <!-- Header -->
+  <div class="processing-header">
+    <button class="back-button" (click)="goToOverview()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      Back to Overview
+    </button>
+    <h1>Visa Processing Dashboard</h1>
+    <p class="subtitle">Manage visa applications and processing workflows</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button
+      class="tab-button"
+      [class.active]="activeTab === 'pending'"
+      (click)="switchTab('pending')">
+      Pending Processing
+      <span class="badge" *ngIf="pendingVisas.length > 0">{{ pendingVisas.length }}</span>
+    </button>
+    <button
+      class="tab-button"
+      [class.active]="activeTab === 'completed'"
+      (click)="switchTab('completed')">
+      Completed
+      <span class="badge" *ngIf="completedVisas.length > 0">{{ completedVisas.length }}</span>
+    </button>
+  </div>
+
+  <!-- Pending Processing Tab -->
+  <div *ngIf="activeTab === 'pending'" class="tab-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingPending" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading pending visa applications...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="errorPending && !isLoadingPending" class="error-container">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+      <p>{{ errorPending }}</p>
+      <button class="retry-button" (click)="retryPending()">Retry</button>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingPending && !errorPending && pendingVisas.length === 0" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h3>All caught up!</h3>
+      <p>No pending visa applications require processing at this time.</p>
+    </div>
+
+    <!-- Pending Visas List -->
+    <div *ngIf="!isLoadingPending && !errorPending && pendingVisas.length > 0" class="content-grid">
+      <!-- Left: Applications List -->
+      <div class="requests-list">
+        <h2>Approved Applications ({{ pendingVisas.length }})</h2>
+        <div class="request-cards">
+          <div
+            *ngFor="let app of pendingVisas"
+            class="request-card"
+            [class.selected]="selectedApplication?.id === app.id"
+            (click)="selectApplication(app)">
+            <div class="request-header">
+              <div>
+                <h3>{{ app.requestorName }}</h3>
+                <p class="request-number">{{ app.request_number }}</p>
+              </div>
+              <span class="badge" [class]="getStatusClass(app.status)">{{ app.status }}</span>
+            </div>
+            <div class="request-details">
+              <div class="detail-row">
+                <span class="label">Department:</span>
+                <span class="value">{{ app.department }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Staff ID:</span>
+                <span class="value">{{ app.staffId }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Destination:</span>
+                <span class="badge" [class]="getDestinationBadgeClass(app.destination)">{{ app.destination }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Visa Type:</span>
+                <span class="badge" [class]="getVisaTypeBadgeClass(app.visaType)">{{ app.visaType }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Travel Purpose:</span>
+                <span class="value">{{ app.travelPurpose }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Trip Start:</span>
+                <span class="value">{{ formatDate(app.tripStartDate) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Trip End:</span>
+                <span class="value">{{ formatDate(app.tripEndDate) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Passport:</span>
+                <span class="value">{{ app.passportNumber }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Processing Form -->
+      <div class="assignment-form">
+        <div *ngIf="!selectedApplication" class="no-selection">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+          </svg>
+          <p>Select an application from the list to process</p>
+        </div>
+
+        <div *ngIf="selectedApplication" class="form-container">
+          <h2>Process Visa Application</h2>
+
+          <div class="selected-request-info">
+            <h3>{{ selectedApplication.requestorName }}</h3>
+            <p>{{ selectedApplication.request_number }} - {{ selectedApplication.destination }}</p>
+          </div>
+
+          <form (ngSubmit)="completeProcessing()">
+            <!-- Visa Number (Optional) -->
+            <div class="form-group">
+              <label for="visaNumber">Visa Number (Optional)</label>
+              <input
+                type="text"
+                id="visaNumber"
+                [(ngModel)]="visaNumber"
+                name="visaNumber"
+                placeholder="Enter visa number if available">
+            </div>
+
+            <!-- Visa Issue Date (Optional) -->
+            <div class="form-group">
+              <label for="visaIssueDate">Visa Issue Date (Optional)</label>
+              <input
+                type="date"
+                id="visaIssueDate"
+                [(ngModel)]="visaIssueDate"
+                name="visaIssueDate">
+            </div>
+
+            <!-- Visa Expiry Date (Optional) -->
+            <div class="form-group">
+              <label for="visaExpiryDate">Visa Expiry Date (Optional)</label>
+              <input
+                type="date"
+                id="visaExpiryDate"
+                [(ngModel)]="visaExpiryDate"
+                name="visaExpiryDate">
+            </div>
+
+            <!-- Processing Notes -->
+            <div class="form-group">
+              <label for="notes">Processing Notes (Optional)</label>
+              <textarea
+                id="notes"
+                [(ngModel)]="processingNotes"
+                name="notes"
+                rows="3"
+                placeholder="Add any notes about this visa processing..."></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+              <button
+                type="button"
+                class="btn-primary"
+                (click)="startProcessing()"
+                [disabled]="isProcessing">
+                <span *ngIf="!isProcessing">Start Processing</span>
+                <span *ngIf="isProcessing">
+                  <div class="btn-spinner"></div>
+                  Processing...
+                </span>
+              </button>
+              <button
+                type="submit"
+                class="btn-primary"
+                [disabled]="isProcessing">
+                <span *ngIf="!isProcessing">Mark as Completed</span>
+                <span *ngIf="isProcessing">
+                  <div class="btn-spinner"></div>
+                  Completing...
+                </span>
+              </button>
+              <button
+                type="button"
+                class="btn-danger"
+                (click)="rejectApplication()"
+                [disabled]="isProcessing">
+                Unable to Process
+              </button>
+              <button
+                type="button"
+                class="btn-secondary"
+                (click)="selectedApplication = null; resetFormFields()"
+                [disabled]="isProcessing">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Completed Tab -->
+  <div *ngIf="activeTab === 'completed'" class="tab-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingCompleted" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading completed visa applications...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingCompleted && completedVisas.length === 0" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+      </svg>
+      <h3>No Completed Visas</h3>
+      <p>There are no completed visa applications at this time.</p>
+    </div>
+
+    <!-- Completed Visas Table -->
+    <div *ngIf="!isLoadingCompleted && completedVisas.length > 0" class="bookings-table-container">
+      <h2>Completed Applications ({{ completedVisas.length }})</h2>
+      <table class="bookings-table">
+        <thead>
+          <tr>
+            <th>Request #</th>
+            <th>Applicant</th>
+            <th>Destination</th>
+            <th>Visa Type</th>
+            <th>Status</th>
+            <th>Completed Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let visa of completedVisas">
+            <td>{{ visa.request_number }}</td>
+            <td>{{ visa.requestorName }}</td>
+            <td>
+              <span class="badge" [class]="getDestinationBadgeClass(visa.destination)">{{ visa.destination }}</span>
+            </td>
+            <td>
+              <span class="badge" [class]="getVisaTypeBadgeClass(visa.visaType)">{{ visa.visaType }}</span>
+            </td>
+            <td>
+              <span class="badge" [class]="getStatusClass(visa.status)">{{ visa.status }}</span>
+            </td>
+            <td>{{ formatDate(visa.completedDate) }}</td>
+            <td>
+              <button
+                class="btn-small btn-primary"
+                (click)="viewApplication(visa.id)">
+                View
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

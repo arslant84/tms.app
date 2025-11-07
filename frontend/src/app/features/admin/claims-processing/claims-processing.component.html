@@ -1,0 +1,239 @@
+<div class="claims-processing-container">
+  <!-- Header -->
+  <div class="processing-header">
+    <button class="back-button" (click)="goBack()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      Back to Overview
+    </button>
+    <h1>Claims Processing Dashboard</h1>
+    <p class="subtitle">Process approved expense claims and manage payments</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button
+      class="tab-button"
+      [class.active]="activeTab === 'pending'"
+      (click)="setActiveTab('pending')">
+      Pending Processing
+      <span class="badge" *ngIf="pendingClaims.length > 0">{{ pendingClaims.length }}</span>
+    </button>
+    <button
+      class="tab-button"
+      [class.active]="activeTab === 'completed'"
+      (click)="setActiveTab('completed')">
+      Completed
+      <span class="badge" *ngIf="completedClaims.length > 0">{{ completedClaims.length }}</span>
+    </button>
+  </div>
+
+  <!-- Pending Processing Tab -->
+  <div *ngIf="activeTab === 'pending'" class="tab-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingPending" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading pending claims...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="errorPending && !isLoadingPending" class="error-container">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+      <p>{{ errorPending }}</p>
+      <button class="retry-button" (click)="fetchPendingClaims()">Retry</button>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingPending && !errorPending && pendingClaims.length === 0" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h3>All caught up!</h3>
+      <p>No pending claims require processing at this time.</p>
+    </div>
+
+    <!-- Pending Claims List -->
+    <div *ngIf="!isLoadingPending && !errorPending && pendingClaims.length > 0" class="content-grid">
+      <!-- Left: Claims List -->
+      <div class="requests-list">
+        <h2>Approved Claims ({{ pendingClaims.length }})</h2>
+        <div class="request-cards">
+          <div
+            *ngFor="let claim of pendingClaims"
+            class="request-card"
+            [class.selected]="selectedClaim?.id === claim.id"
+            (click)="selectClaim(claim)">
+            <div class="request-header">
+              <div>
+                <h3>{{ claim.staffName }}</h3>
+                <p class="request-number">{{ claim.request_number }}</p>
+              </div>
+              <span class="badge badge-warning">{{ claim.status }}</span>
+            </div>
+            <div class="request-details">
+              <div class="detail-row">
+                <span class="label">Staff No:</span>
+                <span class="value">{{ claim.staffNo }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Purpose:</span>
+                <span class="value">{{ claim.purpose }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Amount:</span>
+                <span class="value fw-bold">{{ formatCurrency(claim.amount) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Submitted:</span>
+                <span class="value">{{ formatDate(claim.submittedDate) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Processing Form -->
+      <div class="assignment-form">
+        <div *ngIf="!selectedClaim" class="no-selection">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+          </svg>
+          <p>Select a claim from the list to process payment</p>
+        </div>
+
+        <div *ngIf="selectedClaim" class="form-container">
+          <h2>Process Payment</h2>
+
+          <div class="selected-request-info">
+            <h3>{{ selectedClaim.staffName }}</h3>
+            <p>{{ selectedClaim.request_number }} - {{ formatCurrency(selectedClaim.amount) }}</p>
+          </div>
+
+          <form (ngSubmit)="markAsPaid()">
+            <!-- Payment Method -->
+            <div class="form-group">
+              <label for="paymentMethod">Payment Method <span class="required">*</span></label>
+              <select
+                id="paymentMethod"
+                [(ngModel)]="paymentMethod"
+                name="paymentMethod"
+                required>
+                <option value="BANK_TRANSFER">Bank Transfer</option>
+                <option value="CHEQUE">Cheque</option>
+                <option value="CASH">Cash</option>
+              </select>
+            </div>
+
+            <!-- Payment Reference -->
+            <div class="form-group">
+              <label for="paymentReference">Payment Reference / Cheque No <span class="required">*</span></label>
+              <input
+                type="text"
+                id="paymentReference"
+                [(ngModel)]="paymentReference"
+                name="paymentReference"
+                placeholder="Enter payment reference or cheque number"
+                required>
+            </div>
+
+            <!-- Payment Date -->
+            <div class="form-group">
+              <label for="paymentDate">Payment Date <span class="required">*</span></label>
+              <input
+                type="date"
+                id="paymentDate"
+                [(ngModel)]="paymentDate"
+                name="paymentDate"
+                required>
+            </div>
+
+            <!-- Processing Notes -->
+            <div class="form-group">
+              <label for="processingNotes">Processing Notes (Optional)</label>
+              <textarea
+                id="processingNotes"
+                [(ngModel)]="processingNotes"
+                name="processingNotes"
+                rows="4"
+                placeholder="Add any additional notes or comments..."></textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="form-actions">
+              <button
+                type="submit"
+                class="btn-primary"
+                [disabled]="isProcessing || !paymentReference || !paymentDate">
+                <span *ngIf="!isProcessing">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Mark as Paid
+                </span>
+                <span *ngIf="isProcessing" class="processing">
+                  <div class="spinner-small"></div>
+                  Processing...
+                </span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Completed Tab -->
+  <div *ngIf="activeTab === 'completed'" class="tab-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingCompleted" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading completed claims...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingCompleted && completedClaims.length === 0" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+      </svg>
+      <h3>No completed payments yet</h3>
+      <p>Processed claims will appear here once payment is completed.</p>
+    </div>
+
+    <!-- Completed Claims List -->
+    <div *ngIf="!isLoadingCompleted && completedClaims.length > 0" class="completed-grid">
+      <h2>Payment History ({{ completedClaims.length }})</h2>
+      <div class="completed-cards">
+        <div *ngFor="let claim of completedClaims" class="completed-card">
+          <div class="completed-header">
+            <div>
+              <h3>{{ claim.staffName }}</h3>
+              <p class="request-number">{{ claim.request_number }}</p>
+            </div>
+            <span class="badge badge-success">{{ claim.status }}</span>
+          </div>
+          <div class="completed-details">
+            <div class="detail-row">
+              <span class="label">Amount:</span>
+              <span class="value fw-bold">{{ formatCurrency(claim.amount) }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Payment Method:</span>
+              <span class="value">{{ claim.paymentMethod }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Reference:</span>
+              <span class="value">{{ claim.paymentReference }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Completed:</span>
+              <span class="value">{{ formatDate(claim.completedDate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

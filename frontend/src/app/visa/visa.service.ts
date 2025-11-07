@@ -12,6 +12,7 @@ export interface VisaApplicationDetail extends VisaApplication {
 
 export interface VisaApplication {
   id: number;
+  request_number?: string;
   user: number | null;
   requestor_name: string;
   email?: string;
@@ -151,7 +152,7 @@ export class VisaService {
   }
 
   updateApplication(id: number, data: Partial<VisaApplication>): Observable<VisaApplication> {
-    return this.http.put<VisaApplication>(`${this.apiUrl}${id}/`, data);
+    return this.http.patch<VisaApplication>(`${this.apiUrl}${id}/`, data);
   }
 
   deleteApplication(id: number): Observable<void> {

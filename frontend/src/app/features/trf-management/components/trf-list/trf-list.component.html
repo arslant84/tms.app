@@ -138,7 +138,10 @@
             </thead>
             <tbody>
               <tr *ngFor="let trf of trfs" class="table-row">
-                <td class="font-medium">TSR-{{ trf.id }}</td>
+                <td class="font-medium">
+                  <span *ngIf="trf.request_number" class="request-number">{{ trf.request_number }}</span>
+                  <span *ngIf="!trf.request_number" class="text-muted">TSR-{{ trf.id }}</span>
+                </td>
                 <td>{{ trf.requestor_name || 'N/A' }}</td>
                 <td>{{ formatTravelTypeDisplay(trf.travel_type) }}</td>
                 <td class="purpose-cell">{{ trf.purpose || 'N/A' }}</td>

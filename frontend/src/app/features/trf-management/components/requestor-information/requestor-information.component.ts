@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthService } from '../../../../core/services/auth.service';
 
 export interface RequestorInformation {
   fullName: string;
@@ -25,7 +26,10 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
 
   requestorForm!: FormGroup;
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.initForm();
@@ -39,14 +43,29 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
   }
 
   private initForm(): void {
+    // Get current user data for auto-population
+    const currentUser = this.authService.getCurrentUser();
+    const position = this.authService.getUserPosition(currentUser);
+
+    // Use initialData if provided (edit mode), otherwise use current user data (create mode)
     this.requestorForm = this.fb.group({
-      fullName: [this.initialData.fullName || 'Jane Doe (Sample)', Validators.required],
-      staffId: [this.initialData.staffId || 'S-12345', Validators.required],
-      department: [this.initialData.department || 'Exploration Department / Geologist', Validators.required],
-      position: [this.initialData.position || ''],
-      costCenter: [this.initialData.costCenter || 'CC-EXPL-001', Validators.required],
-      contactNo: [this.initialData.contactNo || 'Ext: 1234', Validators.required],
-      email: [this.initialData.email || 'jane.doe@example.com', [Validators.required, Validators.email]]
+      fullName: [this.initialData.fullName || currentUser?.name || '', Validators.required],
+      staffId: [this.initialData.staffId || currentUser?.staff_id || '', Validators.required],
+      department: [this.initialData.department || currentUser?.department || '', Validators.required],
+      position: [this.initialData.position || position || ''],
+      costCenter: [this.initialData.costCenter || '', Validators.required],
+      contactNo: [this.initialData.contactNo || currentUser?.phone || '', Validators.required],
+      email: [this.initialData.email || currentUser?.email || '', [Validators.required, Validators.email]]
+    });
+
+    console.log('Requestor Information - Current user:', currentUser);
+    console.log('Requestor Information - Auto-populated with:', {
+      fullName: this.requestorForm.get('fullName')?.value,
+      staffId: this.requestorForm.get('staffId')?.value,
+      department: this.requestorForm.get('department')?.value,
+      position: this.requestorForm.get('position')?.value,
+      contactNo: this.requestorForm.get('contactNo')?.value,
+      email: this.requestorForm.get('email')?.value
     });
   }
 

@@ -22,8 +22,12 @@
           rows="4"
           class="form-control"
           placeholder="Describe the purpose of your travel"
+          [ngClass]="{'is-invalid': overseasForm.get('purpose')?.invalid && overseasForm.get('purpose')?.touched}"
         ></textarea>
-        <div *ngIf="overseasForm.get('purpose')?.invalid && overseasForm.get('purpose')?.touched" class="text-danger small mt-1">
+        <div class="invalid-feedback" *ngIf="overseasForm.get('purpose')?.errors?.['required'] && overseasForm.get('purpose')?.touched">
+          Purpose of travel is required
+        </div>
+        <div class="invalid-feedback" *ngIf="overseasForm.get('purpose')?.errors?.['minlength'] && overseasForm.get('purpose')?.touched">
           Purpose must be at least 10 characters
         </div>
       </div>
@@ -37,10 +41,14 @@
         <select
           formControlName="tripType"
           class="form-select"
+          [ngClass]="{'is-invalid': overseasForm.get('tripType')?.invalid && overseasForm.get('tripType')?.touched}"
         >
           <option value="One Way">One Way</option>
           <option value="Round Trip">Round Trip</option>
         </select>
+        <div class="invalid-feedback" *ngIf="overseasForm.get('tripType')?.errors?.['required'] && overseasForm.get('tripType')?.touched">
+          Trip type is required
+        </div>
       </div>
 
       <!-- Itinerary Section -->
@@ -63,7 +71,11 @@
                   formControlName="date"
                   (change)="onDateChange(i, $event)"
                   class="form-control"
+                  [ngClass]="{'is-invalid': segment.get('date')?.invalid && segment.get('date')?.touched}"
                 />
+                <div class="invalid-feedback" *ngIf="segment.get('date')?.errors?.['required'] && segment.get('date')?.touched">
+                  Date is required
+                </div>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-medium">Day / День</label>
@@ -82,7 +94,11 @@
                   formControlName="from"
                   placeholder="Origin city/airport"
                   class="form-control"
+                  [ngClass]="{'is-invalid': segment.get('from')?.invalid && segment.get('from')?.touched}"
                 />
+                <div class="invalid-feedback" *ngIf="segment.get('from')?.errors?.['required'] && segment.get('from')?.touched">
+                  Origin is required
+                </div>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-medium">To / Куда <span class="text-danger">*</span></label>
@@ -91,7 +107,11 @@
                   formControlName="to"
                   placeholder="Destination city/airport"
                   class="form-control"
+                  [ngClass]="{'is-invalid': segment.get('to')?.invalid && segment.get('to')?.touched}"
                 />
+                <div class="invalid-feedback" *ngIf="segment.get('to')?.errors?.['required'] && segment.get('to')?.touched">
+                  Destination is required
+                </div>
               </div>
             </div>
 
@@ -118,13 +138,17 @@
             <!-- Flight Number -->
             <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <label class="form-label fw-medium">Flight/Rein/Class / Рейс/Класс <span class="text-danger">*</span></label>
+                <label class="form-label fw-medium">Flight<span class="text-danger">*</span></label>
                 <input
                   type="text"
                   formControlName="flightNumber"
                   placeholder="e.g., LH1234, Economy"
                   class="form-control"
+                  [ngClass]="{'is-invalid': segment.get('flightNumber')?.invalid && segment.get('flightNumber')?.touched}"
                 />
+                <div class="invalid-feedback" *ngIf="segment.get('flightNumber')?.errors?.['required'] && segment.get('flightNumber')?.touched">
+                  Flight number is required
+                </div>
               </div>
             </div>
 
@@ -177,7 +201,11 @@
               formControlName="bankName"
               placeholder="Enter bank name"
               class="form-control"
+              [ngClass]="{'is-invalid': overseasForm.get('advanceBankDetails.bankName')?.invalid && overseasForm.get('advanceBankDetails.bankName')?.touched}"
             />
+            <div class="invalid-feedback" *ngIf="overseasForm.get('advanceBankDetails.bankName')?.errors?.['required'] && overseasForm.get('advanceBankDetails.bankName')?.touched">
+              Bank name is required
+            </div>
           </div>
           <div class="col-md-6">
             <label class="form-label fw-medium">Account Number / Номер счета <span class="text-danger">*</span></label>
@@ -186,7 +214,11 @@
               formControlName="accountNumber"
               placeholder="Enter account number"
               class="form-control"
+              [ngClass]="{'is-invalid': overseasForm.get('advanceBankDetails.accountNumber')?.invalid && overseasForm.get('advanceBankDetails.accountNumber')?.touched}"
             />
+            <div class="invalid-feedback" *ngIf="overseasForm.get('advanceBankDetails.accountNumber')?.errors?.['required'] && overseasForm.get('advanceBankDetails.accountNumber')?.touched">
+              Account number is required
+            </div>
           </div>
         </div>
       </div>
@@ -210,7 +242,11 @@
                   type="date"
                   formControlName="dateFrom"
                   class="form-control"
+                  [ngClass]="{'is-invalid': item.get('dateFrom')?.invalid && item.get('dateFrom')?.touched}"
                 />
+                <div class="invalid-feedback" *ngIf="item.get('dateFrom')?.errors?.['required'] && item.get('dateFrom')?.touched">
+                  Date from is required
+                </div>
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-medium">Date To / Дата по <span class="text-danger">*</span></label>
@@ -218,7 +254,11 @@
                   type="date"
                   formControlName="dateTo"
                   class="form-control"
+                  [ngClass]="{'is-invalid': item.get('dateTo')?.invalid && item.get('dateTo')?.touched}"
                 />
+                <div class="invalid-feedback" *ngIf="item.get('dateTo')?.errors?.['required'] && item.get('dateTo')?.touched">
+                  Date to is required
+                </div>
               </div>
             </div>
 

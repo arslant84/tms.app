@@ -10,6 +10,13 @@ class TravelRequest(models.Model):
     Examples: "Draft", "Pending HOD", "Pending Line Manager", "Approved", etc.
     """
 
+    request_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Auto-generated request number (e.g., TSR-20250702-1423-NYC-PCYX)"
+    )
     requestor_name = models.CharField(max_length=255)
     staff_id = models.CharField(max_length=255, blank=True, null=True)
     department = models.CharField(max_length=255, blank=True, null=True)

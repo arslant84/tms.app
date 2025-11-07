@@ -25,7 +25,7 @@ class VisaApplicationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisaApplication
         fields = [
-            'id', 'applicant_name', 'requestor_name', 'staff_id', 'destination', 'visa_type', 'request_type',
+            'id', 'request_number', 'applicant_name', 'requestor_name', 'staff_id', 'destination', 'visa_type', 'request_type',
             'status', 'trip_start_date', 'trip_end_date', 'submitted_date',
             'last_updated_date'
         ]
@@ -42,7 +42,7 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
         model = VisaApplication
         fields = [
             # Basic Info
-            'id', 'user', 'user_email', 'applicant_name', 'requestor_name', 'staff_id',
+            'id', 'request_number', 'user', 'user_email', 'applicant_name', 'requestor_name', 'staff_id',
             'department', 'position', 'email',
 
             # Section A: Personal Information
@@ -77,7 +77,7 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
             # Nested
             'approval_workflow', 'documents'
         ]
-        read_only_fields = ['id', 'submitted_date', 'created_at', 'updated_at', 'last_updated_date']
+        read_only_fields = ['id', 'request_number', 'submitted_date', 'created_at', 'updated_at', 'last_updated_date']
 
 
 class VisaApplicationCreateUpdateSerializer(serializers.ModelSerializer):
@@ -110,8 +110,8 @@ class VisaApplicationCreateUpdateSerializer(serializers.ModelSerializer):
             'sponsoring_dept_head', 'sponsoring_dept_head_dept', 'sponsoring_dept_head_contact',
             'sponsoring_dept_head_date', 'ceo_approval_name', 'ceo_approval_date',
 
-            # Status
-            'status',
+            # Status & Processing
+            'status', 'processing_started_at', 'processing_completed_at', 'processing_details',
 
             # Additional
             'additional_comments', 'supporting_documents_notes', 'trf_reference_number'

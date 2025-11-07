@@ -34,6 +34,13 @@ class AccommodationRequest(models.Model):
 
     # Note: STATUS_CHOICES removed to support dynamic workflow statuses
 
+    request_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Auto-generated request number (e.g., ACCOM-20251102-1423-DFS-PCYX)"
+    )
     requestor_name = models.CharField(max_length=255)
     staff_id = models.CharField(max_length=255, blank=True, null=True)
     department = models.CharField(max_length=255, blank=True, null=True)

@@ -1,0 +1,350 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { VisaService, VisaApplication } from '../../../visa/visa.service';
+import { ToastService } from '../../../core/services/toast.service';
+
+interface PendingVisa {
+  id: number;
+  request_number: string;
+  requestorName: string;
+  department: string;
+  staffId: string;
+  destination: string;
+  visaType: string;
+  travelPurpose: string;
+  tripStartDate: string;
+  tripEndDate: string;
+  status: string;
+  submittedDate: string;
+  passportNumber: string;
+}
+
+interface CompletedVisa {
+  id: number;
+  request_number: string;
+  requestorName: string;
+  destination: string;
+  visaType: string;
+  status: string;
+  completedDate: string;
+  notes?: string;
+}
+
+@Component({
+  selector: 'app-visa-processing',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './visa-processing.component.html',
+  styleUrl: './visa-processing.component.scss'
+})
+export class VisaProcessingComponent implements OnInit {
+  activeTab: 'pending' | 'completed' = 'pending';
+
+  // Pending Visas
+  pendingVisas: PendingVisa[] = [];
+  isLoadingPending = false;
+  errorPending: string | null = null;
+
+  // Completed Visas
+  completedVisas: CompletedVisa[] = [];
+  isLoadingCompleted = false;
+
+  // Selected Application for processing
+  selectedApplication: PendingVisa | null = null;
+  isProcessing = false;
+
+  // Processing form fields
+  processingNotes = '';
+  visaNumber = '';
+  visaIssueDate = '';
+  visaExpiryDate = '';
+
+  constructor(
+    private visaService: VisaService,
+    private toastService: ToastService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.fetchPendingVisas();
+    this.fetchCompletedVisas();
+  }
+
+  /**
+   * Fetch pending visa applications (Approved status)
+   */
+  fetchPendingVisas(): void {
+    this.isLoadingPending = true;
+    this.errorPending = null;
+
+    this.visaService.getAllApplications({ status: 'Approved' }).subscribe({
+      next: (response: any) => {
+        const applications = response.results || response;
+
+        this.pendingVisas = applications.map((app: any) => ({
+          id: app.id,
+          request_number: app.request_number || `VIS-${app.id}`,
+          requestorName: app.requestor_name || 'N/A',
+          department: app.department || 'N/A',
+          staffId: app.staff_id || 'N/A',
+          destination: app.destination || 'N/A',
+          visaType: app.visa_type || 'N/A',
+          travelPurpose: app.travel_purpose || 'N/A',
+          tripStartDate: app.trip_start_date || 'N/A',
+          tripEndDate: app.trip_end_date || 'N/A',
+          status: app.status,
+          submittedDate: app.submitted_date || app.created_at,
+          passportNumber: app.passport_number || 'N/A'
+        }));
+
+        this.isLoadingPending = false;
+      },
+      error: (err) => {
+        console.error('Failed to fetch pending visas:', err);
+        this.errorPending = 'Failed to load pending visa applications. Please try again.';
+        this.pendingVisas = [];
+        this.isLoadingPending = false;
+      }
+    });
+  }
+
+  /**
+   * Fetch completed visa applications
+   */
+  fetchCompletedVisas(): void {
+    this.isLoadingCompleted = true;
+
+    this.visaService.getAllApplications({ status: 'Completed' }).subscribe({
+      next: (response: any) => {
+        const applications = response.results || response;
+
+        this.completedVisas = applications.map((app: any) => ({
+          id: app.id,
+          request_number: app.request_number || `VIS-${app.id}`,
+          requestorName: app.requestor_name || 'N/A',
+          destination: app.destination || 'N/A',
+          visaType: app.visa_type || 'N/A',
+          status: app.status,
+          completedDate: app.processing_completed_at || app.updated_at,
+          notes: app.additional_comments
+        }));
+
+        this.isLoadingCompleted = false;
+      },
+      error: (err) => {
+        console.error('Failed to fetch completed visas:', err);
+        this.completedVisas = [];
+        this.isLoadingCompleted = false;
+      }
+    });
+  }
+
+  /**
+   * Select visa application for processing
+   */
+  selectApplication(application: PendingVisa): void {
+    this.selectedApplication = application;
+    this.resetFormFields();
+  }
+
+  /**
+   * Reset form fields
+   */
+  resetFormFields(): void {
+    this.processingNotes = '';
+    this.visaNumber = '';
+    this.visaIssueDate = '';
+    this.visaExpiryDate = '';
+  }
+
+  /**
+   * Mark visa as processing started
+   */
+  startProcessing(): void {
+    if (!this.selectedApplication) {
+      this.toastService.error('No application selected');
+      return;
+    }
+
+    this.isProcessing = true;
+
+    this.visaService.updateApplication(this.selectedApplication.id, {
+      status: 'Processing',
+      processing_started_at: new Date().toISOString()
+    }).subscribe({
+      next: () => {
+        this.toastService.success(`Processing started for ${this.selectedApplication!.requestorName}`);
+        this.fetchPendingVisas();
+        this.selectedApplication = null;
+        this.resetFormFields();
+        this.isProcessing = false;
+      },
+      error: (err) => {
+        this.toastService.error('Failed to start processing: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.isProcessing = false;
+      }
+    });
+  }
+
+  /**
+   * Complete visa processing
+   */
+  completeProcessing(): void {
+    if (!this.selectedApplication) {
+      this.toastService.error('No application selected');
+      return;
+    }
+
+    if (!confirm(`Mark visa application ${this.selectedApplication.request_number} as completed?`)) {
+      return;
+    }
+
+    this.isProcessing = true;
+
+    const updateData: any = {
+      status: 'Completed',
+      processing_completed_at: new Date().toISOString()
+    };
+
+    if (this.processingNotes.trim()) {
+      updateData.additional_comments = this.processingNotes;
+    }
+
+    // Add visa details if provided
+    if (this.visaNumber || this.visaIssueDate || this.visaExpiryDate) {
+      updateData.processing_details = {
+        visa_number: this.visaNumber,
+        visa_issue_date: this.visaIssueDate,
+        visa_expiry_date: this.visaExpiryDate,
+        completed_by_admin: true,
+        completed_at: new Date().toISOString()
+      };
+    }
+
+    this.visaService.updateApplication(this.selectedApplication.id, updateData).subscribe({
+      next: () => {
+        this.toastService.success(`Visa application for ${this.selectedApplication!.requestorName} marked as completed`);
+        this.fetchPendingVisas();
+        this.fetchCompletedVisas();
+        this.selectedApplication = null;
+        this.resetFormFields();
+        this.isProcessing = false;
+      },
+      error: (err) => {
+        this.toastService.error('Failed to complete processing: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.isProcessing = false;
+      }
+    });
+  }
+
+  /**
+   * Reject visa application (Unable to process)
+   */
+  rejectApplication(): void {
+    if (!this.selectedApplication) {
+      this.toastService.error('No application selected');
+      return;
+    }
+
+    const reason = prompt('Please provide a reason for rejecting this visa application:');
+    if (!reason || !reason.trim()) {
+      return;
+    }
+
+    this.isProcessing = true;
+
+    this.visaService.rejectApplication(this.selectedApplication.id, reason).subscribe({
+      next: () => {
+        this.toastService.success(`Visa application ${this.selectedApplication!.request_number} rejected`);
+        this.fetchPendingVisas();
+        this.selectedApplication = null;
+        this.resetFormFields();
+        this.isProcessing = false;
+      },
+      error: (err) => {
+        this.toastService.error('Failed to reject application: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.isProcessing = false;
+      }
+    });
+  }
+
+  /**
+   * Switch tab
+   */
+  switchTab(tab: 'pending' | 'completed'): void {
+    this.activeTab = tab;
+    if (tab === 'pending' && this.pendingVisas.length === 0) {
+      this.fetchPendingVisas();
+    } else if (tab === 'completed' && this.completedVisas.length === 0) {
+      this.fetchCompletedVisas();
+    }
+  }
+
+  /**
+   * View application details
+   */
+  viewApplication(applicationId: number): void {
+    this.router.navigate(['/visa', applicationId]);
+  }
+
+  /**
+   * Navigate back to overview
+   */
+  goToOverview(): void {
+    this.router.navigate(['/admin/visa']);
+  }
+
+  /**
+   * Format date
+   */
+  formatDate(date: string | Date | null | undefined): string {
+    if (!date) return 'N/A';
+    try {
+      const d = typeof date === 'string' ? new Date(date) : date;
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+      return 'Invalid Date';
+    }
+  }
+
+  /**
+   * Get status badge class
+   */
+  getStatusClass(status: string): string {
+    const statusLower = status.toLowerCase();
+    if (statusLower === 'approved') return 'badge-success';
+    if (statusLower === 'completed') return 'badge-success';
+    if (statusLower === 'processing') return 'badge-warning';
+    return 'badge-secondary';
+  }
+
+  /**
+   * Get destination badge class
+   */
+  getDestinationBadgeClass(destination: string): string {
+    const hash = destination?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0;
+    const colors = ['badge-blue', 'badge-green', 'badge-amber', 'badge-purple'];
+    return colors[hash % colors.length];
+  }
+
+  /**
+   * Get visa type badge class
+   */
+  getVisaTypeBadgeClass(visaType: string): string {
+    const typeLower = visaType?.toLowerCase() || '';
+    if (typeLower === 'business' || typeLower === 'work') return 'badge-blue';
+    if (typeLower === 'diplomatic' || typeLower === 'official') return 'badge-amber';
+    if (typeLower === 'student') return 'badge-purple';
+    if (typeLower === 'tourist' || typeLower === 'transit') return 'badge-green';
+    return 'badge-gray';
+  }
+
+  /**
+   * Retry loading pending visas
+   */
+  retryPending(): void {
+    this.fetchPendingVisas();
+  }
+}

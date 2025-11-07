@@ -13,17 +13,31 @@ import { ToastService } from '../../../core/services/toast.service';
   styleUrl: './visa-admin.component.scss'
 })
 export class VisaAdminComponent implements OnInit {
+  // Stats
+  stats = {
+    total: 0,
+    pending: 0,
+    approved: 0,
+    processing: 0,
+    completed: 0,
+    rejected: 0
+  };
+
+  // Tab state
+  activeTab: 'applications' | 'approvals' = 'applications';
+
+  // Applications
   applications: VisaApplication[] = [];
   filteredApplications: VisaApplication[] = [];
   selectedApplication: VisaApplication | null = null;
+  loadingApplications = false;
 
   // Filter criteria
   filterCriteria = {
     status: 'all',
     visaType: 'all',
-    search: '',
-    dateFrom: '',
-    dateTo: ''
+    destination: 'all',
+    search: ''
   };
 
   // Pagination
@@ -32,7 +46,6 @@ export class VisaAdminComponent implements OnInit {
   totalApplications = 0;
 
   // Loading states
-  loading: boolean = true;
   error: string = '';
   processingId: number | null = null;
 
@@ -69,18 +82,58 @@ export class VisaAdminComponent implements OnInit {
   constructor(
     private visaService: VisaService,
     private toastService: ToastService,
-    private router: Router
+    public router: Router
   ) {}
 
   ngOnInit(): void {
+    this.fetchStats();
     this.loadApplications();
+  }
+
+  /**
+   * Fetch visa application statistics
+   */
+  fetchStats(): void {
+    this.visaService.getAllApplications({}).subscribe({
+      next: (response: any) => {
+        const applications = response.results || response || [];
+
+        this.stats.total = applications.length;
+        this.stats.pending = applications.filter((app: any) =>
+          app.status && (app.status.toLowerCase().includes('pending') || app.status === 'Submitted')
+        ).length;
+        this.stats.approved = applications.filter((app: any) =>
+          app.status === 'Approved'
+        ).length;
+        this.stats.processing = applications.filter((app: any) =>
+          app.status && (app.status.toLowerCase().includes('processing') || app.status === 'Under Review')
+        ).length;
+        this.stats.completed = applications.filter((app: any) =>
+          app.status === 'Completed'
+        ).length;
+        this.stats.rejected = applications.filter((app: any) =>
+          app.status === 'Rejected' || app.status === 'Cancelled'
+        ).length;
+      },
+      error: (err) => {
+        console.error('Error fetching stats:', err);
+        // Keep default values on error
+      }
+    });
+  }
+
+  /**
+   * Set active tab
+   */
+  setActiveTab(tab: 'applications' | 'approvals'): void {
+    this.activeTab = tab;
   }
 
   /**
    * Load visa applications from API
    */
   loadApplications(): void {
-    this.loading = true;
+    this.loadingApplications = true;
     this.error = '';
 
     const filters: any = {
@@ -104,14 +157,25 @@ export class VisaAdminComponent implements OnInit {
       next: (response) => {
         this.applications = response.results || response;
         this.totalApplications = response.count || this.applications.length;
-        this.filteredApplications = [...this.applications];
-        this.loading = false;
+        this.applyClientSideFilters();
+        this.loadingApplications = false;
       },
       error: (err) => {
         this.error = 'Failed to load visa applications: ' + (err.error?.message || err.message || 'Unknown error');
-        this.loading = false;
+        this.loadingApplications = false;
         console.error('Error loading applications:', err);
       }
+    });
+  }
+
+  /**
+   * Apply client-side filters
+   */
+  applyClientSideFilters(): void {
+    this.filteredApplications = this.applications.filter(app => {
+      const matchesDestination = this.filterCriteria.destination === 'all' ||
+        app.destination === this.filterCriteria.destination;
+      return matchesDestination;
     });
   }
 
@@ -130,12 +194,21 @@ export class VisaAdminComponent implements OnInit {
     this.filterCriteria = {
       status: 'all',
       visaType: 'all',
-      search: '',
-      dateFrom: '',
-      dateTo: ''
+      destination: 'all',
+      search: ''
     };
     this.currentPage = 1;
     this.loadApplications();
+  }
+
+  /**
+   * Get unique destinations
+   */
+  get uniqueDestinations(): string[] {
+    const destinations = this.applications
+      .map(app => app.destination)
+      .filter((dest, index, self) => dest && self.indexOf(dest) === index);
+    return Array.from(new Set(destinations));
   }
 
   /**
@@ -245,29 +318,33 @@ export class VisaAdminComponent implements OnInit {
   }
 
   /**
-   * Get status badge class
+   * Badge classes
    */
-  getStatusClass(status: string): string {
+  getStatusBadgeClass(status: string): string {
     const statusLower = status.toLowerCase();
-    if (statusLower.includes('completed')) return 'badge bg-success';
-    if (statusLower.includes('approved')) return 'badge bg-primary';
-    if (statusLower.includes('processing') || statusLower.includes('under review')) return 'badge bg-info';
-    if (statusLower.includes('rejected')) return 'badge bg-danger';
-    if (statusLower.includes('cancelled')) return 'badge bg-secondary';
-    if (statusLower.includes('pending') || statusLower.includes('submitted')) return 'badge bg-warning';
-    return 'badge bg-secondary';
+    if (statusLower.includes('completed')) return 'badge-success';
+    if (statusLower.includes('approved')) return 'badge-blue';
+    if (statusLower.includes('processing') || statusLower.includes('under review')) return 'badge-purple';
+    if (statusLower.includes('rejected')) return 'badge-red';
+    if (statusLower.includes('cancelled')) return 'badge-gray';
+    if (statusLower.includes('pending') || statusLower.includes('submitted')) return 'badge-amber';
+    return 'badge-gray';
   }
 
-  /**
-   * Get visa type badge
-   */
-  getVisaTypeBadge(visaType: string): string {
-    const typeLower = visaType.toLowerCase();
-    if (typeLower === 'business' || typeLower === 'work') return 'badge bg-primary';
-    if (typeLower === 'diplomatic' || typeLower === 'official') return 'badge bg-warning text-dark';
-    if (typeLower === 'student') return 'badge bg-info';
-    if (typeLower === 'tourist' || typeLower === 'transit') return 'badge bg-secondary';
-    return 'badge bg-secondary';
+  getVisaTypeBadgeClass(visaType: string): string {
+    const typeLower = visaType?.toLowerCase() || '';
+    if (typeLower === 'business' || typeLower === 'work') return 'badge-blue';
+    if (typeLower === 'diplomatic' || typeLower === 'official') return 'badge-amber';
+    if (typeLower === 'student') return 'badge-purple';
+    if (typeLower === 'tourist' || typeLower === 'transit') return 'badge-green';
+    return 'badge-gray';
+  }
+
+  getDestinationBadgeClass(destination: string): string {
+    // Simple hash-based color assignment
+    const hash = destination?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0;
+    const colors = ['badge-blue', 'badge-green', 'badge-purple', 'badge-amber', 'badge-indigo'];
+    return colors[hash % colors.length];
   }
 
   /**

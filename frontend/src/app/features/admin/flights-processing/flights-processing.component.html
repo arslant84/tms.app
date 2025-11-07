@@ -1,0 +1,336 @@
+<div class="flights-processing-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <button class="btn btn-outline-secondary btn-sm mb-2" (click)="goToOverview()">
+        <i class="bi bi-arrow-left me-1"></i>
+        Back to Overview
+      </button>
+      <h1 class="page-title">
+        <i class="bi bi-airplane"></i>
+        Flights Processing Dashboard
+      </h1>
+      <p class="page-subtitle">Process flight ticket bookings for all approved travel requests.</p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          [class.active]="activeTab === 'pending'"
+          (click)="switchTab('pending')"
+          type="button"
+        >
+          Pending Bookings
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          [class.active]="activeTab === 'booked'"
+          (click)="switchTab('booked')"
+          type="button"
+        >
+          Booked Flights
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- Pending Bookings Tab -->
+      <div *ngIf="activeTab === 'pending'" class="tab-pane active">
+        <!-- Search & Filter -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Search & Filter Approved TRFs</h5>
+            <p class="card-description mb-0">Find TRFs awaiting flight booking.</p>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-8">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="search" class="form-control" placeholder="Search by TRF ID, Name, Destination...">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <select class="form-select">
+                  <option value="Approved">Status: Approved</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Split Layout: Table + Form -->
+        <div class="row g-4">
+          <!-- Left: TRFs Table (2/3 width) -->
+          <div class="col-md-8">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title mb-0">TRFs Awaiting Flight Booking</h5>
+                <p class="card-description mb-0">All approved travel requests requiring flight ticket booking and arrangements.</p>
+              </div>
+              <div class="card-body p-0">
+                <!-- Loading State -->
+                <div *ngIf="isLoadingPending" class="loading-state">
+                  <div class="spinner-border text-primary"></div>
+                  <p class="mt-2">Loading TRFs...</p>
+                </div>
+
+                <!-- Error State -->
+                <div *ngIf="errorPending && !isLoadingPending" class="alert alert-danger m-3">
+                  <i class="bi bi-exclamation-triangle me-2"></i>{{ errorPending }}
+                  <button class="btn btn-sm btn-outline-danger ms-3" (click)="retryPending()">
+                    <i class="bi bi-arrow-clockwise"></i> Try Again
+                  </button>
+                </div>
+
+                <!-- Table -->
+                <div *ngIf="!isLoadingPending && !errorPending" class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead>
+                      <tr>
+                        <th>TRF ID</th>
+                        <th>Requestor</th>
+                        <th>Destination</th>
+                        <th>Travel Date</th>
+                        <th>Status</th>
+                        <th class="text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        *ngFor="let trf of pendingTrfs"
+                        (click)="selectTrf(trf)"
+                        [class.selected]="selectedTrf?.id === trf.id"
+                        style="cursor: pointer;"
+                      >
+                        <td class="fw-medium">{{ trf.id }}</td>
+                        <td>{{ trf.requestorName }}</td>
+                        <td>{{ trf.destinationSummary }}</td>
+                        <td>{{ formatDate(trf.requestedDate) }}</td>
+                        <td>
+                          <span class="badge" [ngClass]="getStatusClass(trf.status)">
+                            {{ trf.status }}
+                          </span>
+                        </td>
+                        <td class="text-center">
+                          <button class="btn btn-outline-primary btn-sm me-1" (click)="viewTrf(trf.id); $event.stopPropagation()" title="View Full TRF Details">
+                            <i class="bi bi-eye"></i>
+                          </button>
+                          <button
+                            class="btn btn-primary btn-sm"
+                            (click)="selectTrf(trf); $event.stopPropagation()"
+                            [disabled]="trf.status !== 'Approved'"
+                          >
+                            Book Flight
+                          </button>
+                        </td>
+                      </tr>
+
+                      <tr *ngIf="pendingTrfs.length === 0">
+                        <td colspan="6" class="text-center py-5">
+                          <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                          <p class="mt-2 text-muted">No TRFs currently awaiting flight booking.</p>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Booking Form (1/3 width) -->
+          <div class="col-md-4">
+            <div class="card booking-form-card">
+              <div class="card-header">
+                <h5 class="card-title mb-0">Booking Details <span *ngIf="selectedTrf">({{ selectedTrf.id }})</span></h5>
+                <p class="card-description mb-0">
+                  <span *ngIf="selectedTrf">Enter booking details for TRF: {{ selectedTrf.id }}</span>
+                  <span *ngIf="!selectedTrf">Select a TRF from the list to book flights.</span>
+                </p>
+              </div>
+              <div class="card-body">
+                <!-- TRF Details -->
+                <div *ngIf="selectedTrf" class="booking-form">
+                  <!-- Requestor Info -->
+                  <div class="info-section mb-3">
+                    <h6 class="info-title">Requestor:</h6>
+                    <p class="info-text">{{ selectedTrf.requestorName }} (Staff ID: {{ selectedTrf.staffId }})</p>
+                    <p class="info-text">Dept: {{ selectedTrf.department }}</p>
+                  </div>
+
+                  <!-- Trip Info -->
+                  <div class="info-section mb-3">
+                    <h6 class="info-title">Trip:</h6>
+                    <p class="info-text">{{ selectedTrf.travelType }} - {{ selectedTrf.purpose }}</p>
+                    <p class="info-text">Destination: {{ selectedTrf.destinationSummary }}</p>
+                    <p class="info-text">Date: {{ formatDate(selectedTrf.requestedDate) }}</p>
+                    <p class="info-text">Status: <span class="fw-medium">{{ selectedTrf.status }}</span></p>
+                  </div>
+
+                  <!-- Booking Form (only if Approved) -->
+                  <div *ngIf="selectedTrf.status === 'Approved'" class="booking-inputs">
+                    <div class="row g-2 mb-2">
+                      <div class="col-6">
+                        <label class="form-label">PNR / Booking Ref.</label>
+                        <input type="text" class="form-control form-control-sm" [(ngModel)]="pnr" placeholder="e.g., XYZ123">
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label">Airline</label>
+                        <input type="text" class="form-control form-control-sm" [(ngModel)]="airline" placeholder="e.g., MH / AK">
+                      </div>
+                    </div>
+
+                    <div class="mb-2">
+                      <label class="form-label">Flight Number</label>
+                      <input type="text" class="form-control form-control-sm" [(ngModel)]="flightNumber" placeholder="e.g., MH123">
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                      <div class="col-6">
+                        <label class="form-label">Departure Airport</label>
+                        <input type="text" class="form-control form-control-sm" [(ngModel)]="departureAirport" placeholder="e.g., KUL">
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label">Arrival Airport</label>
+                        <input type="text" class="form-control form-control-sm" [(ngModel)]="arrivalAirport" placeholder="e.g., LHR">
+                      </div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                      <div class="col-6">
+                        <label class="form-label">Departure Date</label>
+                        <input type="date" class="form-control form-control-sm" [(ngModel)]="departureDate">
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label">Departure Time</label>
+                        <input type="time" class="form-control form-control-sm" [(ngModel)]="departureTime">
+                      </div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                      <div class="col-6">
+                        <label class="form-label">Arrival Date</label>
+                        <input type="date" class="form-control form-control-sm" [(ngModel)]="arrivalDate">
+                      </div>
+                      <div class="col-6">
+                        <label class="form-label">Arrival Time</label>
+                        <input type="time" class="form-control form-control-sm" [(ngModel)]="arrivalTime">
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Flight Booking Notes</label>
+                      <textarea class="form-control form-control-sm" rows="2" [(ngModel)]="flightNotes" placeholder="Add any relevant flight booking notes..."></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                      <button
+                        class="btn btn-primary btn-sm w-100 mb-2"
+                        (click)="bookFlight()"
+                        [disabled]="isProcessing || selectedTrf.status !== 'Approved'"
+                      >
+                        <span *ngIf="!isProcessing"><i class="bi bi-check-circle me-1"></i> Confirm Flight Booking</span>
+                        <span *ngIf="isProcessing"><span class="spinner-border spinner-border-sm me-1"></span> Processing...</span>
+                      </button>
+
+                      <button
+                        class="btn btn-danger btn-sm w-100"
+                        (click)="noFlightsAvailable()"
+                        [disabled]="isProcessing || selectedTrf.status !== 'Approved'"
+                      >
+                        <i class="bi bi-x-circle me-1"></i> No Flights Available - Cancel Request
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- No TRF Selected -->
+                <div *ngIf="!selectedTrf" class="empty-selection">
+                  <p class="text-muted text-center">Select a TRF from the list to view its booking details here.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booked Flights Tab -->
+      <div *ngIf="activeTab === 'booked'" class="tab-pane active">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Booked Flights</h5>
+            <p class="card-description mb-0">List of all booked flight arrangements.</p>
+          </div>
+          <div class="card-body p-0">
+            <!-- Loading State -->
+            <div *ngIf="isLoadingBooked" class="loading-state">
+              <div class="spinner-border text-primary"></div>
+              <p class="mt-2">Loading booked flights...</p>
+            </div>
+
+            <!-- Table -->
+            <div *ngIf="!isLoadingBooked" class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>TRF ID</th>
+                    <th>Requestor</th>
+                    <th>Flight</th>
+                    <th>Route</th>
+                    <th>Date</th>
+                    <th>PNR</th>
+                    <th>Status</th>
+                    <th class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let flight of bookedFlights">
+                    <td class="fw-medium">{{ flight.trfId }}</td>
+                    <td>{{ flight.requestorName }}</td>
+                    <td>{{ flight.flightNumber }}</td>
+                    <td>{{ flight.departureLocation }} → {{ flight.arrivalLocation }}</td>
+                    <td>{{ formatDate(flight.departureDate) }}</td>
+                    <td>{{ flight.bookingReference }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getStatusClass(flight.status)">
+                        {{ flight.status }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <button class="btn btn-outline-primary btn-sm me-1" (click)="viewTrf(flight.trfId)" title="View TRF Details">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button
+                        class="btn btn-outline-danger btn-sm"
+                        (click)="cancelBooking(flight)"
+                        [disabled]="isProcessing"
+                        title="Cancel Booking"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+
+                  <tr *ngIf="bookedFlights.length === 0">
+                    <td colspan="8" class="text-center py-5">
+                      <i class="bi bi-airplane" style="font-size: 3rem; opacity: 0.3;"></i>
+                      <p class="mt-2 text-muted">No flight bookings found.</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

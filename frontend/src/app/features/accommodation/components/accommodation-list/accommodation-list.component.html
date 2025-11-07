@@ -3,12 +3,12 @@
   <div class="header-section">
     <div class="header-left">
       <div class="title-with-icon">
-        <i class="bi bi-house-door header-icon"></i>
+        <i class="bi bi-building header-icon"></i>
         <h1 class="page-title">Accommodation Requests</h1>
       </div>
       <p class="page-subtitle">Manage your accommodation bookings and requests</p>
     </div>
-    <button class="btn btn-primary" (click)="navigateToCreate()">
+    <button class="btn btn-primary btn-create" (click)="navigateToCreate()">
       <i class="bi bi-plus-circle me-2"></i>Accommodation Request
     </button>
   </div>
@@ -82,6 +82,7 @@
       <table class="requests-table">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Requestor Name</th>
             <th>Department</th>
             <th>Position</th>
@@ -93,36 +94,49 @@
         </thead>
         <tbody>
           <tr *ngFor="let request of requests">
-            <td class="name-cell">{{ request.requestor_name }}</td>
+            <td class="id-cell">
+              <span class="request-id">#{{ request.id }}</span>
+            </td>
+            <td class="name-cell">
+              <div class="requestor-info">
+                <span class="requestor-name">{{ request.requestor_name }}</span>
+                <span *ngIf="request.staff_id" class="staff-id text-muted">{{ request.staff_id }}</span>
+              </div>
+            </td>
             <td>{{ request.department || 'N/A' }}</td>
             <td>{{ request.position || 'N/A' }}</td>
-            <td class="amount-cell">{{ formatCurrency(request.estimated_cost) }}</td>
+            <td class="cost-cell">
+              <span *ngIf="request.estimated_cost" class="amount">{{ formatCurrency(request.estimated_cost) }}</span>
+              <span *ngIf="!request.estimated_cost" class="text-muted">$0.00</span>
+            </td>
             <td>
               <span class="badge" [ngClass]="getStatusClass(request.status)">
                 {{ request.status }}
               </span>
             </td>
             <td>{{ formatDate(request.created_at) }}</td>
-            <td class="text-end">
+            <td class="actions-cell">
               <div class="action-buttons">
                 <button
-                  class="btn btn-sm btn-outline-primary action-btn"
+                  class="btn btn-sm btn-icon btn-view"
                   (click)="navigateToView(request.id)"
                   title="View Details"
                 >
                   <i class="bi bi-eye"></i>
                 </button>
                 <button
-                  class="btn btn-sm btn-outline-primary action-btn"
+                  class="btn btn-sm btn-icon btn-edit"
                   (click)="navigateToEdit(request.id)"
                   title="Edit Request"
+                  *ngIf="canEdit(request)"
                 >
                   <i class="bi bi-pencil"></i>
                 </button>
                 <button
-                  class="btn btn-sm btn-outline-danger action-btn"
+                  class="btn btn-sm btn-icon btn-delete"
                   (click)="deleteRequest(request.id, $event)"
                   title="Delete Request"
+                  *ngIf="canDelete(request)"
                 >
                   <i class="bi bi-trash"></i>
                 </button>

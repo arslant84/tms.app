@@ -76,6 +76,7 @@ export class TrfDetailComponent implements OnInit {
   private transformTrfData(data: any): any {
     return {
       id: data.id,
+      requestNumber: data.request_number || data.requestNumber,
       travelType: data.travel_type || data.travelType,
       status: data.status,
       requestorName: data.requestor_name || data.requestorName,
@@ -93,10 +94,12 @@ export class TrfDetailComponent implements OnInit {
       externalRefToAuthorityLetter: data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter,
       externalCostCenter: data.external_cost_center || data.externalCostCenter,
       // Nested data (will be loaded separately or included in response)
-      itinerary: data.itinerary || [],
-      mealSelections: data.daily_meal_selections || data.mealSelections || [],
+      // Backend uses 'itinerary_segments', but fallback to 'itinerary'
+      itinerary: data.itinerary_segments || data.itinerary || [],
+      mealSelections: data.daily_meals || data.daily_meal_selections || data.mealSelections || [],
       accommodationDetails: data.accommodation_details || data.accommodationDetails || [],
-      transportDetails: data.company_transport_details || data.transportDetails || [],
+      // Backend uses 'transport_details' (from serializer), check this first
+      transportDetails: data.transport_details || data.company_transport_details || data.transportDetails || [],
       passportDetails: data.passport_details || data.passportDetails,
       bankDetails: data.advance_bank_details || data.bankDetails,
       advanceAmounts: data.advance_amount_items || data.advanceAmounts || [],

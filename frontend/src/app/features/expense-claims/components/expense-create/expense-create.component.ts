@@ -6,6 +6,7 @@ import { ExpenseClaimsService } from '../../services/expense-claims.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import {
   ExpenseClaim,
   DocumentType,
@@ -63,7 +64,8 @@ export class ExpenseCreateComponent implements OnInit {
     private expenseService: ExpenseClaimsService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -80,6 +82,9 @@ export class ExpenseCreateComponent implements OnInit {
         this.isEditMode = true;
         this.claimId = params['id'];
         this.loadClaimData(this.claimId);
+      } else {
+        // Only auto-populate in create mode
+        this.populateUserDetails();
       }
     });
 
@@ -87,6 +92,19 @@ export class ExpenseCreateComponent implements OnInit {
     this.expenseItems.valueChanges.subscribe(() => {
       this.calculateTotals();
     });
+  }
+
+  private populateUserDetails(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      console.log('Expense Claims - Current user data:', currentUser);
+      // Auto-populate user details from logged-in user
+      this.expenseForm.get('headerDetails')?.patchValue({
+        staffName: currentUser.name || '',
+        staffNo: currentUser.staff_id || '',
+        departmentCode: currentUser.department || ''
+      });
+    }
   }
 
   initForm(): void {
@@ -268,7 +286,7 @@ export class ExpenseCreateComponent implements OnInit {
 
     this.submitting = true;
     const claimData = this.prepareClaimData();
-    const backendData = toBackendFormat(claimData) as any;
+    const backendData = toBackendFormat(claimData, this.defaultCurrency) as any;
 
     console.log('📤 Sending expense claim data to backend:', backendData);
     console.log('📤 Data keys:', Object.keys(backendData));
@@ -280,15 +298,29 @@ export class ExpenseCreateComponent implements OnInit {
 
     saveOperation.subscribe({
       next: (response) => {
-        this.submitting = false;
-        const message = this.isEditMode ? 'Claim updated successfully' : 'Claim submitted successfully';
-        this.toastService.success(message);
-        // Navigate to list instead of detail view
-        this.router.navigate(['/expenses']);
+        console.log('✅ Claim saved, now submitting for approval...');
+        const claimId = response.id || this.claimId;
+
+        // After saving, submit the claim for approval
+        this.expenseService.submitClaim(Number(claimId)).subscribe({
+          next: (submitResponse) => {
+            this.submitting = false;
+            console.log('✅ Claim submitted successfully:', submitResponse);
+            this.toastService.success('Claim submitted for approval successfully');
+            this.router.navigate(['/expenses']);
+          },
+          error: (submitErr) => {
+            this.submitting = false;
+            this.toastService.error('Failed to submit claim for approval: ' + (submitErr.error?.error || submitErr.error?.message || submitErr.message));
+            console.error('Error submitting claim:', submitErr);
+            // Still navigate to list even if submit fails (claim was saved as draft)
+            this.router.navigate(['/expenses']);
+          }
+        });
       },
       error: (err) => {
         this.submitting = false;
-        const action = this.isEditMode ? 'update' : 'submit';
+        const action = this.isEditMode ? 'update' : 'create';
         this.toastService.error(`Failed to ${action} claim: ` + (err.error?.message || err.message));
         console.error(`Error ${action}ing claim:`, err);
         if (err.error) {
