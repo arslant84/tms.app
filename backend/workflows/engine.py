@@ -456,6 +456,10 @@ class WorkflowEngine:
     @staticmethod
     def _is_user_authorized(step_execution: WorkflowStepExecution, user: User) -> bool:
         """Check if user is authorized to action this step"""
+        # Admin override - admins can approve any step
+        if user.is_staff or user.is_superuser:
+            return True
+
         # Check if user is directly assigned
         if step_execution.assigned_to == user:
             return True
@@ -463,7 +467,19 @@ class WorkflowEngine:
         # Check if user has the required role (if no specific user assigned)
         if not step_execution.assigned_to:
             if hasattr(user, 'role') and step_execution.workflow_step.approver_role:
-                return user.role.name == step_execution.workflow_step.approver_role
+                # Get the role name from the approver_role UUID
+                from accounts.models import Role
+                try:
+                    role = Role.objects.get(id=step_execution.workflow_step.approver_role)
+                    if user.role.name == role.name:
+                        return True
+                except Role.DoesNotExist:
+                    pass
+
+                # Also check if approver_role is already a string name (legacy support)
+                if isinstance(step_execution.workflow_step.approver_role, str):
+                    if user.role.name == step_execution.workflow_step.approver_role:
+                        return True
 
         # Check for active delegation
         active_delegations = step_execution.delegations.filter(

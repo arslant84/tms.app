@@ -2,6 +2,13 @@ from django.db import models
 from accounts.models import User
 
 class VisaApplication(models.Model):
+    request_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Auto-generated request number (e.g., VIS-20251102-1423-TKM-PCYX)"
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     requestor_name = models.CharField(max_length=255)
     staff_id = models.CharField(max_length=255, blank=True, null=True)

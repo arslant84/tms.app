@@ -1,382 +1,419 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AccommodationService, AccommodationRequest, AccommodationRoom, AccommodationStaffHouse } from '../../accommodation/services/accommodation.service';
+import { AccommodationService, AccommodationStaffHouse, AccommodationRoom } from '../../accommodation/services/accommodation.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { LocationDialogComponent, LocationDialogData } from './location-dialog.component';
+import { RoomDialogComponent, RoomDialogData } from './room-dialog.component';
 
 @Component({
   selector: 'app-accommodation-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LocationDialogComponent, RoomDialogComponent],
   templateUrl: './accommodation-admin.component.html',
   styleUrl: './accommodation-admin.component.scss'
 })
 export class AccommodationAdminComponent implements OnInit {
-  requests: AccommodationRequest[] = [];
-  filteredRequests: AccommodationRequest[] = [];
-  selectedRequest: AccommodationRequest | null = null;
+  @ViewChild(LocationDialogComponent) locationDialog?: LocationDialogComponent;
+  @ViewChild(RoomDialogComponent) roomDialog?: RoomDialogComponent;
 
-  // Filter criteria
-  filterCriteria = {
-    status: 'all',
-    search: '',
-    dateFrom: '',
-    dateTo: ''
+  // Stats
+  stats = {
+    total: 0,
+    pending: 0,
+    approved: 0,
+    processing: 0,
+    completed: 0,
+    rejected: 0
   };
 
-  // Pagination
-  currentPage = 1;
-  pageSize = 20;
-  totalRequests = 0;
+  // Tab state
+  activeTab: 'locations' | 'rooms' = 'locations';
 
-  // Loading states
-  loading: boolean = true;
-  error: string = '';
-  processingId: number | null = null;
+  // Locations
+  locations: AccommodationStaffHouse[] = [];
+  loadingLocations = false;
 
-  // Assign room modal
-  showAssignRoomModal: boolean = false;
-  staffHouses: AccommodationStaffHouse[] = [];
-  availableRooms: AccommodationRoom[] = [];
-  roomAssignment = {
-    staff_house: null as number | null,
-    room: null as number | null,
-    check_in_date: '',
-    check_out_date: '',
-    notes: ''
-  };
+  // Rooms
+  rooms: AccommodationRoom[] = [];
+  filteredRooms: AccommodationRoom[] = [];
+  loadingRooms = false;
+  filterLocation = 'all';
+  filterStaffHouse = 'all';
 
-  // Status options for filter
-  statusOptions = [
-    { value: 'all', label: 'All Statuses' },
-    { value: 'Pending Approval', label: 'Pending Approval' },
-    { value: 'Approved', label: 'Approved' },
-    { value: 'Confirmed', label: 'Confirmed' },
-    { value: 'Checked In', label: 'Checked In' },
-    { value: 'Checked Out', label: 'Checked Out' },
-    { value: 'Rejected', label: 'Rejected' },
-    { value: 'Cancelled', label: 'Cancelled' }
-  ];
+  // Dialog states
+  locationDialogOpen = false;
+  locationDialogData: LocationDialogData | null = null;
+
+  roomDialogOpen = false;
+  roomDialogData: RoomDialogData | null = null;
 
   constructor(
     private accommodationService: AccommodationService,
     private toastService: ToastService,
-    private router: Router
+    public router: Router
   ) {}
 
   ngOnInit(): void {
-    this.loadRequests();
-    this.loadStaffHouses();
+    this.fetchStats();
+    this.fetchLocations();
+    this.fetchRooms();
   }
 
   /**
-   * Load accommodation requests from API
+   * Fetch accommodation statistics
    */
-  loadRequests(): void {
-    this.loading = true;
-    this.error = '';
+  fetchStats(): void {
+    this.accommodationService.getAllRequests().subscribe({
+      next: (response: any) => {
+        const requests = response.results || response || [];
 
-    const filters: any = {
-      page: this.currentPage,
-      page_size: this.pageSize
-    };
-
-    if (this.filterCriteria.status !== 'all') {
-      filters.status = this.filterCriteria.status;
-    }
-
-    if (this.filterCriteria.search) {
-      filters.search = this.filterCriteria.search;
-    }
-
-    this.accommodationService.getAllRequests(filters).subscribe({
-      next: (response) => {
-        this.requests = response.results || response;
-        this.totalRequests = response.count || this.requests.length;
-        this.filteredRequests = [...this.requests];
-        this.loading = false;
+        this.stats.total = requests.length;
+        this.stats.pending = requests.filter((r: any) =>
+          r.status && r.status.toLowerCase().includes('pending')
+        ).length;
+        this.stats.approved = requests.filter((r: any) =>
+          r.status === 'Approved'
+        ).length;
+        this.stats.processing = requests.filter((r: any) =>
+          r.status && r.status.toLowerCase().includes('processing')
+        ).length;
+        this.stats.completed = requests.filter((r: any) =>
+          r.status === 'Completed'
+        ).length;
+        this.stats.rejected = requests.filter((r: any) =>
+          r.status === 'Rejected'
+        ).length;
       },
       error: (err) => {
-        this.error = 'Failed to load accommodation requests: ' + (err.error?.message || err.message || 'Unknown error');
-        this.loading = false;
-        console.error('Error loading requests:', err);
+        console.error('Error fetching stats:', err);
+        // Keep default values on error
       }
     });
   }
 
   /**
-   * Load staff houses
+   * Set active tab
    */
-  loadStaffHouses(): void {
+  setActiveTab(tab: 'locations' | 'rooms'): void {
+    this.activeTab = tab;
+  }
+
+  /**
+   * Fetch locations/staff houses
+   */
+  fetchLocations(): void {
+    this.loadingLocations = true;
+
     this.accommodationService.getAllStaffHouses().subscribe({
-      next: (houses) => {
-        this.staffHouses = houses;
+      next: (data) => {
+        console.log('✅ Fetched locations from API:', data);
+        this.locations = data;
+        this.loadingLocations = false;
       },
       error: (err) => {
-        console.error('Error loading staff houses:', err);
+        console.error('❌ Error fetching locations:', err);
+        this.toastService.error('Failed to load locations');
+        this.loadingLocations = false;
       }
     });
   }
 
   /**
-   * Load available rooms for selected staff house
+   * Fetch rooms
    */
-  loadAvailableRooms(): void {
-    if (!this.roomAssignment.staff_house) {
-      this.availableRooms = [];
-      return;
-    }
+  fetchRooms(): void {
+    this.loadingRooms = true;
 
-    this.accommodationService.getAllRooms(this.roomAssignment.staff_house).subscribe({
-      next: (rooms) => {
-        this.availableRooms = rooms.filter(room => room.status === 'Available');
+    this.accommodationService.getAllRooms().subscribe({
+      next: (data) => {
+        this.rooms = data;
+        this.applyRoomFilters();
+        this.loadingRooms = false;
       },
       error: (err) => {
-        console.error('Error loading rooms:', err);
+        console.error('Error fetching rooms:', err);
         this.toastService.error('Failed to load rooms');
+        this.loadingRooms = false;
       }
     });
   }
 
   /**
-   * Apply filters
+   * Apply room filters
    */
-  applyFilters(): void {
-    this.currentPage = 1;
-    this.loadRequests();
+  applyRoomFilters(): void {
+    this.filteredRooms = this.rooms.filter(room => {
+      const matchesLocation = this.filterLocation === 'all' ||
+        this.getStaffHouseLocation(room.staff_house) === this.filterLocation;
+      const matchesStaffHouse = this.filterStaffHouse === 'all' ||
+        room.staff_house.toString() === this.filterStaffHouse;
+      return matchesLocation && matchesStaffHouse;
+    });
   }
 
   /**
-   * Reset filters
+   * Get staff house location by ID
    */
-  resetFilters(): void {
-    this.filterCriteria = {
-      status: 'all',
-      search: '',
-      dateFrom: '',
-      dateTo: ''
-    };
-    this.currentPage = 1;
-    this.loadRequests();
+  getStaffHouseLocation(staffHouseId: number): string {
+    const staffHouse = this.locations.find(loc => loc.id === staffHouseId);
+    return staffHouse?.location || '';
   }
 
   /**
-   * Change page
+   * Get staff house name by ID
    */
-  changePage(page: number): void {
-    this.currentPage = page;
-    this.loadRequests();
+  getStaffHouseName(staffHouseId: number): string {
+    const staffHouse = this.locations.find(loc => loc.id === staffHouseId);
+    return staffHouse?.name || 'Unknown';
   }
 
   /**
-   * View request details
+   * Get room count for a staff house
    */
-  viewRequest(request: AccommodationRequest): void {
-    this.router.navigate(['/accommodation', request.id]);
+  getRoomCount(staffHouseId: number): number {
+    return this.rooms.filter(room => room.staff_house === staffHouseId).length;
   }
 
   /**
-   * Open assign room modal
+   * Get unique locations
    */
-  openAssignRoomModal(request: AccommodationRequest): void {
-    this.selectedRequest = request;
-    this.roomAssignment = {
-      staff_house: null,
-      room: null,
-      check_in_date: '',
-      check_out_date: '',
-      notes: ''
-    };
-    this.availableRooms = [];
-    this.showAssignRoomModal = true;
+  get uniqueLocations(): string[] {
+    return Array.from(new Set(this.locations.map(loc => loc.location)));
   }
 
   /**
-   * Close assign room modal
+   * Get filtered staff houses based on location filter
    */
-  closeAssignRoomModal(): void {
-    this.showAssignRoomModal = false;
-    this.selectedRequest = null;
-    this.roomAssignment = {
-      staff_house: null,
-      room: null,
-      check_in_date: '',
-      check_out_date: '',
-      notes: ''
-    };
-    this.availableRooms = [];
+  get filteredStaffHouses(): AccommodationStaffHouse[] {
+    return this.filterLocation === 'all'
+      ? this.locations
+      : this.locations.filter(house => house.location === this.filterLocation);
   }
 
   /**
-   * Assign room to request
+   * Badge classes
    */
-  assignRoom(): void {
-    if (!this.selectedRequest) return;
-
-    if (!this.roomAssignment.staff_house || !this.roomAssignment.room ||
-        !this.roomAssignment.check_in_date || !this.roomAssignment.check_out_date) {
-      this.toastService.error('Please fill in all required fields');
-      return;
+  getLocationBadgeClass(location: string): string {
+    switch (location) {
+      case 'Ashgabat': return 'badge-blue';
+      case 'Kiyanly': return 'badge-green';
+      case 'Turkmenbashy': return 'badge-amber';
+      default: return 'badge-gray';
     }
+  }
 
-    this.processingId = this.selectedRequest.id;
+  getRoomTypeBadgeClass(type: string): string {
+    switch (type) {
+      case 'Single': return 'badge-blue';
+      case 'Double': return 'badge-purple';
+      case 'Suite': return 'badge-indigo';
+      case 'Tent': return 'badge-green';
+      default: return 'badge-gray';
+    }
+  }
 
-    const bookingData = {
-      accommodation_request: this.selectedRequest.id,
-      staff_house: this.roomAssignment.staff_house,
-      room: this.roomAssignment.room,
-      date: this.roomAssignment.check_in_date,
-      status: 'Confirmed',
-      notes: this.roomAssignment.notes
+  getStatusBadgeClass(status: string): string {
+    switch (status) {
+      case 'Available': return 'badge-success';
+      case 'Maintenance': return 'badge-warning';
+      case 'Reserved': return 'badge-info';
+      default: return 'badge-secondary';
+    }
+  }
+
+  /**
+   * Location management methods
+   */
+  openLocationDialog(): void {
+    this.locationDialogData = null;
+    this.locationDialogOpen = true;
+  }
+
+  editLocation(location: AccommodationStaffHouse): void {
+    this.locationDialogData = {
+      id: location.id,
+      name: location.name,
+      location: location.location as any,
+      address: location.address || '',
+      description: location.description || ''
+    };
+    this.locationDialogOpen = true;
+  }
+
+  onLocationDialogClose(): void {
+    this.locationDialogOpen = false;
+    this.locationDialogData = null;
+  }
+
+  onLocationSave(data: LocationDialogData): void {
+    const payload = {
+      name: data.name,
+      location: data.location,
+      address: data.address,
+      description: data.description
     };
 
-    this.accommodationService.createBooking(bookingData).subscribe({
+    if (data.id) {
+      // Update existing location
+      this.accommodationService.updateStaffHouse(data.id, payload).subscribe({
+        next: (response) => {
+          this.toastService.success('Location updated successfully');
+          this.fetchLocations();
+          this.locationDialogOpen = false;
+          this.locationDialogData = null;
+          if (this.locationDialog) {
+            this.locationDialog.setSubmitting(false);
+          }
+        },
+        error: (err) => {
+          console.error('Error updating location:', err);
+          this.toastService.error('Failed to update location: ' + (err.error?.detail || err.message));
+          if (this.locationDialog) {
+            this.locationDialog.setSubmitting(false);
+          }
+        }
+      });
+    } else {
+      // Create new location
+      console.log('🔄 Creating new location with payload:', payload);
+      this.accommodationService.createStaffHouse(payload).subscribe({
+        next: (response) => {
+          console.log('✅ Location created successfully:', response);
+          this.toastService.success('Location created successfully');
+          this.fetchLocations();
+          this.locationDialogOpen = false;
+          this.locationDialogData = null;
+          if (this.locationDialog) {
+            this.locationDialog.setSubmitting(false);
+          }
+        },
+        error: (err) => {
+          console.error('❌ Error creating location:', err);
+          console.error('Error details:', err.error);
+          this.toastService.error('Failed to create location: ' + (err.error?.detail || err.message));
+          if (this.locationDialog) {
+            this.locationDialog.setSubmitting(false);
+          }
+        }
+      });
+    }
+  }
+
+  confirmDeleteLocation(location: AccommodationStaffHouse): void {
+    if (confirm(`Are you sure you want to delete "${location.name}"? This will also delete all rooms in this location.`)) {
+      this.deleteLocation(location);
+    }
+  }
+
+  deleteLocation(location: AccommodationStaffHouse): void {
+    this.accommodationService.deleteStaffHouse(location.id).subscribe({
       next: () => {
-        this.toastService.success('Room assigned successfully');
-        this.closeAssignRoomModal();
-        this.processingId = null;
-        this.loadRequests();
+        this.toastService.success('Location deleted successfully');
+        this.fetchLocations();
+        this.fetchRooms(); // Refresh rooms as they may be affected
       },
       error: (err) => {
-        this.toastService.error('Failed to assign room: ' + (err.error?.message || err.message || 'Unknown error'));
-        this.processingId = null;
-        console.error('Error assigning room:', err);
+        console.error('Error deleting location:', err);
+        this.toastService.error('Failed to delete location: ' + (err.error?.detail || err.message));
       }
     });
   }
 
   /**
-   * Approve request
+   * Room management methods
    */
-  approveRequest(request: AccommodationRequest): void {
-    if (!confirm(`Are you sure you want to approve request #${request.id}?`)) {
-      return;
+  openRoomDialog(): void {
+    this.roomDialogData = null;
+    this.roomDialogOpen = true;
+  }
+
+  editRoom(room: AccommodationRoom): void {
+    this.roomDialogData = {
+      id: room.id,
+      staff_house: room.staff_house,
+      name: room.name,
+      room_type: room.room_type || '',
+      capacity: room.capacity,
+      status: room.status as any
+    };
+    this.roomDialogOpen = true;
+  }
+
+  onRoomDialogClose(): void {
+    this.roomDialogOpen = false;
+    this.roomDialogData = null;
+  }
+
+  onRoomSave(data: RoomDialogData): void {
+    const payload = {
+      staff_house: data.staff_house,
+      name: data.name,
+      room_type: data.room_type,
+      capacity: data.capacity,
+      status: data.status
+    };
+
+    if (data.id) {
+      // Update existing room
+      this.accommodationService.updateRoom(data.id, payload).subscribe({
+        next: (response) => {
+          this.toastService.success('Room updated successfully');
+          this.fetchRooms();
+          this.roomDialogOpen = false;
+          this.roomDialogData = null;
+          if (this.roomDialog) {
+            this.roomDialog.setSubmitting(false);
+          }
+        },
+        error: (err) => {
+          console.error('Error updating room:', err);
+          this.toastService.error('Failed to update room: ' + (err.error?.detail || err.message));
+          if (this.roomDialog) {
+            this.roomDialog.setSubmitting(false);
+          }
+        }
+      });
+    } else {
+      // Create new room
+      this.accommodationService.createRoom(payload).subscribe({
+        next: (response) => {
+          this.toastService.success('Room created successfully');
+          this.fetchRooms();
+          this.roomDialogOpen = false;
+          this.roomDialogData = null;
+          if (this.roomDialog) {
+            this.roomDialog.setSubmitting(false);
+          }
+        },
+        error: (err) => {
+          console.error('Error creating room:', err);
+          this.toastService.error('Failed to create room: ' + (err.error?.detail || err.message));
+          if (this.roomDialog) {
+            this.roomDialog.setSubmitting(false);
+          }
+        }
+      });
     }
+  }
 
-    this.processingId = request.id;
+  confirmDeleteRoom(room: AccommodationRoom): void {
+    if (confirm(`Are you sure you want to delete "${room.name}"?`)) {
+      this.deleteRoom(room);
+    }
+  }
 
-    this.accommodationService.approveRequest(request.id, 'Approved by Admin').subscribe({
+  deleteRoom(room: AccommodationRoom): void {
+    this.accommodationService.deleteRoom(room.id).subscribe({
       next: () => {
-        this.toastService.success('Request approved successfully');
-        this.processingId = null;
-        this.loadRequests();
+        this.toastService.success('Room deleted successfully');
+        this.fetchRooms();
       },
       error: (err) => {
-        this.toastService.error('Failed to approve request: ' + (err.error?.message || err.message || 'Unknown error'));
-        this.processingId = null;
-        console.error('Error approving request:', err);
+        console.error('Error deleting room:', err);
+        this.toastService.error('Failed to delete room: ' + (err.error?.detail || err.message));
       }
     });
-  }
-
-  /**
-   * Reject request
-   */
-  rejectRequest(request: AccommodationRequest): void {
-    const reason = prompt('Please provide a reason for rejection:');
-
-    if (!reason || reason.trim() === '') {
-      this.toastService.error('Rejection reason is required');
-      return;
-    }
-
-    this.processingId = request.id;
-
-    this.accommodationService.rejectRequest(request.id, reason).subscribe({
-      next: () => {
-        this.toastService.success('Request rejected successfully');
-        this.processingId = null;
-        this.loadRequests();
-      },
-      error: (err) => {
-        this.toastService.error('Failed to reject request: ' + (err.error?.message || err.message || 'Unknown error'));
-        this.processingId = null;
-        console.error('Error rejecting request:', err);
-      }
-    });
-  }
-
-  /**
-   * Get status badge class
-   */
-  getStatusClass(status: string): string {
-    const statusLower = status.toLowerCase();
-    if (statusLower.includes('checked out')) return 'badge bg-success';
-    if (statusLower.includes('checked in')) return 'badge bg-info';
-    if (statusLower.includes('confirmed') || statusLower.includes('approved')) return 'badge bg-primary';
-    if (statusLower.includes('rejected')) return 'badge bg-danger';
-    if (statusLower.includes('cancelled')) return 'badge bg-secondary';
-    if (statusLower.includes('pending')) return 'badge bg-warning';
-    return 'badge bg-secondary';
-  }
-
-  /**
-   * Format currency
-   */
-  formatCurrency(amount: number | null | undefined): string {
-    if (amount === null || amount === undefined) return 'N/A';
-    return amount.toLocaleString('en-MY', { style: 'currency', currency: 'MYR' });
-  }
-
-  /**
-   * Format date
-   */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
-    }
-  }
-
-  /**
-   * Check if request can be approved
-   */
-  canApprove(request: AccommodationRequest): boolean {
-    return request.status === 'Pending Approval';
-  }
-
-  /**
-   * Check if room can be assigned
-   */
-  canAssignRoom(request: AccommodationRequest): boolean {
-    return request.status === 'Approved' || request.status === 'Confirmed';
-  }
-
-  /**
-   * Check if request is processing
-   */
-  isProcessing(requestId: number): boolean {
-    return this.processingId === requestId;
-  }
-
-  /**
-   * Get total pages
-   */
-  get totalPages(): number {
-    return Math.ceil(this.totalRequests / this.pageSize);
-  }
-
-  /**
-   * Get page numbers for pagination
-   */
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    const maxPages = 5;
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxPages / 2));
-    let endPage = Math.min(this.totalPages, startPage + maxPages - 1);
-
-    if (endPage - startPage + 1 < maxPages) {
-      startPage = Math.max(1, endPage - maxPages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    return pages;
   }
 }

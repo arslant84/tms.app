@@ -8,13 +8,20 @@ import { TransportRequestComponent } from './features/requests/transport/transpo
 import { VisaRequestComponent } from './features/requests/visa/visa-request.component';
 import { ExpenseClaimComponent } from './features/requests/expense/expense-claim.component';
 import { PendingApprovalsComponent } from './features/approvals/pending/pending-approvals.component';
+import { PendingApprovalsComponent as UnifiedApprovalsComponent } from './features/admin/approvals/components/pending-approvals/pending-approvals.component';
 import { ClerkPanelComponent } from './features/admin/clerk-panel/clerk-panel.component';
 import { AdminReportsComponent } from './features/admin/reports/admin-reports.component';
 import { ClaimsAdminComponent } from './features/admin/claims-admin/claims-admin.component';
+import { ClaimsProcessingComponent } from './features/admin/claims-processing/claims-processing.component';
 import { TransportAdminComponent } from './features/admin/transport-admin/transport-admin.component';
+import { TransportProcessingComponent } from './features/admin/transport-processing/transport-processing.component';
 import { FlightsAdminComponent } from './features/admin/flights-admin/flights-admin.component';
+import { FlightsAdminOverviewComponent } from './features/admin/flights-admin-overview/flights-admin-overview.component';
+import { FlightsProcessingComponent } from './features/admin/flights-processing/flights-processing.component';
 import { AccommodationAdminComponent } from './features/admin/accommodation-admin/accommodation-admin.component';
+import { AccommodationProcessingComponent } from './features/admin/accommodation-processing/accommodation-processing.component';
 import { VisaAdminComponent } from './features/admin/visa-admin/visa-admin.component';
+import { VisaProcessingComponent } from './features/admin/visa-processing/visa-processing.component';
 import { SystemSettingsComponent } from './features/admin/system-settings/system-settings.component';
 import { TmsApp_Admin_SystemSettings_NotificationTemplatesComponent } from './features/admin/system-settings/notification-templates/notification-templates.component';
 import { SuccessComponent } from './features/requests/success/success.component';
@@ -80,12 +87,42 @@ export const routes: Routes = [
           { path: '', redirectTo: 'clerk-panel', pathMatch: 'full' },
           { path: 'clerk-panel', component: ClerkPanelComponent },
           { path: 'reports', component: AdminReportsComponent },
-          { path: 'approvals', component: PendingApprovalsComponent },
-          { path: 'claims', component: ClaimsAdminComponent },
-          { path: 'transport', component: TransportAdminComponent },
-          { path: 'flights', component: FlightsAdminComponent },
-          { path: 'accommodation', component: AccommodationAdminComponent },
-          { path: 'visa', component: VisaAdminComponent },
+          { path: 'approvals', component: UnifiedApprovalsComponent },
+          {
+            path: 'claims',
+            children: [
+              { path: '', component: ClaimsAdminComponent },
+              { path: 'processing', component: ClaimsProcessingComponent }
+            ]
+          },
+          {
+            path: 'transport',
+            children: [
+              { path: '', component: TransportAdminComponent },
+              { path: 'processing', component: TransportProcessingComponent }
+            ]
+          },
+          {
+            path: 'flights',
+            children: [
+              { path: '', component: FlightsAdminOverviewComponent },
+              { path: 'processing', component: FlightsProcessingComponent }
+            ]
+          },
+          {
+            path: 'accommodation',
+            children: [
+              { path: '', component: AccommodationAdminComponent },
+              { path: 'processing', component: AccommodationProcessingComponent }
+            ]
+          },
+          {
+            path: 'visa',
+            children: [
+              { path: '', component: VisaAdminComponent },
+              { path: 'processing', component: VisaProcessingComponent }
+            ]
+          },
           { path: 'settings', component: SystemSettingsComponent },
           { path: 'settings/notifications', component: TmsApp_Admin_SystemSettings_NotificationTemplatesComponent }
         ],

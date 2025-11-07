@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 
 export interface ExpenseClaim {
   id: number;
+  request_number?: string;
   document_number?: string;
   staff_name: string;
   staff_no: string;
@@ -209,7 +210,7 @@ export class ExpenseClaimsService {
    * Mark expense claim as paid
    */
   markAsPaid(id: number, data: any): Observable<any> {
-    const url = `${this.apiUrl}/claims/${id}/mark-paid/`;
+    const url = `${this.apiUrl}/claims/${id}/mark-as-paid/`;
     console.log('📡 Expense Claims Service: Marking claim as paid:', url);
 
     return this.http.post(url, data).pipe(

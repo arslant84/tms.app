@@ -170,18 +170,117 @@ class TrfPassportDetailSerializer(serializers.ModelSerializer):
 
 class TravelRequestSerializer(serializers.ModelSerializer):
     """Main serializer for Travel Requests (list view)"""
+    has_flight_booking = serializers.SerializerMethodField()
+    flight_details = serializers.SerializerMethodField()
+    overseas_travel_details = serializers.SerializerMethodField()
+    home_leave_details = serializers.SerializerMethodField()
+    domestic_travel_details = serializers.SerializerMethodField()
 
     class Meta:
         model = TravelRequest
         fields = [
-            'id', 'requestor_name', 'staff_id', 'department', 'position',
+            'id', 'request_number', 'requestor_name', 'staff_id', 'department', 'position',
             'cost_center', 'tel_email', 'email', 'travel_type', 'status',
             'purpose', 'estimated_cost', 'additional_comments',
             'external_full_name', 'external_organization',
             'external_ref_to_authority_letter', 'external_cost_center',
-            'submitted_at', 'created_at', 'updated_at', 'additional_data'
+            'submitted_at', 'created_at', 'updated_at', 'additional_data',
+            'has_flight_booking', 'flight_details', 'overseas_travel_details',
+            'home_leave_details', 'domestic_travel_details'
         ]
-        read_only_fields = ['id', 'submitted_at', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'request_number', 'submitted_at', 'created_at', 'updated_at']
+
+    def get_has_flight_booking(self, obj):
+        """Check if TRF has any flight bookings from bookings app"""
+        return obj.flight_bookings.exists()
+
+    def get_flight_details(self, obj):
+        """Get flight booking details if exists"""
+        flight_booking = obj.flight_bookings.first()
+        if flight_booking:
+            return {
+                'id': flight_booking.id,
+                'airline': flight_booking.airline,
+                'flightNumber': flight_booking.flight_number,
+                'departureLocation': flight_booking.departure_airport,
+                'arrivalLocation': flight_booking.arrival_airport,
+                'departureDate': flight_booking.departure_time.isoformat() if flight_booking.departure_time else None,
+                'arrivalDate': flight_booking.arrival_time.isoformat() if flight_booking.arrival_time else None,
+                'bookingReference': flight_booking.booking_reference,
+                'pnr': flight_booking.booking_reference,
+                'status': flight_booking.status,
+                'remarks': flight_booking.notes
+            }
+        return None
+
+    def get_overseas_travel_details(self, obj):
+        """Get overseas travel details with itinerary"""
+        if obj.travel_type == 'Overseas':
+            itinerary_segments = obj.trfitinerarysegment_set.all()
+            return {
+                'itinerary': [
+                    {
+                        'from_location': seg.from_location,
+                        'from': seg.from_location,
+                        'to_location': seg.to_location,
+                        'to': seg.to_location,
+                        'departure_date': seg.segment_date.isoformat() if seg.segment_date else None,
+                        'date': seg.segment_date.isoformat() if seg.segment_date else None,
+                        'etd': seg.departure_time,
+                        'eta': seg.arrival_time,
+                        'departure_time': seg.departure_time,
+                        'arrival_time': seg.arrival_time
+                    }
+                    for seg in itinerary_segments
+                ]
+            }
+        return None
+
+    def get_home_leave_details(self, obj):
+        """Get home leave details with itinerary"""
+        if obj.travel_type == 'Home Leave Passage':
+            itinerary_segments = obj.trfitinerarysegment_set.all()
+            return {
+                'itinerary': [
+                    {
+                        'from_location': seg.from_location,
+                        'from': seg.from_location,
+                        'to_location': seg.to_location,
+                        'to': seg.to_location,
+                        'departure_date': seg.segment_date.isoformat() if seg.segment_date else None,
+                        'date': seg.segment_date.isoformat() if seg.segment_date else None,
+                        'etd': seg.departure_time,
+                        'eta': seg.arrival_time,
+                        'departure_time': seg.departure_time,
+                        'arrival_time': seg.arrival_time
+                    }
+                    for seg in itinerary_segments
+                ]
+            }
+        return None
+
+    def get_domestic_travel_details(self, obj):
+        """Get domestic travel details with itinerary"""
+        if obj.travel_type == 'Domestic':
+            itinerary_segments = obj.trfitinerarysegment_set.all()
+            return {
+                'itinerary': [
+                    {
+                        'from_location': seg.from_location,
+                        'from': seg.from_location,
+                        'to_location': seg.to_location,
+                        'to': seg.to_location,
+                        'departure_date': seg.segment_date.isoformat() if seg.segment_date else None,
+                        'date': seg.segment_date.isoformat() if seg.segment_date else None,
+                        'etd': seg.departure_time,
+                        'eta': seg.arrival_time,
+                        'departure_time': seg.departure_time,
+                        'arrival_time': seg.arrival_time
+                    }
+                    for seg in itinerary_segments
+                ]
+            }
+        return None
 
     def validate_status(self, value):
         """Validate TRF status"""
@@ -242,7 +341,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = TravelRequest
         fields = [
-            'id', 'requestor_name', 'staff_id', 'department', 'position',
+            'id', 'request_number', 'requestor_name', 'staff_id', 'department', 'position',
             'cost_center', 'tel_email', 'email', 'travel_type', 'status',
             'purpose', 'estimated_cost', 'additional_comments',
             'external_full_name', 'external_organization',
@@ -253,7 +352,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             'flight_bookings', 'itinerary_segments', 'meal_provisions',
             'passport_details'
         ]
-        read_only_fields = ['id', 'submitted_at', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'request_number', 'submitted_at', 'created_at', 'updated_at']
 
 
 class TravelRequestCreateSerializer(serializers.ModelSerializer):
@@ -287,7 +386,7 @@ class TravelRequestUpdateSerializer(serializers.ModelSerializer):
             'cost_center', 'tel_email', 'email', 'travel_type', 'purpose',
             'estimated_cost', 'additional_comments', 'external_full_name',
             'external_organization', 'external_ref_to_authority_letter',
-            'external_cost_center', 'additional_data'
+            'external_cost_center', 'additional_data', 'status'
         ]
 
     def validate(self, attrs):
@@ -298,20 +397,19 @@ class TravelRequestUpdateSerializer(serializers.ModelSerializer):
             )
         return attrs
 
+    def validate_status(self, value):
+        """Only allow setting status to Draft when updating"""
+        if value not in ['Draft', 'Rejected']:
+            raise serializers.ValidationError(
+                "Status can only be set to 'Draft' or 'Rejected' during update."
+            )
+        return value
+
 
 class ApprovalActionSerializer(serializers.Serializer):
     """Serializer for approval actions (approve/reject)"""
     comments = serializers.CharField(required=False, allow_blank=True)
     step_role = serializers.CharField(required=True)
 
-    def validate_step_role(self, value):
-        """Validate step role"""
-        valid_roles = [
-            'Department Focal', 'HOD', 'Travel Desk', 'Finance',
-            'Director', 'Country Director'
-        ]
-        if value not in valid_roles:
-            raise serializers.ValidationError(
-                f"Step role must be one of: {', '.join(valid_roles)}"
-            )
-        return value
+    # Note: step_role validation is handled by WorkflowEngine
+    # which checks if the user is authorized for the current workflow step

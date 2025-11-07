@@ -1,0 +1,268 @@
+<div class="accommodation-processing-container">
+  <!-- Header -->
+  <div class="processing-header">
+    <button class="back-button" (click)="goToOverview()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      Back to Overview
+    </button>
+    <h1>Accommodation Processing Dashboard</h1>
+    <p class="subtitle">Manage accommodation requests and room assignments</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button
+      class="tab-button"
+      [class.active]="activeTab === 'pending'"
+      (click)="switchTab('pending')">
+      Pending Assignments
+      <span class="badge" *ngIf="pendingAccommodations.length > 0">{{ pendingAccommodations.length }}</span>
+    </button>
+    <button
+      class="tab-button"
+      [class.active]="activeTab === 'booked'"
+      (click)="switchTab('booked')">
+      Booked Accommodations
+      <span class="badge" *ngIf="bookedAccommodations.length > 0">{{ bookedAccommodations.length }}</span>
+    </button>
+  </div>
+
+  <!-- Pending Assignments Tab -->
+  <div *ngIf="activeTab === 'pending'" class="tab-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingPending" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading pending accommodations...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="errorPending && !isLoadingPending" class="error-container">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+      <p>{{ errorPending }}</p>
+      <button class="retry-button" (click)="retryPending()">Retry</button>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingPending && !errorPending && pendingAccommodations.length === 0" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h3>All caught up!</h3>
+      <p>No pending accommodation requests require processing at this time.</p>
+    </div>
+
+    <!-- Pending Accommodations List -->
+    <div *ngIf="!isLoadingPending && !errorPending && pendingAccommodations.length > 0" class="content-grid">
+      <!-- Left: Requests List -->
+      <div class="requests-list">
+        <h2>Approved Requests ({{ pendingAccommodations.length }})</h2>
+        <div class="request-cards">
+          <div
+            *ngFor="let request of pendingAccommodations"
+            class="request-card"
+            [class.selected]="selectedRequest?.id === request.id"
+            (click)="selectRequest(request)">
+            <div class="request-header">
+              <div>
+                <h3>{{ request.requestorName }}</h3>
+                <p class="request-number">{{ request.request_number }}</p>
+              </div>
+              <span class="badge" [class]="getStatusClass(request.status)">{{ request.status }}</span>
+            </div>
+            <div class="request-details">
+              <div class="detail-row">
+                <span class="label">Department:</span>
+                <span class="value">{{ request.department }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Staff ID:</span>
+                <span class="value">{{ request.staffId }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Location:</span>
+                <span class="badge" [class]="getLocationBadgeClass(request.location)">{{ request.location }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Check-in:</span>
+                <span class="value">{{ formatDate(request.checkInDate) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Check-out:</span>
+                <span class="value">{{ formatDate(request.checkOutDate) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Duration:</span>
+                <span class="value">{{ request.duration }} nights</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Room Type:</span>
+                <span class="value">{{ request.roomType }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Assignment Form -->
+      <div class="assignment-form">
+        <div *ngIf="!selectedRequest" class="no-selection">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819" />
+          </svg>
+          <p>Select a request from the list to assign a room</p>
+        </div>
+
+        <div *ngIf="selectedRequest" class="form-container">
+          <h2>Assign Room</h2>
+
+          <div class="selected-request-info">
+            <h3>{{ selectedRequest.requestorName }}</h3>
+            <p>{{ selectedRequest.request_number }} - {{ selectedRequest.location }}</p>
+          </div>
+
+          <form (ngSubmit)="assignRoom()">
+            <!-- Staff House Selection -->
+            <div class="form-group">
+              <label for="staffHouse">Staff House *</label>
+              <select
+                id="staffHouse"
+                [(ngModel)]="selectedStaffHouse"
+                name="staffHouse"
+                (change)="onStaffHouseChange()"
+                required>
+                <option [value]="null">Select a staff house</option>
+                <option *ngFor="let house of availableStaffHouses" [value]="house.id">
+                  {{ house.name }} - {{ house.location }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Room Selection -->
+            <div class="form-group">
+              <label for="room">Room *</label>
+              <select
+                id="room"
+                [(ngModel)]="selectedRoom"
+                name="room"
+                [disabled]="!selectedStaffHouse || availableRooms.length === 0"
+                required>
+                <option [value]="null">Select a room</option>
+                <option *ngFor="let room of availableRooms" [value]="room.id">
+                  {{ room.name }} - {{ room.room_type }} (Capacity: {{ room.capacity }})
+                </option>
+              </select>
+              <p class="helper-text" *ngIf="selectedStaffHouse && availableRooms.length === 0">
+                No available rooms in this staff house
+              </p>
+            </div>
+
+            <!-- Booking Notes -->
+            <div class="form-group">
+              <label for="notes">Notes (Optional)</label>
+              <textarea
+                id="notes"
+                [(ngModel)]="bookingNotes"
+                name="notes"
+                rows="3"
+                placeholder="Add any additional notes about this assignment..."></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="form-actions">
+              <button
+                type="submit"
+                class="btn-primary"
+                [disabled]="!selectedStaffHouse || !selectedRoom || isProcessing">
+                <span *ngIf="!isProcessing">Assign Room</span>
+                <span *ngIf="isProcessing">
+                  <div class="btn-spinner"></div>
+                  Assigning...
+                </span>
+              </button>
+              <button
+                type="button"
+                class="btn-danger"
+                (click)="noRoomsAvailable()"
+                [disabled]="isProcessing">
+                No Rooms Available
+              </button>
+              <button
+                type="button"
+                class="btn-secondary"
+                (click)="selectedRequest = null; resetFormFields()"
+                [disabled]="isProcessing">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Booked Accommodations Tab -->
+  <div *ngIf="activeTab === 'booked'" class="tab-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingBooked" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading booked accommodations...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingBooked && bookedAccommodations.length === 0" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+      </svg>
+      <h3>No Booked Accommodations</h3>
+      <p>There are no confirmed accommodation bookings at this time.</p>
+    </div>
+
+    <!-- Booked Accommodations Table -->
+    <div *ngIf="!isLoadingBooked && bookedAccommodations.length > 0" class="bookings-table-container">
+      <h2>Confirmed Bookings ({{ bookedAccommodations.length }})</h2>
+      <table class="bookings-table">
+        <thead>
+          <tr>
+            <th>Request #</th>
+            <th>Requestor</th>
+            <th>Staff House</th>
+            <th>Room</th>
+            <th>Location</th>
+            <th>Check-in</th>
+            <th>Check-out</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let booking of bookedAccommodations">
+            <td>{{ booking.requestNumber }}</td>
+            <td>{{ booking.requestorName }}</td>
+            <td>{{ booking.staffHouseName }}</td>
+            <td>{{ booking.roomName }}</td>
+            <td>
+              <span class="badge" [class]="getLocationBadgeClass(booking.location)">{{ booking.location }}</span>
+            </td>
+            <td>{{ formatDate(booking.checkInDate) }}</td>
+            <td>{{ formatDate(booking.checkOutDate) }}</td>
+            <td>
+              <span class="badge" [class]="getStatusClass(booking.status)">{{ booking.status }}</span>
+            </td>
+            <td>
+              <button
+                class="btn-small btn-danger"
+                (click)="cancelBooking(booking)"
+                [disabled]="isProcessing">
+                Cancel
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

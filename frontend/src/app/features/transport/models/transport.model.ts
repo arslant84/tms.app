@@ -60,6 +60,7 @@ export interface TransportApprovalSubmissionData {
 
 export interface TransportRequestForm extends TransportRequestData, TransportApprovalSubmissionData {
   id: string;
+  request_number?: string;
   status: TransportRequestStatus;
   approvalWorkflow: TransportApprovalStep[];
   approval_steps?: any[]; // Legacy field for backward compatibility

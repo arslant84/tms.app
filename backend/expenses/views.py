@@ -9,6 +9,7 @@ from datetime import datetime
 
 from .models import ExpenseClaim, ExpenseItem, ClaimsApprovalStep, ExpenseCategory
 from workflows.router import WorkflowRouter
+from utils.request_id_generator import generate_request_id
 from .serializers import (
     ExpenseClaimSerializer,
     ExpenseClaimDetailSerializer,
@@ -155,6 +156,21 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Generate request number if it doesn't exist
+        if not expense.request_number:
+            try:
+                # CLM uses special format with two unique IDs (no context needed)
+                request_number = generate_request_id('CLM', '')
+                expense.request_number = request_number
+                print(f"✅ Generated request number for Expense Claim #{expense.id}: {request_number}")
+            except Exception as e:
+                print(f"❌ Error generating request number: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                # Fallback to simple format
+                expense.request_number = f"CLM-{datetime.now().strftime('%Y%m%d-%H%M')}-CLM-{expense.id}"
+                print(f"⚠️ Using fallback request number: {expense.request_number}")
+
         # Update status to Pending
         expense.status = 'Pending'
         expense.save()
@@ -202,7 +218,11 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
-        """Approve an expense claim at current approval step"""
+        """Approve an expense claim using WorkflowEngine"""
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
         expense = self.get_object()
         serializer = ApprovalActionSerializer(data=request.data)
 
@@ -212,51 +232,115 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
         step_role = serializer.validated_data['step_role']
         comments = serializer.validated_data.get('comments', '')
 
-        # Find or create approval step for this role
-        approval_step, created = ClaimsApprovalStep.objects.get_or_create(
-            claim=expense,
-            step_role=step_role,
-            defaults={
-                'step_name': f'{step_role} Approval',
-                'status': 'Pending'
-            }
-        )
+        try:
+            # Get the workflow instance for this expense claim
+            content_type = ContentType.objects.get_for_model(expense)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=expense.id,
+                status='in_progress'
+            ).first()
 
-        # Update approval step
-        approval_step.status = 'Approved'
-        approval_step.comments = comments
-        approval_step.step_date = datetime.now()
-        approval_step.save()
+            print(f"[DEBUG] Approving Claim #{expense.id}")
+            print(f"[DEBUG] User: {request.user.email}, is_staff={request.user.is_staff}, is_superuser={request.user.is_superuser}")
+            print(f"[DEBUG] Workflow instance found: {workflow_instance is not None}")
 
-        # Update expense claim status based on approval workflow
-        status_progression = {
-            'HOD': 'Under Review',
-            'Finance': 'Approved'
-        }
+            if workflow_instance:
+                # Find the current pending step
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
 
-        if step_role in status_progression:
-            expense.status = status_progression[step_role]
-            expense.save()
+                print(f"[DEBUG] Pending step found: {current_step is not None}")
+                if current_step:
+                    print(f"[DEBUG] Step: {current_step.workflow_step.step_name}, assigned_to: {current_step.assigned_to}")
 
-            # Create next approval step if not final
-            if expense.status != 'Approved':
-                next_role = 'Finance' if step_role == 'HOD' else None
-                if next_role:
-                    ClaimsApprovalStep.objects.get_or_create(
+                if current_step:
+                    # Use workflow engine to process approval
+                    result = WorkflowEngine.process_action(
+                        step_execution_id=current_step.id,
+                        action='approve',
+                        actioned_by=request.user,
+                        comments=comments
+                    )
+
+                    # Reload to get updated status
+                    expense.refresh_from_db()
+
+                    # Update legacy approval step for backward compatibility
+                    approval_step, created = ClaimsApprovalStep.objects.get_or_create(
                         claim=expense,
-                        step_role=next_role,
+                        step_role=step_role,
                         defaults={
-                            'step_name': f'{next_role} Approval',
+                            'step_name': f'{step_role} Approval',
                             'status': 'Pending'
                         }
                     )
+                    approval_step.status = 'Approved'
+                    approval_step.comments = comments
+                    approval_step.step_date = timezone.now()
+                    approval_step.save()
 
-        expense_serializer = ExpenseClaimDetailSerializer(expense)
-        return Response(expense_serializer.data)
+                    expense_serializer = ExpenseClaimDetailSerializer(expense)
+                    return Response(expense_serializer.data)
+                else:
+                    return Response(
+                        {'error': 'No pending approval step found'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                # Fallback to legacy approval logic
+                print(f"⚠️ No workflow instance found for Expense Claim #{expense.id}, using legacy approval")
+
+                approval_step, created = ClaimsApprovalStep.objects.get_or_create(
+                    claim=expense,
+                    step_role=step_role,
+                    defaults={
+                        'step_name': f'{step_role} Approval',
+                        'status': 'Pending'
+                    }
+                )
+
+                approval_step.status = 'Approved'
+                approval_step.comments = comments
+                approval_step.step_date = timezone.now()
+                approval_step.save()
+
+                status_progression = {
+                    'Department Focal': 'Pending HOD',
+                    'HOD': 'Approved'
+                }
+
+                if step_role in status_progression:
+                    expense.status = status_progression[step_role]
+                    expense.save()
+
+                expense_serializer = ExpenseClaimDetailSerializer(expense)
+                return Response(expense_serializer.data)
+
+        except ValueError as e:
+            # ValueError is raised by WorkflowEngine for authorization failures
+            print(f"❌ ValueError in approve workflow: {str(e)}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            print(f"❌ Error in approve workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Failed to process approval: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
-        """Reject an expense claim"""
+        """Reject an expense claim using WorkflowEngine"""
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
         expense = self.get_object()
         serializer = ApprovalActionSerializer(data=request.data)
 
@@ -266,28 +350,74 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
         step_role = serializer.validated_data['step_role']
         comments = serializer.validated_data.get('comments', '')
 
-        # Find or create approval step for this role
-        approval_step, created = ClaimsApprovalStep.objects.get_or_create(
-            claim=expense,
-            step_role=step_role,
-            defaults={
-                'step_name': f'{step_role} Approval',
-                'status': 'Pending'
-            }
-        )
+        try:
+            content_type = ContentType.objects.get_for_model(expense)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=expense.id,
+                status='in_progress'
+            ).first()
 
-        # Update approval step
-        approval_step.status = 'Rejected'
-        approval_step.comments = comments
-        approval_step.step_date = datetime.now()
-        approval_step.save()
+            if workflow_instance:
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
 
-        # Update expense claim status
-        expense.status = 'Rejected'
-        expense.save()
+                if current_step:
+                    result = WorkflowEngine.process_action(
+                        step_execution_id=current_step.id,
+                        action='reject',
+                        actioned_by=request.user,
+                        comments=comments
+                    )
 
-        expense_serializer = ExpenseClaimDetailSerializer(expense)
-        return Response(expense_serializer.data)
+                    expense.refresh_from_db()
+
+                    approval_step, created = ClaimsApprovalStep.objects.get_or_create(
+                        claim=expense,
+                        step_role=step_role,
+                        defaults={
+                            'step_name': f'{step_role} Approval',
+                            'status': 'Pending'
+                        }
+                    )
+                    approval_step.status = 'Rejected'
+                    approval_step.comments = comments
+                    approval_step.step_date = timezone.now()
+                    approval_step.save()
+
+                    expense_serializer = ExpenseClaimDetailSerializer(expense)
+                    return Response(expense_serializer.data)
+            else:
+                # Fallback to legacy rejection
+                approval_step, created = ClaimsApprovalStep.objects.get_or_create(
+                    claim=expense,
+                    step_role=step_role,
+                    defaults={
+                        'step_name': f'{step_role} Approval',
+                        'status': 'Pending'
+                    }
+                )
+
+                approval_step.status = 'Rejected'
+                approval_step.comments = comments
+                approval_step.step_date = timezone.now()
+                approval_step.save()
+
+                expense.status = 'Rejected'
+                expense.save()
+
+                expense_serializer = ExpenseClaimDetailSerializer(expense)
+                return Response(expense_serializer.data)
+
+        except Exception as e:
+            print(f"❌ Error in reject workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Failed to process rejection: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -320,13 +450,13 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
             step_name='Cancellation',
             status='Cancelled',
             comments=comments,
-            step_date=datetime.now()
+            step_date=timezone.now()
         )
 
         serializer = self.get_serializer(expense)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='mark-as-paid')
     def mark_as_paid(self, request, pk=None):
         """Mark an expense claim as paid (Finance role only)"""
         expense = self.get_object()
@@ -346,9 +476,23 @@ class ExpenseClaimViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Update status
+        # Update status and payment details
         expense.status = 'Paid'
+        expense.payment_method = request.data.get('payment_method', 'BANK_TRANSFER')
+        expense.cheque_receipt_no = request.data.get('cheque_receipt_no')
+        expense.payment_date = request.data.get('payment_date')
         expense.save()
+
+        # Create approval step for payment record
+        comments = request.data.get('comments', 'Payment processed')
+        ClaimsApprovalStep.objects.create(
+            claim=expense,
+            step_role='Finance',
+            step_name='Payment Processing',
+            status='Paid',
+            comments=comments,
+            step_date=timezone.now()
+        )
 
         serializer = self.get_serializer(expense)
         return Response(serializer.data)

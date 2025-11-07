@@ -108,8 +108,32 @@ export class TrfWizardComponent implements OnInit {
     // For now, this is a placeholder
     this.trfService.getTrfById(id).subscribe({
       next: (data: any) => {
+        console.log('=== LOADED TRF DATA ===');
+        console.log('TRF ID:', id);
+        console.log('TRF Status:', data.status);
+        console.log('Full TRF data:', data);
+        console.log('Meal data (daily_meals):', data.daily_meals);
+        console.log('Meal data (daily_meal_selections):', data.daily_meal_selections);
+        console.log('Transport data (transport_details):', data.transport_details);
+        console.log('Transport data (company_transport_details):', data.company_transport_details);
+
         this.existingTrfData = data;
         this.selectedTravelType = data.travel_type || data.travelType;
+
+        // Check if TRF can be edited
+        if (data.status && !['Draft', 'Rejected'].includes(data.status)) {
+          const errorMsg = `This TRF cannot be edited because its status is "${data.status}". Only Draft or Rejected TRFs can be edited.`;
+          this.submitError = errorMsg;
+          this.isLoadingTrf = false;
+          console.warn('TRF cannot be edited - status:', data.status);
+
+          // Show error toast and redirect back to list
+          this.toastService.error(errorMsg);
+          setTimeout(() => {
+            this.router.navigate(['/trf']);
+          }, 3000);
+          return;
+        }
 
         // Pre-populate requestor data
         this.requestorData = {
@@ -141,36 +165,62 @@ export class TrfWizardComponent implements OnInit {
   private prePopulateTravelData(data: any): void {
     switch (this.selectedTravelType) {
       case 'Domestic':
+        console.log('=== DOMESTIC TRAVEL DATA ===');
+        console.log('Raw data.daily_meals:', data.daily_meals);
+        console.log('Raw data.transport_details:', data.transport_details);
+        console.log('Raw data.accommodation_details:', data.accommodation_details);
+
         this.domesticTravelData = {
           purposeOfTravel: data.purpose,
           tripType: data.trip_type || data.tripType || 'Round Trip',
-          itinerary: data.itinerary || [],
+          // Backend uses 'itinerary_segments' but fallback to 'itinerary'
+          itinerary: this.transformItineraryData(data.itinerary_segments || data.itinerary || []),
           mealProvisions: {
-            dailySelections: data.daily_meal_selections || data.mealSelections || []
+            // Backend uses 'daily_meals' but fallback to 'daily_meal_selections'
+            dailySelections: this.transformMealSelectionsData(data.daily_meals || data.daily_meal_selections || data.mealSelections || [])
           },
-          accommodation: data.accommodation_details?.[0] || data.accommodation || {},
-          companyTransportation: data.company_transport_details || data.transportDetails || []
+          accommodation: this.transformAccommodationData(data.accommodation_details?.[0] || data.accommodation || {}),
+          // Backend uses 'transport_details' but fallback to 'company_transport_details'
+          companyTransportation: this.transformCompanyTransportData(data.transport_details || data.company_transport_details || data.transportDetails || [])
         };
+
+        console.log('Transformed domesticTravelData:', this.domesticTravelData);
+        console.log('Meal provisions dailySelections:', this.domesticTravelData.mealProvisions.dailySelections);
+        console.log('Company transportation:', this.domesticTravelData.companyTransportation);
         break;
 
       case 'Overseas':
+        console.log('=== OVERSEAS TRAVEL DATA ===');
+        console.log('Bank detail (bank_detail):', data.bank_detail);
+        console.log('Advance amounts (advance_amounts):', data.advance_amounts);
+
         this.overseasTravelData = {
           purpose: data.purpose,
           tripType: data.trip_type || data.tripType || 'Round Trip',
-          itinerary: data.itinerary || [],
-          advanceBankDetails: data.advance_bank_details || data.bankDetails || {},
-          advanceAmountRequested: data.advance_amount_items || data.advanceAmounts || []
+          itinerary: this.transformItineraryData(data.itinerary_segments || data.itinerary || []),
+          advanceBankDetails: this.transformBankDetails(data.bank_detail || data.advance_bank_details || data.bankDetails),
+          advanceAmountRequested: this.transformAdvanceAmounts(data.advance_amounts || data.advance_amount_items || data.advanceAmounts || [])
         };
+
+        console.log('Transformed bank details:', this.overseasTravelData.advanceBankDetails);
+        console.log('Transformed advance amounts:', this.overseasTravelData.advanceAmountRequested);
         break;
 
       case 'Home Leave':
+        console.log('=== HOME LEAVE TRAVEL DATA ===');
+        console.log('Passport details:', data.passport_details);
+        console.log('Bank detail:', data.bank_detail);
+
         this.homeLeaveData = {
           purpose: data.purpose,
           tripType: data.trip_type || data.tripType || 'Round Trip',
-          itinerary: data.itinerary || [],
-          passportDetails: data.passport_details || data.passportDetails || {},
-          advanceBankDetails: data.advance_bank_details || data.bankDetails || {}
+          itinerary: this.transformItineraryData(data.itinerary_segments || data.itinerary || []),
+          passportDetails: this.transformPassportDetails(data.passport_details || data.passportDetails),
+          advanceBankDetails: this.transformBankDetails(data.bank_detail || data.advance_bank_details || data.bankDetails)
         };
+
+        console.log('Transformed passport details:', this.homeLeaveData.passportDetails);
+        console.log('Transformed bank details:', this.homeLeaveData.advanceBankDetails);
         break;
 
       case 'External Parties':
@@ -181,9 +231,9 @@ export class TrfWizardComponent implements OnInit {
           externalOrganization: data.external_organization || data.externalOrganization || '',
           externalRefToAuthorityLetter: data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter || '',
           externalCostCenter: data.external_cost_center || data.externalCostCenter || '',
-          itinerary: data.itinerary_segments || data.itinerary || [],
+          itinerary: this.transformItineraryData(data.itinerary_segments || data.itinerary || []),
           accommodation: data.accommodation_details || data.accommodation || [],
-          transport: data.transport_details || data.transport || []
+          transport: data.transport_details || data.company_transport_details || data.transport || []
         };
         break;
     }
@@ -429,6 +479,11 @@ export class TrfWizardComponent implements OnInit {
 
     if (this.isEditMode && this.trfId) {
       // Update existing TRF
+      console.log('=== UPDATE MODE ===');
+      console.log('TRF ID:', this.trfId);
+      console.log('Combined data:', combinedData);
+      console.log('Main TRF data being sent:', combinedData.mainTrf);
+
       this.trfService.updateTrf(this.trfId, combinedData.mainTrf).subscribe({
         next: (updatedTrf: any) => {
           console.log('TRF updated successfully:', updatedTrf);
@@ -437,11 +492,60 @@ export class TrfWizardComponent implements OnInit {
           // This is a simplified approach - ideally, you'd update existing ones
           from(this.createNestedResources(this.trfId!, combinedData)).subscribe({
             next: () => {
-              this.isSubmitting = false;
+              // If not saving as draft, submit the TRF to workflow
+              if (!isDraft) {
+                console.log('Submitting TRF to workflow after update...');
+                this.trfService.submitTrf(this.trfId!).subscribe({
+                  next: (submittedTrf: any) => {
+                    console.log('TRF submitted to workflow successfully:', submittedTrf);
+                    this.isSubmitting = false;
+                    this.toastService.success('TRF updated and submitted successfully!');
+                    this.router.navigate(['/trf']);
+                  },
+                  error: (error: any) => {
+                    this.isSubmitting = false;
+                    console.error('=== ERROR SUBMITTING TO WORKFLOW ===');
+                    console.error('Full error object:', error);
+                    console.error('Error status:', error.status);
+                    console.error('Error statusText:', error.statusText);
+                    console.error('Error error:', error.error);
+                    console.error('Error error type:', typeof error.error);
+                    if (error.error && typeof error.error === 'object') {
+                      console.error('Error error keys:', Object.keys(error.error));
+                      console.error('Error error.error:', error.error.error);
+                      console.error('Error error.message:', error.error.message);
+                      console.error('Error error.detail:', error.error.detail);
+                    }
+                    console.error('Error message:', error.message);
 
-              // Show success message and navigate
-              this.toastService.success(isDraft ? 'TRF updated and saved as draft!' : 'TRF updated successfully!');
-              this.router.navigate(['/trf']);
+                    let errorMessage = 'Error submitting TRF to workflow: ';
+                    if (error.error && typeof error.error === 'object') {
+                      if (error.error.error) {
+                        errorMessage += error.error.error;
+                      } else if (error.error.message) {
+                        errorMessage += error.error.message;
+                      } else if (error.error.detail) {
+                        errorMessage += error.error.detail;
+                      } else {
+                        errorMessage += JSON.stringify(error.error);
+                      }
+                    } else if (error.error && typeof error.error === 'string') {
+                      errorMessage += error.error;
+                    } else if (error.message) {
+                      errorMessage += error.message;
+                    } else {
+                      errorMessage += 'Unknown error';
+                    }
+
+                    this.submitError = errorMessage;
+                    this.toastService.error(this.submitError);
+                  }
+                });
+              } else {
+                this.isSubmitting = false;
+                this.toastService.success('TRF updated and saved as draft!');
+                this.router.navigate(['/trf']);
+              }
             },
             error: (error: any) => {
               this.isSubmitting = false;
@@ -453,9 +557,36 @@ export class TrfWizardComponent implements OnInit {
         },
         error: (error: any) => {
           this.isSubmitting = false;
-          this.submitError = 'Error updating TRF: ' + (error.error?.message || error.message || 'Unknown error');
+          console.error('=== ERROR UPDATING TRF ===');
+          console.error('Error object:', error);
+          console.error('Error status:', error.status);
+          console.error('Error error:', error.error);
+
+          // Extract validation errors if available
+          let errorMessage = 'Error updating TRF: ';
+          if (error.error && typeof error.error === 'object') {
+            if (error.error.non_field_errors) {
+              errorMessage += error.error.non_field_errors.join(', ');
+            } else if (error.error.message) {
+              errorMessage += error.error.message;
+            } else {
+              // Flatten all field errors
+              const fieldErrors = Object.entries(error.error)
+                .map(([field, messages]: [string, any]) => {
+                  if (Array.isArray(messages)) {
+                    return `${field}: ${messages.join(', ')}`;
+                  }
+                  return `${field}: ${messages}`;
+                })
+                .join('; ');
+              errorMessage += fieldErrors || error.message || 'Unknown error';
+            }
+          } else {
+            errorMessage += error.message || 'Unknown error';
+          }
+
+          this.submitError = errorMessage;
           this.toastService.error(this.submitError);
-          console.error('Error updating TRF:', error);
         }
       });
     } else {
@@ -470,11 +601,29 @@ export class TrfWizardComponent implements OnInit {
           // Step 2: Create nested resources (itinerary, meals, accommodation, transport)
           from(this.createNestedResources(createdTrf.id, combinedData)).subscribe({
             next: () => {
-              this.isSubmitting = false;
-
-              // Show success message and navigate
-              this.toastService.success(isDraft ? 'TRF saved as draft successfully!' : 'TRF submitted successfully!');
-              this.router.navigate(['/trf']);
+              // If not saving as draft, submit the TRF to generate request number and start workflow
+              if (!isDraft) {
+                console.log('Submitting TRF to workflow after create...');
+                this.trfService.submitTrf(createdTrf.id).subscribe({
+                  next: (submittedTrf: any) => {
+                    console.log('TRF submitted to workflow successfully:', submittedTrf);
+                    this.isSubmitting = false;
+                    this.toastService.success('TRF submitted successfully!');
+                    this.router.navigate(['/trf']);
+                  },
+                  error: (error: any) => {
+                    this.isSubmitting = false;
+                    console.error('=== ERROR SUBMITTING TO WORKFLOW (CREATE) ===');
+                    console.error('Full error object:', error);
+                    this.submitError = 'Error submitting TRF: ' + (error.error?.error || error.error?.message || error.message || 'Unknown error');
+                    this.toastService.error(this.submitError);
+                  }
+                });
+              } else {
+                this.isSubmitting = false;
+                this.toastService.success('TRF saved as draft successfully!');
+                this.router.navigate(['/trf']);
+              }
             },
             error: (error: any) => {
               this.isSubmitting = false;
@@ -508,7 +657,8 @@ export class TrfWizardComponent implements OnInit {
       tel_email: this.requestorData.contactNo,
       email: this.requestorData.email,
       travel_type: this.selectedTravelType,
-      status: isDraft ? 'Draft' : 'Pending Department Focal',
+      // Always create as Draft, then call submit endpoint to generate request number
+      status: 'Draft',
       estimated_cost: 0
     };
 
@@ -630,10 +780,61 @@ export class TrfWizardComponent implements OnInit {
   }
 
   /**
+   * Delete existing nested resources for a TRF (used during update to prevent duplicates)
+   */
+  private deleteExistingNestedResources(trfId: number): Promise<void> {
+    console.log('=== Deleting Existing Nested Resources ===');
+    console.log('TRF ID:', trfId);
+
+    const promises: Promise<any>[] = [];
+
+    // Delete all existing nested resources
+    promises.push(
+      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'itinerary')).catch(err => {
+        console.warn('No itinerary segments to delete or error:', err);
+      })
+    );
+    promises.push(
+      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'meals')).catch(err => {
+        console.warn('No meal selections to delete or error:', err);
+      })
+    );
+    promises.push(
+      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'accommodation')).catch(err => {
+        console.warn('No accommodation to delete or error:', err);
+      })
+    );
+    promises.push(
+      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'transport')).catch(err => {
+        console.warn('No transport to delete or error:', err);
+      })
+    );
+    promises.push(
+      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'passport')).catch(err => {
+        console.warn('No passport details to delete or error:', err);
+      })
+    );
+    promises.push(
+      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'bank')).catch(err => {
+        console.warn('No bank details to delete or error:', err);
+      })
+    );
+    promises.push(
+      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'advance-amounts')).catch(err => {
+        console.warn('No advance amounts to delete or error:', err);
+      })
+    );
+
+    return Promise.all(promises).then(() => {
+      console.log('✓ Existing nested resources deleted successfully');
+    });
+  }
+
+  /**
    * Create nested resources (itinerary, meals, passport, bank details, etc.)
    */
   private createNestedResources(trfId: number, data: any): any {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       console.log('=== Creating Nested Resources ===');
       console.log('TRF ID:', trfId);
       console.log('TRF ID type:', typeof trfId);
@@ -647,6 +848,16 @@ export class TrfWizardComponent implements OnInit {
         console.error(error);
         reject(new Error(error));
         return;
+      }
+
+      // If in edit mode, delete existing nested resources first to prevent duplicates
+      if (this.isEditMode) {
+        try {
+          await this.deleteExistingNestedResources(trfId);
+        } catch (err) {
+          console.error('Error deleting existing nested resources:', err);
+          // Continue anyway - some resources might not exist
+        }
       }
 
       const promises: Promise<any>[] = [];
@@ -776,13 +987,16 @@ export class TrfWizardComponent implements OnInit {
             day_of_week: transport.day || '',
             from_location: transport.from || transport.fromLocation || '',
             to_location: transport.to || transport.toLocation || '',
-            bt_no_required: transport.btNumber || transport.btNoRequired || '',
+            // Domestic uses 'etd', External Parties uses 'btNumber' or 'btNoRequired'
+            bt_no_required: transport.etd || transport.btNumber || transport.btNoRequired || '',
             accommodation_type_n: transport.accommodationType || '',
             address: transport.address || '',
             remarks: transport.remarks || ''
           };
 
           console.log('Creating transport:', transportData);
+          console.log('  - transport.etd:', transport.etd);
+          console.log('  - transportData.bt_no_required:', transportData.bt_no_required);
           promises.push(
             firstValueFrom(this.trfService.createTransport(transportData))
           );
@@ -892,5 +1106,193 @@ export class TrfWizardComponent implements OnInit {
         this.router.navigate(['/trf']);
       }
     });
+  }
+
+  /**
+   * Transform itinerary data from backend format to component format
+   */
+  private transformItineraryData(itinerary: any[]): any[] {
+    return itinerary.map((segment: any) => ({
+      date: segment.segment_date || segment.date || null,
+      day: segment.day_of_week || segment.day || '',
+      from: segment.from_location || segment.from || '',
+      to: segment.to_location || segment.to || '',
+      etd: segment.departure_time || segment.etd || '',
+      eta: segment.arrival_time || segment.eta || '',
+      flightNumber: segment.flight_number || segment.flightNumber || '',
+      remarks: segment.remarks || ''
+    }));
+  }
+
+  /**
+   * Transform meal selections data from backend format to component format
+   */
+  private transformMealSelectionsData(mealSelections: any[]): any[] {
+    console.log('=== TRANSFORMING MEAL SELECTIONS ===');
+    console.log('Raw meal data:', mealSelections);
+
+    const transformed = mealSelections.map((meal: any) => {
+      const result = {
+        date: meal.meal_date || meal.date || null,
+        // Explicitly handle boolean values - backend returns true/false
+        breakfast: meal.breakfast === true || meal.breakfast === 'true' || meal.breakfast === 1,
+        lunch: meal.lunch === true || meal.lunch === 'true' || meal.lunch === 1,
+        dinner: meal.dinner === true || meal.dinner === 'true' || meal.dinner === 1,
+        supper: meal.supper === true || meal.supper === 'true' || meal.supper === 1,
+        refreshment: meal.refreshment === true || meal.refreshment === 'true' || meal.refreshment === 1
+      };
+      console.log('Transformed meal:', result);
+      return result;
+    });
+
+    console.log('All transformed meals:', transformed);
+    return transformed;
+  }
+
+  /**
+   * Transform accommodation data from backend format to component format
+   */
+  private transformAccommodationData(accommodation: any): any {
+    if (!accommodation || Object.keys(accommodation).length === 0) {
+      return {
+        accommodationType: 'Hotel/Otels',
+        otherTypeDescription: '',
+        checkInDate: null,
+        checkInTime: '',
+        checkOutDate: null,
+        checkOutTime: '',
+        remarks: ''
+      };
+    }
+
+    return {
+      accommodationType: accommodation.accommodation_type || accommodation.accommodationType || 'Hotel/Otels',
+      otherTypeDescription: accommodation.other_type_description || accommodation.otherTypeDescription || '',
+      checkInDate: accommodation.check_in_date || accommodation.checkInDate || null,
+      checkInTime: accommodation.check_in_time || accommodation.checkInTime || '',
+      checkOutDate: accommodation.check_out_date || accommodation.checkOutDate || null,
+      checkOutTime: accommodation.check_out_time || accommodation.checkOutTime || '',
+      remarks: accommodation.remarks || ''
+    };
+  }
+
+  /**
+   * Transform company transport data from backend format to component format
+   */
+  private transformCompanyTransportData(transport: any[]): any[] {
+    console.log('=== TRANSFORMING COMPANY TRANSPORT ===');
+    console.log('Raw transport data:', transport);
+
+    const transformed = transport.map((item: any, index: number) => {
+      console.log(`\n--- Transport Item ${index} ---`);
+      console.log('Raw item keys:', Object.keys(item));
+      console.log('Raw bt_no_required value:', item.bt_no_required);
+      console.log('Raw accommodation_type_n value:', item.accommodation_type_n);
+      console.log('Raw transport_date value:', item.transport_date);
+      console.log('Raw from_location value:', item.from_location);
+      console.log('Raw to_location value:', item.to_location);
+
+      const result = {
+        date: item.transport_date || item.date || null,
+        day: item.day_of_week || item.day || '',
+        from: item.from_location || item.from || '',
+        to: item.to_location || item.to || '',
+        // Backend uses 'bt_no_required' which is stored in the 'etd' field in the form
+        etd: item.bt_no_required || item.etd || '',
+        accommodationType: item.accommodation_type_n || item.accommodationType || '',
+        address: item.address || '',
+        remarks: item.remarks || ''
+      };
+
+      console.log('Transformed result.etd:', result.etd);
+      console.log('Transformed result.accommodationType:', result.accommodationType);
+      console.log('Full transformed item:', result);
+
+      return result;
+    });
+
+    console.log('All transformed transport:', transformed);
+    return transformed;
+  }
+
+  /**
+   * Transform bank details from backend format to component format
+   */
+  private transformBankDetails(bankDetail: any): any {
+    if (!bankDetail || Object.keys(bankDetail).length === 0) {
+      return {
+        bankName: '',
+        accountNumber: ''
+      };
+    }
+
+    return {
+      bankName: bankDetail.bank_name || bankDetail.bankName || '',
+      accountNumber: bankDetail.account_number || bankDetail.accountNumber || ''
+    };
+  }
+
+  /**
+   * Transform advance amounts from backend format to component format
+   */
+  private transformAdvanceAmounts(advanceAmounts: any[]): any[] {
+    if (!advanceAmounts || advanceAmounts.length === 0) {
+      return [];
+    }
+
+    return advanceAmounts.map((item: any) => ({
+      dateFrom: item.date_from || item.dateFrom || null,
+      dateTo: item.date_to || item.dateTo || null,
+      lh: item.lh || 0,
+      ma: item.ma || 0,
+      oa: item.oa || 0,
+      tr: item.tr || 0,
+      oe: item.oe || 0,
+      usd: item.usd || 0,
+      remarks: item.remarks || ''
+    }));
+  }
+
+  /**
+   * Transform passport details from backend format to component format
+   */
+  private transformPassportDetails(passportDetails: any): any {
+    // Backend returns array, we need first element
+    if (Array.isArray(passportDetails) && passportDetails.length > 0) {
+      const detail = passportDetails[0];
+      return {
+        fullName: detail.full_name || detail.fullName || '',
+        passportNumber: detail.passport_number || detail.passportNumber || '',
+        nationality: detail.nationality || '',
+        dateOfBirth: detail.date_of_birth || detail.dateOfBirth || null,
+        placeOfBirth: detail.place_of_birth || detail.placeOfBirth || '',
+        passportIssueDate: detail.passport_issue_date || detail.passportIssueDate || null,
+        passportExpiryDate: detail.passport_expiry_date || detail.passportExpiryDate || null
+      };
+    }
+
+    // If already an object (not array)
+    if (passportDetails && !Array.isArray(passportDetails)) {
+      return {
+        fullName: passportDetails.full_name || passportDetails.fullName || '',
+        passportNumber: passportDetails.passport_number || passportDetails.passportNumber || '',
+        nationality: passportDetails.nationality || '',
+        dateOfBirth: passportDetails.date_of_birth || passportDetails.dateOfBirth || null,
+        placeOfBirth: passportDetails.place_of_birth || passportDetails.placeOfBirth || '',
+        passportIssueDate: passportDetails.passport_issue_date || passportDetails.passportIssueDate || null,
+        passportExpiryDate: passportDetails.passport_expiry_date || passportDetails.passportExpiryDate || null
+      };
+    }
+
+    // Return empty object if no data
+    return {
+      fullName: '',
+      passportNumber: '',
+      nationality: '',
+      dateOfBirth: null,
+      placeOfBirth: '',
+      passportIssueDate: null,
+      passportExpiryDate: null
+    };
   }
 }

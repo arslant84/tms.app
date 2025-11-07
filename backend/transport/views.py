@@ -16,6 +16,7 @@ from .serializers import (
     ApprovalActionSerializer
 )
 from workflows.router import WorkflowRouter
+from utils.request_id_generator import generate_request_id
 
 
 class TransportRequestViewSet(viewsets.ModelViewSet):
@@ -165,6 +166,31 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Generate request number if it doesn't exist
+        if not transport_request.request_number:
+            try:
+                # Extract context from first transport detail's destination
+                context = 'TRN'
+                if transport_request.transport_details and len(transport_request.transport_details) > 0:
+                    first_detail = transport_request.transport_details[0]
+                    destination = first_detail.get('to') or first_detail.get('to_location') or ''
+                    if destination:
+                        context = destination  # Let generate_request_id handle validation and length
+
+                print(f"🔍 Extracted context for Transport Request #{transport_request.id}: {context}")
+
+                # Generate unique request number (will auto-validate and limit context to 5 chars)
+                request_number = generate_request_id('TRN', context)
+                transport_request.request_number = request_number
+                print(f"✅ Generated request number: {request_number}")
+            except Exception as e:
+                print(f"❌ Error generating request number: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                # Fallback to simple format
+                transport_request.request_number = f"TRN-{datetime.now().strftime('%Y%m%d-%H%M')}-TRN-{transport_request.id}"
+                print(f"⚠️ Using fallback request number: {transport_request.request_number}")
+
         # Update status and submitted_at
         transport_request.status = 'Pending'
         transport_request.submitted_at = timezone.now()
@@ -214,37 +240,13 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         """
-        Approve a transport request at current approval step
-        Progresses through workflow: HOD → Admin → Completed
+        Approve a transport request using WorkflowEngine
         """
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
         transport_request = self.get_object()
-        user = request.user
-
-        # Get user role
-        user_role = user.role.name if hasattr(user, 'role') and user.role else None
-
-        # Validate status
-        if transport_request.status not in ['Pending', 'Approved']:
-            return Response(
-                {'error': f'Cannot approve transport request with status {transport_request.status}'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Get current pending approval step
-        current_step = transport_request.approval_steps.filter(status='Pending').first()
-
-        if not current_step:
-            return Response(
-                {'error': 'No pending approval step found'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Validate user has permission for this step
-        if not user.is_staff and user_role != current_step.step_role:
-            return Response(
-                {'error': f'You do not have permission to approve at step {current_step.step_role}'},
-                status=status.HTTP_403_FORBIDDEN
-            )
 
         # Get approval action data
         action_serializer = ApprovalActionSerializer(
@@ -254,38 +256,162 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         action_serializer.is_valid(raise_exception=True)
         comments = action_serializer.validated_data.get('comments', '')
 
-        # Update current step
-        current_step.status = 'Approved'
-        current_step.step_date = timezone.now()
-        current_step.comments = comments
-        current_step.save()
+        try:
+            # Get the workflow instance for this transport request
+            content_type = ContentType.objects.get_for_model(transport_request)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=transport_request.id,
+                status='in_progress'
+            ).first()
 
-        # Determine next step or completion
-        status_progression = {
-            'HOD': 'Approved',  # After HOD approval, status becomes Approved (awaiting admin assignment)
-            'Admin': 'Completed'  # After Admin processes, status becomes Completed
-        }
+            if workflow_instance:
+                # Find the current pending step
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
 
-        next_status = status_progression.get(current_step.step_role)
+                if current_step:
+                    # Use workflow engine to process approval
+                    result = WorkflowEngine.process_action(
+                        step_execution_id=current_step.id,
+                        action='approve',
+                        actioned_by=request.user,
+                        comments=comments
+                    )
 
-        if next_status:
-            transport_request.status = next_status
-            transport_request.save()
+                    # Reload to get updated status
+                    transport_request.refresh_from_db()
 
-            # Create next approval step if needed
-            if current_step.step_role == 'HOD':
-                TransportApprovalStep.objects.create(
-                    transport_request=transport_request,
-                    step_role='Admin',
-                    step_name='Admin Processing',
-                    status='Pending'
-                )
+                    # Update legacy approval step for backward compatibility
+                    legacy_step = transport_request.approval_steps.filter(status='Pending').first()
+                    if legacy_step:
+                        legacy_step.status = 'Approved'
+                        legacy_step.step_date = timezone.now()
+                        legacy_step.comments = comments
+                        legacy_step.save()
 
-        serializer = TransportRequestDetailSerializer(transport_request)
-        return Response(serializer.data)
+                    serializer = TransportRequestDetailSerializer(transport_request)
+                    return Response(serializer.data)
+                else:
+                    return Response(
+                        {'error': 'No pending approval step found'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                # Fallback to legacy approval logic
+                print(f"⚠️ No workflow instance found for Transport #{transport_request.id}, using legacy approval")
+
+                current_step = transport_request.approval_steps.filter(status='Pending').first()
+                if not current_step:
+                    return Response(
+                        {'error': 'No pending approval step found'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Update current step
+                current_step.status = 'Approved'
+                current_step.step_date = timezone.now()
+                current_step.comments = comments
+                current_step.save()
+
+                # Determine next step or completion
+                status_progression = {
+                    'Department Focal': 'Pending HOD',
+                    'HOD': 'Approved'
+                }
+
+                next_status = status_progression.get(current_step.step_role)
+                if next_status:
+                    transport_request.status = next_status
+                    transport_request.save()
+
+                serializer = TransportRequestDetailSerializer(transport_request)
+                return Response(serializer.data)
+
+        except Exception as e:
+            print(f"❌ Error in approve workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Failed to process approval: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
+        """Reject a transport request using WorkflowEngine"""
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
+        transport_request = self.get_object()
+
+        action_serializer = ApprovalActionSerializer(
+            data=request.data,
+            context={'action_type': 'reject'}
+        )
+        action_serializer.is_valid(raise_exception=True)
+        comments = action_serializer.validated_data.get('comments', '')
+
+        try:
+            content_type = ContentType.objects.get_for_model(transport_request)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=transport_request.id,
+                status='in_progress'
+            ).first()
+
+            if workflow_instance:
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
+
+                if current_step:
+                    result = WorkflowEngine.process_action(
+                        step_execution_id=current_step.id,
+                        action='reject',
+                        actioned_by=request.user,
+                        comments=comments
+                    )
+
+                    transport_request.refresh_from_db()
+
+                    legacy_step = transport_request.approval_steps.filter(status='Pending').first()
+                    if legacy_step:
+                        legacy_step.status = 'Rejected'
+                        legacy_step.step_date = timezone.now()
+                        legacy_step.comments = comments
+                        legacy_step.save()
+
+                    serializer = TransportRequestDetailSerializer(transport_request)
+                    return Response(serializer.data)
+            else:
+                # Fallback to legacy rejection
+                current_step = transport_request.approval_steps.filter(status='Pending').first()
+                if current_step:
+                    current_step.status = 'Rejected'
+                    current_step.step_date = timezone.now()
+                    current_step.comments = comments
+                    current_step.save()
+
+                transport_request.status = 'Rejected'
+                transport_request.save()
+
+                serializer = TransportRequestDetailSerializer(transport_request)
+                return Response(serializer.data)
+
+        except Exception as e:
+            print(f"❌ Error in reject workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Failed to process rejection: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'])
+    def reject_old(self, request, pk=None):
         """
         Reject a transport request at current approval step
         """

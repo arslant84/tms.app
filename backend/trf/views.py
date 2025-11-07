@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime
 from workflows.router import WorkflowRouter
+from utils.request_id_generator import generate_request_id, extract_context_from_itinerary
 
 from .models import (
     TravelRequest,
@@ -186,6 +187,33 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Generate request number if it doesn't exist
+        if not trf.request_number:
+            try:
+                # Get itinerary segments to extract context
+                itinerary_segments = list(trf.trfitinerarysegment_set.all().values(
+                    'to_location', 'from_location', 'departure_time', 'arrival_time'
+                ))
+
+                print(f"🔍 Itinerary segments for TRF #{trf.id}: {itinerary_segments}")
+
+                # Extract context from itinerary (first destination)
+                context = extract_context_from_itinerary(itinerary_segments) if itinerary_segments else 'TRF'
+                print(f"🔍 Extracted context: {context}")
+
+                # Generate unique request number
+                request_number = generate_request_id('TSR', context)
+                trf.request_number = request_number
+                print(f"✅ Generated request number: {request_number}")
+            except Exception as e:
+                print(f"❌ Error generating request number: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                # Fallback to simple format
+                from datetime import datetime
+                trf.request_number = f"TSR-{datetime.now().strftime('%Y%m%d-%H%M')}-TRF-{trf.id}"
+                print(f"⚠️ Using fallback request number: {trf.request_number}")
+
         # Update status and submitted_at
         trf.status = 'Pending'
         trf.submitted_at = timezone.now()
@@ -234,7 +262,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
-        """Approve a TRF at current approval step"""
+        """Approve a TRF at current approval step using WorkflowEngine"""
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
         trf = self.get_object()
         serializer = ApprovalActionSerializer(data=request.data)
 
@@ -244,52 +276,133 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         step_role = serializer.validated_data['step_role']
         comments = serializer.validated_data.get('comments', '')
 
-        # Find or create approval step for this role
-        approval_step, created = TrfApprovalStep.objects.get_or_create(
-            trf=trf,
-            step_role=step_role,
-            defaults={
-                'step_name': f'{step_role} Approval',
-                'status': 'Pending'
-            }
-        )
+        try:
+            # Get the workflow instance for this TRF
+            content_type = ContentType.objects.get_for_model(trf)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=trf.id,
+                status='in_progress'
+            ).first()
 
-        # Update approval step
-        approval_step.status = 'Approved'
-        approval_step.comments = comments
-        approval_step.step_date = datetime.now()
-        approval_step.save()
+            print(f"[DEBUG] Approving TRF #{trf.id}")
+            print(f"[DEBUG] User: {request.user.email}, is_staff={request.user.is_staff}, is_superuser={request.user.is_superuser}")
+            print(f"[DEBUG] Workflow instance found: {workflow_instance is not None}")
 
-        # Update TRF status based on approval workflow
-        status_progression = {
-            'Department Focal': 'Pending HOD',
-            'HOD': 'Pending Travel Desk',
-            'Travel Desk': 'Pending Finance',
-            'Finance': 'Approved'
-        }
+            if workflow_instance:
+                # Find the current pending step (by order)
+                # The WorkflowEngine will validate if the user is authorized
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
 
-        if step_role in status_progression:
-            trf.status = status_progression[step_role]
-            trf.save()
+                print(f"[DEBUG] Pending step found: {current_step is not None}")
+                if current_step:
+                    print(f"[DEBUG] Step: {current_step.workflow_step.step_name}, assigned_to: {current_step.assigned_to}")
 
-            # Create next approval step if not final
-            if trf.status != 'Approved':
-                next_role = trf.status.replace('Pending ', '')
-                TrfApprovalStep.objects.get_or_create(
+                if current_step:
+                    # Use workflow engine to process approval
+                    result = WorkflowEngine.process_action(
+                        step_execution_id=current_step.id,
+                        action='approve',
+                        actioned_by=request.user,
+                        comments=comments
+                    )
+
+                    # Reload TRF to get updated status
+                    trf.refresh_from_db()
+
+                    # Also update legacy approval step for backward compatibility
+                    approval_step, created = TrfApprovalStep.objects.get_or_create(
+                        trf=trf,
+                        step_role=step_role,
+                        defaults={
+                            'step_name': f'{step_role} Approval',
+                            'status': 'Pending'
+                        }
+                    )
+                    approval_step.status = 'Approved'
+                    approval_step.comments = comments
+                    approval_step.step_date = timezone.now()
+                    approval_step.save()
+
+                    trf_serializer = TravelRequestDetailSerializer(trf)
+                    return Response(trf_serializer.data)
+                else:
+                    return Response(
+                        {'error': 'No pending approval step found for this role'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                # Fallback to legacy manual approval if no workflow found
+                print(f"⚠️ No workflow instance found for TRF #{trf.id}, using legacy approval")
+
+                # Find or create approval step for this role
+                approval_step, created = TrfApprovalStep.objects.get_or_create(
                     trf=trf,
-                    step_role=next_role,
+                    step_role=step_role,
                     defaults={
-                        'step_name': f'{next_role} Review',
+                        'step_name': f'{step_role} Approval',
                         'status': 'Pending'
                     }
                 )
 
-        trf_serializer = TravelRequestDetailSerializer(trf)
-        return Response(trf_serializer.data)
+                # Update approval step
+                approval_step.status = 'Approved'
+                approval_step.comments = comments
+                approval_step.step_date = datetime.now()
+                approval_step.save()
+
+                # Update TRF status based on approval workflow
+                status_progression = {
+                    'Department Focal': 'Pending HOD',
+                    'HOD': 'Pending Travel Desk',
+                    'Travel Desk': 'Pending Finance',
+                    'Finance': 'Approved'
+                }
+
+                if step_role in status_progression:
+                    trf.status = status_progression[step_role]
+                    trf.save()
+
+                    # Create next approval step if not final
+                    if trf.status != 'Approved':
+                        next_role = trf.status.replace('Pending ', '')
+                        TrfApprovalStep.objects.get_or_create(
+                            trf=trf,
+                            step_role=next_role,
+                            defaults={
+                                'step_name': f'{next_role} Review',
+                                'status': 'Pending'
+                            }
+                        )
+
+                trf_serializer = TravelRequestDetailSerializer(trf)
+                return Response(trf_serializer.data)
+
+        except ValueError as e:
+            # ValueError is raised by WorkflowEngine for authorization failures
+            print(f"❌ ValueError in approve workflow: {str(e)}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            print(f"❌ Error in approve workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Failed to process approval: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
-        """Reject a TRF"""
+        """Reject a TRF using WorkflowEngine"""
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
         trf = self.get_object()
         serializer = ApprovalActionSerializer(data=request.data)
 
@@ -299,28 +412,89 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         step_role = serializer.validated_data['step_role']
         comments = serializer.validated_data.get('comments', '')
 
-        # Find or create approval step for this role
-        approval_step, created = TrfApprovalStep.objects.get_or_create(
-            trf=trf,
-            step_role=step_role,
-            defaults={
-                'step_name': f'{step_role} Approval',
-                'status': 'Pending'
-            }
-        )
+        try:
+            # Get the workflow instance for this TRF
+            content_type = ContentType.objects.get_for_model(trf)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=trf.id,
+                status='in_progress'
+            ).first()
 
-        # Update approval step
-        approval_step.status = 'Rejected'
-        approval_step.comments = comments
-        approval_step.step_date = datetime.now()
-        approval_step.save()
+            if workflow_instance:
+                # Find the current step execution for the given role
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
 
-        # Update TRF status
-        trf.status = 'Rejected'
-        trf.save()
+                if current_step:
+                    # Use workflow engine to process rejection
+                    result = WorkflowEngine.process_action(
+                        step_execution_id=current_step.id,
+                        action='reject',
+                        actioned_by=request.user,
+                        comments=comments
+                    )
 
-        trf_serializer = TravelRequestDetailSerializer(trf)
-        return Response(trf_serializer.data)
+                    # Reload TRF to get updated status
+                    trf.refresh_from_db()
+
+                    # Also update legacy approval step for backward compatibility
+                    approval_step, created = TrfApprovalStep.objects.get_or_create(
+                        trf=trf,
+                        step_role=step_role,
+                        defaults={
+                            'step_name': f'{step_role} Approval',
+                            'status': 'Pending'
+                        }
+                    )
+                    approval_step.status = 'Rejected'
+                    approval_step.comments = comments
+                    approval_step.step_date = datetime.now()
+                    approval_step.save()
+
+                    trf_serializer = TravelRequestDetailSerializer(trf)
+                    return Response(trf_serializer.data)
+                else:
+                    return Response(
+                        {'error': 'No pending approval step found'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                # Fallback to legacy manual rejection if no workflow found
+                print(f"⚠️ No workflow instance found for TRF #{trf.id}, using legacy rejection")
+
+                # Find or create approval step for this role
+                approval_step, created = TrfApprovalStep.objects.get_or_create(
+                    trf=trf,
+                    step_role=step_role,
+                    defaults={
+                        'step_name': f'{step_role} Approval',
+                        'status': 'Pending'
+                    }
+                )
+
+                # Update approval step
+                approval_step.status = 'Rejected'
+                approval_step.comments = comments
+                approval_step.step_date = datetime.now()
+                approval_step.save()
+
+                # Update TRF status
+                trf.status = 'Rejected'
+                trf.save()
+
+                trf_serializer = TravelRequestDetailSerializer(trf)
+                return Response(trf_serializer.data)
+
+        except Exception as e:
+            print(f"❌ Error in reject workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Failed to process rejection: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -339,6 +513,55 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(trf)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['delete'], url_path='delete-itinerary')
+    def delete_itinerary(self, request, pk=None):
+        """Delete all itinerary segments for a TRF"""
+        trf = self.get_object()
+        count = TrfItinerarySegment.objects.filter(trf=trf).delete()[0]
+        return Response({'deleted': count}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], url_path='delete-meals')
+    def delete_meals(self, request, pk=None):
+        """Delete all meal selections for a TRF"""
+        trf = self.get_object()
+        count = TrfDailyMealSelection.objects.filter(trf=trf).delete()[0]
+        return Response({'deleted': count}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], url_path='delete-accommodation')
+    def delete_accommodation(self, request, pk=None):
+        """Delete all accommodation details for a TRF"""
+        trf = self.get_object()
+        count = TrfAccommodationDetail.objects.filter(trf=trf).delete()[0]
+        return Response({'deleted': count}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], url_path='delete-transport')
+    def delete_transport(self, request, pk=None):
+        """Delete all transport details for a TRF"""
+        trf = self.get_object()
+        count = TrfCompanyTransportDetail.objects.filter(trf=trf).delete()[0]
+        return Response({'deleted': count}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], url_path='delete-passport')
+    def delete_passport(self, request, pk=None):
+        """Delete all passport details for a TRF"""
+        trf = self.get_object()
+        count = TrfPassportDetail.objects.filter(trf=trf).delete()[0]
+        return Response({'deleted': count}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], url_path='delete-bank')
+    def delete_bank(self, request, pk=None):
+        """Delete bank details for a TRF"""
+        trf = self.get_object()
+        count = TrfAdvanceBankDetail.objects.filter(trf=trf).delete()[0]
+        return Response({'deleted': count}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], url_path='delete-advance-amounts')
+    def delete_advance_amounts(self, request, pk=None):
+        """Delete all advance amount items for a TRF"""
+        trf = self.get_object()
+        count = TrfAdvanceAmountRequestedItem.objects.filter(trf=trf).delete()[0]
+        return Response({'deleted': count}, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['get'], url_path='pending-approvals')
     def pending_approvals(self, request):
         """Get TRFs pending approval for the current user"""
@@ -355,8 +578,148 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             ]
         ).order_by('-submitted_at')
 
-        serializer = self.get_serializer(queryset, many=True)
+        # Use detail serializer to include nested data (itinerary, accommodation, etc.)
+        serializer = TravelRequestDetailSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path='admin/book-flight')
+    def book_flight(self, request, pk=None):
+        """
+        Book a flight for an approved TRF
+        Creates a FlightBooking record and links it to the TRF
+
+        Expected payload:
+        {
+            "pnr": "ABC123",
+            "airline": "MH",
+            "flightNumber": "MH123",
+            "departureAirport": "KUL",
+            "arrivalAirport": "LHR",
+            "departureDateTime": "2025-12-01T10:00:00",
+            "arrivalDateTime": "2025-12-01T18:00:00",
+            "flightNotes": "Optional notes"
+        }
+        """
+        from bookings.models import FlightBooking
+        from datetime import datetime
+        import traceback
+
+        trf = self.get_object()
+
+        print(f"\n=== BOOK FLIGHT DEBUG ===")
+        print(f"TRF ID: {trf.id}")
+        print(f"TRF Status: [{trf.status}]")
+        print(f"TRF Travel Type: {trf.travel_type}")
+        print(f"Request Data: {request.data}")
+        print(f"========================\n")
+
+        # Validate TRF status
+        if trf.status != 'Approved':
+            error_msg = f'Flights can only be booked for Approved TRFs. Current status: {trf.status}'
+            print(f"❌ Status validation failed: {error_msg}")
+            return Response(
+                {'error': error_msg},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Extract booking data from request
+        pnr = request.data.get('pnr', '')
+        airline = request.data.get('airline', '')
+        flight_number = request.data.get('flightNumber', '')
+        departure_airport = request.data.get('departureAirport', '')
+        arrival_airport = request.data.get('arrivalAirport', '')
+        departure_datetime_str = request.data.get('departureDateTime')
+        arrival_datetime_str = request.data.get('arrivalDateTime')
+        flight_notes = request.data.get('flightNotes', '')
+
+        print(f"Extracted data:")
+        print(f"  PNR: {pnr}")
+        print(f"  Airline: {airline}")
+        print(f"  Flight Number: {flight_number}")
+        print(f"  Departure Airport: {departure_airport}")
+        print(f"  Arrival Airport: {arrival_airport}")
+        print(f"  Departure DateTime: {departure_datetime_str}")
+        print(f"  Arrival DateTime: {arrival_datetime_str}")
+
+        # Validate required fields
+        if not all([pnr, airline, flight_number, departure_airport, arrival_airport]):
+            missing = []
+            if not pnr: missing.append('pnr')
+            if not airline: missing.append('airline')
+            if not flight_number: missing.append('flightNumber')
+            if not departure_airport: missing.append('departureAirport')
+            if not arrival_airport: missing.append('arrivalAirport')
+            error_msg = f'Missing required fields: {", ".join(missing)}'
+            print(f"❌ Field validation failed: {error_msg}")
+            return Response(
+                {'error': error_msg},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Parse datetime strings
+        try:
+            if departure_datetime_str:
+                # Handle both with and without timezone
+                departure_time = datetime.fromisoformat(departure_datetime_str.replace('Z', '+00:00'))
+                if departure_time.tzinfo is None:
+                    from django.utils import timezone as django_tz
+                    departure_time = django_tz.make_aware(departure_time)
+            else:
+                departure_time = timezone.now()
+
+            if arrival_datetime_str:
+                arrival_time = datetime.fromisoformat(arrival_datetime_str.replace('Z', '+00:00'))
+                if arrival_time.tzinfo is None:
+                    from django.utils import timezone as django_tz
+                    arrival_time = django_tz.make_aware(arrival_time)
+            else:
+                arrival_time = timezone.now()
+
+            print(f"Parsed datetimes:")
+            print(f"  Departure: {departure_time}")
+            print(f"  Arrival: {arrival_time}")
+        except (ValueError, TypeError) as e:
+            error_msg = f'Invalid datetime format: {str(e)}'
+            print(f"❌ DateTime parsing failed: {error_msg}")
+            traceback.print_exc()
+            return Response(
+                {'error': error_msg},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create FlightBooking
+        flight_booking = FlightBooking.objects.create(
+            trf=trf,
+            user=trf.created_by if trf.created_by else request.user,
+            airline=airline,
+            flight_number=flight_number,
+            departure_airport=departure_airport,
+            arrival_airport=arrival_airport,
+            departure_time=departure_time,
+            arrival_time=arrival_time,
+            booking_reference=pnr,
+            status='CONFIRMED',
+            cost=0,  # Can be added later
+            booked_by=request.user,
+            booking_date=timezone.now(),
+            confirmation_date=timezone.now(),
+            notes=flight_notes
+        )
+
+        # Update TRF status to indicate flight is booked
+        trf.status = 'Flight Booked'
+        trf.save()
+
+        # Return updated TRF data
+        serializer = TravelRequestDetailSerializer(trf)
+        return Response({
+            'trf': serializer.data,
+            'flight_booking': {
+                'id': flight_booking.id,
+                'booking_reference': flight_booking.booking_reference,
+                'status': flight_booking.status
+            }
+        }, status=status.HTTP_201_CREATED)
 
 
 # =============== NESTED RESOURCE VIEWSETS ===============

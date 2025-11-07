@@ -81,11 +81,16 @@ export class TransportCreateComponent implements OnInit {
   loadUserDetails(): void {
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
+      const position = this.authService.getUserPosition(currentUser);
+
+      console.log('Transport - Current user data:', currentUser);
+      console.log('Transport - Extracted position:', position);
+
       this.transportForm.patchValue({
         requestorName: currentUser.name || currentUser.email || '',
-        staffId: currentUser.staff_id || currentUser.staff_no || '',
+        staffId: currentUser.staff_id || '',
         department: currentUser.department || '',
-        position: '' // Position not available in User model
+        position: position || ''
       });
     }
   }

@@ -14,6 +14,8 @@ from .serializers import (
     VisaDocumentSerializer
 )
 from workflows.router import WorkflowRouter
+from utils.request_id_generator import generate_request_id
+from datetime import datetime
 class VisaApplicationViewSet(viewsets.ModelViewSet):
     """ViewSet for visa applications with different serializers for list/detail/create"""
     queryset = VisaApplication.objects.all().select_related('user').prefetch_related(
@@ -40,6 +42,24 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         extra_kwargs = {}
         if status_value != 'Draft':
             extra_kwargs['submitted_date'] = timezone.now()
+
+        # Generate request number if submitting (not Draft)
+        if status_value not in ['Draft']:
+            try:
+                # Extract context from destination field
+                destination = serializer.validated_data.get('destination', '')
+                context = destination if destination else 'VIS'  # Let generate_request_id handle validation
+
+                print(f"🔍 Extracted context for Visa Application: {context}")
+
+                # Generate unique request number (will auto-validate and limit context to 5 chars)
+                request_number = generate_request_id('VIS', context)
+                extra_kwargs['request_number'] = request_number
+                print(f"✅ Generated request number: {request_number}")
+            except Exception as e:
+                print(f"❌ Error generating request number: {str(e)}")
+                import traceback
+                traceback.print_exc()
 
         # Save the visa application
         visa_application = serializer.save(user=self.request.user, **extra_kwargs)
@@ -77,6 +97,27 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         extra_kwargs = {}
         if old_status == 'Draft' and new_status != 'Draft' and not instance.submitted_date:
             extra_kwargs['submitted_date'] = timezone.now()
+
+        # Generate request number if transitioning from Draft and doesn't have one
+        if old_status == 'Draft' and new_status not in ['Draft'] and not instance.request_number:
+            try:
+                # Extract context from destination field
+                destination = serializer.validated_data.get('destination', instance.destination)
+                context = destination if destination else 'VIS'  # Let generate_request_id handle validation
+
+                print(f"🔍 Extracted context for Visa Application #{instance.id}: {context}")
+
+                # Generate unique request number (will auto-validate and limit context to 5 chars)
+                request_number = generate_request_id('VIS', context)
+                extra_kwargs['request_number'] = request_number
+                print(f"✅ Generated request number: {request_number}")
+            except Exception as e:
+                print(f"❌ Error generating request number: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                # Fallback to simple format
+                extra_kwargs['request_number'] = f"VIS-{datetime.now().strftime('%Y%m%d-%H%M')}-VIS-{instance.id}"
+                print(f"⚠️ Using fallback request number: {extra_kwargs['request_number']}")
 
         # Save the visa application
         visa_application = serializer.save(**extra_kwargs)
@@ -117,69 +158,183 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='approve')
     def approve(self, request, pk=None):
-        """Approve a visa application step"""
+        """Approve a visa application using WorkflowEngine"""
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
         visa = self.get_object()
         step_role = request.data.get('step_role')
         comments = request.data.get('comments', '')
 
-        # Create or update approval step
-        approval_step, created = VisaApprovalStep.objects.get_or_create(
-            visa=visa,
-            step_role=step_role,
-            defaults={
-                'step_name': f'{step_role} Approval',
-                'status': 'Approved',
-                'comments': comments
-            }
-        )
+        try:
+            # Get the workflow instance for this visa
+            content_type = ContentType.objects.get_for_model(visa)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=visa.id,
+                status='in_progress'
+            ).first()
 
-        if not created:
-            approval_step.status = 'Approved'
-            approval_step.comments = comments
-            approval_step.save()
+            if workflow_instance:
+                # Find the current pending step
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
 
-        # Update visa status based on approval workflow
-        # This is simplified - you may want more complex logic
-        status_map = {
-            'Department Focal': 'Pending Manager',
-            'Manager': 'Pending HOD',
-            'HOD': 'Pending Visa Clerk',
-            'Visa Clerk': 'Processing'
-        }
-        visa.status = status_map.get(step_role, visa.status)
-        visa.save()
+                if current_step:
+                    # Use workflow engine to process approval
+                    result = WorkflowEngine.process_action(
+                        step_execution_id=current_step.id,
+                        action='approve',
+                        actioned_by=request.user,
+                        comments=comments
+                    )
 
-        serializer = VisaApplicationDetailSerializer(visa)
-        return Response(serializer.data)
+                    # Reload to get updated status
+                    visa.refresh_from_db()
+
+                    # Update legacy approval step for backward compatibility
+                    approval_step, created = VisaApprovalStep.objects.get_or_create(
+                        visa=visa,
+                        step_role=step_role,
+                        defaults={
+                            'step_name': f'{step_role} Approval',
+                            'status': 'Approved',
+                            'comments': comments
+                        }
+                    )
+                    if not created:
+                        approval_step.status = 'Approved'
+                        approval_step.comments = comments
+                        approval_step.save()
+
+                    serializer = VisaApplicationDetailSerializer(visa)
+                    return Response(serializer.data)
+                else:
+                    return Response(
+                        {'error': 'No pending approval step found'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                # Fallback to legacy approval logic
+                print(f"⚠️ No workflow instance found for Visa #{visa.id}, using legacy approval")
+
+                approval_step, created = VisaApprovalStep.objects.get_or_create(
+                    visa=visa,
+                    step_role=step_role,
+                    defaults={
+                        'step_name': f'{step_role} Approval',
+                        'status': 'Approved',
+                        'comments': comments
+                    }
+                )
+
+                if not created:
+                    approval_step.status = 'Approved'
+                    approval_step.comments = comments
+                    approval_step.save()
+
+                status_map = {
+                    'Department Focal': 'Pending HOD',
+                    'HOD': 'Approved'
+                }
+                visa.status = status_map.get(step_role, visa.status)
+                visa.save()
+
+                serializer = VisaApplicationDetailSerializer(visa)
+                return Response(serializer.data)
+
+        except Exception as e:
+            print(f"❌ Error in approve workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Failed to process approval: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=True, methods=['post'], url_path='reject')
     def reject(self, request, pk=None):
-        """Reject a visa application"""
+        """Reject a visa application using WorkflowEngine"""
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
         visa = self.get_object()
         step_role = request.data.get('step_role')
         comments = request.data.get('comments', '')
 
-        # Create or update approval step
-        approval_step, created = VisaApprovalStep.objects.get_or_create(
-            visa=visa,
-            step_role=step_role,
-            defaults={
-                'step_name': f'{step_role} Approval',
-                'status': 'Rejected',
-                'comments': comments
-            }
-        )
+        try:
+            content_type = ContentType.objects.get_for_model(visa)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=visa.id,
+                status='in_progress'
+            ).first()
 
-        if not created:
-            approval_step.status = 'Rejected'
-            approval_step.comments = comments
-            approval_step.save()
+            if workflow_instance:
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
 
-        visa.status = 'Rejected'
-        visa.save()
+                if current_step:
+                    result = WorkflowEngine.process_action(
+                        step_execution_id=current_step.id,
+                        action='reject',
+                        actioned_by=request.user,
+                        comments=comments
+                    )
 
-        serializer = VisaApplicationDetailSerializer(visa)
-        return Response(serializer.data)
+                    visa.refresh_from_db()
+
+                    approval_step, created = VisaApprovalStep.objects.get_or_create(
+                        visa=visa,
+                        step_role=step_role,
+                        defaults={
+                            'step_name': f'{step_role} Approval',
+                            'status': 'Rejected',
+                            'comments': comments
+                        }
+                    )
+                    if not created:
+                        approval_step.status = 'Rejected'
+                        approval_step.comments = comments
+                        approval_step.save()
+
+                    serializer = VisaApplicationDetailSerializer(visa)
+                    return Response(serializer.data)
+            else:
+                # Fallback to legacy rejection
+                approval_step, created = VisaApprovalStep.objects.get_or_create(
+                    visa=visa,
+                    step_role=step_role,
+                    defaults={
+                        'step_name': f'{step_role} Approval',
+                        'status': 'Rejected',
+                        'comments': comments
+                    }
+                )
+
+                if not created:
+                    approval_step.status = 'Rejected'
+                    approval_step.comments = comments
+                    approval_step.save()
+
+                visa.status = 'Rejected'
+                visa.save()
+
+                serializer = VisaApplicationDetailSerializer(visa)
+                return Response(serializer.data)
+
+        except Exception as e:
+            print(f"❌ Error in reject workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {'error': f'Failed to process rejection: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class VisaApprovalStepViewSet(viewsets.ModelViewSet):

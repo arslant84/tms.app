@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { TrfService } from '../../services/trf.service';
 import { DomesticTravelRequestForm, OverseasTravelRequestForm } from '../../models/trf.model';
 import { HttpClientModule } from '@angular/common/http';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-trf-create',
@@ -30,11 +31,33 @@ export class TrfCreateComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private trfService: TrfService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
     this.initForm();
+    this.populateUserDetails();
+  }
+
+  private populateUserDetails(): void {
+    const currentUser = this.authService.getCurrentUser();
+    console.log('TRF - Current user data:', currentUser);
+    if (currentUser) {
+      // Auto-populate employee details from logged-in user
+      this.trfForm.get('employeeDetails')?.patchValue({
+        fullName: currentUser.name || '',
+        staffId: currentUser.staff_id || '',
+        department: currentUser.department || '',
+        email: currentUser.email || ''
+      });
+
+      // Auto-populate prepared by fields
+      this.trfForm.get('approval')?.patchValue({
+        preparedBy: currentUser.name || ''
+      });
+      console.log('TRF - Form values after population:', this.trfForm.get('employeeDetails')?.value);
+    }
   }
   
   initForm(): void {

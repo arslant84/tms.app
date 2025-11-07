@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AccommodationService } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-accommodation-create',
@@ -26,7 +27,8 @@ export class AccommodationCreateComponent implements OnInit {
     private router: Router,
     private accommodationService: AccommodationService,
     private toastService: ToastService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -38,8 +40,25 @@ export class AccommodationCreateComponent implements OnInit {
         this.isEditMode = true;
         this.requestId = +params['id'];
         this.loadRequestData(this.requestId);
+      } else {
+        // Only auto-populate in create mode
+        this.populateUserDetails();
       }
     });
+  }
+
+  private populateUserDetails(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      console.log('Accommodation - Current user data:', currentUser);
+      // Auto-populate user details from logged-in user
+      this.accommodationForm.patchValue({
+        requestorName: currentUser.name || '',
+        requestorId: currentUser.staff_id || '',
+        requestorGender: currentUser.gender || '',
+        department: currentUser.department || ''
+      });
+    }
   }
 
   initForm(): void {

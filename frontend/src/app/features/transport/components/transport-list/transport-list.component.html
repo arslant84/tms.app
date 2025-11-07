@@ -82,6 +82,12 @@
       <table class="requests-table">
         <thead>
           <tr>
+            <th class="sortable-header" (click)="onSort('id')">
+              <button class="sort-button">
+                Request #
+                <i class="bi bi-arrow-down-up"></i>
+              </button>
+            </th>
             <th class="sortable-header" (click)="onSort('requestorName')">
               <button class="sort-button">
                 Requestor
@@ -109,6 +115,10 @@
         </thead>
         <tbody>
           <tr *ngFor="let request of requests">
+            <td class="id-cell">
+              <span *ngIf="request.request_number" class="request-number">{{ request.request_number }}</span>
+              <span *ngIf="!request.request_number" class="text-muted">TRN-{{ request.id }}</span>
+            </td>
             <td class="title-cell">{{ request.requestorName || 'N/A' }}</td>
             <td class="purpose-cell">{{ request.purpose || 'N/A' }}</td>
             <td>{{ getFirstTransportType(request) }}</td>

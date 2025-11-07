@@ -144,17 +144,33 @@ export class ApprovalsService {
   /**
    * Approve a request
    */
-  approveRequest(type: string, id: number, comments?: string): Observable<any> {
+  approveRequest(type: string, id: number, comments?: string, stepRole?: string): Observable<any> {
     const url = this.getApprovalUrl(type, id, 'approve');
-    return this.http.post(url, { comments }, { withCredentials: true });
+    // Backend requires step_role field
+    const payload: any = { comments: comments || '' };
+    if (stepRole) {
+      payload.step_role = stepRole;
+    } else {
+      // Default to current approval step if not provided
+      payload.step_role = 'Department Focal';
+    }
+    return this.http.post(url, payload, { withCredentials: true });
   }
 
   /**
    * Reject a request
    */
-  rejectRequest(type: string, id: number, comments?: string): Observable<any> {
+  rejectRequest(type: string, id: number, comments?: string, stepRole?: string): Observable<any> {
     const url = this.getApprovalUrl(type, id, 'reject');
-    return this.http.post(url, { comments }, { withCredentials: true });
+    // Backend requires step_role field
+    const payload: any = { comments: comments || '' };
+    if (stepRole) {
+      payload.step_role = stepRole;
+    } else {
+      // Default to current approval step if not provided
+      payload.step_role = 'Department Focal';
+    }
+    return this.http.post(url, payload, { withCredentials: true });
   }
 
   /**
@@ -235,6 +251,13 @@ export class ApprovalsService {
   // Transform backend data to unified ApprovalRequest format
 
   private transformTrfToApproval(trf: any): ApprovalRequest {
+    // Backend uses 'itinerary_segments', but some responses might use 'itinerary'
+    const itinerary = trf.itinerary_segments || trf.itinerary || [];
+
+    const destination = this.extractDestination(itinerary);
+    const departureDate = this.extractDepartureDate(itinerary);
+    const returnDate = this.extractReturnDate(itinerary);
+
     return {
       id: trf.id,
       type: 'trf',
@@ -253,9 +276,9 @@ export class ApprovalsService {
       details: {
         travelType: trf.travel_type,
         purpose: trf.purpose,
-        destination: this.extractDestination(trf.itinerary),
-        departureDate: this.extractDepartureDate(trf.itinerary),
-        returnDate: this.extractReturnDate(trf.itinerary),
+        destination: destination,
+        departureDate: departureDate,
+        returnDate: returnDate,
         estimatedCost: trf.total_estimated_cost || 0
       }
     };
@@ -384,17 +407,23 @@ export class ApprovalsService {
 
   private extractDestination(itinerary: any[]): string {
     if (!itinerary || itinerary.length === 0) return 'N/A';
-    return itinerary[itinerary.length - 1]?.destination || 'N/A';
+    // Backend uses 'to_location' not 'destination'
+    const lastSegment = itinerary[itinerary.length - 1];
+    return lastSegment?.to_location || lastSegment?.destination || 'N/A';
   }
 
   private extractDepartureDate(itinerary: any[]): string {
     if (!itinerary || itinerary.length === 0) return '';
-    return itinerary[0]?.departure_date || '';
+    // Backend uses 'segment_date' not 'departure_date'
+    const firstSegment = itinerary[0];
+    return firstSegment?.segment_date || firstSegment?.departure_date || firstSegment?.date || '';
   }
 
   private extractReturnDate(itinerary: any[]): string {
     if (!itinerary || itinerary.length === 0) return '';
-    return itinerary[itinerary.length - 1]?.arrival_date || '';
+    // Backend uses 'segment_date' not 'arrival_date'
+    const lastSegment = itinerary[itinerary.length - 1];
+    return lastSegment?.segment_date || lastSegment?.arrival_date || lastSegment?.date || '';
   }
 
   private getApprovalUrl(type: string, id: number, action: 'approve' | 'reject'): string {

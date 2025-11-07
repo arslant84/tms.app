@@ -174,7 +174,7 @@
       <div class="card-header bg-light">
         <div class="d-flex align-items-center">
           <i class="bi bi-cup-hot me-2"></i>
-          <h5 class="mb-0">Meal Provision in Kiyanly / Питание в Киянлы</h5>
+          <h5 class="mb-0">Meal Provision</h5>
         </div>
       </div>
       <div class="card-body" formGroupName="mealProvisions">
@@ -508,16 +508,14 @@
                 </div>
               </div>
               <div class="form-group">
-                <label [for]="'transportEtd-' + i" class="form-label">ETD</label>
+                <label [for]="'transportEtd-' + i" class="form-label">BT No./Time Required</label>
                 <input
-                  type="time"
+                  type="text"
                   class="form-control"
                   [id]="'transportEtd-' + i"
                   formControlName="etd"
+                  placeholder="e.g., BT-12345 or 09:00"
                   [ngClass]="{'is-invalid': transport.get('etd')?.invalid && transport.get('etd')?.touched}">
-                <div class="invalid-feedback" *ngIf="transport.get('etd')?.errors?.['required'] && transport.get('etd')?.touched">
-                  ETD is required
-                </div>
               </div>
               <div class="form-group">
                 <label [for]="'accommodationType-' + i" class="form-label">Accommodation Type</label>

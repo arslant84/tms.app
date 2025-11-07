@@ -89,7 +89,7 @@
               <tr>
                 <th class="sortable-header" (click)="handleSort('document_number')">
                   <button class="sort-button">
-                    Document #
+                    Request #
                     <i *ngIf="sortKey === 'document_number'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
@@ -128,7 +128,11 @@
             </thead>
             <tbody>
               <tr *ngFor="let claim of claims" class="table-row">
-                <td class="font-medium">{{ claim.document_number || 'CLM-' + claim.id }}</td>
+                <td class="font-medium">
+                  <span *ngIf="claim.request_number" class="request-number">{{ claim.request_number }}</span>
+                  <span *ngIf="!claim.request_number && claim.document_number">{{ claim.document_number }}</span>
+                  <span *ngIf="!claim.request_number && !claim.document_number" class="text-muted">CLM-{{ claim.id }}</span>
+                </td>
                 <td>{{ claim.staff_name || 'N/A' }}</td>
                 <td class="purpose-cell">{{ claim.purpose_of_claim || 'N/A' }}</td>
                 <td class="amount-cell">{{ formatCurrency(claim.total_advance_claim_amount) }}</td>

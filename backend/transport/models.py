@@ -13,6 +13,13 @@ class TransportRequest(models.Model):
     # Status will be set by workflow engine based on configured approval roles
     # Examples: "Draft", "Pending HOD", "Pending Line Manager", "Approved", etc.
 
+    request_number = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text="Auto-generated request number (e.g., TRN-20251102-1423-ASH-PCYX)"
+    )
     requestor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

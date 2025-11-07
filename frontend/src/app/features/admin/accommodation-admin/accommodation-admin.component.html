@@ -2,250 +2,271 @@
   <!-- Header -->
   <div class="page-header">
     <div class="header-content">
-      <h1 class="page-title">Accommodation Administration</h1>
-      <p class="page-subtitle">Manage accommodation requests and room assignments</p>
+      <h1 class="page-title">
+        <i class="bi bi-building me-2"></i>
+        Accommodation Administration
+      </h1>
+      <p class="page-subtitle">Manage accommodation locations, rooms, and processing.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="router.navigate(['/admin/accommodation/processing'])">
+        <i class="bi bi-file-text me-2"></i>
+        Processing Dashboard
+      </button>
     </div>
   </div>
 
-  <!-- Filters Section -->
-  <div class="card mb-4">
-    <div class="card-body">
-      <div class="row g-3">
-        <div class="col-md-3">
-          <label for="statusFilter" class="form-label">Status</label>
-          <select id="statusFilter" class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
-            <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
-          </select>
-        </div>
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-title">Total Requests</div>
+        <i class="bi bi-building stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.total }}</div>
+        <p class="stat-description">All submitted requests</p>
+      </div>
+    </div>
 
-        <div class="col-md-4">
-          <label for="searchFilter" class="form-label">Search</label>
-          <input type="text" class="form-control" id="searchFilter" placeholder="Name, staff ID, department..."
-                 [(ngModel)]="filterCriteria.search" (keyup.enter)="applyFilters()">
-        </div>
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-title">Pending Review</div>
+        <i class="bi bi-clock stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.pending }}</div>
+        <p class="stat-description">Awaiting approval</p>
+      </div>
+    </div>
 
-        <div class="col-md-2">
-          <label for="dateFrom" class="form-label">Date From</label>
-          <input type="date" class="form-control" id="dateFrom" [(ngModel)]="filterCriteria.dateFrom">
-        </div>
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-title">Approved</div>
+        <i class="bi bi-check-circle stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.approved }}</div>
+        <p class="stat-description">Approved requests</p>
+      </div>
+    </div>
 
-        <div class="col-md-2">
-          <label for="dateTo" class="form-label">Date To</label>
-          <input type="date" class="form-control" id="dateTo" [(ngModel)]="filterCriteria.dateTo">
-        </div>
-
-        <div class="col-md-1 d-flex align-items-end">
-          <button class="btn btn-primary w-100 me-2" (click)="applyFilters()">
-            <i class="bi bi-search"></i>
-          </button>
-          <button class="btn btn-outline-secondary" (click)="resetFilters()" title="Reset">
-            <i class="bi bi-arrow-counterclockwise"></i>
-          </button>
-        </div>
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-title">Processing</div>
+        <i class="bi bi-gear stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.processing + stats.completed }}</div>
+        <p class="stat-description">In progress</p>
       </div>
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="loading" class="loading-container">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-    <p class="mt-2">Loading requests...</p>
-  </div>
-
-  <!-- Error State -->
-  <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
-    <i class="bi bi-exclamation-triangle"></i> {{ error }}
-    <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadRequests()">
-      <i class="bi bi-arrow-clockwise"></i> Retry
-    </button>
-  </div>
-
-  <!-- Requests Table -->
-  <div *ngIf="!loading && !error" class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <span class="fw-bold">Accommodation Requests ({{ totalRequests }})</span>
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <div class="tabs-list">
+      <button
+        class="tab-trigger"
+        [class.active]="activeTab === 'locations'"
+        (click)="setActiveTab('locations')">
+        Locations
+      </button>
+      <button
+        class="tab-trigger"
+        [class.active]="activeTab === 'rooms'"
+        (click)="setActiveTab('rooms')">
+        Rooms
+      </button>
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
-          <tr>
-            <th>Request #</th>
-            <th>Requestor</th>
-            <th>Department</th>
-            <th>Position</th>
-            <th>Cost</th>
-            <th>Status</th>
-            <th>Submitted</th>
-            <th class="text-end">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let request of filteredRequests">
-            <td>
-              <a href="javascript:void(0)" (click)="viewRequest(request)" class="text-decoration-none">
-                #{{ request.id }}
-              </a>
-            </td>
-            <td>
-              <div class="fw-medium">{{ request.requestor_name }}</div>
-              <small class="text-muted" *ngIf="request.staff_id">{{ request.staff_id }}</small>
-            </td>
-            <td>{{ request.department || 'N/A' }}</td>
-            <td>{{ request.position || 'N/A' }}</td>
-            <td class="fw-medium">{{ formatCurrency(request.estimated_cost) }}</td>
-            <td>
-              <span [ngClass]="getStatusClass(request.status)">{{ request.status }}</span>
-            </td>
-            <td>{{ formatDate(request.submitted_at) }}</td>
-            <td class="text-end">
-              <div class="btn-group btn-group-sm" role="group">
-                <button class="btn btn-outline-primary" (click)="viewRequest(request)" title="View Details">
-                  <i class="bi bi-eye"></i>
-                </button>
+    <!-- Locations Tab Content -->
+    <div class="tab-content" *ngIf="activeTab === 'locations'">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-content">
+            <div class="card-title-group">
+              <i class="bi bi-building me-2"></i>
+              <h3 class="card-title">Accommodation Locations</h3>
+            </div>
+            <p class="card-description">Manage staff houses and camp locations in Ashgabat, Kiyanly, and Turkmenbashy</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="location-management">
+            <div class="management-header">
+              <h3 class="management-title">Available Locations</h3>
+              <button class="btn btn-primary" (click)="openLocationDialog()">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add New Location
+              </button>
+            </div>
 
-                <button *ngIf="canApprove(request)" class="btn btn-outline-success"
-                        (click)="approveRequest(request)"
-                        [disabled]="isProcessing(request.id)"
-                        title="Approve Request">
-                  <span *ngIf="!isProcessing(request.id)">
-                    <i class="bi bi-check-circle"></i>
-                  </span>
-                  <span *ngIf="isProcessing(request.id)" class="spinner-border spinner-border-sm"></span>
-                </button>
+            <!-- Loading State -->
+            <div *ngIf="loadingLocations" class="loading-state">
+              <i class="bi bi-arrow-clockwise spin"></i>
+              <p>Loading locations...</p>
+            </div>
 
-                <button *ngIf="canApprove(request)" class="btn btn-outline-danger"
-                        (click)="rejectRequest(request)"
-                        [disabled]="isProcessing(request.id)"
-                        title="Reject Request">
-                  <i class="bi bi-x-circle"></i>
-                </button>
+            <!-- Empty State -->
+            <div *ngIf="!loadingLocations && locations.length === 0" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>No accommodation locations found. Add your first location to get started.</p>
+            </div>
 
-                <button *ngIf="canAssignRoom(request)" class="btn btn-outline-info"
-                        (click)="openAssignRoomModal(request)"
-                        [disabled]="isProcessing(request.id)"
-                        title="Assign Room">
-                  <i class="bi bi-door-open"></i>
-                </button>
+            <!-- Locations Table -->
+            <div *ngIf="!loadingLocations && locations.length > 0" class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Area</th>
+                    <th>Address</th>
+                    <th>Rooms</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let location of locations">
+                    <td class="fw-medium">{{ location.name }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getLocationBadgeClass(location.location)">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        {{ location.location }}
+                      </span>
+                    </td>
+                    <td>{{ location.address || 'N/A' }}</td>
+                    <td>{{ getRoomCount(location.id) }} rooms</td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-icon btn-edit" (click)="editLocation(location)" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button class="btn btn-sm btn-icon btn-delete" (click)="confirmDeleteLocation(location)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rooms Tab Content -->
+    <div class="tab-content" *ngIf="activeTab === 'rooms'">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-content">
+            <div class="card-title-group">
+              <i class="bi bi-door-closed me-2"></i>
+              <h3 class="card-title">Room Management</h3>
+            </div>
+            <p class="card-description">Manage rooms in staff houses and camps across all locations</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="room-management">
+            <div class="management-header">
+              <div class="filters-group">
+                <div class="filter-label">
+                  <i class="bi bi-funnel me-2"></i>
+                  <span>Filter:</span>
+                </div>
+                <select class="form-select filter-select" [(ngModel)]="filterLocation" (change)="applyRoomFilters()">
+                  <option value="all">All Locations</option>
+                  <option *ngFor="let loc of uniqueLocations" [value]="loc">{{ loc }}</option>
+                </select>
+                <select class="form-select filter-select" [(ngModel)]="filterStaffHouse" (change)="applyRoomFilters()">
+                  <option value="all">All Staff Houses</option>
+                  <option *ngFor="let house of filteredStaffHouses" [value]="house.id">{{ house.name }}</option>
+                </select>
               </div>
-            </td>
-          </tr>
+              <button class="btn btn-primary" (click)="openRoomDialog()">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add New Room
+              </button>
+            </div>
 
-          <tr *ngIf="filteredRequests.length === 0">
-            <td colspan="8" class="text-center py-4">
-              <div class="text-muted">
-                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                <p class="mt-2">No requests found</p>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            <!-- Loading State -->
+            <div *ngIf="loadingRooms" class="loading-state">
+              <i class="bi bi-arrow-clockwise spin"></i>
+              <p>Loading rooms...</p>
+            </div>
 
-    <!-- Pagination -->
-    <div *ngIf="totalPages > 1" class="card-footer">
-      <nav aria-label="Requests pagination">
-        <ul class="pagination pagination-sm mb-0 justify-content-center">
-          <li class="page-item" [class.disabled]="currentPage === 1">
-            <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">Previous</a>
-          </li>
+            <!-- Empty State -->
+            <div *ngIf="!loadingRooms && filteredRooms.length === 0" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>{{ rooms.length === 0 ? 'No rooms found. Add your first room to get started.' : 'No rooms match the current filters.' }}</p>
+            </div>
 
-          <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
-            <a class="page-link" href="javascript:void(0)" (click)="changePage(page)">{{ page }}</a>
-          </li>
-
-          <li class="page-item" [class.disabled]="currentPage === totalPages">
-            <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">Next</a>
-          </li>
-        </ul>
-      </nav>
+            <!-- Rooms Table -->
+            <div *ngIf="!loadingRooms && filteredRooms.length > 0" class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Room Name</th>
+                    <th>Location</th>
+                    <th>Staff House</th>
+                    <th>Type</th>
+                    <th>Capacity</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let room of filteredRooms">
+                    <td class="fw-medium">{{ room.name }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getLocationBadgeClass(getStaffHouseLocation(room.staff_house))">
+                        {{ getStaffHouseLocation(room.staff_house) }}
+                      </span>
+                    </td>
+                    <td>{{ getStaffHouseName(room.staff_house) }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getRoomTypeBadgeClass(room.room_type || '')">
+                        {{ room.room_type || 'N/A' }}
+                      </span>
+                    </td>
+                    <td>{{ room.capacity }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getStatusBadgeClass(room.status)">
+                        {{ room.status }}
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-icon btn-edit" (click)="editRoom(room)" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button class="btn btn-sm btn-icon btn-delete" (click)="confirmDeleteRoom(room)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Assign Room Modal -->
-<div class="modal fade" [class.show]="showAssignRoomModal" [style.display]="showAssignRoomModal ? 'block' : 'none'"
-     tabindex="-1" role="dialog" *ngIf="showAssignRoomModal">
-  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Assign Room</h5>
-        <button type="button" class="btn-close" (click)="closeAssignRoomModal()"></button>
-      </div>
-      <div class="modal-body">
-        <div *ngIf="selectedRequest" class="alert alert-info">
-          <strong>Request #{{ selectedRequest.id }}</strong> - {{ selectedRequest.requestor_name }}<br>
-          Department: {{ selectedRequest.department || 'N/A' }}
-        </div>
+<!-- Location Dialog -->
+<app-location-dialog
+  [isOpen]="locationDialogOpen"
+  [data]="locationDialogData"
+  (close)="onLocationDialogClose()"
+  (save)="onLocationSave($event)">
+</app-location-dialog>
 
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label for="staffHouse" class="form-label">Staff House <span class="text-danger">*</span></label>
-            <select id="staffHouse" class="form-select"
-                    [(ngModel)]="roomAssignment.staff_house"
-                    (change)="loadAvailableRooms()"
-                    required>
-              <option [ngValue]="null">Select Staff House</option>
-              <option *ngFor="let house of staffHouses" [ngValue]="house.id">
-                {{ house.name }} ({{ house.location }})
-              </option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label for="room" class="form-label">Room <span class="text-danger">*</span></label>
-            <select id="room" class="form-select"
-                    [(ngModel)]="roomAssignment.room"
-                    [disabled]="!roomAssignment.staff_house"
-                    required>
-              <option [ngValue]="null">Select Room</option>
-              <option *ngFor="let room of availableRooms" [ngValue]="room.id">
-                {{ room.name }} (Capacity: {{ room.capacity }})
-              </option>
-            </select>
-            <small class="text-muted" *ngIf="!roomAssignment.staff_house">
-              Please select a staff house first
-            </small>
-          </div>
-
-          <div class="col-md-6">
-            <label for="checkInDate" class="form-label">Check-In Date <span class="text-danger">*</span></label>
-            <input type="date" id="checkInDate" class="form-control"
-                   [(ngModel)]="roomAssignment.check_in_date"
-                   required>
-          </div>
-
-          <div class="col-md-6">
-            <label for="checkOutDate" class="form-label">Check-Out Date <span class="text-danger">*</span></label>
-            <input type="date" id="checkOutDate" class="form-control"
-                   [(ngModel)]="roomAssignment.check_out_date"
-                   required>
-          </div>
-
-          <div class="col-12">
-            <label for="notes" class="form-label">Notes</label>
-            <textarea id="notes" class="form-control" rows="3"
-                      [(ngModel)]="roomAssignment.notes"
-                      placeholder="Additional notes or special requirements"></textarea>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeAssignRoomModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" (click)="assignRoom()"
-                [disabled]="processingId !== null || !roomAssignment.staff_house || !roomAssignment.room || !roomAssignment.check_in_date || !roomAssignment.check_out_date">
-          <span *ngIf="processingId === null">
-            <i class="bi bi-door-open"></i> Assign Room
-          </span>
-          <span *ngIf="processingId !== null" class="spinner-border spinner-border-sm"></span>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Backdrop -->
-<div class="modal-backdrop fade" [class.show]="showAssignRoomModal" *ngIf="showAssignRoomModal"></div>
+<!-- Room Dialog -->
+<app-room-dialog
+  [isOpen]="roomDialogOpen"
+  [data]="roomDialogData"
+  [staffHouses]="locations"
+  (close)="onRoomDialogClose()"
+  (save)="onRoomSave($event)">
+</app-room-dialog>

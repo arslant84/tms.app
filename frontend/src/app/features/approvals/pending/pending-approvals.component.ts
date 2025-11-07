@@ -171,10 +171,14 @@ export class PendingApprovalsComponent implements OnInit {
 
     this.isProcessing = true;
 
+    // Extract step role from current approval step or use default
+    const stepRole = this.extractStepRole(this.selectedRequest.currentApprovalStep);
+
     this.approvalsService.approveRequest(
       this.selectedRequest.type,
       this.selectedRequest.id,
-      this.approvalComment
+      this.approvalComment,
+      stepRole
     ).subscribe({
       next: () => {
         this.toastService.success('Request approved successfully');
@@ -212,10 +216,14 @@ export class PendingApprovalsComponent implements OnInit {
 
     this.isProcessing = true;
 
+    // Extract step role from current approval step or use default
+    const stepRole = this.extractStepRole(this.selectedRequest.currentApprovalStep);
+
     this.approvalsService.rejectRequest(
       this.selectedRequest.type,
       this.selectedRequest.id,
-      this.approvalComment
+      this.approvalComment,
+      stepRole
     ).subscribe({
       next: () => {
         this.toastService.success('Request rejected successfully');
@@ -236,6 +244,24 @@ export class PendingApprovalsComponent implements OnInit {
     });
   }
   
+  /**
+   * Extract step role from current approval step string
+   */
+  private extractStepRole(currentStep?: string): string {
+    if (!currentStep) return 'Department Focal';
+
+    // Extract role from strings like "Pending Department Focal"
+    if (currentStep.includes('Department Focal')) return 'Department Focal';
+    if (currentStep.includes('HOD')) return 'HOD';
+    if (currentStep.includes('Travel Desk')) return 'Travel Desk';
+    if (currentStep.includes('Finance')) return 'Finance';
+    if (currentStep.includes('Director')) return 'Director';
+    if (currentStep.includes('Country Director')) return 'Country Director';
+
+    // Default fallback
+    return 'Department Focal';
+  }
+
   /**
    * Get CSS class based on priority
    */

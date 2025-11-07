@@ -73,8 +73,7 @@ export class TrfService {
 
   // Update TRF
   updateTrf(id: number, trf: TravelRequestForm, isOverseas: boolean = false): Observable<TravelRequestForm> {
-    const url = isOverseas ? this.overseasApiUrl : this.apiUrl;
-    return this.http.put<TravelRequestForm>(`${url}/${id}/`, trf)
+    return this.http.put<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/`, trf)
       .pipe(
         catchError(this.handleError)
       );
@@ -90,8 +89,7 @@ export class TrfService {
 
   // Submit TRF for approval
   submitTrf(id: number, isOverseas: boolean = false): Observable<TravelRequestForm> {
-    const url = isOverseas ? this.overseasApiUrl : this.apiUrl;
-    return this.http.post<TravelRequestForm>(`${url}/${id}/submit/`, {})
+    return this.http.post<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/submit/`, {})
       .pipe(
         catchError(this.handleError)
       );
@@ -111,8 +109,7 @@ export class TrfService {
       'Accept': 'application/pdf'
     });
 
-    const url = isOverseas ? this.overseasApiUrl : this.apiUrl;
-    return this.http.get(`${url}/${id}/export-pdf/`, {
+    return this.http.get(`${environment.apiUrl}/trf/travel-requests/${id}/export-pdf/`, {
       headers: headers,
       responseType: 'blob'
     }).pipe(
@@ -189,6 +186,56 @@ export class TrfService {
   // Create Advance Amount Requested Item
   createAdvanceAmountItem(data: any): Observable<any> {
     return this.http.post<any>(`${environment.apiUrl}/trf/advance-amounts/`, data)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  // Delete nested resources by type
+  deleteNestedResources(trfId: number, type: string): Observable<any> {
+    const endpoints: { [key: string]: string } = {
+      'itinerary': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-itinerary/`,
+      'meals': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-meals/`,
+      'accommodation': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-accommodation/`,
+      'transport': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-transport/`,
+      'passport': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-passport/`,
+      'bank': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-bank/`,
+      'advance-amounts': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-advance-amounts/`
+    };
+
+    const url = endpoints[type];
+    if (!url) {
+      return throwError(() => new Error(`Unknown resource type: ${type}`));
+    }
+
+    return this.http.delete<any>(url).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // Book flight for TRF (Admin action)
+  bookFlight(trfId: string, payload: any): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/trf/travel-requests/${trfId}/admin/book-flight/`, payload)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  // Reject TRF (Admin action)
+  rejectTrf(trfId: string, reason: string): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/trf/travel-requests/${trfId}/action/`, {
+      action: 'reject',
+      approverRole: 'Flight Admin',
+      approverName: 'Flight Administrator',
+      comments: reason
+    }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // Cancel flight booking
+  cancelFlightBooking(flightId: string): Observable<any> {
+    return this.http.delete<any>(`${environment.apiUrl}/flights/bookings/${flightId}/`)
       .pipe(
         catchError(this.handleError)
       );

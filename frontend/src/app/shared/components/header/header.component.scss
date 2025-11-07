@@ -193,27 +193,49 @@
     &:hover {
       background: rgba(255, 255, 255, 0.2);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+      .user-avatar {
+        border-color: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        transform: scale(1.05);
+      }
     }
 
     .user-avatar {
-      width: 2rem; // w-8 h-8
-      height: 2rem;
+      width: 2.25rem; // Slightly larger: 36px
+      height: 2.25rem;
       border-radius: 50%;
       overflow: hidden;
-      background-color: #f3f4f6; // bg-gray-100
+      background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); // Teal gradient
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s;
+      position: relative;
 
-      img {
+      .avatar-img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        display: block;
       }
 
+      .avatar-initials {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        user-select: none;
+      }
+
+      // Fallback icon styles (if still used anywhere)
       i.bi-person-circle {
-        font-size: 2rem;
-        color: #6b7280; // text-gray-500
+        font-size: 2.25rem;
+        color: white;
       }
     }
 

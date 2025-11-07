@@ -19,7 +19,7 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">Employee ID:</span>
-              <span class="detail-value">{{ requestorData?.employeeId || 'N/A' }}</span>
+              <span class="detail-value">{{ requestorData?.staffId || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <span class="detail-label">Department:</span>
@@ -42,7 +42,7 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">Purpose:</span>
-              <span class="detail-value">{{ travelDetails?.purpose || 'N/A' }}</span>
+              <span class="detail-value">{{ travelDetails?.purposeOfTravel || travelDetails?.purpose || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <span class="detail-label">Itinerary Segments:</span>

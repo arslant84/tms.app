@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 // Accommodation Interfaces
@@ -28,6 +29,7 @@ export interface AccommodationRoom {
 
 export interface AccommodationRequest {
   id: number;
+  request_number?: string;
   requestor_name: string;
   staff_id?: string;
   department?: string;
@@ -123,7 +125,17 @@ export class AccommodationService {
   getAllStaffHouses(location?: string): Observable<AccommodationStaffHouse[]> {
     let params = new HttpParams();
     if (location) params = params.set('location', location);
-    return this.http.get<AccommodationStaffHouse[]>(`${this.apiUrl}/staff-houses/`, { params });
+    // Add page_size to get all results without pagination
+    params = params.set('page_size', '1000');
+    return this.http.get<any>(`${this.apiUrl}/staff-houses/`, { params }).pipe(
+      map((response: any) => {
+        // Handle both paginated and non-paginated responses
+        if (response && response.results) {
+          return response.results;
+        }
+        return Array.isArray(response) ? response : [];
+      })
+    );
   }
 
   getStaffHouseById(id: number): Observable<AccommodationStaffHouse> {
@@ -146,7 +158,17 @@ export class AccommodationService {
   getAllRooms(staffHouseId?: number): Observable<AccommodationRoom[]> {
     let params = new HttpParams();
     if (staffHouseId) params = params.set('staff_house', staffHouseId.toString());
-    return this.http.get<AccommodationRoom[]>(`${this.apiUrl}/rooms/`, { params });
+    // Add page_size to get all results without pagination
+    params = params.set('page_size', '1000');
+    return this.http.get<any>(`${this.apiUrl}/rooms/`, { params }).pipe(
+      map((response: any) => {
+        // Handle both paginated and non-paginated responses
+        if (response && response.results) {
+          return response.results;
+        }
+        return Array.isArray(response) ? response : [];
+      })
+    );
   }
 
   getRoomById(id: number): Observable<AccommodationRoom> {

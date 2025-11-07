@@ -20,6 +20,7 @@ from .serializers import (
     RoomAvailabilitySerializer
 )
 from workflows.router import WorkflowRouter
+from utils.request_id_generator import generate_request_id
 
 
 class AccommodationStaffHouseViewSet(viewsets.ModelViewSet):
@@ -215,6 +216,30 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Generate request number if it doesn't exist
+        if not accommodation_request.request_number:
+            try:
+                # Extract context from additional_data location or use generic context
+                context = 'ACCOM'
+                if accommodation_request.additional_data and isinstance(accommodation_request.additional_data, dict):
+                    location = accommodation_request.additional_data.get('location', '')
+                    if location:
+                        context = location  # Let generate_request_id handle validation and length
+
+                print(f"🔍 Extracted context for Accommodation Request #{accommodation_request.id}: {context}")
+
+                # Generate unique request number (will auto-validate and limit context to 5 chars)
+                request_number = generate_request_id('ACCOM', context)
+                accommodation_request.request_number = request_number
+                print(f"✅ Generated request number: {request_number}")
+            except Exception as e:
+                print(f"❌ Error generating request number: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                # Fallback to simple format
+                accommodation_request.request_number = f"ACCOM-{datetime.now().strftime('%Y%m%d-%H%M')}-ACCOM-{accommodation_request.id}"
+                print(f"⚠️ Using fallback request number: {accommodation_request.request_number}")
+
         # Update status and submitted_at
         accommodation_request.status = 'Pending'
         accommodation_request.submitted_at = timezone.now()
@@ -248,37 +273,130 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
-        """Approve an accommodation request"""
+        """Approve an accommodation request using WorkflowEngine"""
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
         accommodation_request = self.get_object()
+        comments = request.data.get('comments', '')
 
-        if accommodation_request.status != 'Pending':
+        try:
+            # Get the workflow instance for this accommodation request
+            content_type = ContentType.objects.get_for_model(accommodation_request)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=accommodation_request.id,
+                status='in_progress'
+            ).first()
+
+            if workflow_instance:
+                # Find the current pending step
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
+
+                if current_step:
+                    # Use workflow engine to process approval
+                    result = WorkflowEngine.process_action(
+                        step_execution_id=current_step.id,
+                        action='approve',
+                        actioned_by=request.user,
+                        comments=comments
+                    )
+
+                    # Reload to get updated status
+                    accommodation_request.refresh_from_db()
+
+                    serializer = self.get_serializer(accommodation_request)
+                    return Response(serializer.data)
+                else:
+                    return Response(
+                        {'error': 'No pending approval step found'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                # Fallback to legacy approval logic
+                print(f"⚠️ No workflow instance found for Accommodation #{accommodation_request.id}, using legacy approval")
+
+                if accommodation_request.status not in ['Pending', 'Pending Department Focal', 'Pending HOD']:
+                    return Response(
+                        {'error': 'Cannot approve request with current status'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                accommodation_request.status = 'Approved'
+                accommodation_request.save()
+
+                serializer = self.get_serializer(accommodation_request)
+                return Response(serializer.data)
+
+        except Exception as e:
+            print(f"❌ Error in approve workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return Response(
-                {'error': 'Only pending requests can be approved'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'error': f'Failed to process approval: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-        accommodation_request.status = 'Approved'
-        accommodation_request.save()
-
-        serializer = self.get_serializer(accommodation_request)
-        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
-        """Reject an accommodation request"""
+        """Reject an accommodation request using WorkflowEngine"""
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
         accommodation_request = self.get_object()
+        comments = request.data.get('comments', '')
 
-        if accommodation_request.status != 'Pending':
+        try:
+            content_type = ContentType.objects.get_for_model(accommodation_request)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=accommodation_request.id,
+                status='in_progress'
+            ).first()
+
+            if workflow_instance:
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
+
+                if current_step:
+                    result = WorkflowEngine.process_action(
+                        step_execution_id=current_step.id,
+                        action='reject',
+                        actioned_by=request.user,
+                        comments=comments
+                    )
+
+                    accommodation_request.refresh_from_db()
+
+                    serializer = self.get_serializer(accommodation_request)
+                    return Response(serializer.data)
+            else:
+                # Fallback to legacy rejection
+                if accommodation_request.status not in ['Pending', 'Pending Department Focal', 'Pending HOD']:
+                    return Response(
+                        {'error': 'Cannot reject request with current status'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                accommodation_request.status = 'Rejected'
+                accommodation_request.save()
+
+                serializer = self.get_serializer(accommodation_request)
+                return Response(serializer.data)
+
+        except Exception as e:
+            print(f"❌ Error in reject workflow: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return Response(
-                {'error': 'Only pending requests can be rejected'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'error': f'Failed to process rejection: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-        accommodation_request.status = 'Rejected'
-        accommodation_request.save()
-
-        serializer = self.get_serializer(accommodation_request)
-        return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='pending-approvals')
     def pending_approvals(self, request):

@@ -1,5 +1,6 @@
 export interface TravelRequestForm {
   id: string;
+  requestNumber?: string;
   requesterId: string;
   requesterName: string;
   purpose: string;
