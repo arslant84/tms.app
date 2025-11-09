@@ -139,7 +139,9 @@ export interface ApprovalStep {
 export interface AccommodationRequestDetails {
   // Identification
   id: string | number;
+  requestNumber?: string;
   trfId?: string | number;
+  trfRequestNumber?: string;  // TSR request number like "TSR-20251102-2327-TURKM-8M6B"
 
   // Requestor Information
   requestorName: string;
@@ -185,9 +187,6 @@ export interface AccommodationRequestDetails {
   dailyBookings?: DailyBooking[];
   rejectionDetails?: RejectionDetails;
   approvalWorkflow?: ApprovalStep[];
-
-  // Estimated Cost
-  estimatedCost?: number;
 
   // Travel Details
   travelDetails?: TravelDetails;
@@ -273,12 +272,12 @@ export interface AccommodationRequestBackend {
   special_requests?: string;
   notes?: string;
   additional_comments?: string;
-  estimated_cost?: number;
   submitted_at?: string;
   created_at: string;
   updated_at: string;
   bookings?: DailyBookingBackend[];
   trf?: number;
+  trf_request_number?: string;
   requestor_gender?: string;
   additional_data?: any;
 }
@@ -390,7 +389,9 @@ export function accommodationToFrontend(
 
   return {
     id: backend.id,
+    requestNumber: backend.request_number,
     trfId: backend.trf,
+    trfRequestNumber: backend.trf_request_number,
     requestorName: backend.requestor_name,
     requestorId: backend.staff_id || '',
     requestorGender: gender as GuestGender,
@@ -420,7 +421,6 @@ export function accommodationToFrontend(
     dailyBookings,
     rejectionDetails,
     approvalWorkflow,
-    estimatedCost: backend.estimated_cost,
     travelDetails: backend.additional_data?.travel_details
   };
 }
@@ -431,34 +431,9 @@ export function accommodationToFrontend(
 export function accommodationToBackend(
   frontend: AccommodationRequestDetails
 ): Partial<AccommodationRequestBackend> {
-  // Build additional_data object
-  const additionalData: any = {};
-
-  if (frontend.rejectionDetails) {
-    additionalData.rejection = {
-      rejected_by: frontend.rejectionDetails.rejectedBy,
-      rejected_at: frontend.rejectionDetails.rejectedAt,
-      reason: frontend.rejectionDetails.reason
-    };
-  }
-
-  if (frontend.approvalWorkflow) {
-    additionalData.approval_workflow = frontend.approvalWorkflow;
-  }
-
-  if (frontend.travelDetails) {
-    additionalData.travel_details = frontend.travelDetails;
-  }
-
-  return {
-    requestor_name: frontend.requestorName,
-    staff_id: frontend.requestorId,
-    requestor_gender: frontend.requestorGender,
-    department: frontend.department,
-    position: frontend.position,
-    cost_center: frontend.costCenter,
-    tel_email: frontend.telEmail,
-    email: frontend.email,
+  // Build additional_data object with ALL accommodation details
+  const additionalData: any = {
+    // Location and room details
     location: frontend.location,
     requested_check_in_date: typeof frontend.requestedCheckInDate === 'string'
       ? frontend.requestedCheckInDate
@@ -467,17 +442,64 @@ export function accommodationToBackend(
       ? frontend.requestedCheckOutDate
       : frontend.requestedCheckOutDate?.toISOString().split('T')[0],
     requested_room_type: frontend.requestedRoomType,
+
+    // Requestor details
+    requestor_gender: frontend.requestorGender,
+
+    // Flight details
+    flight_arrival_time: frontend.flightArrivalTime,
+    flight_departure_time: frontend.flightDepartureTime,
+
+    // Special requests
+    special_requests: frontend.specialRequests
+  };
+
+  // Add rejection details if present
+  if (frontend.rejectionDetails) {
+    additionalData.rejection = {
+      rejected_by: frontend.rejectionDetails.rejectedBy,
+      rejected_at: frontend.rejectionDetails.rejectedAt,
+      reason: frontend.rejectionDetails.reason
+    };
+  }
+
+  // Add approval workflow if present
+  if (frontend.approvalWorkflow) {
+    additionalData.approval_workflow = frontend.approvalWorkflow;
+  }
+
+  // Add travel details if present
+  if (frontend.travelDetails) {
+    additionalData.travel_details = frontend.travelDetails;
+  }
+
+  // Add number of guests if present
+  const checkInDate = typeof frontend.requestedCheckInDate === 'string' ? frontend.requestedCheckInDate : frontend.requestedCheckInDate?.toISOString().split('T')[0];
+  const checkOutDate = typeof frontend.requestedCheckOutDate === 'string' ? frontend.requestedCheckOutDate : frontend.requestedCheckOutDate?.toISOString().split('T')[0];
+
+  if (checkInDate && checkOutDate) {
+    // Calculate number of nights
+    const nights = calculateNights(checkInDate, checkOutDate);
+    if (nights > 0) {
+      additionalData.number_of_nights = nights;
+    }
+  }
+
+  return {
+    requestor_name: frontend.requestorName,
+    staff_id: frontend.requestorId,
+    department: frontend.department,
+    position: frontend.position,
+    cost_center: frontend.costCenter,
+    tel_email: frontend.telEmail,
+    email: frontend.email,
     status: frontend.status,
     assigned_room: frontend.assignedRoomId,
     assigned_staff_house: frontend.assignedStaffHouseId,
-    flight_arrival_time: frontend.flightArrivalTime,
-    flight_departure_time: frontend.flightDepartureTime,
-    special_requests: frontend.specialRequests,
     notes: frontend.notes,
     additional_comments: frontend.additionalComments,
-    estimated_cost: frontend.estimatedCost,
     trf: typeof frontend.trfId === 'number' ? frontend.trfId : (frontend.trfId ? parseInt(frontend.trfId as string) : undefined),
-    additional_data: Object.keys(additionalData).length > 0 ? additionalData : undefined
+    additional_data: additionalData
   };
 }
 

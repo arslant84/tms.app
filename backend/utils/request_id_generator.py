@@ -201,3 +201,28 @@ def extract_context_from_location(location: str) -> str:
         Context string (will be validated and limited to 5 chars by generate_request_id)
     """
     return location if location else 'ACCOM'
+
+
+def extract_context_from_transport(transport_details: list) -> str:
+    """
+    Extracts context from transport details for TRN request IDs
+    Uses the destination of the first transport detail
+
+    Args:
+        transport_details: List of transport detail objects from transport_details JSON field
+                          Expected format: [{'to': 'Location', 'from': '...', ...}, ...]
+
+    Returns:
+        Context string (destination will be validated and limited to 5 chars by generate_request_id)
+    """
+    if transport_details and len(transport_details) > 0:
+        first_detail = transport_details[0]
+        # Handle both formats: JSON field (to, from) and model field (to_location, from_location)
+        destination = (
+            first_detail.get('to') or
+            first_detail.get('to_location') or
+            first_detail.get('destination') or
+            ''
+        )
+        return destination if destination else 'TRN'
+    return 'TRN'

@@ -22,7 +22,7 @@ from visa.models import VisaApplication
 from accommodation.models import AccommodationRequest
 from expenses.models import ExpenseClaim
 from workflows.models import WorkflowInstance, WorkflowStepExecution
-from accounts.models import Role
+from accounts.models import Role, AdminActionLog
 
 
 @api_view(['GET'])
@@ -61,8 +61,17 @@ def unified_approvals(request):
     # Helper function to check if user can approve this entity
     def can_user_approve(entity, module_name):
         """Check if current user is authorized to approve this entity"""
-        # Admin override
+        # Admin override - with audit logging
         if user.is_staff or user.is_superuser:
+            # SECURITY: Log admin override action for audit trail
+            AdminActionLog.log_action(
+                admin=user,
+                action_type='approval_override',
+                entity_type=module_name,
+                entity_id=entity.id,
+                description=f'Admin {user.email} viewed {module_name} #{entity.id} in approval queue (admin override)',
+                request=request
+            )
             return True
 
         # Get workflow instance for this entity

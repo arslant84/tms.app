@@ -237,10 +237,6 @@
               <span class="detail-label">Room Type:</span>
               <span class="detail-value">{{ selectedRequest.details.roomType }}</span>
             </div>
-            <div class="detail-item" *ngIf="selectedRequest.details.estimatedCost">
-              <span class="detail-label">Est. Cost:</span>
-              <span class="detail-value">{{ selectedRequest.details.estimatedCost | currency:'MYR' }}</span>
-            </div>
           </ng-container>
 
           <!-- Transport Request -->

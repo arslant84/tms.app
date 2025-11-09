@@ -76,7 +76,7 @@
           <div class="detail-item" *ngIf="hasTrfLink()">
             <label>TSR Reference</label>
             <a [routerLink]="getTrfLink()" class="value link">
-              <i class="bi bi-file-text"></i> TRF-{{ request.trfId }}
+              <i class="bi bi-file-text"></i> {{ request.trfRequestNumber || 'TSR-' + request.trfId }}
             </a>
           </div>
           <div class="detail-item">

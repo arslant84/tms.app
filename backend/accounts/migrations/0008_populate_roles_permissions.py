@@ -147,15 +147,19 @@ def populate_roles_and_permissions(apps, schema_editor):
         ]
 
         # Insert role-permission pairs in batches
+        # SECURITY: Use parameterized queries to prevent SQL injection
         for i in range(0, len(role_permission_pairs), 50):
             batch = role_permission_pairs[i:i+50]
-            values = ','.join([f"('{role_id}', '{perm_id}', NOW())" for role_id, perm_id in batch])
+            # Create placeholders for parameterized query
+            placeholders = ','.join(['(%s, %s, NOW())'] * len(batch))
+            # Flatten the batch into a list of parameters
+            params = [item for pair in batch for item in pair]
             rp_sql = f"""
                 INSERT INTO accounts_rolepermission (role_id, permission_id, created_at)
-                VALUES {values}
+                VALUES {placeholders}
                 ON CONFLICT (role_id, permission_id) DO NOTHING;
             """
-            cursor.execute(rp_sql)
+            cursor.execute(rp_sql, params)
 
         print(f"✓ Created {len(role_permission_pairs)} role-permission mappings")
         print("\n✓ Successfully populated all roles, permissions, and mappings!")

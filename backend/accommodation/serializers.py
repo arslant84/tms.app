@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.core.validators import MinValueValidator, MaxValueValidator
 from .models import AccommodationStaffHouse, AccommodationRoom, AccommodationRequest, AccommodationBooking
 from accounts.serializers import UserSerializer
 # from trf.serializers import TravelRequestSerializer  # TODO: Enable after TRF serializers are created
@@ -29,10 +30,18 @@ class AccommodationRoomSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def validate_capacity(self, value):
-        """Ensure capacity is positive"""
+        """SECURITY: Ensure capacity is within reasonable range"""
         if value < 1:
             raise serializers.ValidationError("Capacity must be at least 1")
+        if value > 20:
+            raise serializers.ValidationError("Capacity must be 20 or less")
         return value
+
+    def validate_name(self, value):
+        """SECURITY: Validate room name length"""
+        if len(str(value)) > 100:
+            raise serializers.ValidationError("Room name too long (max 100 characters)")
+        return value.strip()
 
     def validate_status(self, value):
         """Validate room status"""
@@ -46,16 +55,17 @@ class AccommodationRoomSerializer(serializers.ModelSerializer):
 
 class AccommodationRequestSerializer(serializers.ModelSerializer):
     """Serializer for Accommodation Requests"""
+    trf_request_number = serializers.CharField(source='trf.request_number', read_only=True, allow_null=True)
 
     class Meta:
         model = AccommodationRequest
         fields = [
             'id', 'request_number', 'requestor_name', 'staff_id', 'department', 'position',
-            'cost_center', 'tel_email', 'email', 'status', 'estimated_cost',
+            'cost_center', 'tel_email', 'email', 'trf', 'trf_request_number', 'status',
             'additional_comments', 'submitted_at', 'created_at', 'updated_at',
             'additional_data'
         ]
-        read_only_fields = ['id', 'request_number', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'request_number', 'trf_request_number', 'created_at', 'updated_at']
 
     def validate_status(self, value):
         """Validate request status"""
@@ -67,9 +77,44 @@ class AccommodationRequestSerializer(serializers.ModelSerializer):
         return value
 
     def validate_email(self, value):
-        """Validate email format"""
-        if value and '@' not in value:
-            raise serializers.ValidationError("Invalid email format")
+        """SECURITY: Validate email format and length"""
+        if value:
+            if '@' not in value or '.' not in value.split('@')[-1]:
+                raise serializers.ValidationError("Invalid email format")
+            if len(value) > 255:
+                raise serializers.ValidationError("Email too long (max 255 characters)")
+        return value
+
+    def validate_requestor_name(self, value):
+        """SECURITY: Validate requestor name length"""
+        if len(str(value)) > 200:
+            raise serializers.ValidationError("Requestor name too long (max 200 characters)")
+        return value.strip()
+
+    def validate_additional_comments(self, value):
+        """SECURITY: Validate comments length"""
+        if value and len(str(value)) > 2000:
+            raise serializers.ValidationError("Comments too long (max 2000 characters)")
+        return value
+
+    def validate_additional_data(self, value):
+        """SECURITY: Validate additional_data structure and size"""
+        if value:
+            # Ensure it's a dictionary
+            if not isinstance(value, dict):
+                raise serializers.ValidationError("additional_data must be a JSON object")
+
+            # Validate common fields in additional_data
+            if 'location' in value and len(str(value['location'])) > 200:
+                raise serializers.ValidationError("Location too long (max 200 characters)")
+
+            if 'number_of_guests' in value:
+                num_guests = value['number_of_guests']
+                if not isinstance(num_guests, (int, float)) or num_guests < 1:
+                    raise serializers.ValidationError("number_of_guests must be at least 1")
+                if num_guests > 100:
+                    raise serializers.ValidationError("number_of_guests must be 100 or less")
+
         return value
 
 

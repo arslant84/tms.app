@@ -305,8 +305,7 @@ export class ApprovalsService {
         location: acc.location,
         checkInDate: acc.check_in_date,
         checkOutDate: acc.check_out_date,
-        roomType: acc.room_type,
-        estimatedCost: acc.estimated_cost || 0
+        roomType: acc.room_type
       }
     };
   }

@@ -64,7 +64,16 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at']
-        read_only_fields = ['id']
+        # SECURITY: Prevent privilege escalation - these fields can only be modified by admins
+        read_only_fields = ['id', 'email', 'is_admin', 'is_active', 'role', 'last_login_at']
+
+    def update(self, instance, validated_data):
+        # SECURITY: Extra protection - explicitly prevent modification of sensitive fields
+        validated_data.pop('is_admin', None)
+        validated_data.pop('is_active', None)
+        validated_data.pop('role', None)
+        validated_data.pop('email', None)
+        return super().update(instance, validated_data)
 
 
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
@@ -82,9 +91,19 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     def validate_profile_photo(self, value):
         """Validate profile photo - can be None or a base64 string"""
         if value and isinstance(value, str) and value.strip():
-            # Basic validation for base64 image data
+            # SECURITY: Validate base64 size to prevent DoS
+            if len(value) > 5 * 1024 * 1024:  # 5MB limit
+                raise serializers.ValidationError('Image too large (max 5MB)')
+
+            # SECURITY: Validate MIME type
             if not value.startswith('data:image/'):
                 raise serializers.ValidationError('Invalid image format. Must be a base64 data URL.')
+
+            # SECURITY: Check specific allowed types
+            allowed_types = ['data:image/jpeg', 'data:image/jpg', 'data:image/png', 'data:image/gif']
+            if not any(value.startswith(t) for t in allowed_types):
+                raise serializers.ValidationError('Only JPEG, PNG, and GIF images are allowed')
+
         return value
 
 

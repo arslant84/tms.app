@@ -203,15 +203,6 @@ export class AccommodationDetailComponent implements OnInit {
     return formatTime12Hour(timeStr || undefined);
   }
 
-  formatCurrency(amount: number | string | null | undefined): string {
-    if (!amount && amount !== 0) return '$0.00';
-    const num = Number(amount);
-    return isNaN(num) ? '$0.00' : new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(num);
-  }
-
   getCheckInStatus(booking: DailyBooking): { label: string; class: string } {
     if (booking.status === 'Checked-in' || booking.status === 'Checked-out') {
       return {

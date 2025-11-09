@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django import forms
-from .models import User, Role, Permission, RolePermission, ApplicationSetting
+from .models import User, Role, Permission, RolePermission, ApplicationSetting, AdminActionLog
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -147,3 +147,42 @@ class ApplicationSettingAdmin(admin.ModelAdmin):
         if obj:  # Editing an existing object
             return self.readonly_fields + ('setting_key',)
         return self.readonly_fields
+
+
+@admin.register(AdminActionLog)
+class AdminActionLogAdmin(admin.ModelAdmin):
+    """Admin interface for Admin Action Logs (Security Audit Trail)"""
+
+    list_display = ('created_at', 'admin_email', 'action_type', 'entity_type', 'entity_id', 'ip_address')
+    list_filter = ('action_type', 'created_at', 'admin')
+    search_fields = ('admin__email', 'entity_type', 'entity_id', 'description', 'ip_address')
+    ordering = ('-created_at',)
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        ('Action Details', {
+            'fields': ('admin', 'action_type', 'entity_type', 'entity_id', 'description')
+        }),
+        ('Request Details', {
+            'fields': ('ip_address', 'user_agent')
+        }),
+        ('Timestamp', {
+            'fields': ('created_at',)
+        }),
+    )
+
+    readonly_fields = ('admin', 'action_type', 'entity_type', 'entity_id', 'description',
+                       'ip_address', 'user_agent', 'created_at')
+
+    def admin_email(self, obj):
+        return obj.admin.email if obj.admin else 'Unknown'
+    admin_email.short_description = 'Admin User'
+    admin_email.admin_order_field = 'admin__email'
+
+    def has_add_permission(self, request):
+        # Prevent manual creation of audit logs
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion of audit logs for security
+        return False

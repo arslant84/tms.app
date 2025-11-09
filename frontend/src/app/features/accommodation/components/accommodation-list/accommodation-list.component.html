@@ -82,11 +82,10 @@
       <table class="requests-table">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>Request Number</th>
             <th>Requestor Name</th>
             <th>Department</th>
-            <th>Position</th>
-            <th>Est. Cost</th>
+            <th>Check-in Date</th>
             <th>Status</th>
             <th>Created</th>
             <th>Actions</th>
@@ -94,8 +93,8 @@
         </thead>
         <tbody>
           <tr *ngFor="let request of requests">
-            <td class="id-cell">
-              <span class="request-id">#{{ request.id }}</span>
+            <td class="request-number-cell">
+              <span class="request-number">{{ request.request_number || 'N/A' }}</span>
             </td>
             <td class="name-cell">
               <div class="requestor-info">
@@ -104,10 +103,11 @@
               </div>
             </td>
             <td>{{ request.department || 'N/A' }}</td>
-            <td>{{ request.position || 'N/A' }}</td>
-            <td class="cost-cell">
-              <span *ngIf="request.estimated_cost" class="amount">{{ formatCurrency(request.estimated_cost) }}</span>
-              <span *ngIf="!request.estimated_cost" class="text-muted">$0.00</span>
+            <td>
+              <div class="accommodation-info">
+                <span>{{ getCheckInDate(request) }}</span>
+                <span *ngIf="getLocation(request)" class="text-muted small">{{ getLocation(request) }}</span>
+              </div>
             </td>
             <td>
               <span class="badge" [ngClass]="getStatusClass(request.status)">
@@ -136,7 +136,6 @@
                   class="btn btn-sm btn-icon btn-delete"
                   (click)="deleteRequest(request.id, $event)"
                   title="Delete Request"
-                  *ngIf="canDelete(request)"
                 >
                   <i class="bi bi-trash"></i>
                 </button>

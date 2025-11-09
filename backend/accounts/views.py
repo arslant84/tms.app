@@ -5,6 +5,8 @@ from django.contrib.auth import get_user_model, authenticate, login
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
 
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, RoleSerializer, PermissionSerializer,
@@ -17,21 +19,22 @@ User = get_user_model()
 
 class LoginView(ObtainAuthToken):
     permission_classes = [permissions.AllowAny]
-    
+
+    @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True))
     def post(self, request, *args, **kwargs):
         # Get username and password from request
         username = request.data.get('email')
         password = request.data.get('password')
-        
+
         print(f"Login attempt for user: {username}")
-        
+
         # Authenticate user
         user = authenticate(request, username=username, password=password)
-        
+
         if user is not None:
             # Create or get token
             token, created = Token.objects.get_or_create(user=user)
-            
+
             # Return token and user data in format expected by Angular frontend
             return Response({
                 'token': token.key,
@@ -39,6 +42,7 @@ class LoginView(ObtainAuthToken):
             })
         else:
             print(f"Authentication failed for user: {username}")
+            # SECURITY: Generic error message to prevent user enumeration
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -278,7 +282,7 @@ class ApplicationSettingViewSet(viewsets.ModelViewSet):
             'errors': errors
         })
 
-    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def as_object(self, request):
         """
         Return all settings as a simple key-value object.
@@ -287,8 +291,16 @@ class ApplicationSettingViewSet(viewsets.ModelViewSet):
         - public: bool - Return only public settings
 
         Returns: {"setting_key": value, ...}
+
+        SECURITY: Only authenticated users can access settings.
+        Non-admin users only get public settings.
         """
         queryset = self.get_queryset()
+
+        # SECURITY: Non-admin users only get public settings
+        if not request.user.is_staff and not request.user.is_superuser:
+            queryset = queryset.filter(is_public=True)
+
         settings_obj = {}
 
         for setting in queryset:

@@ -305,11 +305,11 @@
 .badge-info { background-color: #3b82f6; color: white; }
 
 // Table Cells
-.id-cell {
+.request-number-cell {
   font-weight: 500;
   color: #1f2937;
 
-  .request-id {
+  .request-number {
     color: #0d9488;
     font-weight: 600;
   }
@@ -333,10 +333,13 @@
   }
 }
 
-.cost-cell {
-  .amount {
-    font-weight: 500;
-    color: #1f2937;
+.accommodation-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+
+  .small {
+    font-size: 0.75rem;
   }
 }
 

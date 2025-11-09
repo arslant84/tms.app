@@ -1,320 +1,442 @@
 <div class="transport-processing-container">
   <!-- Header -->
   <div class="processing-header">
-    <button class="back-button" (click)="goToOverview()">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-      </svg>
-      Back to Overview
+    <button class="btn btn-outline-secondary mb-3" (click)="goBack()">
+      <i class="bi bi-arrow-left me-2"></i>
+      Back to Transport Admin
     </button>
-    <h1>Transport Processing Dashboard</h1>
-    <p class="subtitle">Manage transport requests and vehicle assignments</p>
+    <h1 class="h2 mb-1">
+      <i class="bi bi-truck me-2"></i>
+      Transport Processing
+    </h1>
+    <p class="text-muted">Process and manage transport requests with booking details.</p>
   </div>
 
   <!-- Tabs -->
-  <div class="tabs-container">
-    <button
-      class="tab-button"
-      [class.active]="activeTab === 'pending'"
-      (click)="switchTab('pending')">
-      Pending Assignments
-      <span class="badge" *ngIf="pendingTransports.length > 0">{{ pendingTransports.length }}</span>
-    </button>
-    <button
-      class="tab-button"
-      [class.active]="activeTab === 'assigned'"
-      (click)="switchTab('assigned')">
-      Assigned Transports
-      <span class="badge" *ngIf="assignedTransports.length > 0">{{ assignedTransports.length }}</span>
-    </button>
+  <div class="tabs-container mb-4">
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <button
+          class="nav-link"
+          [class.active]="activeTab === 'approved'"
+          (click)="switchTab('approved')">
+          Approved Requests ({{ approvedRequests.length }})
+        </button>
+      </li>
+      <li class="nav-item">
+        <button
+          class="nav-link"
+          [class.active]="activeTab === 'processing'"
+          (click)="switchTab('processing')">
+          Processing ({{ processingRequests.length }})
+        </button>
+      </li>
+      <li class="nav-item">
+        <button
+          class="nav-link"
+          [class.active]="activeTab === 'completed'"
+          (click)="switchTab('completed')">
+          Completed ({{ completedRequests.length }})
+        </button>
+      </li>
+    </ul>
   </div>
 
-  <!-- Pending Assignments Tab -->
-  <div *ngIf="activeTab === 'pending'" class="tab-content">
-    <!-- Loading State -->
-    <div *ngIf="isLoadingPending" class="loading-container">
-      <div class="spinner"></div>
-      <p>Loading pending transport requests...</p>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
     </div>
+    <p class="mt-2">Loading transport requests...</p>
+  </div>
 
-    <!-- Error State -->
-    <div *ngIf="errorPending && !isLoadingPending" class="error-container">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-      </svg>
-      <p>{{ errorPending }}</p>
-      <button class="retry-button" (click)="retryPending()">Retry</button>
-    </div>
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="alert alert-danger">
+    {{ error }}
+  </div>
 
-    <!-- Empty State -->
-    <div *ngIf="!isLoadingPending && !errorPending && pendingTransports.length === 0" class="empty-state">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <h3>All caught up!</h3>
-      <p>No pending transport requests require processing at this time.</p>
-    </div>
+  <!-- Approved Requests Tab -->
+  <div *ngIf="activeTab === 'approved' && !isLoading" class="tab-content-panel">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <h3 class="card-title mb-0">
+            <i class="bi bi-clock-history me-2"></i>
+            Approved Transport Requests
+          </h3>
+          <p class="text-muted small mb-0">Transport requests approved by HOD and ready for processing by Transport Admin.</p>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" (click)="fetchTransportRequests()">
+          <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+        </button>
+      </div>
+      <div class="card-body">
+        <div *ngIf="approvedRequests.length === 0" class="text-center py-4">
+          <i class="bi bi-check-circle display-4 text-muted"></i>
+          <p class="mt-2 text-muted">All caught up! No pending transport requests require processing at this time.</p>
+          <p class="text-muted small">Approved requests will appear here after HOD approval.</p>
+          <button class="btn btn-sm btn-primary mt-2" (click)="fetchTransportRequests()">
+            <i class="bi bi-arrow-clockwise me-1"></i> Check for New Requests
+          </button>
+        </div>
 
-    <!-- Pending Transports List -->
-    <div *ngIf="!isLoadingPending && !errorPending && pendingTransports.length > 0" class="content-grid">
-      <!-- Left: Requests List -->
-      <div class="requests-list">
-        <h2>Approved Requests ({{ pendingTransports.length }})</h2>
-        <div class="request-cards">
-          <div
-            *ngFor="let request of pendingTransports"
-            class="request-card"
-            [class.selected]="selectedRequest?.id === request.id"
-            (click)="selectRequest(request)">
-            <div class="request-header">
-              <div>
-                <h3>{{ request.requestorName }}</h3>
-                <p class="request-number">{{ request.request_number }}</p>
-              </div>
-              <span class="badge" [class]="getStatusClass(request.status)">{{ request.status }}</span>
-            </div>
-            <div class="request-details">
-              <div class="detail-row">
-                <span class="label">Department:</span>
-                <span class="value">{{ request.department }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Purpose:</span>
-                <span class="value">{{ request.purpose }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Transport Type:</span>
-                <span class="badge badge-blue">{{ request.transportType }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Passengers:</span>
-                <span class="value">{{ request.passengers }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Pickup:</span>
-                <span class="value">{{ request.pickupLocation }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Dropoff:</span>
-                <span class="value">{{ request.dropoffLocation }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Scheduled:</span>
-                <span class="value">{{ formatDate(request.scheduledDate) }} {{ request.scheduledTime }}</span>
+        <div *ngIf="approvedRequests.length > 0" class="row">
+          <div class="col-md-12" *ngFor="let request of approvedRequests; let i = index">
+            <div class="card mb-3 border-success border-opacity-25">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <h5 class="card-title mb-1">{{ request.requestorName || 'N/A' }}</h5>
+                    <p class="text-muted mb-2 small">
+                      <span class="badge bg-light text-dark me-2">{{ request.department || 'N/A' }}</span>
+                      <span class="text-muted">ID: {{ request.request_number || request.id }}</span>
+                    </p>
+                    <div class="mb-2">
+                      <strong class="text-dark">Purpose:</strong>
+                      <span class="ms-1">{{ request.purpose || 'N/A' }}</span>
+                    </div>
+                    <div class="mb-2">
+                      <strong class="text-dark">Transport Details:</strong>
+                      <div class="ms-1 text-muted small">{{ formatTransportDetails(request) }}</div>
+                    </div>
+                    <div class="text-muted small">
+                      <i class="bi bi-calendar3 me-1"></i>
+                      <strong>Submitted:</strong> {{ formatDate(request.submittedAt || request.createdAt) }}
+                    </div>
+                  </div>
+                  <div class="ms-3">
+                    <span class="badge bg-success">{{ request.status }}</span>
+                  </div>
+                </div>
+                <hr class="my-2">
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-primary" (click)="openDetailsDialog(request)">
+                    <i class="bi bi-eye me-1"></i> View Details
+                  </button>
+                  <button class="btn btn-sm btn-success" (click)="openProcessingDialog(request)">
+                    <i class="bi bi-check-circle me-1"></i> Start Processing
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Right: Assignment Form -->
-      <div class="assignment-form">
-        <div *ngIf="!selectedRequest" class="no-selection">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-          </svg>
-          <p>Select a request from the list to assign a vehicle</p>
+  <!-- Processing Requests Tab -->
+  <div *ngIf="activeTab === 'processing' && !isLoading" class="tab-content-panel">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title mb-0">
+          <i class="bi bi-gear-fill me-2"></i>
+          Processing Transport Requests
+        </h3>
+        <p class="text-muted small mb-0">Transport requests currently being processed. Complete them with booking details.</p>
+      </div>
+      <div class="card-body">
+        <div *ngIf="processingRequests.length === 0" class="text-center py-4 text-muted">
+          <i class="bi bi-inbox display-4"></i>
+          <p class="mt-2">No transport requests are currently being processed.</p>
         </div>
 
-        <div *ngIf="selectedRequest" class="form-container">
-          <h2>Assign Vehicle</h2>
-
-          <div class="selected-request-info">
-            <h3>{{ selectedRequest.requestorName }}</h3>
-            <p>{{ selectedRequest.request_number }} - {{ selectedRequest.purpose }}</p>
+        <div *ngIf="processingRequests.length > 0" class="row">
+          <div class="col-md-12" *ngFor="let request of processingRequests">
+            <div class="card mb-3 border-warning">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h5 class="card-title">{{ request.requestorName || 'N/A' }}</h5>
+                    <p class="text-muted mb-2">
+                      <strong>{{ request.department || 'N/A' }}</strong> • ID: {{ request.request_number || request.id }}
+                    </p>
+                    <p class="mb-2"><strong>Purpose:</strong> {{ request.purpose || 'N/A' }}</p>
+                    <p class="mb-2"><strong>Details:</strong> {{ formatTransportDetails(request) }}</p>
+                  </div>
+                  <div>
+                    <span class="badge bg-warning text-dark">{{ request.status }}</span>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="openDetailsDialog(request)">
+                    <i class="bi bi-eye me-1"></i> View
+                  </button>
+                  <button class="btn btn-sm btn-success" (click)="completeTransport(request)" [disabled]="isProcessing">
+                    <i class="bi bi-check-circle me-1"></i>
+                    {{ isProcessing ? 'Completing...' : 'Mark as Complete' }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <form (ngSubmit)="assignVehicle()">
-            <!-- Vehicle Number -->
-            <div class="form-group">
-              <label for="vehicleNumber">Vehicle Number *</label>
-              <input
-                type="text"
-                id="vehicleNumber"
-                [(ngModel)]="vehicleData.vehicle_number"
-                name="vehicleNumber"
-                placeholder="Enter vehicle number (e.g., TMN-1234)"
-                required>
-            </div>
-
-            <!-- Vehicle Type -->
-            <div class="form-group">
-              <label for="vehicleType">Vehicle Type *</label>
-              <select
-                id="vehicleType"
-                [(ngModel)]="vehicleData.vehicle_type"
-                name="vehicleType"
-                required>
-                <option *ngFor="let type of vehicleTypes" [value]="type.value">
-                  {{ type.label }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Vehicle Capacity -->
-            <div class="form-group">
-              <label for="vehicleCapacity">Vehicle Capacity *</label>
-              <input
-                type="number"
-                id="vehicleCapacity"
-                [(ngModel)]="vehicleData.vehicle_capacity"
-                name="vehicleCapacity"
-                min="1"
-                max="50"
-                required>
-              <p class="helper-text">Required passengers: {{ selectedRequest.passengers }}</p>
-            </div>
-
-            <!-- Driver Name -->
-            <div class="form-group">
-              <label for="driverName">Driver Name *</label>
-              <input
-                type="text"
-                id="driverName"
-                [(ngModel)]="vehicleData.driver_name"
-                name="driverName"
-                placeholder="Enter driver's full name"
-                required>
-            </div>
-
-            <!-- Driver Contact -->
-            <div class="form-group">
-              <label for="driverContact">Driver Contact *</label>
-              <input
-                type="text"
-                id="driverContact"
-                [(ngModel)]="vehicleData.driver_contact"
-                name="driverContact"
-                placeholder="Enter driver's contact number"
-                required>
-            </div>
-
-            <!-- Driver License -->
-            <div class="form-group">
-              <label for="driverLicense">Driver License (Optional)</label>
-              <input
-                type="text"
-                id="driverLicense"
-                [(ngModel)]="vehicleData.driver_license"
-                name="driverLicense"
-                placeholder="Enter driver's license number">
-            </div>
-
-            <!-- Assignment Date -->
-            <div class="form-group">
-              <label for="assignmentDate">Assignment Date *</label>
-              <input
-                type="date"
-                id="assignmentDate"
-                [(ngModel)]="vehicleData.assignment_date"
-                name="assignmentDate"
-                required>
-            </div>
-
-            <!-- Actions -->
-            <div class="form-actions">
-              <button
-                type="submit"
-                class="btn-primary"
-                [disabled]="!vehicleData.vehicle_number || !vehicleData.driver_name || !vehicleData.driver_contact || isProcessing">
-                <span *ngIf="!isProcessing">Assign Vehicle</span>
-                <span *ngIf="isProcessing">
-                  <div class="btn-spinner"></div>
-                  Assigning...
-                </span>
-              </button>
-              <button
-                type="button"
-                class="btn-danger"
-                (click)="noVehiclesAvailable()"
-                [disabled]="isProcessing">
-                No Vehicles Available
-              </button>
-              <button
-                type="button"
-                class="btn-secondary"
-                (click)="cancelSelection()"
-                [disabled]="isProcessing">
-                Cancel
-              </button>
-            </div>
-          </form>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Assigned Transports Tab -->
-  <div *ngIf="activeTab === 'assigned'" class="tab-content">
-    <!-- Loading State -->
-    <div *ngIf="isLoadingAssigned" class="loading-container">
-      <div class="spinner"></div>
-      <p>Loading assigned transport requests...</p>
-    </div>
+  <!-- Completed Requests Tab -->
+  <div *ngIf="activeTab === 'completed' && !isLoading" class="tab-content-panel">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title mb-0">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          Completed Transport Requests
+        </h3>
+        <p class="text-muted small mb-0">Transport requests that have been completed with booking details.</p>
+      </div>
+      <div class="card-body">
+        <div *ngIf="completedRequests.length === 0" class="text-center py-4 text-muted">
+          <i class="bi bi-clipboard-check display-4"></i>
+          <p class="mt-2">No completed transport requests yet.</p>
+        </div>
 
-    <!-- Empty State -->
-    <div *ngIf="!isLoadingAssigned && assignedTransports.length === 0" class="empty-state">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-      </svg>
-      <h3>No Assigned Transports</h3>
-      <p>There are no transport requests with assigned vehicles at this time.</p>
-    </div>
-
-    <!-- Assigned Transports Table -->
-    <div *ngIf="!isLoadingAssigned && assignedTransports.length > 0" class="bookings-table-container">
-      <h2>Assigned Transports ({{ assignedTransports.length }})</h2>
-      <table class="bookings-table">
-        <thead>
-          <tr>
-            <th>Request #</th>
-            <th>Requestor</th>
-            <th>Vehicle Number</th>
-            <th>Vehicle Type</th>
-            <th>Driver</th>
-            <th>Driver Contact</th>
-            <th>Scheduled Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let transport of assignedTransports">
-            <td>{{ transport.request_number }}</td>
-            <td>{{ transport.requestorName }}</td>
-            <td>{{ transport.vehicleNumber }}</td>
-            <td>
-              <span class="badge" [class]="getVehicleTypeBadgeClass(transport.vehicleType)">
-                {{ transport.vehicleType.replace('_', ' ') }}
-              </span>
-            </td>
-            <td>{{ transport.driverName }}</td>
-            <td>{{ transport.driverContact }}</td>
-            <td>{{ formatDate(transport.scheduledDate) }}</td>
-            <td>
-              <span class="badge" [class]="getStatusClass(transport.status)">{{ transport.status }}</span>
-            </td>
-            <td>
-              <div class="action-buttons">
-                <button
-                  class="btn-small btn-success"
-                  (click)="completeTransport(transport)"
-                  [disabled]="isProcessing"
-                  title="Mark as completed">
-                  <i class="bi bi-check-circle"></i>
-                  Complete
-                </button>
-                <button
-                  class="btn-small btn-view"
-                  (click)="viewRequest(transport.id)"
-                  title="View details">
-                  <i class="bi bi-eye"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <div *ngIf="completedRequests.length > 0" class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Requestor</th>
+                <th>Department</th>
+                <th>Purpose</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let request of completedRequests">
+                <td class="fw-medium">{{ request.request_number || request.id }}</td>
+                <td>{{ request.requestorName || 'N/A' }}</td>
+                <td>{{ request.department || 'N/A' }}</td>
+                <td>{{ request.purpose || 'N/A' }}</td>
+                <td><span class="badge bg-success">{{ request.status }}</span></td>
+                <td>{{ formatDate(request.submittedAt) }}</td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary" (click)="openDetailsDialog(request)">
+                    <i class="bi bi-eye"></i> View
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- Start Processing Dialog - Confirmation before showing booking form -->
+<div class="modal fade" [class.show]="showProcessingDialog" [style.display]="showProcessingDialog ? 'block' : 'none'"
+     tabindex="-1" *ngIf="showProcessingDialog">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success bg-opacity-10">
+        <h5 class="modal-title">
+          <i class="bi bi-check-circle text-success me-2"></i>
+          Start Processing Transport Request
+        </h5>
+        <button type="button" class="btn-close" (click)="closeDialogs()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3">You are about to start processing this transport request. Please provide vehicle and booking details.</p>
+        <div *ngIf="selectedRequest" class="alert alert-info mb-0">
+          <div class="mb-2"><strong>Requestor:</strong> {{ selectedRequest.requestorName }}</div>
+          <div class="mb-2"><strong>Department:</strong> {{ selectedRequest.department }}</div>
+          <div class="mb-2"><strong>Request ID:</strong> {{ selectedRequest.request_number || selectedRequest.id }}</div>
+          <div class="mb-0"><strong>Purpose:</strong> {{ selectedRequest.purpose }}</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDialogs()">Cancel</button>
+        <button type="button" class="btn btn-success" (click)="handleStartProcessing()">
+          <i class="bi bi-arrow-right me-1"></i>
+          Continue to Booking Form
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Complete Processing Dialog -->
+<div class="modal fade" [class.show]="showCompletingDialog" [style.display]="showCompletingDialog ? 'block' : 'none'"
+     tabindex="-1" *ngIf="showCompletingDialog">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Complete Transport Processing</h5>
+        <button type="button" class="btn-close" (click)="closeDialogs()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">Provide booking details to complete the transport request processing.</p>
+        <div *ngIf="selectedRequest" class="alert alert-info mb-3">
+          <strong>{{ selectedRequest.requestorName }}</strong><br>
+          <strong>ID:</strong> {{ selectedRequest.request_number || selectedRequest.id }}<br>
+          <strong>Purpose:</strong> {{ selectedRequest.purpose }}
+        </div>
+
+        <form>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Vehicle Type *</label>
+              <input type="text" class="form-control" [(ngModel)]="bookingForm.vehicleType" name="vehicleType" placeholder="e.g., Van, Bus, Car" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Vehicle Number *</label>
+              <input type="text" class="form-control" [(ngModel)]="bookingForm.vehicleNumber" name="vehicleNumber" placeholder="e.g., ABC-123" required>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Driver Name *</label>
+              <input type="text" class="form-control" [(ngModel)]="bookingForm.driverName" name="driverName" placeholder="Driver's full name" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Driver Contact</label>
+              <input type="text" class="form-control" [(ngModel)]="bookingForm.driverContact" name="driverContact" placeholder="Phone number">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Pickup Time</label>
+              <input type="time" class="form-control" [(ngModel)]="bookingForm.pickupTime" name="pickupTime">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Dropoff Time</label>
+              <input type="time" class="form-control" [(ngModel)]="bookingForm.dropoffTime" name="dropoffTime">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Actual Route</label>
+            <input type="text" class="form-control" [(ngModel)]="bookingForm.actualRoute" name="actualRoute" placeholder="Actual route taken">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Booking Reference</label>
+            <input type="text" class="form-control" [(ngModel)]="bookingForm.bookingReference" name="bookingReference" placeholder="Internal booking reference">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Additional Notes</label>
+            <textarea class="form-control" [(ngModel)]="bookingForm.additionalNotes" name="additionalNotes" rows="3" placeholder="Any additional notes or special instructions"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDialogs()" [disabled]="isLoading">Cancel</button>
+        <button type="button" class="btn btn-success" (click)="handleCompleteProcessing()"
+                [disabled]="isLoading || !bookingForm.vehicleType || !bookingForm.vehicleNumber || !bookingForm.driverName">
+          <span *ngIf="!isLoading">
+            <i class="bi bi-check-circle me-1"></i>
+            Assign Vehicle & Start Processing
+          </span>
+          <span *ngIf="isLoading">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Assigning...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Details Dialog -->
+<div class="modal fade" [class.show]="showDetailsDialog" [style.display]="showDetailsDialog ? 'block' : 'none'"
+     tabindex="-1" *ngIf="showDetailsDialog">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Transport Request Details</h5>
+        <button type="button" class="btn-close" (click)="closeDialogs()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="selectedRequest">
+          <p class="mb-2"><strong>Requestor:</strong> {{ selectedRequest.requestorName || 'N/A' }}</p>
+          <p class="mb-2"><strong>Department:</strong> {{ selectedRequest.department || 'N/A' }}</p>
+          <p class="mb-2"><strong>Purpose:</strong> {{ selectedRequest.purpose || 'N/A' }}</p>
+          <p class="mb-2"><strong>Status:</strong> <span [class]="getStatusColor(selectedRequest.status)">{{ selectedRequest.status }}</span></p>
+          <p class="mb-2"><strong>Submitted:</strong> {{ formatDate(selectedRequest.submittedAt) }}</p>
+          <hr>
+          <p class="mb-2"><strong>Transport Details:</strong></p>
+          <p>{{ formatTransportDetails(selectedRequest) }}</p>
+
+          <!-- Booking/Processing Details Section -->
+          <div *ngIf="selectedRequest.bookingDetails && (selectedRequest.status === 'Processing with Transport Admin' || selectedRequest.status === 'Completed')"
+               class="mt-4 p-3 rounded" [class.bg-success-subtle]="selectedRequest.status === 'Completed'"
+               [class.bg-info-subtle]="selectedRequest.status === 'Processing with Transport Admin'">
+            <h6 class="fw-bold mb-3">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              {{ selectedRequest.status === 'Completed' ? 'Booking Details' : 'Processing Details' }}
+            </h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="text-muted small">Vehicle Type</label>
+                  <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.vehicleType || 'N/A' }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="text-muted small">Vehicle Number</label>
+                  <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.vehicleNumber || 'N/A' }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="text-muted small">Driver Name</label>
+                  <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.driverName || 'N/A' }}</p>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <label class="text-muted small">Driver Contact</label>
+                  <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.driverContact || 'N/A' }}</p>
+                </div>
+              </div>
+              <div class="col-md-6" *ngIf="selectedRequest.bookingDetails.pickupTime">
+                <div class="detail-item">
+                  <label class="text-muted small">Pickup Time</label>
+                  <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.pickupTime }}</p>
+                </div>
+              </div>
+              <div class="col-md-6" *ngIf="selectedRequest.bookingDetails.dropoffTime">
+                <div class="detail-item">
+                  <label class="text-muted small">Dropoff Time</label>
+                  <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.dropoffTime }}</p>
+                </div>
+              </div>
+              <div class="col-12" *ngIf="selectedRequest.bookingDetails.actualRoute">
+                <div class="detail-item">
+                  <label class="text-muted small">Actual Route</label>
+                  <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.actualRoute }}</p>
+                </div>
+              </div>
+              <div class="col-md-6" *ngIf="selectedRequest.bookingDetails.bookingReference">
+                <div class="detail-item">
+                  <label class="text-muted small">Booking Reference</label>
+                  <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.bookingReference }}</p>
+                </div>
+              </div>
+              <div class="col-12" *ngIf="selectedRequest.bookingDetails.additionalNotes">
+                <div class="detail-item">
+                  <label class="text-muted small">Additional Notes</label>
+                  <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.additionalNotes }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDialogs()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showProcessingDialog || showCompletingDialog || showDetailsDialog"
+     *ngIf="showProcessingDialog || showCompletingDialog || showDetailsDialog"></div>

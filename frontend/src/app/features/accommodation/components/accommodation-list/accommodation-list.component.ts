@@ -6,7 +6,6 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AccommodationService, AccommodationRequest } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { AppSettingsService } from '../../../../core/services/app-settings.service';
 
 export const ACCOMMODATION_STATUSES = [
   'Draft',
@@ -48,8 +47,7 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
   constructor(
     private accommodationService: AccommodationService,
     private router: Router,
-    private toastService: ToastService,
-    private appSettingsService: AppSettingsService
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -139,9 +137,17 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/accommodation/edit', id]);
   }
 
+  private deleteConfirmId: number | null = null;
+  private deleteConfirmTimeout: any = null;
+
   deleteRequest(id: number, event: Event): void {
     event.stopPropagation();
-    if (confirm('Are you sure you want to delete this accommodation request?')) {
+
+    // If this is the second click on the same item within 3 seconds, proceed with deletion
+    if (this.deleteConfirmId === id) {
+      clearTimeout(this.deleteConfirmTimeout);
+      this.deleteConfirmId = null;
+
       this.accommodationService.deleteRequest(id).subscribe({
         next: () => {
           this.toastService.success('Accommodation request deleted successfully');
@@ -152,6 +158,15 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
           this.toastService.error('Failed to delete accommodation request');
         }
       });
+    } else {
+      // First click - show confirmation toast
+      this.deleteConfirmId = id;
+      this.toastService.warning('Click delete again to confirm deletion');
+
+      // Reset confirmation after 3 seconds
+      this.deleteConfirmTimeout = setTimeout(() => {
+        this.deleteConfirmId = null;
+      }, 3000);
     }
   }
 
@@ -178,23 +193,19 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
-  formatCurrency(amount: number | undefined): string {
-    if (!amount && amount !== 0) return '$0.00';
-    const currency = this.appSettingsService.getDefaultCurrency();
-    return new Intl.NumberFormat('en-MY', {
-      style: 'currency',
-      currency: currency
-    }).format(amount);
+  getCheckInDate(request: AccommodationRequest): string {
+    const checkInDate = request.additional_data?.requested_check_in_date;
+    if (!checkInDate) return 'N/A';
+    return this.formatDate(checkInDate);
+  }
+
+  getLocation(request: AccommodationRequest): string {
+    return request.additional_data?.location || '';
   }
 
   canEdit(request: AccommodationRequest): boolean {
     const status = request.status.toLowerCase();
     return status.includes('draft') || status.includes('pending');
-  }
-
-  canDelete(request: AccommodationRequest): boolean {
-    const status = request.status.toLowerCase();
-    return status.includes('draft') || status.includes('rejected') || status.includes('cancelled');
   }
 
   get totalPages(): number {
