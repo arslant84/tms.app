@@ -2,36 +2,19 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TransportService, TransportRequest, VehicleAssignment } from '../../transport/services/transport.service';
+import { TransportService, TransportRequest } from '../../transport/services/transport.service';
 import { ToastService } from '../../../core/services/toast.service';
 
-interface PendingTransport {
-  id: number;
-  request_number: string;
-  requestorName: string;
-  department: string;
-  purpose: string;
-  transportType: string;
-  passengers: number;
-  pickupLocation: string;
-  dropoffLocation: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  status: string;
-  requestedDate: string;
-}
-
-interface AssignedTransport {
-  id: number;
-  request_number: string;
-  requestorName: string;
-  vehicleNumber: string;
+interface BookingDetails {
   vehicleType: string;
+  vehicleNumber: string;
   driverName: string;
-  driverContact: string;
-  scheduledDate: string;
-  status: string;
-  assignmentDate: string;
+  driverContact?: string;
+  pickupTime?: string;
+  dropoffTime?: string;
+  actualRoute?: string;
+  bookingReference?: string;
+  additionalNotes?: string;
 }
 
 @Component({
@@ -42,38 +25,36 @@ interface AssignedTransport {
   styleUrl: './transport-processing.component.scss'
 })
 export class TransportProcessingComponent implements OnInit {
-  activeTab: 'pending' | 'assigned' = 'pending';
+  activeTab: 'approved' | 'processing' | 'completed' = 'approved';
 
-  // Pending Transport Requests
-  pendingTransports: PendingTransport[] = [];
-  isLoadingPending = false;
-  errorPending: string | null = null;
+  // Transport Requests by status
+  approvedRequests: TransportRequest[] = [];
+  processingRequests: TransportRequest[] = [];
+  completedRequests: TransportRequest[] = [];
 
-  // Assigned Transport Requests
-  assignedTransports: AssignedTransport[] = [];
-  isLoadingAssigned = false;
-
-  // Selected Request for processing
-  selectedRequest: PendingTransport | null = null;
+  // Loading states
+  isLoading = false;
   isProcessing = false;
+  error: string | null = null;
 
-  // Vehicle assignment form fields
-  vehicleData: VehicleAssignment = {
-    vehicle_number: '',
-    vehicle_type: 'COMPANY_VEHICLE',
-    vehicle_capacity: 4,
-    driver_name: '',
-    driver_contact: '',
-    driver_license: '',
-    assignment_date: new Date().toISOString().split('T')[0]
+  // Selected Request for dialogs
+  selectedRequest: TransportRequest | null = null;
+  showProcessingDialog = false;
+  showCompletingDialog = false;
+  showDetailsDialog = false;
+
+  // Booking form state
+  bookingForm: BookingDetails = {
+    vehicleType: '',
+    vehicleNumber: '',
+    driverName: '',
+    driverContact: '',
+    pickupTime: '',
+    dropoffTime: '',
+    actualRoute: '',
+    bookingReference: '',
+    additionalNotes: ''
   };
-
-  // Vehicle types
-  vehicleTypes = [
-    { value: 'COMPANY_VEHICLE', label: 'Company Vehicle' },
-    { value: 'HIRED_VEHICLE', label: 'Hired Vehicle' },
-    { value: 'RENTAL', label: 'Rental' }
-  ];
 
   constructor(
     private transportService: TransportService,
@@ -82,241 +63,255 @@ export class TransportProcessingComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.fetchPendingTransports();
-    this.fetchAssignedTransports();
+    this.fetchTransportRequests();
   }
 
   /**
-   * Fetch pending transport requests (Approved status)
+   * Fetch all transport requests by status
    */
-  fetchPendingTransports(): void {
-    this.isLoadingPending = true;
-    this.errorPending = null;
+  fetchTransportRequests(): void {
+    this.isLoading = true;
+    this.error = null;
 
-    this.transportService.getAllRequests({ status: 'Approved' }).subscribe({
+    // Fetch all requests and filter on client side for better reliability
+    this.transportService.getAllRequests({}).subscribe({
       next: (response: any) => {
-        const requests = response.results || response;
+        const allRequests = response.results || response || [];
 
-        this.pendingTransports = requests.map((req: any) => {
-          // Extract transport details from transportDetails array
-          const transportDetails = req.transportDetails || [];
-          const firstTransport = transportDetails[0] || {};
+        // Filter approved requests - those approved by HOD and ready for transport admin
+        this.approvedRequests = allRequests.filter((req: TransportRequest) => {
+          const status = req.status || '';
+          const statusLower = status.toLowerCase();
+          const hasVehicleAssignment = req.vehicle_assignments && req.vehicle_assignments.length > 0;
 
-          // Calculate total passengers
-          const totalPassengers = transportDetails.reduce(
-            (sum: number, detail: any) => sum + (detail.numberOfPassengers || 0),
-            0
+          // Include requests that are approved, not completed/rejected, and don't have a vehicle assigned yet
+          const isApproved = (
+            statusLower.includes('approved') &&
+            !statusLower.includes('processing') &&
+            !statusLower.includes('completed') &&
+            !statusLower.includes('rejected') &&
+            !hasVehicleAssignment  // Not yet processed
           );
-
-          return {
-            id: req.id,
-            request_number: req.request_number || `TRN-${req.id}`,
-            requestorName: req.requestorName || 'N/A',
-            department: req.department || 'N/A',
-            purpose: req.purpose || 'N/A',
-            transportType: firstTransport.transportType || 'N/A',
-            passengers: totalPassengers,
-            pickupLocation: firstTransport.pickupLocation || 'N/A',
-            dropoffLocation: firstTransport.dropoffLocation || 'N/A',
-            scheduledDate: firstTransport.departureDate || 'N/A',
-            scheduledTime: firstTransport.departureTime || 'N/A',
-            status: req.status,
-            requestedDate: req.createdAt || req.created_at
-          };
+          if (isApproved) {
+            console.log('✅ Approved Request:', req.request_number || req.id, 'Status:', status, 'Has Vehicle:', hasVehicleAssignment);
+          }
+          return isApproved;
         });
 
-        this.isLoadingPending = false;
+        // Filter processing requests - those with vehicle assignments (being processed)
+        this.processingRequests = allRequests.filter((req: TransportRequest) => {
+          const status = req.status || '';
+          const statusLower = status.toLowerCase();
+          const hasVehicleAssignment = req.vehicle_assignments && req.vehicle_assignments.length > 0;
+
+          // Exclude completed requests from processing tab
+          const isCompleted = statusLower === 'completed';
+
+          // Show in processing if:
+          // 1. Status includes "processing", OR
+          // 2. Request has vehicle assignment (vehicle assigned = being processed)
+          // BUT NOT if status is "Completed"
+          const isProcessing = !isCompleted && (statusLower.includes('processing') || hasVehicleAssignment);
+
+          if (isProcessing) {
+            console.log('🔄 Processing Request:', req.request_number || req.id, 'Status:', status, 'Has Vehicle:', hasVehicleAssignment);
+          }
+          return isProcessing;
+        });
+
+        // Filter completed requests
+        this.completedRequests = allRequests.filter((req: TransportRequest) => {
+          const status = req.status || '';
+          const statusLower = status.toLowerCase();
+          const isCompleted = statusLower === 'completed';
+          if (isCompleted) {
+            console.log('✔️ Completed Request:', req.request_number || req.id, 'Status:', status);
+          }
+          return isCompleted;
+        });
+
+        console.log('🚀 Transport Processing Stats:', {
+          approved: this.approvedRequests.length,
+          processing: this.processingRequests.length,
+          completed: this.completedRequests.length,
+          total: allRequests.length,
+          allStatuses: allRequests.map((req: any) => ({ id: req.request_number || req.id, status: req.status }))
+        });
+
+        this.isLoading = false;
       },
       error: (err) => {
-        console.error('Failed to fetch pending transport requests:', err);
-        this.errorPending = 'Failed to load pending requests. Please try again.';
-        this.pendingTransports = [];
-        this.isLoadingPending = false;
+        console.error('Failed to fetch transport requests:', err);
+        this.error = 'Failed to load transport requests';
+        this.isLoading = false;
       }
     });
   }
 
   /**
-   * Fetch assigned transport requests (Processing with Transport Admin status)
+   * Handle starting transport processing
+   * Opens the booking form to assign vehicle details
    */
-  fetchAssignedTransports(): void {
-    this.isLoadingAssigned = true;
-
-    this.transportService.getAllRequests({ status: 'Processing with Transport Admin' }).subscribe({
-      next: (response: any) => {
-        const requests = response.results || response;
-
-        this.assignedTransports = requests.map((req: any) => {
-          // Extract vehicle assignment data
-          const vehicleInfo = req.vehicle_assignment || {};
-          const transportDetails = req.transportDetails || [];
-          const firstTransport = transportDetails[0] || {};
-
-          return {
-            id: req.id,
-            request_number: req.request_number || `TRN-${req.id}`,
-            requestorName: req.requestorName || 'N/A',
-            vehicleNumber: vehicleInfo.vehicle_number || 'N/A',
-            vehicleType: vehicleInfo.vehicle_type || 'N/A',
-            driverName: vehicleInfo.driver_name || 'N/A',
-            driverContact: vehicleInfo.driver_contact || 'N/A',
-            scheduledDate: firstTransport.departureDate || 'N/A',
-            status: req.status,
-            assignmentDate: vehicleInfo.assignment_date || req.updated_at
-          };
-        });
-
-        this.isLoadingAssigned = false;
-      },
-      error: (err) => {
-        console.error('Failed to fetch assigned transport requests:', err);
-        this.assignedTransports = [];
-        this.isLoadingAssigned = false;
-      }
-    });
+  handleStartProcessing(): void {
+    // Close the confirmation dialog and open the booking form
+    this.showProcessingDialog = false;
+    this.showCompletingDialog = true;
+    // selectedRequest is already set from openProcessingDialog
   }
 
   /**
-   * Select transport request for processing
+   * Handle completing transport processing with booking details
+   * Assigns vehicle details and saves booking details to request
    */
-  selectRequest(request: PendingTransport): void {
-    this.selectedRequest = request;
-    this.resetFormFields();
+  handleCompleteProcessing(): void {
+    if (!this.selectedRequest) return;
 
-    // Pre-fill the assignment date with scheduled date if available
-    if (request.scheduledDate && request.scheduledDate !== 'N/A') {
-      this.vehicleData.assignment_date = request.scheduledDate;
+    // Validate required fields
+    if (!this.bookingForm.vehicleType || !this.bookingForm.vehicleNumber || !this.bookingForm.driverName) {
+      this.toastService.error('Please fill in vehicle type, vehicle number, and driver name');
+      return;
     }
+
+    this.isLoading = true;
+
+    // Prepare booking details to save to transport request
+    const bookingDetails = {
+      vehicle_type: this.bookingForm.vehicleType,
+      vehicle_number: this.bookingForm.vehicleNumber,
+      driver_name: this.bookingForm.driverName,
+      driver_contact: this.bookingForm.driverContact || '',
+      pickup_time: this.bookingForm.pickupTime || '',
+      dropoff_time: this.bookingForm.dropoffTime || '',
+      actual_route: this.bookingForm.actualRoute || '',
+      booking_reference: this.bookingForm.bookingReference || '',
+      additional_notes: this.bookingForm.additionalNotes || ''
+    };
+
+    // Prepare vehicle assignment data (for VehicleAssignment model)
+    const vehicleData = {
+      vehicle_type: this.bookingForm.vehicleType,
+      vehicle_number: this.bookingForm.vehicleNumber,
+      driver_name: this.bookingForm.driverName,
+      driver_contact: this.bookingForm.driverContact || '',
+      driver_license: '', // Optional
+      vehicle_capacity: 4, // Default capacity
+      status: 'Assigned' // Initial status
+    };
+
+    // First, assign vehicle (creates VehicleAssignment entry)
+    this.transportService.assignVehicle(this.selectedRequest.id, vehicleData).subscribe({
+      next: (vehicleAssignment) => {
+        console.log('✅ Vehicle assigned successfully:', vehicleAssignment);
+
+        // Then, update transport request with booking details
+        this.transportService.updateRequest(this.selectedRequest!.id, {
+          booking_details: bookingDetails
+        }).subscribe({
+          next: () => {
+            console.log('✅ Booking details saved successfully');
+            this.toastService.success(`Vehicle assigned and booking details saved! Request moved to processing.`);
+            this.showCompletingDialog = false;
+            this.selectedRequest = null;
+            this.resetBookingForm();
+
+            // Refresh to show the request in the Processing tab
+            setTimeout(() => {
+              console.log('🔄 Refreshing transport requests after vehicle assignment...');
+              this.fetchTransportRequests();
+              this.isLoading = false;
+            }, 500);
+          },
+          error: (err) => {
+            console.error('❌ Failed to save booking details:', err);
+            this.toastService.error('Vehicle assigned but failed to save booking details: ' + (err.error?.message || err.message));
+            this.isLoading = false;
+            this.fetchTransportRequests(); // Still refresh to show vehicle assignment
+          }
+        });
+      },
+      error: (err) => {
+        console.error('❌ Failed to assign vehicle:', err);
+        this.toastService.error('Failed to assign vehicle: ' + (err.error?.message || err.message));
+        this.isLoading = false;
+      }
+    });
   }
 
   /**
-   * Reset form fields
+   * Reset booking form
    */
-  resetFormFields(): void {
-    this.vehicleData = {
-      vehicle_number: '',
-      vehicle_type: 'COMPANY_VEHICLE',
-      vehicle_capacity: 4,
-      driver_name: '',
-      driver_contact: '',
-      driver_license: '',
-      assignment_date: new Date().toISOString().split('T')[0]
+  resetBookingForm(): void {
+    this.bookingForm = {
+      vehicleType: '',
+      vehicleNumber: '',
+      driverName: '',
+      driverContact: '',
+      pickupTime: '',
+      dropoffTime: '',
+      actualRoute: '',
+      bookingReference: '',
+      additionalNotes: ''
     };
   }
 
   /**
-   * Assign vehicle to transport request
+   * Format transport details for display
    */
-  assignVehicle(): void {
-    if (!this.selectedRequest) {
-      this.toastService.error('No request selected');
-      return;
+  formatTransportDetails(request: TransportRequest): string {
+    if (!request.transportDetails || request.transportDetails.length === 0) {
+      return 'No details available';
     }
 
-    if (!this.vehicleData.vehicle_number || !this.vehicleData.driver_name || !this.vehicleData.driver_contact) {
-      this.toastService.error('Please fill in all required fields');
-      return;
-    }
-
-    this.isProcessing = true;
-
-    this.transportService.assignVehicle(this.selectedRequest.id, this.vehicleData).subscribe({
-      next: () => {
-        this.toastService.success(`Vehicle assigned successfully for ${this.selectedRequest!.requestorName}`);
-        this.fetchPendingTransports();
-        this.fetchAssignedTransports();
-        this.selectedRequest = null;
-        this.resetFormFields();
-        this.isProcessing = false;
-      },
-      error: (err) => {
-        this.toastService.error('Failed to assign vehicle: ' + (err.error?.message || err.message || 'Unknown error'));
-        this.isProcessing = false;
-      }
-    });
+    return request.transportDetails.map(detail =>
+      `${detail.from || 'N/A'} → ${detail.to || 'N/A'} (${detail.departureTime || 'N/A'}, ${detail.numberOfPassengers || 0} pax)`
+    ).join('; ');
   }
 
   /**
-   * Reject transport request (No vehicles available)
+   * Get status color class
    */
-  noVehiclesAvailable(): void {
-    if (!this.selectedRequest) {
-      this.toastService.error('No request selected');
-      return;
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'Approved': return 'badge bg-primary';
+      case 'Processing with Transport Admin': return 'badge bg-warning';
+      case 'Completed': return 'badge bg-success';
+      default: return 'badge bg-secondary';
     }
-
-    if (!confirm(`Reject transport request ${this.selectedRequest.request_number} due to no available vehicles?`)) {
-      return;
-    }
-
-    this.isProcessing = true;
-
-    this.transportService.rejectRequest(
-      this.selectedRequest.id,
-      'No vehicles available for requested dates. Request rejected by Transport Admin.'
-    ).subscribe({
-      next: () => {
-        this.toastService.success(`Request ${this.selectedRequest!.request_number} rejected due to no available vehicles`);
-        this.fetchPendingTransports();
-        this.selectedRequest = null;
-        this.resetFormFields();
-        this.isProcessing = false;
-      },
-      error: (err) => {
-        this.toastService.error('Failed to reject request: ' + (err.error?.message || err.message || 'Unknown error'));
-        this.isProcessing = false;
-      }
-    });
   }
 
   /**
-   * Complete transport request
+   * Switch active tab
    */
-  completeTransport(transport: AssignedTransport): void {
-    if (!confirm(`Mark transport request ${transport.request_number} as completed?`)) {
-      return;
-    }
-
-    this.isProcessing = true;
-
-    this.transportService.completeRequest(transport.id).subscribe({
-      next: () => {
-        this.toastService.success(`Request ${transport.request_number} marked as completed`);
-        this.fetchPendingTransports();
-        this.fetchAssignedTransports();
-        this.isProcessing = false;
-      },
-      error: (err) => {
-        this.toastService.error('Failed to complete request: ' + (err.error?.message || err.message || 'Unknown error'));
-        this.isProcessing = false;
-      }
-    });
-  }
-
-  /**
-   * Switch tab
-   */
-  switchTab(tab: 'pending' | 'assigned'): void {
+  switchTab(tab: 'approved' | 'processing' | 'completed'): void {
     this.activeTab = tab;
-    if (tab === 'pending' && this.pendingTransports.length === 0) {
-      this.fetchPendingTransports();
-    } else if (tab === 'assigned' && this.assignedTransports.length === 0) {
-      this.fetchAssignedTransports();
-    }
   }
 
   /**
-   * View request details
+   * Open dialogs
    */
-  viewRequest(requestId: number): void {
-    this.router.navigate(['/transport', requestId]);
+  openProcessingDialog(request: TransportRequest): void {
+    this.selectedRequest = request;
+    this.showProcessingDialog = true;
+  }
+
+  openCompletingDialog(request: TransportRequest): void {
+    this.selectedRequest = request;
+    this.showCompletingDialog = true;
+  }
+
+  openDetailsDialog(request: TransportRequest): void {
+    this.selectedRequest = request;
+    this.showDetailsDialog = true;
   }
 
   /**
-   * Navigate back to overview
+   * Close dialogs
    */
-  goToOverview(): void {
-    this.router.navigate(['/admin/transport']);
+  closeDialogs(): void {
+    this.showProcessingDialog = false;
+    this.showCompletingDialog = false;
+    this.showDetailsDialog = false;
+    this.selectedRequest = null;
   }
 
   /**
@@ -333,14 +328,17 @@ export class TransportProcessingComponent implements OnInit {
   }
 
   /**
-   * Get status badge class
+   * Navigate back to transport admin
    */
-  getStatusClass(status: string): string {
-    const statusLower = status.toLowerCase();
-    if (statusLower === 'approved') return 'badge-success';
-    if (statusLower.includes('processing')) return 'badge-info';
-    if (statusLower === 'completed') return 'badge-success';
-    return 'badge-secondary';
+  goBack(): void {
+    this.router.navigate(['/admin/transport']);
+  }
+
+  /**
+   * View request details
+   */
+  viewRequest(requestId: number | string): void {
+    this.router.navigate(['/transport', requestId]);
   }
 
   /**
@@ -356,17 +354,27 @@ export class TransportProcessingComponent implements OnInit {
   }
 
   /**
-   * Retry loading pending transports
+   * Complete transport request
+   * Updates status to "Completed"
    */
-  retryPending(): void {
-    this.fetchPendingTransports();
-  }
+  completeTransport(transport: any): void {
+    if (!confirm(`Mark transport request ${transport.request_number || transport.id} as completed?`)) {
+      return;
+    }
 
-  /**
-   * Cancel selection
-   */
-  cancelSelection(): void {
-    this.selectedRequest = null;
-    this.resetFormFields();
+    this.isProcessing = true;
+
+    // Use the proper workflow action to complete the request
+    this.transportService.completeRequest(transport.id).subscribe({
+      next: () => {
+        this.toastService.success(`Request ${transport.request_number || transport.id} marked as completed`);
+        this.fetchTransportRequests();
+        this.isProcessing = false;
+      },
+      error: (err) => {
+        this.toastService.error('Failed to complete request: ' + (err.error?.message || err.message));
+        this.isProcessing = false;
+      }
+    });
   }
 }

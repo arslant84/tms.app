@@ -37,8 +37,8 @@ export interface AccommodationRequest {
   cost_center?: string;
   tel_email?: string;
   email?: string;
+  trf?: number;
   status: string;
-  estimated_cost?: number;
   additional_comments?: string;
   submitted_at?: string;
   created_at: string;

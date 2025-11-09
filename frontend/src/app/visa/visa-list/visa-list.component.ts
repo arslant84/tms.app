@@ -6,6 +6,7 @@ import { Subject, debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
 import { VisaService, VisaApplication } from '../visa.service';
 import { WorkflowService } from '../../core/services/workflow.service';
 import { WorkflowInstanceList } from '../../core/models/workflow.models';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-visa-list',
@@ -57,7 +58,8 @@ export class VisaListComponent implements OnInit, OnDestroy {
 
   constructor(
     private visaService: VisaService,
-    public workflowService: WorkflowService
+    public workflowService: WorkflowService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -180,18 +182,36 @@ export class VisaListComponent implements OnInit, OnDestroy {
     // Navigation handled by routerLink in template
   }
 
+  private deleteConfirmId: number | null = null;
+  private deleteConfirmTimeout: any = null;
+
   deleteApplication(id: number, event: Event): void {
     event.stopPropagation();
-    if (confirm('Are you sure you want to delete this visa application?')) {
+
+    // If this is the second click on the same item within 3 seconds, proceed with deletion
+    if (this.deleteConfirmId === id) {
+      clearTimeout(this.deleteConfirmTimeout);
+      this.deleteConfirmId = null;
+
       this.visaService.deleteApplication(id).subscribe({
         next: () => {
+          this.toastService.success('Visa application deleted successfully');
           this.fetchApplications();
         },
         error: (error) => {
           console.error('Error deleting visa application:', error);
-          alert('Failed to delete visa application');
+          this.toastService.error('Failed to delete visa application');
         }
       });
+    } else {
+      // First click - show confirmation toast
+      this.deleteConfirmId = id;
+      this.toastService.warning('Click delete again to confirm deletion');
+
+      // Reset confirmation after 3 seconds
+      this.deleteConfirmTimeout = setTimeout(() => {
+        this.deleteConfirmId = null;
+      }, 3000);
     }
   }
 

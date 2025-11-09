@@ -64,6 +64,8 @@ export interface TransportRequestForm extends TransportRequestData, TransportApp
   status: TransportRequestStatus;
   approvalWorkflow: TransportApprovalStep[];
   approval_steps?: any[]; // Legacy field for backward compatibility
+  vehicle_assignments?: any[]; // Vehicle assignments for transport processing
+  createdAt?: Date | string;
   submittedAt?: Date | string;
   updatedAt?: Date | string;
   createdBy?: string;
@@ -152,6 +154,7 @@ export function toBackendFormat(frontendData: Partial<TransportRequestForm>): an
 export function toFrontendFormat(backendData: any): TransportRequestForm {
   return {
     id: backendData.id?.toString() || '',
+    request_number: backendData.request_number,
 
     // Requestor info
     requestorName: backendData.requestor_name || backendData.requestor?.get_full_name || '',
@@ -194,6 +197,9 @@ export function toFrontendFormat(backendData: any): TransportRequestForm {
     // Legacy approval_steps for backward compatibility
     approval_steps: backendData.approval_steps || backendData.approval_workflow || [],
 
+    // Vehicle assignments
+    vehicle_assignments: backendData.vehicle_assignments || [],
+
     // Booking details
     bookingDetails: backendData.booking_details ? {
       vehicleType: backendData.booking_details.vehicle_type,
@@ -208,6 +214,7 @@ export function toFrontendFormat(backendData: any): TransportRequestForm {
     } : undefined,
 
     // Timestamps
+    createdAt: backendData.created_at,
     submittedAt: backendData.submitted_at,
     updatedAt: backendData.updated_at,
     createdBy: backendData.created_by,

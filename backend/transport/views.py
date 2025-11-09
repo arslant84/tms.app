@@ -113,6 +113,23 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         if status_value in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
             extra_kwargs['submitted_at'] = timezone.now()
 
+            # Generate request number if submitting directly (not Draft)
+            if not validated_data.get('request_number'):
+                try:
+                    from utils.request_id_generator import generate_request_id, extract_context_from_transport
+
+                    # Extract context from transport_details
+                    transport_details = validated_data.get('transport_details', [])
+                    context = extract_context_from_transport(transport_details) if transport_details else 'TRN'
+
+                    # Generate unique request number
+                    request_number = generate_request_id('TRN', context)
+                    extra_kwargs['request_number'] = request_number
+                    print(f"✅ Generated request number during creation: {request_number}")
+                except Exception as e:
+                    print(f"❌ Error generating request number: {str(e)}")
+                    # Will be generated later if needed
+
         # Save the transport request
         transport_request = serializer.save(requestor=user, **extra_kwargs)
 
@@ -169,17 +186,19 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # Generate request number if it doesn't exist
         if not transport_request.request_number:
             try:
-                # Extract context from first transport detail's destination
-                context = 'TRN'
-                if transport_request.transport_details and len(transport_request.transport_details) > 0:
-                    first_detail = transport_request.transport_details[0]
-                    destination = first_detail.get('to') or first_detail.get('to_location') or ''
-                    if destination:
-                        context = destination  # Let generate_request_id handle validation and length
+                # Extract context from transport_details JSON (first destination)
+                from utils.request_id_generator import extract_context_from_transport
 
-                print(f"🔍 Extracted context for Transport Request #{transport_request.id}: {context}")
+                # transport_details is a JSON array, convert to list format for extraction
+                transport_details = transport_request.transport_details or []
 
-                # Generate unique request number (will auto-validate and limit context to 5 chars)
+                print(f"🔍 Transport details for TRN #{transport_request.id}: {transport_details}")
+
+                # Extract context (first destination from transport_details)
+                context = extract_context_from_transport(transport_details) if transport_details else 'TRN'
+                print(f"🔍 Extracted context: {context}")
+
+                # Generate unique request number
                 request_number = generate_request_id('TRN', context)
                 transport_request.request_number = request_number
                 print(f"✅ Generated request number: {request_number}")
@@ -488,6 +507,41 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
 
         # Update status
         transport_request.status = 'Cancelled'
+        transport_request.save()
+
+        serializer = TransportRequestDetailSerializer(transport_request)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def complete(self, request, pk=None):
+        """
+        Mark a transport request as completed (by transport admin only)
+        """
+        transport_request = self.get_object()
+
+        # Validate user is admin/staff
+        if not request.user.is_staff:
+            return Response(
+                {'error': 'Only transport admin can mark requests as completed'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Validate status - can only complete approved or processing requests
+        if transport_request.status not in ['Approved', 'Processing with Transport Admin']:
+            return Response(
+                {'error': f'Cannot complete transport request with status {transport_request.status}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate that vehicle has been assigned
+        if not transport_request.vehicle_assignments.exists():
+            return Response(
+                {'error': 'Cannot complete request without vehicle assignment'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update status
+        transport_request.status = 'Completed'
         transport_request.save()
 
         serializer = TransportRequestDetailSerializer(transport_request)

@@ -148,45 +148,76 @@
         </div>
       </section>
 
-      <!-- Booking Details (if assigned by admin) -->
-      <section class="detail-section" *ngIf="request.bookingDetails">
-        <h3 class="section-title">
-          <i class="bi bi-car-front-fill"></i>
-          Booking Details
+      <!-- Transport Processing Details (if assigned by admin) -->
+      <section class="detail-section" *ngIf="request.bookingDetails && (request.status === 'Processing with Transport Admin' || request.status === 'Completed')">
+        <h3 class="section-title mb-3">
+          <i class="bi bi-check-circle-fill me-2 text-success"></i>
+          Transport Processing Details
         </h3>
-        <div class="detail-grid">
-          <div class="detail-item" *ngIf="request.bookingDetails.vehicleType">
-            <label>Vehicle Type</label>
-            <p>{{ request.bookingDetails.vehicleType }}</p>
+        <div class="p-4 rounded bg-success-subtle">
+          <div class="row g-4">
+            <!-- Row 1 -->
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Vehicle Type</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.vehicleType || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Vehicle Number</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.vehicleNumber || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Driver Name</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.driverName || 'N/A' }}</p>
+              </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Driver Contact</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.driverContact || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Pickup Time</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.pickupTime || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Dropoff Time</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.dropoffTime || 'N/A' }}</p>
+              </div>
+            </div>
+
+            <!-- Row 3 - Full width fields -->
+            <div class="col-12" *ngIf="request.bookingDetails.actualRoute">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Actual Route</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.actualRoute }}</p>
+              </div>
+            </div>
+
+            <div class="col-12" *ngIf="request.bookingDetails.bookingReference">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Booking Reference</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.bookingReference }}</p>
+              </div>
+            </div>
+
+            <div class="col-12" *ngIf="request.bookingDetails.additionalNotes">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Transport Admin Notes</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.additionalNotes }}</p>
+              </div>
+            </div>
           </div>
-          <div class="detail-item" *ngIf="request.bookingDetails.vehicleNumber">
-            <label>Vehicle Number</label>
-            <p>{{ request.bookingDetails.vehicleNumber }}</p>
-          </div>
-          <div class="detail-item" *ngIf="request.bookingDetails.driverName">
-            <label>Driver Name</label>
-            <p>{{ request.bookingDetails.driverName }}</p>
-          </div>
-          <div class="detail-item" *ngIf="request.bookingDetails.driverContact">
-            <label>Driver Contact</label>
-            <p>{{ request.bookingDetails.driverContact }}</p>
-          </div>
-          <div class="detail-item" *ngIf="request.bookingDetails.pickupTime">
-            <label>Pickup Time</label>
-            <p>{{ request.bookingDetails.pickupTime }}</p>
-          </div>
-          <div class="detail-item" *ngIf="request.bookingDetails.dropoffTime">
-            <label>Dropoff Time</label>
-            <p>{{ request.bookingDetails.dropoffTime }}</p>
-          </div>
-        </div>
-        <div *ngIf="request.bookingDetails.actualRoute" class="purpose-text">
-          <label>Route</label>
-          <p>{{ request.bookingDetails.actualRoute }}</p>
-        </div>
-        <div *ngIf="request.bookingDetails.additionalNotes" class="purpose-text">
-          <label>Notes</label>
-          <p>{{ request.bookingDetails.additionalNotes }}</p>
         </div>
       </section>
 

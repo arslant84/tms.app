@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TransportService, TransportRequest, VehicleAssignment } from '../../transport/services/transport.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AppSettingsService } from '../../../core/services/app-settings.service';
@@ -9,7 +9,7 @@ import { AppSettingsService } from '../../../core/services/app-settings.service'
 @Component({
   selector: 'app-transport-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './transport-admin.component.html',
   styleUrl: './transport-admin.component.scss'
 })
@@ -17,6 +17,12 @@ export class TransportAdminComponent implements OnInit {
   requests: TransportRequest[] = [];
   filteredRequests: TransportRequest[] = [];
   selectedRequest: TransportRequest | null = null;
+
+  // Stats
+  totalRequestsCount = 0;
+  pendingReviewCount = 0;
+  approvedCount = 0;
+  processingCount = 0;
 
   // Filter criteria
   filterCriteria = {
@@ -102,6 +108,7 @@ export class TransportAdminComponent implements OnInit {
         this.requests = response.results || response;
         this.totalRequests = response.count || this.requests.length;
         this.filteredRequests = [...this.requests];
+        this.calculateStats();
         this.loading = false;
       },
       error: (err) => {
@@ -110,6 +117,24 @@ export class TransportAdminComponent implements OnInit {
         console.error('Error loading requests:', err);
       }
     });
+  }
+
+  /**
+   * Calculate statistics for dashboard cards
+   */
+  calculateStats(): void {
+    this.totalRequestsCount = this.requests.length;
+    this.pendingReviewCount = this.requests.filter(req =>
+      req.status?.toLowerCase().includes('pending')
+    ).length;
+    this.approvedCount = this.requests.filter(req =>
+      req.status?.toLowerCase().includes('approved') &&
+      !req.status?.toLowerCase().includes('processing')
+    ).length;
+    this.processingCount = this.requests.filter(req =>
+      req.status === 'Processing with Transport Admin' ||
+      req.status === 'Completed'
+    ).length;
   }
 
   /**

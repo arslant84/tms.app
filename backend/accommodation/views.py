@@ -141,6 +141,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
     - POST /api/accommodation/requests/{id}/submit/ - Submit request
     - POST /api/accommodation/requests/{id}/approve/ - Approve request
     - POST /api/accommodation/requests/{id}/reject/ - Reject request
+    - POST /api/accommodation/requests/{id}/cancel/ - Cancel request
     """
     queryset = AccommodationRequest.objects.all()
     serializer_class = AccommodationRequestSerializer
@@ -176,6 +177,24 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
         extra_kwargs = {}
         if status_value in ['Pending', 'Submitted']:
             extra_kwargs['submitted_at'] = timezone.now()
+
+            # Generate request number if submitting directly (not Draft)
+            if not serializer.validated_data.get('request_number'):
+                try:
+                    from utils.request_id_generator import generate_request_id, extract_context_from_location
+
+                    # Extract context from additional_data location
+                    additional_data = serializer.validated_data.get('additional_data', {})
+                    location = additional_data.get('location', '') if isinstance(additional_data, dict) else ''
+                    context = extract_context_from_location(location) if location else 'ACCOM'
+
+                    # Generate unique request number
+                    request_number = generate_request_id('ACCOM', context)
+                    extra_kwargs['request_number'] = request_number
+                    print(f"✅ Generated request number during creation: {request_number}")
+                except Exception as e:
+                    print(f"❌ Error generating request number: {str(e)}")
+                    # Will be generated later if needed
 
         # Save the accommodation request
         accommodation_request = serializer.save(**extra_kwargs)
@@ -397,6 +416,23 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 {'error': f'Failed to process rejection: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """Cancel an accommodation request"""
+        accommodation_request = self.get_object()
+
+        if accommodation_request.status in ['Approved', 'Completed']:
+            return Response(
+                {'error': 'Approved or completed accommodation requests cannot be cancelled'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        accommodation_request.status = 'Cancelled'
+        accommodation_request.save()
+
+        serializer = self.get_serializer(accommodation_request)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='pending-approvals')
     def pending_approvals(self, request):

@@ -151,9 +151,17 @@ export class TransportListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/transport/edit', id]);
   }
 
+  private deleteConfirmId: number | string | null = null;
+  private deleteConfirmTimeout: any = null;
+
   deleteRequest(id: number | string, event: Event): void {
     event.stopPropagation();
-    if (confirm('Are you sure you want to delete this transport request?')) {
+
+    // If this is the second click on the same item within 3 seconds, proceed with deletion
+    if (this.deleteConfirmId === id) {
+      clearTimeout(this.deleteConfirmTimeout);
+      this.deleteConfirmId = null;
+
       this.transportService.deleteRequest(id).subscribe({
         next: () => {
           this.toastService.success('Transport request deleted successfully');
@@ -164,6 +172,15 @@ export class TransportListComponent implements OnInit, OnDestroy {
           this.toastService.error('Failed to delete transport request');
         }
       });
+    } else {
+      // First click - show confirmation toast
+      this.deleteConfirmId = id;
+      this.toastService.warning('Click delete again to confirm deletion');
+
+      // Reset confirmation after 3 seconds
+      this.deleteConfirmTimeout = setTimeout(() => {
+        this.deleteConfirmId = null;
+      }, 3000);
     }
   }
 

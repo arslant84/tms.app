@@ -177,3 +177,63 @@ class ApplicationSetting(models.Model):
         )
         setting.set_value(value)
         return setting
+
+
+class AdminActionLog(models.Model):
+    """
+    Audit log for administrative override actions.
+    Tracks when admins bypass normal workflows or permissions.
+    """
+    ACTION_TYPES = (
+        ('approval_override', 'Approval Workflow Override'),
+        ('permission_override', 'Permission Override'),
+        ('data_modification', 'Direct Data Modification'),
+        ('settings_change', 'Settings Change'),
+        ('user_modification', 'User Account Modification'),
+        ('other', 'Other Administrative Action'),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='admin_actions')
+    action_type = models.CharField(max_length=50, choices=ACTION_TYPES)
+    entity_type = models.CharField(max_length=255, help_text='Type of entity affected (e.g., TransportRequest, TravelRequest)')
+    entity_id = models.CharField(max_length=255, help_text='ID of the affected entity')
+    description = models.TextField(help_text='Description of the action taken')
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Admin Action Log'
+        verbose_name_plural = 'Admin Action Logs'
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['admin', '-created_at']),
+            models.Index(fields=['action_type', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.admin.email if self.admin else 'Unknown'} - {self.action_type} - {self.created_at}"
+
+    @staticmethod
+    def log_action(admin, action_type, entity_type, entity_id, description, request=None):
+        """Helper method to create an audit log entry"""
+        log_data = {
+            'admin': admin,
+            'action_type': action_type,
+            'entity_type': entity_type,
+            'entity_id': str(entity_id),
+            'description': description,
+        }
+
+        # Extract IP address and user agent from request if available
+        if request:
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                log_data['ip_address'] = x_forwarded_for.split(',')[0]
+            else:
+                log_data['ip_address'] = request.META.get('REMOTE_ADDR')
+            log_data['user_agent'] = request.META.get('HTTP_USER_AGENT', '')
+
+        return AdminActionLog.objects.create(**log_data)

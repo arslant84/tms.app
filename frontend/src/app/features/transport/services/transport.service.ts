@@ -81,9 +81,9 @@ export class TransportService {
     );
   }
 
-  // Update existing transport request
+  // Update existing transport request (partial update)
   updateRequest(id: number | string, data: any): Observable<TransportRequestForm> {
-    return this.http.put<any>(`${this.apiUrl}/${id}/`, data).pipe(
+    return this.http.patch<any>(`${this.apiUrl}/${id}/`, data).pipe(
       map(response => toFrontendFormat(response))
     );
   }
@@ -120,6 +120,11 @@ export class TransportService {
 
   // Assign vehicle to transport request
   assignVehicle(id: number | string, data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/${id}/assign_vehicle/`, data);
+    // Create vehicle assignment through the vehicle-assignments endpoint
+    const vehicleAssignmentData = {
+      transport_request: id,
+      ...data
+    };
+    return this.http.post(`${environment.apiUrl}/transport/vehicle-assignments/`, vehicleAssignmentData);
   }
 }

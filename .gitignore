@@ -71,8 +71,10 @@ out-tsc/
 .DS_Store
 
 # ========== Environment Files ==========
+# SECURITY: Never commit environment files with secrets
 .env
 .env.local
+.env.production
 .env.*.local
 
 # ========== OS Files ==========

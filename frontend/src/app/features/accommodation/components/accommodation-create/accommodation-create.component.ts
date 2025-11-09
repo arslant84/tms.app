@@ -6,6 +6,7 @@ import { AccommodationService } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { TrfService } from '../../../trf-management/services/trf.service';
 
 @Component({
   selector: 'app-accommodation-create',
@@ -21,6 +22,11 @@ export class AccommodationCreateComponent implements OnInit {
   loading = false;
   submitting = false;
 
+  // TRF/TSR selection
+  availableTrfs: any[] = [];
+  loadingTrfs = false;
+  selectedTrfDetails: any = null;
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -28,11 +34,13 @@ export class AccommodationCreateComponent implements OnInit {
     private accommodationService: AccommodationService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private trfService: TrfService
   ) {}
 
   ngOnInit(): void {
     this.initForm();
+    this.loadAvailableTrfs();
 
     // Check if we're in edit mode
     this.route.params.subscribe(params => {
@@ -45,6 +53,32 @@ export class AccommodationCreateComponent implements OnInit {
         this.populateUserDetails();
       }
     });
+  }
+
+  loadAvailableTrfs(): void {
+    this.loadingTrfs = true;
+    this.trfService.getAllTrfs({ page_size: 1000 }).subscribe({
+      next: (response: any) => {
+        // Handle both paginated and non-paginated responses
+        const trfs = response.results || response;
+        this.availableTrfs = Array.isArray(trfs) ? trfs : [];
+        this.loadingTrfs = false;
+      },
+      error: (err) => {
+        console.error('Error loading TRFs:', err);
+        this.availableTrfs = [];
+        this.loadingTrfs = false;
+      }
+    });
+  }
+
+  onTrfChange(event: any): void {
+    const trfId = event.target.value;
+    if (trfId) {
+      this.selectedTrfDetails = this.availableTrfs.find(trf => trf.id === +trfId);
+    } else {
+      this.selectedTrfDetails = null;
+    }
   }
 
   private populateUserDetails(): void {
@@ -82,13 +116,15 @@ export class AccommodationCreateComponent implements OnInit {
     this.loading = true;
     this.accommodationService.getRequestById(id).subscribe({
       next: (request: any) => {
+        const trfValue = request.trf || request.additional_data?.trf_id || request.additional_data?.trf;
+
         this.accommodationForm.patchValue({
           requestorName: request.requestor_name,
           requestorId: request.staff_id,
           requestorGender: request.requestor_gender || request.additional_data?.requestor_gender,
           department: request.department,
           location: request.location || request.additional_data?.location,
-          trfId: request.trf,
+          trfId: trfValue,
           requestedCheckInDate: request.requested_check_in_date || request.additional_data?.requested_check_in_date,
           requestedCheckOutDate: request.requested_check_out_date || request.additional_data?.requested_check_out_date,
           requestedRoomType: request.requested_room_type || request.additional_data?.requested_room_type,
@@ -96,6 +132,12 @@ export class AccommodationCreateComponent implements OnInit {
           flightDepartureTime: request.flight_departure_time || request.additional_data?.flight_departure_time,
           specialRequests: request.special_requests || request.additional_data?.special_requests
         });
+
+        // Set selected TRF details for display
+        if (trfValue && this.availableTrfs.length > 0) {
+          this.selectedTrfDetails = this.availableTrfs.find(trf => trf.id === +trfValue);
+        }
+
         this.loading = false;
       },
       error: (err) => {
@@ -136,7 +178,18 @@ export class AccommodationCreateComponent implements OnInit {
       error: (err) => {
         this.submitting = false;
         const action = this.isEditMode ? 'update' : 'create';
-        this.toastService.error(`Failed to ${action} request`);
+
+        let errorMessage = `Failed to ${action} request`;
+        if (err.error && typeof err.error === 'object') {
+          const errors = Object.entries(err.error).map(([field, messages]) => {
+            return `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`;
+          }).join('; ');
+          if (errors) {
+            errorMessage += ': ' + errors;
+          }
+        }
+
+        this.toastService.error(errorMessage);
         console.error(`Error ${action}ing request:`, err);
       }
     });

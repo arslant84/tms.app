@@ -1,3 +1,60 @@
+// Settings Card - Matching System Settings Style
+.settings-card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+
+  .card-header {
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+    border-bottom: none;
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: white;
+      margin: 0 0 0.25rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      i {
+        font-size: 1.25rem;
+        color: white;
+      }
+    }
+
+    .card-description {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.95);
+      margin: 0;
+    }
+
+    h4.card-title, h5.card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: white;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      i {
+        font-size: 1.25rem;
+        color: white;
+      }
+    }
+  }
+
+  .card-body {
+    padding: 1.5rem;
+    background: white;
+  }
+}
+
 .enhanced-workflow-config {
   .approval-steps-container {
     background: #f8f9fa;

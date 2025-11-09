@@ -4,6 +4,7 @@ Redesigned to match React source project structure (pctsb.syntra)
 NO cost fields - only basic transport details
 """
 from rest_framework import serializers
+from django.core.validators import MinValueValidator, MaxValueValidator
 from .models import TransportRequest, TransportApprovalStep, VehicleAssignment
 from accounts.models import User
 
@@ -27,6 +28,24 @@ class TransportApprovalStepSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
+class VehicleAssignmentSerializer(serializers.ModelSerializer):
+    """Serializer for vehicle assignments"""
+    assigned_by_user = UserSerializer(source='assigned_by', read_only=True)
+
+    class Meta:
+        model = VehicleAssignment
+        fields = [
+            'id', 'transport_request', 'vehicle_number', 'vehicle_type',
+            'vehicle_capacity', 'driver_name', 'driver_contact', 'driver_license',
+            'assigned_by', 'assigned_by_user', 'status', 'odometer_start',
+            'odometer_end', 'fuel_used_liters', 'assignment_date',
+            'completion_date', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'assigned_by', 'assignment_date', 'created_at', 'updated_at'
+        ]
+
+
 class TransportRequestSerializer(serializers.ModelSerializer):
     """
     Main serializer for TransportRequest
@@ -34,6 +53,7 @@ class TransportRequestSerializer(serializers.ModelSerializer):
     """
     requestor_email = serializers.EmailField(source='requestor.email', read_only=True)
     detail_count = serializers.SerializerMethodField()
+    vehicle_assignments = VehicleAssignmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = TransportRequest
@@ -44,7 +64,7 @@ class TransportRequestSerializer(serializers.ModelSerializer):
             'transport_details', 'detail_count',
             'additional_comments',
             'confirm_policy', 'confirm_manager_approval', 'confirm_terms_and_conditions',
-            'booking_details',
+            'booking_details', 'vehicle_assignments',
             'submitted_at', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'request_number', 'requestor', 'created_at', 'updated_at']
@@ -56,12 +76,16 @@ class TransportRequestSerializer(serializers.ModelSerializer):
         return 0
 
     def validate_transport_details(self, value):
-        """Validate transport details array"""
+        """Validate transport details array - SECURITY: Comprehensive validation"""
         if not isinstance(value, list):
             raise serializers.ValidationError("transport_details must be an array")
 
         if len(value) == 0:
             raise serializers.ValidationError("At least one transport detail is required")
+
+        # SECURITY: Limit number of transport details to prevent DoS
+        if len(value) > 50:
+            raise serializers.ValidationError("Maximum 50 transport details allowed")
 
         # Validate each transport detail object
         required_fields = ['from', 'to', 'departureTime', 'transportType', 'numberOfPassengers']
@@ -72,12 +96,48 @@ class TransportRequestSerializer(serializers.ModelSerializer):
                         f"Transport detail #{i+1}: '{field}' is required"
                     )
 
-            # Validate numberOfPassengers is positive
-            if detail.get('numberOfPassengers', 0) < 1:
+            # SECURITY: Validate string lengths to prevent excessive data
+            if len(str(detail.get('from', ''))) > 200:
+                raise serializers.ValidationError(
+                    f"Transport detail #{i+1}: 'from' location too long (max 200 characters)"
+                )
+            if len(str(detail.get('to', ''))) > 200:
+                raise serializers.ValidationError(
+                    f"Transport detail #{i+1}: 'to' location too long (max 200 characters)"
+                )
+
+            # SECURITY: Validate numberOfPassengers range
+            num_passengers = detail.get('numberOfPassengers', 0)
+            if not isinstance(num_passengers, (int, float)) or num_passengers < 1:
                 raise serializers.ValidationError(
                     f"Transport detail #{i+1}: numberOfPassengers must be at least 1"
                 )
+            if num_passengers > 100:
+                raise serializers.ValidationError(
+                    f"Transport detail #{i+1}: numberOfPassengers must be 100 or less"
+                )
 
+            # SECURITY: Validate transport type
+            valid_transport_types = ['Official Vehicle', 'Rental', 'Personal', 'Taxi', 'Bus', 'Train', 'Flight', 'Other']
+            if detail.get('transportType') not in valid_transport_types:
+                raise serializers.ValidationError(
+                    f"Transport detail #{i+1}: Invalid transport type"
+                )
+
+        return value
+
+    def validate_purpose(self, value):
+        """SECURITY: Validate purpose length"""
+        if len(str(value).strip()) < 10:
+            raise serializers.ValidationError("Purpose must be at least 10 characters")
+        if len(str(value)) > 1000:
+            raise serializers.ValidationError("Purpose too long (max 1000 characters)")
+        return value.strip()
+
+    def validate_additional_comments(self, value):
+        """SECURITY: Validate comments length"""
+        if value and len(str(value)) > 2000:
+            raise serializers.ValidationError("Comments too long (max 2000 characters)")
         return value
 
 
@@ -153,12 +213,20 @@ class TransportRequestUpdateSerializer(serializers.ModelSerializer):
             'purpose', 'tsr_reference',
             'transport_details',
             'additional_comments',
-            'confirm_policy', 'confirm_manager_approval', 'confirm_terms_and_conditions'
+            'confirm_policy', 'confirm_manager_approval', 'confirm_terms_and_conditions',
+            'booking_details'
         ]
 
     def validate(self, data):
         """Validate update - cannot update submitted/approved requests"""
         instance = self.instance
+
+        # Allow booking_details update by transport admin on any status
+        if 'booking_details' in data and len(data) == 1:
+            # Only updating booking_details, allow this
+            return data
+
+        # For other fields, check status
         if instance.status not in ['Draft', 'Rejected']:
             raise serializers.ValidationError(
                 f"Cannot update transport request with status '{instance.status}'"
@@ -187,21 +255,3 @@ class ApprovalActionSerializer(serializers.Serializer):
                 "Comments are required when rejecting a transport request"
             )
         return value
-
-
-class VehicleAssignmentSerializer(serializers.ModelSerializer):
-    """Serializer for vehicle assignments (deprecated - use booking_details instead)"""
-    assigned_by_user = UserSerializer(source='assigned_by', read_only=True)
-
-    class Meta:
-        model = VehicleAssignment
-        fields = [
-            'id', 'transport_request', 'vehicle_number', 'vehicle_type',
-            'vehicle_capacity', 'driver_name', 'driver_contact', 'driver_license',
-            'assigned_by', 'assigned_by_user', 'status', 'odometer_start',
-            'odometer_end', 'fuel_used_liters', 'assignment_date',
-            'completion_date', 'created_at', 'updated_at'
-        ]
-        read_only_fields = [
-            'id', 'assigned_by', 'assignment_date', 'created_at', 'updated_at'
-        ]
