@@ -211,14 +211,33 @@
               class="btn btn-outline"
               (click)="onCancel()"
               [disabled]="submitting">
+              <i class="bi bi-x"></i>
               Cancel
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="onSaveDraft()"
+              [disabled]="submitting">
+              <span *ngIf="!submitting">
+                <i class="bi bi-save"></i>
+                Save Draft
+              </span>
+              <span *ngIf="submitting">
+                <i class="bi bi-arrow-repeat spin"></i>
+                Saving...
+              </span>
             </button>
 
             <button
               type="submit"
               class="btn btn-primary"
               [disabled]="accommodationForm.invalid || submitting">
-              <span *ngIf="!submitting">Submit Request</span>
+              <span *ngIf="!submitting">
+                <i class="bi bi-send"></i>
+                Submit Request
+              </span>
               <span *ngIf="submitting">
                 <i class="bi bi-arrow-repeat spin"></i>
                 Submitting...

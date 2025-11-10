@@ -220,6 +220,58 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 # Don't fail the request creation if workflow fails
                 pass
 
+    def perform_update(self, serializer):
+        """Update accommodation request and start workflow if status changes to Pending/Submitted"""
+        old_status = self.get_object().status
+        new_status = serializer.validated_data.get('status', old_status)
+
+        # Set submitted_at timestamp if status is changing to submitted (not Draft)
+        extra_kwargs = {}
+        if new_status in ['Pending', 'Submitted'] and old_status == 'Draft':
+            extra_kwargs['submitted_at'] = timezone.now()
+
+            # Generate request number if submitting (changing from Draft to Pending/Submitted)
+            accommodation_request = self.get_object()
+            if not accommodation_request.request_number:
+                try:
+                    from utils.request_id_generator import generate_request_id, extract_context_from_location
+
+                    # Extract context from additional_data location
+                    additional_data = serializer.validated_data.get('additional_data', {})
+                    location = additional_data.get('location', '') if isinstance(additional_data, dict) else ''
+                    context = extract_context_from_location(location) if location else 'ACCOM'
+
+                    # Generate unique request number
+                    request_number = generate_request_id('ACCOM', context)
+                    extra_kwargs['request_number'] = request_number
+                    print(f"✅ Generated request number during update: {request_number}")
+                except Exception as e:
+                    print(f"❌ Error generating request number: {str(e)}")
+
+        # Save the accommodation request
+        accommodation_request = serializer.save(**extra_kwargs)
+
+        # Start workflow if status changed from Draft to Pending/Submitted
+        if new_status in ['Pending', 'Submitted'] and old_status == 'Draft':
+            try:
+                workflow_instance = WorkflowRouter.start_workflow_for_request(
+                    entity=accommodation_request,
+                    entity_type='accommodation',
+                    initiated_by=self.request.user
+                )
+
+                if workflow_instance:
+                    # Reload the accommodation request to get the updated status from workflow
+                    accommodation_request.refresh_from_db()
+                    print(f"✅ Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}")
+                    print(f"✅ Status updated to: {accommodation_request.status}")
+                else:
+                    print(f"⚠️ No active workflow configured for accommodation - using legacy approval system")
+            except Exception as e:
+                print(f"❌ Error starting workflow for Accommodation Request #{accommodation_request.id}: {str(e)}")
+                # Don't fail the request update if workflow fails
+                pass
+
     @action(detail=True, methods=['post'])
     def submit(self, request, pk=None):
         """

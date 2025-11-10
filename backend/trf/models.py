@@ -50,21 +50,6 @@ class TravelRequest(models.Model):
     def __str__(self):
         return self.requestor_name
 
-class TrfAccommodationDetail(models.Model):
-    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
-    check_in_date = models.DateField(blank=True, null=True)
-    check_out_date = models.DateField(blank=True, null=True)
-    accommodation_type = models.CharField(max_length=255, blank=True, null=True)
-    location = models.CharField(max_length=255, blank=True, null=True)
-    address = models.TextField(blank=True, null=True)
-    remarks = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    place_of_stay = models.CharField(max_length=255, blank=True, null=True)
-    estimated_cost_per_night = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    check_in_time = models.CharField(max_length=255, blank=True, null=True)
-    check_out_time = models.CharField(max_length=255, blank=True, null=True)
-    other_type_description = models.CharField(max_length=255, blank=True, null=True)
-
 class TrfAdvanceAmountRequestedItem(models.Model):
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
     date_from = models.DateField(blank=True, null=True)
@@ -97,18 +82,6 @@ class TrfApprovalStep(models.Model):
     status = models.CharField(max_length=255)
     step_date = models.DateTimeField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-class TrfCompanyTransportDetail(models.Model):
-    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
-    transport_date = models.DateField(blank=True, null=True)
-    day_of_week = models.CharField(max_length=255, blank=True, null=True)
-    from_location = models.CharField(max_length=255, blank=True, null=True)
-    to_location = models.CharField(max_length=255, blank=True, null=True)
-    bt_no_required = models.CharField(max_length=255, blank=True, null=True)
-    accommodation_type_n = models.CharField(max_length=255, blank=True, null=True)
-    address = models.TextField(blank=True, null=True)
-    remarks = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class TrfDailyMealSelection(models.Model):

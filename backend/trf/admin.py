@@ -1,11 +1,9 @@
 from django.contrib import admin
 from .models import (
     TravelRequest,
-    TrfAccommodationDetail,
     TrfAdvanceAmountRequestedItem,
     TrfAdvanceBankDetail,
     TrfApprovalStep,
-    TrfCompanyTransportDetail,
     TrfDailyMealSelection,
     TrfFlightBooking,
     TrfItinerarySegment,
@@ -21,14 +19,6 @@ class TravelRequestAdmin(admin.ModelAdmin):
     list_filter = ['status', 'travel_type', 'department', 'created_at']
     ordering = ['-created_at']
     readonly_fields = ['submitted_at', 'created_at', 'updated_at']
-
-
-@admin.register(TrfAccommodationDetail)
-class TrfAccommodationDetailAdmin(admin.ModelAdmin):
-    list_display = ['id', 'trf', 'check_in_date', 'check_out_date', 'accommodation_type', 'location']
-    search_fields = ['location', 'address', 'place_of_stay']
-    list_filter = ['accommodation_type', 'check_in_date']
-    ordering = ['-created_at']
 
 
 @admin.register(TrfAdvanceAmountRequestedItem)
@@ -51,14 +41,6 @@ class TrfApprovalStepAdmin(admin.ModelAdmin):
     list_display = ['id', 'trf', 'step_role', 'step_name', 'status', 'step_date']
     search_fields = ['step_role', 'step_name', 'comments']
     list_filter = ['status', 'step_role', 'step_date']
-    ordering = ['-created_at']
-
-
-@admin.register(TrfCompanyTransportDetail)
-class TrfCompanyTransportDetailAdmin(admin.ModelAdmin):
-    list_display = ['id', 'trf', 'transport_date', 'from_location', 'to_location', 'bt_no_required']
-    search_fields = ['from_location', 'to_location', 'address']
-    list_filter = ['transport_date']
     ordering = ['-created_at']
 
 

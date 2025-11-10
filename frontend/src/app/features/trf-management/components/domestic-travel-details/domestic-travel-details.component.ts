@@ -26,36 +26,11 @@ export interface MealProvisionDetails {
   dailySelections: DailyMealSelection[];
 }
 
-export type AccommodationType = 'Hotel/Otels' | 'Staff House/Kiyanli camp' | 'Other';
-
-export interface AccommodationDetail {
-  accommodationType: AccommodationType;
-  otherTypeDescription?: string;
-  checkInDate: Date | null;
-  checkInTime: string;
-  checkOutDate: Date | null;
-  checkOutTime: string;
-  remarks?: string;
-}
-
-export interface CompanyTransportDetail {
-  date: Date | null;
-  day: string;
-  from: string;
-  to: string;
-  etd: string;
-  accommodationType: string;
-  address: string;
-  remarks?: string;
-}
-
 export interface DomesticTravelSpecificDetails {
   purposeOfTravel: string;
   tripType: 'One Way' | 'Round Trip';
   itinerary: ItinerarySegment[];
   mealProvisions: MealProvisionDetails;
-  accommodation: AccommodationDetail;
-  companyTransportation: CompanyTransportDetail[];
 }
 
 @Component({
@@ -72,7 +47,6 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
 
   travelForm!: FormGroup;
   timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-  accommodationTypes: AccommodationType[] = ['Hotel/Otels', 'Staff House/Kiyanli camp', 'Other'];
   weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   dailyMealDates: Date[] = [];
@@ -96,7 +70,6 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
       console.log('=== DOMESTIC TRAVEL DETAILS ngOnChanges ===');
       console.log('initialData changed:', changes['initialData']);
       console.log('New initialData:', this.initialData);
-      console.log('companyTransportation:', this.initialData.companyTransportation);
       this.initForm();  // Rebuild form with new data
     }
   }
@@ -116,53 +89,8 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
             ? this.initialData.mealProvisions.dailySelections.map(item => this.createDailyMealSelection(item))
             : []
         )
-      }),
-      accommodation: this.fb.group({
-        accommodationType: [
-          this.initialData.accommodation?.accommodationType || 'Hotel/Otels',
-          Validators.required
-        ],
-        otherTypeDescription: [this.initialData.accommodation?.otherTypeDescription || ''],
-        checkInDate: [this.initialData.accommodation?.checkInDate || null, Validators.required],
-        checkInTime: [
-          this.initialData.accommodation?.checkInTime || '',
-          [Validators.required, Validators.pattern(this.timeRegex)]
-        ],
-        checkOutDate: [this.initialData.accommodation?.checkOutDate || null, Validators.required],
-        checkOutTime: [
-          this.initialData.accommodation?.checkOutTime || '',
-          [Validators.required, Validators.pattern(this.timeRegex)]
-        ],
-        remarks: [this.initialData.accommodation?.remarks || '']
-      }),
-      companyTransportation: this.fb.array(
-        this.initialData.companyTransportation?.length
-          ? (() => {
-              console.log('=== INITIALIZING COMPANY TRANSPORTATION ===');
-              console.log('companyTransportation array:', this.initialData.companyTransportation);
-              this.initialData.companyTransportation.forEach((item: any, index: number) => {
-                console.log(`Item ${index}:`, item);
-                console.log(`  - etd: ${item.etd}`);
-                console.log(`  - accommodationType: ${item.accommodationType}`);
-              });
-              return this.initialData.companyTransportation.map((item: any) => this.createTransportationDetail(item));
-            })()
-          : [this.createTransportationDetail()]
-      )
+      })
     });
-
-    // Add validator for otherTypeDescription when accommodationType is 'Other'
-    this.travelForm.get('accommodation.accommodationType')?.valueChanges.subscribe(
-      (value: AccommodationType) => {
-        const otherTypeControl = this.travelForm.get('accommodation.otherTypeDescription');
-        if (value === 'Other') {
-          otherTypeControl?.setValidators([Validators.required]);
-        } else {
-          otherTypeControl?.clearValidators();
-        }
-        otherTypeControl?.updateValueAndValidity();
-      }
-    );
 
     // Watch trip type changes to manage itinerary segments
     this.travelForm.get('tripType')?.valueChanges.subscribe(tripType => {
@@ -191,10 +119,6 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
 
   get dailyMealSelectionsArray(): FormArray {
     return this.travelForm.get('mealProvisions.dailySelections') as FormArray;
-  }
-
-  get transportationArray(): FormArray {
-    return this.travelForm.get('companyTransportation') as FormArray;
   }
 
   // Form group creators
@@ -229,28 +153,6 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     return formGroup;
   }
 
-  createTransportationDetail(data?: Partial<CompanyTransportDetail>): FormGroup {
-    console.log('=== createTransportationDetail ===');
-    console.log('Received data:', data);
-    console.log('  - etd value:', data?.etd);
-    console.log('  - accommodationType value:', data?.accommodationType);
-
-    const formGroup = this.fb.group({
-      date: [data?.date || null, Validators.required],
-      day: [data?.day || '', Validators.required],
-      from: [data?.from || '', Validators.required],
-      to: [data?.to || '', Validators.required],
-      // BT No./Time Required - can be any text (BT number, time, or description)
-      etd: [data?.etd || ''],
-      accommodationType: [data?.accommodationType || ''],
-      address: [data?.address || ''],
-      remarks: [data?.remarks || '']
-    });
-
-    console.log('Created form group value:', formGroup.value);
-    return formGroup;
-  }
-
   // Array manipulation methods
   addItinerarySegment(): void {
     this.itineraryArray.push(this.createItinerarySegment());
@@ -262,16 +164,6 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     }
   }
 
-  addTransportationDetail(): void {
-    this.transportationArray.push(this.createTransportationDetail());
-  }
-
-  removeTransportationDetail(index: number): void {
-    if (this.transportationArray.length > 1) {
-      this.transportationArray.removeAt(index);
-    }
-  }
-
   // Date change handlers to auto-fill day of week
   onItineraryDateChange(index: number, event: any): void {
     const dateValue = event.target.value;
@@ -280,16 +172,6 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
       const dayIndex = date.getDay();
       const dayName = this.weekdays[dayIndex];
       this.itineraryArray.at(index).get('day')?.setValue(dayName);
-    }
-  }
-
-  onTransportDateChange(index: number, event: any): void {
-    const dateValue = event.target.value;
-    if (dateValue) {
-      const date = new Date(dateValue);
-      const dayIndex = date.getDay();
-      const dayName = this.weekdays[dayIndex];
-      this.transportationArray.at(index).get('day')?.setValue(dayName);
     }
   }
 

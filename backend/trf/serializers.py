@@ -2,11 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
     TravelRequest,
-    TrfAccommodationDetail,
     TrfAdvanceAmountRequestedItem,
     TrfAdvanceBankDetail,
     TrfApprovalStep,
-    TrfCompanyTransportDetail,
     TrfDailyMealSelection,
     TrfFlightBooking,
     TrfItinerarySegment,
@@ -18,20 +16,6 @@ User = get_user_model()
 
 
 # =============== NESTED/RELATED SERIALIZERS ===============
-
-class TrfAccommodationDetailSerializer(serializers.ModelSerializer):
-    """Serializer for TRF Accommodation Details"""
-
-    class Meta:
-        model = TrfAccommodationDetail
-        fields = [
-            'id', 'trf', 'check_in_date', 'check_out_date', 'accommodation_type',
-            'location', 'address', 'place_of_stay', 'estimated_cost_per_night',
-            'check_in_time', 'check_out_time', 'other_type_description', 'remarks',
-            'created_at'
-        ]
-        read_only_fields = ['id', 'created_at']
-
 
 class TrfAdvanceAmountRequestedItemSerializer(serializers.ModelSerializer):
     """Serializer for TRF Advance Amount Requested Items"""
@@ -77,19 +61,6 @@ class TrfApprovalStepSerializer(serializers.ModelSerializer):
                 f"Status must be one of: {', '.join(valid_statuses)}"
             )
         return value
-
-
-class TrfCompanyTransportDetailSerializer(serializers.ModelSerializer):
-    """Serializer for TRF Company Transport Details"""
-
-    class Meta:
-        model = TrfCompanyTransportDetail
-        fields = [
-            'id', 'trf', 'transport_date', 'day_of_week', 'from_location',
-            'to_location', 'bt_no_required', 'accommodation_type_n', 'address',
-            'remarks', 'created_at'
-        ]
-        read_only_fields = ['id', 'created_at']
 
 
 class TrfDailyMealSelectionSerializer(serializers.ModelSerializer):
@@ -307,9 +278,6 @@ class TravelRequestSerializer(serializers.ModelSerializer):
 
 class TravelRequestDetailSerializer(serializers.ModelSerializer):
     """Detailed serializer for Travel Requests with all nested data"""
-    accommodation_details = TrfAccommodationDetailSerializer(
-        many=True, read_only=True, source='trfaccommodationdetail_set'
-    )
     advance_amounts = TrfAdvanceAmountRequestedItemSerializer(
         many=True, read_only=True, source='trfadvanceamountrequesteditem_set'
     )
@@ -318,9 +286,6 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
     )
     approval_steps = TrfApprovalStepSerializer(
         many=True, read_only=True, source='trfapprovalstep_set'
-    )
-    transport_details = TrfCompanyTransportDetailSerializer(
-        many=True, read_only=True, source='trfcompanytransportdetail_set'
     )
     daily_meals = TrfDailyMealSelectionSerializer(
         many=True, read_only=True, source='trfdailymealselection_set'
@@ -347,8 +312,8 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             'external_full_name', 'external_organization',
             'external_ref_to_authority_letter', 'external_cost_center',
             'submitted_at', 'created_at', 'updated_at', 'additional_data',
-            'accommodation_details', 'advance_amounts', 'bank_detail',
-            'approval_steps', 'transport_details', 'daily_meals',
+            'advance_amounts', 'bank_detail',
+            'approval_steps', 'daily_meals',
             'flight_bookings', 'itinerary_segments', 'meal_provisions',
             'passport_details'
         ]
@@ -390,18 +355,29 @@ class TravelRequestUpdateSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
+        """Allow editing for Draft, Rejected, or any Pending status"""
         instance = getattr(self, 'instance', None)
-        if instance and instance.status not in ['Draft', 'Rejected']:
-            raise serializers.ValidationError(
-                "Only draft or rejected TRFs can be updated."
-            )
+        if instance:
+            current_status = instance.status
+            # Allow editing if status is Draft, Rejected, or starts with Pending
+            if not (current_status == 'Draft' or
+                    current_status == 'Rejected' or
+                    current_status.startswith('Pending')):
+                raise serializers.ValidationError(
+                    f"This TRF cannot be edited because its status is '{current_status}'. "
+                    "Only Draft, Rejected, or Pending TRFs can be edited."
+                )
         return attrs
 
     def validate_status(self, value):
-        """Only allow setting status to Draft when updating"""
-        if value not in ['Draft', 'Rejected']:
+        """Allow setting status to Draft, Rejected, or any Pending status during update"""
+        # Allow Draft, Rejected, or any status starting with Pending
+        if not (value == 'Draft' or
+                value == 'Rejected' or
+                value.startswith('Pending')):
             raise serializers.ValidationError(
-                "Status can only be set to 'Draft' or 'Rejected' during update."
+                f"Status can only be set to 'Draft', 'Rejected', or 'Pending...' statuses during update. "
+                f"Cannot set status to '{value}'."
             )
         return value
 

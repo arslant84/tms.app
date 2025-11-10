@@ -143,22 +143,6 @@ export class TrfService {
       );
   }
 
-  // Create Accommodation Detail
-  createAccommodation(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/accommodation-details/`, data)
-      .pipe(
-        catchError(this.handleError)
-      );
-  }
-
-  // Create Company Transport Detail
-  createTransport(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/transport-details/`, data)
-      .pipe(
-        catchError(this.handleError)
-      );
-  }
-
   // Create Meal Provision
   createMealProvision(data: any): Observable<any> {
     return this.http.post<any>(`${environment.apiUrl}/trf/meal-provisions/`, data)
@@ -196,8 +180,6 @@ export class TrfService {
     const endpoints: { [key: string]: string } = {
       'itinerary': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-itinerary/`,
       'meals': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-meals/`,
-      'accommodation': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-accommodation/`,
-      'transport': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-transport/`,
       'passport': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-passport/`,
       'bank': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-bank/`,
       'advance-amounts': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-advance-amounts/`

@@ -17,17 +17,6 @@
         {{ isEditMode ? 'Edit' : 'New' }} Expense Claim
       </h1>
     </div>
-    <div class="form-actions-top">
-      <button type="button" class="btn btn-outline" (click)="onCancel()">
-        <i class="bi bi-x"></i> Cancel
-      </button>
-      <button type="button" class="btn btn-secondary" (click)="onSaveDraft()" [disabled]="submitting">
-        <i class="bi bi-save"></i> Save Draft
-      </button>
-      <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="submitting || expenseForm.invalid">
-        <i class="bi bi-send"></i> {{ submitting ? 'Submitting...' : 'Submit' }}
-      </button>
-    </div>
   </div>
 
   <!-- Form Content -->
