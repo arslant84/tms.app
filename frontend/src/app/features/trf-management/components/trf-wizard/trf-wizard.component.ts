@@ -114,15 +114,18 @@ export class TrfWizardComponent implements OnInit {
         console.log('Full TRF data:', data);
         console.log('Meal data (daily_meals):', data.daily_meals);
         console.log('Meal data (daily_meal_selections):', data.daily_meal_selections);
-        console.log('Transport data (transport_details):', data.transport_details);
-        console.log('Transport data (company_transport_details):', data.company_transport_details);
 
         this.existingTrfData = data;
         this.selectedTravelType = data.travel_type || data.travelType;
 
         // Check if TRF can be edited
-        if (data.status && !['Draft', 'Rejected'].includes(data.status)) {
-          const errorMsg = `This TRF cannot be edited because its status is "${data.status}". Only Draft or Rejected TRFs can be edited.`;
+        // Allow editing for Draft, Rejected, or any Pending status
+        const canEdit = data.status === 'Draft' ||
+                        data.status === 'Rejected' ||
+                        data.status.startsWith('Pending');
+
+        if (data.status && !canEdit) {
+          const errorMsg = `This TRF cannot be edited because its status is "${data.status}". Only Draft, Rejected, or Pending TRFs can be edited.`;
           this.submitError = errorMsg;
           this.isLoadingTrf = false;
           console.warn('TRF cannot be edited - status:', data.status);
@@ -167,8 +170,6 @@ export class TrfWizardComponent implements OnInit {
       case 'Domestic':
         console.log('=== DOMESTIC TRAVEL DATA ===');
         console.log('Raw data.daily_meals:', data.daily_meals);
-        console.log('Raw data.transport_details:', data.transport_details);
-        console.log('Raw data.accommodation_details:', data.accommodation_details);
 
         this.domesticTravelData = {
           purposeOfTravel: data.purpose,
@@ -178,15 +179,11 @@ export class TrfWizardComponent implements OnInit {
           mealProvisions: {
             // Backend uses 'daily_meals' but fallback to 'daily_meal_selections'
             dailySelections: this.transformMealSelectionsData(data.daily_meals || data.daily_meal_selections || data.mealSelections || [])
-          },
-          accommodation: this.transformAccommodationData(data.accommodation_details?.[0] || data.accommodation || {}),
-          // Backend uses 'transport_details' but fallback to 'company_transport_details'
-          companyTransportation: this.transformCompanyTransportData(data.transport_details || data.company_transport_details || data.transportDetails || [])
+          }
         };
 
         console.log('Transformed domesticTravelData:', this.domesticTravelData);
         console.log('Meal provisions dailySelections:', this.domesticTravelData.mealProvisions.dailySelections);
-        console.log('Company transportation:', this.domesticTravelData.companyTransportation);
         break;
 
       case 'Overseas':
@@ -231,9 +228,7 @@ export class TrfWizardComponent implements OnInit {
           externalOrganization: data.external_organization || data.externalOrganization || '',
           externalRefToAuthorityLetter: data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter || '',
           externalCostCenter: data.external_cost_center || data.externalCostCenter || '',
-          itinerary: this.transformItineraryData(data.itinerary_segments || data.itinerary || []),
-          accommodation: data.accommodation_details || data.accommodation || [],
-          transport: data.transport_details || data.company_transport_details || data.transport || []
+          itinerary: this.transformItineraryData(data.itinerary_segments || data.itinerary || [])
         };
         break;
     }
@@ -598,7 +593,7 @@ export class TrfWizardComponent implements OnInit {
           console.log('TRF.id:', createdTrf.id);
           console.log('TRF.pk:', createdTrf.pk);
 
-          // Step 2: Create nested resources (itinerary, meals, accommodation, transport)
+          // Step 2: Create nested resources (itinerary, meals, etc.)
           from(this.createNestedResources(createdTrf.id, combinedData)).subscribe({
             next: () => {
               // If not saving as draft, submit the TRF to generate request number and start workflow
@@ -673,7 +668,7 @@ export class TrfWizardComponent implements OnInit {
       case 'External Parties':
         return this.prepareExternalPartiesData(mainTrf, isDraft);
       default:
-        return { mainTrf, itinerarySegments: [], mealSelections: [], accommodation: null, transport: [] };
+        return { mainTrf, itinerarySegments: [], mealSelections: [] };
     }
   }
 
@@ -688,8 +683,6 @@ export class TrfWizardComponent implements OnInit {
       mainTrf,
       itinerarySegments: this.domesticTravelData?.itinerary || [],
       mealSelections: this.domesticTravelData?.mealProvisions?.dailySelections || [],
-      accommodation: this.domesticTravelData?.accommodation || null,
-      transport: this.domesticTravelData?.companyTransportation || [],
       passportDetails: null,
       bankDetails: null,
       advanceAmounts: []
@@ -707,8 +700,6 @@ export class TrfWizardComponent implements OnInit {
       mainTrf,
       itinerarySegments: this.overseasTravelData?.itinerary || [],
       mealSelections: [],
-      accommodation: null,
-      transport: [],
       passportDetails: null,
       bankDetails: this.overseasTravelData?.advanceBankDetails || null,
       advanceAmounts: this.overseasTravelData?.advanceAmountRequested || []
@@ -726,8 +717,6 @@ export class TrfWizardComponent implements OnInit {
       mainTrf,
       itinerarySegments: this.homeLeaveData?.itinerary || [],
       mealSelections: [],
-      accommodation: null,
-      transport: [],
       passportDetails: this.homeLeaveData?.passportDetails || null,
       bankDetails: this.homeLeaveData?.advanceBankDetails || null,
       advanceAmounts: []
@@ -751,8 +740,6 @@ export class TrfWizardComponent implements OnInit {
       mainTrf,
       itinerarySegments: this.externalPartiesData?.itinerary || [],
       mealSelections: [],
-      accommodation: this.externalPartiesData?.accommodation || [],
-      transport: this.externalPartiesData?.transport || [],
       passportDetails: null,
       bankDetails: null,
       advanceAmounts: []
@@ -797,16 +784,6 @@ export class TrfWizardComponent implements OnInit {
     promises.push(
       firstValueFrom(this.trfService.deleteNestedResources(trfId, 'meals')).catch(err => {
         console.warn('No meal selections to delete or error:', err);
-      })
-    );
-    promises.push(
-      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'accommodation')).catch(err => {
-        console.warn('No accommodation to delete or error:', err);
-      })
-    );
-    promises.push(
-      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'transport')).catch(err => {
-        console.warn('No transport to delete or error:', err);
       })
     );
     promises.push(
@@ -912,93 +889,6 @@ export class TrfWizardComponent implements OnInit {
           console.log('Creating meal selection:', mealData);
           promises.push(
             firstValueFrom(this.trfService.createDailyMeal(mealData))
-          );
-        });
-      }
-
-      // Create accommodation (can be single object or array)
-      if (data.accommodation) {
-        if (Array.isArray(data.accommodation)) {
-          // External Parties accommodation (array)
-          data.accommodation.forEach((acc: any) => {
-            // Skip accommodation with missing required fields
-            if (!acc.fromDate || !acc.toDate) {
-              console.warn('Skipping accommodation with missing dates:', acc);
-              return;
-            }
-
-            const accommodationData = {
-              trf: trfId,
-              accommodation_type: acc.accommodationType || '',
-              check_in_date: this.formatDateForAPI(acc.fromDate),
-              check_in_time: '',
-              check_out_date: this.formatDateForAPI(acc.toDate),
-              check_out_time: '',
-              location: acc.fromLocation || '',
-              address: acc.address || '',
-              place_of_stay: acc.toLocation || '',
-              remarks: acc.remarks || ''
-            };
-
-            console.log('Creating accommodation (array):', accommodationData);
-            promises.push(
-              firstValueFrom(this.trfService.createAccommodation(accommodationData))
-            );
-          });
-        } else {
-          // Domestic accommodation (single object)
-          // Skip if missing required fields
-          if (!data.accommodation.checkInDate || !data.accommodation.checkOutDate) {
-            console.warn('Skipping accommodation with missing dates:', data.accommodation);
-          } else {
-            const accommodationData = {
-              trf: trfId,
-              accommodation_type: data.accommodation.type || '',
-              check_in_date: this.formatDateForAPI(data.accommodation.checkInDate),
-              check_in_time: data.accommodation.checkInTime || '',
-              check_out_date: this.formatDateForAPI(data.accommodation.checkOutDate),
-              check_out_time: data.accommodation.checkOutTime || '',
-              location: '',
-              address: '',
-              place_of_stay: '',
-              remarks: data.accommodation.remarks || ''
-            };
-
-            console.log('Creating accommodation (single):', accommodationData);
-            promises.push(
-              firstValueFrom(this.trfService.createAccommodation(accommodationData))
-            );
-          }
-        }
-      }
-
-      // Create transport details (can be single array or nested)
-      if (data.transport && data.transport.length > 0) {
-        data.transport.forEach((transport: any) => {
-          // Skip transport with missing required date
-          if (!transport.date) {
-            console.warn('Skipping transport with missing date:', transport);
-            return;
-          }
-
-          const transportData = {
-            trf: trfId,
-            transport_date: this.formatDateForAPI(transport.date),
-            day_of_week: transport.day || '',
-            from_location: transport.from || transport.fromLocation || '',
-            to_location: transport.to || transport.toLocation || '',
-            // Domestic uses 'etd', External Parties uses 'btNumber' or 'btNoRequired'
-            bt_no_required: transport.etd || transport.btNumber || transport.btNoRequired || '',
-            accommodation_type_n: transport.accommodationType || '',
-            address: transport.address || '',
-            remarks: transport.remarks || ''
-          };
-
-          console.log('Creating transport:', transportData);
-          console.log('  - transport.etd:', transport.etd);
-          console.log('  - transportData.bt_no_required:', transportData.bt_no_required);
-          promises.push(
-            firstValueFrom(this.trfService.createTransport(transportData))
           );
         });
       }
@@ -1146,72 +1036,6 @@ export class TrfWizardComponent implements OnInit {
     });
 
     console.log('All transformed meals:', transformed);
-    return transformed;
-  }
-
-  /**
-   * Transform accommodation data from backend format to component format
-   */
-  private transformAccommodationData(accommodation: any): any {
-    if (!accommodation || Object.keys(accommodation).length === 0) {
-      return {
-        accommodationType: 'Hotel/Otels',
-        otherTypeDescription: '',
-        checkInDate: null,
-        checkInTime: '',
-        checkOutDate: null,
-        checkOutTime: '',
-        remarks: ''
-      };
-    }
-
-    return {
-      accommodationType: accommodation.accommodation_type || accommodation.accommodationType || 'Hotel/Otels',
-      otherTypeDescription: accommodation.other_type_description || accommodation.otherTypeDescription || '',
-      checkInDate: accommodation.check_in_date || accommodation.checkInDate || null,
-      checkInTime: accommodation.check_in_time || accommodation.checkInTime || '',
-      checkOutDate: accommodation.check_out_date || accommodation.checkOutDate || null,
-      checkOutTime: accommodation.check_out_time || accommodation.checkOutTime || '',
-      remarks: accommodation.remarks || ''
-    };
-  }
-
-  /**
-   * Transform company transport data from backend format to component format
-   */
-  private transformCompanyTransportData(transport: any[]): any[] {
-    console.log('=== TRANSFORMING COMPANY TRANSPORT ===');
-    console.log('Raw transport data:', transport);
-
-    const transformed = transport.map((item: any, index: number) => {
-      console.log(`\n--- Transport Item ${index} ---`);
-      console.log('Raw item keys:', Object.keys(item));
-      console.log('Raw bt_no_required value:', item.bt_no_required);
-      console.log('Raw accommodation_type_n value:', item.accommodation_type_n);
-      console.log('Raw transport_date value:', item.transport_date);
-      console.log('Raw from_location value:', item.from_location);
-      console.log('Raw to_location value:', item.to_location);
-
-      const result = {
-        date: item.transport_date || item.date || null,
-        day: item.day_of_week || item.day || '',
-        from: item.from_location || item.from || '',
-        to: item.to_location || item.to || '',
-        // Backend uses 'bt_no_required' which is stored in the 'etd' field in the form
-        etd: item.bt_no_required || item.etd || '',
-        accommodationType: item.accommodation_type_n || item.accommodationType || '',
-        address: item.address || '',
-        remarks: item.remarks || ''
-      };
-
-      console.log('Transformed result.etd:', result.etd);
-      console.log('Transformed result.accommodationType:', result.accommodationType);
-      console.log('Full transformed item:', result);
-
-      return result;
-    });
-
-    console.log('All transformed transport:', transformed);
     return transformed;
   }
 

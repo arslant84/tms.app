@@ -10,11 +10,9 @@ from utils.request_id_generator import generate_request_id, extract_context_from
 
 from .models import (
     TravelRequest,
-    TrfAccommodationDetail,
     TrfAdvanceAmountRequestedItem,
     TrfAdvanceBankDetail,
     TrfApprovalStep,
-    TrfCompanyTransportDetail,
     TrfDailyMealSelection,
     TrfFlightBooking,
     TrfItinerarySegment,
@@ -27,11 +25,9 @@ from .serializers import (
     TravelRequestCreateSerializer,
     TravelRequestUpdateSerializer,
     ApprovalActionSerializer,
-    TrfAccommodationDetailSerializer,
     TrfAdvanceAmountRequestedItemSerializer,
     TrfAdvanceBankDetailSerializer,
     TrfApprovalStepSerializer,
-    TrfCompanyTransportDetailSerializer,
     TrfDailyMealSelectionSerializer,
     TrfFlightBookingSerializer,
     TrfItinerarySegmentSerializer,
@@ -527,20 +523,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         count = TrfDailyMealSelection.objects.filter(trf=trf).delete()[0]
         return Response({'deleted': count}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['delete'], url_path='delete-accommodation')
-    def delete_accommodation(self, request, pk=None):
-        """Delete all accommodation details for a TRF"""
-        trf = self.get_object()
-        count = TrfAccommodationDetail.objects.filter(trf=trf).delete()[0]
-        return Response({'deleted': count}, status=status.HTTP_200_OK)
-
-    @action(detail=True, methods=['delete'], url_path='delete-transport')
-    def delete_transport(self, request, pk=None):
-        """Delete all transport details for a TRF"""
-        trf = self.get_object()
-        count = TrfCompanyTransportDetail.objects.filter(trf=trf).delete()[0]
-        return Response({'deleted': count}, status=status.HTTP_200_OK)
-
     @action(detail=True, methods=['delete'], url_path='delete-passport')
     def delete_passport(self, request, pk=None):
         """Delete all passport details for a TRF"""
@@ -724,19 +706,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
 # =============== NESTED RESOURCE VIEWSETS ===============
 
-class TrfAccommodationDetailViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Accommodation Details"""
-    queryset = TrfAccommodationDetail.objects.all()
-    serializer_class = TrfAccommodationDetailSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        trf_id = self.request.query_params.get('trf', None)
-        if trf_id:
-            return self.queryset.filter(trf_id=trf_id)
-        return self.queryset.order_by('-created_at')
-
-
 class TrfAdvanceAmountRequestedItemViewSet(viewsets.ModelViewSet):
     """ViewSet for TRF Advance Amount Requested Items"""
     queryset = TrfAdvanceAmountRequestedItem.objects.all()
@@ -767,19 +736,6 @@ class TrfApprovalStepViewSet(viewsets.ModelViewSet):
     """ViewSet for TRF Approval Steps"""
     queryset = TrfApprovalStep.objects.all()
     serializer_class = TrfApprovalStepSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        trf_id = self.request.query_params.get('trf', None)
-        if trf_id:
-            return self.queryset.filter(trf_id=trf_id)
-        return self.queryset.order_by('-created_at')
-
-
-class TrfCompanyTransportDetailViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Company Transport Details"""
-    queryset = TrfCompanyTransportDetail.objects.all()
-    serializer_class = TrfCompanyTransportDetailSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):

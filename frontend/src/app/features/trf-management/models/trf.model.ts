@@ -28,27 +28,6 @@ export interface MealProvision {
   refreshment: boolean;
 }
 
-export interface Accommodation {
-  type: 'Hotel' | 'StaffHouse' | 'PKCKampung' | 'Other';
-  otherDetails?: string;
-  checkInDate: string;
-  checkInTime: string;
-  checkOutDate: string;
-  checkOutTime: string;
-  remarks: string;
-}
-
-export interface CompanyTransportation {
-  date: string;
-  day: string;
-  from: string;
-  to: string;
-  etd: string;
-  accommodationType: string;
-  address: string;
-  remarks: string;
-}
-
 export interface Approval {
   preparedBy: string;
   preparedByPosition: string;
@@ -85,8 +64,6 @@ export interface DomesticTravelRequestForm {
   purposeOfTravel: string;
   itinerary: TravelItineraryItem[];
   mealProvisions: MealProvision[];
-  accommodation: Accommodation;
-  companyTransportation: CompanyTransportation[];
   approval: Approval;
   status: 'Draft' | 'Submitted' | 'UnderReview' | 'Approved' | 'Rejected';
   createdAt: string;

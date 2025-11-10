@@ -10,8 +10,6 @@ export interface ExternalPartiesDetails {
   externalRefToAuthorityLetter?: string;
   externalCostCenter: string;
   itinerary: any[];
-  accommodation: any[];
-  transport: any[];
 }
 
 @Component({
@@ -49,9 +47,7 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
       externalOrganization: [this.initialData.externalOrganization || '', Validators.required],
       externalRefToAuthorityLetter: [this.initialData.externalRefToAuthorityLetter || ''],
       externalCostCenter: [this.initialData.externalCostCenter || '', Validators.required],
-      itinerary: this.fb.array([]),
-      accommodation: this.fb.array([]),
-      transport: this.fb.array([])
+      itinerary: this.fb.array([])
     });
 
     // Watch trip type changes to manage itinerary segments
@@ -71,32 +67,10 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
     } else {
       this.addItinerarySegment();
     }
-
-    // Initialize accommodation from initialData or add one empty entry
-    if (this.initialData.accommodation && this.initialData.accommodation.length > 0) {
-      this.initialData.accommodation.forEach(acc => this.addAccommodation(acc));
-    } else {
-      this.addAccommodation();
-    }
-
-    // Initialize transport from initialData or add one empty entry
-    if (this.initialData.transport && this.initialData.transport.length > 0) {
-      this.initialData.transport.forEach(trans => this.addTransport(trans));
-    } else {
-      this.addTransport();
-    }
   }
 
   get itinerary(): FormArray {
     return this.externalForm.get('itinerary') as FormArray;
-  }
-
-  get accommodation(): FormArray {
-    return this.externalForm.get('accommodation') as FormArray;
-  }
-
-  get transport(): FormArray {
-    return this.externalForm.get('transport') as FormArray;
   }
 
   private createItinerarySegment(data?: any): FormGroup {
@@ -118,28 +92,6 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
       arrivalTime: [data?.arrivalTime || ''],
       arrivalLocation: [data?.arrivalLocation || '', Validators.required],
       modeOfTransport: [data?.modeOfTransport || '', Validators.required],
-      remarks: [data?.remarks || '']
-    });
-  }
-
-  private createAccommodation(data?: any): FormGroup {
-    return this.fb.group({
-      fromDate: [data?.fromDate || '', Validators.required],
-      toDate: [data?.toDate || '', Validators.required],
-      fromLocation: [data?.fromLocation || '', Validators.required],
-      toLocation: [data?.toLocation || '', Validators.required],
-      accommodationType: [data?.accommodationType || '', Validators.required],
-      address: [data?.address || ''],
-      remarks: [data?.remarks || '']
-    });
-  }
-
-  private createTransport(data?: any): FormGroup {
-    return this.fb.group({
-      date: [data?.date || '', Validators.required],
-      fromLocation: [data?.fromLocation || '', Validators.required],
-      toLocation: [data?.toLocation || '', Validators.required],
-      btNoRequired: [data?.btNoRequired || ''],
       remarks: [data?.remarks || '']
     });
   }
@@ -167,26 +119,6 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   removeItinerarySegment(index: number): void {
     if (this.itinerary.length > 1) {
       this.itinerary.removeAt(index);
-    }
-  }
-
-  addAccommodation(data?: any): void {
-    this.accommodation.push(this.createAccommodation(data));
-  }
-
-  removeAccommodation(index: number): void {
-    if (this.accommodation.length > 1) {
-      this.accommodation.removeAt(index);
-    }
-  }
-
-  addTransport(data?: any): void {
-    this.transport.push(this.createTransport(data));
-  }
-
-  removeTransport(index: number): void {
-    if (this.transport.length > 1) {
-      this.transport.removeAt(index);
     }
   }
 

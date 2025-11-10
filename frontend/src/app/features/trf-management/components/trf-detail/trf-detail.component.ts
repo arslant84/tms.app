@@ -27,10 +27,10 @@ export class TrfDetailComponent implements OnInit {
   workflowLoading: boolean = false;
   currentStepExecution: WorkflowStepExecution | null = null;
 
-  // Status-based visibility constants (from pctsb.syntra)
-  private readonly EDITABLE_STATUSES = ['Pending Department Focal', 'Rejected', 'Draft'];
+  // Status-based visibility constants
+  // Editable: Draft, Rejected, or any Pending status (before approval)
   private readonly CANCELLABLE_STATUSES = ['Pending Department Focal', 'Pending HOD', 'Pending Travel Desk'];
-  private readonly DELETABLE_STATUSES = ['Pending Department Focal', 'Rejected', 'Draft'];
+  private readonly DELETABLE_STATUSES = ['Draft', 'Rejected'];
 
   constructor(
     private route: ActivatedRoute,
@@ -97,9 +97,6 @@ export class TrfDetailComponent implements OnInit {
       // Backend uses 'itinerary_segments', but fallback to 'itinerary'
       itinerary: data.itinerary_segments || data.itinerary || [],
       mealSelections: data.daily_meals || data.daily_meal_selections || data.mealSelections || [],
-      accommodationDetails: data.accommodation_details || data.accommodationDetails || [],
-      // Backend uses 'transport_details' (from serializer), check this first
-      transportDetails: data.transport_details || data.company_transport_details || data.transportDetails || [],
       passportDetails: data.passport_details || data.passportDetails,
       bankDetails: data.advance_bank_details || data.bankDetails,
       advanceAmounts: data.advance_amount_items || data.advanceAmounts || [],
@@ -133,9 +130,16 @@ export class TrfDetailComponent implements OnInit {
 
   /**
    * Check if TRF can be edited based on status
+   * Allow editing for: Draft, Rejected, or any Pending status
    */
   canEdit(): boolean {
-    return this.EDITABLE_STATUSES.includes(this.trfData?.status);
+    if (!this.trfData?.status) return false;
+
+    const status = this.trfData.status;
+    // Allow editing if status is Draft, Rejected, or starts with Pending
+    return status === 'Draft' ||
+           status === 'Rejected' ||
+           status.startsWith('Pending');
   }
 
   /**
@@ -147,9 +151,11 @@ export class TrfDetailComponent implements OnInit {
 
   /**
    * Check if TRF can be deleted based on status
+   * Only allow deletion for Draft and Rejected statuses
    */
   canDelete(): boolean {
-    return this.DELETABLE_STATUSES.includes(this.trfData?.status);
+    if (!this.trfData?.status) return false;
+    return this.DELETABLE_STATUSES.includes(this.trfData.status);
   }
 
   /**
