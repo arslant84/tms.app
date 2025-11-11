@@ -24,6 +24,8 @@ from .serializers import (
 from trf.models import TravelRequest
 from expenses.models import ExpenseClaim
 from bookings.models import FlightBooking, HotelBooking
+from transport.models import TransportRequest
+from visa.models import VisaApplication
 from accounts.models import User
 
 
@@ -140,11 +142,15 @@ def dashboard_summary(request):
         claims = ExpenseClaim.objects.all()
         flights = FlightBooking.objects.all()
         hotels = HotelBooking.objects.all()
+        transports = TransportRequest.objects.all()
+        visas = VisaApplication.objects.all()
     else:
         trfs = TravelRequest.objects.filter(user=user)
         claims = ExpenseClaim.objects.filter(user=user)
         flights = FlightBooking.objects.filter(user=user)
         hotels = HotelBooking.objects.filter(user=user)
+        transports = TransportRequest.objects.filter(requestor=user)
+        visas = VisaApplication.objects.filter(user=user)
 
     # Calculate statistics
     total_trfs = trfs.count()
@@ -158,12 +164,18 @@ def dashboard_summary(request):
         total=Sum('estimated_cost')
     )['total'] or Decimal('0.00')
 
-    # Calculate total expense claims (count of draft claims, not sum)
-    total_expense_claims = claims.filter(status='Draft').count()
+    # Calculate pending expense claims (count of pending user claims)
+    pending_expense_claims = claims.filter(status__icontains='Pending').count()
 
     # Active bookings
     active_bookings = flights.filter(status__in=['CONFIRMED', 'TICKETED']).count()
     active_bookings += hotels.filter(status__in=['CONFIRMED']).count()
+
+    # Pending transport requests
+    pending_transport_requests = transports.filter(status__icontains='Pending').count()
+
+    # Pending visa applications
+    pending_visa_applications = visas.filter(status__icontains='Pending').count()
 
     # Pending approvals (use case-insensitive contains for dynamic statuses)
     pending_approvals = trfs.filter(status__icontains='Pending').count()
@@ -187,9 +199,11 @@ def dashboard_summary(request):
         'approved_trfs': approved_trfs,
         'rejected_trfs': rejected_trfs,
         'total_travel_cost': total_travel_cost,
-        'total_expense_claims': total_expense_claims,
+        'pending_expense_claims': pending_expense_claims,
         'active_bookings': active_bookings,
         'pending_approvals': pending_approvals,
+        'pending_transport_requests': pending_transport_requests,
+        'pending_visa_applications': pending_visa_applications,
         'recent_activities': recent_activities
     }
 

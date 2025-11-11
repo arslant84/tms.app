@@ -22,9 +22,11 @@ export class DashboardHomeComponent implements OnInit {
     approved_trfs: 0,
     rejected_trfs: 0,
     total_travel_cost: 0,
-    total_expense_claims: 0,
+    pending_expense_claims: 0,
     active_bookings: 0,
     pending_approvals: 0,
+    pending_transport_requests: 0,
+    pending_visa_applications: 0,
     recent_activities: []
   };
 

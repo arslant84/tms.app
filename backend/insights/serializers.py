@@ -75,9 +75,11 @@ class DashboardSummarySerializer(serializers.Serializer):
     approved_trfs = serializers.IntegerField()
     rejected_trfs = serializers.IntegerField()
     total_travel_cost = serializers.DecimalField(max_digits=12, decimal_places=2)
-    total_expense_claims = serializers.DecimalField(max_digits=12, decimal_places=2)
+    pending_expense_claims = serializers.IntegerField()
     active_bookings = serializers.IntegerField()
     pending_approvals = serializers.IntegerField()
+    pending_transport_requests = serializers.IntegerField()
+    pending_visa_applications = serializers.IntegerField()
     recent_activities = serializers.ListField()
 
 

@@ -10,9 +10,11 @@ export interface DashboardSummary {
   approved_trfs: number;
   rejected_trfs: number;
   total_travel_cost: number;
-  total_expense_claims: number;
+  pending_expense_claims: number;
   active_bookings: number;
   pending_approvals: number;
+  pending_transport_requests: number;
+  pending_visa_applications: number;
   recent_activities: RecentActivity[];
 }
 
