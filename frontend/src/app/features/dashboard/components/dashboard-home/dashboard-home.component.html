@@ -43,27 +43,27 @@
 
     <div class="summary-card shadow-lg">
       <div class="summary-card-header">
-        <h5 class="summary-card-title">Visa Application Updates</h5>
+        <h5 class="summary-card-title">Pending Visa Applications</h5>
         <div class="icon-circle bg-info-light">
           <i class="bi bi-file-earmark-text icon-info"></i>
         </div>
       </div>
       <div class="summary-card-body">
-        <div class="summary-value text-primary">{{ summary.pending_approvals || 0 }}</div>
-        <p class="summary-description">Pending visa applications</p>
+        <div class="summary-value text-primary">{{ summary.pending_visa_applications || 0 }}</div>
+        <p class="summary-description">Applications awaiting approval</p>
       </div>
     </div>
 
     <div class="summary-card shadow-lg">
       <div class="summary-card-header">
-        <h5 class="summary-card-title">My Draft Claims</h5>
+        <h5 class="summary-card-title">My Pending Claims</h5>
         <div class="icon-circle bg-amber-light">
           <i class="bi bi-receipt icon-amber"></i>
         </div>
       </div>
       <div class="summary-card-body">
-        <div class="summary-value text-primary">{{ summary.total_expense_claims || 0 }}</div>
-        <p class="summary-description">Saved but not yet submitted</p>
+        <div class="summary-value text-primary">{{ summary.pending_expense_claims || 0 }}</div>
+        <p class="summary-description">Claims awaiting approval</p>
       </div>
     </div>
 
@@ -82,14 +82,14 @@
 
     <div class="summary-card shadow-lg">
       <div class="summary-card-header">
-        <h5 class="summary-card-title">Book Transport</h5>
+        <h5 class="summary-card-title">Pending Transport</h5>
         <div class="icon-circle bg-success-light">
           <i class="bi bi-car-front icon-success"></i>
         </div>
       </div>
       <div class="summary-card-body">
-        <div class="summary-value text-primary">0</div>
-        <p class="summary-description">Available locations / new requests</p>
+        <div class="summary-value text-primary">{{ summary.pending_transport_requests || 0 }}</div>
+        <p class="summary-description">Requests awaiting approval</p>
       </div>
     </div>
   </div>
