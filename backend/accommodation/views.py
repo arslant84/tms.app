@@ -147,10 +147,133 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
     serializer_class = AccommodationRequestSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_object(self):
+        """
+        Override to show proper request_number in error messages
+        """
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field or 'pk'
+        lookup_value = self.kwargs[lookup_url_kwarg]
+
+        # Try to determine if it's a numeric ID or request_number
+        if lookup_value.isdigit():
+            filter_kwargs = {'pk': int(lookup_value)}
+        else:
+            filter_kwargs = {'request_number': lookup_value}
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        try:
+            obj = queryset.get(**filter_kwargs)
+        except AccommodationRequest.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+
+            # Try to fetch from full queryset to get request_number for better error message
+            try:
+                obj = AccommodationRequest.objects.get(**filter_kwargs)
+                request_identifier = obj.request_number or f"ID #{obj.id}"
+                raise NotFound(f'Accommodation request {request_identifier} not found or you do not have permission to access it')
+            except AccommodationRequest.DoesNotExist:
+                raise NotFound(f'Accommodation request not found with identifier: {lookup_value}')
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
+
+    def get_serializer_class(self):
+        """Use detailed serializer for retrieve action"""
+        if self.action == 'retrieve':
+            from .serializers import AccommodationRequestDetailSerializer
+            return AccommodationRequestDetailSerializer
+        return AccommodationRequestSerializer
+
     def get_queryset(self):
-        """Filter requests by status, department, etc."""
+        """
+        Filter requests by status, department, and user permissions
+
+        Context-aware filtering:
+        - Approval actions (approve/reject): Allow access to all requests (authorization checked in WorkflowEngine)
+        - admin_view=true: Show all accommodation requests if user has permission (Admin Module)
+        - Otherwise: Show only user's own requests (Personal Requests view)
+        """
+        user = self.request.user
         queryset = self.queryset
 
+        # Optimize for detail view - prefetch bookings with related staff_house and room
+        if self.action == 'retrieve':
+            queryset = queryset.prefetch_related(
+                'bookings',
+                'bookings__staff_house',
+                'bookings__room',
+                'trf__trfitinerarysegment_set'  # Prefetch TRF itinerary segments for TSR dates
+            )
+
+        # Optimize for list view - prefetch TRF itinerary segments for TSR dates
+        if self.action == 'list':
+            queryset = queryset.prefetch_related('trf__trfitinerarysegment_set')
+
+        # For approval actions, allow access to requests pending the user's approval
+        if self.action in ['approve', 'reject']:
+            print(f"✅ Approval action: Allowing access to all accommodation requests (authorization checked in WorkflowEngine)")
+            return queryset  # No filtering - authorization handled by WorkflowEngine
+
+        # For retrieve action, check permissions first
+        if self.action == 'retrieve':
+            # Check if user has admin permissions to view all
+            if user.role:
+                can_view_all = user.role.permissions.filter(
+                    name__in=['view_all_accommodation', 'approve_accommodation', 'process_accommodation']
+                ).exists()
+
+                if can_view_all or user.is_admin:
+                    print(f"✅ Retrieve action: User {user.username} has admin permissions - allowing access to all requests")
+                    return queryset  # No filtering for admins
+
+            # Regular users can view their own requests only
+            print(f"✅ Retrieve action: User {user.username} - filtering by requestor")
+            # Filter by requestor_name OR created_by to handle different data entry methods
+            queryset = queryset.filter(
+                models.Q(requestor_name=user.get_full_name()) |
+                models.Q(created_by=user) |
+                models.Q(staff_id=user.staff_id)
+            )
+            return queryset
+
+        # For assign action, check if user has admin permissions
+        if self.action == 'assign' and user.role:
+            can_view_all = user.role.permissions.filter(
+                name__in=['view_all_accommodation', 'approve_accommodation', 'process_accommodation']
+            ).exists()
+
+            if can_view_all or user.is_admin:
+                print(f"✅ Assign action: User {user.username} has admin permissions - allowing access to all requests")
+                return queryset  # No filtering for admins
+
+        # Check if this is an admin view (Accommodation Admin module)
+        admin_view = self.request.query_params.get('admin_view', 'false').lower() == 'true'
+
+        # Permission-based filtering
+        if admin_view and user.role:
+            # Admin module context - check permissions
+            can_view_all = user.role.permissions.filter(name='view_all_accommodation').exists()
+
+            if can_view_all:
+                print(f"✅ Admin view: User {user.username} (role: {user.role.name}) has 'view_all_accommodation' permission - showing all accommodation requests")
+                pass  # No filtering - show all
+            elif user.role.permissions.filter(name__in=['approve_accommodation', 'view_pending_approvals']).exists():
+                # Department-level approvers - could be extended to filter by department if needed
+                queryset = queryset.filter(requestor_name=user.get_full_name())
+                print(f"✅ Admin view: Approver - showing own accommodation requests")
+            else:
+                # No admin permissions - show only own
+                queryset = queryset.filter(requestor_name=user.get_full_name())
+                print(f"⚠️ Admin view: User lacks permission - showing only own accommodation requests")
+        else:
+            # Personal requests view - always show only user's own requests
+            queryset = queryset.filter(requestor_name=user.get_full_name())
+            print(f"✅ Personal view: User {user.username} - showing only own accommodation requests")
+
+        # Apply additional filters from query parameters
         status_filter = self.request.query_params.get('status', None)
         department = self.request.query_params.get('department', None)
         requestor_name = self.request.query_params.get('requestor_name', None)
@@ -491,10 +614,195 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
         """Get accommodation requests pending approval"""
         queryset = AccommodationRequest.objects.filter(
             status='Pending'
-        ).order_by('-submitted_at')
+        ).prefetch_related('trf__trfitinerarysegment_set').order_by('-submitted_at')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def assign(self, request, pk=None):
+        """
+        Assign accommodation to a request and create daily booking records
+
+        Expected payload:
+        {
+            "staff_house": 1,
+            "room": 2,
+            "start_date": "2025-11-24",
+            "end_date": "2025-11-26",
+            "notes": "Optional notes",
+            "assigned_room_info": "Apartment - Room #1 (Nov 24 - Nov 26, 2025)"
+        }
+        """
+        accommodation_request = self.get_object()
+
+        # Extract data from request
+        staff_house_id = request.data.get('staff_house')
+        room_id = request.data.get('room')
+        start_date_str = request.data.get('start_date')
+        end_date_str = request.data.get('end_date')
+        notes = request.data.get('notes', '')
+        assigned_room_info = request.data.get('assigned_room_info', '')
+
+        # Validate required fields
+        if not all([staff_house_id, room_id, start_date_str, end_date_str]):
+            return Response(
+                {'error': 'staff_house, room, start_date, and end_date are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Parse dates
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except ValueError as e:
+            return Response(
+                {'error': f'Invalid date format. Use YYYY-MM-DD: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate date range
+        if end_date < start_date:
+            return Response(
+                {'error': 'end_date must be greater than or equal to start_date'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Verify staff house and room exist
+        try:
+            staff_house = AccommodationStaffHouse.objects.get(id=staff_house_id)
+            room = AccommodationRoom.objects.get(id=room_id, staff_house=staff_house)
+        except AccommodationStaffHouse.DoesNotExist:
+            return Response(
+                {'error': f'Staff house with id {staff_house_id} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except AccommodationRoom.DoesNotExist:
+            return Response(
+                {'error': f'Room with id {room_id} not found in staff house {staff_house_id}'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Check for existing bookings in the date range
+        current_date = start_date
+        conflicting_dates = []
+        while current_date <= end_date:
+            existing_booking = AccommodationBooking.objects.filter(
+                room=room,
+                date=current_date,
+                status__in=['Confirmed', 'Pending']
+            ).first()
+
+            if existing_booking:
+                conflicting_dates.append(current_date.strftime('%Y-%m-%d'))
+
+            current_date += timedelta(days=1)
+
+        if conflicting_dates:
+            return Response(
+                {
+                    'error': 'Room is already booked for the following dates',
+                    'conflicting_dates': conflicting_dates
+                },
+                status=status.HTTP_409_CONFLICT
+            )
+
+        # Delete any existing bookings for this request (in case of reassignment)
+        AccommodationBooking.objects.filter(accommodation_request=accommodation_request).delete()
+
+        # Create daily booking records
+        created_bookings = []
+        current_date = start_date
+
+        try:
+            while current_date <= end_date:
+                booking = AccommodationBooking.objects.create(
+                    staff_house=staff_house,
+                    room=room,
+                    accommodation_request=accommodation_request,
+                    date=current_date,
+                    trf=accommodation_request.trf,
+                    status='Confirmed',
+                    notes=notes or f'TRF Assignment: {assigned_room_info}'
+                )
+                created_bookings.append(booking)
+                current_date += timedelta(days=1)
+
+            # Update accommodation request status
+            accommodation_request.status = 'Accommodation Assigned'
+
+            # Update additional_comments with assignment info
+            if accommodation_request.additional_comments:
+                accommodation_request.additional_comments += f'\n\n{assigned_room_info}'
+            else:
+                accommodation_request.additional_comments = assigned_room_info
+
+            accommodation_request.save()
+
+            # Add workflow step execution if workflow is active
+            try:
+                from workflows.models import WorkflowInstance, StepExecution
+                from django.contrib.contenttypes.models import ContentType
+
+                content_type = ContentType.objects.get_for_model(accommodation_request)
+                workflow_instance = WorkflowInstance.objects.filter(
+                    content_type=content_type,
+                    object_id=accommodation_request.id,
+                    status='in_progress'
+                ).first()
+
+                if workflow_instance:
+                    # Find or create accommodation admin step
+                    from workflows.models import WorkflowStep
+
+                    accommodation_step = WorkflowStep.objects.filter(
+                        workflow_definition=workflow_instance.workflow_definition,
+                        step_name='Accommodation Admin'
+                    ).first()
+
+                    if accommodation_step:
+                        StepExecution.objects.create(
+                            workflow_instance=workflow_instance,
+                            workflow_step=accommodation_step,
+                            assigned_role=request.user.role,
+                            status='completed',
+                            action_taken='assign',
+                            actioned_by=request.user,
+                            actioned_at=timezone.now(),
+                            comments=f'Assigned: {assigned_room_info}'
+                        )
+
+                        # Mark workflow as completed
+                        workflow_instance.status = 'completed'
+                        workflow_instance.completed_at = timezone.now()
+                        workflow_instance.save()
+            except Exception as e:
+                print(f"⚠️ Could not add workflow step execution: {str(e)}")
+                # Don't fail the assignment if workflow update fails
+                pass
+
+            # Prepare response
+            serializer = self.get_serializer(accommodation_request)
+            return Response({
+                'message': f'Accommodation assigned successfully. Created {len(created_bookings)} booking records.',
+                'bookings_created': len(created_bookings),
+                'date_range': f'{start_date_str} to {end_date_str}',
+                'accommodation_request': serializer.data
+            })
+
+        except Exception as e:
+            # Rollback: delete any created bookings
+            for booking in created_bookings:
+                booking.delete()
+
+            print(f"❌ Error creating booking records: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+            return Response(
+                {'error': f'Failed to create booking records: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class AccommodationBookingViewSet(viewsets.ModelViewSet):

@@ -63,6 +63,7 @@ class AccommodationBooking(models.Model):
     staff_house = models.ForeignKey(AccommodationStaffHouse, on_delete=models.CASCADE)
     room = models.ForeignKey(AccommodationRoom, on_delete=models.CASCADE)
     staff = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    accommodation_request = models.ForeignKey(AccommodationRequest, on_delete=models.CASCADE, blank=True, null=True, related_name='bookings')
     date = models.DateField()
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE, blank=True, null=True)
     status = models.CharField(max_length=255, default='Confirmed')

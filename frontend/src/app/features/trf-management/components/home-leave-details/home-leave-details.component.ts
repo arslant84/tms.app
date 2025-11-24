@@ -2,21 +2,10 @@ import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Outpu
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 
-export interface PassportDetails {
-  fullName: string;
-  passportNumber: string;
-  nationality: string;
-  dateOfBirth: string;
-  placeOfBirth?: string;
-  passportIssueDate: string;
-  passportExpiryDate: string;
-}
-
 export interface HomeLeaveDetails {
   purpose: string;
   tripType: 'One Way' | 'Round Trip';
   itinerary: any[];
-  passportDetails: PassportDetails;
   advanceBankDetails?: any;
 }
 
@@ -52,15 +41,6 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
       purpose: [this.initialData.purpose || '', [Validators.required, Validators.minLength(10)]],
       tripType: [this.initialData.tripType || 'Round Trip', Validators.required],
       itinerary: this.fb.array([]),
-      passportDetails: this.fb.group({
-        fullName: ['', Validators.required],
-        passportNumber: ['', Validators.required],
-        nationality: ['', Validators.required],
-        dateOfBirth: ['', Validators.required],
-        placeOfBirth: [''],
-        passportIssueDate: ['', Validators.required],
-        passportExpiryDate: ['', Validators.required]
-      }),
       advanceBankDetails: this.fb.group({
         bankName: [''],
         accountNumber: ['']
@@ -83,19 +63,6 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
       this.initialData.itinerary.forEach(segment => this.addItinerarySegment(segment));
     } else {
       this.addItinerarySegment();
-    }
-
-    // Set passport details if provided
-    if (this.initialData.passportDetails) {
-      this.homeLeaveForm.get('passportDetails')?.patchValue({
-        fullName: this.initialData.passportDetails.fullName || '',
-        passportNumber: this.initialData.passportDetails.passportNumber || '',
-        nationality: this.initialData.passportDetails.nationality || '',
-        dateOfBirth: this.initialData.passportDetails.dateOfBirth || '',
-        placeOfBirth: this.initialData.passportDetails.placeOfBirth || '',
-        passportIssueDate: this.initialData.passportDetails.passportIssueDate || '',
-        passportExpiryDate: this.initialData.passportDetails.passportExpiryDate || ''
-      });
     }
 
     // Set bank details if provided

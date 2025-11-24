@@ -543,9 +543,27 @@ export function getStatusBadgeClass(status: BookingStatus): string {
 
 /**
  * Check if accommodation request is editable based on status
+ * Once approved by any approval workflow, requests cannot be edited
  */
 export function isEditable(status: BookingStatus): boolean {
-  return ['Draft', 'Pending', 'Rejected'].includes(status);
+  // Only Draft and Rejected requests can be edited
+  const editableStatuses = ['Draft', 'Rejected'];
+
+  // Check if status is in editable list
+  if (editableStatuses.includes(status)) {
+    return true;
+  }
+
+  // Allow editing for pending statuses that haven't been approved yet
+  // (status contains 'Pending' but not 'Approved', 'Completed', or 'Assigned')
+  if (status.includes('Pending') &&
+      !status.includes('Approved') &&
+      !status.includes('Completed') &&
+      !status.includes('Assigned')) {
+    return true;
+  }
+
+  return false;
 }
 
 /**

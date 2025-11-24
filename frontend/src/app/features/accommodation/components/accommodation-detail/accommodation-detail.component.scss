@@ -982,3 +982,386 @@ $gray-900: #1f2937;
     }
   }
 }
+
+// ========== NEW ACCOMMODATION ASSIGNED CARD ==========
+.accommodation-assigned-card {
+  border-left: 4px solid #f59e0b !important; // Orange border to match PDF
+
+  .card-header.assignment-header {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border-bottom: 1px solid #fcd34d;
+
+    i {
+      color: #f59e0b;
+    }
+  }
+
+  .card-body {
+    padding: 1.5rem;
+  }
+
+  .assignment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+
+    .assignment-item {
+      label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: $gray-600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+      }
+
+      .value {
+        display: block;
+        font-size: 1rem;
+        font-weight: 500;
+        color: $gray-900;
+      }
+    }
+  }
+
+  .assignment-details-section {
+    padding-top: 1rem;
+    border-top: 1px solid $gray-200;
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: $gray-600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+
+    .assignment-details-text {
+      font-size: 0.95rem;
+      color: $gray-700;
+      margin: 0;
+      line-height: 1.6;
+    }
+  }
+}
+
+// ========== NEW ROOM BOOKING DETAILS CARD ==========
+.room-booking-details-card {
+  border-left: 4px solid #3b82f6 !important; // Blue border to match PDF
+
+  .card-header.booking-header {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1e40af;
+    border-bottom: 1px solid #93c5fd;
+
+    i {
+      color: #3b82f6;
+    }
+  }
+
+  .card-subtitle {
+    padding: 0.75rem 1.5rem 0;
+    background: #f8fafc;
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: $gray-600;
+    }
+  }
+
+  .card-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  // Booking Summary Section
+  .booking-summary-section {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 1.25rem;
+
+    .summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+
+      h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: $gray-900;
+        margin: 0;
+      }
+
+      .days-badge {
+        background: #3b82f6;
+        color: white;
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+
+      .summary-item {
+        label {
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #1e40af;
+          margin-right: 0.5rem;
+        }
+
+        .value {
+          font-size: 0.875rem;
+          color: $gray-900;
+        }
+      }
+    }
+  }
+
+  // Daily Booking Records Section
+  .daily-bookings-section {
+    h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: $gray-900;
+      margin-bottom: 1rem;
+    }
+
+    .booking-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .booking-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: white;
+      border: 1px solid $gray-200;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+      }
+
+      .booking-number {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1e40af;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1rem;
+      }
+
+      .booking-content {
+        flex: 1;
+
+        .booking-date {
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: $gray-900;
+          margin-bottom: 0.25rem;
+        }
+
+        .booking-room {
+          font-size: 0.85rem;
+          color: $gray-600;
+        }
+      }
+
+      .booking-badges {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+    }
+  }
+
+  // Room Information Section
+  .room-info-section {
+    background: white;
+    border: 1px solid $gray-200;
+    border-radius: 8px;
+    padding: 1.25rem;
+
+    h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: $gray-900;
+      margin-bottom: 1rem;
+    }
+
+    .room-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+
+      .info-item {
+        label {
+          display: block;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: $gray-600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 0.5rem;
+        }
+
+        .value {
+          display: block;
+          font-size: 0.95rem;
+          color: $gray-900;
+        }
+      }
+    }
+  }
+
+  // Stay Status Section
+  .stay-status-section {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 1.25rem;
+
+    h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: $gray-900;
+      margin-bottom: 1rem;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+
+      .status-item {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+
+        .status-icon {
+          flex-shrink: 0;
+          width: 40px;
+          height: 40px;
+          background: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          i {
+            font-size: 1.25rem;
+            color: $gray-600;
+          }
+        }
+
+        .status-content {
+          label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: $gray-900;
+            margin-bottom: 0.25rem;
+          }
+
+          .status-text {
+            display: block;
+            font-size: 0.85rem;
+            color: $gray-600;
+          }
+        }
+      }
+    }
+  }
+
+  // Booking Notes & Instructions Section
+  .booking-notes-section {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 1.25rem;
+
+    h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: $gray-900;
+      margin-bottom: 1rem;
+    }
+
+    .notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .note-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 3px solid #f59e0b;
+
+      .note-date {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #92400e;
+        margin-bottom: 0.5rem;
+
+        i {
+          color: #f59e0b;
+        }
+      }
+
+      .note-content {
+        font-size: 0.9rem;
+        color: $gray-700;
+        line-height: 1.6;
+      }
+    }
+  }
+}
+
+// ========== BADGE STYLES ==========
+.badge-ready {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  i {
+    font-size: 0.85rem;
+  }
+}

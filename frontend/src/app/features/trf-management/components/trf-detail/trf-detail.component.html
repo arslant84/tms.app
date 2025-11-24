@@ -71,33 +71,27 @@
     <!-- Status Badge -->
     <div class="status-bar">
       <!-- Show workflow status if workflow exists -->
-      <span *ngIf="workflow" class="badge" [ngClass]="workflowService.getWorkflowStatusClass(workflow)">
-        <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; display: inline;">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        {{ workflowService.getWorkflowStatus(workflow) }}
+      <span *ngIf="workflow" class="badge" [ngClass]="getWorkflowStatusClass()">
+        <i class="bi bi-diagram-3 me-1"></i>
+        {{ getWorkflowStatus() }}
       </span>
       <!-- Fallback to request status if no workflow -->
       <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span>
       <!-- Loading state -->
-      <span *ngIf="workflowLoading" class="badge badge-secondary">
-        <span class="spinner-sm"></span>
+      <span *ngIf="workflowLoading" class="badge bg-secondary">
+        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
         Loading workflow...
       </span>
       <span *ngIf="trfData.requestNumber" class="text-muted">Request Number: {{ trfData.requestNumber }}</span>
       <span *ngIf="!trfData.requestNumber" class="text-muted">TRF ID: #{{ trfData.id }}</span>
     </div>
 
-    <!-- Main Card -->
-    <div class="detail-card">
-      <!-- Employee/External Party Details -->
-      <section class="detail-section">
-        <h3 class="section-title">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-          </svg>
-          {{ isExternal ? 'External Party Details' : 'Employee Details' }}
-        </h3>
+    <!-- Employee/External Party Details -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-person"></i> {{ isExternal ? 'External Party Details' : 'Employee Details' }}</h5>
+      </div>
+      <div class="card-body">
         <div class="detail-grid">
           <ng-container *ngIf="isExternal">
             <div class="detail-item">
@@ -140,29 +134,27 @@
             </div>
           </ng-container>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Purpose of Travel -->
-      <section class="detail-section" *ngIf="trfData.purpose">
-        <h3 class="section-title">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          Purpose of Travel
-        </h3>
+    <!-- Purpose of Travel -->
+    <div class="card mb-4" *ngIf="trfData.purpose">
+      <div class="card-header">
+        <h5><i class="bi bi-file-text"></i> Purpose of Travel</h5>
+      </div>
+      <div class="card-body">
         <div class="purpose-text">
           <p>{{ trfData.purpose }}</p>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Itinerary -->
-      <section class="detail-section" *ngIf="trfData.itinerary && trfData.itinerary.length > 0">
-        <h3 class="section-title">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-          </svg>
-          Itinerary
-        </h3>
+    <!-- Itinerary -->
+    <div class="card mb-4" *ngIf="trfData.itinerary && trfData.itinerary.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-calendar-event"></i> Itinerary</h5>
+      </div>
+      <div class="card-body">
         <div class="table-container">
           <table class="detail-table">
             <thead>
@@ -191,16 +183,15 @@
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Meal Provision (Domestic) -->
-      <section class="detail-section" *ngIf="isDomestic && trfData.mealSelections && trfData.mealSelections.length > 0">
-        <h3 class="section-title">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-          </svg>
-          Meal Provision (Kiyanly)
-        </h3>
+    <!-- Meal Provision (Domestic) -->
+    <div class="card mb-4" *ngIf="isDomestic && trfData.mealSelections && trfData.mealSelections.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-cup-straw"></i> Meal Provision (Kiyanly)</h5>
+      </div>
+      <div class="card-body">
         <div class="table-container">
           <table class="detail-table">
             <thead>
@@ -250,16 +241,15 @@
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Passport Details (Overseas/Home Leave) -->
-      <section class="detail-section" *ngIf="isOverseas && trfData.passportDetails && trfData.passportDetails.length > 0">
-        <h3 class="section-title">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
-          </svg>
-          Passport Details
-        </h3>
+    <!-- Passport Details (Overseas/Home Leave) -->
+    <div class="card mb-4" *ngIf="isOverseas && trfData.passportDetails && trfData.passportDetails.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-passport"></i> Passport Details</h5>
+      </div>
+      <div class="card-body">
         <div class="detail-grid">
           <div class="detail-item">
             <label>Full Name</label>
@@ -290,16 +280,15 @@
             <p>{{ formatDate(trfData.passportDetails[0]?.passport_expiry_date || trfData.passportDetails[0]?.passportExpiryDate) }}</p>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Advance Request (Overseas/Home Leave) -->
-      <section class="detail-section" *ngIf="isOverseas && (trfData.bankDetails || trfData.advanceAmounts?.length > 0)">
-        <h3 class="section-title">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-          </svg>
-          Advance Request
-        </h3>
+    <!-- Advance Request (Overseas/Home Leave) -->
+    <div class="card mb-4" *ngIf="isOverseas && (trfData.bankDetails || trfData.advanceAmounts?.length > 0)">
+      <div class="card-header">
+        <h5><i class="bi bi-currency-dollar"></i> Advance Request</h5>
+      </div>
+      <div class="card-body">
 
         <div class="sub-section" *ngIf="trfData.bankDetails">
           <h4 class="sub-title">Bank Details</h4>
@@ -369,29 +358,27 @@
           </div>
           <p class="table-legend">LH: Lodging & Hotel | MA: Meals Allowance | OA: Other Allowance | TR: Transportation | OE: Other Expenses</p>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Additional Comments -->
-      <section class="detail-section" *ngIf="trfData.additionalComments">
-        <h3 class="section-title">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          Additional Comments
-        </h3>
+    <!-- Additional Comments -->
+    <div class="card mb-4" *ngIf="trfData.additionalComments">
+      <div class="card-header">
+        <h5><i class="bi bi-chat-left-text"></i> Additional Comments</h5>
+      </div>
+      <div class="card-body">
         <div class="purpose-text">
           <p>{{ trfData.additionalComments }}</p>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Request Metadata -->
-      <section class="detail-section">
-        <h3 class="section-title">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          Request Information
-        </h3>
+    <!-- Request Metadata -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-info-circle"></i> Request Information</h5>
+      </div>
+      <div class="card-body">
         <div class="detail-grid">
           <div class="detail-item">
             <label>Request Number</label>
@@ -401,10 +388,6 @@
           <div class="detail-item">
             <label>Travel Type</label>
             <p>{{ trfData.travelType }}</p>
-          </div>
-          <div class="detail-item">
-            <label>Estimated Cost</label>
-            <p>{{ formatNumber(trfData.estimatedCost, 2) }} USD</p>
           </div>
           <div class="detail-item">
             <label>Current Status</label>
@@ -419,14 +402,15 @@
             <p>{{ formatDate(trfData.updatedAt) }}</p>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Modern Workflow Status -->
-      <section class="detail-section" *ngIf="workflow || workflowLoading">
-        <h3 class="section-title">
-          <i class="bi bi-diagram-3"></i>
-          Approval Workflow
-        </h3>
+    <!-- Modern Workflow Status -->
+    <div class="card mb-4" *ngIf="workflow || workflowLoading">
+      <div class="card-header">
+        <h5><i class="bi bi-diagram-3"></i> Approval Workflow</h5>
+      </div>
+      <div class="card-body">
 
         <!-- Loading State -->
         <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
@@ -456,16 +440,15 @@
           <i class="bi bi-info-circle"></i>
           No workflow has been initiated for this TRF yet.
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Fallback: Old Approval Workflow (if no modern workflow exists) -->
-      <section class="detail-section" *ngIf="!workflow && !workflowLoading && trfData.approvalSteps && trfData.approvalSteps.length > 0">
-        <h3 class="section-title">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          Approval Workflow (Legacy)
-        </h3>
+    <!-- Fallback: Old Approval Workflow (if no modern workflow exists) -->
+    <div class="card mb-4" *ngIf="!workflow && !workflowLoading && trfData.approvalSteps && trfData.approvalSteps.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-check-circle"></i> Approval Workflow (Legacy)</h5>
+      </div>
+      <div class="card-body">
         <div class="approval-timeline">
           <div *ngFor="let step of trfData.approvalSteps; let i = index" class="approval-step"
                [ngClass]="{'completed': step.status === 'Approved', 'rejected': step.status === 'Rejected', 'pending': step.status === 'Pending'}">
@@ -491,7 +474,7 @@
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   </div>
 </div>

@@ -145,83 +145,155 @@
       </div>
     </div>
 
-    <!-- CARD 3: Accommodation Assignment (Conditional) -->
-    <div class="detail-card" *ngIf="hasAssignment">
+    <!-- CARD 3: Accommodation Assigned (Conditional) -->
+    <div class="detail-card accommodation-assigned-card" *ngIf="hasAssignment">
       <div class="card-header assignment-header">
         <i class="bi bi-house-check"></i>
-        <h3>Accommodation Assignment</h3>
+        <h3>Accommodation Assigned</h3>
       </div>
       <div class="card-body">
-        <div class="assignment-info">
+        <div class="assignment-grid">
           <div class="assignment-item">
-            <i class="bi bi-building"></i>
-            <div class="assignment-details">
-              <label>Staff House</label>
-              <span class="value">{{ request.assignedStaffHouseName }}</span>
-            </div>
+            <label>ASSIGNED STAFF HOUSE</label>
+            <span class="value">{{ request.assignedStaffHouseName }}</span>
           </div>
           <div class="assignment-item">
-            <i class="bi bi-door-open"></i>
-            <div class="assignment-details">
-              <label>Room</label>
-              <span class="value">{{ request.assignedRoomName }}</span>
-            </div>
+            <label>ASSIGNED ROOM/UNIT</label>
+            <span class="value">{{ request.assignedRoomName }}</span>
           </div>
+          <div class="assignment-item">
+            <label>ASSIGNMENT DATE</label>
+            <span class="value">{{ formatDateWithOrdinal(getAssignmentDate()) }}</span>
+          </div>
+        </div>
+        <div class="assignment-details-section">
+          <label>ASSIGNMENT DETAILS</label>
+          <p class="assignment-details-text">{{ getAssignmentDetails() }}</p>
         </div>
       </div>
     </div>
 
     <!-- CARD 4: Room Booking Details (Daily Records) -->
-    <div class="detail-card" *ngIf="hasBookingRecords">
-      <div class="card-header">
-        <i class="bi bi-calendar3"></i>
+    <div class="detail-card room-booking-details-card" *ngIf="hasBookingRecords">
+      <div class="card-header booking-header">
+        <i class="bi bi-house-door"></i>
         <h3>Room Booking Details</h3>
       </div>
+      <div class="card-subtitle">
+        <p>Detailed booking information and accommodation assignment records</p>
+      </div>
       <div class="card-body">
-        <div class="table-responsive">
-          <table class="booking-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Staff House</th>
-                <th>Room</th>
-                <th>Check-In Status</th>
-                <th>Check-Out Status</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let booking of request.dailyBookings">
-                <td>{{ formatDate(booking.date) }}</td>
-                <td>{{ booking.staffHouseName || 'N/A' }}</td>
-                <td>{{ booking.roomName || 'N/A' }}</td>
-                <td>
-                  <span class="status-badge" [ngClass]="getCheckInStatus(booking).class">
-                    {{ getCheckInStatus(booking).label }}
-                  </span>
-                  <span class="time-text" *ngIf="booking.checkInTime">
-                    {{ formatTime(booking.checkInTime) }}
-                  </span>
-                </td>
-                <td>
-                  <span class="status-badge" [ngClass]="getCheckOutStatus(booking).class">
-                    {{ getCheckOutStatus(booking).label }}
-                  </span>
-                  <span class="time-text" *ngIf="booking.checkOutTime">
-                    {{ formatTime(booking.checkOutTime) }}
-                  </span>
-                </td>
-                <td>{{ booking.notes || '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Booking Summary Section -->
+        <div class="booking-summary-section">
+          <div class="summary-header">
+            <h4>Booking Summary</h4>
+            <span class="days-badge">{{ getTotalNightsFromBookings() }} day(s) booked</span>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <label>Guest:</label>
+              <span class="value">{{ request.requestorName }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Room:</label>
+              <span class="value">{{ request.assignedRoomName || 'N/A' }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Staff House:</label>
+              <span class="value">{{ request.assignedStaffHouseName || 'N/A' }}</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Summary -->
-        <div class="booking-summary">
-          <div class="summary-item">
-            <label>Total Booking Days:</label>
-            <span class="value">{{ getTotalNightsFromBookings() }} day{{ getTotalNightsFromBookings() !== 1 ? 's' : '' }}</span>
+        <!-- Daily Booking Records Section -->
+        <div class="daily-bookings-section">
+          <h4>Daily Booking Records</h4>
+          <div class="booking-list">
+            <div class="booking-item" *ngFor="let booking of request.dailyBookings; let i = index">
+              <div class="booking-number">{{ i + 1 }}</div>
+              <div class="booking-content">
+                <div class="booking-date">{{ formatDateLong(booking.date) }}</div>
+                <div class="booking-room">{{ booking.roomName }} • {{ booking.staffHouseName }}</div>
+              </div>
+              <div class="booking-badges">
+                <span class="badge" [ngClass]="getBookingStatus(booking).class">
+                  {{ getBookingStatus(booking).text }}
+                </span>
+                <span class="badge badge-ready" *ngIf="getReadyStatus(booking).text === 'Ready'">
+                  <i class="bi bi-check-circle"></i> {{ getReadyStatus(booking).text }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Room Information Section -->
+        <div class="room-info-section" *ngIf="getRoomInfo()">
+          <h4>Room Information</h4>
+          <div class="room-info-grid">
+            <div class="info-item">
+              <label>ROOM NAME</label>
+              <span class="value">{{ getRoomInfo()?.name }}</span>
+            </div>
+            <div class="info-item">
+              <label>ROOM TYPE</label>
+              <span class="value">{{ request.requestedRoomType || 'N/A' }}</span>
+            </div>
+            <div class="info-item">
+              <label>CAPACITY</label>
+              <span class="value">{{ getRoomInfo()?.capacity }} person(s)</span>
+            </div>
+            <div class="info-item">
+              <label>STAFF HOUSE</label>
+              <span class="value">{{ request.assignedStaffHouseName }}</span>
+            </div>
+            <div class="info-item">
+              <label>LOCATION</label>
+              <span class="value">{{ getRoomInfo()?.location }}</span>
+            </div>
+            <div class="info-item">
+              <label>GUEST GENDER</label>
+              <span class="value">{{ getRoomInfo()?.gender }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stay Status Section -->
+        <div class="stay-status-section">
+          <h4>Stay Status</h4>
+          <div class="status-grid">
+            <div class="status-item">
+              <div class="status-icon">
+                <i class="bi bi-box-arrow-in-right"></i>
+              </div>
+              <div class="status-content">
+                <label>Check-in Status</label>
+                <span class="status-text">Awaiting check-in</span>
+              </div>
+            </div>
+            <div class="status-item">
+              <div class="status-icon">
+                <i class="bi bi-box-arrow-right"></i>
+              </div>
+              <div class="status-content">
+                <label>Check-out Status</label>
+                <span class="status-text">Stay in progress</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Booking Notes & Instructions Section -->
+        <div class="booking-notes-section" *ngIf="getBookingNotes().length > 0">
+          <h4>Booking Notes & Instructions</h4>
+          <div class="notes-list">
+            <div class="note-item" *ngFor="let note of getBookingNotes()">
+              <div class="note-date">
+                <i class="bi bi-calendar3"></i>
+                {{ note.date }}
+              </div>
+              <div class="note-content">{{ note.note }}</div>
+            </div>
           </div>
         </div>
       </div>

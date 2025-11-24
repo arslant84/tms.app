@@ -18,6 +18,12 @@ export class TrfService {
   getAllTrfs(params?: any): Observable<any> {
     let queryParams = '';
     if (params) {
+      // Convert adminView boolean to admin_view string parameter
+      if (params.adminView === true) {
+        params.admin_view = 'true';
+        delete params.adminView;
+      }
+
       const queryString = Object.keys(params)
         .filter(key => params[key] !== null && params[key] !== undefined && params[key] !== '')
         .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
@@ -98,6 +104,14 @@ export class TrfService {
   // Cancel TRF
   cancelTrf(id: number, isOverseas: boolean = false): Observable<TravelRequestForm> {
     return this.http.post<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/cancel/`, {})
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  // Check TSR accommodation availability
+  checkAccommodationAvailability(id: number): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/trf/travel-requests/${id}/check-accommodation-availability/`)
       .pipe(
         catchError(this.handleError)
       );

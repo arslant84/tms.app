@@ -33,6 +33,9 @@ export class TransportDetailComponent implements OnInit {
   private readonly CANCELLABLE_STATUSES = ['Pending'];
   private readonly DELETABLE_STATUSES = ['Draft', 'Rejected'];
 
+  // Statuses that indicate the request has been approved and should not be editable
+  private readonly APPROVED_KEYWORDS = ['Approved', 'Completed', 'Assigned'];
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -143,7 +146,27 @@ export class TransportDetailComponent implements OnInit {
   }
 
   canEdit(): boolean {
-    return this.EDITABLE_STATUSES.includes(this.request?.status || '');
+    if (!this.request?.status) return false;
+
+    const status = this.request.status;
+
+    // Check if status is in editable list
+    if (this.EDITABLE_STATUSES.includes(status)) {
+      return true;
+    }
+
+    // Check if status contains any approved keywords - if so, not editable
+    const isApproved = this.APPROVED_KEYWORDS.some(keyword => status.includes(keyword));
+    if (isApproved) {
+      return false;
+    }
+
+    // Allow editing for pending statuses that haven't been approved yet
+    if (status.includes('Pending')) {
+      return true;
+    }
+
+    return false;
   }
 
   canCancel(): boolean {
@@ -197,6 +220,15 @@ export class TransportDetailComponent implements OnInit {
   }
 
   onEdit(): void {
+    // Check if request can be edited
+    if (!this.canEdit()) {
+      this.toastService.error(
+        'This transport request cannot be edited because it has been approved. ' +
+        'Approved requests can only be viewed, not modified.'
+      );
+      return;
+    }
+
     this.router.navigate(['/transport/edit', this.requestId]);
   }
 
