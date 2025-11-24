@@ -135,6 +135,15 @@ export class AccommodationDetailComponent implements OnInit {
   }
 
   onEdit(): void {
+    // Check if request can be edited
+    if (!this.canEdit()) {
+      this.toastService.error(
+        'This accommodation request cannot be edited because it has been approved. ' +
+        'Approved requests can only be viewed, not modified.'
+      );
+      return;
+    }
+
     this.router.navigate(['/accommodation/edit', this.requestId]);
   }
 
@@ -183,6 +192,104 @@ export class AccommodationDetailComponent implements OnInit {
     const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
     if (isNaN(date.getTime())) return 'Invalid Date';
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  formatDateLong(dateValue: Date | string | null | undefined): string {
+    if (!dateValue) return 'N/A';
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  formatDateWithOrdinal(dateValue: Date | string | null | undefined): string {
+    if (!dateValue) return 'N/A';
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+    if (isNaN(date.getTime())) return 'Invalid Date';
+
+    const day = date.getDate();
+    const ordinal = this.getOrdinal(day);
+    const monthYear = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+    return `${date.toLocaleDateString('en-US', { month: 'long' })} ${day}${ordinal}, ${date.getFullYear()}`;
+  }
+
+  getOrdinal(day: number): string {
+    if (day > 3 && day < 21) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  }
+
+  getAssignmentDate(): Date | string | null {
+    // Get assignment date from the first daily booking's created_at or use current date
+    if (this.request?.dailyBookings && this.request.dailyBookings.length > 0) {
+      return this.request.dailyBookings[0].createdAt || new Date();
+    }
+    return this.request?.lastUpdatedDate || null;
+  }
+
+  getAssignmentDetails(): string {
+    if (!this.hasAssignment) return 'N/A';
+    const staffHouse = this.request?.assignedStaffHouseName || 'N/A';
+    const room = this.request?.assignedRoomName || 'N/A';
+    const checkIn = this.formatDate(this.request?.requestedCheckInDate);
+    const checkOut = this.formatDate(this.request?.requestedCheckOutDate);
+    return `${staffHouse} - ${room} (${checkIn} - ${checkOut})`;
+  }
+
+  getRoomInfo(): { name: string; type: string; capacity: number; location: string; gender: string } | null {
+    if (!this.request?.dailyBookings || this.request.dailyBookings.length === 0) {
+      return null;
+    }
+
+    const firstBooking = this.request.dailyBookings[0];
+    return {
+      name: firstBooking.roomName || 'N/A',
+      type: 'Single', // TODO: Get from room details
+      capacity: 1,    // TODO: Get from room details
+      location: this.request.location,
+      gender: this.request.requestorGender
+    };
+  }
+
+  getBookingNotes(): { date: string; note: string }[] {
+    if (!this.request?.dailyBookings) return [];
+
+    return this.request.dailyBookings
+      .filter(b => b.notes && b.notes.trim().length > 0)
+      .map(b => ({
+        date: this.formatDate(b.date),
+        note: b.notes!
+      }));
+  }
+
+  getBookingStatus(booking: DailyBooking): { text: string; class: string } {
+    const statusMap: Record<string, { text: string; class: string }> = {
+      'Confirmed': { text: 'Confirmed', class: 'badge-success' },
+      'Pending': { text: 'Pending', class: 'badge-warning' },
+      'Checked-in': { text: 'Checked In', class: 'badge-info' },
+      'Checked-out': { text: 'Checked Out', class: 'badge-secondary' },
+      'Cancelled': { text: 'Cancelled', class: 'badge-danger' },
+      'Blocked': { text: 'Blocked', class: 'badge-dark' }
+    };
+
+    return statusMap[booking.status] || { text: booking.status, class: 'badge-secondary' };
+  }
+
+  getReadyStatus(booking: DailyBooking): { text: string; class: string } {
+    // Assuming "Ready" means the booking is confirmed and ready for check-in
+    if (booking.status === 'Confirmed' || booking.status === 'Pending') {
+      return { text: 'Ready', class: 'badge-ready' };
+    }
+    return { text: 'Not Ready', class: 'badge-secondary' };
   }
 
   formatDateTime(dateValue: Date | string | null | undefined): string {

@@ -303,6 +303,12 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
         many=True, read_only=True, source='trfpassportdetail_set'
     )
 
+    # Add nested travel details for Angular frontend compatibility
+    domesticTravelDetails = serializers.SerializerMethodField()
+    overseasTravelDetails = serializers.SerializerMethodField()
+    externalPartiesTravelDetails = serializers.SerializerMethodField()
+    externalPartyRequestorInfo = serializers.SerializerMethodField()
+
     class Meta:
         model = TravelRequest
         fields = [
@@ -315,9 +321,148 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             'advance_amounts', 'bank_detail',
             'approval_steps', 'daily_meals',
             'flight_bookings', 'itinerary_segments', 'meal_provisions',
-            'passport_details'
+            'passport_details',
+            'domesticTravelDetails', 'overseasTravelDetails',
+            'externalPartiesTravelDetails', 'externalPartyRequestorInfo'
         ]
         read_only_fields = ['id', 'request_number', 'submitted_at', 'created_at', 'updated_at']
+
+    def get_domesticTravelDetails(self, obj):
+        """Get domestic travel details with itinerary"""
+        if obj.travel_type == 'Domestic':
+            itinerary_segments = obj.trfitinerarysegment_set.all()
+            daily_meals = obj.trfdailymealselection_set.all()
+            return {
+                'purpose': obj.purpose,
+                'itinerary': [
+                    {
+                        'id': seg.id,
+                        'date': seg.segment_date.isoformat() if seg.segment_date else None,
+                        'day': seg.day_of_week,
+                        'from': seg.from_location,
+                        'to': seg.to_location,
+                        'etd': seg.departure_time,
+                        'eta': seg.arrival_time,
+                        'flightNumber': seg.flight_number,
+                        'remarks': seg.remarks
+                    }
+                    for seg in itinerary_segments
+                ],
+                'mealProvision': {
+                    'dailyMealSelections': [
+                        {
+                            'id': meal.id,
+                            'meal_date': meal.meal_date.isoformat() if meal.meal_date else None,
+                            'breakfast': meal.breakfast,
+                            'lunch': meal.lunch,
+                            'dinner': meal.dinner,
+                            'supper': meal.supper,
+                            'refreshment': meal.refreshment
+                        }
+                        for meal in daily_meals
+                    ]
+                }
+            }
+        return None
+
+    def get_overseasTravelDetails(self, obj):
+        """Get overseas/home leave travel details with itinerary"""
+        if obj.travel_type in ['Overseas', 'Home Leave Passage']:
+            itinerary_segments = obj.trfitinerarysegment_set.all()
+            advance_amounts = obj.trfadvanceamountrequesteditem_set.all()
+            try:
+                bank_detail = obj.trfadvancebankdetail
+                bank_details_data = {
+                    'bankName': bank_detail.bank_name,
+                    'accountNumber': bank_detail.account_number,
+                    'accountName': bank_detail.account_name,
+                    'swiftCode': bank_detail.swift_code,
+                    'iban': bank_detail.iban,
+                    'branchAddress': bank_detail.branch_address,
+                    'currency': bank_detail.currency,
+                    'amount': str(bank_detail.amount) if bank_detail.amount else None
+                }
+            except TrfAdvanceBankDetail.DoesNotExist:
+                bank_details_data = None
+
+            return {
+                'purpose': obj.purpose,
+                'itinerary': [
+                    {
+                        'id': seg.id,
+                        'date': seg.segment_date.isoformat() if seg.segment_date else None,
+                        'day': seg.day_of_week,
+                        'from': seg.from_location,
+                        'to': seg.to_location,
+                        'etd': seg.departure_time,
+                        'eta': seg.arrival_time,
+                        'flightNumber': seg.flight_number,
+                        'remarks': seg.remarks
+                    }
+                    for seg in itinerary_segments
+                ],
+                'advanceBankDetails': bank_details_data,
+                'advanceAmountRequested': [
+                    {
+                        'id': amt.id,
+                        'dateFrom': amt.date_from.isoformat() if amt.date_from else None,
+                        'dateTo': amt.date_to.isoformat() if amt.date_to else None,
+                        'lh': str(amt.lh) if amt.lh else None,
+                        'ma': str(amt.ma) if amt.ma else None,
+                        'oa': str(amt.oa) if amt.oa else None,
+                        'tr': str(amt.tr) if amt.tr else None,
+                        'oe': str(amt.oe) if amt.oe else None,
+                        'usd': str(amt.usd) if amt.usd else None,
+                        'remarks': amt.remarks
+                    }
+                    for amt in advance_amounts
+                ]
+            }
+        return None
+
+    def get_externalPartiesTravelDetails(self, obj):
+        """Get external parties travel details with itinerary"""
+        if obj.travel_type == 'External Parties':
+            itinerary_segments = obj.trfitinerarysegment_set.all()
+            return {
+                'purpose': obj.purpose,
+                'itinerary': [
+                    {
+                        'id': seg.id,
+                        'date': seg.segment_date.isoformat() if seg.segment_date else None,
+                        'day': seg.day_of_week,
+                        'from': seg.from_location,
+                        'to': seg.to_location,
+                        'etd': seg.departure_time,
+                        'eta': seg.arrival_time,
+                        'flightNumber': seg.flight_number,
+                        'remarks': seg.remarks
+                    }
+                    for seg in itinerary_segments
+                ]
+            }
+        return None
+
+    def get_externalPartyRequestorInfo(self, obj):
+        """Get external party requestor information"""
+        if obj.travel_type == 'External Parties':
+            return {
+                'externalFullName': obj.external_full_name,
+                'externalOrganization': obj.external_organization,
+                'externalRefToAuthorityLetter': obj.external_ref_to_authority_letter,
+                'externalCostCenter': obj.external_cost_center
+            }
+        return None
+
+    def to_representation(self, instance):
+        """Exclude passport_details for Home Leave Passage"""
+        representation = super().to_representation(instance)
+
+        # Remove passport_details from Home Leave Passage TSRs
+        if instance.travel_type == 'Home Leave Passage':
+            representation.pop('passport_details', None)
+
+        return representation
 
 
 class TravelRequestCreateSerializer(serializers.ModelSerializer):

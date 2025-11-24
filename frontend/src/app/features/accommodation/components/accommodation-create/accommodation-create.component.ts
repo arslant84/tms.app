@@ -76,9 +76,68 @@ export class AccommodationCreateComponent implements OnInit {
     const trfId = event.target.value;
     if (trfId) {
       this.selectedTrfDetails = this.availableTrfs.find(trf => trf.id === +trfId);
+
+      // Check accommodation availability and auto-populate dates
+      this.checkTsrAvailability(+trfId);
     } else {
       this.selectedTrfDetails = null;
+      // Clear the date fields if TSR is deselected
+      this.accommodationForm.patchValue({
+        requestedCheckInDate: '',
+        requestedCheckOutDate: ''
+      });
     }
+  }
+
+  checkTsrAvailability(trfId: number): void {
+    this.trfService.checkAccommodationAvailability(trfId).subscribe({
+      next: (response: any) => {
+        if (!response.is_available) {
+          // TSR is already linked to another accommodation request
+          const existingAccom = response.existing_accommodation;
+
+          // Check if this is the current request being edited (in edit mode)
+          const isCurrentRequest = this.isEditMode && this.requestId === existingAccom.id;
+
+          if (!isCurrentRequest) {
+            // Show warning only if it's linked to a DIFFERENT accommodation request
+            this.toastService.warning(
+              `This TSR (${response.tsr_request_number}) is already linked to accommodation request ${existingAccom.request_number} by ${existingAccom.requestor_name}. Please select a different TSR.`
+            );
+
+            // Clear the TSR selection
+            this.accommodationForm.patchValue({
+              trfId: ''
+            });
+            this.selectedTrfDetails = null;
+          } else {
+            // In edit mode, auto-populate dates from TSR even if it's already linked to this request
+            if (response.date_range) {
+              this.accommodationForm.patchValue({
+                requestedCheckInDate: response.date_range.start_date,
+                requestedCheckOutDate: response.date_range.end_date
+              });
+            }
+          }
+        } else {
+          // TSR is available - auto-populate dates if available
+          if (response.date_range) {
+            this.accommodationForm.patchValue({
+              requestedCheckInDate: response.date_range.start_date,
+              requestedCheckOutDate: response.date_range.end_date
+            });
+
+            this.toastService.success(
+              `Check-in and check-out dates have been auto-populated from TSR itinerary. You can adjust them within the TSR date range (${response.date_range.start_date} to ${response.date_range.end_date}).`
+            );
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Error checking TSR availability:', err);
+        this.toastService.error('Failed to check TSR availability');
+      }
+    });
   }
 
   private populateUserDetails(): void {

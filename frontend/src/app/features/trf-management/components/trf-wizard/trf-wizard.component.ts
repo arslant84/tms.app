@@ -59,6 +59,7 @@ export class TrfWizardComponent implements OnInit {
   overseasTravelData: any = {};
   homeLeaveData: any = {};
   externalPartiesData: any = {};
+  approvalData: any = {}; // Store approval & submission data including additionalComments
   approvalSubmissionData: any = {};
 
   constructor(
@@ -107,13 +108,16 @@ export class TrfWizardComponent implements OnInit {
     // TODO: Use the proper GET endpoint once available
     // For now, this is a placeholder
     this.trfService.getTrfById(id).subscribe({
-      next: (data: any) => {
+      next: (response: any) => {
+        // The backend returns { trf: { ...data } }, so we need to extract the trf object
+        const data = response.trf || response;
+
         console.log('=== LOADED TRF DATA ===');
         console.log('TRF ID:', id);
         console.log('TRF Status:', data.status);
         console.log('Full TRF data:', data);
-        console.log('Meal data (daily_meals):', data.daily_meals);
-        console.log('Meal data (daily_meal_selections):', data.daily_meal_selections);
+        console.log('Domestic Travel Details:', data.domesticTravelDetails);
+        console.log('Overseas Travel Details:', data.overseasTravelDetails);
 
         this.existingTrfData = data;
         this.selectedTravelType = data.travel_type || data.travelType;
@@ -149,6 +153,14 @@ export class TrfWizardComponent implements OnInit {
           email: data.email
         };
 
+        // Pre-populate approval data (additional comments)
+        this.approvalData = {
+          additionalComments: data.additional_comments || data.additionalComments || '',
+          confirmPolicy: false,
+          confirmManagerApproval: false,
+          confirmTermsAndConditions: false
+        };
+
         // Pre-populate travel-specific data based on type
         this.prePopulateTravelData(data);
 
@@ -169,67 +181,103 @@ export class TrfWizardComponent implements OnInit {
     switch (this.selectedTravelType) {
       case 'Domestic':
         console.log('=== DOMESTIC TRAVEL DATA ===');
-        console.log('Raw data.daily_meals:', data.daily_meals);
+        console.log('Raw domesticTravelDetails:', data.domesticTravelDetails);
+
+        // Backend returns nested structure: data.domesticTravelDetails.itinerary
+        const domesticDetails = data.domesticTravelDetails || {};
+        const itineraryData = domesticDetails.itinerary || data.itinerary_segments || data.itinerary || [];
+        const mealData = domesticDetails.mealProvision?.dailyMealSelections || data.daily_meals || data.daily_meal_selections || data.mealSelections || [];
 
         this.domesticTravelData = {
-          purposeOfTravel: data.purpose,
+          purposeOfTravel: domesticDetails.purpose || data.purpose || '',
           tripType: data.trip_type || data.tripType || 'Round Trip',
-          // Backend uses 'itinerary_segments' but fallback to 'itinerary'
-          itinerary: this.transformItineraryData(data.itinerary_segments || data.itinerary || []),
+          itinerary: this.transformItineraryData(itineraryData),
           mealProvisions: {
-            // Backend uses 'daily_meals' but fallback to 'daily_meal_selections'
-            dailySelections: this.transformMealSelectionsData(data.daily_meals || data.daily_meal_selections || data.mealSelections || [])
+            dailySelections: this.transformMealSelectionsData(mealData)
           }
         };
 
         console.log('Transformed domesticTravelData:', this.domesticTravelData);
+        console.log('Itinerary count:', this.domesticTravelData.itinerary.length);
         console.log('Meal provisions dailySelections:', this.domesticTravelData.mealProvisions.dailySelections);
         break;
 
       case 'Overseas':
         console.log('=== OVERSEAS TRAVEL DATA ===');
-        console.log('Bank detail (bank_detail):', data.bank_detail);
-        console.log('Advance amounts (advance_amounts):', data.advance_amounts);
+        console.log('Raw overseasTravelDetails:', data.overseasTravelDetails);
+
+        // Backend returns nested structure: data.overseasTravelDetails
+        const overseasDetails = data.overseasTravelDetails || {};
+        const overseasItinerary = overseasDetails.itinerary || data.itinerary_segments || data.itinerary || [];
+        const bankDetails = overseasDetails.advanceBankDetails || data.bank_detail || data.advance_bank_details || data.bankDetails;
+        const advanceAmounts = overseasDetails.advanceAmountRequested || data.advance_amounts || data.advance_amount_items || data.advanceAmounts || [];
 
         this.overseasTravelData = {
-          purpose: data.purpose,
+          purpose: overseasDetails.purpose || data.purpose || '',
           tripType: data.trip_type || data.tripType || 'Round Trip',
-          itinerary: this.transformItineraryData(data.itinerary_segments || data.itinerary || []),
-          advanceBankDetails: this.transformBankDetails(data.bank_detail || data.advance_bank_details || data.bankDetails),
-          advanceAmountRequested: this.transformAdvanceAmounts(data.advance_amounts || data.advance_amount_items || data.advanceAmounts || [])
+          itinerary: this.transformItineraryData(overseasItinerary),
+          advanceBankDetails: this.transformBankDetails(bankDetails),
+          advanceAmountRequested: this.transformAdvanceAmounts(advanceAmounts)
         };
 
         console.log('Transformed bank details:', this.overseasTravelData.advanceBankDetails);
         console.log('Transformed advance amounts:', this.overseasTravelData.advanceAmountRequested);
+        console.log('Itinerary count:', this.overseasTravelData.itinerary.length);
         break;
 
       case 'Home Leave':
         console.log('=== HOME LEAVE TRAVEL DATA ===');
-        console.log('Passport details:', data.passport_details);
-        console.log('Bank detail:', data.bank_detail);
+        console.log('Raw overseasTravelDetails (Home Leave uses same structure):', data.overseasTravelDetails);
+
+        // Backend returns nested structure: data.overseasTravelDetails (Home Leave reuses overseas structure)
+        const homeLeaveDetails = data.overseasTravelDetails || {};
+        const homeLeaveItinerary = homeLeaveDetails.itinerary || data.itinerary_segments || data.itinerary || [];
+        const passportDetails = data.passport_details || data.passportDetails;
+        const homeLeaveBank = homeLeaveDetails.advanceBankDetails || data.bank_detail || data.advance_bank_details || data.bankDetails;
 
         this.homeLeaveData = {
-          purpose: data.purpose,
+          purpose: homeLeaveDetails.purpose || data.purpose || '',
           tripType: data.trip_type || data.tripType || 'Round Trip',
-          itinerary: this.transformItineraryData(data.itinerary_segments || data.itinerary || []),
-          passportDetails: this.transformPassportDetails(data.passport_details || data.passportDetails),
-          advanceBankDetails: this.transformBankDetails(data.bank_detail || data.advance_bank_details || data.bankDetails)
+          itinerary: this.transformItineraryData(homeLeaveItinerary),
+          passportDetails: this.transformPassportDetails(passportDetails),
+          advanceBankDetails: this.transformBankDetails(homeLeaveBank)
         };
 
         console.log('Transformed passport details:', this.homeLeaveData.passportDetails);
         console.log('Transformed bank details:', this.homeLeaveData.advanceBankDetails);
+        console.log('Itinerary count:', this.homeLeaveData.itinerary.length);
         break;
 
       case 'External Parties':
+        console.log('=== EXTERNAL PARTIES TRAVEL DATA ===');
+        console.log('Full data object:', JSON.stringify(data, null, 2));
+        console.log('Raw externalPartiesTravelDetails:', data.externalPartiesTravelDetails);
+        console.log('Raw externalPartyRequestorInfo:', data.externalPartyRequestorInfo);
+        console.log('Fallback itinerary_segments:', data.itinerary_segments);
+        console.log('Fallback itinerary:', data.itinerary);
+
+        // Backend returns nested structure: data.externalPartiesTravelDetails
+        const externalDetails = data.externalPartiesTravelDetails || {};
+        const externalRequestorInfo = data.externalPartyRequestorInfo || {};
+        const externalItinerary = externalDetails.itinerary || data.itinerary_segments || data.itinerary || [];
+
+        console.log('Extracted externalDetails:', externalDetails);
+        console.log('Extracted externalItinerary (before transform):', externalItinerary);
+        console.log('Itinerary length before transform:', externalItinerary.length);
+
         this.externalPartiesData = {
-          purpose: data.purpose,
+          purpose: externalDetails.purpose || data.purpose || '',
           tripType: data.trip_type || data.tripType || 'One Way',
-          externalFullName: data.external_full_name || data.externalFullName || '',
-          externalOrganization: data.external_organization || data.externalOrganization || '',
-          externalRefToAuthorityLetter: data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter || '',
-          externalCostCenter: data.external_cost_center || data.externalCostCenter || '',
-          itinerary: this.transformItineraryData(data.itinerary_segments || data.itinerary || [])
+          externalFullName: externalRequestorInfo.externalFullName || data.external_full_name || data.externalFullName || '',
+          externalOrganization: externalRequestorInfo.externalOrganization || data.external_organization || data.externalOrganization || '',
+          externalRefToAuthorityLetter: externalRequestorInfo.externalRefToAuthorityLetter || data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter || '',
+          externalCostCenter: externalRequestorInfo.externalCostCenter || data.external_cost_center || data.externalCostCenter || '',
+          itinerary: this.transformExternalPartiesItineraryData(externalItinerary)
         };
+
+        console.log('Transformed externalPartiesData:', this.externalPartiesData);
+        console.log('Final itinerary count:', this.externalPartiesData.itinerary.length);
+        console.log('Final itinerary data:', JSON.stringify(this.externalPartiesData.itinerary, null, 2));
         break;
     }
   }
@@ -677,7 +725,7 @@ export class TrfWizardComponent implements OnInit {
    */
   private prepareDomesticData(mainTrf: any, isDraft: boolean): any {
     mainTrf.purpose = this.domesticTravelData?.purposeOfTravel || '';
-    mainTrf.additional_comments = '';
+    mainTrf.additional_comments = this.approvalForm?.getFormData()?.additionalComments || '';
 
     return {
       mainTrf,
@@ -694,7 +742,7 @@ export class TrfWizardComponent implements OnInit {
    */
   private prepareOverseasData(mainTrf: any, isDraft: boolean): any {
     mainTrf.purpose = this.overseasTravelData?.purpose || '';
-    mainTrf.additional_comments = '';
+    mainTrf.additional_comments = this.approvalForm?.getFormData()?.additionalComments || '';
 
     return {
       mainTrf,
@@ -711,7 +759,7 @@ export class TrfWizardComponent implements OnInit {
    */
   private prepareHomeLeaveData(mainTrf: any, isDraft: boolean): any {
     mainTrf.purpose = this.homeLeaveData?.purpose || '';
-    mainTrf.additional_comments = '';
+    mainTrf.additional_comments = this.approvalForm?.getFormData()?.additionalComments || '';
 
     return {
       mainTrf,
@@ -728,7 +776,7 @@ export class TrfWizardComponent implements OnInit {
    */
   private prepareExternalPartiesData(mainTrf: any, isDraft: boolean): any {
     mainTrf.purpose = this.externalPartiesData?.purpose || '';
-    mainTrf.additional_comments = '';
+    mainTrf.additional_comments = this.approvalForm?.getFormData()?.additionalComments || '';
 
     // Add external party specific fields - CORRECTED FIELD NAMES
     mainTrf.external_full_name = this.externalPartiesData?.externalFullName || '';
@@ -842,21 +890,26 @@ export class TrfWizardComponent implements OnInit {
       // Create itinerary segments
       if (data.itinerarySegments && data.itinerarySegments.length > 0) {
         data.itinerarySegments.forEach((segment: any) => {
+          // Handle both standard fields (date, from, to) and External Parties fields (departureDate, departureLocation, arrivalLocation)
+          const date = segment.date || segment.departureDate;
+          const from = segment.from || segment.departureLocation;
+          const to = segment.to || segment.arrivalLocation;
+
           // Skip segments with missing required fields
-          if (!segment.date || !segment.from || !segment.to) {
+          if (!date || !from || !to) {
             console.warn('Skipping itinerary segment with missing required fields:', segment);
             return;
           }
 
           const itineraryData = {
             trf: trfId,
-            segment_date: this.formatDateForAPI(segment.date),
+            segment_date: this.formatDateForAPI(date),
             day_of_week: segment.day || '',
-            from_location: segment.from,
-            to_location: segment.to,
+            from_location: from,
+            to_location: to,
             departure_time: segment.departureTime || segment.etd || '',
             arrival_time: segment.arrivalTime || segment.eta || '',
-            flight_number: segment.flightNumber || '',
+            flight_number: segment.modeOfTransport || segment.flightNumber || '',
             remarks: segment.remarks || ''
           };
 
@@ -1012,6 +1065,34 @@ export class TrfWizardComponent implements OnInit {
       flightNumber: segment.flight_number || segment.flightNumber || '',
       remarks: segment.remarks || ''
     }));
+  }
+
+  /**
+   * Transform itinerary data specifically for External Parties
+   * External Parties component expects different field names
+   */
+  private transformExternalPartiesItineraryData(itinerary: any[]): any[] {
+    console.log('=== TRANSFORMING EXTERNAL PARTIES ITINERARY ===');
+    console.log('Raw itinerary:', itinerary);
+
+    const transformed = itinerary.map((segment: any) => {
+      const result = {
+        departureDate: segment.segment_date || segment.date || segment.departureDate || null,
+        day: segment.day_of_week || segment.day || '',
+        departureTime: segment.departure_time || segment.etd || segment.departureTime || '',
+        departureLocation: segment.from_location || segment.from || segment.departureLocation || '',
+        arrivalDate: segment.arrival_date || segment.date || segment.arrivalDate || null,
+        arrivalTime: segment.arrival_time || segment.eta || segment.arrivalTime || '',
+        arrivalLocation: segment.to_location || segment.to || segment.arrivalLocation || '',
+        modeOfTransport: segment.mode_of_transport || segment.modeOfTransport || segment.flight_number || segment.flightNumber || '',
+        remarks: segment.remarks || ''
+      };
+      console.log('Transformed segment:', result);
+      return result;
+    });
+
+    console.log('All transformed External Parties itinerary:', transformed);
+    return transformed;
   }
 
   /**

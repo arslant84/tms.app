@@ -42,9 +42,12 @@ export class ExpenseDetailComponent implements OnInit {
   currentStepExecution: WorkflowStepExecution | null = null;
 
   // Status-based visibility constants
-  private readonly EDITABLE_STATUSES = ['Pending Department Focal', 'Pending Verification', 'Draft', 'DRAFT', 'Rejected', 'REJECTED', 'SUBMITTED', 'Submitted'];
+  private readonly EDITABLE_STATUSES = ['Draft', 'DRAFT', 'Rejected', 'REJECTED'];
   private readonly CANCELLABLE_STATUSES = ['Pending Department Focal', 'Pending Verification', 'Pending Line Manager', 'Pending HOD', 'SUBMITTED', 'Submitted', 'UNDER_REVIEW', 'Under Review'];
   private readonly DELETABLE_STATUSES = ['Draft', 'DRAFT', 'Rejected', 'REJECTED'];
+
+  // Statuses that indicate the request has been approved and should not be editable
+  private readonly APPROVED_KEYWORDS = ['Approved', 'Completed', 'Paid', 'Processed'];
 
   constructor(
     private route: ActivatedRoute,
@@ -106,7 +109,27 @@ export class ExpenseDetailComponent implements OnInit {
   }
 
   canEdit(): boolean {
-    return this.EDITABLE_STATUSES.includes(this.claim?.status || '');
+    if (!this.claim?.status) return false;
+
+    const status = this.claim.status;
+
+    // Check if status is in editable list
+    if (this.EDITABLE_STATUSES.includes(status)) {
+      return true;
+    }
+
+    // Check if status contains any approved keywords - if so, not editable
+    const isApproved = this.APPROVED_KEYWORDS.some(keyword => status.includes(keyword));
+    if (isApproved) {
+      return false;
+    }
+
+    // Allow editing for pending statuses that haven't been approved yet
+    if (status.includes('Pending') || status.includes('SUBMITTED') || status.includes('Submitted')) {
+      return true;
+    }
+
+    return false;
   }
 
   canCancel(): boolean {
@@ -132,6 +155,15 @@ export class ExpenseDetailComponent implements OnInit {
   }
 
   onEdit(): void {
+    // Check if request can be edited
+    if (!this.canEdit()) {
+      this.toastService.error(
+        'This expense claim cannot be edited because it has been approved. ' +
+        'Approved claims can only be viewed, not modified.'
+      );
+      return;
+    }
+
     this.router.navigate(['/expenses/edit', this.claimId]);
   }
 

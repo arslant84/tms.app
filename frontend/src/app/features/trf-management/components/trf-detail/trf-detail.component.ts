@@ -28,9 +28,12 @@ export class TrfDetailComponent implements OnInit {
   currentStepExecution: WorkflowStepExecution | null = null;
 
   // Status-based visibility constants
-  // Editable: Draft, Rejected, or any Pending status (before approval)
+  private readonly EDITABLE_STATUSES = ['Draft', 'Rejected'];
   private readonly CANCELLABLE_STATUSES = ['Pending Department Focal', 'Pending HOD', 'Pending Travel Desk'];
   private readonly DELETABLE_STATUSES = ['Draft', 'Rejected'];
+
+  // Statuses that indicate the request has been approved and should not be editable
+  private readonly APPROVED_KEYWORDS = ['Approved', 'Completed', 'Assigned'];
 
   constructor(
     private route: ActivatedRoute,
@@ -58,7 +61,10 @@ export class TrfDetailComponent implements OnInit {
 
     // Fetch TRF details from the backend using TrfService
     this.trfService.getTrfById(this.trfId).subscribe({
-      next: (data) => {
+      next: (response: any) => {
+        // Backend returns { trf: { ...data } }, so extract the trf object
+        const data = response.trf || response;
+        console.log('TRF Detail - Loaded data:', data);
         this.trfData = this.transformTrfData(data);
         this.loading = false;
       },
@@ -74,10 +80,44 @@ export class TrfDetailComponent implements OnInit {
    * Transform backend data to match the view structure
    */
   private transformTrfData(data: any): any {
+    const travelType = data.travel_type || data.travelType;
+
+    // Extract itinerary from the correct nested location based on travel type
+    let itinerary: any[] = [];
+    let mealSelections: any[] = [];
+    let passportDetails: any = null;
+    let bankDetails: any = null;
+    let advanceAmounts: any[] = [];
+    let purpose = data.purpose || '';
+
+    // Backend returns nested structures based on travel type
+    if (travelType === 'Domestic') {
+      const domesticDetails = data.domesticTravelDetails || {};
+      itinerary = domesticDetails.itinerary || data.itinerary_segments || data.itinerary || [];
+      mealSelections = domesticDetails.mealProvision?.dailyMealSelections || data.daily_meals || data.daily_meal_selections || data.mealSelections || [];
+      purpose = domesticDetails.purpose || data.purpose || '';
+    } else if (travelType === 'Overseas' || travelType === 'Home Leave Passage') {
+      const overseasDetails = data.overseasTravelDetails || {};
+      itinerary = overseasDetails.itinerary || data.itinerary_segments || data.itinerary || [];
+      bankDetails = overseasDetails.advanceBankDetails || data.advance_bank_details || data.bankDetails;
+      advanceAmounts = overseasDetails.advanceAmountRequested || data.advance_amount_items || data.advanceAmounts || [];
+      passportDetails = data.passport_details || data.passportDetails; // Passport details might be at top level
+      purpose = overseasDetails.purpose || data.purpose || '';
+    } else if (travelType === 'External Parties') {
+      const externalDetails = data.externalPartiesTravelDetails || {};
+      itinerary = externalDetails.itinerary || data.itinerary_segments || data.itinerary || [];
+      purpose = externalDetails.purpose || data.purpose || '';
+    }
+
+    console.log(`TRF Detail Transform - Travel Type: ${travelType}, Itinerary Count: ${itinerary.length}`);
+
+    // Extract external party info from nested structure
+    const externalRequestorInfo = data.externalPartyRequestorInfo || {};
+
     return {
       id: data.id,
       requestNumber: data.request_number || data.requestNumber,
-      travelType: data.travel_type || data.travelType,
+      travelType: travelType,
       status: data.status,
       requestorName: data.requestor_name || data.requestorName,
       staffId: data.staff_id || data.staffId,
@@ -85,25 +125,25 @@ export class TrfDetailComponent implements OnInit {
       position: data.position,
       costCenter: data.cost_center || data.costCenter,
       telEmail: data.tel_email || data.telEmail,
-      purpose: data.purpose,
+      purpose: purpose,
       additionalComments: data.additional_comments || data.additionalComments,
       estimatedCost: data.estimated_cost || data.estimatedCost || 0,
-      // External party fields
-      externalPartyName: data.external_party_name || data.externalPartyName,
-      externalPartyOrganization: data.external_party_organization || data.externalPartyOrganization,
-      externalRefToAuthorityLetter: data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter,
-      externalCostCenter: data.external_cost_center || data.externalCostCenter,
-      // Nested data (will be loaded separately or included in response)
-      // Backend uses 'itinerary_segments', but fallback to 'itinerary'
-      itinerary: data.itinerary_segments || data.itinerary || [],
-      mealSelections: data.daily_meals || data.daily_meal_selections || data.mealSelections || [],
-      passportDetails: data.passport_details || data.passportDetails,
-      bankDetails: data.advance_bank_details || data.bankDetails,
-      advanceAmounts: data.advance_amount_items || data.advanceAmounts || [],
-      approvalSteps: data.approval_steps || data.approvalSteps || [],
+      // External party fields - from nested structure or top level
+      externalPartyName: externalRequestorInfo.externalFullName || data.external_full_name || data.external_party_name || data.externalPartyName,
+      externalPartyOrganization: externalRequestorInfo.externalOrganization || data.external_organization || data.external_party_organization || data.externalPartyOrganization,
+      externalRefToAuthorityLetter: externalRequestorInfo.externalRefToAuthorityLetter || data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter,
+      externalCostCenter: externalRequestorInfo.externalCostCenter || data.external_cost_center || data.externalCostCenter,
+      // Nested data extracted based on travel type
+      itinerary: itinerary,
+      mealSelections: mealSelections,
+      passportDetails: passportDetails,
+      bankDetails: bankDetails,
+      advanceAmounts: advanceAmounts,
+      approvalSteps: data.approval_steps || data.approvalSteps || data.approvalWorkflow || [],
       createdAt: data.created_at || data.createdAt,
       updatedAt: data.updated_at || data.updatedAt,
-      submittedAt: data.submitted_at || data.submittedAt
+      submittedAt: data.submitted_at || data.submittedAt,
+      flightDetails: data.flightDetails || null
     };
   }
 
@@ -130,16 +170,31 @@ export class TrfDetailComponent implements OnInit {
 
   /**
    * Check if TRF can be edited based on status
-   * Allow editing for: Draft, Rejected, or any Pending status
+   * Once approved by any approval workflow, requests cannot be edited
+   * Only allow editing for: Draft, Rejected, and Pending (before any approval)
    */
   canEdit(): boolean {
     if (!this.trfData?.status) return false;
 
     const status = this.trfData.status;
-    // Allow editing if status is Draft, Rejected, or starts with Pending
-    return status === 'Draft' ||
-           status === 'Rejected' ||
-           status.startsWith('Pending');
+
+    // Check if status is in editable list
+    if (this.EDITABLE_STATUSES.includes(status)) {
+      return true;
+    }
+
+    // Check if status contains any approved keywords - if so, not editable
+    const isApproved = this.APPROVED_KEYWORDS.some(keyword => status.includes(keyword));
+    if (isApproved) {
+      return false;
+    }
+
+    // Allow editing for pending statuses that haven't been approved yet
+    if (status.includes('Pending')) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -235,6 +290,15 @@ export class TrfDetailComponent implements OnInit {
    * Edit TRF
    */
   onEdit(): void {
+    // Check if request can be edited
+    if (!this.canEdit()) {
+      this.toastService.error(
+        'This travel request cannot be edited because it has been approved. ' +
+        'Approved requests can only be viewed, not modified.'
+      );
+      return;
+    }
+
     this.router.navigate(['/trf/edit', this.trfId]);
   }
 
@@ -320,8 +384,11 @@ export class TrfDetailComponent implements OnInit {
         // Handle both paginated response and array response
         const instances = Array.isArray(response) ? response : (response.results || []);
 
+        // Find workflow instance for this specific TRF - check multiple fields
         const instance = instances.find((i: any) =>
-          i.entity_info?.id === this.trfId
+          i.object_id === this.trfId ||
+          i.entity_info?.id === this.trfId ||
+          i.entity_id === this.trfId
         );
 
         if (instance && instance.id) {
@@ -375,5 +442,44 @@ export class TrfDetailComponent implements OnInit {
   onWorkflowDelegated(): void {
     this.toastService.success('Successfully delegated');
     this.loadWorkflow();
+  }
+
+  /**
+   * Get workflow status display text
+   */
+  getWorkflowStatus(): string {
+    if (!this.workflow) return '';
+
+    const status = this.workflow.status;
+    const currentStep = this.workflow.current_step_order;
+    const totalSteps = this.workflow.step_executions?.length || 0;
+
+    if (status === 'approved') return 'Approved';
+    if (status === 'rejected') return 'Rejected';
+    if (status === 'cancelled') return 'Cancelled';
+    if (status === 'in_progress') {
+      if (currentStep && totalSteps) {
+        return `Pending Approval (Step ${currentStep} of ${totalSteps})`;
+      }
+      return 'Pending Approval';
+    }
+    if (status === 'pending') return 'Pending Approval';
+
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  /**
+   * Get workflow status badge class
+   */
+  getWorkflowStatusClass(): string {
+    if (!this.workflow) return 'badge-secondary';
+
+    const status = this.workflow.status;
+    if (status === 'approved') return 'badge-success';
+    if (status === 'rejected') return 'badge-danger';
+    if (status === 'cancelled') return 'badge-secondary';
+    if (status === 'in_progress' || status === 'pending') return 'badge-warning';
+
+    return 'badge-info';
   }
 }

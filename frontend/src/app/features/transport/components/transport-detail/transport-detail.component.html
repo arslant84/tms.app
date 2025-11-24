@@ -64,14 +64,12 @@
       <span class="text-muted">Created: {{ formatDate(request.updatedAt) }}</span>
     </div>
 
-    <!-- Main Card -->
-    <div class="detail-card">
-      <!-- Request Information -->
-      <section class="detail-section">
-        <h3 class="section-title">
-          <i class="bi bi-person-circle"></i>
-          Requestor Information
-        </h3>
+    <!-- Request Information -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-person-circle"></i> Requestor Information</h5>
+      </div>
+      <div class="card-body">
         <div class="detail-grid">
           <div class="detail-item">
             <label>Requestor Name</label>
@@ -90,36 +88,39 @@
             <p>{{ request.position || 'N/A' }}</p>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Purpose -->
-      <section class="detail-section">
-        <h3 class="section-title">
-          <i class="bi bi-file-text"></i>
-          Purpose
-        </h3>
+    <!-- Purpose -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-file-text"></i> Purpose</h5>
+      </div>
+      <div class="card-body">
         <div class="purpose-text">
           <p>{{ request.purpose || 'N/A' }}</p>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- TSR Reference -->
-      <section class="detail-section" *ngIf="request.tsrReference">
-        <h3 class="section-title">
-          <i class="bi bi-link"></i>
-          TSR Reference
-        </h3>
+    <!-- TSR Reference -->
+    <div class="card mb-4" *ngIf="request.tsrReference">
+      <div class="card-header">
+        <h5><i class="bi bi-link"></i> TSR Reference</h5>
+      </div>
+      <div class="card-body">
         <div class="purpose-text">
           <p>{{ request.tsrReference }}</p>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Transport Details -->
-      <section class="detail-section" *ngIf="request.transportDetails && request.transportDetails.length > 0">
-        <h3 class="section-title">
-          <i class="bi bi-geo-alt"></i>
-          Transport Journey Details
-        </h3>
+    <!-- Transport Details -->
+    <div class="card mb-4" *ngIf="request.transportDetails && request.transportDetails.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-geo-alt"></i> Transport Journey Details</h5>
+      </div>
+      <div class="card-body">
         <div class="table-container">
           <table class="detail-table">
             <thead>
@@ -146,14 +147,15 @@
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Transport Processing Details (if assigned by admin) -->
-      <section class="detail-section" *ngIf="request.bookingDetails && (request.status === 'Processing with Transport Admin' || request.status === 'Completed')">
-        <h3 class="section-title mb-3">
-          <i class="bi bi-check-circle-fill me-2 text-success"></i>
-          Transport Processing Details
-        </h3>
+    <!-- Transport Processing Details (if assigned by admin) -->
+    <div class="card mb-4" *ngIf="request.bookingDetails && (request.status === 'Processing with Transport Admin' || request.status === 'Completed')">
+      <div class="card-header">
+        <h5><i class="bi bi-check-circle-fill me-2 text-success"></i> Transport Processing Details</h5>
+      </div>
+      <div class="card-body">
         <div class="p-4 rounded bg-success-subtle">
           <div class="row g-4">
             <!-- Row 1 -->
@@ -219,27 +221,27 @@
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Additional Comments -->
-      <section class="detail-section" *ngIf="request.additionalComments">
-        <h3 class="section-title">
-          <i class="bi bi-chat-left-text"></i>
-          Additional Comments
-        </h3>
+    <!-- Additional Comments -->
+    <div class="card mb-4" *ngIf="request.additionalComments">
+      <div class="card-header">
+        <h5><i class="bi bi-chat-left-text"></i> Additional Comments</h5>
+      </div>
+      <div class="card-body">
         <div class="purpose-text">
           <p>{{ request.additionalComments }}</p>
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Removed vehicle_assignments section - using bookingDetails instead -->
-
-      <!-- Modern Workflow Status -->
-      <section class="detail-section" *ngIf="workflow || workflowLoading">
-        <h3 class="section-title">
-          <i class="bi bi-diagram-3"></i>
-          Approval Workflow
-        </h3>
+    <!-- Modern Workflow Status -->
+    <div class="card mb-4" *ngIf="workflow || workflowLoading">
+      <div class="card-header">
+        <h5><i class="bi bi-diagram-3"></i> Approval Workflow</h5>
+      </div>
+      <div class="card-body">
 
         <!-- Loading State -->
         <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
@@ -269,14 +271,15 @@
           <i class="bi bi-info-circle"></i>
           No workflow has been initiated for this transport request yet.
         </div>
-      </section>
+      </div>
+    </div>
 
-      <!-- Fallback: Old Approval Workflow (if no modern workflow exists) -->
-      <section class="detail-section" *ngIf="!workflow && !workflowLoading && request.approval_steps && request.approval_steps.length > 0">
-        <h3 class="section-title">
-          <i class="bi bi-check-circle"></i>
-          Approval Workflow (Legacy)
-        </h3>
+    <!-- Fallback: Old Approval Workflow (if no modern workflow exists) -->
+    <div class="card mb-4" *ngIf="!workflow && !workflowLoading && request.approval_steps && request.approval_steps.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-check-circle"></i> Approval Workflow (Legacy)</h5>
+      </div>
+      <div class="card-body">
         <div class="approval-timeline">
           <div *ngFor="let step of request.approval_steps" class="approval-step"
                [ngClass]="{'completed': step.status === 'Approved', 'rejected': step.status === 'Rejected', 'pending': step.status === 'Pending'}">
@@ -293,7 +296,7 @@
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   </div>
 </div>

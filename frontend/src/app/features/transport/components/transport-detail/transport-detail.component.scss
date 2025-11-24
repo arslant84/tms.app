@@ -115,6 +115,43 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+// Card Styling (matching accommodation)
+.card {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  background: white;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
+  border-bottom: 2px solid #0d9488;
+  padding: 1.25rem 1.5rem !important;
+  color: white;
+
+  h5 {
+    margin: 0 !important;
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    display: flex;
+    align-items: center;
+
+    i {
+      margin-right: 0.75rem;
+      font-size: 1.5rem;
+      color: #ffffff !important;
+    }
+  }
+}
+
+.card-body {
+  padding: 1.5rem;
+  background-color: #ffffff;
+}
+
 .detail-section {
   padding: 1.5rem;
   border-bottom: 1px solid #e5e7eb;

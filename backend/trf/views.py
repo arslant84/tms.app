@@ -43,18 +43,53 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
     Endpoints:
     - GET /api/trf/travel-requests/ - List all TRFs
     - POST /api/trf/travel-requests/ - Create a new TRF
-    - GET /api/trf/travel-requests/{id}/ - Retrieve TRF details
-    - PUT /api/trf/travel-requests/{id}/ - Update TRF
-    - PATCH /api/trf/travel-requests/{id}/ - Partial update
-    - DELETE /api/trf/travel-requests/{id}/ - Delete TRF
-    - POST /api/trf/travel-requests/{id}/submit/ - Submit TRF for approval
-    - POST /api/trf/travel-requests/{id}/approve/ - Approve TRF
-    - POST /api/trf/travel-requests/{id}/reject/ - Reject TRF
-    - POST /api/trf/travel-requests/{id}/cancel/ - Cancel TRF
+    - GET /api/trf/travel-requests/{id_or_request_number}/ - Retrieve TRF details (supports both numeric ID and request_number)
+    - PUT /api/trf/travel-requests/{id_or_request_number}/ - Update TRF
+    - PATCH /api/trf/travel-requests/{id_or_request_number}/ - Partial update
+    - DELETE /api/trf/travel-requests/{id_or_request_number}/ - Delete TRF
+    - POST /api/trf/travel-requests/{id_or_request_number}/submit/ - Submit TRF for approval
+    - POST /api/trf/travel-requests/{id_or_request_number}/approve/ - Approve TRF
+    - POST /api/trf/travel-requests/{id_or_request_number}/reject/ - Reject TRF
+    - POST /api/trf/travel-requests/{id_or_request_number}/cancel/ - Cancel TRF
     """
     queryset = TravelRequest.objects.all()
     serializer_class = TravelRequestSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        """
+        Override to support lookup by both numeric ID and request_number
+        """
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field or 'pk'
+        lookup_value = self.kwargs[lookup_url_kwarg]
+
+        # Try to determine if it's a numeric ID or request_number
+        if isinstance(lookup_value, int) or (isinstance(lookup_value, str) and lookup_value.isdigit()):
+            # Numeric ID lookup
+            filter_kwargs = {'pk': int(lookup_value)}
+        else:
+            # Request number lookup (contains letters/dashes)
+            filter_kwargs = {'request_number': lookup_value}
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        try:
+            obj = queryset.get(**filter_kwargs)
+        except TravelRequest.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+
+            # Try to fetch from full queryset to get request_number for better error message
+            try:
+                obj = TravelRequest.objects.get(**filter_kwargs)
+                request_identifier = obj.request_number or f"ID #{obj.id}"
+                raise NotFound(f'Travel request {request_identifier} not found or you do not have permission to access it')
+            except TravelRequest.DoesNotExist:
+                raise NotFound(f'Travel request not found with identifier: {lookup_value}')
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
 
     def get_serializer_class(self):
         """Use appropriate serializer based on action"""
@@ -124,13 +159,57 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 pass
 
     def get_queryset(self):
-        """Filter TRFs based on query parameters"""
+        """
+        Filter TRFs based on query parameters and user permissions
+
+        Context-aware filtering:
+        - admin_view=true: Show all/department TRFs if user has appropriate permissions (Admin Module)
+        - Approval actions (approve/reject): Allow access to TRFs pending user's approval
+        - Otherwise: Show only user's own TRFs (Personal Requests view)
+        """
+        user = self.request.user
         queryset = self.queryset
 
         print(f"\n=== TravelRequest GET_QUERYSET ===")
         print(f"Total TRFs in database: {TravelRequest.objects.count()}")
         print(f"Query params: {dict(self.request.query_params)}")
-        print(f"User: {self.request.user}")
+        print(f"Action: {self.action}")
+        print(f"User: {user}")
+        print(f"User role: {user.role.name if user.role else 'No role'}")
+
+        # For approval actions, allow access to TRFs pending the user's approval
+        if self.action in ['approve', 'reject']:
+            print(f"✅ Approval action: Allowing access to all TRFs (authorization checked in WorkflowEngine)")
+            return queryset  # No filtering - authorization handled by WorkflowEngine
+
+        # Check if this is an admin view (Admin module for TRF/Ticketing)
+        admin_view = self.request.query_params.get('admin_view', 'false').lower() == 'true'
+
+        # Permission-based filtering
+        if admin_view and user.role:
+            # Admin module context - check permissions
+            can_view_all = user.role.permissions.filter(name='view_all_trf').exists()
+
+            if can_view_all:
+                print(f"✅ Admin view: User (role: {user.role.name}) has 'view_all_trf' permission - showing all TRFs")
+                pass  # No filtering - show all
+
+            # Department-level approvers see TRFs from their department
+            elif user.role.permissions.filter(name__in=['approve_trf', 'view_pending_approvals']).exists():
+                if user.department:
+                    print(f"✅ Admin view: Approver role ({user.role.name}) - showing TRFs from department: {user.department}")
+                    queryset = queryset.filter(department=user.department)
+                else:
+                    print(f"⚠️ Admin view: Approver role ({user.role.name}) but no department set - showing only own TRFs")
+                    queryset = queryset.filter(created_by=user)
+            else:
+                # No admin permissions - show only own
+                print(f"⚠️ Admin view: User lacks permission - showing only own TRFs")
+                queryset = queryset.filter(created_by=user)
+        else:
+            # Personal requests view - always show only user's own TRFs
+            queryset = queryset.filter(created_by=user)
+            print(f"✅ Personal view: User {user.username} - showing only own TRFs (created_by={user.id})")
 
         # Filter by status
         status_filter = self.request.query_params.get('status', None)
@@ -508,6 +587,52 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(trf)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='check-accommodation-availability')
+    def check_accommodation_availability(self, request, pk=None):
+        """
+        Check if this TSR is available for accommodation booking
+        Returns:
+        - is_available: boolean
+        - date_range: {start_date, end_date} from itinerary
+        - existing_accommodation: accommodation request details if already linked
+        """
+        trf = self.get_object()
+
+        # Check if TSR is already linked to an accommodation request
+        from accommodation.models import AccommodationRequest
+        existing_accommodation = AccommodationRequest.objects.filter(trf=trf).first()
+
+        # Get TSR date range from itinerary
+        itinerary_segments = TrfItinerarySegment.objects.filter(
+            trf=trf
+        ).exclude(segment_date__isnull=True).order_by('segment_date')
+
+        date_range = None
+        if itinerary_segments.exists():
+            first_segment = itinerary_segments.first()
+            last_segment = itinerary_segments.last()
+            date_range = {
+                'start_date': first_segment.segment_date.strftime('%Y-%m-%d'),
+                'end_date': last_segment.segment_date.strftime('%Y-%m-%d')
+            }
+
+        response_data = {
+            'is_available': existing_accommodation is None,
+            'date_range': date_range,
+            'tsr_id': trf.id,
+            'tsr_request_number': trf.request_number
+        }
+
+        if existing_accommodation:
+            response_data['existing_accommodation'] = {
+                'id': existing_accommodation.id,
+                'request_number': existing_accommodation.request_number,
+                'status': existing_accommodation.status,
+                'requestor_name': existing_accommodation.requestor_name
+            }
+
+        return Response(response_data)
 
     @action(detail=True, methods=['delete'], url_path='delete-itinerary')
     def delete_itinerary(self, request, pk=None):
