@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { UserRole, User } from '../../../core/models/user.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { RbacService } from '../../../core/services/rbac.service';
+import { Permission } from '../../../core/models/permission.models';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -24,6 +26,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   constructor(
     private authService: AuthService,
+    private rbacService: RbacService,
     private http: HttpClient
   ) {}
 
@@ -90,47 +93,54 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   // Check if user has approval permissions
   get hasApprovalPermissions(): boolean {
-    return this.userRole === UserRole.FOCAL ||
-           this.userRole === UserRole.HOD ||
-           this.userRole === UserRole.ADMIN ||
-           this.userRole === 'admin' ||
-           this.userRole === 'focal' ||
-           this.userRole === 'hod';
+    // Use RBAC service for consistent permission checking
+    return this.rbacService.hasApprovalRights();
   }
 
-  // Check if user has admin permissions (general)
+  // Check if user has system administrator permissions (for User Management and System Settings)
   get hasAdminPermissions(): boolean {
-    return this.userRole === UserRole.ADMIN ||
-           this.userRole === UserRole.TICKETING_CLERK ||
-           this.userRole === 'admin' ||
-           this.userRole === 'ticketing_clerk';
+    // Only system administrators and users with manage_users permission can access these features
+    return this.rbacService.hasAnyPermission([
+      Permission.SYSTEM_ADMIN,
+      Permission.MANAGE_USERS
+    ]);
   }
 
-  // Individual module admin permissions
+  // Check if user has any admin module access (for showing admin-related UI elements)
+  get hasAnyAdminModuleAccess(): boolean {
+    return this.rbacService.hasAnyPermission([
+      Permission.SYSTEM_ADMIN,
+      Permission.MANAGE_USERS,
+      Permission.VIEW_ADMIN_FLIGHTS,
+      Permission.VIEW_ADMIN_ACCOMMODATION,
+      Permission.VIEW_ADMIN_VISA,
+      Permission.VIEW_ADMIN_TRANSPORT
+    ]);
+  }
+
+  // Individual module admin permissions - now using permission-based checks
   get hasFlightsAdminPermission(): boolean {
-    // For now, use admin role. TODO: Implement permission-based checks
-    return this.hasAdminPermissions;
+    return this.rbacService.canAccessAdminMenu('flights');
   }
 
   get hasAccommodationAdminPermission(): boolean {
-    return this.hasAdminPermissions;
+    return this.rbacService.canAccessAdminMenu('accommodation');
   }
 
   get hasVisaAdminPermission(): boolean {
-    return this.hasAdminPermissions;
-  }
-
-  get hasClaimsAdminPermission(): boolean {
-    return this.hasAdminPermissions;
+    return this.rbacService.canAccessAdminMenu('visa');
   }
 
   get hasTransportAdminPermission(): boolean {
-    return this.hasAdminPermissions;
+    return this.rbacService.canAccessAdminMenu('transport');
   }
 
   get hasReportPermissions(): boolean {
-    // Reports accessible to HOD, Focal, and Admins
-    return this.hasApprovalPermissions || this.hasAdminPermissions;
+    // Reports accessible to users with export or generate reports permissions
+    return this.rbacService.hasAnyPermission([
+      Permission.GENERATE_ADMIN_REPORTS,
+      Permission.EXPORT_DATA
+    ]) || this.hasApprovalPermissions;
   }
 
   // Get user name safely

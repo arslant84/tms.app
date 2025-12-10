@@ -65,7 +65,7 @@ export class AccommodationAdminComponent implements OnInit {
    * Fetch accommodation statistics
    */
   fetchStats(): void {
-    this.accommodationService.getAllRequests().subscribe({
+    this.accommodationService.getAllRequests({ adminView: true }).subscribe({
       next: (response: any) => {
         const requests = response.results || response || [];
 

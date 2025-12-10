@@ -241,7 +241,7 @@
       <div class="modal-body">
         <p class="mb-3">You are about to start processing this transport request. Please provide vehicle and booking details.</p>
         <div *ngIf="selectedRequest" class="alert alert-info mb-0">
-          <div class="mb-2"><strong>Requestor:</strong> {{ selectedRequest.requestorName }}</div>
+          <div class="mb-2"><strong>Staff Name:</strong> {{ selectedRequest.requestorName }}</div>
           <div class="mb-2"><strong>Department:</strong> {{ selectedRequest.department }}</div>
           <div class="mb-2"><strong>Request ID:</strong> {{ selectedRequest.request_number || selectedRequest.id }}</div>
           <div class="mb-0"><strong>Purpose:</strong> {{ selectedRequest.purpose }}</div>
@@ -354,7 +354,7 @@
       </div>
       <div class="modal-body">
         <div *ngIf="selectedRequest">
-          <p class="mb-2"><strong>Requestor:</strong> {{ selectedRequest.requestorName || 'N/A' }}</p>
+          <p class="mb-2"><strong>Staff Name:</strong> {{ selectedRequest.requestorName || 'N/A' }}</p>
           <p class="mb-2"><strong>Department:</strong> {{ selectedRequest.department || 'N/A' }}</p>
           <p class="mb-2"><strong>Purpose:</strong> {{ selectedRequest.purpose || 'N/A' }}</p>
           <p class="mb-2"><strong>Status:</strong> <span [class]="getStatusColor(selectedRequest.status)">{{ selectedRequest.status }}</span></p>

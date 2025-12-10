@@ -16,13 +16,12 @@ from .serializers import (
     DestinationStatSerializer, CategorySpendSerializer, MonthlyTrendSerializer,
     DashboardSummarySerializer, TravelSpendAnalyticsSerializer,
     TravelPatternAnalyticsSerializer, BookingAnalyticsSerializer,
-    ExpenseAnalyticsSerializer, DepartmentAnalyticsSerializer,
+    DepartmentAnalyticsSerializer,
     UserActivitySerializer, ComplianceReportSerializer
 )
 
 # Import models from other apps for analytics
 from trf.models import TravelRequest
-from expenses.models import ExpenseClaim
 from bookings.models import FlightBooking, HotelBooking
 from transport.models import TransportRequest
 from visa.models import VisaApplication
@@ -139,14 +138,12 @@ def dashboard_summary(request):
     # Filter data based on user role
     if user.is_staff:
         trfs = TravelRequest.objects.all()
-        claims = ExpenseClaim.objects.all()
         flights = FlightBooking.objects.all()
         hotels = HotelBooking.objects.all()
         transports = TransportRequest.objects.all()
         visas = VisaApplication.objects.all()
     else:
-        trfs = TravelRequest.objects.filter(user=user)
-        claims = ExpenseClaim.objects.filter(user=user)
+        trfs = TravelRequest.objects.filter(created_by=user)
         flights = FlightBooking.objects.filter(user=user)
         hotels = HotelBooking.objects.filter(user=user)
         transports = TransportRequest.objects.filter(requestor=user)
@@ -164,9 +161,6 @@ def dashboard_summary(request):
         total=Sum('estimated_cost')
     )['total'] or Decimal('0.00')
 
-    # Calculate pending expense claims (count of pending user claims)
-    pending_expense_claims = claims.filter(status__icontains='Pending').count()
-
     # Active bookings
     active_bookings = flights.filter(status__in=['CONFIRMED', 'TICKETED']).count()
     active_bookings += hotels.filter(status__in=['CONFIRMED']).count()
@@ -179,19 +173,121 @@ def dashboard_summary(request):
 
     # Pending approvals (use case-insensitive contains for dynamic statuses)
     pending_approvals = trfs.filter(status__icontains='Pending').count()
-    pending_approvals += claims.filter(status__icontains='Pending').count()
 
-    # Recent activities (last 5)
+    # Recent activities - comprehensive implementation (TSR, Visa, Accommodation, Transport)
     recent_activities = []
-    recent_trfs = trfs.order_by('-created_at')[:3]
+
+    # Helper function to format dates
+    def format_date_info(item):
+        """Format date info based on status"""
+        status_lower = item.get('status', '').lower() if item.get('status') else ''
+        if 'draft' in status_lower:
+            return f"Created: {item.get('created_at').strftime('%b %d, %Y')}"
+        elif 'pending' in status_lower or 'submitted' in status_lower:
+            updated = item.get('updated_at', item.get('created_at'))
+            return f"Submitted: {updated.strftime('%b %d, %Y')}"
+        else:
+            updated = item.get('updated_at', item.get('created_at'))
+            return f"Updated: {updated.strftime('%b %d, %Y')}"
+
+    # Collect TSR activities (non-accommodation travel requests)
+    recent_trfs = trfs.exclude(
+        Q(travel_type__iexact='Accommodation') | Q(travel_type__icontains='Accommodation')
+    ).order_by('-updated_at')[:10]
+
     for trf in recent_trfs:
-        recent_activities.append({
-            'type': 'trf',
-            'id': trf.id,
-            'title': f"TRF #{trf.id}",
-            'status': trf.status,
-            'date': trf.created_at
-        })
+        try:
+            recent_activities.append({
+                'type': 'TSR',
+                'id': trf.id,
+                'title': f"TSR: {trf.purpose_of_travel[:50] if trf.purpose_of_travel else 'Travel Request'}",
+                'status': trf.status or 'Draft',
+                'date': format_date_info({
+                    'status': trf.status,
+                    'created_at': trf.created_at,
+                    'updated_at': trf.updated_at
+                }),
+                'updated_at': trf.updated_at
+            })
+        except Exception as e:
+            print(f"Error processing TSR {trf.id}: {e}")
+
+    # Collect Visa activities
+    recent_visas = visas.order_by('-updated_at')[:10]
+    for visa in recent_visas:
+        try:
+            recent_activities.append({
+                'type': 'Visa',
+                'id': visa.id,
+                'title': f"Visa: {visa.travel_purpose[:50] if visa.travel_purpose else 'Visa Application'}",
+                'status': visa.status or 'Draft',
+                'date': format_date_info({
+                    'status': visa.status,
+                    'created_at': visa.created_at,
+                    'updated_at': visa.updated_at
+                }),
+                'updated_at': visa.updated_at
+            })
+        except Exception as e:
+            print(f"Error processing Visa {visa.id}: {e}")
+
+    # Collect Accommodation activities
+    from accommodation.models import AccommodationBooking
+    try:
+        if user.is_staff:
+            accommodation_bookings = AccommodationBooking.objects.all()
+        else:
+            accommodation_bookings = AccommodationBooking.objects.filter(requestor=user)
+
+        recent_accommodations = accommodation_bookings.order_by('-updated_at')[:10]
+        for accommodation in recent_accommodations:
+            try:
+                recent_activities.append({
+                    'type': 'Accommodation',
+                    'id': accommodation.id,
+                    'title': f"Accommodation: {accommodation.city if hasattr(accommodation, 'city') else 'Booking Request'}",
+                    'status': accommodation.status or 'Draft',
+                    'date': format_date_info({
+                        'status': accommodation.status,
+                        'created_at': accommodation.created_at,
+                        'updated_at': accommodation.updated_at
+                    }),
+                    'updated_at': accommodation.updated_at
+                })
+            except Exception as e:
+                print(f"Error processing Accommodation {accommodation.id}: {e}")
+    except Exception as e:
+        print(f"Error fetching accommodation bookings: {e}")
+
+    # Collect Transport activities
+    recent_transports = transports.order_by('-updated_at')[:10]
+    for transport in recent_transports:
+        try:
+            transport_date = getattr(transport, 'updated_at', None) or getattr(transport, 'created_at', None) or timezone.now()
+            recent_activities.append({
+                'type': 'Transport',
+                'id': transport.id,
+                'title': f"Transport: {transport.from_location if hasattr(transport, 'from_location') else 'Transport Request'}",
+                'status': transport.status or 'Draft',
+                'date': format_date_info({
+                    'status': transport.status,
+                    'created_at': getattr(transport, 'created_at', timezone.now()),
+                    'updated_at': transport_date
+                }),
+                'updated_at': transport_date
+            })
+        except Exception as e:
+            print(f"Error processing Transport {transport.id}: {e}")
+
+    # Sort all activities by updated_at (most recent first)
+    recent_activities.sort(key=lambda x: x['updated_at'], reverse=True)
+
+    # Take top 15 activities
+    recent_activities = recent_activities[:15]
+
+    # Remove updated_at from response (used only for sorting)
+    for activity in recent_activities:
+        activity.pop('updated_at', None)
 
     data = {
         'total_trfs': total_trfs,
@@ -199,7 +295,6 @@ def dashboard_summary(request):
         'approved_trfs': approved_trfs,
         'rejected_trfs': rejected_trfs,
         'total_travel_cost': total_travel_cost,
-        'pending_expense_claims': pending_expense_claims,
         'active_bookings': active_bookings,
         'pending_approvals': pending_approvals,
         'pending_transport_requests': pending_transport_requests,
@@ -226,28 +321,23 @@ def travel_spend_analytics(request):
     # Base queryset
     if user.is_staff:
         trfs = TravelRequest.objects.all()
-        claims = ExpenseClaim.objects.all()
     else:
         trfs = TravelRequest.objects.filter(user=user)
-        claims = ExpenseClaim.objects.filter(user=user)
 
     # Apply date filters
     if date_from:
         trfs = trfs.filter(created_at__gte=date_from)
-        claims = claims.filter(created_at__gte=date_from)
     if date_to:
         trfs = trfs.filter(created_at__lte=date_to)
-        claims = claims.filter(created_at__lte=date_to)
 
     # Total spend
     total_spend = trfs.aggregate(total=Sum('estimated_cost'))['total'] or Decimal('0.00')
-    total_spend += claims.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
 
-    # By category (from expenses)
+    # By category (from travel type)
     by_category = dict(
-        claims.values('category')
-        .annotate(total=Sum('total_amount'))
-        .values_list('category', 'total')
+        trfs.values('travel_type')
+        .annotate(total=Sum('estimated_cost'))
+        .values_list('travel_type', 'total')
     )
 
     # By department (from user's department)
@@ -427,66 +517,6 @@ def booking_analytics(request):
     }
 
     serializer = BookingAnalyticsSerializer(data)
-    return Response(serializer.data)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def expense_analytics(request):
-    """
-    Get expense analytics
-    """
-    user = request.user
-
-    # Base queryset
-    if user.is_staff:
-        claims = ExpenseClaim.objects.all()
-    else:
-        claims = ExpenseClaim.objects.filter(user=user)
-
-    # Counts and totals
-    total_claims = claims.count()
-    total_amount = claims.aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
-    approved_amount = claims.filter(status='APPROVED').aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
-    pending_amount = claims.filter(status='PENDING').aggregate(total=Sum('total_amount'))['total'] or Decimal('0.00')
-
-    # By category
-    by_category = dict(
-        claims.values('category')
-        .annotate(total=Sum('total_amount'))
-        .values_list('category', 'total')
-    )
-
-    # By status
-    by_status = dict(
-        claims.values('status')
-        .annotate(count=Count('id'))
-        .values_list('status', 'count')
-    )
-
-    # Average claim amount
-    average_claim_amount = claims.aggregate(avg=Avg('total_amount'))['avg'] or Decimal('0.00')
-
-    # Top expense categories
-    top_expense_categories = list(
-        claims.values('category')
-        .annotate(total=Sum('total_amount'))
-        .order_by('-total')[:5]
-        .values('category', 'total')
-    )
-
-    data = {
-        'total_claims': total_claims,
-        'total_amount': total_amount,
-        'approved_amount': approved_amount,
-        'pending_amount': pending_amount,
-        'by_category': by_category,
-        'by_status': by_status,
-        'average_claim_amount': average_claim_amount,
-        'top_expense_categories': top_expense_categories
-    }
-
-    serializer = ExpenseAnalyticsSerializer(data)
     return Response(serializer.data)
 
 

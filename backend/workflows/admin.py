@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    WorkflowTemplate, WorkflowStep, WorkflowCondition, WorkflowInstance,
+    WorkflowTemplate, WorkflowStep, WorkflowStepNotificationConfig, WorkflowCondition, WorkflowInstance,
     WorkflowStepExecution, WorkflowDelegation, WorkflowAuditLog
 )
 
@@ -9,8 +9,16 @@ class WorkflowStepInline(admin.TabularInline):
     """Inline admin for workflow steps"""
     model = WorkflowStep
     extra = 1
-    fields = ['step_order', 'step_name', 'approver_role', 'is_required', 'sla_hours']
+    fields = ['step_order', 'step_name', 'approver_permission', 'approver_role', 'is_required', 'sla_hours']
     ordering = ['step_order']
+
+
+class WorkflowStepNotificationConfigInline(admin.TabularInline):
+    """Inline admin for workflow step notification configurations"""
+    model = WorkflowStepNotificationConfig
+    extra = 0
+    fields = ['event_type', 'notification_template', 'priority', 'is_active']
+    ordering = ['event_type']
 
 
 class WorkflowConditionInline(admin.TabularInline):
@@ -57,12 +65,12 @@ class WorkflowStepAdmin(admin.ModelAdmin):
     """Admin configuration for WorkflowStep model"""
     list_display = [
         'id', 'workflow_template', 'step_order', 'step_name',
-        'approver_role', 'is_required', 'can_skip', 'sla_hours'
+        'approver_permission', 'approver_role', 'is_required', 'can_skip', 'sla_hours'
     ]
     list_filter = ['is_required', 'can_skip', 'requires_comments', 'workflow_template']
-    search_fields = ['step_name', 'step_description', 'approver_role']
+    search_fields = ['step_name', 'step_description', 'approver_permission', 'approver_role']
     readonly_fields = ['created_at', 'updated_at']
-    inlines = [WorkflowConditionInline]
+    inlines = [WorkflowStepNotificationConfigInline, WorkflowConditionInline]
     ordering = ['workflow_template', 'step_order']
 
     fieldsets = (
@@ -73,7 +81,8 @@ class WorkflowStepAdmin(admin.ModelAdmin):
             'fields': ('step_order', 'step_name', 'step_description')
         }),
         ('Approval Configuration', {
-            'fields': ('approver_role', 'approver_user')
+            'fields': ('approver_permission', 'approver_role', 'approver_user'),
+            'description': 'Use approver_permission (preferred) or approver_role (deprecated) to assign approvers'
         }),
         ('Behavior', {
             'fields': ('is_required', 'can_skip', 'requires_comments')
@@ -99,6 +108,38 @@ class WorkflowConditionAdmin(admin.ModelAdmin):
     search_fields = ['field_name', 'field_value']
     readonly_fields = ['created_at']
     ordering = ['workflow_step', 'created_at']
+
+
+@admin.register(WorkflowStepNotificationConfig)
+class WorkflowStepNotificationConfigAdmin(admin.ModelAdmin):
+    """Admin configuration for WorkflowStepNotificationConfig model"""
+    list_display = [
+        'id', 'workflow_step', 'event_type', 'notification_template',
+        'priority', 'is_active', 'send_email', 'send_system_notification'
+    ]
+    list_filter = ['event_type', 'priority', 'is_active', 'send_email', 'send_system_notification']
+    search_fields = ['workflow_step__step_name', 'notification_template__name']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['workflow_step', 'event_type']
+
+    fieldsets = (
+        ('Workflow Step', {
+            'fields': ('workflow_step',)
+        }),
+        ('Notification Configuration', {
+            'fields': ('event_type', 'notification_template', 'priority')
+        }),
+        ('Recipients', {
+            'fields': ('recipient_types', 'custom_recipients')
+        }),
+        ('Delivery Options', {
+            'fields': ('is_active', 'send_email', 'send_system_notification')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 class WorkflowStepExecutionInline(admin.TabularInline):

@@ -59,13 +59,32 @@ class RoleSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    role = RoleSerializer()
+    role = RoleSerializer(read_only=True)  # Make role read_only to prevent validation errors
+    permissions = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at']
+        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions']
         # SECURITY: Prevent privilege escalation - these fields can only be modified by admins
-        read_only_fields = ['id', 'email', 'is_admin', 'is_active', 'role', 'last_login_at']
+        read_only_fields = ['id', 'email', 'is_admin', 'is_active', 'role', 'last_login_at', 'permissions']
+
+    def get_permissions(self, obj):
+        """Get list of permission names for this user"""
+        if obj.role:
+            return list(obj.role.permissions.values_list('name', flat=True))
+        return []
+
+    def to_internal_value(self, data):
+        """Remove role from input data before validation to prevent errors"""
+        # Create a mutable copy of the data
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        # Remove fields that shouldn't be updated through this serializer
+        data.pop('role', None)
+        data.pop('is_admin', None)
+        data.pop('is_active', None)
+        data.pop('email', None)
+        data.pop('permissions', None)
+        return super().to_internal_value(data)
 
     def update(self, instance, validated_data):
         # SECURITY: Extra protection - explicitly prevent modification of sensitive fields
@@ -105,6 +124,73 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('Only JPEG, PNG, and GIF images are allowed')
 
         return value
+
+
+class UserAdminUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for admin user updates - allows updating all fields"""
+    role = RoleSerializer(read_only=True)
+    permissions = serializers.SerializerMethodField()
+    password = serializers.CharField(write_only=True, required=False, validators=[validate_password], allow_blank=True)
+    password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password', 'password_confirm']
+        read_only_fields = ['id', 'last_login_at', 'permissions']
+
+    def get_permissions(self, obj):
+        """Get list of permission names for this user"""
+        if obj.role:
+            return list(obj.role.permissions.values_list('name', flat=True))
+        return []
+
+    def validate_email(self, value):
+        """Validate email uniqueness excluding current user"""
+        if self.instance:
+            # Check if email exists for other users (exclude current user)
+            if User.objects.filter(email=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError("user with this email address already exists.")
+        else:
+            # For create, check if email exists at all
+            if User.objects.filter(email=value).exists():
+                raise serializers.ValidationError("user with this email address already exists.")
+        return value
+
+    def validate(self, attrs):
+        # Only validate passwords if they're being updated
+        password = attrs.get('password', '').strip()
+        password_confirm = attrs.get('password_confirm', '').strip()
+
+        if password or password_confirm:
+            if password != password_confirm:
+                raise serializers.ValidationError({"password": "Password fields didn't match."})
+
+        return attrs
+
+    def update(self, instance, validated_data):
+        # Handle password update separately
+        password = validated_data.pop('password', '').strip()
+        validated_data.pop('password_confirm', None)
+
+        # Handle role update (comes as UUID string from frontend)
+        role_id = validated_data.pop('role', None)
+        if role_id:
+            try:
+                role = Role.objects.get(id=role_id)
+                instance.role = role
+            except Role.DoesNotExist:
+                pass
+
+        # Update all other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        # Update password if provided
+        if password:
+            instance.set_password(password)
+
+        instance.save()
+        return instance
 
 
 class UserCreateSerializer(serializers.ModelSerializer):

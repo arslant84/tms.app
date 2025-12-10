@@ -393,29 +393,39 @@
     font-size: 0.875rem;
 
     thead {
-      background-color: #f8f9fa;
-      border-bottom: 2px solid #dee2e6;
+      background-color: #f9fafb;
 
       th {
         padding: 0.75rem;
         text-align: left;
         font-weight: 600;
-        color: #495057;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
       }
     }
 
     tbody {
       tr {
-        border-bottom: 1px solid #dee2e6;
-        transition: background-color 0.15s;
+        border-bottom: 1px solid #e5e7eb;
+        transition: background-color 0.15s ease;
 
         &:hover {
-          background-color: #f8f9fa;
+          background-color: #f9fafb;
         }
 
         td {
-          padding: 0.75rem;
+          padding: 1rem 0.75rem;
           vertical-align: middle;
+          color: #374151;
+        }
+
+        .fw-medium {
+          font-weight: 600;
+          color: #0d9488;
         }
       }
     }

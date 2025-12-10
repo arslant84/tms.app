@@ -7,8 +7,9 @@ import { environment } from '../../../../../../environments/environment';
 
 interface ApprovableItem {
   id: string;
+  requestNumber: string;
   requestorName: string;
-  itemType: 'TSR' | 'Claim' | 'Visa' | 'Accommodation' | 'Transport';
+  itemType: 'TSR' | 'Visa' | 'Accommodation' | 'Transport';
   purpose: string;
   status: string;
   submittedAt: string;
@@ -38,7 +39,7 @@ export class PendingApprovalsComponent implements OnInit {
   error: string | null = null;
 
   // Filters
-  activeTab: 'all' | 'trf' | 'claim' | 'visa' | 'accommodation' | 'transport' = 'all';
+  activeTab: 'all' | 'trf' | 'visa' | 'accommodation' | 'transport' = 'all';
   searchTerm = '';
   statusFilter = '';
 
@@ -48,8 +49,7 @@ export class PendingApprovalsComponent implements OnInit {
     trf: 0,
     transport: 0,
     visa: 0,
-    accommodation: 0,
-    claim: 0
+    accommodation: 0
   };
 
   // Pagination
@@ -113,8 +113,8 @@ export class PendingApprovalsComponent implements OnInit {
 
   fetchTabCounts(): void {
     // Fetch counts for each tab type
-    const types: Array<'trf' | 'transport' | 'visa' | 'accommodation' | 'claim'> =
-      ['trf', 'transport', 'visa', 'accommodation', 'claim'];
+    const types: Array<'trf' | 'transport' | 'visa' | 'accommodation'> =
+      ['trf', 'transport', 'visa', 'accommodation'];
 
     types.forEach(type => {
       const url = `${this.apiUrl}/admin/approvals/?page=1&limit=1&type=${type}`;
@@ -152,7 +152,7 @@ export class PendingApprovalsComponent implements OnInit {
     this.filteredItems = filtered;
   }
 
-  onTabChange(tab: 'all' | 'trf' | 'claim' | 'visa' | 'accommodation' | 'transport'): void {
+  onTabChange(tab: 'all' | 'trf' | 'visa' | 'accommodation' | 'transport'): void {
     this.activeTab = tab;
     this.currentPage = 1;
     this.fetchPendingItems();
@@ -171,8 +171,7 @@ export class PendingApprovalsComponent implements OnInit {
       'TSR': 'bi-airplane',
       'Transport': 'bi-truck',
       'Visa': 'bi-passport',
-      'Accommodation': 'bi-house-door',
-      'Claim': 'bi-receipt'
+      'Accommodation': 'bi-house-door'
     };
     return icons[itemType] || 'bi-file-text';
   }
@@ -196,11 +195,10 @@ export class PendingApprovalsComponent implements OnInit {
 
   viewItem(item: ApprovableItem): void {
     const routes: { [key: string]: string } = {
-      'TSR': `/trf/${item.id}`,
-      'Transport': `/transport/${item.id}`,
-      'Visa': `/visa/${item.id}`,
-      'Accommodation': `/accommodation/${item.id}`,
-      'Claim': `/expense-claims/${item.id}`
+      'TSR': `/trf/details/${item.id}`,
+      'Transport': `/transport/details/${item.id}`,
+      'Visa': `/visa/details/${item.id}`,
+      'Accommodation': `/accommodation/details/${item.id}`
     };
 
     const route = routes[item.itemType];
@@ -237,8 +235,7 @@ export class PendingApprovalsComponent implements OnInit {
       'TSR': 'trf/travel-requests',
       'Transport': 'transport/requests',
       'Visa': 'visa/applications',
-      'Accommodation': 'trf/travel-requests', // Accommodation uses TRF
-      'Claim': 'expenses/claims'
+      'Accommodation': 'accommodation/requests'
     };
 
     const path = apiPaths[this.selectedItem.itemType];
@@ -285,8 +282,7 @@ export class PendingApprovalsComponent implements OnInit {
       'TSR': 'trf/travel-requests',
       'Transport': 'transport/requests',
       'Visa': 'visa/applications',
-      'Accommodation': 'trf/travel-requests',
-      'Claim': 'expenses/claims'
+      'Accommodation': 'accommodation/requests'
     };
 
     const path = apiPaths[this.selectedItem.itemType];
@@ -348,8 +344,7 @@ export class PendingApprovalsComponent implements OnInit {
       'TSR': 'Travel Request',
       'Transport': 'Transport Request',
       'Visa': 'Visa Application',
-      'Accommodation': 'Accommodation',
-      'Claim': 'Expense Claim'
+      'Accommodation': 'Accommodation'
     };
     return labels[itemType] || itemType;
   }

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.contenttypes.models import ContentType
 from .models import (
-    WorkflowTemplate, WorkflowStep, WorkflowCondition, WorkflowInstance,
+    WorkflowTemplate, WorkflowStep, WorkflowStepNotificationConfig, WorkflowCondition, WorkflowInstance,
     WorkflowStepExecution, WorkflowDelegation, WorkflowAuditLog
 )
 from accounts.models import User
@@ -31,10 +31,80 @@ class WorkflowConditionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
+class WorkflowStepNotificationConfigSerializer(serializers.ModelSerializer):
+    """Serializer for workflow step notification configurations"""
+    notification_template_name = serializers.CharField(
+        source='notification_template.name', read_only=True
+    )
+    event_type_display = serializers.CharField(
+        source='get_event_type_display', read_only=True
+    )
+    priority_display = serializers.CharField(
+        source='get_priority_display', read_only=True
+    )
+
+    class Meta:
+        model = WorkflowStepNotificationConfig
+        fields = [
+            'id', 'workflow_step', 'event_type', 'event_type_display',
+            'notification_template', 'notification_template_name',
+            'recipient_types', 'custom_recipients', 'is_active',
+            'send_email', 'send_system_notification', 'priority', 'priority_display',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_recipient_types(self, value):
+        """Validate recipient types"""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("recipient_types must be a list")
+
+        # Get predefined valid types
+        valid_types = [choice[0] for choice in WorkflowStepNotificationConfig.RECIPIENT_TYPE_CHOICES]
+
+        for recipient_type in value:
+            # Allow predefined types or dynamic role-based types (role_*)
+            if recipient_type not in valid_types and not recipient_type.startswith('role_'):
+                raise serializers.ValidationError(
+                    f"Invalid recipient type: {recipient_type}. "
+                    f"Must be one of: {', '.join(valid_types)} or a role ID (role_*)"
+                )
+
+        return value
+
+    def validate_custom_recipients(self, value):
+        """Validate custom email addresses"""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("custom_recipients must be a list")
+
+        # Basic email validation for custom recipients
+        import re
+        email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+        for email in value:
+            if not email_pattern.match(email):
+                raise serializers.ValidationError(f"Invalid email address: {email}")
+
+        return value
+
+    def validate(self, data):
+        """Cross-field validation"""
+        # If custom_emails is in recipient_types, custom_recipients must be provided
+        recipient_types = data.get('recipient_types', [])
+        custom_recipients = data.get('custom_recipients', [])
+
+        if 'custom_emails' in recipient_types and not custom_recipients:
+            raise serializers.ValidationError(
+                "custom_recipients is required when 'custom_emails' is selected in recipient_types"
+            )
+
+        return data
+
+
 class WorkflowStepSerializer(serializers.ModelSerializer):
     """Serializer for workflow steps"""
     approver_user_detail = UserSerializer(source='approver_user', read_only=True)
     conditions = WorkflowConditionSerializer(many=True, read_only=True)
+    notification_configs = WorkflowStepNotificationConfigSerializer(many=True, read_only=True)
 
     class Meta:
         model = WorkflowStep
@@ -42,7 +112,7 @@ class WorkflowStepSerializer(serializers.ModelSerializer):
             'id', 'workflow_template', 'step_order', 'step_name', 'step_description',
             'approver_role', 'approver_user', 'approver_user_detail',
             'is_required', 'can_skip', 'requires_comments',
-            'sla_hours', 'escalation_hours', 'conditions',
+            'sla_hours', 'escalation_hours', 'conditions', 'notification_configs',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -134,7 +204,9 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
 
         # Create steps
         for step_data in steps_data:
-            WorkflowStep.objects.create(
+            notification_configs_data = step_data.pop('notification_configs', [])
+
+            step = WorkflowStep.objects.create(
                 workflow_template=workflow_template,
                 step_order=step_data.get('step_order'),
                 step_name=step_data.get('step_name'),
@@ -147,6 +219,20 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                 sla_hours=step_data.get('sla_hours'),
                 escalation_hours=step_data.get('escalation_hours')
             )
+
+            # Create notification configs for this step
+            for config_data in notification_configs_data:
+                WorkflowStepNotificationConfig.objects.create(
+                    workflow_step=step,
+                    event_type=config_data.get('event_type'),
+                    notification_template_id=config_data.get('notification_template'),
+                    recipient_types=config_data.get('recipient_types', []),
+                    custom_recipients=config_data.get('custom_recipients', []),
+                    is_active=config_data.get('is_active', True),
+                    send_email=config_data.get('send_email', True),
+                    send_system_notification=config_data.get('send_system_notification', True),
+                    priority=config_data.get('priority', 'normal')
+                )
 
         return workflow_template
 
@@ -161,12 +247,14 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
 
         # Update steps if provided
         if steps_data is not None:
-            # Delete existing steps
+            # Delete existing steps (and their notification configs due to CASCADE)
             instance.steps.all().delete()
 
             # Create new steps
             for step_data in steps_data:
-                WorkflowStep.objects.create(
+                notification_configs_data = step_data.pop('notification_configs', [])
+
+                step = WorkflowStep.objects.create(
                     workflow_template=instance,
                     step_order=step_data.get('step_order'),
                     step_name=step_data.get('step_name'),
@@ -179,6 +267,20 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                     sla_hours=step_data.get('sla_hours'),
                     escalation_hours=step_data.get('escalation_hours')
                 )
+
+                # Create notification configs for this step
+                for config_data in notification_configs_data:
+                    WorkflowStepNotificationConfig.objects.create(
+                        workflow_step=step,
+                        event_type=config_data.get('event_type'),
+                        notification_template_id=config_data.get('notification_template'),
+                        recipient_types=config_data.get('recipient_types', []),
+                        custom_recipients=config_data.get('custom_recipients', []),
+                        is_active=config_data.get('is_active', True),
+                        send_email=config_data.get('send_email', True),
+                        send_system_notification=config_data.get('send_system_notification', True),
+                        priority=config_data.get('priority', 'normal')
+                    )
 
         return instance
 

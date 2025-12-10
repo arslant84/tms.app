@@ -25,6 +25,8 @@ interface CompletedVisa {
   id: number;
   request_number: string;
   requestorName: string;
+  staffId: string;
+  department: string;
   destination: string;
   visaType: string;
   status: string;

@@ -10,7 +10,11 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f8f9fa;
+  background-image: url('/img/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 // Clean login container styles
@@ -83,7 +87,8 @@
 .app-content {
   flex: 1;
   padding: 2rem;
-  background-color: colors.$background-primary;
+  background-color: rgba(248, 249, 250, 0.85);
+  backdrop-filter: blur(5px);
 }
 
 .app-footer {

@@ -52,7 +52,6 @@ INSTALLED_APPS = [
     'accounts',
     'trf',
     'bookings',
-    'expenses',
     'insights',
     'visa',
     'accommodation',
@@ -147,7 +146,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Where collectstatic will collect files
+
+# Additional locations of static files (if you have app-specific static folders)
+STATICFILES_DIRS = [
+    # os.path.join(BASE_DIR, 'static'),  # Uncomment if you have a project-level static folder
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -217,9 +222,15 @@ def load_email_settings():
     """
     Load email configuration from ApplicationSetting model.
     This function is called after Django is fully initialized.
+    Updates both the settings module and django.conf.settings object.
     """
     try:
         from accounts.models import ApplicationSetting
+        from django.conf import settings as django_settings
+        import sys
+
+        # Get current settings module
+        current_module = sys.modules[__name__]
 
         # Load settings from database
         settings_map = {
@@ -233,14 +244,31 @@ def load_email_settings():
             'server_email': 'SERVER_EMAIL',
         }
 
+        settings_loaded = False
+        loaded_values = {}
+
         for db_key, setting_key in settings_map.items():
             value = ApplicationSetting.get_setting(db_key)
             if value is not None:
+                # Update the settings module
+                setattr(current_module, setting_key, value)
                 globals()[setting_key] = value
+
+                # Update django.conf.settings (the LazySettings wrapper)
+                setattr(django_settings, setting_key, value)
+
+                loaded_values[setting_key] = value
+                settings_loaded = True
+
+        if settings_loaded:
+            print(f"✅ Loaded {len(loaded_values)} email settings from database")
+            print(f"   SMTP Host: {loaded_values.get('EMAIL_HOST', 'N/A')}")
+            print(f"   SMTP User: {loaded_values.get('EMAIL_HOST_USER', 'N/A')}")
 
     except Exception as e:
         # Fail silently during migrations or if ApplicationSetting doesn't exist yet
-        pass
+        import sys
+        print(f"⚠️  Could not load email settings from database: {e}", file=sys.stderr)
 
 # Note: Call load_email_settings() in AppConfig.ready() method to load settings after startup
 

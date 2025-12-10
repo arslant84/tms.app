@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { TmsApp_Core_Services_RolesService, TmsApp_Roles_RoleWithPermissions, TmsApp_Roles_Permission, TmsApp_Roles_RoleFormValues } from '../../../../core/services/roles.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { RbacService } from '../../../../core/services/rbac.service';
+import { Permission } from '../../../../core/models/permission.models';
 
 @Component({
   selector: 'tmsapp-admin-systemsettings-role-management',
@@ -28,11 +30,45 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
 
   constructor(
     private rolesService: TmsApp_Core_Services_RolesService,
-    private toast: ToastService
+    private toast: ToastService,
+    private rbacService: RbacService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
+    // Debug logging
+    const currentUser = this.rbacService['authService'].getCurrentUser();
+    console.log('=== Role Management Component Init ===');
+    console.log('Current user:', currentUser);
+    console.log('User role:', currentUser?.role);
+    console.log('Role name:', typeof currentUser?.role === 'object' ? currentUser?.role?.name : currentUser?.role);
+    console.log('User permissions:', currentUser?.permissions);
+    console.log('Has manage_roles permission:', currentUser?.permissions?.includes('manage_roles'));
+    console.log('Has system_admin permission:', currentUser?.permissions?.includes('system_admin'));
+    console.log('Is admin:', currentUser?.is_admin);
+    console.log('hasManageRolesPermission check result:', this.hasManageRolesPermission);
+
+    // Check if user has permission to manage roles
+    if (!this.hasManageRolesPermission) {
+      console.error('❌ Permission check failed! Redirecting to dashboard...');
+      this.toast.error('You do not have permission to manage roles. This feature requires system administrator access.');
+      this.isLoading = false;
+      // Redirect to dashboard after showing error
+      setTimeout(() => {
+        this.router.navigate(['/dashboard']);
+      }, 2000);
+      return;
+    }
+
+    console.log('✅ Permission check passed! Loading data...');
     this.loadData();
+  }
+
+  get hasManageRolesPermission(): boolean {
+    return this.rbacService.hasAnyPermission([
+      Permission.MANAGE_ROLES,
+      Permission.SYSTEM_ADMIN
+    ]);
   }
 
   loadData(): void {
@@ -56,10 +92,12 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
 
         if (err.status === 401) {
           this.toast.error('Session expired. Please login again.');
+          setTimeout(() => this.router.navigate(['/auth/login']), 1500);
         } else if (err.status === 403) {
-          this.toast.error('You do not have permission to view roles and permissions. Admin access required.');
+          this.toast.error('Access Denied: You need System Administrator privileges. Your account is not authorized to manage roles and permissions.');
+          setTimeout(() => this.router.navigate(['/dashboard']), 2000);
         } else {
-          this.toast.error('Failed to load roles or permissions. Please try again.');
+          this.toast.error(`Failed to load data: ${err.statusText || 'Unknown error'}. Please refresh the page or contact support.`);
         }
       })
       .finally(() => {

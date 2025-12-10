@@ -131,11 +131,7 @@ export class DashboardHomeComponent implements OnInit {
     const iconMap: { [key: string]: string } = {
       'TRF': 'bi-clipboard-check',
       'TSR': 'bi-clipboard-check',
-      'EXPENSE_CLAIM': 'bi-receipt',
-      'CLAIM': 'bi-receipt',
       'VISA': 'bi-file-earmark-text',
-      'FLIGHT': 'bi-airplane',
-      'HOTEL': 'bi-building',
       'ACCOMMODATION': 'bi-building',
       'TRANSPORT': 'bi-car-front'
     };
@@ -159,22 +155,18 @@ export class DashboardHomeComponent implements OnInit {
     switch (type) {
       case 'TRF':
       case 'TSR':
-        return `/trf/view/${item.id}`;
-      case 'EXPENSE_CLAIM':
-      case 'CLAIM':
-        return `/expenses/${item.id}`;
+        return `/trf/${item.id}`;
       case 'VISA':
         return `/visa/${item.id}`;
-      case 'FLIGHT':
-        return `/bookings/flights/${item.id}`;
-      case 'HOTEL':
       case 'ACCOMMODATION':
         return `/accommodation/${item.id}`;
       case 'TRANSPORT':
         return `/transport/${item.id}`;
       default:
-        // Fallback to TRF view if type is unknown
-        return `/trf/view/${item.id}`;
+        // Log unknown type for debugging
+        console.warn(`Unknown activity type: ${item.type}, ID: ${item.id}`);
+        // Fallback to TSR view if type is unknown
+        return `/trf/${item.id}`;
     }
   }
 }

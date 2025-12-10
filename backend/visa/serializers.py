@@ -26,7 +26,7 @@ class VisaApplicationListSerializer(serializers.ModelSerializer):
         model = VisaApplication
         fields = [
             'id', 'request_number', 'applicant_name', 'requestor_name', 'staff_id', 'destination', 'visa_type', 'request_type',
-            'status', 'trip_start_date', 'trip_end_date', 'submitted_date',
+            'travel_purpose', 'passport_number', 'status', 'trip_start_date', 'trip_end_date', 'submitted_date',
             'last_updated_date'
         ]
 

@@ -96,10 +96,7 @@ class UserNotificationPreferenceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Users can only see their own preferences"""
         user = self.request.user
-
-        if user.is_staff:
-            return UserNotificationPreference.objects.all()
-
+        # All users only see their own preferences
         return UserNotificationPreference.objects.filter(user=user)
 
     def perform_create(self, serializer):
@@ -144,10 +141,8 @@ class UserNotificationSubscriptionViewSet(viewsets.ModelViewSet):
         """Users can only see their own subscriptions"""
         user = self.request.user
 
-        if user.is_staff:
-            queryset = UserNotificationSubscription.objects.all()
-        else:
-            queryset = UserNotificationSubscription.objects.filter(user=user)
+        # All users only see their own subscriptions
+        queryset = UserNotificationSubscription.objects.filter(user=user)
 
         # Filter by event type
         event_type_id = self.request.query_params.get('event_type', None)
@@ -179,10 +174,10 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         """Users can only see their own notifications"""
         user = self.request.user
 
-        if user.is_staff:
-            queryset = UserNotification.objects.all()
-        else:
-            queryset = UserNotification.objects.filter(user=user)
+        # All users (including admins) only see notifications sent to them
+        # Notifications are created for the appropriate users by the notification service
+        queryset = UserNotification.objects.filter(user=user)
+        print(f"✅ User {user.username} - showing only notifications sent to them")
 
         # Filter by read status
         is_read = self.request.query_params.get('is_read', None)
@@ -289,7 +284,7 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
             is_read=False
         ).count()
 
-        return Response({'unread_count': count})
+        return Response({'count': count})
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
@@ -355,10 +350,8 @@ class NotificationBatchViewSet(viewsets.ReadOnlyModelViewSet):
         """Users can only see their own batches"""
         user = self.request.user
 
-        if user.is_staff:
-            queryset = NotificationBatch.objects.all()
-        else:
-            queryset = NotificationBatch.objects.filter(user=user)
+        # All users only see their own batches
+        queryset = NotificationBatch.objects.filter(user=user)
 
         # Filter by frequency
         frequency = self.request.query_params.get('frequency', None)

@@ -47,13 +47,6 @@
         <i class="bi bi-building"></i>
         <span>Accommodation</span>
       </a>
-      <a
-        routerLink="/expenses"
-        routerLinkActive="active"
-        class="nav-link">
-        <i class="bi bi-receipt"></i>
-        <span>Claims</span>
-      </a>
     </nav>
 
     <!-- Right Section: Notifications + User Menu -->
@@ -152,7 +145,6 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
             <li><a class="dropdown-item" routerLink="/profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
-            <li><a class="dropdown-item" routerLink="/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#" (click)="logout($event)"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
           </ul>

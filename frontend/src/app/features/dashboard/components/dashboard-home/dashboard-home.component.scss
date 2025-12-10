@@ -1,6 +1,8 @@
 // Dashboard Component - Matching React pctsb.syntra design
 .dashboard-container {
   padding: 0;
+  max-width: 100%;
+  width: 100%;
 
   > * + * {
     margin-top: 2rem; // space-y-8 equivalent (32px)
@@ -93,18 +95,19 @@
   }
 }
 
-// Summary Cards Grid
+// Summary Cards Grid - Responsive for 4 cards
 .summary-cards-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem; // gap-6
+  width: 100%;
 
   @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr); // sm:grid-cols-2
+    grid-template-columns: repeat(2, 1fr); // sm:grid-cols-2 (2 cards per row)
   }
 
   @media (min-width: 1024px) {
-    grid-template-columns: repeat(5, 1fr); // lg:grid-cols-5
+    grid-template-columns: repeat(4, 1fr); // lg:grid-cols-4 (4 cards per row)
   }
 }
 
@@ -308,6 +311,10 @@
 
 .activity-card-content {
   padding: 0.5rem 1.5rem 1.5rem; // pt-2
+  min-height: 300px; // Ensure card has minimum height even with no activities
+
+  // Ensure content doesn't overflow
+  overflow: hidden;
 }
 
 // Loading State
@@ -343,11 +350,37 @@
   color: #ef4444; // text-red-500
 }
 
-// Activities List
+// Activities List - With scrolling for many items
 .activities-list {
   display: flex;
   flex-direction: column;
   gap: 1.5rem; // space-y-6
+  max-height: 600px; // Limit height to show ~4-5 activities
+  overflow-y: auto; // Enable vertical scrolling
+  padding-right: 0.5rem; // Space for scrollbar
+
+  // Custom scrollbar styling
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #0d9488;
+    border-radius: 4px;
+
+    &:hover {
+      background: #0f766e;
+    }
+  }
+
+  // Firefox scrollbar
+  scrollbar-width: thin;
+  scrollbar-color: #0d9488 #f1f1f1;
 }
 
 .activity-item-card {

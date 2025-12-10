@@ -238,19 +238,22 @@
       <table class="bookings-table">
         <thead>
           <tr>
-            <th>Request #</th>
-            <th>Applicant</th>
-            <th>Destination</th>
-            <th>Visa Type</th>
-            <th>Status</th>
-            <th>Completed Date</th>
-            <th>Actions</th>
+            <th>REQUEST NUMBER</th>
+            <th>STAFF NAME</th>
+            <th>DESTINATION</th>
+            <th>VISA TYPE</th>
+            <th>STATUS</th>
+            <th>COMPLETED DATE</th>
+            <th>ACTIONS</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let visa of completedVisas">
             <td>{{ visa.request_number }}</td>
-            <td>{{ visa.requestorName }}</td>
+            <td>
+              <div class="fw-medium">{{ visa.requestorName }}</div>
+              <small class="text-muted d-block" *ngIf="visa.staffId">{{ visa.staffId }}</small>
+            </td>
             <td>
               <span class="badge" [class]="getDestinationBadgeClass(visa.destination)">{{ visa.destination }}</span>
             </td>

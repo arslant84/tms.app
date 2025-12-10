@@ -7,6 +7,7 @@ import { ToastService } from '../../../core/services/toast.service';
 
 interface FlightApplication {
   id: string;
+  requestNumber: string;
   requestorName: string;
   department: string;
   purpose: string;
@@ -86,7 +87,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
    */
   fetchFlightStats(): void {
     // Calculate stats from TRFs
-    this.trfService.getAllTrfs().subscribe({
+    this.trfService.getAllTrfs({ adminView: true }).subscribe({
       next: (response: any) => {
         const trfs = response.results || response.trfs || [];
 
@@ -131,7 +132,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
 
-    this.trfService.getAllTrfs().subscribe({
+    this.trfService.getAllTrfs({ adminView: true }).subscribe({
       next: (response: any) => {
         const trfs = response.results || response.trfs || [];
 
@@ -192,6 +193,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
 
           return {
             id: trf.id,
+            requestNumber: trf.request_number || `#${trf.id}`,
             requestorName: trf.requestor_name || 'N/A',
             department: trf.department || 'N/A',
             purpose: trf.purpose || 'N/A',
@@ -224,7 +226,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
     this.filteredApplications = this.applications.filter(app => {
       // Search filter
       const matchesSearch = !this.searchTerm ||
-        app.id.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        app.requestNumber.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         app.requestorName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         app.purpose.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         (app.destinationSummary && app.destinationSummary.toLowerCase().includes(this.searchTerm.toLowerCase()));
@@ -282,7 +284,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
    * View TRF details
    */
   viewTrf(trfId: string): void {
-    this.router.navigate(['/trf/view', trfId]);
+    this.router.navigate(['/trf', trfId]);
   }
 
   /**
@@ -291,17 +293,24 @@ export class FlightsAdminOverviewComponent implements OnInit {
   getStatusClass(status: string): string {
     const statusLower = status.toLowerCase();
     if (statusLower === 'approved') return 'badge-success';
-    if (statusLower.includes('awaiting')) return 'badge-info';
+    if (statusLower.includes('awaiting')) return 'badge-warning';
     if (statusLower.includes('processed')) return 'badge-info';
-    if (statusLower === 'rejected') return 'badge-danger';
-    return 'badge-secondary';
+    if (statusLower.includes('pending')) return 'badge-warning';
+    if (statusLower === 'rejected') return 'badge-red';
+    if (statusLower === 'completed') return 'badge-green';
+    return 'badge-gray';
   }
 
   /**
    * Get travel type badge class
    */
   getTravelTypeBadge(travelType: string): string {
-    return 'badge-info';
+    switch (travelType) {
+      case 'Overseas': return 'badge-blue';
+      case 'Home Leave Passage': return 'badge-purple';
+      case 'Domestic': return 'badge-green';
+      default: return 'badge-gray';
+    }
   }
 
   /**

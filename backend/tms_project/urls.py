@@ -25,7 +25,6 @@ urlpatterns = [
     path('api/', include('accounts.urls')),
     path('api/trf/', include('trf.urls')),
     path('api/bookings/', include('bookings.urls')),
-    path('api/expenses/', include('expenses.urls')),
     path('api/insights/', include('insights.urls')),
     path('api/visa/', include('visa.urls')),
     path('api/accommodation/', include('accommodation.urls')),
@@ -36,6 +35,7 @@ urlpatterns = [
     path('api/admin/approvals/', unified_approvals, name='unified-approvals'),
 ]
 
-# Serve media files in development
+# Serve media and static files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

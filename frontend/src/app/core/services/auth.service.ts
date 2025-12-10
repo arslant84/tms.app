@@ -70,6 +70,8 @@ export class AuthService {
           department: response.user.department || '',
           is_admin: response.user.is_admin || false,
           is_active: response.user.is_active !== undefined ? response.user.is_active : true,
+          // Include permissions array from backend
+          permissions: response.user.permissions || [],
           // Include all additional fields from backend
           staff_id: response.user.staff_id,
           phone: response.user.phone,
@@ -79,6 +81,7 @@ export class AuthService {
         };
 
         console.log('Stored user data:', user);
+        console.log('User permissions:', user.permissions);
 
         // Store user data
         localStorage.setItem('user_data', JSON.stringify(user));

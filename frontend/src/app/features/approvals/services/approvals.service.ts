@@ -251,8 +251,23 @@ export class ApprovalsService {
   // Transform backend data to unified ApprovalRequest format
 
   private transformTrfToApproval(trf: any): ApprovalRequest {
-    // Backend uses 'itinerary_segments', but some responses might use 'itinerary'
-    const itinerary = trf.itinerary_segments || trf.itinerary || [];
+    // Extract itinerary from nested structure based on travel type
+    let itinerary: any[] = [];
+    const travelType = trf.travel_type || trf.travelType;
+
+    if (travelType === 'Domestic') {
+      const domesticDetails = trf.domesticTravelDetails || {};
+      itinerary = domesticDetails.itinerary || trf.itinerary_segments || trf.itinerary || [];
+    } else if (travelType === 'Overseas' || travelType === 'Home Leave Passage') {
+      const overseasDetails = trf.overseasTravelDetails || {};
+      itinerary = overseasDetails.itinerary || trf.itinerary_segments || trf.itinerary || [];
+    } else if (travelType === 'External Parties') {
+      const externalDetails = trf.externalPartiesTravelDetails || {};
+      itinerary = externalDetails.itinerary || trf.itinerary_segments || trf.itinerary || [];
+    } else {
+      // Fallback for legacy data
+      itinerary = trf.itinerary_segments || trf.itinerary || [];
+    }
 
     const destination = this.extractDestination(itinerary);
     const departureDate = this.extractDepartureDate(itinerary);

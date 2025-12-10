@@ -1,18 +1,17 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
+import { AdminMenuGuard, PermissionGuard } from './core/guards/permission.guard';
 import { UserRole } from './core/models/user.model';
+import { Permission } from './core/models/permission.models';
 import { MainLayoutComponent } from './components/main-layout/main-layout.component';
 import { TravelRequestWizardComponent } from './features/requests/travel/travel-request-wizard.component';
 import { AccommodationRequestComponent } from './features/requests/accommodation/accommodation-request.component';
 import { TransportRequestComponent } from './features/requests/transport/transport-request.component';
 import { VisaRequestComponent } from './features/requests/visa/visa-request.component';
-import { ExpenseClaimComponent } from './features/requests/expense/expense-claim.component';
 import { PendingApprovalsComponent } from './features/approvals/pending/pending-approvals.component';
 import { PendingApprovalsComponent as UnifiedApprovalsComponent } from './features/admin/approvals/components/pending-approvals/pending-approvals.component';
 import { ClerkPanelComponent } from './features/admin/clerk-panel/clerk-panel.component';
 import { AdminReportsComponent } from './features/admin/reports/admin-reports.component';
-import { ClaimsAdminComponent } from './features/admin/claims-admin/claims-admin.component';
-import { ClaimsProcessingComponent } from './features/admin/claims-processing/claims-processing.component';
 import { TransportAdminComponent } from './features/admin/transport-admin/transport-admin.component';
 import { TransportProcessingComponent } from './features/admin/transport-processing/transport-processing.component';
 import { FlightsAdminComponent } from './features/admin/flights-admin/flights-admin.component';
@@ -66,11 +65,10 @@ export const routes: Routes = [
           { path: 'accommodation', component: AccommodationRequestComponent },
           { path: 'transport', component: TransportRequestComponent },
           { path: 'visa', component: VisaRequestComponent },
-          { path: 'expense', component: ExpenseClaimComponent },
           { path: 'success', component: SuccessComponent }
         ]
       },
-      // Approvals routes
+      // Approvals routes (for users with approval permissions)
       {
         path: 'approvals',
         children: [
@@ -78,7 +76,16 @@ export const routes: Routes = [
           { path: 'pending', component: PendingApprovalsComponent },
           // Approval history will be added here
         ],
-        data: { roles: [UserRole.HOD, UserRole.FOCAL, UserRole.ADMIN] }
+        canActivate: [PermissionGuard],
+        data: {
+          permissions: [
+            Permission.VIEW_PENDING_APPROVALS,
+            Permission.APPROVE_TRF,
+            Permission.APPROVE_VISA,
+            Permission.APPROVE_TRANSPORT,
+            Permission.APPROVE_ACCOMMODATION
+          ]
+        }
       },
       // Admin routes
       {
@@ -89,14 +96,9 @@ export const routes: Routes = [
           { path: 'reports', component: AdminReportsComponent },
           { path: 'approvals', component: UnifiedApprovalsComponent },
           {
-            path: 'claims',
-            children: [
-              { path: '', component: ClaimsAdminComponent },
-              { path: 'processing', component: ClaimsProcessingComponent }
-            ]
-          },
-          {
             path: 'transport',
+            canActivate: [AdminMenuGuard],
+            data: { adminModule: 'transport' },
             children: [
               { path: '', component: TransportAdminComponent },
               { path: 'processing', component: TransportProcessingComponent }
@@ -104,6 +106,8 @@ export const routes: Routes = [
           },
           {
             path: 'flights',
+            canActivate: [AdminMenuGuard],
+            data: { adminModule: 'flights' },
             children: [
               { path: '', component: FlightsAdminOverviewComponent },
               { path: 'processing', component: FlightsProcessingComponent }
@@ -111,6 +115,8 @@ export const routes: Routes = [
           },
           {
             path: 'accommodation',
+            canActivate: [AdminMenuGuard],
+            data: { adminModule: 'accommodation' },
             children: [
               { path: '', component: AccommodationAdminComponent },
               { path: 'processing', component: AccommodationProcessingComponent }
@@ -118,26 +124,43 @@ export const routes: Routes = [
           },
           {
             path: 'visa',
+            canActivate: [AdminMenuGuard],
+            data: { adminModule: 'visa' },
             children: [
               { path: '', component: VisaAdminComponent },
               { path: 'processing', component: VisaProcessingComponent }
             ]
           },
-          { path: 'settings', component: SystemSettingsComponent },
-          { path: 'settings/notifications', component: TmsApp_Admin_SystemSettings_NotificationTemplatesComponent }
+          {
+            path: 'settings',
+            component: SystemSettingsComponent,
+            canActivate: [PermissionGuard],
+            data: { permissions: [Permission.VIEW_SYSTEM_SETTINGS, Permission.SYSTEM_ADMIN] }
+          },
+          {
+            path: 'settings/notifications',
+            component: TmsApp_Admin_SystemSettings_NotificationTemplatesComponent,
+            canActivate: [PermissionGuard],
+            data: { permissions: [Permission.MANAGE_NOTIFICATIONS, Permission.SYSTEM_ADMIN] }
+          }
         ],
-        data: { roles: [UserRole.ADMIN, UserRole.TICKETING_CLERK, UserRole.HOD, UserRole.FOCAL] }
+        // Admin routes require ANY admin module permission or system admin
+        canActivate: [PermissionGuard],
+        data: {
+          permissions: [
+            Permission.SYSTEM_ADMIN,
+            Permission.VIEW_ADMIN_FLIGHTS,
+            Permission.VIEW_ADMIN_ACCOMMODATION,
+            Permission.VIEW_ADMIN_VISA,
+            Permission.VIEW_ADMIN_TRANSPORT,
+            Permission.MANAGE_USERS
+          ]
+        }
       },
       // TRF Management
       {
         path: 'trf',
         loadChildren: () => import('./features/trf-management/trf-management.module').then(m => m.TrfManagementModule)
-      },
-
-      // Expense Claims
-      {
-        path: 'expenses',
-        loadChildren: () => import('./features/expense-claims/expense-claims.module').then(m => m.ExpenseClaimsModule)
       },
 
       // Transport Management
@@ -152,11 +175,14 @@ export const routes: Routes = [
         loadChildren: () => import('./features/accommodation/accommodation.module').then(m => m.AccommodationModule)
       },
 
-      // User Management
+      // User Management (Admins only with manage_users permission)
       {
         path: 'users',
         loadChildren: () => import('./features/user-management/user-management.module').then(m => m.UserManagementModule),
-        data: { roles: [UserRole.HOD, UserRole.FOCAL] }
+        canActivate: [PermissionGuard],
+        data: {
+          permissions: [Permission.MANAGE_USERS, Permission.SYSTEM_ADMIN]
+        }
       },
       // User Profile
       {

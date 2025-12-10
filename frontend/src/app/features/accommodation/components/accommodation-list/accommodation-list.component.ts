@@ -125,6 +125,38 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
     }
   }
 
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.fetchRequests();
+    }
+  }
+
+  getPageNumbers(): number[] {
+    const maxPagesToShow = 5;
+    const pages: number[] = [];
+
+    if (this.totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const half = Math.floor(maxPagesToShow / 2);
+      let start = Math.max(1, this.currentPage - half);
+      let end = Math.min(this.totalPages, start + maxPagesToShow - 1);
+
+      if (end - start < maxPagesToShow - 1) {
+        start = Math.max(1, end - maxPagesToShow + 1);
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+
+    return pages;
+  }
+
   navigateToCreate(): void {
     this.router.navigate(['/accommodation/create']);
   }

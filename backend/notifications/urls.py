@@ -14,7 +14,7 @@ router.register(r'event-types', NotificationEventTypeViewSet, basename='notifica
 router.register(r'templates', NotificationTemplateViewSet, basename='notification-template')
 router.register(r'preferences', UserNotificationPreferenceViewSet, basename='notification-preference')
 router.register(r'subscriptions', UserNotificationSubscriptionViewSet, basename='notification-subscription')
-router.register(r'notifications', UserNotificationViewSet, basename='user-notification')
+router.register(r'', UserNotificationViewSet, basename='user-notification')
 router.register(r'batches', NotificationBatchViewSet, basename='notification-batch')
 
 urlpatterns = [

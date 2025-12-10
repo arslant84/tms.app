@@ -26,17 +26,75 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated]
 
+    def get_object(self):
+        """
+        Override to show proper request_number in error messages
+        """
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field or 'pk'
+        lookup_value = self.kwargs[lookup_url_kwarg]
+
+        # Try to determine if it's a numeric ID or request_number
+        if str(lookup_value).isdigit():
+            filter_kwargs = {'pk': int(lookup_value)}
+        else:
+            filter_kwargs = {'request_number': lookup_value}
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        try:
+            obj = queryset.get(**filter_kwargs)
+        except TransportRequest.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+
+            # Try to fetch from full queryset to get request_number for better error message
+            try:
+                obj = TransportRequest.objects.get(**filter_kwargs)
+                request_identifier = obj.request_number or f"ID #{obj.id}"
+                raise NotFound(f'Transport request {request_identifier} not found or you do not have permission to access it')
+            except TransportRequest.DoesNotExist:
+                raise NotFound(f'Transport request not found with identifier: {lookup_value}')
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
+
     def get_queryset(self):
         """
-        Get queryset based on user role and filters
+        Get queryset based on user permissions and filters
+
+        Context-aware filtering:
+        - Approval actions (approve/reject): Allow access to all requests (authorization checked in WorkflowEngine)
+        - admin_view=true: Show all requests if user has view_all_transport permission (Admin Module)
+        - Otherwise: Show only user's own requests (Personal Requests view)
         """
         user = self.request.user
         queryset = TransportRequest.objects.all()
 
-        # Filter by user role
-        if not user.is_staff:
-            # Regular users see their own requests
+        # For approval actions, allow access to requests pending the user's approval
+        if self.action in ['approve', 'reject']:
+            print(f"✅ Approval action: Allowing access to all transport requests (authorization checked in WorkflowEngine)")
+            return queryset  # No filtering - authorization handled by WorkflowEngine
+
+        # Check if this is an admin view (Transport Admin module)
+        admin_view = self.request.query_params.get('admin_view', 'false').lower() == 'true'
+
+        # Permission-based filtering
+        if admin_view and user.role:
+            # Admin module context - check if user has permission to view all
+            can_view_all = user.role.permissions.filter(name='view_all_transport').exists()
+
+            if can_view_all:
+                print(f"✅ Admin view: User {user.username} (role: {user.role.name}) has 'view_all_transport' permission - showing all transport requests")
+                pass  # No filtering - show all transport requests
+            else:
+                # User doesn't have permission - show only their own
+                queryset = queryset.filter(requestor=user)
+                print(f"⚠️ Admin view: User {user.username} lacks permission - showing only own transport requests")
+        else:
+            # Personal requests view - always show only user's own requests
             queryset = queryset.filter(requestor=user)
+            print(f"✅ Personal view: User {user.username} - showing only own transport requests")
 
         # Query parameter filters
         status_filter = self.request.query_params.get('status', None)

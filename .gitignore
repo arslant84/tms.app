@@ -41,6 +41,10 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Static and media files (generated/uploaded)
+staticfiles/
+media/
+
 # Virtual environments
 venv/
 env/

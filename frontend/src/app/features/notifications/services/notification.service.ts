@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, interval } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 // Notification Interfaces
@@ -86,19 +87,34 @@ export class NotificationService {
       if (filters.page_size) params = params.set('page_size', filters.page_size.toString());
     }
 
-    return this.http.get<any>(`${this.apiUrl}/notifications/`, { params }).pipe(
+    return this.http.get<any>(`${this.apiUrl}/`, { params }).pipe(
       tap((response) => {
         const notifications = Array.isArray(response) ? response : response.results || [];
         this.notificationsSubject.next(notifications);
+      }),
+      catchError((error) => {
+        // Only log server errors to avoid console spam
+        if (error.status >= 500) {
+          console.error('❌ Server error fetching notifications:', error.status);
+        }
+        return of({ results: [] });
       })
     );
   }
 
   // Get unread count
   getUnreadCount(): Observable<{ count: number }> {
-    return this.http.get<{ count: number }>(`${this.apiUrl}/notifications/unread_count/`).pipe(
+    return this.http.get<{ count: number }>(`${this.apiUrl}/unread_count/`).pipe(
       tap((response) => {
         this.unreadCountSubject.next(response.count);
+      }),
+      catchError((error) => {
+        // Silently handle errors to avoid console spam from polling
+        // Only log once if there's an actual server error
+        if (error.status >= 500) {
+          console.error('❌ Server error fetching unread count:', error.status);
+        }
+        return of({ count: 0 });
       })
     );
   }
@@ -110,12 +126,12 @@ export class NotificationService {
 
   // Get single notification
   getNotificationById(id: number): Observable<UserNotification> {
-    return this.http.get<UserNotification>(`${this.apiUrl}/notifications/${id}/`);
+    return this.http.get<UserNotification>(`${this.apiUrl}/${id}/`);
   }
 
   // Mark notification as read
   markAsRead(id: number): Observable<UserNotification> {
-    return this.http.post<UserNotification>(`${this.apiUrl}/notifications/${id}/mark_as_read/`, {}).pipe(
+    return this.http.post<UserNotification>(`${this.apiUrl}/${id}/mark_as_read/`, {}).pipe(
       tap(() => {
         this.refreshUnreadCount();
         this.refreshNotifications();
@@ -125,7 +141,7 @@ export class NotificationService {
 
   // Mark all as read
   markAllAsRead(): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/notifications/mark_all_as_read/`, {}).pipe(
+    return this.http.post<any>(`${this.apiUrl}/mark_all_as_read/`, {}).pipe(
       tap(() => {
         this.refreshUnreadCount();
         this.refreshNotifications();
@@ -135,7 +151,7 @@ export class NotificationService {
 
   // Delete notification
   deleteNotification(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/notifications/${id}/`).pipe(
+    return this.http.delete<void>(`${this.apiUrl}/${id}/`).pipe(
       tap(() => {
         this.refreshUnreadCount();
         this.refreshNotifications();
@@ -156,6 +172,11 @@ export class NotificationService {
   // Get event types
   getEventTypes(): Observable<NotificationEventType[]> {
     return this.http.get<NotificationEventType[]>(`${this.apiUrl}/event-types/`);
+  }
+
+  // Get notification templates
+  getNotificationTemplates(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/templates/`);
   }
 
   // Get user subscriptions

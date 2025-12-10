@@ -23,6 +23,86 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
     ).order_by('-created_at')
     permission_classes = [IsAuthenticated]
 
+    def get_object(self):
+        """
+        Override to show proper request_number in error messages
+        """
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field or 'pk'
+        lookup_value = self.kwargs[lookup_url_kwarg]
+
+        # Try to determine if it's a numeric ID or request_number
+        if str(lookup_value).isdigit():
+            filter_kwargs = {'pk': int(lookup_value)}
+        else:
+            filter_kwargs = {'request_number': lookup_value}
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        try:
+            obj = queryset.get(**filter_kwargs)
+        except VisaApplication.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+
+            # Try to fetch from full queryset to get request_number for better error message
+            try:
+                obj = VisaApplication.objects.get(**filter_kwargs)
+                request_identifier = obj.request_number or f"ID #{obj.id}"
+                raise NotFound(f'Visa application {request_identifier} not found or you do not have permission to access it')
+            except VisaApplication.DoesNotExist:
+                raise NotFound(f'Visa application not found with identifier: {lookup_value}')
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
+
+    def get_queryset(self):
+        """
+        Filter visa applications based on user permissions
+
+        Context-aware filtering:
+        - Approval actions (approve/reject): Allow access to all applications (authorization checked in WorkflowEngine)
+        - admin_view=true: Show all/department visas if user has appropriate permissions (Admin Module)
+        - Otherwise: Show only user's own visa applications (Personal Requests view)
+        """
+        user = self.request.user
+        queryset = self.queryset
+
+        # For approval actions, allow access to applications pending the user's approval
+        if self.action in ['approve', 'reject']:
+            print(f"✅ Approval action: Allowing access to all visa applications (authorization checked in WorkflowEngine)")
+            return queryset  # No filtering - authorization handled by WorkflowEngine
+
+        # Check if this is an admin view (Visa Admin module)
+        admin_view = self.request.query_params.get('admin_view', 'false').lower() == 'true'
+
+        # Permission-based filtering
+        if admin_view and user.role:
+            # Admin module context - check permissions
+            can_view_all = user.role.permissions.filter(name='view_all_visa').exists()
+
+            if can_view_all:
+                print(f"✅ Admin view: User {user.username} (role: {user.role.name}) has 'view_all_visa' permission - showing all visa applications")
+                pass  # No filtering - show all
+            elif user.role.permissions.filter(name__in=['approve_visa', 'view_pending_approvals']).exists():
+                # Department-level approvers
+                if user.department:
+                    queryset = queryset.filter(user__department=user.department)
+                    print(f"✅ Admin view: Approver - showing department visa applications")
+                else:
+                    queryset = queryset.filter(user=user)
+                    print(f"⚠️ Admin view: Approver but no department - showing only own")
+            else:
+                # No admin permissions - show only own
+                queryset = queryset.filter(user=user)
+                print(f"⚠️ Admin view: User lacks permission - showing only own visa applications")
+        else:
+            # Personal requests view - always show only user's own applications
+            queryset = queryset.filter(user=user)
+            print(f"✅ Personal view: User {user.username} - showing only own visa applications")
+
+        return queryset
+
     def get_serializer_class(self):
         """Return appropriate serializer based on action"""
         if self.action == 'list':

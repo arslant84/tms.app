@@ -60,6 +60,9 @@
   background-color: #0d9488;
   border-color: #0d9488;
   color: white;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: all 0.2s;
 
   &:hover {
     background-color: #0f766e;
@@ -216,56 +219,54 @@
   }
 }
 
-// Table
+// Table - Matching Visa List Design
 .requests-table {
   width: 100%;
-  border-collapse: collapse;
+  margin-bottom: 0;
   font-size: 0.875rem;
 
   thead {
     background-color: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
 
     th {
-      padding: 0.75rem 1rem;
-      text-align: left;
       font-weight: 600;
-      color: #374151;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.75rem;
+      white-space: nowrap;
     }
   }
 
-  tbody tr {
-    border-bottom: 1px solid #e5e7eb;
+  tbody {
+    tr {
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      border-bottom: 1px solid #e5e7eb;
 
-    &:hover {
-      background-color: #f9fafb;
-    }
+      &:hover {
+        background-color: #f9fafb;
+      }
 
-    td {
-      padding: 0.75rem 1rem;
+      &:last-child {
+        border-bottom: none;
+      }
+
+      td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+        color: #374151;
+      }
     }
   }
 }
 
-.sortable-header {
-  cursor: pointer;
-}
-
-.sort-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: transparent;
-  border: none;
+// Request Number Styling
+.request-number {
+  color: #0d9488;
   font-weight: 600;
-  color: #374151;
-  cursor: pointer;
-  padding: 0;
-
-  &:hover {
-    background-color: rgba(107, 114, 128, 0.1);
-    border-radius: 0.25rem;
-  }
 }
 
 .title-cell {
@@ -330,36 +331,49 @@
   }
 }
 
-// Pagination
-.pagination-section {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
+// Pagination - Matching Visa List Design
+.pagination-container {
+  padding: 1.5rem;
   border-top: 1px solid #e5e7eb;
-  flex-wrap: wrap;
-  gap: 1rem;
 
-  .pagination-info {
-    font-size: 0.875rem;
-    color: #6b7280;
-  }
+  .pagination {
+    margin-bottom: 0;
 
-  .pagination-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    .page-item {
+      .page-link {
+        color: #0d9488;
+        border-color: #e5e7eb;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        cursor: pointer;
 
-    .page-indicator {
-      font-size: 0.875rem;
-      color: #6b7280;
-      padding: 0 0.5rem;
+        &:hover {
+          background-color: #f0fdfa;
+          border-color: #0d9488;
+        }
+      }
+
+      &.active .page-link {
+        background-color: #0d9488;
+        border-color: #0d9488;
+        color: white;
+
+        &:hover {
+          background-color: #0f766e;
+          border-color: #0f766e;
+        }
+      }
+
+      &.disabled .page-link {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
     }
   }
 
-  .btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .pagination-info {
+    color: #6b7280;
+    font-size: 0.875rem;
   }
 }
 

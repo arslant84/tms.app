@@ -4,8 +4,29 @@
   align-items: center;
   min-height: 100vh;
   width: 100%;
-  background-color: #2c3e50;
-  background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+  background-image: url('/img/login-background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+
+  // Add overlay for better readability of login card
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 0;
+  }
+
+  // Ensure card is above overlay
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .login-card {

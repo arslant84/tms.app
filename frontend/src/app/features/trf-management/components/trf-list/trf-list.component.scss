@@ -256,36 +256,42 @@
 
 .tsr-table {
   width: 100%;
-  border-collapse: collapse;
+  margin-bottom: 0;
   font-size: 0.875rem;
 
   thead {
-    background-color: #f9fafb; // bg-gray-50
-    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;
 
-    tr {
-      th {
-        padding: 0.75rem 1rem;
-        text-align: left;
-        font-weight: 600;
-        color: #374151; // gray-700
-        font-size: 0.875rem;
-      }
+    th {
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.75rem;
+      white-space: nowrap;
     }
   }
 
   tbody {
     tr {
+      cursor: pointer;
+      transition: background-color 0.15s ease;
       border-bottom: 1px solid #e5e7eb;
-      transition: background-color 0.15s;
 
       &:hover {
-        background-color: #f9fafb; // hover:bg-gray-50
+        background-color: #f9fafb;
+      }
+
+      &:last-child {
+        border-bottom: none;
       }
 
       td {
-        padding: 0.75rem 1rem;
+        padding: 1rem 0.75rem;
         vertical-align: middle;
+        color: #374151;
       }
     }
   }
@@ -369,51 +375,91 @@
   color: white;
 }
 
-// View Button
-.btn-view {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem; // mr-1.5
-  padding: 0.25rem 0.75rem;
-  font-size: 0.875rem; // text-sm
-  border: 1px solid #d1d5db;
+// Request Number Styling
+.request-number {
   color: #0d9488;
-  background: white;
-  border-radius: 0.375rem;
-  transition: all 0.15s;
+  font-weight: 600;
+}
 
-  &:hover {
-    background-color: #f0fdfa; // teal-50
-    border-color: #0d9488;
-  }
+// Action Buttons - Matching Visa List Design
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
 
-  i {
-    font-size: 1rem; // h-4 w-4
+  .action-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-width: 1px;
+
+    i {
+      font-size: 1rem;
+    }
+
+    &.btn-outline-primary {
+      color: #0d9488;
+      border-color: #0d9488;
+
+      &:hover {
+        background-color: #0d9488;
+        border-color: #0d9488;
+        color: white;
+      }
+    }
+
+    &.btn-outline-danger {
+      &:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+      }
+    }
   }
 }
 
-// Pagination
-.pagination-section {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem; // space-x-2
-  padding: 1rem 1.5rem 0; // py-4 px-6
+// Pagination - Matching Visa List Design
+.pagination-container {
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
 
-  .pagination-info {
-    font-size: 0.875rem; // text-sm
-    color: #6b7280; // text-muted-foreground
+  .pagination {
+    margin-bottom: 0;
+
+    .page-item {
+      .page-link {
+        color: #0d9488;
+        border-color: #e5e7eb;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+
+        &:hover {
+          background-color: #f0fdfa;
+          border-color: #0d9488;
+        }
+      }
+
+      &.active .page-link {
+        background-color: #0d9488;
+        border-color: #0d9488;
+        color: white;
+
+        &:hover {
+          background-color: #0f766e;
+          border-color: #0f766e;
+        }
+      }
+
+      &.disabled .page-link {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+    }
   }
 
-  .btn {
-    padding: 0.25rem 0.75rem;
+  .pagination-info {
+    color: #6b7280;
     font-size: 0.875rem;
-    border: 1px solid #d1d5db;
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
   }
 }
 

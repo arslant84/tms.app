@@ -19,6 +19,7 @@ interface ItinerarySegment {
 
 interface PendingTrf {
   id: string;
+  request_number?: string;
   requestorName: string;
   department: string;
   staffId: string;
@@ -33,6 +34,7 @@ interface PendingTrf {
 interface BookedFlight {
   id: string;
   trfId: string;
+  trfRequestNumber?: string;
   flightNumber: string;
   airline: string;
   departureLocation: string;
@@ -59,6 +61,7 @@ export class FlightsProcessingComponent implements OnInit {
 
   // Pending TRFs
   pendingTrfs: PendingTrf[] = [];
+  filteredPendingTrfs: PendingTrf[] = [];
   isLoadingPending = false;
   errorPending: string | null = null;
 
@@ -81,6 +84,10 @@ export class FlightsProcessingComponent implements OnInit {
   arrivalDate: string = '';
   arrivalTime = '';
   flightNotes = '';
+
+  // Search and filter
+  searchTerm = '';
+  statusFilter = 'all';
 
   constructor(
     private trfService: TrfService,
@@ -119,29 +126,34 @@ export class FlightsProcessingComponent implements OnInit {
           return false;
         });
 
-        this.pendingTrfs = approvedTrfs.map((trf: any) => {
+        const mappedTrfs = approvedTrfs.map((trf: any) => {
           let destinationSummary = 'N/A';
           let requestedDate = trf.submitted_at || trf.created_at;
           let itinerary: ItinerarySegment[] | undefined;
 
-          if (trf.overseas_travel_details?.itinerary?.length) {
-            itinerary = trf.overseas_travel_details.itinerary;
+          // Support both snake_case (list API) and camelCase (detail API) formats
+          const overseasDetails = trf.overseas_travel_details || trf.overseasTravelDetails;
+          const homeLeaveDetails = trf.home_leave_details || trf.overseasTravelDetails; // Home leave reuses overseas structure
+          const domesticDetails = trf.domestic_travel_details || trf.domesticTravelDetails;
+
+          if (overseasDetails?.itinerary?.length) {
+            itinerary = overseasDetails.itinerary;
             if (itinerary) {
               destinationSummary = itinerary
                 .map(s => `${s.from_location || s.from} → ${s.to_location || s.to}`)
                 .join(', ');
               requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
             }
-          } else if (trf.home_leave_details?.itinerary?.length) {
-            itinerary = trf.home_leave_details.itinerary;
+          } else if (homeLeaveDetails?.itinerary?.length) {
+            itinerary = homeLeaveDetails.itinerary;
             if (itinerary) {
               destinationSummary = itinerary
                 .map(s => `${s.from_location || s.from} → ${s.to_location || s.to}`)
                 .join(', ');
               requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
             }
-          } else if (trf.domestic_travel_details?.itinerary?.length) {
-            itinerary = trf.domestic_travel_details.itinerary;
+          } else if (domesticDetails?.itinerary?.length) {
+            itinerary = domesticDetails.itinerary;
             if (itinerary) {
               destinationSummary = itinerary
                 .map(s => `${s.from_location || s.from} → ${s.to_location || s.to}`)
@@ -154,6 +166,7 @@ export class FlightsProcessingComponent implements OnInit {
 
           return {
             id: trf.id,
+            request_number: trf.request_number,
             requestorName: trf.requestor_name || 'N/A',
             department: trf.department || 'N/A',
             staffId: trf.staff_id || 'N/A',
@@ -166,6 +179,9 @@ export class FlightsProcessingComponent implements OnInit {
           };
         });
 
+        this.pendingTrfs = mappedTrfs;
+        this.filteredPendingTrfs = mappedTrfs;
+        this.applyFilters();
         this.isLoadingPending = false;
       },
       error: (err) => {
@@ -195,6 +211,7 @@ export class FlightsProcessingComponent implements OnInit {
         this.bookedFlights = bookedTrfs.map((trf: any) => ({
           id: trf.flight_details.id,
           trfId: trf.id,
+          trfRequestNumber: trf.request_number,
           flightNumber: trf.flight_details.flightNumber || 'N/A',
           airline: trf.flight_details.airline || 'N/A',
           departureLocation: trf.flight_details.departureLocation || 'N/A',
@@ -301,7 +318,8 @@ export class FlightsProcessingComponent implements OnInit {
 
     this.trfService.bookFlight(this.selectedTrf.id, payload).subscribe({
       next: (response: any) => {
-        this.toastService.success(`Flight booked successfully for TRF ${this.selectedTrf!.id}`);
+        const trfDisplay = this.selectedTrf!.request_number || this.selectedTrf!.id;
+        this.toastService.success(`Flight booked successfully for TRF ${trfDisplay}`);
         this.fetchPendingTrfs();
         this.fetchBookedFlights();
         this.selectedTrf = null;
@@ -324,7 +342,8 @@ export class FlightsProcessingComponent implements OnInit {
       return;
     }
 
-    if (!confirm(`Cancel TRF ${this.selectedTrf.id} due to no available flights?`)) {
+    const trfDisplay = this.selectedTrf.request_number || this.selectedTrf.id;
+    if (!confirm(`Cancel TRF ${trfDisplay} due to no available flights?`)) {
       return;
     }
 
@@ -332,7 +351,7 @@ export class FlightsProcessingComponent implements OnInit {
 
     this.trfService.rejectTrf(this.selectedTrf.id, 'No flights available for requested travel dates and destinations. Request cancelled by Flight Admin.').subscribe({
       next: () => {
-        this.toastService.success(`TRF ${this.selectedTrf!.id} cancelled due to no available flights`);
+        this.toastService.success(`TRF ${trfDisplay} cancelled due to no available flights`);
         this.fetchPendingTrfs();
         this.selectedTrf = null;
         this.resetFormFields();
@@ -349,7 +368,8 @@ export class FlightsProcessingComponent implements OnInit {
    * Cancel booking
    */
   cancelBooking(flight: BookedFlight): void {
-    if (!confirm(`Cancel flight booking for TRF ${flight.trfId}?`)) {
+    const trfDisplay = flight.trfRequestNumber || flight.trfId;
+    if (!confirm(`Cancel flight booking for TRF ${trfDisplay}?`)) {
       return;
     }
 
@@ -357,7 +377,7 @@ export class FlightsProcessingComponent implements OnInit {
 
     this.trfService.cancelFlightBooking(flight.id).subscribe({
       next: () => {
-        this.toastService.success(`Flight booking for TRF ${flight.trfId} cancelled successfully`);
+        this.toastService.success(`Flight booking for TRF ${trfDisplay} cancelled successfully`);
         this.fetchPendingTrfs();
         this.fetchBookedFlights();
         this.isProcessing = false;
@@ -385,7 +405,7 @@ export class FlightsProcessingComponent implements OnInit {
    * View TRF details
    */
   viewTrf(trfId: string): void {
-    this.router.navigate(['/trf/view', trfId]);
+    this.router.navigate(['/trf', trfId]);
   }
 
   /**
@@ -436,5 +456,66 @@ export class FlightsProcessingComponent implements OnInit {
    */
   retryPending(): void {
     this.fetchPendingTrfs();
+  }
+
+  /**
+   * Get travel type badge class
+   */
+  getTravelTypeBadgeClass(travelType: string): string {
+    switch (travelType) {
+      case 'Overseas': return 'badge-blue';
+      case 'Home Leave Passage': return 'badge-purple';
+      case 'Domestic': return 'badge-green';
+      default: return 'badge-gray';
+    }
+  }
+
+  /**
+   * Check if form is valid
+   */
+  isFormValid(): boolean {
+    return !!(
+      this.pnr &&
+      this.airline &&
+      this.flightNumber &&
+      this.departureAirport &&
+      this.arrivalAirport &&
+      this.departureDate &&
+      this.departureTime &&
+      this.arrivalDate &&
+      this.arrivalTime
+    );
+  }
+
+  /**
+   * Clear form
+   */
+  clearForm(): void {
+    this.resetFormFields();
+  }
+
+  /**
+   * Apply search and status filters
+   */
+  applyFilters(): void {
+    let filtered = [...this.pendingTrfs];
+
+    // Apply status filter
+    if (this.statusFilter !== 'all') {
+      filtered = filtered.filter(trf => trf.status === this.statusFilter);
+    }
+
+    // Apply search term
+    if (this.searchTerm) {
+      const searchLower = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(trf =>
+        trf.request_number?.toLowerCase().includes(searchLower) ||
+        trf.requestorName.toLowerCase().includes(searchLower) ||
+        trf.destinationSummary.toLowerCase().includes(searchLower) ||
+        trf.department.toLowerCase().includes(searchLower)
+      );
+    }
+
+    this.filteredPendingTrfs = filtered;
   }
 }

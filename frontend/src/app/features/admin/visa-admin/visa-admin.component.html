@@ -143,14 +143,14 @@
               <table class="table">
                 <thead>
                   <tr>
-                    <th>Request #</th>
-                    <th>Applicant</th>
-                    <th>Destination</th>
-                    <th>Visa Type</th>
-                    <th>Travel Purpose</th>
-                    <th>Status</th>
-                    <th>Submitted</th>
-                    <th class="text-end">Actions</th>
+                    <th>REQUEST NUMBER</th>
+                    <th>STAFF NAME</th>
+                    <th>DESTINATION</th>
+                    <th>VISA TYPE</th>
+                    <th>TRAVEL PURPOSE</th>
+                    <th>STATUS</th>
+                    <th>SUBMITTED</th>
+                    <th class="text-end">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -162,7 +162,7 @@
                     </td>
                     <td>
                       <div class="fw-medium">{{ app.requestor_name }}</div>
-                      <small class="text-muted" *ngIf="app.passport_number">{{ app.passport_number }}</small>
+                      <small class="text-muted d-block" *ngIf="app.staff_id">{{ app.staff_id }}</small>
                     </td>
                     <td>
                       <span class="badge" [ngClass]="getDestinationBadgeClass(app.destination)">
@@ -227,21 +227,29 @@
 
             <!-- Pagination -->
             <div *ngIf="totalPages > 1 && !loadingApplications && !error" class="pagination-container">
-              <nav aria-label="Applications pagination">
-                <ul class="pagination pagination-sm mb-0 justify-content-center">
+              <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
                   <li class="page-item" [class.disabled]="currentPage === 1">
-                    <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">Previous</a>
+                    <a class="page-link" (click)="changePage(currentPage - 1)" aria-label="Previous">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
                   </li>
-
                   <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
-                    <a class="page-link" href="javascript:void(0)" (click)="changePage(page)">{{ page }}</a>
+                    <a class="page-link" (click)="changePage(page)">{{ page }}</a>
                   </li>
-
                   <li class="page-item" [class.disabled]="currentPage === totalPages">
-                    <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">Next</a>
+                    <a class="page-link" (click)="changePage(currentPage + 1)" aria-label="Next">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
                   </li>
                 </ul>
               </nav>
+              <div class="text-center mt-3 pagination-info">
+                <small>
+                  Showing {{ (currentPage - 1) * pageSize + 1 }} -
+                  {{ currentPage * pageSize > totalApplications ? totalApplications : currentPage * pageSize }} of {{ totalApplications }} applications
+                </small>
+              </div>
             </div>
           </div>
         </div>
@@ -283,7 +291,7 @@
       <div class="modal-body">
         <div *ngIf="selectedApplication" class="alert alert-info">
           <strong>{{ selectedApplication.request_number || 'Application #' + selectedApplication.id }}</strong><br>
-          <strong>Applicant:</strong> {{ selectedApplication.requestor_name }}<br>
+          <strong>Staff Name:</strong> {{ selectedApplication.requestor_name }}<br>
           <strong>Destination:</strong> {{ selectedApplication.destination }}<br>
           <strong>Visa Type:</strong> {{ selectedApplication.visa_type }}
         </div>

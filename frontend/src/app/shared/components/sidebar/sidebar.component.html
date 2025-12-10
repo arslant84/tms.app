@@ -46,17 +46,6 @@
       <span class="nav-label">Visa Admin</span>
     </a>
 
-    <!-- Claims Admin -->
-    <a
-      *ngIf="hasClaimsAdminPermission"
-      routerLink="/admin/claims"
-      routerLinkActive="active"
-      class="nav-item"
-      [attr.title]="'Claims Admin'">
-      <i class="bi bi-file-text"></i>
-      <span class="nav-label">Claims Admin</span>
-    </a>
-
     <!-- Transport Admin -->
     <a
       *ngIf="hasTransportAdminPermission"

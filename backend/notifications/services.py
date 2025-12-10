@@ -10,6 +10,10 @@ from .models import (
     UserNotificationPreference, UserNotificationSubscription
 )
 import re
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 
 class NotificationService:
@@ -91,11 +95,13 @@ class NotificationService:
     @staticmethod
     def send_email_notification(notification):
         """
-        Send email for a notification
+        Send email for a notification with enhanced error logging
 
         Args:
             notification: UserNotification instance
         """
+        logger.info(f"Starting email notification send to {notification.user.email} (Notification ID: {notification.id})")
+
         try:
             # Check if email notifications are globally enabled
             from accounts.models import ApplicationSetting
@@ -103,34 +109,53 @@ class NotificationService:
 
             if not email_notifications_enabled:
                 # Email notifications are disabled globally
+                logger.warning(f"Email notifications disabled globally - skipping notification {notification.id}")
                 notification.email_error = 'Email notifications are disabled globally'
+                notification.save(update_fields=['email_error'])
+                return
+
+            # Validate recipient email
+            if not notification.user.email:
+                error_msg = f"User {notification.user.id} has no email address"
+                logger.error(error_msg)
+                notification.email_error = error_msg
                 notification.save(update_fields=['email_error'])
                 return
 
             # Get email template if event type has one
             subject = notification.title
             message_body = notification.message
+            html_message_body = None
 
             if notification.event_type:
+                logger.debug(f"Using event type template: {notification.event_type.name}")
                 template = notification.event_type.templates.filter(is_active=True).first()
-                if template and template.email_subject:
+                if template and template.subject:
                     subject = NotificationService._render_template(
-                        template.email_subject,
+                        template.subject,
                         notification
                     )
-                    if template.email_body:
-                        message_body = NotificationService._render_template(
-                            template.email_body,
+                    if template.body:
+                        html_message_body = NotificationService._render_template(
+                            template.body,
                             notification
                         )
+                        # Create plain text version by stripping HTML tags
+                        message_body = re.sub('<[^<]+?>', '', html_message_body)
+                        logger.debug(f"Rendered HTML email template for notification {notification.id}")
 
-            # Send email
+            # Log SMTP configuration being used
+            logger.debug(f"SMTP Config - Host: {settings.EMAIL_HOST}, Port: {settings.EMAIL_PORT}, TLS: {settings.EMAIL_USE_TLS}")
+
+            # Send email with HTML support
+            logger.info(f"Sending email to {notification.user.email} - Subject: '{subject}'")
             send_mail(
                 subject=subject,
                 message=message_body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[notification.user.email],
                 fail_silently=False,
+                html_message=html_message_body,  # HTML version for email clients that support it
             )
 
             # Update notification
@@ -138,9 +163,29 @@ class NotificationService:
             notification.email_sent_at = timezone.now()
             notification.save(update_fields=['sent_via_email', 'email_sent_at'])
 
+            logger.info(f"✅ Email sent successfully to {notification.user.email} (Notification ID: {notification.id})")
+
         except Exception as e:
-            notification.email_error = str(e)
+            # Enhanced error logging with full traceback
+            error_msg = str(e)
+            error_type = type(e).__name__
+
+            logger.error(
+                f"❌ Email sending failed for notification {notification.id}\n"
+                f"   Error Type: {error_type}\n"
+                f"   Error Message: {error_msg}\n"
+                f"   Recipient: {notification.user.email}\n"
+                f"   Subject: {notification.title}\n"
+                f"   SMTP Host: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}\n"
+                f"   From: {settings.DEFAULT_FROM_EMAIL}\n"
+                f"   Full Traceback:\n{traceback.format_exc()}"
+            )
+
+            # Store detailed error in database
+            notification.email_error = f"[{error_type}] {error_msg}"
             notification.save(update_fields=['email_error'])
+
+            # Re-raise to allow higher-level error handling
             raise
 
     @staticmethod

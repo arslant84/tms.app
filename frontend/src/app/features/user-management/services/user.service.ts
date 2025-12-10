@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 export interface Role {
-  id: number;
+  id: string;  // UUID
   name: string;
   description?: string;
   permissions?: Permission[];
@@ -13,7 +13,7 @@ export interface Role {
 }
 
 export interface Permission {
-  id: number;
+  id: string;  // UUID
   name: string;
   description?: string;
   created_at: string;
@@ -41,7 +41,7 @@ export interface UserCreate {
   name: string;
   password: string;
   password_confirm: string;
-  role?: number;
+  role?: string;  // UUID
   department?: string;
   is_admin?: boolean;
   is_active?: boolean;
@@ -61,7 +61,7 @@ export class UserService {
   // User CRUD operations
   getAllUsers(filters?: {
     search?: string;
-    role?: number;
+    role?: string;  // UUID
     department?: string;
     is_active?: boolean;
     page?: number;
@@ -71,7 +71,7 @@ export class UserService {
 
     if (filters) {
       if (filters.search) params = params.set('search', filters.search);
-      if (filters.role) params = params.set('role', filters.role.toString());
+      if (filters.role) params = params.set('role', filters.role);
       if (filters.department) params = params.set('department', filters.department);
       if (filters.is_active !== undefined) params = params.set('is_active', filters.is_active.toString());
       if (filters.page) params = params.set('page', filters.page.toString());
@@ -104,7 +104,7 @@ export class UserService {
     return this.http.get<any>(`${this.apiUrl}/roles/`, { params });
   }
 
-  getRoleById(id: number): Observable<Role> {
+  getRoleById(id: string): Observable<Role> {
     return this.http.get<Role>(`${this.apiUrl}/roles/${id}/`);
   }
 
@@ -112,11 +112,11 @@ export class UserService {
     return this.http.post<Role>(`${this.apiUrl}/roles/`, data);
   }
 
-  updateRole(id: number, data: Partial<Role>): Observable<Role> {
+  updateRole(id: string, data: Partial<Role>): Observable<Role> {
     return this.http.put<Role>(`${this.apiUrl}/roles/${id}/`, data);
   }
 
-  deleteRole(id: number): Observable<void> {
+  deleteRole(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/roles/${id}/`);
   }
 
