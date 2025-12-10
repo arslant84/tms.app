@@ -158,6 +158,14 @@
                   <small class="form-text text-muted">Notification trigger time</small>
                 </div>
               </div>
+
+              <!-- Notification Configuration -->
+              <app-step-notification-config
+                [stepNumber]="step.order"
+                [stepName]="'Step ' + step.order"
+                [notificationConfigs]="step.notification_configs || []"
+                (notificationConfigsChange)="step.notification_configs = $event">
+              </app-step-notification-config>
             </div>
           </div>
         </div>

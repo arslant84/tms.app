@@ -28,8 +28,8 @@ class WorkflowRouter:
         Start a workflow for a newly created request
 
         Args:
-            entity: The request object (TravelRequest, ExpenseClaim, etc.)
-            entity_type: Type identifier (travelrequest, expenseclaim, etc.)
+            entity: The request object (TravelRequest, etc.)
+            entity_type: Type identifier (travelrequest, etc.)
             initiated_by: User who created the request
 
         Returns:
@@ -114,11 +114,7 @@ class WorkflowRouter:
                     step_exec.save()
 
                     # Send notification
-                    WorkflowNotifications.notify_approval_required(
-                        workflow_instance=workflow_instance,
-                        step_execution=step_exec,
-                        assigned_user=users[0]
-                    )
+                    WorkflowNotifications.notify_approval_required(step_exec)
 
     @staticmethod
     def get_final_processing_admin(entity_type: str) -> Optional[User]:
@@ -136,8 +132,7 @@ class WorkflowRouter:
             'travelrequest': 'Travel Desk',
             'transportrequest': 'Transport Admin',
             'visaapplication': 'Visa Admin',
-            'accommodation': 'Accommodation Admin',
-            'expenseclaim': 'Finance'
+            'accommodation': 'Accommodation Admin'
         }
 
         admin_role_name = admin_role_map.get(entity_type)
@@ -166,5 +161,5 @@ class WorkflowRouter:
         if admin:
             WorkflowNotifications.notify_workflow_completed(
                 workflow_instance=workflow_instance,
-                final_admin=admin
+                processor_name=admin.get_full_name()
             )

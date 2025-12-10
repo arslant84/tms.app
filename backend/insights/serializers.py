@@ -75,7 +75,6 @@ class DashboardSummarySerializer(serializers.Serializer):
     approved_trfs = serializers.IntegerField()
     rejected_trfs = serializers.IntegerField()
     total_travel_cost = serializers.DecimalField(max_digits=12, decimal_places=2)
-    pending_expense_claims = serializers.IntegerField()
     active_bookings = serializers.IntegerField()
     pending_approvals = serializers.IntegerField()
     pending_transport_requests = serializers.IntegerField()
@@ -114,18 +113,6 @@ class BookingAnalyticsSerializer(serializers.Serializer):
     preferred_airlines = serializers.ListField()
     preferred_hotels = serializers.ListField()
     booking_class_distribution = serializers.DictField()
-
-
-class ExpenseAnalyticsSerializer(serializers.Serializer):
-    """Serializer for expense analytics"""
-    total_claims = serializers.IntegerField()
-    total_amount = serializers.DecimalField(max_digits=12, decimal_places=2)
-    approved_amount = serializers.DecimalField(max_digits=12, decimal_places=2)
-    pending_amount = serializers.DecimalField(max_digits=12, decimal_places=2)
-    by_category = serializers.DictField()
-    by_status = serializers.DictField()
-    average_claim_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
-    top_expense_categories = serializers.ListField()
 
 
 class DepartmentAnalyticsSerializer(serializers.Serializer):

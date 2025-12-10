@@ -8,7 +8,6 @@ from .views import (
     travel_spend_analytics,
     travel_pattern_analytics,
     booking_analytics,
-    expense_analytics,
     department_analytics,
     user_activity_report
 )
@@ -25,7 +24,6 @@ urlpatterns = [
     path('analytics/travel-spend/', travel_spend_analytics, name='travel-spend-analytics'),
     path('analytics/travel-patterns/', travel_pattern_analytics, name='travel-pattern-analytics'),
     path('analytics/bookings/', booking_analytics, name='booking-analytics'),
-    path('analytics/expenses/', expense_analytics, name='expense-analytics'),
     path('analytics/departments/', department_analytics, name='department-analytics'),
     path('reports/user-activity/', user_activity_report, name='user-activity-report'),
 ]

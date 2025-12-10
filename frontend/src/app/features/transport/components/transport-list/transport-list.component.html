@@ -8,7 +8,7 @@
       </div>
       <p class="page-subtitle">Manage your transport bookings and requests</p>
     </div>
-    <button class="btn btn-primary" (click)="navigateToCreate()">
+    <button class="btn btn-primary btn-create" (click)="navigateToCreate()">
       <i class="bi bi-plus-circle me-2"></i>Transport Request
     </button>
   </div>
@@ -82,35 +82,15 @@
       <table class="requests-table">
         <thead>
           <tr>
-            <th class="sortable-header" (click)="onSort('id')">
-              <button class="sort-button">
-                Request #
-                <i class="bi bi-arrow-down-up"></i>
-              </button>
-            </th>
-            <th class="sortable-header" (click)="onSort('requestorName')">
-              <button class="sort-button">
-                Requestor
-                <i class="bi bi-arrow-down-up"></i>
-              </button>
-            </th>
-            <th>Purpose</th>
-            <th>Transport Type</th>
-            <th class="text-center">Passengers</th>
-            <th>Department</th>
-            <th class="sortable-header" (click)="onSort('status')">
-              <button class="sort-button">
-                Status
-                <i class="bi bi-arrow-down-up"></i>
-              </button>
-            </th>
-            <th class="sortable-header" (click)="onSort('submittedAt')">
-              <button class="sort-button">
-                Submitted
-                <i class="bi bi-arrow-down-up"></i>
-              </button>
-            </th>
-            <th>Actions</th>
+            <th>REQUEST NUMBER</th>
+            <th>STAFF NAME</th>
+            <th>PURPOSE</th>
+            <th>TRANSPORT TYPE</th>
+            <th class="text-center">PASSENGERS</th>
+            <th>DEPARTMENT</th>
+            <th>STATUS</th>
+            <th>SUBMITTED</th>
+            <th class="text-end">ACTIONS</th>
           </tr>
         </thead>
         <tbody>
@@ -119,7 +99,10 @@
               <span *ngIf="request.request_number" class="request-number">{{ request.request_number }}</span>
               <span *ngIf="!request.request_number" class="text-muted">TRN-{{ request.id }}</span>
             </td>
-            <td class="title-cell">{{ request.requestorName || 'N/A' }}</td>
+            <td class="title-cell">
+              <div>{{ request.requestorName || 'N/A' }}</div>
+              <small class="text-muted d-block" *ngIf="request.staffId">{{ request.staffId }}</small>
+            </td>
             <td class="purpose-cell">{{ request.purpose || 'N/A' }}</td>
             <td>{{ getFirstTransportType(request) }}</td>
             <td class="text-center">{{ getTotalPassengers(request) }}</td>
@@ -160,28 +143,32 @@
       </table>
 
       <!-- Pagination -->
-      <div class="pagination-section">
-        <span class="pagination-info">
-          Showing {{ startIndex }} to {{ endIndex }} of {{ totalRequests }} requests
-        </span>
-        <div class="pagination-controls">
-          <button
-            class="btn btn-sm btn-secondary"
-            (click)="previousPage()"
-            [disabled]="currentPage === 1"
-          >
-            <i class="bi bi-chevron-left"></i>
-            Previous
-          </button>
-          <span class="page-indicator">Page {{ currentPage }} of {{ totalPages }}</span>
-          <button
-            class="btn btn-sm btn-secondary"
-            (click)="nextPage()"
-            [disabled]="currentPage >= totalPages"
-          >
-            Next
-            <i class="bi bi-chevron-right"></i>
-          </button>
+      <div *ngIf="totalPages > 1" class="pagination-container">
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="previousPage()" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <li
+              class="page-item"
+              *ngFor="let page of getPageNumbers()"
+              [class.active]="currentPage === page"
+            >
+              <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" (click)="nextPage()" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="text-center mt-3 pagination-info">
+          <small>
+            Showing {{ startIndex }} to {{ endIndex }} of {{ totalRequests }} requests
+          </small>
         </div>
       </div>
     </div>

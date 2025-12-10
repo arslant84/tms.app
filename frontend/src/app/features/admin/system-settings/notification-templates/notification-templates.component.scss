@@ -1,7 +1,14 @@
 .notification-templates-page {
-  padding: 2rem 0;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 2rem;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 
   // Page Header
   .page-header {
@@ -26,10 +33,11 @@
         font-weight: 700;
         margin: 0 0 0.5rem 0;
         letter-spacing: -0.025em;
+        color: #1f2937;
       }
 
       .page-subtitle {
-        color: var(--text-muted);
+        color: #6b7280;
         margin: 0;
         font-size: 0.875rem;
       }
@@ -41,32 +49,56 @@
     }
   }
 
-  // Card Styles
+  // Card Styles (matching settings page with gradient header)
   .templates-card {
-    border: 1px solid var(--border-color);
+    background: white;
     border-radius: 0.5rem;
-    background: var(--card-bg);
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 1.5rem;
 
     .card-header {
-      padding: 1.5rem;
-      border-bottom: 1px solid var(--border-color);
+      padding: 1.25rem 1.5rem;
+      background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+      border-bottom: none;
 
       .card-title {
         margin: 0;
         font-size: 1.25rem;
         font-weight: 600;
+        color: white;
+        display: flex;
+        align-items: center;
+
+        i {
+          font-size: 1.25rem;
+          margin-right: 0.5rem;
+        }
+      }
+
+      .card-description {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.95);
+        margin: 0;
       }
     }
 
     .card-body {
       padding: 0;
+      background: white;
 
       .loading-container {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
-        padding: 5rem 0;
+        justify-content: center;
+        padding: 3rem 0;
+
+        .spinner-border {
+          width: 2rem;
+          height: 2rem;
+        }
       }
 
       .table-responsive {
@@ -76,22 +108,23 @@
           margin: 0;
 
           thead {
-            background-color: var(--table-header-bg);
+            background-color: #f8f9fa;
 
             th {
               font-weight: 600;
               font-size: 0.875rem;
               padding: 1rem 1.5rem;
-              border-bottom: 2px solid var(--border-color);
+              border-bottom: 2px solid #dee2e6;
+              color: #374151;
             }
           }
 
           tbody {
             tr {
-              border-bottom: 1px solid var(--border-color);
+              border-bottom: 1px solid #dee2e6;
 
               &:hover {
-                background-color: var(--table-hover-bg);
+                background-color: #f8f9fa;
               }
 
               &:last-child {
@@ -104,12 +137,12 @@
 
                 .template-name {
                   font-weight: 500;
-                  color: var(--text-primary);
+                  color: #212529;
                 }
 
                 .template-description {
                   font-size: 0.875rem;
-                  color: var(--text-muted);
+                  color: #6c757d;
                   margin-top: 0.25rem;
                 }
 
@@ -326,11 +359,11 @@
       .variables-section {
         margin-top: 0.75rem;
         padding-top: 0.75rem;
-        border-top: 1px solid var(--border-color);
+        border-top: 1px solid #dee2e6;
 
         .variables-label {
           font-size: 0.75rem;
-          color: var(--text-muted);
+          color: #6c757d;
           margin-bottom: 0.5rem;
         }
 
@@ -354,7 +387,7 @@
 
         .variables-help {
           font-size: 0.75rem;
-          color: var(--text-muted);
+          color: #6c757d;
           margin: 0;
         }
       }
@@ -392,15 +425,4 @@
     background-color: #6c757d;
     color: #fff;
   }
-}
-
-// CSS Variables for consistent theming
-.notification-templates-page {
-  --text-primary: #212529;
-  --text-muted: #6c757d;
-  --border-color: #dee2e6;
-  --card-bg: #ffffff;
-  --modal-bg: #ffffff;
-  --table-header-bg: #f8f9fa;
-  --table-hover-bg: #f8f9fa;
 }

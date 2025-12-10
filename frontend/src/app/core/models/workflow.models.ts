@@ -22,6 +22,43 @@ export interface WorkflowCondition {
   is_active: boolean;
 }
 
+export interface WorkflowStepNotificationConfig {
+  id?: string;
+  workflow_step?: string;
+  event_type: 'assignment' | 'approval' | 'rejection' | 'escalation' | 'reminder' | 'delegation';
+  event_type_display?: string;
+  notification_template: string;
+  notification_template_name?: string;
+  recipient_types: RecipientType[];
+  custom_recipients: string[];
+  is_active: boolean;
+  send_email: boolean;
+  send_system_notification: boolean;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  priority_display?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// RecipientType now supports both predefined types and dynamic role IDs (role_*)
+export type RecipientType =
+  | 'current_approver'
+  | 'requester'
+  | 'previous_approvers'
+  | 'next_approvers'
+  | 'all_stakeholders'
+  | 'custom_emails'
+  | string; // Allow dynamic role IDs like 'role_123'
+
+export const EVENT_TYPE_OPTIONS = [
+  { value: 'assignment', label: 'On Step Assignment' },
+  { value: 'approval', label: 'On Approval' },
+  { value: 'rejection', label: 'On Rejection' },
+  { value: 'escalation', label: 'On Escalation' },
+  { value: 'reminder', label: 'On Reminder' },
+  { value: 'delegation', label: 'On Delegation' },
+];
+
 export interface WorkflowStep {
   id: string;
   workflow_template?: string;
@@ -37,6 +74,7 @@ export interface WorkflowStep {
   sla_hours?: number;
   escalation_hours?: number;
   conditions?: WorkflowCondition[];
+  notification_configs?: WorkflowStepNotificationConfig[];
   created_at: string;
   updated_at: string;
 }

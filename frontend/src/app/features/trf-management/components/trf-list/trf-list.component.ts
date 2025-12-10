@@ -33,6 +33,7 @@ export interface TrfListItem {
   id: number;
   request_number?: string;
   requestor_name: string;
+  staff_id?: string;
   travel_type: string;
   purpose: string;
   status: string;
@@ -54,6 +55,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
   totalPages = 1;
   totalTrfs = 0;
   limit = 10;
+  pageSize = 10;
 
   // Search and filter properties
   searchTerm = '';
@@ -127,6 +129,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
 
     const params: any = {
       page: this.currentPage,
+      page_size: this.pageSize,
       limit: this.limit
     };
 
@@ -168,8 +171,9 @@ export class TrfListComponent implements OnInit, OnDestroy {
             this.totalTrfs = response.count || response.totalCount || 0;
           }
 
-          this.totalPages = Math.ceil(this.totalTrfs / this.limit);
+          this.totalPages = Math.ceil(this.totalTrfs / this.pageSize);
           console.log('Total TRFs:', this.totalTrfs);
+          console.log('Current Page:', this.currentPage, 'Total Pages:', this.totalPages);
           console.log('TRFs array:', this.trfs);
         },
         error: (err) => {
@@ -273,6 +277,42 @@ export class TrfListComponent implements OnInit, OnDestroy {
       this.currentPage++;
       this.fetchTrfs();
     }
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.fetchTrfs();
+    }
+  }
+
+  getPageNumbers(): number[] {
+    const maxPagesToShow = 5;
+    const pages: number[] = [];
+
+    if (this.totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const half = Math.floor(maxPagesToShow / 2);
+      let start = Math.max(1, this.currentPage - half);
+      let end = Math.min(this.totalPages, start + maxPagesToShow - 1);
+
+      if (end - start < maxPagesToShow - 1) {
+        start = Math.max(1, end - maxPagesToShow + 1);
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+
+    return pages;
+  }
+
+  get Math() {
+    return Math;
   }
 
   private resetToFirstPage(): void {

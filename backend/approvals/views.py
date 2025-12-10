@@ -6,7 +6,6 @@ Provides a single endpoint for all pending approvals across all modules:
 - Transport Requests
 - Visa Applications
 - Accommodation Requests
-- Expense Claims
 """
 
 from rest_framework.decorators import api_view, permission_classes
@@ -20,7 +19,6 @@ from trf.models import TravelRequest
 from transport.models import TransportRequest
 from visa.models import VisaApplication
 from accommodation.models import AccommodationRequest
-from expenses.models import ExpenseClaim
 from workflows.models import WorkflowInstance, WorkflowStepExecution
 from accounts.models import Role, AdminActionLog
 
@@ -39,7 +37,7 @@ def unified_approvals(request):
     user = request.user
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 20))
-    item_type = request.GET.get('type', None)  # 'trf', 'transport', 'visa', 'accommodation', 'claim'
+    item_type = request.GET.get('type', None)  # 'trf', 'transport', 'visa', 'accommodation'
 
     offset = (page - 1) * limit
 
@@ -144,15 +142,17 @@ def unified_approvals(request):
             purpose = obj.purpose
         elif hasattr(obj, 'travel_purpose') and obj.travel_purpose:
             purpose = obj.travel_purpose
-        elif hasattr(obj, 'purpose_of_claim') and obj.purpose_of_claim:
-            purpose = obj.purpose_of_claim
         elif hasattr(obj, 'title') and obj.title:
             purpose = obj.title
         else:
             purpose = f'{item_type_name} Request'
 
+        # Get request_number (formatted ID) or fallback to numeric ID
+        request_identifier = getattr(obj, 'request_number', None) or str(obj.id)
+
         return {
-            'id': str(obj.id),
+            'id': str(obj.id),  # Keep numeric ID for API calls
+            'requestNumber': request_identifier,  # Display formatted request number
             'requestorName': requestor_name,
             'itemType': item_type_name,
             'purpose': purpose,
@@ -237,20 +237,6 @@ def unified_approvals(request):
                     item['location'] = accom.additional_data.get('location', '')
                     item['checkInDate'] = accom.additional_data.get('requested_check_in_date', '')
                     item['checkOutDate'] = accom.additional_data.get('requested_check_out_date', '')
-                all_items.append(item)
-
-    # 5. Expense Claims
-    if not item_type or item_type == 'claim':
-        claims = ExpenseClaim.objects.filter(
-            status__in=approval_statuses
-        ).order_by('-created_at')
-
-        for claim in claims:
-            # Only include if user is authorized to approve
-            if can_user_approve(claim, 'claims'):
-                item = format_item(claim, 'Claim')
-                item['amount'] = float(getattr(claim, 'total_amount', 0) or 0)
-                item['documentNumber'] = getattr(claim, 'request_number', '')
                 all_items.append(item)
 
     # Sort all items by submission date (newest first)

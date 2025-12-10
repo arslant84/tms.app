@@ -11,9 +11,6 @@
       <button class="btn btn-primary btn-action" routerLink="/trf/create">
         <i class="bi bi-plus-circle me-2"></i>New TSR
       </button>
-      <button class="btn btn-primary btn-action" routerLink="/expenses/create">
-        <i class="bi bi-plus-circle me-2"></i>New Claim
-      </button>
       <button class="btn btn-primary btn-action" routerLink="/accommodation/request">
         <i class="bi bi-plus-circle me-2"></i>Accommodation
       </button>
@@ -51,19 +48,6 @@
       <div class="summary-card-body">
         <div class="summary-value text-primary">{{ summary.pending_visa_applications || 0 }}</div>
         <p class="summary-description">Applications awaiting approval</p>
-      </div>
-    </div>
-
-    <div class="summary-card shadow-lg">
-      <div class="summary-card-header">
-        <h5 class="summary-card-title">My Pending Claims</h5>
-        <div class="icon-circle bg-amber-light">
-          <i class="bi bi-receipt icon-amber"></i>
-        </div>
-      </div>
-      <div class="summary-card-body">
-        <div class="summary-value text-primary">{{ summary.pending_expense_claims || 0 }}</div>
-        <p class="summary-description">Claims awaiting approval</p>
       </div>
     </div>
 

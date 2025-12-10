@@ -99,41 +99,41 @@
               <tr>
                 <th class="sortable-header" (click)="handleSort('id')">
                   <button class="sort-button">
-                    TSR ID
+                    REQUEST NUMBER
                     <i *ngIf="sortKey === 'id'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
                 <th class="sortable-header" (click)="handleSort('requestor_name')">
                   <button class="sort-button">
-                    Requestor
+                    STAFF NAME
                     <i *ngIf="sortKey === 'requestor_name'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
                 <th class="sortable-header" (click)="handleSort('travel_type')">
                   <button class="sort-button">
-                    Type
+                    TYPE
                     <i *ngIf="sortKey === 'travel_type'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
                 <th class="sortable-header" (click)="handleSort('purpose')">
                   <button class="sort-button">
-                    Purpose
+                    PURPOSE
                     <i *ngIf="sortKey === 'purpose'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
                 <th class="sortable-header" (click)="handleSort('status')">
                   <button class="sort-button">
-                    Status
+                    STATUS
                     <i *ngIf="sortKey === 'status'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
                 <th class="sortable-header" (click)="handleSort('submitted_at')">
                   <button class="sort-button">
-                    Submitted
+                    SUBMITTED
                     <i *ngIf="sortKey === 'submitted_at'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
-                <th>Action</th>
+                <th class="text-end">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
@@ -142,7 +142,10 @@
                   <span *ngIf="trf.request_number" class="request-number">{{ trf.request_number }}</span>
                   <span *ngIf="!trf.request_number" class="text-muted">TSR-{{ trf.id }}</span>
                 </td>
-                <td>{{ trf.requestor_name || 'N/A' }}</td>
+                <td>
+                  <div>{{ trf.requestor_name || 'N/A' }}</div>
+                  <small class="text-muted d-block" *ngIf="trf.staff_id">{{ trf.staff_id }}</small>
+                </td>
                 <td>{{ formatTravelTypeDisplay(trf.travel_type) }}</td>
                 <td class="purpose-cell">{{ trf.purpose || 'N/A' }}</td>
                 <td>
@@ -182,20 +185,34 @@
         </div>
 
         <!-- Pagination -->
-        <div *ngIf="totalPages > 1" class="pagination-section">
-          <button
-            class="btn btn-outline-secondary btn-sm"
-            (click)="previousPage()"
-            [disabled]="currentPage <= 1 || isLoading">
-            Previous
-          </button>
-          <span class="pagination-info">Page {{ currentPage }} of {{ totalPages }}</span>
-          <button
-            class="btn btn-outline-secondary btn-sm"
-            (click)="nextPage()"
-            [disabled]="currentPage >= totalPages || isLoading">
-            Next
-          </button>
+        <div *ngIf="totalPages > 1" class="pagination-container">
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+              <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link" (click)="previousPage()" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+              <li
+                class="page-item"
+                *ngFor="let page of getPageNumbers()"
+                [class.active]="currentPage === page"
+              >
+                <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+              </li>
+              <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <a class="page-link" (click)="nextPage()" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <div class="text-center mt-3 pagination-info">
+            <small>
+              Showing {{ (currentPage - 1) * pageSize + 1 }} -
+              {{ Math.min(currentPage * pageSize, totalTrfs) }} of {{ totalTrfs }} requests
+            </small>
+          </div>
         </div>
       </div>
 

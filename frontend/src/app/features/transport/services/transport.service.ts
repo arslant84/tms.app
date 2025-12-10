@@ -39,6 +39,7 @@ export class TransportService {
     search?: string;
     page?: number;
     page_size?: number;
+    adminView?: boolean;  // Set to true when viewing from Transport Admin module
   }): Observable<any> {
     let params = new HttpParams();
 
@@ -47,6 +48,8 @@ export class TransportService {
       if (filters.search) params = params.set('search', filters.search);
       if (filters.page) params = params.set('page', filters.page.toString());
       if (filters.page_size) params = params.set('page_size', filters.page_size.toString());
+      // Add admin_view parameter for admin modules (side navbar)
+      if (filters.adminView) params = params.set('admin_view', 'true');
     }
 
     return this.http.get<any>(this.apiUrl + '/', { params }).pipe(

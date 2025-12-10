@@ -27,7 +27,7 @@ export class VisaListComponent implements OnInit, OnDestroy {
 
   // Pagination
   currentPage = 1;
-  pageSize = 20;
+  pageSize = 10;
   totalCount = 0;
   Math = Math; // Expose Math to template
 
@@ -172,6 +172,56 @@ export class VisaListComponent implements OnInit, OnDestroy {
   onPageChange(page: number): void {
     this.currentPage = page;
     this.fetchApplications();
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.fetchApplications();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.fetchApplications();
+    }
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.fetchApplications();
+    }
+  }
+
+  getPageNumbers(): number[] {
+    const maxPagesToShow = 5;
+    const pages: number[] = [];
+
+    if (this.totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const half = Math.floor(maxPagesToShow / 2);
+      let start = Math.max(1, this.currentPage - half);
+      let end = Math.min(this.totalPages, start + maxPagesToShow - 1);
+
+      if (end - start < maxPagesToShow - 1) {
+        start = Math.max(1, end - maxPagesToShow + 1);
+      }
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+
+    return pages;
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalCount / this.pageSize);
   }
 
   navigateToDetail(id: number): void {

@@ -82,24 +82,24 @@
       <table class="requests-table">
         <thead>
           <tr>
-            <th>Request Number</th>
-            <th>Requestor Name</th>
-            <th>Department</th>
-            <th>Check-in Date</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th>Actions</th>
+            <th>REQUEST NUMBER</th>
+            <th>STAFF NAME</th>
+            <th>DEPARTMENT</th>
+            <th>CHECK-IN DATE</th>
+            <th>STATUS</th>
+            <th>CREATED</th>
+            <th class="text-end">ACTIONS</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let request of requests">
-            <td class="request-number-cell">
+            <td>
               <span class="request-number">{{ request.request_number || 'N/A' }}</span>
             </td>
-            <td class="name-cell">
+            <td>
               <div class="requestor-info">
-                <span class="requestor-name">{{ request.requestor_name }}</span>
-                <span *ngIf="request.staff_id" class="staff-id text-muted">{{ request.staff_id }}</span>
+                <strong>{{ request.requestor_name }}</strong>
+                <small *ngIf="request.staff_id">{{ request.staff_id }}</small>
               </div>
             </td>
             <td>{{ request.department || 'N/A' }}</td>
@@ -115,17 +115,17 @@
               </span>
             </td>
             <td>{{ formatDate(request.created_at) }}</td>
-            <td class="actions-cell">
+            <td>
               <div class="action-buttons">
                 <button
-                  class="btn btn-sm btn-icon btn-view"
+                  class="btn btn-sm btn-outline-primary action-btn"
                   (click)="navigateToView(request.id)"
                   title="View Details"
                 >
                   <i class="bi bi-eye"></i>
                 </button>
                 <button
-                  class="btn btn-sm btn-icon btn-edit"
+                  class="btn btn-sm btn-outline-primary action-btn"
                   (click)="navigateToEdit(request.id)"
                   title="Edit Request"
                   *ngIf="canEdit(request)"
@@ -133,7 +133,7 @@
                   <i class="bi bi-pencil"></i>
                 </button>
                 <button
-                  class="btn btn-sm btn-icon btn-delete"
+                  class="btn btn-sm btn-outline-danger action-btn"
                   (click)="deleteRequest(request.id, $event)"
                   title="Delete Request"
                 >
@@ -146,28 +146,32 @@
       </table>
 
       <!-- Pagination -->
-      <div class="pagination-section">
-        <span class="pagination-info">
-          Showing {{ startIndex }} to {{ endIndex }} of {{ totalRequests }} requests
-        </span>
-        <div class="pagination-controls">
-          <button
-            class="btn btn-sm btn-secondary"
-            (click)="previousPage()"
-            [disabled]="currentPage === 1"
-          >
-            <i class="bi bi-chevron-left"></i>
-            Previous
-          </button>
-          <span class="page-indicator">Page {{ currentPage }} of {{ totalPages }}</span>
-          <button
-            class="btn btn-sm btn-secondary"
-            (click)="nextPage()"
-            [disabled]="currentPage >= totalPages"
-          >
-            Next
-            <i class="bi bi-chevron-right"></i>
-          </button>
+      <div *ngIf="totalPages > 1" class="pagination-container">
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="previousPage()" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <li
+              class="page-item"
+              *ngFor="let page of getPageNumbers()"
+              [class.active]="currentPage === page"
+            >
+              <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" (click)="nextPage()" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="text-center mt-3 pagination-info">
+          <small>
+            Showing {{ startIndex }} to {{ endIndex }} of {{ totalRequests }} requests
+          </small>
         </div>
       </div>
     </div>

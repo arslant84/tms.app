@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { AuthService } from './auth.service';
+import { Permission, PermissionGroups } from '../models/permission.models';
 
 // Role definitions based on source project requirements
 export const ROLES = {
@@ -40,7 +41,7 @@ export const ROLE_SIDEBAR_ACCESS: Record<string, string[]> = {
   [ROLES.TICKETING_ADMIN]: ['Flights Admin'],
   [ROLES.TRANSPORT_ADMIN]: ['Transport Admin'],
   [ROLES.VISA_CLERK]: ['Visa Admin'],
-  [ROLES.FINANCE_CLERK]: ['Claims Admin'],
+  [ROLES.FINANCE_CLERK]: [],
   [ROLES.DEPARTMENT_FOCAL]: ['Approvals'],
   [ROLES.LINE_MANAGER]: ['Approvals'],
   [ROLES.HOD]: ['Approvals', 'Reports'],
@@ -68,13 +69,33 @@ export class RbacService {
   constructor(private authService: AuthService) {}
 
   /**
+   * Get role name from user object (handles both string and object role)
+   */
+  private getRoleName(user: any): string | null {
+    if (!user || !user.role) return null;
+
+    // If role is an object, get the name property
+    if (typeof user.role === 'object' && user.role.name) {
+      return user.role.name;
+    }
+
+    // If role is a string, return it directly
+    if (typeof user.role === 'string') {
+      return user.role;
+    }
+
+    return null;
+  }
+
+  /**
    * Check if user can see all requests or only their own
    */
   canViewAllRequests(): boolean {
     const user = this.authService.getCurrentUser();
     if (!user || !user.role) return false;
 
-    return ADMIN_ROLES.includes(user.role as any) ||
+    const roleName = this.getRoleName(user);
+    return (roleName && ADMIN_ROLES.includes(roleName as any)) ||
            user.is_admin === true;
   }
 
@@ -85,7 +106,8 @@ export class RbacService {
     const user = this.authService.getCurrentUser();
     if (!user || !user.role) return false;
 
-    return APPROVAL_ROLES.includes(user.role as any);
+    const roleName = this.getRoleName(user);
+    return roleName ? APPROVAL_ROLES.includes(roleName as any) : false;
   }
 
   /**
@@ -98,7 +120,7 @@ export class RbacService {
       return { roleSpecificStatuses: [], canApprove: false, roleContext: '' };
     }
 
-    const role = user.role;
+    const role = this.getRoleName(user);
 
     // Define what statuses each role should see in their approval queue
     const statusFilters: Record<string, string[]> = {
@@ -153,9 +175,9 @@ export class RbacService {
     };
 
     return {
-      roleSpecificStatuses: statusFilters[role] || [],
-      canApprove: APPROVAL_ROLES.includes(role as any),
-      roleContext: role
+      roleSpecificStatuses: statusFilters[role || ''] || [],
+      canApprove: role ? APPROVAL_ROLES.includes(role as any) : false,
+      roleContext: role || ''
     };
   }
 
@@ -204,17 +226,17 @@ export class RbacService {
       return { topNavbar: [], leftSidebar: [], hasReports: false };
     }
 
-    const role = user.role;
+    const role = this.getRoleName(user);
 
     // All roles have access to basic request types in top navbar
-    const baseNavItems = ['TRF', 'Transport', 'Visa', 'Accommodation', 'Claims'];
+    const baseNavItems = ['TRF', 'Transport', 'Visa', 'Accommodation'];
 
     // Determine additional access
-    const hasReports = [ROLES.HOD, ROLES.REQUESTOR, ROLES.ADMIN, ROLES.SYSTEM_ADMINISTRATOR].includes(role as any) || user.is_admin;
+    const hasReports = (role && [ROLES.HOD, ROLES.REQUESTOR, ROLES.ADMIN, ROLES.SYSTEM_ADMINISTRATOR].includes(role as any)) || user.is_admin;
     const topNavbar = hasReports ? [...baseNavItems, 'Reports'] : baseNavItems;
 
     // Get role-specific sidebar access
-    const leftSidebar = ROLE_SIDEBAR_ACCESS[role] || [];
+    const leftSidebar = role ? (ROLE_SIDEBAR_ACCESS[role] || []) : [];
 
     return {
       topNavbar,
@@ -224,7 +246,7 @@ export class RbacService {
   }
 
   /**
-   * Check if user can perform specific actions based on role
+   * Check if user can perform specific actions based on role and permissions
    */
   canPerformAction(action: string, entityType: string): boolean {
     const user = this.authService.getCurrentUser();
@@ -233,36 +255,50 @@ export class RbacService {
       return false;
     }
 
-    const role = user.role;
+    const role = this.getRoleName(user);
 
     // Admin roles can perform all actions
-    if (ADMIN_ROLES.includes(role as any) || user.is_admin) {
+    if ((role && ADMIN_ROLES.includes(role as any)) || user.is_admin) {
       return true;
     }
 
-    // Define role-specific action permissions
+    // Map actions to permission checks using new Permission enum
+    const actionToPermissionMap: Record<string, Permission> = {
+      'approve_tsr': Permission.APPROVE_TRF,
+      'approve_trf': Permission.APPROVE_TRF,
+      'approve_visa': Permission.APPROVE_VISA,
+      'approve_transport': Permission.APPROVE_TRANSPORT,
+      'approve_accommodation': Permission.APPROVE_ACCOMMODATION,
+      'process_visa': Permission.PROCESS_VISA_APPLICATIONS,
+      'process_flights': Permission.PROCESS_FLIGHTS,
+      'manage_accommodation': Permission.MANAGE_ACCOMMODATION_BOOKINGS,
+      'manage_transport': Permission.MANAGE_TRANSPORT_REQUESTS,
+      'manage_flights': Permission.MANAGE_FLIGHTS,
+    };
+
+    // Check if action maps to a permission
+    const requiredPermission = actionToPermissionMap[action];
+    if (requiredPermission) {
+      return this.hasPermission(requiredPermission);
+    }
+
+    // Fallback to legacy role-based logic for unmapped actions
     const actionPermissions: Record<string, Record<string, boolean>> = {
-      [ROLES.FINANCE_CLERK]: {
-        'process_claims': true,
-        'approve_claims_finance': true
-      },
+      [ROLES.FINANCE_CLERK]: {},
       [ROLES.DEPARTMENT_FOCAL]: {
         'approve_tsr': true,
-        'approve_claims': true,
         'approve_visa': true,
         'approve_transport': true,
         'approve_accommodation': true
       },
       [ROLES.LINE_MANAGER]: {
         'approve_tsr': true,
-        'approve_claims': true,
         'approve_visa': true,
         'approve_transport': true,
         'approve_accommodation': true
       },
       [ROLES.HOD]: {
         'approve_tsr': true,
-        'approve_claims_hod': true,
         'approve_visa': true,
         'approve_transport': true,
         'approve_accommodation': true
@@ -272,7 +308,7 @@ export class RbacService {
       }
     };
 
-    return actionPermissions[role]?.[action] || false;
+    return (role && actionPermissions[role]?.[action]) || false;
   }
 
   /**
@@ -293,9 +329,11 @@ export class RbacService {
       return false;
     }
 
+    const roleName = this.getRoleName(user);
+
     // Admin roles have all permissions
-    if (user.role === ROLES.SYSTEM_ADMINISTRATOR ||
-        user.role === ROLES.ADMIN ||
+    if (roleName === ROLES.SYSTEM_ADMINISTRATOR ||
+        roleName === ROLES.ADMIN ||
         user.is_admin) {
       return true;
     }
@@ -314,9 +352,11 @@ export class RbacService {
       return false;
     }
 
+    const roleName = this.getRoleName(user);
+
     // Admin roles have all permissions
-    if (user.role === ROLES.SYSTEM_ADMINISTRATOR ||
-        user.role === ROLES.ADMIN ||
+    if (roleName === ROLES.SYSTEM_ADMINISTRATOR ||
+        roleName === ROLES.ADMIN ||
         user.is_admin) {
       return true;
     }
@@ -337,9 +377,11 @@ export class RbacService {
       return false;
     }
 
+    const roleName = this.getRoleName(user);
+
     // Admin roles have all permissions
-    if (user.role === ROLES.SYSTEM_ADMINISTRATOR ||
-        user.role === ROLES.ADMIN ||
+    if (roleName === ROLES.SYSTEM_ADMINISTRATOR ||
+        roleName === ROLES.ADMIN ||
         user.is_admin) {
       return true;
     }
@@ -364,5 +406,60 @@ export class RbacService {
     // Check specific menu item access
     return navigation.leftSidebar.includes(menuItem) ||
            navigation.topNavbar.includes(menuItem);
+  }
+
+  /**
+   * Check if user can access admin menu for a specific module
+   * Uses new permission-based checks
+   */
+  canAccessAdminMenu(module: 'accommodation' | 'transport' | 'visa' | 'flights'): boolean {
+    const user = this.authService.getCurrentUser();
+
+    if (!user) {
+      return false;
+    }
+
+    const roleName = this.getRoleName(user);
+
+    // Admin roles have access to all admin menus
+    if (roleName === ROLES.SYSTEM_ADMINISTRATOR ||
+        roleName === ROLES.ADMIN ||
+        user.is_admin) {
+      return true;
+    }
+
+    // Map module to permission
+    const modulePermissionMap: Record<string, Permission> = {
+      'accommodation': Permission.VIEW_ADMIN_ACCOMMODATION,
+      'transport': Permission.VIEW_ADMIN_TRANSPORT,
+      'visa': Permission.VIEW_ADMIN_VISA,
+      'flights': Permission.VIEW_ADMIN_FLIGHTS,
+    };
+
+    const requiredPermission = modulePermissionMap[module];
+    return requiredPermission ? this.hasPermission(requiredPermission) : false;
+  }
+
+  /**
+   * Check if user can create requests of a specific type
+   */
+  canCreateRequest(requestType: 'trf' | 'transport' | 'visa' | 'accommodation'): boolean {
+    const user = this.authService.getCurrentUser();
+
+    if (!user) {
+      return false;
+    }
+
+    // All authenticated users can create requests by default
+    // But check for specific permissions if configured
+    const requestPermissionMap: Record<string, Permission> = {
+      'trf': Permission.CREATE_TRF,
+      'transport': Permission.CREATE_TRANSPORT_REQUESTS,
+      'visa': Permission.CREATE_VISA_REQUESTS,
+      'accommodation': Permission.CREATE_ACCOMMODATION_REQUESTS,
+    };
+
+    const requiredPermission = requestPermissionMap[requestType];
+    return requiredPermission ? this.hasPermission(requiredPermission) : true;
   }
 }

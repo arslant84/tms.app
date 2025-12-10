@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 class WorkflowTemplate(models.Model):
     """
     Template defining a workflow that can be applied to different entity types
-    (TRF, Visa, Transport, Accommodation, Expenses, etc.)
+    (TRF, Visa, Transport, Accommodation, etc.)
     """
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
@@ -63,7 +63,15 @@ class WorkflowStep(models.Model):
     # Who can approve this step
     approver_role = models.CharField(
         max_length=100,
-        help_text="Role name required to approve this step (e.g., 'HOD', 'Finance')"
+        blank=True,
+        null=True,
+        help_text="[DEPRECATED] Role name required to approve this step - use approver_permission instead"
+    )
+    approver_permission = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Permission required to approve this step (e.g., 'approve_transport', 'approve_trf'). Preferred over approver_role."
     )
     approver_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -71,7 +79,7 @@ class WorkflowStep(models.Model):
         null=True,
         blank=True,
         related_name='workflow_steps_assigned',
-        help_text="Specific user assigned to this step (optional, overrides role)"
+        help_text="Specific user assigned to this step (optional, overrides permission/role)"
     )
 
     # Step behavior
@@ -109,6 +117,108 @@ class WorkflowStep(models.Model):
 
     def __str__(self):
         return f"{self.workflow_template.name} - Step {self.step_order}: {self.step_name}"
+
+
+class WorkflowStepNotificationConfig(models.Model):
+    """
+    Configuration for notifications at each workflow step
+    Defines what notifications are sent, when, and to whom
+    """
+    # Note: RECIPIENT_TYPE_CHOICES is for reference only
+    # The actual recipient_types field is a JSONField that accepts any string values
+    # This allows for dynamic role-based recipients (e.g., 'role_123')
+    RECIPIENT_TYPE_CHOICES = [
+        ('current_approver', 'Current Approver'),
+        ('requester', 'Requester'),
+        ('previous_approvers', 'Previous Approvers'),
+        ('next_approvers', 'Next Approvers'),
+        ('all_stakeholders', 'All Stakeholders'),
+        ('custom_emails', 'Custom Email Addresses'),
+        # Dynamic role-based recipients are stored as 'role_<role_id>'
+    ]
+
+    EVENT_TYPE_CHOICES = [
+        ('assignment', 'On Step Assignment'),
+        ('approval', 'On Approval'),
+        ('rejection', 'On Rejection'),
+        ('escalation', 'On Escalation'),
+        ('reminder', 'On Reminder'),
+        ('delegation', 'On Delegation'),
+    ]
+
+    workflow_step = models.ForeignKey(
+        WorkflowStep,
+        on_delete=models.CASCADE,
+        related_name='notification_configs'
+    )
+
+    # Event that triggers this notification
+    event_type = models.CharField(
+        max_length=50,
+        choices=EVENT_TYPE_CHOICES,
+        help_text="Workflow event that triggers this notification"
+    )
+
+    # Notification template to use
+    notification_template = models.ForeignKey(
+        'notifications.NotificationTemplate',
+        on_delete=models.CASCADE,
+        related_name='workflow_step_configs',
+        help_text="Template to use for this notification"
+    )
+
+    # Recipient configuration
+    recipient_types = models.JSONField(
+        default=list,
+        help_text="List of recipient types (e.g., ['current_approver', 'requester'])"
+    )
+
+    # Custom email addresses (if recipient_types includes 'custom_emails')
+    custom_recipients = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of custom email addresses"
+    )
+
+    # Additional configuration
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this notification configuration is active"
+    )
+
+    send_email = models.BooleanField(
+        default=True,
+        help_text="Send as email notification"
+    )
+
+    send_system_notification = models.BooleanField(
+        default=True,
+        help_text="Send as in-app system notification"
+    )
+
+    priority = models.CharField(
+        max_length=20,
+        choices=[
+            ('low', 'Low'),
+            ('normal', 'Normal'),
+            ('high', 'High'),
+            ('urgent', 'Urgent'),
+        ],
+        default='normal',
+        help_text="Notification priority level"
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['workflow_step', 'event_type']
+        verbose_name = 'Workflow Step Notification Configuration'
+        verbose_name_plural = 'Workflow Step Notification Configurations'
+
+    def __str__(self):
+        return f"{self.workflow_step.step_name} - {self.get_event_type_display()}"
 
 
 class WorkflowCondition(models.Model):

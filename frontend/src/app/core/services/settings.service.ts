@@ -37,7 +37,9 @@ export class SettingsService {
    * Get all settings as an array
    */
   getAllSettings(): Observable<ApplicationSetting[]> {
-    return this.http.get<ApplicationSetting[]>(`${this.apiUrl}/`);
+    return this.http.get<ApplicationSetting[]>(`${this.apiUrl}/`, {
+      params: { public: 'true' }
+    });
   }
 
   /**

@@ -92,7 +92,8 @@ export class TransportAdminComponent implements OnInit {
 
     const filters: any = {
       page: this.currentPage,
-      page_size: this.pageSize
+      page_size: this.pageSize,
+      adminView: true  // Show all transport requests for admin processing
     };
 
     if (this.filterCriteria.status !== 'all') {
@@ -307,12 +308,13 @@ export class TransportAdminComponent implements OnInit {
    */
   getStatusClass(status: string): string {
     const statusLower = status.toLowerCase();
-    if (statusLower.includes('completed')) return 'badge bg-success';
-    if (statusLower.includes('approved') || statusLower.includes('progress')) return 'badge bg-info';
-    if (statusLower.includes('rejected')) return 'badge bg-danger';
-    if (statusLower.includes('cancelled')) return 'badge bg-secondary';
-    if (statusLower.includes('pending')) return 'badge bg-warning';
-    return 'badge bg-secondary';
+    if (statusLower.includes('completed')) return 'badge-success';
+    if (statusLower.includes('approved')) return 'badge-green';
+    if (statusLower.includes('progress')) return 'badge-info';
+    if (statusLower.includes('rejected')) return 'badge-red';
+    if (statusLower.includes('cancelled')) return 'badge-gray';
+    if (statusLower.includes('pending')) return 'badge-warning';
+    return 'badge-gray';
   }
 
   /**

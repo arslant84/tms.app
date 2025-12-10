@@ -281,10 +281,13 @@ $gray-900: #1f2937;
       th {
         padding: 0.75rem 1rem;
         text-align: left;
-        font-size: 0.875rem;
+        font-size: 0.75rem;
         font-weight: 600;
-        color: $gray-700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: $gray-500;
         border: none;
+        white-space: nowrap;
       }
     }
 
@@ -302,11 +305,16 @@ $gray-900: #1f2937;
         }
 
         td {
-          padding: 0.75rem 1rem;
+          padding: 1rem;
           font-size: 0.875rem;
-          color: $gray-900;
+          color: $gray-700;
           border: none;
           vertical-align: middle;
+        }
+
+        .fw-medium {
+          font-weight: 600;
+          color: $primary;
         }
       }
     }
@@ -538,9 +546,48 @@ $gray-900: #1f2937;
 
 // ========== PAGINATION ==========
 .pagination-container {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
+  padding: 1.5rem;
   border-top: 1px solid $border;
+
+  .pagination {
+    margin-bottom: 0;
+
+    .page-item {
+      .page-link {
+        color: $primary;
+        border-color: $border;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+
+        &:hover {
+          background-color: #f0fdfa;
+          border-color: $primary;
+        }
+      }
+
+      &.active .page-link {
+        background-color: $primary;
+        border-color: $primary;
+        color: white;
+
+        &:hover {
+          background-color: $primary-dark;
+          border-color: $primary-dark;
+        }
+      }
+
+      &.disabled .page-link {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+    }
+  }
+
+  .pagination-info {
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
 }
 
 // ========== MODAL STYLES ==========

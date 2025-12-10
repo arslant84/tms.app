@@ -30,12 +30,12 @@ class WorkflowEngine:
     @transaction.atomic
     def start_workflow(entity, initiated_by: User, module_name: str) -> WorkflowInstance:
         """
-        Start a new workflow for an entity (TRF, Claim, Visa, etc.)
+        Start a new workflow for an entity (TRF, Visa, etc.)
 
         Args:
-            entity: The entity object (TravelRequest, ExpenseClaim, etc.)
+            entity: The entity object (TravelRequest, etc.)
             initiated_by: User who initiated the workflow
-            module_name: Module identifier ('trf', 'claims', 'visa', etc.)
+            module_name: Module identifier ('trf', 'visa', etc.)
 
         Returns:
             WorkflowInstance: The created workflow instance
@@ -222,7 +222,7 @@ class WorkflowEngine:
         )
 
         # Send delegation notification
-        WorkflowNotifications.notify_step_delegated(step_execution, delegated_to)
+        WorkflowNotifications.notify_step_delegated(step_execution, delegated_to, delegated_from)
 
         return {
             'success': True,
@@ -318,11 +318,19 @@ class WorkflowEngine:
     @staticmethod
     def _start_step(workflow_instance: WorkflowInstance, step: WorkflowStep, initiator: User):
         """Create and start a workflow step execution"""
-        # Determine assigned user
+        # Determine assigned user (priority order: user > permission > role)
         assigned_user = step.approver_user if step.approver_user else None
 
-        # If no specific user, try to find by role
+        # If no specific user, try to find by permission (PREFERRED)
+        if not assigned_user and step.approver_permission:
+            assigned_user = WorkflowEngine._find_user_by_permission(
+                step.approver_permission,
+                workflow_instance.initiated_by.department if hasattr(workflow_instance.initiated_by, 'department') else None
+            )
+
+        # Fallback: try to find by role (for backward compatibility)
         if not assigned_user and step.approver_role:
+            print(f"⚠️ Using deprecated role-based assignment for step '{step.step_name}'. Consider using approver_permission instead.")
             assigned_user = WorkflowEngine._find_user_by_role(
                 step.approver_role,
                 workflow_instance.initiated_by.department if hasattr(workflow_instance.initiated_by, 'department') else None
@@ -492,8 +500,60 @@ class WorkflowEngine:
         return active_delegations
 
     @staticmethod
+    def _find_user_by_permission(permission_name: str, department: Optional[str] = None) -> Optional[User]:
+        """
+        Find a user with the specified permission (PREFERRED METHOD)
+
+        Args:
+            permission_name: Permission name (e.g., 'approve_transport', 'approve_trf')
+            department: Optional department for department-specific approvals
+
+        Returns:
+            User: First active user with the permission, or None
+        """
+        from accounts.models import Permission
+
+        try:
+            permission = Permission.objects.get(name=permission_name)
+
+            # Get all roles that have this permission
+            roles_with_permission = permission.role_set.all()
+
+            if not roles_with_permission.exists():
+                print(f"⚠️ No roles found with permission '{permission_name}'")
+                return None
+
+            # For department-specific permissions (approvals), filter by department
+            if department and permission_name.startswith('approve_'):
+                user = User.objects.filter(
+                    role__in=roles_with_permission,
+                    department=department,
+                    status='Active'
+                ).first()
+            else:
+                # For org-wide permissions (processing, admin)
+                user = User.objects.filter(
+                    role__in=roles_with_permission,
+                    status='Active'
+                ).first()
+
+            if user:
+                print(f"✅ Found user {user.email} with permission '{permission_name}'")
+            else:
+                print(f"⚠️ No active users found with permission '{permission_name}'")
+
+            return user
+        except Permission.DoesNotExist:
+            print(f"❌ Permission '{permission_name}' not found")
+            return None
+
+    @staticmethod
     def _find_user_by_role(role_name: str, department: Optional[str] = None) -> Optional[User]:
-        """Find a user with the specified role"""
+        """
+        Find a user with the specified role [DEPRECATED - use _find_user_by_permission instead]
+
+        Kept for backward compatibility with existing workflows.
+        """
         from accounts.models import Role
 
         try:

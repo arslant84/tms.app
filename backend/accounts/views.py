@@ -9,10 +9,11 @@ from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 
 from .serializers import (
-    UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, RoleSerializer, PermissionSerializer,
+    UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, UserAdminUpdateSerializer, RoleSerializer, PermissionSerializer,
     ApplicationSettingSerializer, ApplicationSettingCreateSerializer, ApplicationSettingUpdateSerializer
 )
 from .models import Role, Permission, ApplicationSetting
+from .permissions import HasManageRolesPermission, HasManageUsersPermission, HasViewSystemSettingsPermission
 
 User = get_user_model()
 
@@ -72,7 +73,8 @@ class UserViewSet(viewsets.ModelViewSet):
             if user_id and str(self.request.user.id) == str(user_id):
                 print(f"User {self.request.user.id} updating own profile, using UserProfileUpdateSerializer")
                 return UserProfileUpdateSerializer
-            print(f"Admin updating user {user_id}, using UserSerializer")
+            print(f"Admin updating user {user_id}, using UserAdminUpdateSerializer")
+            return UserAdminUpdateSerializer
         return UserSerializer
 
     def get_permissions(self):
@@ -169,14 +171,14 @@ class UserViewSet(viewsets.ModelViewSet):
 class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [HasManageRolesPermission]
     pagination_class = None  # Disable pagination for roles
 
 
 class PermissionViewSet(viewsets.ModelViewSet):
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [HasManageRolesPermission]  # Same permission as roles
     pagination_class = None  # Disable pagination for permissions
 
 

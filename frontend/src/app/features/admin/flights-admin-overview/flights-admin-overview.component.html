@@ -19,80 +19,89 @@
   <!-- Stats Cards -->
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="stat-header">
-        <span class="stat-label">Total Requests</span>
+      <div class="stat-card-header">
+        <div class="stat-card-title">Total Requests</div>
         <i class="bi bi-airplane stat-icon"></i>
       </div>
-      <div class="stat-value">{{ stats.total }}</div>
-      <div class="stat-description">All submitted requests</div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.total }}</div>
+        <p class="stat-description">All submitted requests</p>
+      </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-header">
-        <span class="stat-label">TRFs Awaiting Flight Booking</span>
+      <div class="stat-card-header">
+        <div class="stat-card-title">Awaiting Flight Booking</div>
         <i class="bi bi-clock stat-icon"></i>
       </div>
-      <div class="stat-value">{{ stats.pending }}</div>
-      <div class="stat-description">All approved travel requests requiring flight ticket booking and arrangements</div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.pending }}</div>
+        <p class="stat-description">Approved requests requiring booking</p>
+      </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-header">
-        <span class="stat-label">Booked Flights</span>
+      <div class="stat-card-header">
+        <div class="stat-card-title">Booked Flights</div>
         <i class="bi bi-check-circle stat-icon"></i>
       </div>
-      <div class="stat-value">{{ stats.booked }}</div>
-      <div class="stat-description">Flights processed by admin</div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.booked }}</div>
+        <p class="stat-description">Flights processed by admin</p>
+      </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-header">
-        <span class="stat-label">In Approval</span>
+      <div class="stat-card-header">
+        <div class="stat-card-title">In Approval</div>
         <i class="bi bi-gear stat-icon"></i>
       </div>
-      <div class="stat-value">{{ stats.in_approval }}</div>
-      <div class="stat-description">TSRs pending departmental approval</div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.in_approval }}</div>
+        <p class="stat-description">Pending departmental approval</p>
+      </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-header">
-        <span class="stat-label">Rejected</span>
+      <div class="stat-card-header">
+        <div class="stat-card-title">Rejected</div>
         <i class="bi bi-x-circle stat-icon"></i>
       </div>
-      <div class="stat-value">{{ stats.rejected }}</div>
-      <div class="stat-description">Flight requests denied</div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.rejected }}</div>
+        <p class="stat-description">Flight requests denied</p>
+      </div>
     </div>
   </div>
 
   <!-- Filter & Search Section -->
   <div class="card mb-4">
     <div class="card-header">
-      <h5 class="card-title mb-0">Filter & Search Applications</h5>
-      <p class="card-description mb-0">Find and manage flight-related travel requests</p>
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-funnel me-2"></i>
+          <h3 class="card-title">Filter & Search Applications</h3>
+        </div>
+        <p class="card-description">Find and manage flight-related travel requests</p>
+      </div>
     </div>
     <div class="card-body">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Search by TRF ID, requestor name, destination..."
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="onSearchChange()"
-          />
-        </div>
+      <div class="filters-group">
+        <input
+          type="text"
+          class="form-control filter-select"
+          placeholder="Search by TRF ID, requestor name, destination..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+        />
 
-        <div class="col-md-3">
-          <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange()">
-            <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
-          </select>
-        </div>
+        <select class="form-select filter-select" [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange()">
+          <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
 
-        <div class="col-md-3">
-          <select class="form-select" [(ngModel)]="travelTypeFilter" (ngModelChange)="onTravelTypeFilterChange()">
-            <option *ngFor="let opt of travelTypeOptions" [value]="opt.value">{{ opt.label }}</option>
-          </select>
-        </div>
+        <select class="form-select filter-select" [(ngModel)]="travelTypeFilter" (ngModelChange)="onTravelTypeFilterChange()">
+          <option *ngFor="let opt of travelTypeOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
       </div>
     </div>
   </div>
@@ -100,16 +109,19 @@
   <!-- Applications List -->
   <div class="card">
     <div class="card-header">
-      <h5 class="card-title mb-0">Flight-Related Travel Requests</h5>
-      <p class="card-description mb-0">Travel requests requiring flight bookings (Overseas and Home Leave Passage)</p>
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-airplane me-2"></i>
+          <h3 class="card-title">Flight-Related Travel Requests</h3>
+        </div>
+        <p class="card-description">Travel requests requiring flight bookings (Overseas and Home Leave Passage)</p>
+      </div>
     </div>
     <div class="card-body">
       <!-- Loading State -->
       <div *ngIf="isLoading" class="loading-state">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-2">Loading applications...</p>
+        <i class="bi bi-arrow-clockwise spin"></i>
+        <p>Loading applications...</p>
       </div>
 
       <!-- Error State -->
@@ -120,69 +132,61 @@
         </button>
       </div>
 
-      <!-- Applications List -->
-      <div *ngIf="!isLoading && !error && filteredApplications.length > 0" class="applications-list">
-        <div *ngFor="let application of filteredApplications" class="application-item">
-          <div class="application-content">
-            <div class="application-badges">
-              <span class="application-id">{{ application.id }}</span>
-              <span class="badge" [ngClass]="getStatusClass(application.status)">
-                {{ application.status }}
-              </span>
-              <span class="badge" [ngClass]="getTravelTypeBadge(application.travelType)">
-                {{ application.travelType }}
-              </span>
-            </div>
-
-            <div class="application-details">
-              <p class="requestor-name">{{ application.requestorName }}</p>
-              <p class="department text-muted">{{ application.department }}</p>
-            </div>
-
-            <div class="application-info">
-              <p class="purpose">{{ application.purpose }}</p>
-              <p class="destination text-muted" *ngIf="application.destinationSummary">
-                Route: {{ application.destinationSummary }}
-              </p>
-            </div>
-
-            <p class="submitted-date text-muted">
-              Submitted: {{ formatDate(application.submittedAt) }}
-            </p>
-          </div>
-
-          <div class="application-actions">
-            <button class="btn btn-outline-primary btn-sm" (click)="viewTrf(application.id)" title="View Details">
-              <i class="bi bi-eye me-1"></i>
-              View Details
-            </button>
-          </div>
-        </div>
-
-        <!-- Load More Button -->
-        <div class="load-more-container">
-          <button class="btn btn-outline-primary" (click)="loadMoreApplications()" [disabled]="isLoadingMore">
-            <span *ngIf="!isLoadingMore">Load More</span>
-            <span *ngIf="isLoadingMore">
-              <span class="spinner-border spinner-border-sm me-2"></span>
-              Loading...
-            </span>
-          </button>
-        </div>
-      </div>
-
       <!-- Empty State -->
       <div *ngIf="!isLoading && !error && filteredApplications.length === 0" class="empty-state">
-        <i class="bi bi-airplane empty-icon"></i>
-        <h3 class="empty-title">No flight applications found</h3>
-        <p class="empty-description">
-          <span *ngIf="searchTerm || statusFilter !== 'all' || travelTypeFilter !== 'all'">
-            Try adjusting your search criteria
-          </span>
-          <span *ngIf="!searchTerm && statusFilter === 'all' && travelTypeFilter === 'all'">
-            No travel requests requiring flights at this time
-          </span>
+        <i class="bi bi-inbox"></i>
+        <p *ngIf="searchTerm || statusFilter !== 'all' || travelTypeFilter !== 'all'">
+          No applications match the current filters.
         </p>
+        <p *ngIf="!searchTerm && statusFilter === 'all' && travelTypeFilter === 'all'">
+          No travel requests requiring flights at this time.
+        </p>
+      </div>
+
+      <!-- Applications Table -->
+      <div *ngIf="!isLoading && !error && filteredApplications.length > 0" class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>REQUEST NUMBER</th>
+              <th>STAFF NAME</th>
+              <th>DEPARTMENT</th>
+              <th>TRAVEL TYPE</th>
+              <th>DESTINATION</th>
+              <th>STATUS</th>
+              <th>SUBMITTED</th>
+              <th class="text-end">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let application of filteredApplications">
+              <td class="fw-medium">{{ application.requestNumber }}</td>
+              <td>{{ application.requestorName }}</td>
+              <td>{{ application.department }}</td>
+              <td>
+                <span class="badge" [ngClass]="getTravelTypeBadge(application.travelType)">
+                  {{ application.travelType }}
+                </span>
+              </td>
+              <td>
+                <div class="text-truncate" style="max-width: 200px;" [title]="application.destinationSummary">
+                  {{ application.destinationSummary || 'N/A' }}
+                </div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(application.status)">
+                  {{ application.status }}
+                </span>
+              </td>
+              <td>{{ formatDate(application.submittedAt) }}</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-icon btn-view" (click)="viewTrf(application.id)" title="View Details">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

@@ -23,7 +23,7 @@ export class UserAdminComponent implements OnInit {
 
   // Filters
   searchTerm = '';
-  filterRole: number | null = null;
+  filterRole: string | null = null;  // UUID
   filterDepartment = '';
   filterStatus: boolean | null = null;
   currentPage = 1;

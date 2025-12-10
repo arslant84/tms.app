@@ -5,6 +5,8 @@ import { TmsApp_Core_Services_RolesService, TmsApp_Roles_RoleWithPermissions } f
 import { ToastService } from '../../../../core/services/toast.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
+import { WorkflowStepNotificationConfig } from '../../../../core/models/workflow.models';
+import { StepNotificationConfigComponent } from '../step-notification-config/step-notification-config.component';
 
 interface WorkflowStepConfig {
   order: number;
@@ -12,6 +14,7 @@ interface WorkflowStepConfig {
   roleName?: string;
   escalationHours: number;
   slaHours: number;
+  notification_configs?: WorkflowStepNotificationConfig[];
 }
 
 interface ModuleWorkflowConfig {
@@ -23,7 +26,7 @@ interface ModuleWorkflowConfig {
 @Component({
   selector: 'app-enhanced-workflow-config',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StepNotificationConfigComponent],
   templateUrl: './enhanced-workflow-config.component.html',
   styleUrls: ['./enhanced-workflow-config.component.scss']
 })
@@ -194,7 +197,8 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
         can_skip: false,
         requires_comments: false,
         sla_hours: step.slaHours,
-        escalation_hours: step.escalationHours
+        escalation_hours: step.escalationHours,
+        notification_configs: step.notification_configs || []
       }))
     };
 
@@ -231,7 +235,8 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
           order: step.step_order,
           roleId: step.approver_role || '',
           escalationHours: step.escalation_hours || 48,
-          slaHours: step.sla_hours || 72
+          slaHours: step.sla_hours || 72,
+          notification_configs: step.notification_configs || []
         }));
 
         // Show steps configuration when editing

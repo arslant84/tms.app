@@ -8,3 +8,4 @@ passlib>=1.7.4
 python-multipart>=0.0.5
 python-decouple>=3.8
 django-ratelimit>=4.1.0
+pytz>=2024.1

@@ -219,33 +219,46 @@
   }
 }
 
-// Table
+// Table - Matching Visa List Design
 .requests-table {
   width: 100%;
-  border-collapse: collapse;
+  margin-bottom: 0;
   font-size: 0.875rem;
 
   thead {
     background-color: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
 
     th {
-      padding: 0.75rem 1rem;
-      text-align: left;
       font-weight: 600;
-      color: #374151;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.75rem;
+      white-space: nowrap;
     }
   }
 
-  tbody tr {
-    border-bottom: 1px solid #e5e7eb;
+  tbody {
+    tr {
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      border-bottom: 1px solid #e5e7eb;
 
-    &:hover {
-      background-color: #f9fafb;
-    }
+      &:hover {
+        background-color: #f9fafb;
+      }
 
-    td {
-      padding: 0.75rem 1rem;
+      &:last-child {
+        border-bottom: none;
+      }
+
+      td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+        color: #374151;
+      }
     }
   }
 }
@@ -308,31 +321,23 @@
 .badge-info { background-color: #3b82f6; color: white; }
 
 // Table Cells
-.request-number-cell {
-  font-weight: 500;
-  color: #1f2937;
-
-  .request-number {
-    color: #0d9488;
-    font-weight: 600;
-  }
+.request-number {
+  color: #0d9488;
+  font-weight: 600;
 }
 
-.name-cell {
-  .requestor-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
+.requestor-info {
+  strong {
+    display: block;
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
 
-    .requestor-name {
-      font-weight: 500;
-      color: #1f2937;
-    }
-
-    .staff-id {
-      font-size: 0.75rem;
-      color: #9ca3af;
-    }
+  small {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 0.125rem;
   }
 }
 
@@ -346,99 +351,85 @@
   }
 }
 
-// Action Buttons
-.actions-cell {
-  text-align: right;
-}
-
+// Action Buttons - Matching Visa List Design
 .action-buttons {
-  display: inline-flex;
-  gap: 0.375rem;
-  align-items: center;
-}
-
-.btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  border-radius: 0.375rem;
-  border-width: 1px;
-  transition: all 0.15s ease;
-
-  i {
-    font-size: 1rem;
-  }
-}
-
-.btn-view {
-  color: #0d9488;
-  border-color: #0d9488;
-  background: white;
-
-  &:hover {
-    background-color: #f0fdfa;
-    border-color: #0f766e;
-    color: #0f766e;
-  }
-}
-
-.btn-edit {
-  color: #f59e0b;
-  border-color: #f59e0b;
-  background: white;
-
-  &:hover {
-    background-color: #fffbeb;
-    border-color: #d97706;
-    color: #d97706;
-  }
-}
-
-.btn-delete {
-  color: #ef4444;
-  border-color: #ef4444;
-  background: white;
-
-  &:hover {
-    background-color: #fef2f2;
-    border-color: #dc2626;
-    color: #dc2626;
-  }
-}
-
-// Pagination
-.pagination-section {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e5e7eb;
-  flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.5rem;
+  justify-content: flex-end;
 
-  .pagination-info {
+  .action-btn {
+    padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
-    color: #6b7280;
+    border-width: 1px;
+
+    i {
+      font-size: 1rem;
+    }
+
+    &.btn-outline-primary {
+      color: #0d9488;
+      border-color: #0d9488;
+
+      &:hover {
+        background-color: #0d9488;
+        border-color: #0d9488;
+        color: white;
+      }
+    }
+
+    &.btn-outline-danger {
+      &:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+      }
+    }
   }
+}
 
-  .pagination-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+// Pagination - Matching Visa List Design
+.pagination-container {
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
 
-    .page-indicator {
-      font-size: 0.875rem;
-      color: #6b7280;
-      padding: 0 0.5rem;
+  .pagination {
+    margin-bottom: 0;
+
+    .page-item {
+      .page-link {
+        color: #0d9488;
+        border-color: #e5e7eb;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+
+        &:hover {
+          background-color: #f0fdfa;
+          border-color: #0d9488;
+        }
+      }
+
+      &.active .page-link {
+        background-color: #0d9488;
+        border-color: #0d9488;
+        color: white;
+
+        &:hover {
+          background-color: #0f766e;
+          border-color: #0f766e;
+        }
+      }
+
+      &.disabled .page-link {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
     }
   }
 
-  .btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .pagination-info {
+    color: #6b7280;
+    font-size: 0.875rem;
   }
 }
 

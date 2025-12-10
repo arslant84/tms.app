@@ -7,7 +7,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('bookings', '0002_alter_flightbooking_trf_alter_hotelbooking_trf'),
-        ('expenses', '0003_alter_expenseclaim_trf_claimsapprovalstep_claim_and_more'),
         ('trf', '0002_travelrequest_remove_travelrequestform_requester_and_more'),
     ]
 
