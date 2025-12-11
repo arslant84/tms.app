@@ -1,34 +1,17 @@
 # ========================================
 # TMS App - Git Ignore Configuration
+# Only track frontend/ and backend/ folders
 # ========================================
 
-# ========== Documentation Files ==========
-# Exclude all markdown documentation files
-*.md
-!README.md
-!backend/README.md
-!frontend/README.md
+# Ignore everything at root level
+/*
 
-# ========== Test & Migration Scripts ==========
-# Python test scripts
-test_*.py
-*_test.py
-create_admin.py
-migrate_*.py
-
-# CSV exports
-*.csv
-event_types_export.csv
-
-# ========== Submodules & External Projects ==========
-# Exclude pctsb.syntra submodule content
-pctsb.syntra/
-pctsb.syntra
-Claude Code v2.0.21.txt
-Claude*.txt
+# Exception: Allow only these folders
+!frontend/
+!backend/
+!.gitignore
 
 # ========== Python Cache & Compiled Files ==========
-# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -51,7 +34,6 @@ env/
 ENV/
 .venv
 backend/venv/
-frontend/node_modules/
 
 # ========== Node & Angular ==========
 # Dependencies
@@ -84,13 +66,3 @@ out-tsc/
 # ========== OS Files ==========
 Thumbs.db
 Desktop.ini
-nul
-
-# ========== Temporary Files ==========
-*.bat
-*.tmp
-
-# ========== Keep These Directories ==========
-# Force include important directories
-!backend/
-!frontend/

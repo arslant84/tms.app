@@ -1,0 +1,16 @@
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+  <ngb-toast
+    *ngFor="let toast of toastService.toasts"
+    [class]="getToastClass(toast.type)"
+    [autohide]="toast.autohide ?? true"
+    [delay]="toast.delay ?? 5000"
+    (hidden)="toastService.remove(toast.id)">
+    <div class="d-flex align-items-center">
+      <i class="bi me-2" [ngClass]="getIconClass(toast.type)"></i>
+      <div class="flex-grow-1">{{ toast.message }}</div>
+      <button type="button" class="btn-close btn-close-white ms-2"
+              aria-label="Close"
+              (click)="toastService.remove(toast.id)"></button>
+    </div>
+  </ngb-toast>
+</div>

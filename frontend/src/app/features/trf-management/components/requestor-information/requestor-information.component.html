@@ -1,0 +1,108 @@
+<!-- Requestor Information Form - Matching React pctsb.syntra design -->
+<div class="card">
+  <div class="card-header">
+    <div class="d-flex">
+      <i class="bi bi-person-circle"></i>
+      <h5>Employee Details / Данные сотрудника</h5>
+    </div>
+    <p class="card-description">Please provide your information as the requestor.</p>
+  </div>
+  <div class="card-body">
+    <form [formGroup]="requestorForm" (ngSubmit)="onSubmit()">
+      <!-- Full Name & Staff ID Row -->
+      <div class="row">
+        <div class="form-group">
+          <label for="fullName" class="form-label">Full Name / Полное имя</label>
+          <input
+            type="text"
+            class="form-control"
+            id="fullName"
+            formControlName="fullName"
+            placeholder="e.g., Your Full Name"
+            [ngClass]="{'is-invalid': requestorForm.get('fullName')?.invalid && requestorForm.get('fullName')?.touched}">
+          <div class="invalid-feedback" *ngIf="requestorForm.get('fullName')?.errors?.['required'] && requestorForm.get('fullName')?.touched">
+            Full name is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="staffId" class="form-label">Staff # / Штатный №</label>
+          <input
+            type="text"
+            class="form-control"
+            id="staffId"
+            formControlName="staffId"
+            placeholder="e.g., S-00000"
+            [ngClass]="{'is-invalid': requestorForm.get('staffId')?.invalid && requestorForm.get('staffId')?.touched}">
+          <div class="invalid-feedback" *ngIf="requestorForm.get('staffId')?.errors?.['required'] && requestorForm.get('staffId')?.touched">
+            Staff # is required
+          </div>
+        </div>
+      </div>
+
+      <!-- Department & Position (Full Width) -->
+      <div class="form-group">
+        <label for="department" class="form-label">Department & Position / Отдел и должность</label>
+        <input
+          type="text"
+          class="form-control"
+          id="department"
+          formControlName="department"
+          placeholder="e.g., IT Department / Software Engineer"
+          [ngClass]="{'is-invalid': requestorForm.get('department')?.invalid && requestorForm.get('department')?.touched}">
+        <div class="invalid-feedback" *ngIf="requestorForm.get('department')?.errors?.['required'] && requestorForm.get('department')?.touched">
+          Department & Position is required
+        </div>
+      </div>
+
+      <!-- Cost Center & Contact Number Row -->
+      <div class="row">
+        <div class="form-group">
+          <label for="costCenter" class="form-label">Dept. Cost Centre / Центр затрат отдела</label>
+          <input
+            type="text"
+            class="form-control"
+            id="costCenter"
+            formControlName="costCenter"
+            placeholder="e.g., CC00000"
+            [ngClass]="{'is-invalid': requestorForm.get('costCenter')?.invalid && requestorForm.get('costCenter')?.touched}">
+          <div class="invalid-feedback" *ngIf="requestorForm.get('costCenter')?.errors?.['required'] && requestorForm.get('costCenter')?.touched">
+            Dept. Cost Centre is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="contactNo" class="form-label">Tel. Ext. & E-Mail / Телефон и почта</label>
+          <input
+            type="text"
+            class="form-control"
+            id="contactNo"
+            formControlName="contactNo"
+            placeholder="e.g., 0000 / your.email@example.com"
+            [ngClass]="{'is-invalid': requestorForm.get('contactNo')?.invalid && requestorForm.get('contactNo')?.touched}">
+          <div class="invalid-feedback" *ngIf="requestorForm.get('contactNo')?.errors?.['required'] && requestorForm.get('contactNo')?.touched">
+            Contact number is required
+          </div>
+        </div>
+      </div>
+
+      <!-- Hidden Email Field (for data structure compatibility) -->
+      <div class="form-group" style="display: none;">
+        <label for="email" class="form-label">Email (hidden, for data)</label>
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          formControlName="email"
+          placeholder="your.email@example.com">
+      </div>
+
+      <!-- Submit Button -->
+      <div class="mt-4 d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary">
+          Next: Travel Details
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
