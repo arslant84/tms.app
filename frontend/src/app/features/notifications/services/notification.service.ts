@@ -190,8 +190,9 @@ export class NotificationService {
   }
 
   // Helper method to refresh notifications
-  private refreshNotifications(): void {
+  refreshNotifications(): void {
     this.getAllNotifications({ page_size: 20 }).subscribe();
+    this.refreshUnreadCount();
   }
 
   // Initialize service (call this on app init)
