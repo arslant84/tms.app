@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/transport/', include('transport.urls')),
     path('api/workflows/', include('workflows.urls')),
     path('api/notifications/', include('notifications.urls')),
+    path('api/reports/', include('reports.urls')),
     # Unified approvals endpoint
     path('api/admin/approvals/', unified_approvals, name='unified-approvals'),
 ]
