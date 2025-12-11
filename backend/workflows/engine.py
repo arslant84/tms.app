@@ -548,19 +548,28 @@ class WorkflowEngine:
             return None
 
     @staticmethod
-    def _find_user_by_role(role_name: str, department: Optional[str] = None) -> Optional[User]:
+    def _find_user_by_role(role_identifier: str, department: Optional[str] = None) -> Optional[User]:
         """
         Find a user with the specified role [DEPRECATED - use _find_user_by_permission instead]
 
         Kept for backward compatibility with existing workflows.
+
+        Args:
+            role_identifier: Either a role UUID or role name string
+            department: Optional department filter
         """
         from accounts.models import Role
 
         try:
-            role = Role.objects.get(name=role_name)
+            # Try to get role by UUID first (new workflow templates use UUIDs)
+            try:
+                role = Role.objects.get(id=role_identifier)
+            except (Role.DoesNotExist, ValueError):
+                # Fallback: try by name (legacy workflow templates)
+                role = Role.objects.get(name=role_identifier)
 
             # For department-specific roles, filter by department
-            if department and role_name in ['Department Focal', 'Line Manager']:
+            if department and role.name in ['Department Focal', 'Line Manager']:
                 user = User.objects.filter(
                     role=role,
                     department=department,
@@ -573,8 +582,14 @@ class WorkflowEngine:
                     status='Active'
                 ).first()
 
+            if user:
+                print(f"✅ Found user {user.email} with role '{role.name}' (ID: {role.id})")
+            else:
+                print(f"⚠️ No active users found with role '{role.name}'")
+
             return user
         except Role.DoesNotExist:
+            print(f"❌ Role not found: {role_identifier}")
             return None
 
     @staticmethod
