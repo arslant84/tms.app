@@ -1,0 +1,159 @@
+<!-- Header - Matching React pctsb.syntra design -->
+<header class="app-header">
+  <div class="header-container">
+    <!-- Left Section: Toggle + Logo -->
+    <div class="header-left">
+      <!-- Sidebar Toggle Button (All screens) -->
+      <button class="sidebar-toggle-button" (click)="toggleSidebar()" title="Toggle Sidebar">
+        <i class="bi bi-list"></i>
+        <span class="sr-only">Toggle Menu</span>
+      </button>
+
+      <!-- Logo -->
+      <div class="logo-desktop">
+        <a routerLink="/dashboard" class="logo-link">
+          <span class="logo-text">{{ applicationName$ | async }}</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Center Section: Main Navigation (Desktop Only) -->
+    <nav class="header-nav">
+      <a
+        routerLink="/trf"
+        routerLinkActive="active"
+        class="nav-link">
+        <i class="bi bi-file-text"></i>
+        <span>TSR</span>
+      </a>
+      <a
+        routerLink="/transport"
+        routerLinkActive="active"
+        class="nav-link">
+        <i class="bi bi-truck"></i>
+        <span>Transport</span>
+      </a>
+      <a
+        routerLink="/visa"
+        routerLinkActive="active"
+        class="nav-link">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Visa</span>
+      </a>
+      <a
+        routerLink="/accommodation"
+        routerLinkActive="active"
+        class="nav-link">
+        <i class="bi bi-building"></i>
+        <span>Accommodation</span>
+      </a>
+    </nav>
+
+    <!-- Right Section: Notifications + User Menu -->
+    <div class="header-right">
+      <!-- Notifications Bell -->
+      <div class="notifications-dropdown dropdown" *ngIf="currentUser$ | async">
+        <button
+          class="notification-button"
+          type="button"
+          id="notificationsDropdown"
+          aria-expanded="false"
+          (click)="toggleNotificationsDropdown($event)">
+          <i class="bi bi-bell"></i>
+          <span class="notification-badge" *ngIf="(notificationCount$ | async) as count">
+            {{ count > 99 ? '99+' : count }}
+          </span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end notifications-menu" aria-labelledby="notificationsDropdown">
+          <li class="dropdown-header">
+            <div class="notifications-header">
+              <span class="fw-bold">Notifications</span>
+              <button
+                class="btn btn-link btn-sm text-decoration-none p-0"
+                (click)="markAllAsRead($event)"
+                *ngIf="(notificationCount$ | async) as count">
+                Mark all read
+              </button>
+            </div>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+
+          <!-- Notification Items -->
+          <ng-container *ngIf="notifications.length > 0; else noNotifications">
+            <li *ngFor="let notification of notifications">
+              <a
+                class="dropdown-item notification-item"
+                [class.unread]="!notification.is_read"
+                (click)="onNotificationClick(notification)"
+                href="javascript:void(0)">
+                <div class="notification-content">
+                  <div class="notification-icon">
+                    <i [class]="getNotificationIcon(notification.priority)"></i>
+                  </div>
+                  <div class="notification-body">
+                    <div class="notification-title">{{ notification.title }}</div>
+                    <div class="notification-message">{{ notification.message }}</div>
+                    <div class="notification-time">{{ getTimeAgo(notification.created_at) }}</div>
+                  </div>
+                  <div class="notification-indicator" *ngIf="!notification.is_read">
+                    <span class="unread-dot"></span>
+                  </div>
+                </div>
+              </a>
+            </li>
+          </ng-container>
+
+          <ng-template #noNotifications>
+            <li class="dropdown-item text-center text-muted py-3">
+              <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+              No new notifications
+            </li>
+          </ng-template>
+
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item text-center text-primary" (click)="viewAllNotifications($event)" href="javascript:void(0)">
+              View All Notifications
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- User Menu -->
+      <div class="user-menu" *ngIf="currentUser$ | async as user; else loginButton">
+        <div class="dropdown profile-dropdown">
+          <button
+            class="user-button"
+            type="button"
+            id="userDropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            (click)="toggleProfileDropdown($event)">
+            <div class="user-avatar">
+              <img
+                *ngIf="getUserAvatar(user)"
+                [src]="getUserAvatar(user)!"
+                [alt]="user.name"
+                class="avatar-img"
+                (error)="$any($event.target).style.display='none'">
+              <div class="avatar-initials" *ngIf="!getUserAvatar(user)">
+                {{ getUserInitials(user.name) }}
+              </div>
+            </div>
+            <span class="user-name">{{ user.name }}</span>
+            <i class="bi bi-chevron-down chevron-icon"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" routerLink="/profile"><i class="bi bi-person me-2"></i>My Profile</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" (click)="logout($event)"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <ng-template #loginButton>
+        <a class="btn btn-outline-primary" routerLink="/auth/login">Login</a>
+      </ng-template>
+    </div>
+  </div>
+</header>

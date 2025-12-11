@@ -1,0 +1,201 @@
+<div class="visa-list-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-left">
+      <div class="title-with-icon">
+        <i class="bi bi-passport header-icon"></i>
+        <h1 class="page-title">Visa Applications</h1>
+      </div>
+      <p class="page-subtitle">Viewing your visa applications</p>
+    </div>
+    <button class="btn btn-primary" routerLink="/visa/new">
+      <i class="bi bi-plus-circle me-2"></i>New Visa Application
+    </button>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card shadow-lg">
+    <div class="filters-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-funnel"></i>
+        <h3 class="card-title">Filter & Search Visa Applications</h3>
+      </div>
+      <p class="card-description">Search and filter your visa applications by various criteria.</p>
+    </div>
+    <div class="filters-card-content">
+      <div class="filters-grid">
+        <input
+          type="text"
+          class="form-control search-input"
+          placeholder="Search by name, destination, passport number..."
+          [value]="searchTerm"
+          (input)="onSearchChange($any($event.target).value)">
+
+        <select
+          class="form-select filter-select"
+          [(ngModel)]="filterStatus"
+          (change)="onFilterChange()">
+          <option value="">All Statuses</option>
+          <option *ngFor="let status of statuses" [value]="status">
+            {{ status }}
+          </option>
+        </select>
+
+        <select
+          class="form-select filter-select"
+          [(ngModel)]="filterVisaType"
+          (change)="onFilterChange()">
+          <option value="">All Visa Types</option>
+          <option *ngFor="let type of visaTypes" [value]="type">
+            {{ type }}
+          </option>
+        </select>
+      </div>
+
+      <div *ngIf="hasActiveFilters()" class="clear-filters-section">
+        <button class="btn btn-outline-secondary btn-sm btn-clear" (click)="clearFilters()">
+          <i class="bi bi-x me-1"></i>Clear All Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visa List Card -->
+  <div class="visa-list-card shadow-lg">
+    <div class="visa-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-passport"></i>
+        <h3 class="card-title">My Visa Applications</h3>
+      </div>
+      <p class="card-description">
+        List of your submitted visa applications. Total:
+        <span *ngIf="isLoading && totalCount === 0" class="loading-inline">
+          <i class="bi bi-arrow-clockwise spin-animation"></i>
+        </span>
+        <span *ngIf="!isLoading || totalCount > 0">{{ totalCount }}</span>
+      </p>
+    </div>
+
+    <div class="visa-card-content">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-state">
+        <div class="spinner-border text-primary spinner-lg" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="loading-text">Loading visa applications...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && applications.length === 0" class="empty-state">
+        <i class="bi bi-inbox empty-icon"></i>
+        <h3 class="empty-title">No Visa Applications Found</h3>
+        <p class="empty-description">
+          You haven't submitted any visa applications yet or none match your current filters.
+        </p>
+      </div>
+
+      <!-- Table View -->
+      <div *ngIf="!isLoading && applications.length > 0" class="table-responsive">
+        <table class="table table-hover applications-table">
+          <thead>
+            <tr>
+              <th>REQUEST NUMBER</th>
+              <th>STAFF NAME</th>
+              <th>DESTINATION</th>
+              <th>VISA TYPE</th>
+              <th>TRAVEL DATE</th>
+              <th>SUBMITTED</th>
+              <th>STATUS</th>
+              <th class="text-end">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let app of applications" [routerLink]="['/visa', app.id]" class="clickable-row">
+              <td class="id-cell">
+                <span *ngIf="app.request_number" class="request-number">{{ app.request_number }}</span>
+                <span *ngIf="!app.request_number" class="text-muted">VIS-{{ app.id }}</span>
+              </td>
+              <td>
+                <div class="applicant-info">
+                  <strong>{{ app.requestor_name }}</strong>
+                  <small class="text-muted d-block" *ngIf="app.staff_id">{{ app.staff_id }}</small>
+                </div>
+              </td>
+              <td>
+                <span class="destination-text">{{ app.destination }}</span>
+              </td>
+              <td>
+                <span class="badge badge-visa-type">{{ app.visa_type }}</span>
+              </td>
+              <td>{{ formatDate(app.trip_start_date) }}</td>
+              <td>{{ formatDate(app.submitted_date) }}</td>
+              <td>
+                <span class="badge" [ngClass]="getDisplayStatusClass(app)">
+                  {{ getDisplayStatus(app) }}
+                </span>
+              </td>
+              <td class="text-end">
+                <div class="action-buttons">
+                  <button
+                    class="btn btn-sm btn-outline-primary action-btn"
+                    [routerLink]="['/visa', app.id]"
+                    (click)="$event.stopPropagation()"
+                    title="View Details"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-primary action-btn"
+                    [routerLink]="['/visa', app.id, 'edit']"
+                    (click)="$event.stopPropagation()"
+                    title="Edit Application"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger action-btn"
+                    (click)="deleteApplication(app.id, $event)"
+                    title="Delete Application"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="!isLoading && totalPages > 1" class="pagination-container">
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="previousPage()" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <li
+              class="page-item"
+              *ngFor="let page of getPageNumbers()"
+              [class.active]="currentPage === page"
+            >
+              <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" (click)="nextPage()" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="text-center mt-3 pagination-info">
+          <small>
+            Showing {{ (currentPage - 1) * pageSize + 1 }} -
+            {{ Math.min(currentPage * pageSize, totalCount) }} of {{ totalCount }} applications
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

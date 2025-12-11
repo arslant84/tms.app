@@ -1,0 +1,239 @@
+<div class="notification-config-section">
+  <!-- Section Header -->
+  <div class="section-header" (click)="toggleExpanded()">
+    <div class="header-left">
+      <i class="bi" [ngClass]="isExpanded ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+      <span class="section-title">Notifications</span>
+      <span class="badge bg-info ms-2">{{ getConfigCount() }} configured</span>
+    </div>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-primary"
+      (click)="startAddNew(); $event.stopPropagation()"
+      *ngIf="!isAddingNew">
+      <i class="bi bi-plus-circle"></i> Add Notification
+    </button>
+  </div>
+
+  <!-- Expanded Content -->
+  <div class="section-content" *ngIf="isExpanded">
+    <!-- Existing Configurations List -->
+    <div class="config-list" *ngIf="notificationConfigs.length > 0 && !isAddingNew">
+      <div class="config-item" *ngFor="let config of notificationConfigs; let i = index">
+        <div class="config-details">
+          <div class="config-row">
+            <span class="config-label">Event:</span>
+            <span class="badge bg-secondary">{{ getEventTypeLabel(config.event_type) }}</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">Template:</span>
+            <span class="config-value">{{ getTemplateName(config.notification_template) }}</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">Recipients:</span>
+            <span class="config-value">{{ getRecipientTypeLabels(config.recipient_types) }}</span>
+          </div>
+          <div class="config-row" *ngIf="config.custom_recipients && config.custom_recipients.length > 0">
+            <span class="config-label">Custom Emails:</span>
+            <span class="config-value">{{ config.custom_recipients.join(', ') }}</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">Priority:</span>
+            <span class="badge" [ngClass]="{
+              'bg-danger': config.priority === 'urgent',
+              'bg-warning': config.priority === 'high',
+              'bg-info': config.priority === 'normal',
+              'bg-secondary': config.priority === 'low'
+            }">{{ config.priority }}</span>
+          </div>
+        </div>
+        <div class="config-actions">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            (click)="editConfig(config, i)"
+            title="Edit">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger"
+            (click)="deleteConfig(i)"
+            title="Delete">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="notificationConfigs.length === 0 && !isAddingNew">
+      <i class="bi bi-bell-slash"></i>
+      <p>No notifications configured for this step</p>
+      <button type="button" class="btn btn-sm btn-primary" (click)="startAddNew()">
+        <i class="bi bi-plus-circle"></i> Add First Notification
+      </button>
+    </div>
+
+    <!-- Add/Edit Form -->
+    <div class="config-form" *ngIf="isAddingNew">
+      <h6 class="form-title">
+        {{ editingIndex >= 0 ? 'Edit' : 'Add' }} Notification Configuration
+      </h6>
+
+      <!-- Event Type -->
+      <div class="mb-3">
+        <label class="form-label">Event Type <span class="text-danger">*</span></label>
+        <select class="form-select" [(ngModel)]="form.event_type" required>
+          <option *ngFor="let option of eventTypeOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Notification Template -->
+      <div class="mb-3">
+        <label class="form-label">Notification Template <span class="text-danger">*</span></label>
+        <select class="form-select" [(ngModel)]="form.notification_template" required>
+          <option value="">-- Select Template --</option>
+          <option *ngFor="let template of availableTemplates" [value]="template.id">
+            {{ template.name }}
+          </option>
+        </select>
+        <small class="form-text text-muted">
+          Choose the notification template to use for this event
+        </small>
+      </div>
+
+      <!-- Recipient Types -->
+      <div class="mb-3">
+        <label class="form-label">Send To <span class="text-danger">*</span></label>
+        <div class="recipient-checkboxes">
+          <!-- Workflow Recipients -->
+          <div class="recipient-category" *ngIf="getRecipientsByCategory('Workflow').length > 0">
+            <div class="category-label">Workflow Recipients</div>
+            <div class="form-check" *ngFor="let option of getRecipientsByCategory('Workflow')">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                [id]="'recipient-' + option.value"
+                [checked]="isRecipientTypeSelected(option.value)"
+                (change)="toggleRecipientType(option.value)">
+              <label class="form-check-label" [for]="'recipient-' + option.value">
+                {{ option.label }}
+              </label>
+            </div>
+          </div>
+
+          <!-- System Roles -->
+          <div class="recipient-category" *ngIf="getRecipientsByCategory('System Roles').length > 0">
+            <div class="category-label">System Roles</div>
+            <div class="form-check" *ngFor="let option of getRecipientsByCategory('System Roles')">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                [id]="'recipient-' + option.value"
+                [checked]="isRecipientTypeSelected(option.value)"
+                (change)="toggleRecipientType(option.value)">
+              <label class="form-check-label" [for]="'recipient-' + option.value">
+                {{ option.label }}
+              </label>
+            </div>
+          </div>
+
+          <!-- Other -->
+          <div class="recipient-category" *ngIf="getRecipientsByCategory('Other').length > 0">
+            <div class="category-label">Other</div>
+            <div class="form-check" *ngFor="let option of getRecipientsByCategory('Other')">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                [id]="'recipient-' + option.value"
+                [checked]="isRecipientTypeSelected(option.value)"
+                (change)="toggleRecipientType(option.value)">
+              <label class="form-check-label" [for]="'recipient-' + option.value">
+                {{ option.label }}
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Email Addresses -->
+      <div class="mb-3" *ngIf="isRecipientTypeSelected('custom_emails')">
+        <label class="form-label">Custom Email Addresses</label>
+        <div class="custom-emails-list">
+          <div class="email-tag" *ngFor="let email of form.custom_recipients; let i = index">
+            {{ email }}
+            <button type="button" class="btn-remove" (click)="removeCustomEmail(i)">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="addCustomEmail()">
+            <i class="bi bi-plus"></i> Add Email
+          </button>
+        </div>
+      </div>
+
+      <!-- Priority -->
+      <div class="mb-3">
+        <label class="form-label">Priority</label>
+        <select class="form-select" [(ngModel)]="form.priority">
+          <option value="low">Low</option>
+          <option value="normal">Normal</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+
+      <!-- Delivery Options -->
+      <div class="mb-3">
+        <label class="form-label">Delivery Options</label>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="sendEmail"
+            [(ngModel)]="form.send_email">
+          <label class="form-check-label" for="sendEmail">
+            Send as Email
+          </label>
+        </div>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="sendSystemNotification"
+            [(ngModel)]="form.send_system_notification">
+          <label class="form-check-label" for="sendSystemNotification">
+            Send as In-App Notification
+          </label>
+        </div>
+      </div>
+
+      <!-- Active Status -->
+      <div class="mb-3">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="isActive"
+            [(ngModel)]="form.is_active">
+          <label class="form-check-label" for="isActive">
+            Active (notifications will be sent)
+          </label>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" (click)="saveConfig()">
+          <i class="bi bi-check-circle"></i> {{ editingIndex >= 0 ? 'Update' : 'Add' }} Configuration
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

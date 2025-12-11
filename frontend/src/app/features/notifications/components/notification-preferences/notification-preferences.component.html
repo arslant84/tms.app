@@ -1,0 +1,228 @@
+<div class="preferences-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-left">
+      <div class="title-with-icon">
+        <i class="bi bi-gear header-icon"></i>
+        <h1 class="page-title">Notification Preferences</h1>
+      </div>
+      <p class="page-subtitle">Manage how and when you receive notifications</p>
+    </div>
+    <button class="btn btn-outline-secondary" routerLink="/notifications">
+      <i class="bi bi-arrow-left"></i>
+      Back to Notifications
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Loading preferences...</p>
+  </div>
+
+  <!-- Preferences Form -->
+  <div *ngIf="!isLoading" class="preferences-content">
+    <form [formGroup]="preferencesForm" (ngSubmit)="onSubmit()">
+      <!-- General Settings Card -->
+      <div class="preferences-card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="bi bi-bell"></i>
+            General Settings
+          </h2>
+          <p class="card-subtitle">Choose how you want to receive notifications</p>
+        </div>
+
+        <div class="card-body">
+          <!-- Email Notifications -->
+          <div class="form-check-item">
+            <div class="check-content">
+              <label class="form-check-label">
+                <i class="bi bi-envelope"></i>
+                Email Notifications
+              </label>
+              <p class="check-description">Receive notifications via email</p>
+            </div>
+            <div class="form-check form-switch">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="emailNotifications"
+                formControlName="email_notifications_enabled" />
+            </div>
+          </div>
+
+          <!-- In-App Notifications -->
+          <div class="form-check-item">
+            <div class="check-content">
+              <label class="form-check-label">
+                <i class="bi bi-app-indicator"></i>
+                In-App Notifications
+              </label>
+              <p class="check-description">Show notifications in the application</p>
+            </div>
+            <div class="form-check form-switch">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="inAppNotifications"
+                formControlName="in_app_notifications_enabled" />
+            </div>
+          </div>
+
+          <!-- Push Notifications -->
+          <div class="form-check-item">
+            <div class="check-content">
+              <label class="form-check-label">
+                <i class="bi bi-phone"></i>
+                Push Notifications
+              </label>
+              <p class="check-description">Receive push notifications on your devices</p>
+            </div>
+            <div class="form-check form-switch">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="pushNotifications"
+                formControlName="push_notifications_enabled" />
+            </div>
+          </div>
+
+          <!-- Digest Frequency -->
+          <div class="form-group">
+            <label for="digestFrequency" class="form-label">
+              <i class="bi bi-clock-history"></i>
+              Notification Digest Frequency
+            </label>
+            <select
+              id="digestFrequency"
+              class="form-select"
+              formControlName="digest_frequency">
+              <option value="instant">Instant (Real-time)</option>
+              <option value="hourly">Hourly Summary</option>
+              <option value="daily">Daily Digest</option>
+              <option value="weekly">Weekly Digest</option>
+            </select>
+            <small class="form-text">Choose how often you want to receive notification summaries</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiet Hours Card -->
+      <div class="preferences-card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="bi bi-moon"></i>
+            Quiet Hours
+          </h2>
+          <p class="card-subtitle">Set times when you don't want to be disturbed</p>
+        </div>
+
+        <div class="card-body">
+          <!-- Enable Quiet Hours -->
+          <div class="form-check-item">
+            <div class="check-content">
+              <label class="form-check-label">
+                Enable Quiet Hours
+              </label>
+              <p class="check-description">Mute notifications during specified hours</p>
+            </div>
+            <div class="form-check form-switch">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="quietHours"
+                formControlName="quiet_hours_enabled" />
+            </div>
+          </div>
+
+          <!-- Quiet Hours Time Range -->
+          <div class="time-range-group" *ngIf="preferencesForm.get('quiet_hours_enabled')?.value">
+            <div class="form-group">
+              <label for="quietHoursStart" class="form-label">Start Time</label>
+              <input
+                type="time"
+                id="quietHoursStart"
+                class="form-control"
+                formControlName="quiet_hours_start" />
+            </div>
+            <div class="time-separator">to</div>
+            <div class="form-group">
+              <label for="quietHoursEnd" class="form-label">End Time</label>
+              <input
+                type="time"
+                id="quietHoursEnd"
+                class="form-control"
+                formControlName="quiet_hours_end" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event Subscriptions Card -->
+      <div class="preferences-card" *ngIf="eventTypes.length > 0">
+        <div class="card-header">
+          <h2 class="card-title">
+            <i class="bi bi-list-check"></i>
+            Event Subscriptions
+          </h2>
+          <p class="card-subtitle">Choose which events you want to be notified about</p>
+        </div>
+
+        <div class="card-body">
+          <div *ngFor="let category of uniqueCategories" class="category-section">
+            <h3 class="category-title">{{ category | titlecase }}</h3>
+
+            <div class="event-list">
+              <div
+                *ngFor="let eventType of getEventTypesByCategory(category)"
+                class="event-item">
+                <div class="event-content">
+                  <div class="event-name">{{ eventType.display_name }}</div>
+                  <div class="event-description" *ngIf="eventType.description">
+                    {{ eventType.description }}
+                  </div>
+                </div>
+                <div class="form-check form-switch">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    [id]="'event-' + eventType.id"
+                    [checked]="isSubscribed(eventType.id)"
+                    (change)="toggleSubscription(eventType)"
+                    [disabled]="!eventType.is_active" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="cancel()"
+          [disabled]="isSaving">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="preferencesForm.invalid || isSaving">
+          <span *ngIf="!isSaving">
+            <i class="bi bi-check-circle"></i>
+            Save Preferences
+          </span>
+          <span *ngIf="isSaving">
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Saving...
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

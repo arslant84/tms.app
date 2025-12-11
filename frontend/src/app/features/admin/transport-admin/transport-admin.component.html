@@ -1,0 +1,194 @@
+<div class="transport-admin-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="bi bi-gear-fill me-2"></i>
+        Transport Request Management
+      </h1>
+      <p class="page-subtitle">Manage and review all transport requests</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" [routerLink]="['/admin/transport/processing']">
+        <i class="bi bi-truck me-2"></i>
+        Transport Processing
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-card-title">Total Requests</span>
+        <i class="bi bi-truck stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ totalRequestsCount }}</div>
+        <p class="stat-description">All submitted requests</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-card-title">Pending Review</span>
+        <i class="bi bi-clock stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ pendingReviewCount }}</div>
+        <p class="stat-description">Awaiting approval</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-card-title">Approved</span>
+        <i class="bi bi-check-circle stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ approvedCount }}</div>
+        <p class="stat-description">Approved requests</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-card-title">Processing</span>
+        <i class="bi bi-gear-fill stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ processingCount }}</div>
+        <p class="stat-description">In progress</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-funnel me-2"></i>
+          <h3 class="card-title">Filter & Search Transport Requests</h3>
+        </div>
+        <p class="card-description">Search and filter transport requests by various criteria.</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <input type="text" class="form-control" placeholder="Search by ID, Requestor, Purpose..."
+                 [(ngModel)]="filterCriteria.search" (keyup.enter)="applyFilters()">
+        </div>
+        <div class="col-md-4">
+          <select class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
+            <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transport Requests List Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-truck me-2"></i>
+          <h3 class="card-title">All Transport Requests</h3>
+        </div>
+        <p class="card-description">Complete list of transport requests from all users. Total: {{ totalRequests }}</p>
+      </div>
+    </div>
+    <div class="card-body p-0">
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="loading-state">
+        <i class="bi bi-arrow-clockwise spin"></i>
+        <p>Loading transport requests...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error && !loading" class="alert alert-danger m-3" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> {{ error }}
+        <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadRequests()">
+          <i class="bi bi-arrow-clockwise"></i> Retry
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && !error && filteredRequests.length === 0" class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>No transport requests found.</p>
+        <p class="text-sm">Transport requests will appear here once submitted.</p>
+      </div>
+
+      <!-- Requests Table -->
+      <div *ngIf="!loading && !error && filteredRequests.length > 0" class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>REQUEST NUMBER</th>
+              <th>STAFF NAME</th>
+              <th>DEPARTMENT</th>
+              <th>PURPOSE</th>
+              <th>STATUS</th>
+              <th>SUBMITTED</th>
+              <th class="text-center">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let request of filteredRequests">
+              <td class="fw-medium">{{ request.request_number || request.id }}</td>
+              <td>{{ request.requestorName || 'N/A' }}</td>
+              <td>{{ request.department || 'N/A' }}</td>
+              <td>
+                <div class="text-truncate" style="max-width: 200px;" [title]="request.purpose">
+                  {{ request.purpose || 'N/A' }}
+                </div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(request.status)">
+                  {{ request.status }}
+                </span>
+              </td>
+              <td>{{ formatDate(request.createdAt) }}</td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary" (click)="viewRequest(request)">
+                  <i class="bi bi-eye me-1"></i> View
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="totalPages > 1 && !loading && !error" class="pagination-container">
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="changePage(currentPage - 1)" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+              <a class="page-link" (click)="changePage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" (click)="changePage(currentPage + 1)" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="text-center mt-3 pagination-info">
+          <small>
+            Showing {{ (currentPage - 1) * pageSize + 1 }} -
+            {{ currentPage * pageSize > totalRequests ? totalRequests : currentPage * pageSize }} of {{ totalRequests }} requests
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

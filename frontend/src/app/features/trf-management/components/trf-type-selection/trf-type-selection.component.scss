@@ -1,0 +1,23 @@
+// Travel Type Selection - Bootstrap Design
+
+.hover-card {
+  transition: all 0.2s ease-in-out;
+  border: 1px solid var(--bs-border-color);
+
+  &:hover,
+  &:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    border-color: var(--bs-primary);
+    background-color: rgba(var(--bs-primary-rgb), 0.03);
+  }
+
+  &:focus {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+  }
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}

@@ -1,0 +1,229 @@
+<div class="approval-actions" *ngIf="canAction">
+  <!-- Action Buttons -->
+  <div class="actions-container" [ngClass]="{'actions-compact': compact}">
+    <div class="actions-header" *ngIf="!compact">
+      <h6 class="mb-0">
+        <i class="bi bi-hand-thumbs-up"></i>
+        Take Action
+      </h6>
+      <p class="text-muted small mb-3">
+        You are assigned to approve this step
+      </p>
+    </div>
+
+    <div class="action-buttons" [ngClass]="{'btn-group': compact, 'd-flex gap-2 flex-wrap': !compact}">
+      <!-- Approve Button -->
+      <button
+        type="button"
+        class="btn btn-success"
+        [class.btn-sm]="compact"
+        [disabled]="processing"
+        (click)="onApprove()">
+        <i class="bi bi-check-circle"></i>
+        <span *ngIf="!processing">Approve</span>
+        <span *ngIf="processing">
+          <span class="spinner-border spinner-border-sm me-1"></span>
+          Processing...
+        </span>
+      </button>
+
+      <!-- Reject Button -->
+      <button
+        type="button"
+        class="btn btn-danger"
+        [class.btn-sm]="compact"
+        [disabled]="processing"
+        (click)="onReject()">
+        <i class="bi bi-x-circle"></i>
+        Reject
+      </button>
+
+      <!-- Skip Button (if allowed) -->
+      <button
+        *ngIf="canSkip"
+        type="button"
+        class="btn btn-secondary"
+        [class.btn-sm]="compact"
+        [disabled]="processing"
+        (click)="onSkip()">
+        <i class="bi bi-skip-forward"></i>
+        Skip
+      </button>
+
+      <!-- Delegate Button -->
+      <button
+        type="button"
+        class="btn btn-info"
+        [class.btn-sm]="compact"
+        [disabled]="processing"
+        (click)="onDelegate()">
+        <i class="bi bi-arrow-right-circle"></i>
+        Delegate
+      </button>
+    </div>
+
+    <!-- Info Message -->
+    <div class="alert alert-info alert-sm mt-3" *ngIf="!compact && requiresComments">
+      <i class="bi bi-info-circle"></i>
+      Comments are required for this step
+    </div>
+  </div>
+
+  <!-- Comment Dialog Modal -->
+  <div class="modal-backdrop" *ngIf="showCommentDialog" (click)="onCommentDialogCancel()"></div>
+  <div class="modal-dialog-container" *ngIf="showCommentDialog">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi" [ngClass]="{
+            'bi-check-circle text-success': currentAction === 'approve',
+            'bi-x-circle text-danger': currentAction === 'reject',
+            'bi-skip-forward text-secondary': currentAction === 'skip'
+          }"></i>
+          {{ getDialogTitle() }}
+        </h5>
+        <button type="button" class="btn-close" (click)="onCommentDialogCancel()">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="comments" class="form-label">
+            Comments
+            <span class="text-danger" *ngIf="isCommentsRequired()">*</span>
+          </label>
+          <textarea
+            id="comments"
+            class="form-control"
+            rows="4"
+            [(ngModel)]="comments"
+            [placeholder]="isCommentsRequired() ? 'Please provide a reason (required)' : 'Optional comments'"
+            [required]="isCommentsRequired()">
+          </textarea>
+          <small class="text-muted" *ngIf="isCommentsRequired()">
+            Comments are required when rejecting
+          </small>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="onCommentDialogCancel()"
+          [disabled]="processing">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn"
+          [ngClass]="{
+            'btn-success': currentAction === 'approve',
+            'btn-danger': currentAction === 'reject',
+            'btn-secondary': currentAction === 'skip'
+          }"
+          (click)="onCommentDialogSubmit()"
+          [disabled]="processing || (isCommentsRequired() && !comments.trim())">
+          <span *ngIf="!processing">
+            <i class="bi" [ngClass]="{
+              'bi-check-circle': currentAction === 'approve',
+              'bi-x-circle': currentAction === 'reject',
+              'bi-skip-forward': currentAction === 'skip'
+            }"></i>
+            {{ currentAction === 'approve' ? 'Approve' : (currentAction === 'reject' ? 'Reject' : 'Skip') }}
+          </span>
+          <span *ngIf="processing">
+            <span class="spinner-border spinner-border-sm me-1"></span>
+            Processing...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delegation Dialog Modal -->
+  <div class="modal-backdrop" *ngIf="showDelegationDialog" (click)="onDelegationDialogCancel()"></div>
+  <div class="modal-dialog-container" *ngIf="showDelegationDialog">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-arrow-right-circle text-info"></i>
+          Delegate Approval
+        </h5>
+        <button type="button" class="btn-close" (click)="onDelegationDialogCancel()">
+          <span>&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          Delegate this approval to another user. They will receive notification and can take action on your behalf.
+        </div>
+
+        <div class="form-group mb-3">
+          <label for="delegateUser" class="form-label">
+            Delegate To <span class="text-danger">*</span>
+          </label>
+          <input
+            type="text"
+            id="delegateUser"
+            class="form-control"
+            [(ngModel)]="delegationUserId"
+            placeholder="Enter user ID or email"
+            required>
+          <small class="text-muted">
+            Enter the user ID of the person you want to delegate to
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="delegationReason" class="form-label">
+            Reason (Optional)
+          </label>
+          <textarea
+            id="delegationReason"
+            class="form-control"
+            rows="3"
+            [(ngModel)]="delegationReason"
+            placeholder="Why are you delegating this approval?">
+          </textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="onDelegationDialogCancel()"
+          [disabled]="processing">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-info"
+          (click)="onDelegationDialogSubmit()"
+          [disabled]="processing || !delegationUserId.trim()">
+          <span *ngIf="!processing">
+            <i class="bi bi-arrow-right-circle"></i>
+            Delegate
+          </span>
+          <span *ngIf="processing">
+            <span class="spinner-border spinner-border-sm me-1"></span>
+            Delegating...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- No Permission Message -->
+<div class="no-permission" *ngIf="stepExecution && !canAction && stepExecution.status === 'pending'">
+  <div class="alert alert-warning">
+    <i class="bi bi-info-circle"></i>
+    You do not have permission to action this step.
+    It is assigned to: <strong>{{ workflowService.formatUserName(stepExecution.assigned_to_user) || stepExecution.workflow_step_detail?.approver_role }}</strong>
+  </div>
+</div>

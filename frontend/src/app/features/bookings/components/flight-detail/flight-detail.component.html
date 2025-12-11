@@ -1,0 +1,283 @@
+<div class="container-fluid p-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">Flight Booking Details</h2>
+      <p class="text-muted mb-0">Booking Reference: {{ booking?.booking_reference || 'N/A' }}</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary" routerLink="/bookings/flights">
+        <i class="bi bi-arrow-left me-2"></i>Back to List
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading booking details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadBooking()">
+      Retry
+    </button>
+  </div>
+
+  <!-- Booking Details -->
+  <div *ngIf="booking && !loading">
+
+    <!-- Action Buttons -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+          <button
+            *ngIf="canEdit()"
+            class="btn btn-primary"
+            (click)="editBooking()">
+            <i class="bi bi-pencil me-2"></i>Edit Booking
+          </button>
+          <button
+            *ngIf="canConfirm()"
+            class="btn btn-success"
+            (click)="confirmBooking()">
+            <i class="bi bi-check-circle me-2"></i>Confirm Booking
+          </button>
+          <button
+            *ngIf="canCancel()"
+            class="btn btn-warning"
+            (click)="cancelBooking()">
+            <i class="bi bi-x-circle me-2"></i>Cancel Booking
+          </button>
+          <button
+            *ngIf="canDelete()"
+            class="btn btn-danger"
+            (click)="deleteBooking()">
+            <i class="bi bi-trash me-2"></i>Delete Booking
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Flight Information -->
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-airplane me-2"></i>Flight Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="text-muted small">Status</label>
+                <div>
+                  <span class="badge {{ getStatusBadgeClass(booking.status) }}">
+                    {{ booking.status }}
+                  </span>
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="text-muted small">Booking Class</label>
+                <div>
+                  <span class="badge {{ getBookingClassBadgeClass(booking.booking_class) }}">
+                    {{ booking.booking_class }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="text-muted small">Flight Type</label>
+              <div class="fw-medium">{{ booking.flight_type || 'N/A' }}</div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-6">
+                <label class="text-muted small">Airline</label>
+                <div class="fw-medium">{{ booking.airline }}</div>
+                <div class="text-muted small" *ngIf="booking.airline_code">{{ booking.airline_code }}</div>
+              </div>
+              <div class="col-6">
+                <label class="text-muted small">Flight Number</label>
+                <div class="fw-medium">{{ booking.flight_number }}</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="text-muted small">Departure</label>
+              <div class="fw-medium">{{ booking.departure_airport }}</div>
+              <div class="text-muted small" *ngIf="booking.departure_airport_code">
+                {{ booking.departure_airport_code }}
+                <span *ngIf="booking.departure_terminal"> - Terminal {{ booking.departure_terminal }}</span>
+              </div>
+              <div class="text-primary">{{ formatDateTime(booking.departure_time) }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="text-muted small">Arrival</label>
+              <div class="fw-medium">{{ booking.arrival_airport }}</div>
+              <div class="text-muted small" *ngIf="booking.arrival_airport_code">
+                {{ booking.arrival_airport_code }}
+                <span *ngIf="booking.arrival_terminal"> - Terminal {{ booking.arrival_terminal }}</span>
+              </div>
+              <div class="text-success">{{ formatDateTime(booking.arrival_time) }}</div>
+            </div>
+
+            <div class="row mb-3" *ngIf="booking.seat_number">
+              <div class="col-12">
+                <label class="text-muted small">Seat Number</label>
+                <div class="fw-medium">{{ booking.seat_number }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking & Ticketing Details -->
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-ticket-perforated me-2"></i>Booking & Ticketing</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="text-muted small">Booking Reference</label>
+              <div class="fw-medium">{{ booking.booking_reference }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="booking.ticket_number">
+              <label class="text-muted small">Ticket Number</label>
+              <div class="fw-medium">{{ booking.ticket_number }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="booking.booking_date">
+              <label class="text-muted small">Booking Date</label>
+              <div>{{ formatDate(booking.booking_date) }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="booking.confirmation_date">
+              <label class="text-muted small">Confirmation Date</label>
+              <div>{{ formatDate(booking.confirmation_date) }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="booking.ticketing_date">
+              <label class="text-muted small">Ticketing Date</label>
+              <div>{{ formatDate(booking.ticketing_date) }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="booking.cancellation_date">
+              <label class="text-muted small">Cancellation Date</label>
+              <div>{{ formatDate(booking.cancellation_date) }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="booking.cancellation_reason">
+              <label class="text-muted small">Cancellation Reason</label>
+              <div class="text-danger">{{ booking.cancellation_reason }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cost Information -->
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Cost Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="text-muted small">Base Cost</label>
+              <div class="fw-medium fs-5">{{ formatCurrency(booking.cost, booking.currency) }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="text-muted small">Tax Amount</label>
+              <div>{{ formatCurrency(booking.tax_amount, booking.currency) }}</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="text-muted small">Total Cost</label>
+              <div class="fw-bold fs-4 text-success">
+                {{ formatCurrency(booking.cost + booking.tax_amount, booking.currency) }}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="text-muted small">Currency</label>
+              <div class="fw-medium">{{ booking.currency }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Passenger Preferences -->
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-person me-2"></i>Passenger Preferences</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3" *ngIf="booking.baggage_allowance">
+              <label class="text-muted small">Baggage Allowance</label>
+              <div class="fw-medium">{{ booking.baggage_allowance }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="booking.carry_on_allowance">
+              <label class="text-muted small">Carry-on Allowance</label>
+              <div class="fw-medium">{{ booking.carry_on_allowance }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="booking.meal_preference">
+              <label class="text-muted small">Meal Preference</label>
+              <div class="fw-medium">{{ booking.meal_preference }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="booking.special_requests">
+              <label class="text-muted small">Special Requests</label>
+              <div>{{ booking.special_requests }}</div>
+            </div>
+
+            <div class="mb-3" *ngIf="booking.notes">
+              <label class="text-muted small">Additional Notes</label>
+              <div>{{ booking.notes }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Information -->
+      <div class="col-12 mb-4">
+        <div class="card">
+          <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>System Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <label class="text-muted small">TRF ID</label>
+                <div class="fw-medium">{{ booking.trf }}</div>
+              </div>
+              <div class="col-md-3">
+                <label class="text-muted small">User ID</label>
+                <div class="fw-medium">{{ booking.user }}</div>
+              </div>
+              <div class="col-md-3">
+                <label class="text-muted small">Created At</label>
+                <div>{{ formatDateTime(booking.created_at) }}</div>
+              </div>
+              <div class="col-md-3">
+                <label class="text-muted small">Last Updated</label>
+                <div>{{ formatDateTime(booking.updated_at) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

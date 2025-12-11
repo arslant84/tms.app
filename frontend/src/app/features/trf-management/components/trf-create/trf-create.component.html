@@ -1,0 +1,436 @@
+<div class="trf-container">
+  <div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h2>Travel & Services Request Form ({{formType == 'overseas' ? 'International' : 'Domestic'}})</h2>
+      <div>
+        <button class="btn btn-light me-2" (click)="saveDraft()" [disabled]="isSubmitting">
+          <i class="bi bi-save"></i> Save Draft
+        </button>
+        <button class="btn btn-light" (click)="exportToPdf()" [disabled]="trfForm.invalid || isSubmitting">
+          <i class="bi bi-file-pdf"></i> Export PDF
+        </button>
+      </div>
+    </div>
+    
+    <div class="card-body p-0">
+      <div class="text-center mb-2 p-2">
+        <small class="text-muted">For Internal Use / Для Внутреннего Пользования</small>
+      </div>
+      
+      <form [formGroup]="trfForm" (ngSubmit)="onSubmit()">
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr>
+              <th colspan="8" class="text-center bg-light">
+                <strong>TRAVEL & SERVICES REQUEST FORM ({{formType == 'overseas' ? 'International' : 'Domestic'}})</strong><br>
+                <small>ФОРМА ЗАПРОСА НА ПОЕЗДКУ И УСЛУГИ (ВНУТРЕННЯЯ)</small>
+              </th>
+            </tr>
+          </thead>
+        </table>
+
+        <!-- EMPLOYEE DETAILS SECTION -->
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr>
+              <th colspan="8" class="bg-info text-white">
+                EMPLOYEE DETAILS / ДАННЫЕ СОТРУДНИКА
+              </th>
+            </tr>
+          </thead>
+          <tbody formGroupName="employeeDetails">
+            <tr>
+              <td colspan="4">
+                <div class="form-group mb-0">
+                  <label for="fullName">FULL NAME / ПОЛНОЕ ИМЯ:</label>
+                  <input type="text" class="form-control" id="fullName" formControlName="fullName">
+                </div>
+              </td>
+              <td colspan="4">
+                <div class="form-group mb-0">
+                  <label for="staffId">STAFF # / ШТАТНЫЙ №:</label>
+                  <input type="text" class="form-control" id="staffId" formControlName="staffId">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="4">
+                <div class="form-group mb-0">
+                  <label for="department">DEPARTM & POSITION/ОТДЕЛ И ДОЛЖНОСТЬ:</label>
+                  <input type="text" class="form-control" id="department" formControlName="department">
+                </div>
+              </td>
+              <td colspan="4">
+                <div class="form-group mb-0">
+                  <label for="deptCostCenter">DEPT. COST CENTRE: ЦЕНТР ЗАТРАТ ОТДЕЛА:</label>
+                  <input type="text" class="form-control" id="deptCostCenter" formControlName="deptCostCenter">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="8">
+                <div class="form-group mb-0">
+                  <label for="telExt">TEL. EXT. & E-MAIL/FAX: ТЕЛЕФОН И ПОЧТА:</label>
+                  <input type="text" class="form-control" id="telExt" formControlName="telExt">
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- PURPOSE OF TRAVEL SECTION -->
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr>
+              <th colspan="8" class="bg-info text-white">
+                PURPOSE OF TRAVEL / ЦЕЛЬ ПОЕЗДКИ:
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="8">
+                <div class="form-group mb-0">
+                  <textarea class="form-control" rows="2" formControlName="purposeOfTravel"></textarea>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ITINERARY SECTION -->
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr>
+              <th colspan="8" class="bg-info text-white">
+                ITINERARY / МАРШРУТ
+              </th>
+            </tr>
+            <tr>
+              <th>DATE / ДАТА</th>
+              <th>DAY / ДЕНЬ</th>
+              <th>FROM / ОТКУДА</th>
+              <th>TO / КУДА</th>
+              <th>ETD / ВЫЛЕТ</th>
+              <th>ETA / ПРИЛЕТ</th>
+              <th>FLIGHT / РЕЙС</th>
+              <th>REMARKS / ПРИМЕЧАНИЯ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container formArrayName="itinerary">
+              <tr *ngFor="let item of itineraryArray.controls; let i = index" [formGroupName]="i">
+                <td>
+                  <input type="date" class="form-control form-control-sm" formControlName="date">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="day">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="from">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="to">
+                </td>
+                <td>
+                  <input type="time" class="form-control form-control-sm" formControlName="etd">
+                </td>
+                <td>
+                  <input type="time" class="form-control form-control-sm" formControlName="eta">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="flight">
+                </td>
+                <td>
+                  <div class="d-flex">
+                    <input type="text" class="form-control form-control-sm" formControlName="remarks">
+                    <button type="button" class="btn btn-sm btn-danger ms-1" *ngIf="itineraryArray.length > 1" (click)="removeItineraryItem(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+            <tr>
+              <td colspan="8" class="text-end">
+                <button type="button" class="btn btn-sm btn-primary" (click)="addItineraryItem()">
+                  <i class="bi bi-plus-circle"></i> Add Row
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- MEAL PROVISION SECTION -->
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr>
+              <th colspan="6" class="bg-info text-white">
+                MEAL PROVISION IN KTV ONLY / ПИТАНИЕ В КИТВЕЛИ
+              </th>
+            </tr>
+            <tr>
+              <th>DATE FROM/ДАТА С(ДО):</th>
+              <th>BREAKFAST/ЗАВТРАК</th>
+              <th>LUNCH/ОБЕД</th>
+              <th>DINNER/УЖИН</th>
+              <th>SUPPER/ПОЗДНИЙ УЖИН</th>
+              <th>REFRESHMENT/ ЗАКУСКИ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container formArrayName="mealProvisions">
+              <tr *ngFor="let meal of mealProvisionsArray.controls; let i = index" [formGroupName]="i">
+                <td>
+                  <input type="date" class="form-control form-control-sm" formControlName="date">
+                </td>
+                <td class="text-center">
+                  <input type="checkbox" class="form-check-input" formControlName="breakfast">
+                </td>
+                <td class="text-center">
+                  <input type="checkbox" class="form-check-input" formControlName="lunch">
+                </td>
+                <td class="text-center">
+                  <input type="checkbox" class="form-check-input" formControlName="dinner">
+                </td>
+                <td class="text-center">
+                  <input type="checkbox" class="form-check-input" formControlName="supper">
+                </td>
+                <td>
+                  <div class="d-flex">
+                    <input type="checkbox" class="form-check-input" formControlName="refreshment">
+                    <button type="button" class="btn btn-sm btn-danger ms-1" *ngIf="mealProvisionsArray.length > 1" (click)="removeMealProvision(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+            <tr>
+              <td>TOTAL/ИТОГО:</td>
+              <td class="text-center">{{ getBreakfastCount() }}</td>
+              <td class="text-center">{{ getLunchCount() }}</td>
+              <td class="text-center">{{ getDinnerCount() }}</td>
+              <td class="text-center">{{ getSupperCount() }}</td>
+              <td class="text-center">{{ getRefreshmentCount() }}</td>
+            </tr>
+            <tr>
+              <td colspan="6" class="text-end">
+                <button type="button" class="btn btn-sm btn-primary" (click)="addMealProvision()">
+                  <i class="bi bi-plus-circle"></i> Add Row
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ACCOMMODATION SECTION -->
+        <table class="table table-bordered mb-0" formGroupName="accommodation">
+          <thead>
+            <tr>
+              <th colspan="6" class="bg-info text-white">
+                ACCOMMODATION / ЖИЛЬЕ
+              </th>
+            </tr>
+            <tr>
+              <th>Accommodation/Жилье</th>
+              <th>Check-in Date/Дата заезда</th>
+              <th>Check-in Time/Время заезда</th>
+              <th>Check-out Date/Дата выезда</th>
+              <th>Check-out Time/Время выезда</th>
+              <th>Remarks / Примечания</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="hotel" value="Hotel" formControlName="type">
+                  <label class="form-check-label" for="hotel">Hotel/Отель</label>
+                </div>
+              </td>
+              <td rowspan="5">
+                <input type="date" class="form-control" formControlName="checkInDate">
+              </td>
+              <td rowspan="5">
+                <input type="time" class="form-control" formControlName="checkInTime">
+              </td>
+              <td rowspan="5">
+                <input type="date" class="form-control" formControlName="checkOutDate">
+              </td>
+              <td rowspan="5">
+                <input type="time" class="form-control" formControlName="checkOutTime">
+              </td>
+              <td rowspan="5">
+                <textarea class="form-control" rows="5" formControlName="remarks"></textarea>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="staffHouse" value="Staff House" formControlName="type">
+                  <label class="form-check-label" for="staffHouse">Staff House/Жилье для сотрудников</label>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="pkcKampung" value="PKC Kampung" formControlName="type">
+                  <label class="form-check-label" for="pkcKampung">PKC Kampung/Кампунг камп</label>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" id="other" value="Other" formControlName="type">
+                  <label class="form-check-label" for="other">Other/Другое</label>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td *ngIf="trfForm.get('accommodation.type')?.value === 'Other'">
+                <input type="text" class="form-control" formControlName="otherDetails" placeholder="Specify other accommodation">
+              </td>
+              <td *ngIf="trfForm.get('accommodation.type')?.value !== 'Other'">&nbsp;</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- COMPANY TRANSPORTATION SECTION -->
+        <table class="table table-bordered mb-0">
+          <thead>
+            <tr>
+              <th colspan="8" class="bg-info text-white">
+                COMPANY TRANSPORTATION / ТРАНСПОРТ КОМПАНИИ
+              </th>
+            </tr>
+            <tr>
+              <th>DATE/ДАТА</th>
+              <th>DAY / ДЕНЬ НЕДЕЛИ</th>
+              <th>FROM ОТКУДА</th>
+              <th>TO/КУДА</th>
+              <th>ETD/Время отправления из места проживания</th>
+              <th>ACCOMMODATION/ТИП ЖИЛЬЯ</th>
+              <th>ADDRESS/АДРЕС</th>
+              <th>REMARKS/ ПРИМЕЧАНИЯ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container formArrayName="companyTransportation">
+              <tr *ngFor="let transport of transportationArray.controls; let i = index" [formGroupName]="i">
+                <td>
+                  <input type="date" class="form-control form-control-sm" formControlName="date">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="day">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="from">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="to">
+                </td>
+                <td>
+                  <input type="time" class="form-control form-control-sm" formControlName="etd">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="accommodationType">
+                </td>
+                <td>
+                  <input type="text" class="form-control form-control-sm" formControlName="address">
+                </td>
+                <td>
+                  <div class="d-flex">
+                    <input type="text" class="form-control form-control-sm" formControlName="remarks">
+                    <button type="button" class="btn btn-sm btn-danger ms-1" *ngIf="transportationArray.length > 1" (click)="removeTransportationItem(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+            <tr>
+              <td colspan="8" class="text-end">
+                <button type="button" class="btn btn-sm btn-primary" (click)="addTransportationItem()">
+                  <i class="bi bi-plus-circle"></i> Add Row
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- APPROVAL SECTION -->
+        <table class="table table-bordered mb-0" formGroupName="approval">
+          <tbody>
+            <tr>
+              <td>PREPARED BY/ ПОДГОТОВЛЕНО:</td>
+              <td>SIGNATURE/ПОДПИСЬ:</td>
+              <td>POSITION/ ДОЛЖНОСТЬ:</td>
+              <td>DATE/ДАТА:</td>
+            </tr>
+            <tr>
+              <td>
+                <input type="text" class="form-control" formControlName="preparedBy">
+              </td>
+              <td></td>
+              <td>
+                <input type="text" class="form-control" formControlName="preparedByPosition">
+              </td>
+              <td>
+                <input type="date" class="form-control" formControlName="preparedByDate">
+              </td>
+            </tr>
+            <tr>
+              <td>REVIEWED BY/ ПРОВЕРЕНО:</td>
+              <td>SIGNATURE/ПОДПИСЬ:</td>
+              <td>POSITION/ ДОЛЖНОСТЬ:</td>
+              <td>DATE/ДАТА:</td>
+            </tr>
+            <tr>
+              <td>
+                <input type="text" class="form-control" formControlName="reviewedBy">
+              </td>
+              <td></td>
+              <td>
+                <input type="text" class="form-control" formControlName="reviewedByPosition">
+              </td>
+              <td>
+                <input type="date" class="form-control" formControlName="reviewedByDate">
+              </td>
+            </tr>
+            <tr>
+              <td>APPROVED BY/ ОДОБРЕНО:</td>
+              <td>SIGNATURE/ПОДПИСЬ:</td>
+              <td>POSITION/ ДОЛЖНОСТЬ:</td>
+              <td>DATE/ДАТА:</td>
+            </tr>
+            <tr>
+              <td>
+                <input type="text" class="form-control" formControlName="approvedBy">
+              </td>
+              <td></td>
+              <td>
+                <input type="text" class="form-control" formControlName="approvedByPosition">
+              </td>
+              <td>
+                <input type="date" class="form-control" formControlName="approvedByDate">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Form Navigation and Submit -->
+        <div class="p-3 d-flex justify-content-between">
+          <button type="button" class="btn btn-secondary" (click)="saveDraft()">
+            <i class="bi bi-save"></i> Save Draft
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="trfForm.invalid || isSubmitting">
+            <i class="bi bi-check-circle"></i> Submit
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,329 @@
+<!--
+  Transport Request Create Form
+  Redesigned to match React source (pctsb.syntra) exactly
+  NO cost fields - matches new backend structure
+-->
+
+<!-- Loading State -->
+<div *ngIf="loading" class="loading-container">
+  <div class="loading-spinner">
+    <i class="bi bi-arrow-clockwise spin-animation"></i>
+    <p>Loading request data...</p>
+  </div>
+</div>
+
+<!-- Page Header -->
+<div *ngIf="!loading" class="page-header-section">
+  <div class="header-left">
+    <button class="btn-back" (click)="onCancel()">
+      <i class="bi bi-arrow-left"></i>
+      Back to List
+    </button>
+    <h1 class="page-title">
+      <i class="bi bi-truck"></i>
+      {{ isEditMode ? 'Edit' : 'Create New' }} Transport Request
+    </h1>
+  </div>
+</div>
+
+<div *ngIf="!loading" class="transport-create-container" [formGroup]="transportForm">
+  <div class="form-card">
+    <!-- Requestor Information -->
+    <section class="form-section">
+      <h3 class="section-title">
+        <span class="title-text">
+          <i class="bi bi-person-circle"></i>
+          Requestor Information
+        </span>
+      </h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="requestorName">Requestor Name <span class="required">*</span></label>
+          <input
+            type="text"
+            id="requestorName"
+            class="form-control"
+            formControlName="requestorName"
+            placeholder="Full name"
+          >
+          <div class="error-message" *ngIf="isFieldInvalid('requestorName')">
+            Requestor name is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="staffId">Staff ID <span class="required">*</span></label>
+          <input
+            type="text"
+            id="staffId"
+            class="form-control"
+            formControlName="staffId"
+            placeholder="Employee/Staff ID"
+          >
+          <div class="error-message" *ngIf="isFieldInvalid('staffId')">
+            Staff ID is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="department">Department <span class="required">*</span></label>
+          <input
+            type="text"
+            id="department"
+            class="form-control"
+            formControlName="department"
+            placeholder="Department name"
+          >
+          <div class="error-message" *ngIf="isFieldInvalid('department')">
+            Department is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="position">Position/Title</label>
+          <input
+            type="text"
+            id="position"
+            class="form-control"
+            formControlName="position"
+            placeholder="Job title"
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- Request Details -->
+    <section class="form-section">
+      <h3 class="section-title">
+        <span class="title-text">
+          <i class="bi bi-file-text"></i>
+          Request Details
+        </span>
+      </h3>
+      <div class="form-group full-width">
+        <label for="purpose">Purpose of Transport <span class="required">*</span></label>
+        <textarea
+          id="purpose"
+          class="form-control"
+          formControlName="purpose"
+          rows="3"
+          placeholder="Describe the purpose of this transport request"
+        ></textarea>
+        <div class="error-message" *ngIf="isFieldInvalid('purpose')">
+          Purpose is required
+        </div>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="tsrReference">TSR Reference (if applicable)</label>
+        <input
+          type="text"
+          id="tsrReference"
+          class="form-control"
+          formControlName="tsrReference"
+          placeholder="Reference to related TSR"
+        >
+      </div>
+    </section>
+
+    <!-- Transport Details -->
+    <section class="form-section">
+      <h3 class="section-title">
+        <span class="title-text">
+          <i class="bi bi-geo-alt"></i>
+          Transport Details
+        </span>
+        <button type="button" class="btn btn-sm btn-add-journey" (click)="addTransportDetail()">
+          <i class="bi bi-plus-circle"></i>
+          Add Journey
+        </button>
+      </h3>
+
+      <div formArrayName="transportDetails" class="details-container">
+        <div *ngFor="let detail of transportDetails.controls; let i = index" [formGroupName]="i" class="detail-card">
+          <div class="detail-header">
+            <h4>Journey {{ i + 1 }}</h4>
+            <button
+              type="button"
+              class="btn-remove"
+              (click)="removeTransportDetail(i)"
+              *ngIf="transportDetails.length > 1"
+            >
+              <i class="bi bi-x-circle"></i>
+              Remove
+            </button>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Date <span class="required">*</span></label>
+              <input
+                type="date"
+                class="form-control"
+                formControlName="date"
+                (change)="onDateChange(i, $event)"
+              >
+              <div class="error-message" *ngIf="isDetailFieldInvalid(i, 'date')">
+                Date is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Day</label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="day"
+                placeholder="Auto-filled"
+                readonly
+              >
+            </div>
+
+            <div class="form-group">
+              <label>From <span class="required">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="from"
+                placeholder="Starting location"
+              >
+              <div class="error-message" *ngIf="isDetailFieldInvalid(i, 'from')">
+                From location is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>To <span class="required">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="to"
+                placeholder="Destination"
+              >
+              <div class="error-message" *ngIf="isDetailFieldInvalid(i, 'to')">
+                To location is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Departure Time <span class="required">*</span></label>
+              <input
+                type="time"
+                class="form-control"
+                formControlName="departureTime"
+              >
+              <div class="error-message" *ngIf="isDetailFieldInvalid(i, 'departureTime')">
+                Departure time is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Transport Type <span class="required">*</span></label>
+              <select class="form-control" formControlName="transportType">
+                <option value="">Select type</option>
+                <option *ngFor="let type of transportTypes" [value]="type">{{ type }}</option>
+              </select>
+              <div class="error-message" *ngIf="isDetailFieldInvalid(i, 'transportType')">
+                Transport type is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Number of Passengers <span class="required">*</span></label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="numberOfPassengers"
+                min="1"
+              >
+              <div class="error-message" *ngIf="isDetailFieldInvalid(i, 'numberOfPassengers')">
+                Number of passengers is required
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Approval & Submission Confirmations -->
+    <section class="form-section">
+      <h3 class="section-title">
+        <span class="title-text">
+          <i class="bi bi-check-circle"></i>
+          Approval & Submission
+        </span>
+      </h3>
+
+      <div class="form-group full-width">
+        <label for="additionalComments">Additional Comments</label>
+        <textarea
+          id="additionalComments"
+          class="form-control"
+          formControlName="additionalComments"
+          rows="3"
+          placeholder="Any other information relevant to this request"
+        ></textarea>
+      </div>
+
+      <div class="confirmations">
+        <div class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="confirmPolicy"
+            formControlName="confirmPolicy"
+          >
+          <label class="form-check-label" for="confirmPolicy">
+            <span class="required">*</span> I confirm that this request is in accordance with company travel and transport policy
+          </label>
+          <div class="error-message" *ngIf="isFieldInvalid('confirmPolicy')">
+            You must confirm policy compliance
+          </div>
+        </div>
+
+        <div class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="confirmManagerApproval"
+            formControlName="confirmManagerApproval"
+          >
+          <label class="form-check-label" for="confirmManagerApproval">
+            <span class="required">*</span> I confirm that I have obtained necessary manager approval for this transport request
+          </label>
+          <div class="error-message" *ngIf="isFieldInvalid('confirmManagerApproval')">
+            You must confirm manager approval
+          </div>
+        </div>
+
+        <div class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="confirmTermsAndConditions"
+            formControlName="confirmTermsAndConditions"
+          >
+          <label class="form-check-label" for="confirmTermsAndConditions">
+            I agree to the terms and conditions for transport services
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-cancel" (click)="onCancel()" [disabled]="submitting">
+        <i class="bi bi-x-circle"></i>
+        Cancel
+      </button>
+      <button type="button" class="btn btn-draft" (click)="onSaveDraft()" [disabled]="submitting">
+        <i class="bi bi-save"></i>
+        {{ submitting ? 'Saving...' : 'Save Draft' }}
+      </button>
+      <button type="button" class="btn btn-submit" (click)="onSubmit()" [disabled]="submitting">
+        <i class="bi bi-send"></i>
+        {{ submitting ? 'Submitting...' : 'Submit Request' }}
+      </button>
+    </div>
+  </div>
+</div>

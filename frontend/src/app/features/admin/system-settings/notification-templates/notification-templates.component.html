@@ -1,0 +1,218 @@
+<div class="notification-templates-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">Notification Templates</h1>
+        <p class="page-subtitle">Manage notification templates for system events.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="openCreateModal()" [disabled]="isLoading">
+          <i class="bi bi-plus-circle me-2"></i>
+          Create New Template
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Card -->
+  <div class="card templates-card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">
+          <i class="bi bi-bell me-2"></i>All Notification Templates
+        </h2>
+        <p class="card-description mb-0">Configure notification templates for different system events.</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Templates Table -->
+      <div *ngIf="!isLoading" class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Subject</th>
+              <th>Type</th>
+              <th>Created At</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let template of templates">
+              <td>
+                <div class="template-name">{{ template.name }}</div>
+                <div class="template-description" *ngIf="template.description">{{ template.description }}</div>
+              </td>
+              <td>{{ template.subject }}</td>
+              <td>
+                <span class="badge bg-info">{{ template.notification_type }}</span>
+              </td>
+              <td>{{ formatDate(template.created_at) }}</td>
+              <td class="text-end">
+                <div class="action-buttons">
+                  <button class="btn btn-sm btn-outline-secondary" (click)="openEditModal(template)" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteTemplate(template)" title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="templates.length === 0">
+              <td colspan="5" class="text-center text-muted py-4">
+                No notification templates found.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Dialog -->
+  <div class="modal" [class.show]="isModalOpen" [style.display]="isModalOpen ? 'block' : 'none'" tabindex="-1">
+    <div class="modal-backdrop" [class.show]="isModalOpen" (click)="closeModal()"></div>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            {{ currentTemplate ? 'Edit Notification Template' : 'Create New Notification Template' }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeModal()" [disabled]="isSaving"></button>
+        </div>
+        <div class="modal-body">
+          <form (ngSubmit)="submitForm()">
+            <!-- Template Name -->
+            <div class="mb-3">
+              <label class="form-label">Template Name <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="form.name"
+                name="name"
+                placeholder="Enter template name"
+                [disabled]="isSaving"
+                required
+              />
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label class="form-label">Description (Optional)</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="form.description"
+                name="description"
+                placeholder="Enter description"
+                [disabled]="isSaving"
+              />
+            </div>
+
+            <!-- Notification Type -->
+            <div class="mb-3">
+              <label class="form-label">Notification Type <span class="text-danger">*</span></label>
+              <select class="form-select" [(ngModel)]="form.notification_type" name="notification_type" [disabled]="isSaving" required>
+                <option value="email">Email</option>
+                <option value="system">System</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+
+            <!-- Event Type -->
+            <div class="mb-3">
+              <label class="form-label">Event Type <span class="text-danger">*</span></label>
+              <select
+                class="form-select"
+                [(ngModel)]="form.event_type"
+                name="event_type"
+                (ngModelChange)="onEventTypeChange($event)"
+                [disabled]="isSaving"
+                required
+              >
+                <option [ngValue]="null">Select event type</option>
+                <option *ngFor="let et of eventTypes" [ngValue]="et.id">
+                  {{ et.name }} - {{ et.module }} ({{ et.category }})
+                </option>
+              </select>
+
+              <!-- Event Type Info Box -->
+              <div *ngIf="selectedEventType" class="event-type-info">
+                <div class="info-icon">
+                  <i class="bi bi-info-circle"></i>
+                </div>
+                <div class="info-content">
+                  <div class="info-title">{{ selectedEventType.name }}</div>
+                  <div class="info-badges">
+                    <span class="badge badge-outline">{{ selectedEventType.module }}</span>
+                    <span class="badge badge-secondary">{{ selectedEventType.category }}</span>
+                  </div>
+                  <div class="info-description" *ngIf="selectedEventType.description">
+                    {{ selectedEventType.description }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subject -->
+            <div class="mb-3">
+              <label class="form-label">Subject <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="form.subject"
+                name="subject"
+                placeholder="Enter email subject"
+                [disabled]="isSaving"
+                required
+              />
+            </div>
+
+            <!-- Template Body -->
+            <div class="mb-3">
+              <label class="form-label">Template Body <span class="text-danger">*</span></label>
+              <textarea
+                class="form-control"
+                [(ngModel)]="form.body"
+                name="body"
+                placeholder="Enter template content"
+                rows="6"
+                [disabled]="isSaving"
+                required
+              ></textarea>
+
+              <!-- Available Variables -->
+              <div class="variables-section">
+                <p class="variables-label">Available template variables:</p>
+                <div class="variables-badges">
+                  <span class="variable-badge" *ngFor="let variable of getAvailableVariables()">
+                    {{ '{' }}{{ variable }}{{ '}' }}
+                  </span>
+                </div>
+                <p class="variables-help">These placeholders will be replaced with actual values when notifications are sent.</p>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSaving">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-primary" (click)="submitForm()" [disabled]="!isFormValid() || isSaving">
+            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+            {{ currentTemplate ? 'Update Template' : 'Add Template' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

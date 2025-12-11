@@ -1,0 +1,440 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { TrfService } from '../../services/trf.service';
+import { DomesticTravelRequestForm, OverseasTravelRequestForm } from '../../models/trf.model';
+import { HttpClientModule } from '@angular/common/http';
+import { AuthService } from '../../../../core/services/auth.service';
+
+@Component({
+  selector: 'app-trf-create',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule],
+  templateUrl: './trf-create.component.html',
+  styleUrls: ['./trf-create.component.scss']
+})
+export class TrfCreateComponent implements OnInit {
+  trfForm!: FormGroup;
+  currentStep = 1;
+  totalSteps = 6;
+  isSubmitting = false;
+  submitSuccess = false;
+  submitError = false;
+  errorMessage = '';
+  logoPath: string = 'img/pet-logo-without-text.png';
+  formType: string = 'domestic'; // Default form type
+  requestorInfo: any;
+  domesticTravelDetails: any;
+  overseasTravelDetails: any;
+
+  constructor(
+    private fb: FormBuilder,
+    private trfService: TrfService,
+    private router: Router,
+    private authService: AuthService
+  ) {}
+
+  ngOnInit(): void {
+    this.initForm();
+    this.populateUserDetails();
+  }
+
+  private populateUserDetails(): void {
+    const currentUser = this.authService.getCurrentUser();
+    console.log('TRF - Current user data:', currentUser);
+    if (currentUser) {
+      // Auto-populate employee details from logged-in user
+      this.trfForm.get('employeeDetails')?.patchValue({
+        fullName: currentUser.name || '',
+        staffId: currentUser.staff_id || '',
+        department: currentUser.department || '',
+        email: currentUser.email || ''
+      });
+
+      // Auto-populate prepared by fields
+      this.trfForm.get('approval')?.patchValue({
+        preparedBy: currentUser.name || ''
+      });
+      console.log('TRF - Form values after population:', this.trfForm.get('employeeDetails')?.value);
+    }
+  }
+  
+  initForm(): void {
+    this.trfForm = this.fb.group({
+      employeeDetails: this.fb.group({
+        fullName: ['', Validators.required],
+        staffId: ['', Validators.required],
+        department: ['', Validators.required],
+        position: ['', Validators.required],
+        deptCostCenter: ['', Validators.required],
+        telExt: [''],
+        email: ['', [Validators.required, Validators.email]]
+      }),
+      purposeOfTravel: ['', Validators.required],
+      itinerary: this.fb.array([this.createItineraryItem()]),
+      mealProvisions: this.fb.array([this.createMealProvision()]),
+      accommodation: this.fb.group({
+        type: ['Hotel', Validators.required],
+        otherDetails: [''],
+        checkInDate: ['', Validators.required],
+        checkInTime: ['', Validators.required],
+        checkOutDate: ['', Validators.required],
+        checkOutTime: ['', Validators.required],
+        remarks: ['']
+      }),
+      companyTransportation: this.fb.array([this.createTransportationItem()]),
+      approval: this.fb.group({
+        preparedBy: ['', Validators.required],
+        preparedByPosition: ['', Validators.required],
+        preparedByDate: [new Date().toISOString().split('T')[0], Validators.required],
+        reviewedBy: [''],
+        reviewedByPosition: [''],
+        reviewedByDate: [''],
+        approvedBy: [''],
+        approvedByPosition: [''],
+        approvedByDate: ['']
+      })
+    });
+  }
+  
+  // Helper methods for form arrays
+  get itineraryArray(): FormArray {
+    return this.trfForm.get('itinerary') as FormArray;
+  }
+  
+  get mealProvisionsArray(): FormArray {
+    return this.trfForm.get('mealProvisions') as FormArray;
+  }
+  
+  get transportationArray(): FormArray {
+    return this.trfForm.get('companyTransportation') as FormArray;
+  }
+  
+  createItineraryItem(): FormGroup {
+    return this.fb.group({
+      date: ['', Validators.required],
+      day: ['', Validators.required],
+      from: ['', Validators.required],
+      to: ['', Validators.required],
+      etd: [''],
+      eta: [''],
+      flight: [''],
+      remarks: ['']
+    });
+  }
+  
+  createMealProvision(): FormGroup {
+    return this.fb.group({
+      date: ['', Validators.required],
+      breakfast: [false],
+      lunch: [false],
+      dinner: [false],
+      supper: [false],
+      refreshment: [false]
+    });
+  }
+  
+  createTransportationItem(): FormGroup {
+    return this.fb.group({
+      date: ['', Validators.required],
+      day: ['', Validators.required],
+      from: ['', Validators.required],
+      to: ['', Validators.required],
+      etd: ['', Validators.required],
+      accommodationType: [''],
+      address: [''],
+      remarks: ['']
+    });
+  }
+  
+  addItineraryItem(): void {
+    this.itineraryArray.push(this.createItineraryItem());
+  }
+  
+  removeItineraryItem(index: number): void {
+    if (this.itineraryArray.length > 1) {
+      this.itineraryArray.removeAt(index);
+    }
+  }
+  
+  addMealProvision(): void {
+    this.mealProvisionsArray.push(this.createMealProvision());
+  }
+  
+  removeMealProvision(index: number): void {
+    if (this.mealProvisionsArray.length > 1) {
+      this.mealProvisionsArray.removeAt(index);
+    }
+  }
+  
+  addTransportationItem(): void {
+    this.transportationArray.push(this.createTransportationItem());
+  }
+  
+  removeTransportationItem(index: number): void {
+    if (this.transportationArray.length > 1) {
+      this.transportationArray.removeAt(index);
+    }
+  }
+  
+  // Meal count methods for totals
+  getBreakfastCount(): number {
+    return this.mealProvisionsArray.controls
+      .filter(control => control.get('breakfast')?.value === true)
+      .length;
+  }
+  
+  getLunchCount(): number {
+    return this.mealProvisionsArray.controls
+      .filter(control => control.get('lunch')?.value === true)
+      .length;
+  }
+  
+  getDinnerCount(): number {
+    return this.mealProvisionsArray.controls
+      .filter(control => control.get('dinner')?.value === true)
+      .length;
+  }
+  
+  getSupperCount(): number {
+    return this.mealProvisionsArray.controls
+      .filter(control => control.get('supper')?.value === true)
+      .length;
+  }
+  
+  getRefreshmentCount(): number {
+    return this.mealProvisionsArray.controls
+      .filter(control => control.get('refreshment')?.value === true)
+      .length;
+  }
+  
+  // Navigation methods
+  nextStep(): void {
+    if (this.currentStep < this.totalSteps) {
+      this.currentStep++;
+      window.scrollTo(0, 0);
+    }
+  }
+  
+  prevStep(): void {
+    if (this.currentStep > 1) {
+      this.currentStep--;
+      window.scrollTo(0, 0);
+    }
+  }
+  
+  goToStep(step: number): void {
+    if (step >= 1 && step <= this.totalSteps) {
+      this.currentStep = step;
+      window.scrollTo(0, 0);
+    }
+  }
+  
+  // Form submission
+  onSubmit(): void {
+    if (this.trfForm.invalid) {
+      this.markFormGroupTouched(this.trfForm);
+      return;
+    }
+    
+    this.isSubmitting = true;
+    
+    switch (this.formType) {
+      case 'domestic':
+        this.submitDomesticForm();
+        break;
+      case 'overseas':
+        this.submitOverseasForm();
+        break;
+      case 'home-leave':
+        // Handle home leave form submission
+        this.handleSubmitSuccess();
+        break;
+      case 'external':
+        this.submitExternalForm();
+        break;
+      default:
+        this.submitDomesticForm();
+    }
+  }
+  
+  private submitDomesticForm(): void {
+    const formData = this.trfForm.value;
+
+    // Add status and timestamps
+    // Use 'Pending' status to trigger workflow
+    const trf: DomesticTravelRequestForm = {
+      ...formData,
+      status: 'Pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    this.trfService.createDomesticTrf(trf).subscribe({
+      next: () => {
+        this.handleSubmitSuccess();
+      },
+      error: (error: any) => {
+        this.handleSubmitError(error);
+      }
+    });
+  }
+  
+  private submitOverseasForm(): void {
+    const formData = this.trfForm.value;
+
+    // Add status and timestamps
+    // Use 'Pending' status to trigger workflow
+    const trf: OverseasTravelRequestForm = {
+      ...formData,
+      status: 'Pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    this.trfService.createOverseasTrf(trf).subscribe({
+      next: () => {
+        this.handleSubmitSuccess();
+      },
+      error: (error: any) => {
+        this.handleSubmitError(error);
+      }
+    });
+  }
+  
+  private submitExternalForm(): void {
+    // Handle external form submission
+    this.handleSubmitSuccess();
+  }
+  
+  private handleSubmitSuccess(): void {
+    this.isSubmitting = false;
+    this.submitSuccess = true;
+
+    setTimeout(() => {
+      this.router.navigate(['/trf']);
+    }, 2000);
+  }
+  
+  private handleSubmitError(error: any): void {
+    this.isSubmitting = false;
+    this.submitError = true;
+    this.errorMessage = error.message || 'An error occurred while submitting the form';
+  }
+  
+  // Save as draft
+  saveDraft(): void {
+    // Create a draft object from the form data
+    let formData: any = {
+      requestorInfo: this.requestorInfo,
+      status: 'Draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Based on the form type, save the appropriate draft
+    switch (this.formType) {
+      case 'domestic':
+        formData = {
+          ...formData,
+          ...this.domesticTravelDetails
+        };
+        this.saveDomesticDraft(formData);
+        break;
+      case 'overseas':
+        this.saveOverseasDraft(formData);
+        break;
+      case 'home-leave':
+        // Handle home leave draft saving
+        break;
+      case 'external':
+        this.handleSubmitSuccess();
+        break;
+    }
+  }
+  
+  private saveDomesticDraft(formData: any): void {
+    const trf: DomesticTravelRequestForm = formData as DomesticTravelRequestForm;
+    
+    this.trfService.createDomesticTrf(trf).subscribe({
+      next: () => {
+        this.handleSubmitSuccess();
+      },
+      error: (error: any) => {
+        this.handleSubmitError(error);
+      }
+    });
+  }
+  
+  private saveOverseasDraft(formData: any): void {
+    const trf: OverseasTravelRequestForm = formData as OverseasTravelRequestForm;
+    
+    this.trfService.createOverseasTrf(trf).subscribe({
+      next: () => {
+        this.handleSubmitSuccess();
+      },
+      error: (error: any) => {
+        this.handleSubmitError(error);
+      }
+    });
+  }
+  
+  // Export to PDF
+  exportToPdf(): void {
+    console.log('Exporting to PDF');
+    
+    if (this.trfForm.invalid) {
+      this.markFormGroupTouched(this.trfForm);
+      return;
+    }
+    
+    // Assuming we have an ID after submission
+    const trfId = 1; // This would come from the saved form
+    
+    this.trfService.exportTrfToPdf(trfId, this.formType === 'overseas').subscribe({
+      next: (blob: Blob) => {
+        // Create a URL for the blob
+        const url = window.URL.createObjectURL(blob);
+        
+        // Create a link element
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TRF_${trfId}_${new Date().toISOString().split('T')[0]}.pdf`;
+        
+        // Append to the document body
+        document.body.appendChild(a);
+        
+        // Trigger a click on the link to start the download
+        a.click();
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      },
+      error: (error: any) => {
+        console.error('Error exporting PDF:', error);
+        // Show error message
+      }
+    });
+  }
+  
+  // Helper to mark all controls as touched for validation display
+  private markFormGroupTouched(formGroup: FormGroup): void {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+      
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      } else if (control instanceof FormArray) {
+        control.controls.forEach((ctrl: any) => {
+          if (ctrl instanceof FormGroup) {
+            this.markFormGroupTouched(ctrl);
+          } else {
+            ctrl.markAsTouched();
+          }
+        });
+      }
+    });
+  }
+}

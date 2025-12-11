@@ -1,0 +1,232 @@
+<div class="trf-list-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-left">
+      <div class="title-with-icon">
+        <i class="bi bi-file-text header-icon"></i>
+        <h1 class="page-title">Travel & Service Requests (TSR)</h1>
+      </div>
+      <p class="page-subtitle">Viewing your travel requests</p>
+    </div>
+    <button class="btn btn-primary" (click)="navigateToCreate()">
+      <i class="bi bi-plus-circle me-2"></i>Travel Request
+    </button>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card shadow-lg">
+    <div class="filters-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-funnel"></i>
+        <h3 class="card-title">Filter & Search TSRs</h3>
+      </div>
+      <p class="card-description">Search and filter your travel requests by various criteria.</p>
+    </div>
+    <div class="filters-card-content">
+      <div class="filters-grid">
+        <input
+          type="text"
+          class="form-control search-input"
+          placeholder="Search by ID, Requestor, Purpose..."
+          [value]="searchTerm"
+          (input)="onSearchChange($any($event.target).value)">
+
+        <select
+          class="form-select filter-select"
+          [(ngModel)]="statusFilter"
+          (change)="onStatusFilterChange()">
+          <option value="">All Statuses</option>
+          <option *ngFor="let status of TRF_STATUSES" [value]="status">
+            {{ formatStatusDisplay(status) }}
+          </option>
+        </select>
+
+        <select
+          class="form-select filter-select"
+          [(ngModel)]="travelTypeFilter"
+          (change)="onTravelTypeFilterChange()">
+          <option value="">All Travel Types</option>
+          <option *ngFor="let type of TRAVEL_TYPES" [value]="type">
+            {{ formatTravelTypeDisplay(type) }}
+          </option>
+        </select>
+      </div>
+
+      <div *ngIf="hasActiveFilters()" class="clear-filters-section">
+        <button class="btn btn-outline-secondary btn-sm btn-clear" (click)="clearFilters()">
+          <i class="bi bi-x me-1"></i>Clear All Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TSR List Card -->
+  <div class="tsr-list-card shadow-lg">
+    <div class="tsr-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-file-text"></i>
+        <h3 class="card-title">My TSRs</h3>
+      </div>
+      <p class="card-description">
+        List of your submitted travel requests. Total:
+        <span *ngIf="isLoading && totalTrfs === 0" class="loading-inline">
+          <i class="bi bi-arrow-clockwise spin-animation"></i>
+        </span>
+        <span *ngIf="!isLoading || totalTrfs > 0">{{ totalTrfs }}</span>
+      </p>
+    </div>
+
+    <div class="tsr-card-content">
+      <!-- Loading State -->
+      <div *ngIf="isLoading && trfs.length === 0" class="loading-state">
+        <i class="bi bi-arrow-clockwise spin-animation"></i>
+        <p class="loading-text">Loading TSRs...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="!isLoading && error" class="error-state">
+        <i class="bi bi-exclamation-triangle error-icon"></i>
+        <h3 class="error-title">Error Loading TSRs</h3>
+        <p class="error-message">{{ error }}</p>
+        <button class="btn btn-primary" (click)="fetchTrfs()">Try Again</button>
+      </div>
+
+      <!-- Table with Data -->
+      <div *ngIf="!isLoading && !error && trfs.length > 0" class="table-container">
+        <div class="table-responsive">
+          <table class="tsr-table">
+            <thead>
+              <tr>
+                <th class="sortable-header" (click)="handleSort('id')">
+                  <button class="sort-button">
+                    REQUEST NUMBER
+                    <i *ngIf="sortKey === 'id'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="sortable-header" (click)="handleSort('requestor_name')">
+                  <button class="sort-button">
+                    STAFF NAME
+                    <i *ngIf="sortKey === 'requestor_name'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="sortable-header" (click)="handleSort('travel_type')">
+                  <button class="sort-button">
+                    TYPE
+                    <i *ngIf="sortKey === 'travel_type'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="sortable-header" (click)="handleSort('purpose')">
+                  <button class="sort-button">
+                    PURPOSE
+                    <i *ngIf="sortKey === 'purpose'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="sortable-header" (click)="handleSort('status')">
+                  <button class="sort-button">
+                    STATUS
+                    <i *ngIf="sortKey === 'status'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="sortable-header" (click)="handleSort('submitted_at')">
+                  <button class="sort-button">
+                    SUBMITTED
+                    <i *ngIf="sortKey === 'submitted_at'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
+                  </button>
+                </th>
+                <th class="text-end">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let trf of trfs" class="table-row">
+                <td class="font-medium">
+                  <span *ngIf="trf.request_number" class="request-number">{{ trf.request_number }}</span>
+                  <span *ngIf="!trf.request_number" class="text-muted">TSR-{{ trf.id }}</span>
+                </td>
+                <td>
+                  <div>{{ trf.requestor_name || 'N/A' }}</div>
+                  <small class="text-muted d-block" *ngIf="trf.staff_id">{{ trf.staff_id }}</small>
+                </td>
+                <td>{{ formatTravelTypeDisplay(trf.travel_type) }}</td>
+                <td class="purpose-cell">{{ trf.purpose || 'N/A' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(trf.status)">
+                    {{ formatStatusDisplay(trf.status) }}
+                  </span>
+                </td>
+                <td>{{ formatDate(trf.submitted_at) }}</td>
+                <td class="text-end">
+                  <div class="action-buttons">
+                    <button
+                      class="btn btn-sm btn-outline-primary action-btn"
+                      (click)="navigateToView(trf.id)"
+                      title="View Details"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-primary action-btn"
+                      (click)="navigateToEdit(trf.id)"
+                      title="Edit Request"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger action-btn"
+                      (click)="deleteTrf(trf.id, $event)"
+                      title="Delete Request"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div *ngIf="totalPages > 1" class="pagination-container">
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+              <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link" (click)="previousPage()" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+              <li
+                class="page-item"
+                *ngFor="let page of getPageNumbers()"
+                [class.active]="currentPage === page"
+              >
+                <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+              </li>
+              <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <a class="page-link" (click)="nextPage()" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <div class="text-center mt-3 pagination-info">
+            <small>
+              Showing {{ (currentPage - 1) * pageSize + 1 }} -
+              {{ Math.min(currentPage * pageSize, totalTrfs) }} of {{ totalTrfs }} requests
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && !error && trfs.length === 0" class="empty-state">
+        <i class="bi bi-file-text empty-icon"></i>
+        <p class="empty-message">
+          {{ hasActiveFilters() ? 'No TSRs found matching your criteria.' : 'No TSRs found.' }}
+        </p>
+        <p class="empty-subtitle">Click "Create New TSR" to get started.</p>
+        <button *ngIf="hasActiveFilters()" class="btn btn-link" (click)="clearFilters()">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

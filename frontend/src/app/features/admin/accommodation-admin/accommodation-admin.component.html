@@ -1,0 +1,272 @@
+<div class="accommodation-admin-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="bi bi-building me-2"></i>
+        Accommodation Administration
+      </h1>
+      <p class="page-subtitle">Manage accommodation locations, rooms, and processing.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="router.navigate(['/admin/accommodation/processing'])">
+        <i class="bi bi-file-text me-2"></i>
+        Processing Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-title">Total Requests</div>
+        <i class="bi bi-building stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.total }}</div>
+        <p class="stat-description">All submitted requests</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-title">Pending Review</div>
+        <i class="bi bi-clock stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.pending }}</div>
+        <p class="stat-description">Awaiting approval</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-title">Approved</div>
+        <i class="bi bi-check-circle stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.approved }}</div>
+        <p class="stat-description">Approved requests</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <div class="stat-card-title">Processing</div>
+        <i class="bi bi-gear stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ stats.processing + stats.completed }}</div>
+        <p class="stat-description">In progress</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <div class="tabs-list">
+      <button
+        class="tab-trigger"
+        [class.active]="activeTab === 'locations'"
+        (click)="setActiveTab('locations')">
+        Locations
+      </button>
+      <button
+        class="tab-trigger"
+        [class.active]="activeTab === 'rooms'"
+        (click)="setActiveTab('rooms')">
+        Rooms
+      </button>
+    </div>
+
+    <!-- Locations Tab Content -->
+    <div class="tab-content" *ngIf="activeTab === 'locations'">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-content">
+            <div class="card-title-group">
+              <i class="bi bi-building me-2"></i>
+              <h3 class="card-title">Accommodation Locations</h3>
+            </div>
+            <p class="card-description">Manage staff houses and camp locations in Ashgabat, Kiyanly, and Turkmenbashy</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="location-management">
+            <div class="management-header">
+              <h3 class="management-title">Available Locations</h3>
+              <button class="btn btn-primary" (click)="openLocationDialog()">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add New Location
+              </button>
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="loadingLocations" class="loading-state">
+              <i class="bi bi-arrow-clockwise spin"></i>
+              <p>Loading locations...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!loadingLocations && locations.length === 0" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>No accommodation locations found. Add your first location to get started.</p>
+            </div>
+
+            <!-- Locations Table -->
+            <div *ngIf="!loadingLocations && locations.length > 0" class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Area</th>
+                    <th>Address</th>
+                    <th>Rooms</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let location of locations">
+                    <td class="fw-medium">{{ location.name }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getLocationBadgeClass(location.location)">
+                        <i class="bi bi-geo-alt me-1"></i>
+                        {{ location.location }}
+                      </span>
+                    </td>
+                    <td>{{ location.address || 'N/A' }}</td>
+                    <td>{{ getRoomCount(location.id) }} rooms</td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-icon btn-edit" (click)="editLocation(location)" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button class="btn btn-sm btn-icon btn-delete" (click)="confirmDeleteLocation(location)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rooms Tab Content -->
+    <div class="tab-content" *ngIf="activeTab === 'rooms'">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-content">
+            <div class="card-title-group">
+              <i class="bi bi-door-closed me-2"></i>
+              <h3 class="card-title">Room Management</h3>
+            </div>
+            <p class="card-description">Manage rooms in staff houses and camps across all locations</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="room-management">
+            <div class="management-header">
+              <div class="filters-group">
+                <div class="filter-label">
+                  <i class="bi bi-funnel me-2"></i>
+                  <span>Filter:</span>
+                </div>
+                <select class="form-select filter-select" [(ngModel)]="filterLocation" (change)="applyRoomFilters()">
+                  <option value="all">All Locations</option>
+                  <option *ngFor="let loc of uniqueLocations" [value]="loc">{{ loc }}</option>
+                </select>
+                <select class="form-select filter-select" [(ngModel)]="filterStaffHouse" (change)="applyRoomFilters()">
+                  <option value="all">All Staff Houses</option>
+                  <option *ngFor="let house of filteredStaffHouses" [value]="house.id">{{ house.name }}</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" (click)="openRoomDialog()">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add New Room
+              </button>
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="loadingRooms" class="loading-state">
+              <i class="bi bi-arrow-clockwise spin"></i>
+              <p>Loading rooms...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!loadingRooms && filteredRooms.length === 0" class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>{{ rooms.length === 0 ? 'No rooms found. Add your first room to get started.' : 'No rooms match the current filters.' }}</p>
+            </div>
+
+            <!-- Rooms Table -->
+            <div *ngIf="!loadingRooms && filteredRooms.length > 0" class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Room Name</th>
+                    <th>Location</th>
+                    <th>Staff House</th>
+                    <th>Type</th>
+                    <th>Capacity</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let room of filteredRooms">
+                    <td class="fw-medium">{{ room.name }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getLocationBadgeClass(getStaffHouseLocation(room.staff_house))">
+                        {{ getStaffHouseLocation(room.staff_house) }}
+                      </span>
+                    </td>
+                    <td>{{ getStaffHouseName(room.staff_house) }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getRoomTypeBadgeClass(room.room_type || '')">
+                        {{ room.room_type || 'N/A' }}
+                      </span>
+                    </td>
+                    <td>{{ room.capacity }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getStatusBadgeClass(room.status)">
+                        {{ room.status }}
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-icon btn-edit" (click)="editRoom(room)" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button class="btn btn-sm btn-icon btn-delete" (click)="confirmDeleteRoom(room)" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Location Dialog -->
+<app-location-dialog
+  [isOpen]="locationDialogOpen"
+  [data]="locationDialogData"
+  (close)="onLocationDialogClose()"
+  (save)="onLocationSave($event)">
+</app-location-dialog>
+
+<!-- Room Dialog -->
+<app-room-dialog
+  [isOpen]="roomDialogOpen"
+  [data]="roomDialogData"
+  [staffHouses]="locations"
+  (close)="onRoomDialogClose()"
+  (save)="onRoomSave($event)">
+</app-room-dialog>

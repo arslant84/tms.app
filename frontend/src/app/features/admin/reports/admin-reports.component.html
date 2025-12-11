@@ -1,0 +1,254 @@
+<div class="admin-reports-container">
+  <div class="reports-header">
+    <div>
+      <h1>Admin Reports</h1>
+      <p class="text-muted">Analytics and metrics for the Travel Management System</p>
+    </div>
+    
+    <div class="reports-actions">
+      <div class="date-range-selector">
+        <span>Time Period:</span>
+        <div class="btn-group" role="group">
+          <button 
+            type="button" 
+            class="btn" 
+            [class.btn-primary]="dateRange === 'week'"
+            [class.btn-outline-secondary]="dateRange !== 'week'"
+            (click)="changeDateRange('week')">
+            Week
+          </button>
+          <button 
+            type="button" 
+            class="btn" 
+            [class.btn-primary]="dateRange === 'month'"
+            [class.btn-outline-secondary]="dateRange !== 'month'"
+            (click)="changeDateRange('month')">
+            Month
+          </button>
+          <button 
+            type="button" 
+            class="btn" 
+            [class.btn-primary]="dateRange === 'quarter'"
+            [class.btn-outline-secondary]="dateRange !== 'quarter'"
+            (click)="changeDateRange('quarter')">
+            Quarter
+          </button>
+          <button 
+            type="button" 
+            class="btn" 
+            [class.btn-primary]="dateRange === 'year'"
+            [class.btn-outline-secondary]="dateRange !== 'year'"
+            (click)="changeDateRange('year')">
+            Year
+          </button>
+        </div>
+      </div>
+      
+      <div class="export-actions">
+        <div class="dropdown">
+          <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-download"></i> Export
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+            <li><a class="dropdown-item" (click)="exportReport('pdf')"><i class="bi bi-file-pdf"></i> PDF</a></li>
+            <li><a class="dropdown-item" (click)="exportReport('excel')"><i class="bi bi-file-excel"></i> Excel</a></li>
+            <li><a class="dropdown-item" (click)="exportReport('csv')"><i class="bi bi-file-text"></i> CSV</a></li>
+          </ul>
+        </div>
+        
+        <button class="btn btn-outline-secondary" (click)="printReport()">
+          <i class="bi bi-printer"></i> Print
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Key Metrics -->
+  <div class="row metrics-row">
+    <div class="col-xl-3 col-md-6" *ngFor="let metric of keyMetrics">
+      <div class="metric-card">
+        <div class="metric-icon">
+          <i class="bi" [ngClass]="metric.icon"></i>
+        </div>
+        <div class="metric-content">
+          <h3 class="metric-name">{{ metric.name }}</h3>
+          <div class="metric-value">{{ metric.value }}</div>
+          <div class="metric-change" [ngClass]="getTrendClass(metric.trend)">
+            <i class="bi" [ngClass]="getTrendIcon(metric.trend)"></i>
+            {{ formatPercentage(metric.change) }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Charts Row -->
+  <div class="row charts-row">
+    <div class="col-lg-8">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Request Trends</h3>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #4e73df;"></div>
+              <span>Submitted</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #1cc88a;"></div>
+              <span>Completed</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-body">
+          <!-- This would be a real chart in a production app -->
+          <div class="chart-placeholder">
+            <div class="chart-area">
+              <div class="chart-line" style="height: 70%; background-color: rgba(78, 115, 223, 0.1); border-bottom: 2px solid #4e73df;"></div>
+              <div class="chart-line" style="height: 60%; background-color: rgba(28, 200, 138, 0.1); border-bottom: 2px solid #1cc88a;"></div>
+            </div>
+            <div class="chart-labels">
+              <span *ngFor="let label of requestTrendChart.labels">{{ label }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-4">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Requests by Type</h3>
+        </div>
+        <div class="chart-body">
+          <!-- This would be a real chart in a production app -->
+          <div class="chart-placeholder donut-chart">
+            <div class="donut-hole"></div>
+            <div class="donut-segment" style="transform: rotate(0deg); background-color: #4e73df; clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);"></div>
+            <div class="donut-segment" style="transform: rotate(130deg); background-color: #1cc88a; clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);"></div>
+            <div class="donut-segment" style="transform: rotate(210deg); background-color: #36b9cc; clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);"></div>
+            <div class="donut-segment" style="transform: rotate(260deg); background-color: #f6c23e; clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);"></div>
+            <div class="donut-segment" style="transform: rotate(300deg); background-color: #e74a3b; clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);"></div>
+          </div>
+          
+          <div class="chart-legend vertical">
+            <div class="legend-item" *ngFor="let label of requestsByTypeChart.labels; let i = index">
+              <div class="legend-color" [style.background-color]="requestsByTypeChart.datasets[0].backgroundColor && requestsByTypeChart.datasets[0].backgroundColor[i] ? requestsByTypeChart.datasets[0].backgroundColor[i] : '#cccccc'"></div>
+              <span>{{ label }}: {{ requestsByTypeChart.datasets[0].data[i] }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Processing Time Chart -->
+  <div class="row">
+    <div class="col-12">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>Average Processing Time by Request Type</h3>
+          <div class="subtitle">Measured in hours from submission to completion</div>
+        </div>
+        <div class="chart-body">
+          <!-- This would be a real chart in a production app -->
+          <div class="chart-placeholder bar-chart">
+            <div class="chart-bars">
+              <div class="chart-bar" *ngFor="let value of processingTimeChart.datasets[0].data; let i = index" 
+                   [style.height.%]="value / 72 * 100">
+                <div class="bar-value">{{ value }}h</div>
+              </div>
+            </div>
+            <div class="chart-labels">
+              <span *ngFor="let label of processingTimeChart.labels">{{ label }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Department Statistics -->
+  <div class="row">
+    <div class="col-12">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Department Statistics</h3>
+          <div class="subtitle">Request processing metrics by department</div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Department</th>
+                <th>Total Requests</th>
+                <th>Pending</th>
+                <th>Completed</th>
+                <th>Completion Rate</th>
+                <th>Avg. Processing Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let dept of departmentStats">
+                <td>{{ dept.department }}</td>
+                <td>{{ dept.total }}</td>
+                <td>{{ dept.pending }}</td>
+                <td>{{ dept.completed }}</td>
+                <td>
+                  <div class="progress">
+                    <div class="progress-bar" 
+                         [style.width.%]="getCompletionPercentage(dept)"
+                         [ngClass]="{'bg-success': getCompletionPercentage(dept) > 80, 
+                                     'bg-warning': getCompletionPercentage(dept) <= 80 && getCompletionPercentage(dept) >= 60,
+                                     'bg-danger': getCompletionPercentage(dept) < 60}">
+                      {{ getCompletionPercentage(dept) }}%
+                    </div>
+                  </div>
+                </td>
+                <td>{{ dept.avgProcessingTime.toFixed(1) }} hours</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Top Performers -->
+  <div class="row">
+    <div class="col-12">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>Top Performing Clerks</h3>
+          <div class="subtitle">Based on number of requests processed and average processing time</div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Requests Processed</th>
+                <th>Avg. Processing Time</th>
+                <th>Performance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let clerk of topClerks; let i = index">
+                <td><span class="rank-badge">{{ i + 1 }}</span></td>
+                <td>{{ clerk.name }}</td>
+                <td>{{ clerk.processed }}</td>
+                <td>{{ clerk.avgTime.toFixed(1) }} hours</td>
+                <td>
+                  <div class="stars">
+                    <i class="bi bi-star-fill" *ngFor="let star of [1, 2, 3, 4, 5]; let s = index" 
+                       [class.active]="s < (5 - (clerk.avgTime / 10))"></i>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

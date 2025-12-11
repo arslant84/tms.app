@@ -1,0 +1,223 @@
+<div class="flights-admin-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Flight Bookings Administration</h1>
+      <p class="page-subtitle">Manage flight bookings, confirmations, and ticket issuance</p>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label for="statusFilter" class="form-label">Status</label>
+          <select id="statusFilter" class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
+            <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <label for="classFilter" class="form-label">Class</label>
+          <select id="classFilter" class="form-select" [(ngModel)]="filterCriteria.bookingClass" (change)="applyLocalFilters()">
+            <option *ngFor="let opt of bookingClassOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label for="searchFilter" class="form-label">Search</label>
+          <input type="text" class="form-control" id="searchFilter" placeholder="Booking ref, airline, flight..."
+                 [(ngModel)]="filterCriteria.search" (keyup)="applyLocalFilters()">
+        </div>
+
+        <div class="col-md-2">
+          <label for="dateFrom" class="form-label">Date From</label>
+          <input type="date" class="form-control" id="dateFrom" [(ngModel)]="filterCriteria.dateFrom" (change)="applyLocalFilters()">
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn btn-outline-secondary w-100" (click)="resetFilters()" title="Reset Filters">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading bookings...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadBookings()">
+      <i class="bi bi-arrow-clockwise"></i> Retry
+    </button>
+  </div>
+
+  <!-- Bookings Table -->
+  <div *ngIf="!loading && !error" class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span class="fw-bold">Flight Bookings ({{ filteredBookings.length }})</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Booking Ref</th>
+            <th>Flight</th>
+            <th>Route</th>
+            <th>Departure</th>
+            <th>Class</th>
+            <th>Cost</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let booking of filteredBookings">
+            <td>
+              <a href="javascript:void(0)" (click)="viewBooking(booking)" class="text-decoration-none">
+                {{ booking.booking_reference }}
+              </a>
+              <div *ngIf="booking.ticket_number" class="small text-muted">
+                Ticket: {{ booking.ticket_number }}
+              </div>
+            </td>
+            <td>
+              <div class="fw-medium">{{ booking.airline }}</div>
+              <small class="text-muted">{{ booking.flight_number }}</small>
+            </td>
+            <td>
+              <div>{{ formatRoute(booking) }}</div>
+              <small class="text-muted" *ngIf="booking.departure_terminal">
+                Terminal {{ booking.departure_terminal }}
+              </small>
+            </td>
+            <td>
+              <div>{{ formatDateTime(booking.departure_time) }}</div>
+              <small class="text-muted">Arr: {{ formatDateTime(booking.arrival_time) }}</small>
+            </td>
+            <td>
+              <span [ngClass]="getBookingClassBadge(booking.booking_class)">
+                {{ booking.booking_class.replace('_', ' ') }}
+              </span>
+            </td>
+            <td class="fw-medium">{{ formatCurrency(booking.cost, booking.currency) }}</td>
+            <td>
+              <span [ngClass]="getStatusClass(booking.status)">{{ booking.status }}</span>
+            </td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-primary" (click)="viewBooking(booking)" title="View Details">
+                  <i class="bi bi-eye"></i>
+                </button>
+
+                <button *ngIf="canConfirm(booking)" class="btn btn-outline-success"
+                        (click)="confirmBooking(booking)"
+                        [disabled]="isProcessing(booking.id)"
+                        title="Confirm Booking">
+                  <span *ngIf="!isProcessing(booking.id)">
+                    <i class="bi bi-check-circle"></i>
+                  </span>
+                  <span *ngIf="isProcessing(booking.id)" class="spinner-border spinner-border-sm"></span>
+                </button>
+
+                <button *ngIf="canIssueTicket(booking)" class="btn btn-outline-info"
+                        (click)="openIssueTicketModal(booking)"
+                        [disabled]="isProcessing(booking.id)"
+                        title="Issue Ticket">
+                  <i class="bi bi-ticket-detailed"></i>
+                </button>
+
+                <button *ngIf="canCancel(booking)" class="btn btn-outline-danger"
+                        (click)="cancelBooking(booking)"
+                        [disabled]="isProcessing(booking.id)"
+                        title="Cancel Booking">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="filteredBookings.length === 0">
+            <td colspan="8" class="text-center py-4">
+              <div class="text-muted">
+                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                <p class="mt-2">No bookings found</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="card-footer">
+      <nav aria-label="Bookings pagination">
+        <ul class="pagination pagination-sm mb-0 justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">Previous</a>
+          </li>
+
+          <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+            <a class="page-link" href="javascript:void(0)" (click)="changePage(page)">{{ page }}</a>
+          </li>
+
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">Next</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Issue Ticket Modal -->
+<div class="modal fade" [class.show]="showIssueTicketModal" [style.display]="showIssueTicketModal ? 'block' : 'none'"
+     tabindex="-1" role="dialog" *ngIf="showIssueTicketModal">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Issue Ticket</h5>
+        <button type="button" class="btn-close" (click)="closeIssueTicketModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="selectedBooking" class="alert alert-info">
+          <strong>Booking:</strong> {{ selectedBooking.booking_reference }}<br>
+          <strong>Flight:</strong> {{ selectedBooking.airline }} {{ selectedBooking.flight_number }}<br>
+          <strong>Route:</strong> {{ formatRoute(selectedBooking) }}
+        </div>
+
+        <div class="mb-3">
+          <label for="ticketNumber" class="form-label">Ticket Number <span class="text-danger">*</span></label>
+          <input type="text" id="ticketNumber" class="form-control"
+                 [(ngModel)]="ticketNumber"
+                 placeholder="e.g., 123-4567890123"
+                 required>
+          <small class="text-muted">Enter the airline ticket number</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeIssueTicketModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="issueTicket()"
+                [disabled]="processingId !== null || !ticketNumber">
+          <span *ngIf="processingId === null">
+            <i class="bi bi-ticket-detailed"></i> Issue Ticket
+          </span>
+          <span *ngIf="processingId !== null" class="spinner-border spinner-border-sm"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showIssueTicketModal" *ngIf="showIssueTicketModal"></div>

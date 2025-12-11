@@ -1,0 +1,71 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo-container">
+        <h1 class="app-logo">{{ applicationName$ | async }}</h1>
+      </div>
+      <h2>Travel Management System</h2>
+      <p>Sign in to your account</p>
+    </div>
+    
+    <div class="login-body">
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+        <!-- Error message -->
+        <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+          {{ errorMessage }}
+        </div>
+        
+        <!-- Email field -->
+        <div class="form-group mb-4">
+          <label for="email" class="form-label">Email address</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input 
+              type="email" 
+              class="form-control" 
+              id="email" 
+              formControlName="email" 
+              placeholder="name@example.com"
+              [ngClass]="{'is-invalid': loginForm.get('email')?.invalid && loginForm.get('email')?.touched}"
+            >
+          </div>
+          <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="invalid-feedback d-block mt-1 ms-1">
+            <div *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</div>
+            <div *ngIf="loginForm.get('email')?.errors?.['email']">Please enter a valid email address</div>
+          </div>
+        </div>
+        
+        <!-- Password field -->
+        <div class="form-group mb-4">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input 
+              type="password" 
+              class="form-control" 
+              id="password" 
+              formControlName="password"
+              [ngClass]="{'is-invalid': loginForm.get('password')?.invalid && loginForm.get('password')?.touched}"
+            >
+          </div>
+          <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="invalid-feedback d-block mt-1 ms-1">
+            <div *ngIf="loginForm.get('password')?.errors?.['required']">Password is required</div>
+            <div *ngIf="loginForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</div>
+          </div>
+        </div>
+        
+        <!-- Submit button -->
+        <div class="d-grid mt-5">
+          <button 
+            type="submit" 
+            class="btn btn-primary btn-lg" 
+            [disabled]="loginForm.invalid || isSubmitting"
+          >
+            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            {{ isSubmitting ? 'Signing in...' : 'Sign In' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

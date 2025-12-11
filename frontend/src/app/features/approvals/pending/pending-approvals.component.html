@@ -1,0 +1,362 @@
+<div class="approvals-container">
+  <!-- Header with Tabs -->
+  <div class="approvals-header">
+    <h2>Pending Approvals</h2>
+
+    <!-- Tabs for filtering by request type -->
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'all'" (click)="switchTab('all')">
+          All <span class="badge bg-secondary ms-1" *ngIf="!loading">{{ pendingRequests.length }}</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'trf'" (click)="switchTab('trf')">
+          <i class="bi bi-airplane"></i> Travel
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'accommodation'" (click)="switchTab('accommodation')">
+          <i class="bi bi-building"></i> Accommodation
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'transport'" (click)="switchTab('transport')">
+          <i class="bi bi-truck"></i> Transport
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'visa'" (click)="switchTab('visa')">
+          <i class="bi bi-file-text"></i> Visa
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'expense'" (click)="switchTab('expense')">
+          <i class="bi bi-file-text"></i> Expenses
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+
+        <div class="col-md-3">
+          <label for="priorityFilter" class="form-label">Priority</label>
+          <select id="priorityFilter" class="form-select" [(ngModel)]="filterCriteria.priority" (change)="applyFilters()">
+            <option value="all">All Priorities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+
+        <div class="col-md-5">
+          <label for="searchFilter" class="form-label">Search</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="searchFilter" placeholder="Search requests..."
+                   [(ngModel)]="filterCriteria.search" (keyup)="applyFilters()">
+            <button class="btn btn-outline-secondary" type="button" (click)="filterCriteria.search = ''; applyFilters()">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading pending approvals...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadPendingApprovals()">
+      <i class="bi bi-arrow-clockwise"></i> Retry
+    </button>
+  </div>
+
+  <!-- Main Content Area -->
+  <div *ngIf="!loading && !error" class="content-area" [class.with-details]="selectedRequest">
+    <!-- Requests List -->
+    <div class="requests-list">
+      <div class="list-header">
+        <span>{{ filteredRequests.length }} pending request{{ filteredRequests.length !== 1 ? 's' : '' }}</span>
+      </div>
+      
+      <div class="list-body" *ngIf="filteredRequests.length > 0; else noRequests">
+        <div class="request-card" *ngFor="let request of filteredRequests" 
+             [class.selected]="selectedRequest?.id === request.id"
+             [class.overdue]="isOverdue(request)"
+             (click)="selectRequest(request)">
+          <div class="request-icon">
+            <i class="bi" [ngClass]="getTypeIcon(request.type)"></i>
+          </div>
+          
+          <div class="request-content">
+            <div class="request-title">{{ request.title }}</div>
+            <div class="request-meta">
+              <span class="requester">{{ request.requester.name }}</span>
+              <span class="department">{{ request.requester.department }}</span>
+            </div>
+            <div class="request-dates">
+              <span class="submitted">Submitted: {{ request.dateSubmitted | date:'mediumDate' }}</span>
+              <span class="deadline" *ngIf="request.deadline">
+                Deadline: {{ request.deadline | date:'mediumDate' }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="request-priority">
+            <span class="priority-badge" [ngClass]="getPriorityClass(request.priority)">
+              {{ request.priority }}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <ng-template #noRequests>
+        <div class="no-requests">
+          <i class="bi bi-inbox"></i>
+          <p>No pending requests match your filters</p>
+          <button class="btn btn-outline-primary" (click)="resetFilters()">Reset Filters</button>
+        </div>
+      </ng-template>
+    </div>
+    
+    <!-- Request Details Panel -->
+    <div class="request-details" *ngIf="selectedRequest">
+      <div class="details-header">
+        <h3>Request Details</h3>
+        <button class="btn-close" (click)="closeDetails()"></button>
+      </div>
+      
+      <div class="details-body">
+        <div class="detail-section">
+          <h4>{{ selectedRequest.title }}</h4>
+          <div class="detail-meta">
+            <span class="type-badge" [ngClass]="'type-' + selectedRequest.type">
+              {{ selectedRequest.type | titlecase }}
+            </span>
+            <span class="priority-badge" [ngClass]="getPriorityClass(selectedRequest.priority)">
+              {{ selectedRequest.priority | titlecase }} Priority
+            </span>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h5>Requester Information</h5>
+          <div class="detail-item">
+            <span class="detail-label">Name:</span>
+            <span class="detail-value">{{ selectedRequest.requester.name }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Department:</span>
+            <span class="detail-value">{{ selectedRequest.requester.department }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ selectedRequest.requester.email }}</span>
+          </div>
+        </div>
+        
+        <div class="detail-section">
+          <h5>Request Information</h5>
+          <div class="detail-item">
+            <span class="detail-label">Submitted:</span>
+            <span class="detail-value">{{ selectedRequest.dateSubmitted | date:'mediumDate' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="selectedRequest.deadline">
+            <span class="detail-label">Deadline:</span>
+            <span class="detail-value" [class.text-danger]="isOverdue(selectedRequest)">
+              {{ selectedRequest.deadline | date:'mediumDate' }}
+              <span *ngIf="isOverdue(selectedRequest)" class="badge bg-danger ms-2">Overdue</span>
+            </span>
+          </div>
+        </div>
+        
+        <!-- Dynamic details based on request type -->
+        <div class="detail-section" [ngSwitch]="selectedRequest.type">
+          <!-- TRF Request -->
+          <ng-container *ngSwitchCase="'trf'">
+            <h5>Travel Details</h5>
+            <div class="detail-item" *ngIf="selectedRequest.details.travelType">
+              <span class="detail-label">Type:</span>
+              <span class="detail-value">{{ selectedRequest.details.travelType }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.purpose">
+              <span class="detail-label">Purpose:</span>
+              <span class="detail-value">{{ selectedRequest.details.purpose }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.departureDate">
+              <span class="detail-label">Departure:</span>
+              <span class="detail-value">{{ formatDate(selectedRequest.details.departureDate) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.returnDate">
+              <span class="detail-label">Return:</span>
+              <span class="detail-value">{{ formatDate(selectedRequest.details.returnDate) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.destination">
+              <span class="detail-label">Destination:</span>
+              <span class="detail-value">{{ selectedRequest.details.destination }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.estimatedCost">
+              <span class="detail-label">Est. Cost:</span>
+              <span class="detail-value">{{ selectedRequest.details.estimatedCost | currency:'MYR' }}</span>
+            </div>
+          </ng-container>
+          
+          <!-- Accommodation Request -->
+          <ng-container *ngSwitchCase="'accommodation'">
+            <h5>Accommodation Details</h5>
+            <div class="detail-item" *ngIf="selectedRequest.details.hotelName">
+              <span class="detail-label">Hotel:</span>
+              <span class="detail-value">{{ selectedRequest.details.hotelName }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.location">
+              <span class="detail-label">Location:</span>
+              <span class="detail-value">{{ selectedRequest.details.location }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.checkInDate">
+              <span class="detail-label">Check-in:</span>
+              <span class="detail-value">{{ formatDate(selectedRequest.details.checkInDate) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.checkOutDate">
+              <span class="detail-label">Check-out:</span>
+              <span class="detail-value">{{ formatDate(selectedRequest.details.checkOutDate) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.roomType">
+              <span class="detail-label">Room Type:</span>
+              <span class="detail-value">{{ selectedRequest.details.roomType }}</span>
+            </div>
+          </ng-container>
+
+          <!-- Transport Request -->
+          <ng-container *ngSwitchCase="'transport'">
+            <h5>Transport Details</h5>
+            <div class="detail-item" *ngIf="selectedRequest.details.transportType">
+              <span class="detail-label">Type:</span>
+              <span class="detail-value">{{ selectedRequest.details.transportType }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.pickupLocation">
+              <span class="detail-label">Pickup:</span>
+              <span class="detail-value">{{ selectedRequest.details.pickupLocation }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.dropoffLocation">
+              <span class="detail-label">Dropoff:</span>
+              <span class="detail-value">{{ selectedRequest.details.dropoffLocation }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.pickupDate">
+              <span class="detail-label">Date:</span>
+              <span class="detail-value">{{ formatDate(selectedRequest.details.pickupDate) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.pickupTime">
+              <span class="detail-label">Time:</span>
+              <span class="detail-value">{{ selectedRequest.details.pickupTime }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.estimatedCost">
+              <span class="detail-label">Est. Cost:</span>
+              <span class="detail-value">{{ selectedRequest.details.estimatedCost | currency:'MYR' }}</span>
+            </div>
+          </ng-container>
+
+          <!-- Visa Request -->
+          <ng-container *ngSwitchCase="'visa'">
+            <h5>Visa Details</h5>
+            <div class="detail-item" *ngIf="selectedRequest.details.destinationCountry">
+              <span class="detail-label">Country:</span>
+              <span class="detail-value">{{ selectedRequest.details.destinationCountry }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.visaType">
+              <span class="detail-label">Visa Type:</span>
+              <span class="detail-value">{{ selectedRequest.details.visaType }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.purpose">
+              <span class="detail-label">Purpose:</span>
+              <span class="detail-value">{{ selectedRequest.details.purpose }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.travelDate">
+              <span class="detail-label">Travel Date:</span>
+              <span class="detail-value">{{ formatDate(selectedRequest.details.travelDate) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.returnDate">
+              <span class="detail-label">Return Date:</span>
+              <span class="detail-value">{{ formatDate(selectedRequest.details.returnDate) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.estimatedCost">
+              <span class="detail-label">Est. Cost:</span>
+              <span class="detail-value">{{ selectedRequest.details.estimatedCost | currency:'MYR' }}</span>
+            </div>
+          </ng-container>
+
+          <!-- Expense Request -->
+          <ng-container *ngSwitchCase="'expense'">
+            <h5>Expense Details</h5>
+            <div class="detail-item" *ngIf="selectedRequest.details.expenseType">
+              <span class="detail-label">Type:</span>
+              <span class="detail-value">{{ selectedRequest.details.expenseType }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.claimDate">
+              <span class="detail-label">Claim Date:</span>
+              <span class="detail-value">{{ formatDate(selectedRequest.details.claimDate) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedRequest.details.totalAmount">
+              <span class="detail-label">Total Amount:</span>
+              <span class="detail-value">{{ selectedRequest.details.totalAmount | currency:(selectedRequest.details.currency || 'MYR') }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Receipts:</span>
+              <span class="detail-value">
+                <span class="badge" [class.bg-success]="selectedRequest.details.hasReceipts" [class.bg-warning]="!selectedRequest.details.hasReceipts">
+                  {{ selectedRequest.details.hasReceipts ? 'Attached' : 'Not Attached' }}
+                </span>
+              </span>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- View Full Details Button -->
+        <div class="detail-section">
+          <button class="btn btn-outline-primary w-100" (click)="viewFullDetails()">
+            <i class="bi bi-eye"></i> View Full Details
+          </button>
+        </div>
+        
+        <!-- Approval Actions -->
+        <div class="approval-actions">
+          <div class="form-group mb-3">
+            <label for="approvalComment" class="form-label">
+              Comment <span class="text-danger" *ngIf="false">*</span>
+              <small class="text-muted">(Required for rejection)</small>
+            </label>
+            <textarea id="approvalComment" class="form-control" rows="3"
+                     placeholder="Add a comment with your decision..."
+                     [(ngModel)]="approvalComment"></textarea>
+          </div>
+          
+          <div class="action-buttons">
+            <button class="btn btn-danger" (click)="rejectRequest()" [disabled]="isProcessing">
+              <i class="bi bi-x-circle"></i>
+              <span *ngIf="!isProcessing">Reject</span>
+              <span *ngIf="isProcessing" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            </button>
+            
+            <button class="btn btn-success" (click)="approveRequest()" [disabled]="isProcessing">
+              <i class="bi bi-check-circle"></i>
+              <span *ngIf="!isProcessing">Approve</span>
+              <span *ngIf="isProcessing" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

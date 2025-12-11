@@ -1,0 +1,179 @@
+<div class="card shadow-lg">
+  <div class="card-header gradient-header">
+    <div>
+      <h4 class="card-title mb-0">
+        <i class="bi bi-shield-check me-2"></i>User Roles & Permissions
+      </h4>
+      <p class="card-description mb-0 mt-1">Define roles and assign permissions to control access to system features.</p>
+    </div>
+  </div>
+  <div class="card-body">
+    <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
+      <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+      <div class="mb-4">
+        <h6 class="mb-3 fw-semibold">Existing Roles</h6>
+        <div class="roles-scroll-area border rounded p-3">
+          <div class="roles-list" *ngIf="roles.length > 0">
+            <div class="role-item border rounded p-3 mb-3 bg-white" *ngFor="let role of roles">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="flex-grow-1">
+                  <p class="mb-1 fw-medium">{{ role.name }}</p>
+                  <p class="mb-1 text-muted small">{{ role.description || 'No description' }}</p>
+                  <p class="mb-0 text-muted" style="font-size: 0.75rem;">
+                    Permissions: {{ getPermissionNames(role.permissionIds) }}
+                  </p>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-secondary btn-sm" (click)="openEdit(role)" [disabled]="isSaving">
+                    <i class="bi bi-pencil" style="font-size: 0.875rem;"></i>
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm" (click)="confirmDelete(role)" [disabled]="isSaving">
+                    <i class="bi bi-trash" style="font-size: 0.875rem;"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="roles.length === 0" class="text-center text-muted py-3">
+            <p class="mb-0 small">No roles defined yet. Click "Add New Role" to get started.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <button class="btn btn-primary" (click)="openCreate()" [disabled]="isLoading || isSaving || permissions.length === 0">
+          <i class="bi bi-plus-circle me-2"></i>
+          Add New Role
+        </button>
+        <small class="text-muted" *ngIf="permissions.length === 0">
+          <i class="bi bi-info-circle me-1"></i>
+          No permissions available. Cannot create roles.
+        </small>
+      </div>
+
+      <div class="pt-3">
+        <h6 class="mb-3 fw-semibold">Available System Permissions</h6>
+        <div class="permissions-scroll-area border rounded p-3">
+          <div class="row g-3" *ngIf="permissions.length > 0">
+            <div class="col-md-6" *ngFor="let p of permissions">
+              <div class="border rounded p-2 bg-light small">
+                <p class="mb-0 fw-medium">{{ p.name }}</p>
+                <p class="mb-0 text-muted" style="font-size: 0.75rem;" *ngIf="p.description">{{ p.description }}</p>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="permissions.length === 0" class="text-center text-muted py-2">
+            <p class="mb-0 small">No permissions available or failed to load.</p>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<!-- Role Form Modal -->
+<div class="modal fade" [class.show]="showForm" [style.display]="showForm ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="roleFormModalLabel" [attr.aria-hidden]="!showForm">
+  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-primary" id="roleFormModalLabel">
+          {{ editId ? 'Manage Role: ' + form.name : 'Add New Role' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cancelForm()" [disabled]="isSaving" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="submitForm()">
+          <div class="mb-3">
+            <label class="form-label fw-medium">Role Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="form.name" name="name" placeholder="Enter role name" required [class.is-invalid]="!form.name && submitError" />
+            <div class="invalid-feedback" *ngIf="!form.name && submitError">
+              Role name is required
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-medium">Description (Optional)</label>
+            <textarea class="form-control" [(ngModel)]="form.description" name="description" rows="2" placeholder="Describe the role"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-medium">Assign Permissions <span class="text-danger">*</span></label>
+            <div class="permissions-form-scroll border rounded p-3" [class.border-danger]="(form.permissionIds?.length || 0) === 0 && submitError">
+              <div *ngIf="permissions.length === 0" class="text-center text-muted py-3">
+                <i class="bi bi-exclamation-triangle mb-2" style="font-size: 1.5rem;"></i>
+                <p class="mb-0 small">No permissions available</p>
+              </div>
+              <div *ngFor="let p of permissions" class="form-check mb-3">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [id]="'perm-' + p.id"
+                  [checked]="form.permissionIds?.includes(p.id)"
+                  (change)="togglePermission(p.id)"
+                />
+                <label class="form-check-label small" [for]="'perm-' + p.id">
+                  {{ p.name }}
+                  <span class="d-block text-muted" style="font-size: 0.75rem;" *ngIf="p.description">{{ p.description }}</span>
+                </label>
+              </div>
+            </div>
+            <div class="form-text small text-danger" *ngIf="(form.permissionIds?.length || 0) === 0 && submitError">
+              <i class="bi bi-exclamation-circle me-1"></i>
+              At least one permission must be selected.
+            </div>
+            <div class="form-text small text-muted" *ngIf="(form.permissionIds?.length || 0) > 0">
+              <i class="bi bi-check-circle me-1 text-success"></i>
+              {{ form.permissionIds?.length || 0 }} permission(s) selected
+            </div>
+          </div>
+
+          <div *ngIf="submitError" class="alert alert-danger small">{{ submitError }}</div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="cancelForm()" [disabled]="isSaving">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" (click)="submitForm()" [disabled]="isSaving || !form.name || (form.permissionIds?.length || 0) === 0">
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+          {{ editId ? 'Update Role' : 'Create Role' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showForm" [style.display]="showForm ? 'block' : 'none'" *ngIf="showForm"></div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" [class.show]="showDeleteConfirm" [style.display]="showDeleteConfirm ? 'block' : 'none'" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" [attr.aria-hidden]="!showDeleteConfirm">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
+        <button type="button" class="btn-close" (click)="cancelDelete()" [disabled]="isSaving" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">Are you sure you want to delete this role?</p>
+        <p class="text-muted small mb-0">
+          This action cannot be undone. Role "{{ roleToDelete?.name }}" will be permanently removed.
+          Ensure no users are currently assigned this role before deleting.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelDelete()" [disabled]="isSaving">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-danger" (click)="executeDelete()" [disabled]="isSaving">
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+          Delete Role
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade" [class.show]="showDeleteConfirm" [style.display]="showDeleteConfirm ? 'block' : 'none'" *ngIf="showDeleteConfirm"></div>

@@ -1,0 +1,446 @@
+<div class="clerk-panel-container">
+  <div class="row">
+    <!-- Task List Panel -->
+    <div class="col-lg-5 col-md-12 task-list-panel">
+      <div class="panel-header">
+        <h2>Processing Queue</h2>
+        <div class="filter-controls">
+          <div class="input-group mb-3">
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="Search tasks..." 
+              [(ngModel)]="filterCriteria.search"
+              (input)="applyFilters()">
+            <button class="btn btn-outline-secondary" type="button" (click)="resetFilters()">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+          
+          <div class="filter-row">
+            <div class="filter-item">
+              <label>Type</label>
+              <select class="form-select" [(ngModel)]="filterCriteria.type" (change)="applyFilters()">
+                <option value="all">All Types</option>
+                <option value="travel">Travel</option>
+                <option value="accommodation">Accommodation</option>
+                <option value="transport">Transport</option>
+                <option value="visa">Visa</option>
+                <option value="expense">Expense</option>
+              </select>
+            </div>
+            
+            <div class="filter-item">
+              <label>Status</label>
+              <select class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            
+            <div class="filter-item">
+              <label>Priority</label>
+              <select class="form-select" [(ngModel)]="filterCriteria.priority" (change)="applyFilters()">
+                <option value="all">All Priorities</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="task-list">
+        <div *ngIf="filteredTasks.length === 0" class="no-tasks">
+          <i class="bi bi-inbox"></i>
+          <p>No tasks match your filter criteria</p>
+          <button class="btn btn-outline-primary" (click)="resetFilters()">Reset Filters</button>
+        </div>
+        
+        <div 
+          *ngFor="let task of filteredTasks" 
+          class="task-card" 
+          [class.selected]="selectedTask?.id === task.id"
+          [class.overdue]="isOverdue(task)"
+          (click)="selectTask(task)">
+          
+          <div class="task-icon">
+            <i class="bi" [ngClass]="getTypeIcon(task.requestType)"></i>
+          </div>
+          
+          <div class="task-content">
+            <div class="task-header">
+              <h3 class="task-title">{{ task.title }}</h3>
+              <span class="task-priority" [ngClass]="getPriorityClass(task.priority)">
+                {{ task.priority }}
+              </span>
+            </div>
+            
+            <div class="task-details">
+              <p class="requester">
+                <i class="bi bi-person"></i> {{ task.requester.name }}
+              </p>
+              <p class="department">
+                <i class="bi bi-building"></i> {{ task.requester.department }}
+              </p>
+              <p class="date-assigned">
+                <i class="bi bi-calendar-check"></i> Assigned: {{ task.dateAssigned }}
+              </p>
+              <p *ngIf="task.deadline" class="deadline" [class.overdue]="isOverdue(task)">
+                <i class="bi bi-alarm"></i> Deadline: {{ task.deadline }}
+              </p>
+            </div>
+            
+            <div class="task-footer">
+              <span class="task-status" [ngClass]="getStatusClass(task.status)">
+                {{ task.status.replace('_', ' ') | titlecase }}
+              </span>
+              <span class="task-assignee" *ngIf="task.assignedTo">
+                <i class="bi bi-person-check"></i> {{ task.assignedTo.name }}
+              </span>
+              <span class="task-assignee" *ngIf="!task.assignedTo">
+                <i class="bi bi-person-dash"></i> Unassigned
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Task Details Panel -->
+    <div class="col-lg-7 col-md-12 task-details-panel" *ngIf="selectedTask">
+      <div class="panel-header">
+        <h2>
+          <i class="bi" [ngClass]="getTypeIcon(selectedTask.requestType)"></i>
+          {{ selectedTask.title }}
+        </h2>
+        <button class="btn btn-outline-secondary" (click)="closeDetails()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      
+      <div class="task-details-content">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="detail-section">
+              <h3>Request Information</h3>
+              <div class="detail-item">
+                <span class="detail-label">Request ID:</span>
+                <span class="detail-value">{{ selectedTask.requestId }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Type:</span>
+                <span class="detail-value">{{ selectedTask.requestType | titlecase }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value" [ngClass]="getStatusClass(selectedTask.status)">
+                  {{ selectedTask.status.replace('_', ' ') | titlecase }}
+                </span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Priority:</span>
+                <span class="detail-value" [ngClass]="getPriorityClass(selectedTask.priority)">
+                  {{ selectedTask.priority | titlecase }}
+                </span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Date Assigned:</span>
+                <span class="detail-value">{{ selectedTask.dateAssigned }}</span>
+              </div>
+              <div class="detail-item" *ngIf="selectedTask.deadline">
+                <span class="detail-label">Deadline:</span>
+                <span class="detail-value" [class.overdue]="isOverdue(selectedTask)">
+                  {{ selectedTask.deadline }}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="detail-section">
+              <h3>Requester Information</h3>
+              <div class="detail-item">
+                <span class="detail-label">Name:</span>
+                <span class="detail-value">{{ selectedTask.requester.name }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Department:</span>
+                <span class="detail-value">{{ selectedTask.requester.department }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Email:</span>
+                <span class="detail-value">{{ selectedTask.requester.email }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Request Type Specific Details -->
+        <div class="detail-section">
+          <h3>Request Details</h3>
+          
+          <!-- Travel Request Details -->
+          <div *ngIf="selectedTask.requestType === 'travel'">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <span class="detail-label">Departure Date:</span>
+                  <span class="detail-value">{{ selectedTask.details.departureDate }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Return Date:</span>
+                  <span class="detail-value">{{ selectedTask.details.returnDate }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Origin:</span>
+                  <span class="detail-value">{{ selectedTask.details.origin }}</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <span class="detail-label">Destination:</span>
+                  <span class="detail-value">{{ selectedTask.details.destination }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Preferred Airline:</span>
+                  <span class="detail-value">{{ selectedTask.details.preferredAirline }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Travel Class:</span>
+                  <span class="detail-value">{{ selectedTask.details.travelClass }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="vendor-integration">
+              <h4>Book Flight</h4>
+              <div class="vendor-buttons">
+                <button 
+                  *ngFor="let vendor of vendorOptions.flights" 
+                  class="btn btn-outline-primary"
+                  (click)="openVendorWebsite('flights', vendor.id)">
+                  {{ vendor.name }}
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Accommodation Request Details -->
+          <div *ngIf="selectedTask.requestType === 'accommodation'">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <span class="detail-label">Check-in Date:</span>
+                  <span class="detail-value">{{ selectedTask.details.checkInDate | date:'mediumDate' }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Check-out Date:</span>
+                  <span class="detail-value">{{ selectedTask.details.checkOutDate | date:'mediumDate' }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Accommodation Type:</span>
+                  <span class="detail-value">{{ selectedTask.details.accommodationType === 'ashgabat' ? 'Ashgabat Staff House' : 'Kiyanly Camp' }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Gender:</span>
+                  <span class="detail-value">{{ selectedTask.details.gender === 'male' ? 'Male' : 'Female' }}</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <span class="detail-label">Accommodation Name:</span>
+                  <span class="detail-value">{{ selectedTask.details.accommodationName }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Room Number:</span>
+                  <span class="detail-value">{{ selectedTask.details.roomNumber }}</span>
+                </div>
+                <div class="detail-item" *ngIf="selectedTask.details.relatedTravelRequest">
+                  <span class="detail-label">Related Travel Request:</span>
+                  <span class="detail-value">{{ selectedTask.details.relatedTravelRequest }}</span>
+                </div>
+                <div class="detail-item" *ngIf="selectedTask.details.specialRequirements">
+                  <span class="detail-label">Special Requirements:</span>
+                  <span class="detail-value">{{ selectedTask.details.specialRequirements }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="detail-item reason-section">
+              <span class="detail-label">Reason for Accommodation:</span>
+              <span class="detail-value">{{ selectedTask.details.reason }}</span>
+            </div>
+            
+            <div class="vendor-integration">
+              <h4>Accommodation Management</h4>
+              <div class="vendor-buttons">
+                <!-- Different vendor options based on accommodation type -->
+                <ng-container *ngIf="selectedTask.details.accommodationType === 'ashgabat'">
+                  <button 
+                    class="btn btn-outline-primary"
+                    (click)="openVendorWebsite('hotels', 1)">
+                    Staff House Management
+                  </button>
+                  <button 
+                    class="btn btn-outline-secondary"
+                    (click)="openVendorWebsite('hotels', 2)">
+                    Room Allocation
+                  </button>
+                </ng-container>
+                
+                <ng-container *ngIf="selectedTask.details.accommodationType === 'kiyanly'">
+                  <button 
+                    class="btn btn-outline-primary"
+                    (click)="openVendorWebsite('hotels', 3)">
+                    Camp Management
+                  </button>
+                  <button 
+                    class="btn btn-outline-secondary"
+                    (click)="openVendorWebsite('hotels', 2)">
+                    Room Allocation
+                  </button>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Transport Request Details -->
+          <div *ngIf="selectedTask.requestType === 'transport'">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <span class="detail-label">Transport Type:</span>
+                  <span class="detail-value">{{ selectedTask.details.transportType }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Start Date:</span>
+                  <span class="detail-value">{{ selectedTask.details.startDate }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">End Date:</span>
+                  <span class="detail-value">{{ selectedTask.details.endDate }}</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <span class="detail-label">Location:</span>
+                  <span class="detail-value">{{ selectedTask.details.location }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Car Type:</span>
+                  <span class="detail-value">{{ selectedTask.details.carType }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Additional Requirements:</span>
+                  <span class="detail-value">{{ selectedTask.details.additionalRequirements }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="vendor-integration">
+              <h4>Book Transport</h4>
+              <div class="vendor-buttons">
+                <button 
+                  *ngFor="let vendor of vendorOptions.transport" 
+                  class="btn btn-outline-primary"
+                  (click)="openVendorWebsite('transport', vendor.id)">
+                  {{ vendor.name }}
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Visa Request Details -->
+          <div *ngIf="selectedTask.requestType === 'visa'">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <span class="detail-label">Visa Type:</span>
+                  <span class="detail-value">{{ selectedTask.details.visaType }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Country:</span>
+                  <span class="detail-value">{{ selectedTask.details.country }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Travel Date:</span>
+                  <span class="detail-value">{{ selectedTask.details.travelDate }}</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="detail-item">
+                  <span class="detail-label">Duration:</span>
+                  <span class="detail-value">{{ selectedTask.details.duration }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Passport Number:</span>
+                  <span class="detail-value">{{ selectedTask.details.passportNumber }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Passport Expiry:</span>
+                  <span class="detail-value">{{ selectedTask.details.passportExpiryDate }}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="vendor-integration">
+              <h4>Process Visa</h4>
+              <div class="vendor-buttons">
+                <button 
+                  *ngFor="let vendor of vendorOptions.visa" 
+                  class="btn btn-outline-primary"
+                  (click)="openVendorWebsite('visa', vendor.id)">
+                  {{ vendor.name }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Processing Actions -->
+        <div class="detail-section">
+          <h3>Processing Actions</h3>
+          
+          <div class="processing-notes">
+            <label for="processingNotes">Processing Notes</label>
+            <textarea 
+              id="processingNotes" 
+              class="form-control" 
+              rows="3" 
+              placeholder="Add notes about processing this request..."
+              [(ngModel)]="processingNotes"></textarea>
+          </div>
+          
+          <div class="action-buttons">
+            <button 
+              class="btn btn-primary" 
+              [disabled]="selectedTask.status === 'in_progress' || selectedTask.status === 'completed' || isProcessing"
+              (click)="startProcessing()">
+              <i class="bi bi-play-fill"></i> Start Processing
+            </button>
+            
+            <button 
+              class="btn btn-success" 
+              [disabled]="selectedTask.status !== 'in_progress' || isProcessing"
+              (click)="completeTask()">
+              <i class="bi bi-check-lg"></i> Mark as Completed
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Empty state when no task is selected -->
+    <div class="col-lg-7 col-md-12 task-details-panel empty-state" *ngIf="!selectedTask">
+      <div class="empty-state-content">
+        <i class="bi bi-clipboard-check"></i>
+        <h3>Select a task to view details</h3>
+        <p>Click on any task from the list to view its details and take action.</p>
+      </div>
+    </div>
+  </div>
+</div>

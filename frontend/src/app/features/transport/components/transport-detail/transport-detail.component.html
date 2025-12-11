@@ -1,0 +1,302 @@
+<div class="transport-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading transport request details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <i class="bi bi-exclamation-triangle error-icon"></i>
+    <h3>Error Loading Request</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="goBack()">Back to List</button>
+  </div>
+
+  <!-- Request Details -->
+  <div *ngIf="request && !loading" class="transport-detail-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <button class="btn-back" (click)="goBack()">
+          <i class="bi bi-arrow-left"></i>
+          Back to List
+        </button>
+        <h1 class="page-title">
+          <i class="bi bi-truck"></i>
+          Transport Request Details
+        </h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" (click)="onPrint()">
+          <i class="bi bi-printer"></i>
+          Print
+        </button>
+        <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
+          <i class="bi bi-pencil"></i>
+          Edit
+        </button>
+        <button class="btn btn-warning" (click)="onCancel()" *ngIf="canCancel()">
+          <i class="bi bi-x-circle"></i>
+          Cancel
+        </button>
+        <button class="btn btn-danger" (click)="onDelete()" *ngIf="canDelete()">
+          <i class="bi bi-trash"></i>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Badge -->
+    <div class="status-bar">
+      <!-- Show workflow status if workflow exists -->
+      <span *ngIf="workflow" class="badge" [ngClass]="getWorkflowStatusClass()">
+        <i class="bi bi-diagram-3 me-1"></i>
+        {{ getWorkflowStatus() }}
+      </span>
+      <!-- Fallback to request status if no workflow -->
+      <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span>
+      <!-- Loading state -->
+      <span *ngIf="workflowLoading" class="badge bg-secondary">
+        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        Loading workflow...
+      </span>
+      <span class="text-muted">Created: {{ formatDate(request.updatedAt) }}</span>
+    </div>
+
+    <!-- Request Information -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-person-circle"></i> Requestor Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Requestor Name</label>
+            <p>{{ request.requestorName || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Staff ID</label>
+            <p>{{ request.staffId || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Department</label>
+            <p>{{ request.department || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Position</label>
+            <p>{{ request.position || 'N/A' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Purpose -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-file-text"></i> Purpose</h5>
+      </div>
+      <div class="card-body">
+        <div class="purpose-text">
+          <p>{{ request.purpose || 'N/A' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TSR Reference -->
+    <div class="card mb-4" *ngIf="request.tsrReference">
+      <div class="card-header">
+        <h5><i class="bi bi-link"></i> TSR Reference</h5>
+      </div>
+      <div class="card-body">
+        <div class="purpose-text">
+          <p>{{ request.tsrReference }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transport Details -->
+    <div class="card mb-4" *ngIf="request.transportDetails && request.transportDetails.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-geo-alt"></i> Transport Journey Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-container">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Day</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Departure Time</th>
+                <th>Transport Type</th>
+                <th>Passengers</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let detail of request.transportDetails">
+                <td>{{ detail.date ? formatDate(detail.date.toString()) : 'N/A' }}</td>
+                <td>{{ detail.day }}</td>
+                <td>{{ detail.from }}</td>
+                <td>{{ detail.to }}</td>
+                <td>{{ detail.departureTime }}</td>
+                <td>{{ detail.transportType }}</td>
+                <td>{{ detail.numberOfPassengers }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transport Processing Details (if assigned by admin) -->
+    <div class="card mb-4" *ngIf="request.bookingDetails && (request.status === 'Processing with Transport Admin' || request.status === 'Completed')">
+      <div class="card-header">
+        <h5><i class="bi bi-check-circle-fill me-2 text-success"></i> Transport Processing Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="p-4 rounded bg-success-subtle">
+          <div class="row g-4">
+            <!-- Row 1 -->
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Vehicle Type</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.vehicleType || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Vehicle Number</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.vehicleNumber || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Driver Name</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.driverName || 'N/A' }}</p>
+              </div>
+            </div>
+
+            <!-- Row 2 -->
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Driver Contact</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.driverContact || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Pickup Time</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.pickupTime || 'N/A' }}</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Dropoff Time</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.dropoffTime || 'N/A' }}</p>
+              </div>
+            </div>
+
+            <!-- Row 3 - Full width fields -->
+            <div class="col-12" *ngIf="request.bookingDetails.actualRoute">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Actual Route</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.actualRoute }}</p>
+              </div>
+            </div>
+
+            <div class="col-12" *ngIf="request.bookingDetails.bookingReference">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Booking Reference</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.bookingReference }}</p>
+              </div>
+            </div>
+
+            <div class="col-12" *ngIf="request.bookingDetails.additionalNotes">
+              <div class="processing-detail-item">
+                <label class="text-muted small d-block mb-1">Transport Admin Notes</label>
+                <p class="mb-0 fw-medium">{{ request.bookingDetails.additionalNotes }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Comments -->
+    <div class="card mb-4" *ngIf="request.additionalComments">
+      <div class="card-header">
+        <h5><i class="bi bi-chat-left-text"></i> Additional Comments</h5>
+      </div>
+      <div class="card-body">
+        <div class="purpose-text">
+          <p>{{ request.additionalComments }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modern Workflow Status -->
+    <div class="card mb-4" *ngIf="workflow || workflowLoading">
+      <div class="card-header">
+        <h5><i class="bi bi-diagram-3"></i> Approval Workflow</h5>
+      </div>
+      <div class="card-body">
+
+        <!-- Loading State -->
+        <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading workflow...</span>
+          </div>
+          <p class="text-muted mt-2">Loading workflow status...</p>
+        </div>
+
+        <!-- Workflow Status Timeline -->
+        <app-workflow-status
+          *ngIf="workflow && !workflowLoading"
+          [workflowInstance]="workflow">
+        </app-workflow-status>
+
+        <!-- Approval Action Buttons -->
+        <app-approval-actions
+          *ngIf="currentStepExecution && !workflowLoading"
+          [stepExecution]="currentStepExecution"
+          (approved)="onWorkflowApproved()"
+          (rejected)="onWorkflowRejected()"
+          (delegated)="onWorkflowDelegated()">
+        </app-approval-actions>
+
+        <!-- No Workflow Message -->
+        <div *ngIf="!workflow && !workflowLoading" class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          No workflow has been initiated for this transport request yet.
+        </div>
+      </div>
+    </div>
+
+    <!-- Fallback: Old Approval Workflow (if no modern workflow exists) -->
+    <div class="card mb-4" *ngIf="!workflow && !workflowLoading && request.approval_steps && request.approval_steps.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-check-circle"></i> Approval Workflow (Legacy)</h5>
+      </div>
+      <div class="card-body">
+        <div class="approval-timeline">
+          <div *ngFor="let step of request.approval_steps" class="approval-step"
+               [ngClass]="{'completed': step.status === 'Approved', 'rejected': step.status === 'Rejected', 'pending': step.status === 'Pending'}">
+            <div class="step-icon">
+              <i *ngIf="step.status === 'Approved'" class="bi bi-check-circle-fill icon-success"></i>
+              <i *ngIf="step.status === 'Rejected'" class="bi bi-x-circle-fill icon-error"></i>
+              <i *ngIf="step.status === 'Pending'" class="bi bi-clock-fill icon-pending"></i>
+            </div>
+            <div class="step-content">
+              <h4>{{ step.step_role || 'Unknown Role' }}</h4>
+              <p class="step-status">{{ step.status || 'Pending' }}</p>
+              <p class="step-date" *ngIf="step.step_date">{{ formatDate(step.step_date) }}</p>
+              <p class="step-comments" *ngIf="step.comments">{{ step.comments }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

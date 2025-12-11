@@ -1,0 +1,510 @@
+/* You can add global styles to this file, and also import other style files */
+/* Bootstrap CSS is imported in angular.json */
+@use './styles/typography' as typography;
+@use './styles/colors' as colors;
+@use './styles/buttons';
+
+// We're using Google Fonts for Raleway instead of local font files
+// The font is loaded in index.html
+
+// Global styles
+body {
+  @include typography.body-text;
+  color: colors.$text-primary;
+  background-image: url('/img/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  @include typography.title;
+  color: colors.$primary-teal;
+}
+
+h2 {
+  @include typography.subtitle;
+  color: colors.$primary-dark-gray;
+}
+
+// Secondary font usage for specific elements
+.secondary-font {
+  @include typography.secondary-text;
+}
+
+// Utility classes for colors
+.bg-primary-teal { background-color: colors.$primary-teal; }
+.bg-primary-dark-gray { background-color: colors.$primary-dark-gray; }
+.bg-secondary-purple-dark { background-color: colors.$secondary-purple-dark; }
+.bg-secondary-purple-medium { background-color: colors.$secondary-purple-medium; }
+.bg-secondary-blue { background-color: colors.$secondary-blue; }
+.bg-secondary-light-blue { background-color: colors.$secondary-light-blue; }
+.bg-secondary-green { background-color: colors.$secondary-green; }
+.bg-secondary-yellow { background-color: colors.$secondary-yellow; }
+.bg-secondary-orange { background-color: colors.$secondary-orange; }
+.bg-neutral { background-color: colors.$neutral-color; }
+.bg-highlight { background-color: colors.$highlight-color; }
+
+.text-primary-teal { color: colors.$primary-teal; }
+.text-primary-dark-gray { color: colors.$primary-dark-gray; }
+.text-highlight { color: colors.$highlight-color; }
+
+// Add your custom global styles below
+
+// ========== PAGE CONTAINER HEIGHT FIX ==========
+// Ensure all page containers fill the full height of the content area
+// This prevents pages from displaying with empty space below content
+.flights-admin-container,
+.accommodation-admin-container,
+.claims-admin-container,
+.clerk-panel-container,
+.transport-admin-container,
+.visa-admin-container,
+.admin-reports-container,
+.notification-templates-container,
+.role-management-container,
+.workflow-configuration-container,
+.trf-list-container,
+.trf-create-container,
+.trf-detail-container,
+.dashboard-container,
+// Also apply to any other admin or feature containers
+[class*="-admin-container"],
+[class*="-panel-container"],
+[class*="-list-container"],
+[class*="admin-"][class*="-container"],
+[class*="trf-"][class*="-container"] {
+  min-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: transparent; // Transparent to show background image
+  
+  // Make the last card grow to fill remaining space
+  > .card:last-of-type,
+  > div:last-child > .card:last-of-type {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    
+    .card-body {
+      flex: 1;
+    }
+    
+    .table-responsive {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      
+      table {
+        flex: 1;
+      }
+    }
+  }
+  
+  // Also handle cards that are not last but should still expand
+  > .card {
+    &:has(.table-responsive) {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      
+      .table-responsive {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+    }
+  }
+}
+
+// Apply to container-fluid used in feature pages
+// This is scoped to feature pages only to avoid affecting other Bootstrap layouts
+app-user-admin,
+app-flights-admin,
+app-accommodation-admin,
+app-claims-admin,
+app-transport-admin,
+app-visa-admin,
+app-system-settings,
+tmsapp-admin-systemsettings-notification-templates,
+tmsapp-admin-systemsettings-role-management,
+tmsapp-admin-systemsettings-workflow-configuration,
+// Catch-all for any admin components
+[class*="app-"][class*="-admin"],
+[class*="tmsapp-admin"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  
+  > .container-fluid {
+    min-height: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: transparent; // Allow background image to show through
+    
+    // Make the last card grow to fill remaining space
+    > .card:last-of-type {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      
+      .card-body {
+        flex: 1;
+      }
+      
+      .table-responsive {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        
+        table {
+          flex: 1;
+        }
+      }
+    }
+    
+    // Also handle cards that are not last but should still expand
+    > .card {
+      &:has(.table-responsive) {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        
+        .table-responsive {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+      }
+    }
+  }
+}
+
+// ========== GLOBAL PRINT STYLES ==========
+@media print {
+  // Global print settings
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-size: 10pt;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  // Hide all navigation, header, footer, and sidebar elements
+  header,
+  footer,
+  nav,
+  .sidebar,
+  .sidebar-wrapper,
+  .header,
+  .header-wrapper,
+  .footer-wrapper,
+  .navigation,
+  .app-sidebar,
+  .right-panel,
+  .sidebar-overlay,
+  app-header,
+  app-sidebar,
+  app-navigation,
+  app-toast-container {
+    display: none !important;
+  }
+
+  // App container should have no constraints
+  .app-container {
+    display: block !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  // Ensure main content takes full width
+  main,
+  .main-content,
+  .content,
+  .content-area,
+  .app-content {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  // Remove shadows and borders for cleaner print
+  * {
+    box-shadow: none !important;
+  }
+
+  // Page breaks
+  .page-break {
+    page-break-before: always;
+  }
+
+  .no-page-break {
+    page-break-inside: avoid;
+  }
+}
+
+// ========== REQUEST LISTS UNIFIED STYLES ==========
+// Standardize button sizes and empty state typography across all request list pages
+// Applied to: Visa, Transport, Accommodation, Expense Claims, TRF lists
+
+// Unified button styling for all "Create New" buttons in list pages
+.visa-list-container,
+.transport-list-container,
+.accommodation-list-container,
+.expense-list-container,
+.trf-list-container {
+
+  // Standardize header button width and styling
+  .header-section {
+    .btn-primary {
+      width: 220px; // Fixed width for consistency across all request buttons
+      min-width: 220px; // Also set min-width as fallback
+      max-width: 220px; // Prevent expansion beyond fixed width
+      padding: 0.625rem 1rem; // Consistent padding
+      font-size: 0.9375rem; // 15px - consistent font size
+      font-weight: 500; // Consistent font weight
+      white-space: nowrap; // Prevent text wrapping
+      display: inline-flex; // Ensure proper alignment
+      align-items: center; // Center content vertically
+      justify-content: center; // Center content horizontally
+      line-height: 1.5; // Consistent line height
+      min-height: 44px; // Consistent minimum height
+
+      i {
+        font-size: 1.125rem; // Consistent icon size
+        flex-shrink: 0; // Prevent icon from shrinking
+      }
+    }
+  }
+  
+  // Unified empty state typography
+  .empty-state {
+    padding: 4rem 1.5rem; // Consistent padding
+    
+    .empty-icon {
+      font-size: 4rem; // 64px - consistent icon size
+      color: #d1d5db; // gray-300
+      margin-bottom: 1rem;
+    }
+    
+    .empty-title,
+    .empty-message,
+    h3 {
+      font-size: 1.125rem; // 18px - consistent title size
+      font-weight: 600; // semibold
+      color: #1f2937; // gray-800
+      margin: 0 0 0.5rem 0;
+      line-height: 1.5;
+    }
+    
+    .empty-description,
+    .empty-subtitle,
+    p {
+      font-size: 0.875rem; // 14px - consistent description size
+      color: #6b7280; // gray-500
+      margin: 0.5rem 0 0 0;
+      line-height: 1.5;
+      max-width: 32rem; // Limit width for readability
+    }
+  }
+  
+  // Ensure consistent card title sizes
+  .card-title {
+    font-size: 1.125rem; // 18px
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+  }
+  
+  // Consistent page title styling
+  .page-title {
+    font-size: 1.875rem; // 30px
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #1f2937;
+    margin: 0;
+  }
+  
+  .page-subtitle {
+    font-size: 0.875rem; // 14px
+    color: #6b7280;
+    margin: 0;
+  }
+}
+
+// ==================== Unified Request Table Styles ====================
+// Standardizes data tables across request modules (Visa, Transport, Accommodation,
+// Expense, TRF) for consistent padding, alignment, typography, and action buttons.
+
+.visa-list-container,
+.transport-list-container,
+.accommodation-list-container,
+.expense-list-container,
+.trf-list-container {
+
+  // Base table layout and typography
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  thead {
+    background-color: #f9fafb; // gray-50
+    border-bottom: 1px solid #e5e7eb;
+
+    th {
+      padding: 0.75rem 1rem; // unified cell padding
+      text-align: left;
+      font-weight: 600;
+      color: #374151; // gray-700
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    // Action column header centered
+    th:last-child,
+    th.text-end {
+      text-align: center;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e5e7eb;
+      transition: background-color 0.15s ease;
+      min-height: 3rem; // consistent row height
+
+      &:hover {
+        background-color: #f9fafb;
+      }
+
+      td {
+        padding: 0.75rem 1rem; // unified cell padding
+        vertical-align: middle;
+        color: #374151;
+      }
+
+      td:last-child,
+      td.text-end {
+        text-align: center;
+      }
+    }
+  }
+
+  // Standard action group alignment and spacing in Action column
+  .action-buttons {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem; // ~8px consistent spacing
+  }
+
+  .action-buttons .btn,
+  .action-buttons .btn-icon,
+  .action-buttons .action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    border-width: 1px;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+
+    i {
+      font-size: 1rem;
+    }
+
+    &:hover,
+    &:focus-visible {
+      outline: none;
+      transform: translateY(-1px);
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.15);
+    }
+  }
+}
+
+// Override any component-specific button styles to ensure consistency
+.btn-create {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  padding: 0.625rem 1rem !important;
+  font-size: 0.9375rem !important;
+  font-weight: 500 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 44px !important;
+}
+
+// ==================== Unified Badge Styles ====================
+// Used across all request lists for consistent status display
+.badge {
+  display: inline-flex;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  align-items: center;
+  justify-content: center;
+}
+
+// Status badge colors - unified across all modules
+.badge-pending,
+.badge-warning {
+  background-color: #fef3c7; // amber-100
+  color: #92400e; // amber-900
+  border: 1px solid #fbbf24; // amber-400
+}
+
+.badge-info {
+  background-color: #dbeafe; // blue-100
+  color: #1e3a8a; // blue-900
+  border: 1px solid #3b82f6; // blue-500
+}
+
+.badge-success {
+  background-color: #d1fae5; // green-100
+  color: #065f46; // green-900
+  border: 1px solid #10b981; // green-500
+}
+
+.badge-danger {
+  background-color: #fee2e2; // red-100
+  color: #991b1b; // red-900
+  border: 1px solid #ef4444; // red-500
+}
+
+.badge-secondary,
+.badge-draft {
+  background-color: #f3f4f6; // gray-100
+  color: #6b7280; // gray-500
+  border: 1px solid #d1d5db; // gray-300
+}
+
+.badge-processing {
+  background-color: #e0e7ff; // indigo-100
+  color: #3730a3; // indigo-800
+  border: 1px solid #6366f1; // indigo-500
+}
+
+// Special badge for visa types
+.badge-visa-type {
+  background-color: #f3e8ff; // purple-100
+  color: #6b21a8; // purple-800
+  border: 1px solid #a855f7; // purple-500
+  font-weight: 600;
+}
