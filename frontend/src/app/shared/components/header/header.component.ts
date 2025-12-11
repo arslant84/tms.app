@@ -111,7 +111,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
         next: () => {
           // Navigate to action URL if provided
           if (notification.action_url) {
-            this.router.navigate([notification.action_url]);
+            const mappedUrl = this.mapActionUrlToRoute(notification.action_url);
+            this.router.navigate([mappedUrl]);
           }
           this.isNotificationsOpen = false;
         },
@@ -122,10 +123,39 @@ export class HeaderComponent implements OnInit, OnDestroy {
     } else {
       // Just navigate if already read
       if (notification.action_url) {
-        this.router.navigate([notification.action_url]);
+        const mappedUrl = this.mapActionUrlToRoute(notification.action_url);
+        this.router.navigate([mappedUrl]);
       }
       this.isNotificationsOpen = false;
     }
+  }
+
+  /**
+   * Maps backend entity types to frontend route paths
+   * Backend sends: /travelrequest/123, /transportrequest/123, /visaapplication/123
+   * Frontend needs: /trf/123, /transport/123, /visa/123
+   */
+  private mapActionUrlToRoute(actionUrl: string): string {
+    if (!actionUrl) return '/dashboard';
+
+    // Map backend entity types to frontend routes
+    const mappings: { [key: string]: string } = {
+      '/travelrequest/': '/trf/',
+      '/transportrequest/': '/transport/',
+      '/visaapplication/': '/visa/',
+      '/expenseclaim/': '/expenses/',
+      // accommodation already matches: /accommodation/
+    };
+
+    let mappedUrl = actionUrl;
+    for (const [backendPath, frontendPath] of Object.entries(mappings)) {
+      if (mappedUrl.includes(backendPath)) {
+        mappedUrl = mappedUrl.replace(backendPath, frontendPath);
+        break;
+      }
+    }
+
+    return mappedUrl;
   }
 
   /**
