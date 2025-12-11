@@ -62,9 +62,28 @@
       </div>
     </div>
   </div>
-  
-  <!-- Key Metrics -->
-  <div class="row metrics-row">
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Loading reports data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle"></i>
+    {{ error }}
+    <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadReportData()">
+      <i class="bi bi-arrow-clockwise"></i> Retry
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!isLoading && !error">
+    <!-- Key Metrics -->
+    <div class="row metrics-row">
     <div class="col-xl-3 col-md-6" *ngFor="let metric of keyMetrics">
       <div class="metric-card">
         <div class="metric-icon">
@@ -250,5 +269,6 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 </div>
