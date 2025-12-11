@@ -43,13 +43,13 @@ class WorkflowNotifications:
             # Notify the first approver (if step executions exist)
             if workflow_instance.step_executions.exists():
                 first_step = workflow_instance.step_executions.filter(
-                    step_order=1,
+                    workflow_step__step_order=1,
                     status='pending'
                 ).first()
 
-                if first_step and first_step.assigned_to_user:
+                if first_step and first_step.assigned_to:
                     NotificationService.create_notification(
-                        user=first_step.assigned_to_user,
+                        user=first_step.assigned_to,
                         title=f"New Approval Required: {workflow_instance.workflow_template.name}",
                         message=f"You have been assigned to approve {first_step.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request.",
                         event_type=_get_event_type('APPROVAL_REQUESTED'),
@@ -57,6 +57,8 @@ class WorkflowNotifications:
                         action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
                         send_email=True
                     )
+                else:
+                    print(f"⚠️ First step has no assigned user - notifications may not be sent")
 
             print(f"✅ Notifications sent for workflow start: {workflow_instance.id}")
         except Exception as e:
@@ -86,19 +88,19 @@ class WorkflowNotifications:
 
             # Notify the next approver (if exists)
             next_step = workflow_instance.step_executions.filter(
-                step_order=step_execution.step_order + 1,
+                workflow_step__step_order=step_execution.workflow_step.step_order + 1,
                 status='pending'
             ).first()
 
-            if next_step and next_step.assigned_to_user:
+            if next_step and next_step.assigned_to:
                 NotificationService.create_notification(
-                    user=next_step.assigned_to_user,
+                    user=next_step.assigned_to,
                     title=f"New Approval Required: {next_step.workflow_step.step_name}",
                     message=f"You have been assigned to approve {next_step.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request.",
                     event_type=_get_event_type('APPROVAL_REQUESTED'),
                     priority='high',
                     action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
-                send_email=True
+                    send_email=True
                 )
 
             print(f"✅ Notifications sent for step approval: {step_execution.id}")
