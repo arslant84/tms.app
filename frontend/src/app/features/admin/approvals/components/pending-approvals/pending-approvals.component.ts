@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../../../environments/environment';
+import { NotificationService } from '../../../../notifications/services/notification.service';
 
 interface ApprovableItem {
   id: string;
@@ -70,12 +71,67 @@ export class PendingApprovalsComponent implements OnInit {
 
   constructor(
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
-    this.fetchPendingItems();
-    this.fetchTabCounts();
+    // Check for query params (from notification click)
+    this.route.queryParams.subscribe(params => {
+      const itemId = params['id'];
+      const itemType = params['type'];
+      const action = params['action'];
+
+      if (itemId && itemType && action === 'approve') {
+        // Set the active tab based on item type
+        this.setActiveTabFromType(itemType);
+
+        // Fetch items and then auto-open the approve dialog
+        this.fetchPendingItems();
+        this.fetchTabCounts();
+
+        // Wait for items to load and then open the dialog
+        setTimeout(() => {
+          this.openApproveDialogForItem(itemId);
+          // Clear query params after opening dialog
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+            queryParamsHandling: 'merge'
+          });
+        }, 1000);
+      } else {
+        this.fetchPendingItems();
+        this.fetchTabCounts();
+      }
+    });
+  }
+
+  /**
+   * Set active tab based on entity type
+   */
+  private setActiveTabFromType(type: string): void {
+    const tabMap: { [key: string]: 'all' | 'trf' | 'visa' | 'accommodation' | 'transport' } = {
+      'trf': 'trf',
+      'transport': 'transport',
+      'visa': 'visa',
+      'accommodation': 'accommodation',
+      'expenses': 'all'
+    };
+    this.activeTab = tabMap[type] || 'all';
+  }
+
+  /**
+   * Open approve dialog for a specific item by ID
+   */
+  private openApproveDialogForItem(itemId: string): void {
+    const item = this.filteredItems.find(i => i.id === itemId);
+    if (item) {
+      this.openApproveDialog(item);
+    } else {
+      console.warn(`Could not find item with ID ${itemId} in current items`);
+    }
   }
 
   fetchPendingItems(forceRefresh = false): void {
@@ -252,6 +308,8 @@ export class PendingApprovalsComponent implements OnInit {
         console.log('Item approved successfully');
         this.closeDialogs();
         this.fetchPendingItems(true);
+        // Refresh notifications to remove the actioned notification
+        this.notificationService.refreshNotifications();
         this.isActionPending = false;
       },
       error: (err) => {
@@ -263,6 +321,8 @@ export class PendingApprovalsComponent implements OnInit {
           alert('This item has already been processed or is not awaiting your approval.');
           this.closeDialogs();
           this.fetchPendingItems(true); // Refresh to remove it from the list
+          // Refresh notifications
+          this.notificationService.refreshNotifications();
         } else {
           alert('Failed to approve: ' + errorMsg);
         }
@@ -298,6 +358,8 @@ export class PendingApprovalsComponent implements OnInit {
         console.log('Item rejected successfully');
         this.closeDialogs();
         this.fetchPendingItems(true);
+        // Refresh notifications to remove the actioned notification
+        this.notificationService.refreshNotifications();
         this.isActionPending = false;
       },
       error: (err) => {
