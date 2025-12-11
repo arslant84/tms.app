@@ -1,0 +1,97 @@
+<!-- Sidebar - Matching React pctsb.syntra design -->
+<div class="sidebar-container">
+  <!-- Navigation Menu -->
+  <nav class="nav-menu">
+    <!-- Reports (For users with reporting permissions) -->
+    <a
+      *ngIf="hasReportPermissions"
+      routerLink="/admin/reports"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'Reports'">
+      <i class="bi bi-bar-chart"></i>
+      <span class="nav-label">Reports</span>
+    </a>
+
+    <!-- Flights Admin -->
+    <a
+      *ngIf="hasFlightsAdminPermission"
+      routerLink="/admin/flights"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'Flights Admin'">
+      <i class="bi bi-airplane"></i>
+      <span class="nav-label">Flights Admin</span>
+    </a>
+
+    <!-- Accommodation Admin -->
+    <a
+      *ngIf="hasAccommodationAdminPermission"
+      routerLink="/admin/accommodation"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'Accommodation Admin'">
+      <i class="bi bi-building"></i>
+      <span class="nav-label">Accommodation Admin</span>
+    </a>
+
+    <!-- Visa Admin -->
+    <a
+      *ngIf="hasVisaAdminPermission"
+      routerLink="/admin/visa"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'Visa Admin'">
+      <i class="bi bi-file-text"></i>
+      <span class="nav-label">Visa Admin</span>
+    </a>
+
+    <!-- Transport Admin -->
+    <a
+      *ngIf="hasTransportAdminPermission"
+      routerLink="/admin/transport"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'Transport Admin'">
+      <i class="bi bi-truck"></i>
+      <span class="nav-label">Transport Admin</span>
+    </a>
+
+    <!-- Approvals Queue -->
+    <a
+      *ngIf="hasApprovalPermissions"
+      routerLink="/admin/approvals"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'Approvals'">
+      <i class="bi bi-check-square"></i>
+      <span class="nav-label">Approvals</span>
+      <span class="nav-badge" *ngIf="pendingApprovals > 0">{{ pendingApprovals }}</span>
+    </a>
+
+    <!-- User Management (Admin only) -->
+    <a
+      *ngIf="hasAdminPermissions"
+      routerLink="/users/admin"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="'User Management'">
+      <i class="bi bi-people"></i>
+      <span class="nav-label">User Management</span>
+    </a>
+  </nav>
+
+  <!-- Footer Section -->
+  <div class="sidebar-footer">
+    <!-- System Settings (Admin only) -->
+    <a
+      *ngIf="hasAdminPermissions"
+      routerLink="/admin/settings"
+      routerLinkActive="active"
+      class="nav-item settings-item"
+      [attr.title]="'System Settings'">
+      <i class="bi bi-gear"></i>
+      <span class="nav-label">System Settings</span>
+    </a>
+  </div>
+</div>

@@ -1,0 +1,480 @@
+<!-- TRF Detail View - Matching React Design -->
+<div class="trf-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading TRF details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <h3>Error Loading TRF</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="goBack()">Back to List</button>
+  </div>
+
+  <!-- TRF Details -->
+  <div *ngIf="trfData && !loading" class="trf-detail-content">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <button class="btn-back" (click)="goBack()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Back to List
+        </button>
+        <h1 class="page-title">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          {{ trfData.travelType }} Travel Request
+        </h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" (click)="onPrint()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+          </svg>
+          Print
+        </button>
+        <button class="btn btn-outline" (click)="onExportPdf()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Export PDF
+        </button>
+        <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          Edit
+        </button>
+        <button class="btn btn-warning" (click)="onCancel()" *ngIf="canCancel()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Cancel
+        </button>
+        <button class="btn btn-danger" (click)="onDelete()" *ngIf="canDelete()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Badge -->
+    <div class="status-bar">
+      <!-- Show workflow status if workflow exists -->
+      <span *ngIf="workflow" class="badge" [ngClass]="getWorkflowStatusClass()">
+        <i class="bi bi-diagram-3 me-1"></i>
+        {{ getWorkflowStatus() }}
+      </span>
+      <!-- Fallback to request status if no workflow -->
+      <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span>
+      <!-- Loading state -->
+      <span *ngIf="workflowLoading" class="badge bg-secondary">
+        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        Loading workflow...
+      </span>
+      <span *ngIf="trfData.requestNumber" class="text-muted">Request Number: {{ trfData.requestNumber }}</span>
+      <span *ngIf="!trfData.requestNumber" class="text-muted">TRF ID: #{{ trfData.id }}</span>
+    </div>
+
+    <!-- Employee/External Party Details -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-person"></i> {{ isExternal ? 'External Party Details' : 'Employee Details' }}</h5>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <ng-container *ngIf="isExternal">
+            <div class="detail-item">
+              <label>Full Name</label>
+              <p>{{ trfData.externalPartyName || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Organization</label>
+              <p>{{ trfData.externalPartyOrganization || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Authority Letter Ref.</label>
+              <p>{{ trfData.externalRefToAuthorityLetter || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Cost Center</label>
+              <p>{{ trfData.externalCostCenter || 'N/A' }}</p>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="!isExternal">
+            <div class="detail-item">
+              <label>Requestor Name</label>
+              <p>{{ trfData.requestorName || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Staff ID</label>
+              <p>{{ trfData.staffId || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Department & Position</label>
+              <p>{{ trfData.department || 'N/A' }}{{ trfData.position ? ' / ' + trfData.position : '' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Cost Center</label>
+              <p>{{ trfData.costCenter || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Tel/Email</label>
+              <p>{{ trfData.telEmail || 'N/A' }}</p>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- Purpose of Travel -->
+    <div class="card mb-4" *ngIf="trfData.purpose">
+      <div class="card-header">
+        <h5><i class="bi bi-file-text"></i> Purpose of Travel</h5>
+      </div>
+      <div class="card-body">
+        <div class="purpose-text">
+          <p>{{ trfData.purpose }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Itinerary -->
+    <div class="card mb-4" *ngIf="trfData.itinerary && trfData.itinerary.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-calendar-event"></i> Itinerary</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-container">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Day</th>
+                <th>From</th>
+                <th>To</th>
+                <th>ETD</th>
+                <th>ETA</th>
+                <th>Flight/Class</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let segment of trfData.itinerary">
+                <td>{{ formatDate(segment.segment_date || segment.date) }}</td>
+                <td>{{ segment.day_of_week || segment.day || 'N/A' }}</td>
+                <td>{{ segment.from_location || segment.from || 'N/A' }}</td>
+                <td>{{ segment.to_location || segment.to || 'N/A' }}</td>
+                <td>{{ formatTime(segment.departure_time || segment.etd) }}</td>
+                <td>{{ formatTime(segment.arrival_time || segment.eta) }}</td>
+                <td>{{ segment.flight_number || segment.flightNumber || 'N/A' }}</td>
+                <td>{{ segment.remarks || 'N/A' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meal Provision (Domestic) -->
+    <div class="card mb-4" *ngIf="isDomestic && trfData.mealSelections && trfData.mealSelections.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-cup-straw"></i> Meal Provision (Kiyanly)</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-container">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th class="text-center">Breakfast</th>
+                <th class="text-center">Lunch</th>
+                <th class="text-center">Dinner</th>
+                <th class="text-center">Supper</th>
+                <th class="text-center">Refreshment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let meal of trfData.mealSelections">
+                <td>{{ formatDate(meal.meal_date) }}</td>
+                <td class="text-center">{{ meal.breakfast ? '✓' : '—' }}</td>
+                <td class="text-center">{{ meal.lunch ? '✓' : '—' }}</td>
+                <td class="text-center">{{ meal.dinner ? '✓' : '—' }}</td>
+                <td class="text-center">{{ meal.supper ? '✓' : '—' }}</td>
+                <td class="text-center">{{ meal.refreshment ? '✓' : '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="meal-summary">
+          <h4>Summary Totals:</h4>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span>Breakfast</span>
+              <strong>{{ getMealTotal('breakfast') }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Lunch</span>
+              <strong>{{ getMealTotal('lunch') }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Dinner</span>
+              <strong>{{ getMealTotal('dinner') }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Supper</span>
+              <strong>{{ getMealTotal('supper') }}</strong>
+            </div>
+            <div class="summary-item">
+              <span>Refreshment</span>
+              <strong>{{ getMealTotal('refreshment') }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passport Details (Overseas/Home Leave) -->
+    <div class="card mb-4" *ngIf="isOverseas && trfData.passportDetails && trfData.passportDetails.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-passport"></i> Passport Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Full Name</label>
+            <p>{{ trfData.passportDetails[0]?.full_name || trfData.passportDetails[0]?.fullName || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Passport Number</label>
+            <p>{{ trfData.passportDetails[0]?.passport_number || trfData.passportDetails[0]?.passportNumber || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Nationality</label>
+            <p>{{ trfData.passportDetails[0]?.nationality || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Date of Birth</label>
+            <p>{{ formatDate(trfData.passportDetails[0]?.date_of_birth || trfData.passportDetails[0]?.dateOfBirth) }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Place of Birth</label>
+            <p>{{ trfData.passportDetails[0]?.place_of_birth || trfData.passportDetails[0]?.placeOfBirth || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Passport Issue Date</label>
+            <p>{{ formatDate(trfData.passportDetails[0]?.passport_issue_date || trfData.passportDetails[0]?.passportIssueDate) }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Passport Expiry Date</label>
+            <p>{{ formatDate(trfData.passportDetails[0]?.passport_expiry_date || trfData.passportDetails[0]?.passportExpiryDate) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advance Request (Overseas/Home Leave) -->
+    <div class="card mb-4" *ngIf="isOverseas && (trfData.bankDetails || trfData.advanceAmounts?.length > 0)">
+      <div class="card-header">
+        <h5><i class="bi bi-currency-dollar"></i> Advance Request</h5>
+      </div>
+      <div class="card-body">
+
+        <div class="sub-section" *ngIf="trfData.bankDetails">
+          <h4 class="sub-title">Bank Details</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Account Name</label>
+              <p>{{ trfData.bankDetails.account_name || trfData.bankDetails.accountName || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Bank Name</label>
+              <p>{{ trfData.bankDetails.bank_name || trfData.bankDetails.bankName || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Account Number</label>
+              <p>{{ trfData.bankDetails.account_number || trfData.bankDetails.accountNumber || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>SWIFT Code</label>
+              <p>{{ trfData.bankDetails.swift_code || trfData.bankDetails.swiftCode || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>IBAN</label>
+              <p>{{ trfData.bankDetails.iban || 'N/A' }}</p>
+            </div>
+            <div class="detail-item">
+              <label>Currency</label>
+              <p>{{ trfData.bankDetails.currency || 'N/A' }}</p>
+            </div>
+            <div class="detail-item full-width" *ngIf="trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress">
+              <label>Branch Address</label>
+              <p>{{ trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-section" *ngIf="trfData.advanceAmounts && trfData.advanceAmounts.length > 0">
+          <h4 class="sub-title">Amount Requested Details</h4>
+          <div class="table-container">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>Date From</th>
+                  <th>Date To</th>
+                  <th class="text-right">LH</th>
+                  <th class="text-right">MA</th>
+                  <th class="text-right">OA</th>
+                  <th class="text-right">TR</th>
+                  <th class="text-right">OE</th>
+                  <th class="text-right">USD</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let amount of trfData.advanceAmounts">
+                  <td>{{ formatDate(amount.date_from || amount.dateFrom) }}</td>
+                  <td>{{ formatDate(amount.date_to || amount.dateTo) }}</td>
+                  <td class="text-right">{{ formatNumber(amount.lh) }}</td>
+                  <td class="text-right">{{ formatNumber(amount.ma) }}</td>
+                  <td class="text-right">{{ formatNumber(amount.oa) }}</td>
+                  <td class="text-right">{{ formatNumber(amount.tr) }}</td>
+                  <td class="text-right">{{ formatNumber(amount.oe) }}</td>
+                  <td class="text-right font-semibold">{{ formatNumber(amount.usd, 2) }}</td>
+                  <td>{{ amount.remarks || 'N/A' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="table-legend">LH: Lodging & Hotel | MA: Meals Allowance | OA: Other Allowance | TR: Transportation | OE: Other Expenses</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Comments -->
+    <div class="card mb-4" *ngIf="trfData.additionalComments">
+      <div class="card-header">
+        <h5><i class="bi bi-chat-left-text"></i> Additional Comments</h5>
+      </div>
+      <div class="card-body">
+        <div class="purpose-text">
+          <p>{{ trfData.additionalComments }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Request Metadata -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-info-circle"></i> Request Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Request Number</label>
+            <p *ngIf="trfData.requestNumber">{{ trfData.requestNumber }}</p>
+            <p *ngIf="!trfData.requestNumber" class="text-muted">#{{ trfData.id }} (Not submitted)</p>
+          </div>
+          <div class="detail-item">
+            <label>Travel Type</label>
+            <p>{{ trfData.travelType }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Current Status</label>
+            <p><span class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span></p>
+          </div>
+          <div class="detail-item">
+            <label>Created At</label>
+            <p>{{ formatDate(trfData.createdAt) }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Last Updated</label>
+            <p>{{ formatDate(trfData.updatedAt) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modern Workflow Status -->
+    <div class="card mb-4" *ngIf="workflow || workflowLoading">
+      <div class="card-header">
+        <h5><i class="bi bi-diagram-3"></i> Approval Workflow</h5>
+      </div>
+      <div class="card-body">
+
+        <!-- Loading State -->
+        <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading workflow...</span>
+          </div>
+          <p class="text-muted mt-2">Loading workflow status...</p>
+        </div>
+
+        <!-- Workflow Status Timeline -->
+        <app-workflow-status
+          *ngIf="workflow && !workflowLoading"
+          [workflowInstance]="workflow">
+        </app-workflow-status>
+
+        <!-- Approval Action Buttons -->
+        <app-approval-actions
+          *ngIf="currentStepExecution && !workflowLoading"
+          [stepExecution]="currentStepExecution"
+          (approved)="onWorkflowApproved()"
+          (rejected)="onWorkflowRejected()"
+          (delegated)="onWorkflowDelegated()">
+        </app-approval-actions>
+
+        <!-- No Workflow Message -->
+        <div *ngIf="!workflow && !workflowLoading" class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          No workflow has been initiated for this TRF yet.
+        </div>
+      </div>
+    </div>
+
+    <!-- Fallback: Old Approval Workflow (if no modern workflow exists) -->
+    <div class="card mb-4" *ngIf="!workflow && !workflowLoading && trfData.approvalSteps && trfData.approvalSteps.length > 0">
+      <div class="card-header">
+        <h5><i class="bi bi-check-circle"></i> Approval Workflow (Legacy)</h5>
+      </div>
+      <div class="card-body">
+        <div class="approval-timeline">
+          <div *ngFor="let step of trfData.approvalSteps; let i = index" class="approval-step"
+               [ngClass]="{'completed': step.status === 'Approved', 'rejected': step.status === 'Rejected', 'pending': step.status === 'Pending'}">
+            <div class="step-icon">
+              <svg *ngIf="step.status === 'Approved'" class="icon-success" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <svg *ngIf="step.status === 'Rejected'" class="icon-error" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+              </svg>
+              <svg *ngIf="step.status === 'Pending'" class="icon-pending" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+              </svg>
+              <span *ngIf="!step.status">{{ i + 1 }}</span>
+            </div>
+            <div class="step-content">
+              <h4>{{ step.role || 'Unknown Role' }}</h4>
+              <p class="step-status">{{ step.status || 'Pending' }}</p>
+              <p class="step-date" *ngIf="step.approvedAt || step.rejectedAt">
+                {{ formatDate(step.approvedAt || step.rejectedAt) }}
+              </p>
+              <p class="step-comments" *ngIf="step.comments">{{ step.comments }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

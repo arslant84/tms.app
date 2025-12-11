@@ -1,0 +1,519 @@
+<div class="container-fluid p-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">{{ isEditMode ? 'Edit' : 'Create' }} Flight Booking</h2>
+      <p class="text-muted mb-0">{{ isEditMode ? 'Update flight booking details' : 'Create a new flight booking' }}</p>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="cancel()">
+      <i class="bi bi-x me-2"></i>Cancel
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading booking details...</p>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="flightForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
+
+    <!-- Basic Information -->
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="trf" class="form-label">TRF ID <span class="text-danger">*</span></label>
+            <input
+              type="number"
+              id="trf"
+              class="form-control"
+              formControlName="trf"
+              [class.is-invalid]="isFieldInvalid('trf')"
+              placeholder="Enter TRF ID">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('trf')">
+              {{ getFieldError('trf') }}
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="user" class="form-label">User ID <span class="text-danger">*</span></label>
+            <input
+              type="number"
+              id="user"
+              class="form-control"
+              formControlName="user"
+              [class.is-invalid]="isFieldInvalid('user')"
+              placeholder="Enter User ID">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('user')">
+              {{ getFieldError('user') }}
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="booking_reference" class="form-label">Booking Reference <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              id="booking_reference"
+              class="form-control"
+              formControlName="booking_reference"
+              [class.is-invalid]="isFieldInvalid('booking_reference')"
+              placeholder="e.g., ABC123XYZ">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('booking_reference')">
+              {{ getFieldError('booking_reference') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="flight_type" class="form-label">Flight Type <span class="text-danger">*</span></label>
+            <select
+              id="flight_type"
+              class="form-select"
+              formControlName="flight_type"
+              [class.is-invalid]="isFieldInvalid('flight_type')">
+              <option *ngFor="let type of flightTypes" [value]="type.value">{{ type.label }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('flight_type')">
+              {{ getFieldError('flight_type') }}
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="booking_class" class="form-label">Booking Class <span class="text-danger">*</span></label>
+            <select
+              id="booking_class"
+              class="form-select"
+              formControlName="booking_class"
+              [class.is-invalid]="isFieldInvalid('booking_class')">
+              <option *ngFor="let cls of bookingClasses" [value]="cls.value">{{ cls.label }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('booking_class')">
+              {{ getFieldError('booking_class') }}
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+            <select
+              id="status"
+              class="form-select"
+              formControlName="status"
+              [class.is-invalid]="isFieldInvalid('status')">
+              <option *ngFor="let stat of statuses" [value]="stat.value">{{ stat.label }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('status')">
+              {{ getFieldError('status') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flight Details -->
+    <div class="card mb-4">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-airplane me-2"></i>Flight Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="airline" class="form-label">Airline <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              id="airline"
+              class="form-control"
+              formControlName="airline"
+              [class.is-invalid]="isFieldInvalid('airline')"
+              placeholder="e.g., Emirates">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('airline')">
+              {{ getFieldError('airline') }}
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="airline_code" class="form-label">Airline Code</label>
+            <input
+              type="text"
+              id="airline_code"
+              class="form-control"
+              formControlName="airline_code"
+              placeholder="e.g., EK">
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="flight_number" class="form-label">Flight Number <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              id="flight_number"
+              class="form-control"
+              formControlName="flight_number"
+              [class.is-invalid]="isFieldInvalid('flight_number')"
+              placeholder="e.g., EK502">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('flight_number')">
+              {{ getFieldError('flight_number') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label for="departure_airport" class="form-label">Departure Airport <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              id="departure_airport"
+              class="form-control"
+              formControlName="departure_airport"
+              [class.is-invalid]="isFieldInvalid('departure_airport')"
+              placeholder="e.g., Dubai International">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('departure_airport')">
+              {{ getFieldError('departure_airport') }}
+            </div>
+          </div>
+
+          <div class="col-md-2 mb-3">
+            <label for="departure_airport_code" class="form-label">Airport Code</label>
+            <input
+              type="text"
+              id="departure_airport_code"
+              class="form-control"
+              formControlName="departure_airport_code"
+              placeholder="e.g., DXB">
+          </div>
+
+          <div class="col-md-2 mb-3">
+            <label for="departure_terminal" class="form-label">Terminal</label>
+            <input
+              type="text"
+              id="departure_terminal"
+              class="form-control"
+              formControlName="departure_terminal"
+              placeholder="e.g., 3">
+          </div>
+
+          <div class="col-md-5 mb-3">
+            <label for="departure_time" class="form-label">Departure Time <span class="text-danger">*</span></label>
+            <input
+              type="datetime-local"
+              id="departure_time"
+              class="form-control"
+              formControlName="departure_time"
+              [class.is-invalid]="isFieldInvalid('departure_time')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('departure_time')">
+              {{ getFieldError('departure_time') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label for="arrival_airport" class="form-label">Arrival Airport <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              id="arrival_airport"
+              class="form-control"
+              formControlName="arrival_airport"
+              [class.is-invalid]="isFieldInvalid('arrival_airport')"
+              placeholder="e.g., London Heathrow">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('arrival_airport')">
+              {{ getFieldError('arrival_airport') }}
+            </div>
+          </div>
+
+          <div class="col-md-2 mb-3">
+            <label for="arrival_airport_code" class="form-label">Airport Code</label>
+            <input
+              type="text"
+              id="arrival_airport_code"
+              class="form-control"
+              formControlName="arrival_airport_code"
+              placeholder="e.g., LHR">
+          </div>
+
+          <div class="col-md-2 mb-3">
+            <label for="arrival_terminal" class="form-label">Terminal</label>
+            <input
+              type="text"
+              id="arrival_terminal"
+              class="form-control"
+              formControlName="arrival_terminal"
+              placeholder="e.g., 4">
+          </div>
+
+          <div class="col-md-5 mb-3">
+            <label for="arrival_time" class="form-label">Arrival Time <span class="text-danger">*</span></label>
+            <input
+              type="datetime-local"
+              id="arrival_time"
+              class="form-control"
+              formControlName="arrival_time"
+              [class.is-invalid]="isFieldInvalid('arrival_time')">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('arrival_time')">
+              {{ getFieldError('arrival_time') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="seat_number" class="form-label">Seat Number</label>
+            <input
+              type="text"
+              id="seat_number"
+              class="form-control"
+              formControlName="seat_number"
+              placeholder="e.g., 12A">
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="ticket_number" class="form-label">Ticket Number</label>
+            <input
+              type="text"
+              id="ticket_number"
+              class="form-control"
+              formControlName="ticket_number"
+              placeholder="Enter ticket number">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cost Information -->
+    <div class="card mb-4">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Cost Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="cost" class="form-label">Base Cost <span class="text-danger">*</span></label>
+            <input
+              type="number"
+              id="cost"
+              class="form-control"
+              formControlName="cost"
+              [class.is-invalid]="isFieldInvalid('cost')"
+              step="0.01"
+              min="0"
+              placeholder="0.00">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('cost')">
+              {{ getFieldError('cost') }}
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="tax_amount" class="form-label">Tax Amount <span class="text-danger">*</span></label>
+            <input
+              type="number"
+              id="tax_amount"
+              class="form-control"
+              formControlName="tax_amount"
+              [class.is-invalid]="isFieldInvalid('tax_amount')"
+              step="0.01"
+              min="0"
+              placeholder="0.00">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('tax_amount')">
+              {{ getFieldError('tax_amount') }}
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="currency" class="form-label">Currency <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              id="currency"
+              class="form-control"
+              formControlName="currency"
+              [class.is-invalid]="isFieldInvalid('currency')"
+              placeholder="e.g., USD">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('currency')">
+              {{ getFieldError('currency') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passenger Preferences -->
+    <div class="card mb-4">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bi bi-person me-2"></i>Passenger Preferences</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="baggage_allowance" class="form-label">Baggage Allowance</label>
+            <input
+              type="text"
+              id="baggage_allowance"
+              class="form-control"
+              formControlName="baggage_allowance"
+              placeholder="e.g., 2 pieces, 23kg each">
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="carry_on_allowance" class="form-label">Carry-on Allowance</label>
+            <input
+              type="text"
+              id="carry_on_allowance"
+              class="form-control"
+              formControlName="carry_on_allowance"
+              placeholder="e.g., 1 piece, 7kg">
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="meal_preference" class="form-label">Meal Preference</label>
+            <input
+              type="text"
+              id="meal_preference"
+              class="form-control"
+              formControlName="meal_preference"
+              placeholder="e.g., Vegetarian">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label for="special_requests" class="form-label">Special Requests</label>
+            <textarea
+              id="special_requests"
+              class="form-control"
+              formControlName="special_requests"
+              rows="2"
+              placeholder="Enter any special requests"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Dates (Optional - for Admin) -->
+    <div class="card mb-4">
+      <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Booking Dates</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label for="booking_date" class="form-label">Booking Date</label>
+            <input
+              type="date"
+              id="booking_date"
+              class="form-control"
+              formControlName="booking_date">
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label for="confirmation_date" class="form-label">Confirmation Date</label>
+            <input
+              type="date"
+              id="confirmation_date"
+              class="form-control"
+              formControlName="confirmation_date">
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label for="ticketing_date" class="form-label">Ticketing Date</label>
+            <input
+              type="date"
+              id="ticketing_date"
+              class="form-control"
+              formControlName="ticketing_date">
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label for="booked_by" class="form-label">Booked By (User ID)</label>
+            <input
+              type="number"
+              id="booked_by"
+              class="form-control"
+              formControlName="booked_by"
+              placeholder="Enter user ID">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="cancellation_date" class="form-label">Cancellation Date</label>
+            <input
+              type="date"
+              id="cancellation_date"
+              class="form-control"
+              formControlName="cancellation_date">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="cancellation_reason" class="form-label">Cancellation Reason</label>
+            <input
+              type="text"
+              id="cancellation_reason"
+              class="form-control"
+              formControlName="cancellation_reason"
+              placeholder="Enter cancellation reason">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Additional Notes -->
+    <div class="card mb-4">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0"><i class="bi bi-file-text me-2"></i>Additional Notes</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label for="notes" class="form-label">Notes</label>
+          <textarea
+            id="notes"
+            class="form-control"
+            formControlName="notes"
+            rows="3"
+            placeholder="Enter any additional notes or comments"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 justify-content-end">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="cancel()"
+            [disabled]="submitting">
+            <i class="bi bi-x me-2"></i>Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-warning"
+            (click)="saveDraft()"
+            [disabled]="submitting">
+            <i class="bi bi-save me-2"></i>
+            <span *ngIf="!submitting">Save Draft</span>
+            <span *ngIf="submitting">
+              <span class="spinner-border spinner-border-sm me-2"></span>Saving...
+            </span>
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="submitting">
+            <i class="bi bi-check-circle me-2"></i>
+            <span *ngIf="!submitting">{{ isEditMode ? 'Update' : 'Create' }} Booking</span>
+            <span *ngIf="submitting">
+              <span class="spinner-border spinner-border-sm me-2"></span>Submitting...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>

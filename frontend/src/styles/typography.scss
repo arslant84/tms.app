@@ -1,0 +1,53 @@
+// Typography
+// Using Raleway as an alternative to Museo Sans since Museo Sans is a premium font
+$font-family-primary: 'Raleway', sans-serif;
+$font-family-secondary: 'Verdana', sans-serif;
+
+// Font weights
+$font-weight-300: 300;
+$font-weight-700: 700;
+$font-weight-900: 900;
+
+// Font sizes
+$font-size-title: 2rem;      // Museo Sans 900
+$font-size-subtitle: 1.5rem; // Museo Sans 700
+$font-size-body: 1rem;       // Museo Sans 300
+
+// Primary Colors
+$primary-teal: rgb(0, 177, 169);     // R: 000 G: 177 B: 169
+$primary-brown: rgb(255, 255, 255);  // R: 255 G: 255 B: 255
+$primary-dark-gray: rgb(60, 56, 53); // R: 060 G: 056 B: 053
+
+// Secondary Colors
+$secondary-purple-dark: rgb(64, 43, 83);   // R: 064 G: 043 B: 083
+$secondary-purple-medium: rgb(104, 70, 139); // R: 104 G: 070 B: 139
+$secondary-blue: rgb(97, 94, 154);     // R: 097 G: 094 B: 154
+$secondary-light-blue: rgb(148, 189, 229); // R: 148 G: 189 B: 229
+$secondary-green: rgb(58, 84, 65);     // R: 058 G: 084 B: 065
+$secondary-yellow: rgb(212, 214, 82);  // R: 212 G: 214 B: 082
+$secondary-orange: rgb(242, 176, 47);  // R: 242 G: 176 B: 047
+$neutral-color: rgb(205, 182, 134);    // R: 205 G: 182 B: 134
+$highlight-color: rgb(217, 39, 44);    // R: 217 G: 039 B: 044
+
+// Typography mixins
+@mixin title {
+  font-family: $font-family-primary;
+  font-weight: $font-weight-900;
+  font-size: $font-size-title;
+}
+
+@mixin subtitle {
+  font-family: $font-family-primary;
+  font-weight: $font-weight-700;
+  font-size: $font-size-subtitle;
+}
+
+@mixin body-text {
+  font-family: $font-family-primary;
+  font-weight: $font-weight-300;
+  font-size: $font-size-body;
+}
+
+@mixin secondary-text {
+  font-family: $font-family-secondary;
+}

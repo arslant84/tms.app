@@ -1,0 +1,311 @@
+<div class="visa-form-container">
+  <div class="page-header">
+    <h2>{{ isEditMode ? 'Edit' : 'New' }} Visa Application</h2>
+    <button class="btn btn-outline-secondary" routerLink="/visa">
+      <i class="bi bi-arrow-left"></i> Back to List
+    </button>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <form [formGroup]="visaForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+
+    <!-- SECTION A: Particulars of Applicant -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header">
+        <h4><i class="bi bi-person-circle"></i> Section A: Particulars of Applicant</h4>
+      </div>
+      <div class="card-body">
+
+        <!-- A.1 Personal Information -->
+        <div class="subsection mb-4">
+          <h6 class="subsection-title"><i class="bi bi-person"></i> Personal Information</h6>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="requestor_name" required>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('requestor_name')">
+                Full Name is required
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Staff ID</label>
+              <input type="text" class="form-control" formControlName="staff_id">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Department</label>
+              <input type="text" class="form-control" formControlName="department">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Position</label>
+              <input type="text" class="form-control" formControlName="position">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" formControlName="email">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Date of Birth</label>
+              <input type="date" class="form-control" formControlName="date_of_birth">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Place of Birth</label>
+              <input type="text" class="form-control" formControlName="place_of_birth">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Citizenship</label>
+              <input type="text" class="form-control" formControlName="citizenship">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Contact Telephone</label>
+              <input type="text" class="form-control" formControlName="contact_telephone">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Marital Status</label>
+              <select class="form-select" formControlName="marital_status">
+                <option value="">Select Status</option>
+                <option *ngFor="let status of maritalStatuses" [value]="status">{{ status }}</option>
+              </select>
+            </div>
+            <div class="col-12 mb-3">
+              <label class="form-label">Home Address</label>
+              <textarea class="form-control" formControlName="home_address" rows="2"></textarea>
+            </div>
+            <div class="col-12 mb-3">
+              <label class="form-label">Family Information</label>
+              <textarea class="form-control" formControlName="family_information" rows="2" placeholder="Spouse name, children, dependents..."></textarea>
+            </div>
+            <div class="col-12 mb-3">
+              <label class="form-label">Education Details</label>
+              <textarea class="form-control" formControlName="education_details" rows="2" placeholder="Highest degree, institution, year..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- A.2 Passport Details -->
+        <div class="subsection mb-4">
+          <h6 class="subsection-title"><i class="bi bi-passport"></i> Passport Details</h6>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Passport Number</label>
+              <input type="text" class="form-control" formControlName="passport_number">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Passport Expiry Date</label>
+              <input type="date" class="form-control" formControlName="passport_expiry_date">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Place of Issuance</label>
+              <input type="text" class="form-control" formControlName="passport_place_of_issuance">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Date of Issuance</label>
+              <input type="date" class="form-control" formControlName="passport_date_of_issuance">
+            </div>
+          </div>
+        </div>
+
+        <!-- A.3 Employment Information -->
+        <div class="subsection">
+          <h6 class="subsection-title"><i class="bi bi-building"></i> Employment Information</h6>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Current Employer Name</label>
+              <input type="text" class="form-control" formControlName="current_employer_name">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Current Employer Address</label>
+              <input type="text" class="form-control" formControlName="current_employer_address">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SECTION B: Type of Request -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header">
+        <h4><i class="bi bi-file-earmark-text"></i> Section B: Type of Request</h4>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Request Type <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="request_type" required>
+              <option value="">Select Request Type</option>
+              <option value="LOI">LOI (Letter of Invitation)</option>
+              <option value="VISA">VISA</option>
+              <option value="WORK_PERMIT">Work Permit</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Approximate Arrival Date</label>
+            <input type="date" class="form-control" formControlName="approximately_arrival_date">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Duration of Stay</label>
+            <input type="text" class="form-control" formControlName="duration_of_stay" placeholder="e.g., 7 days, 2 weeks">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Visa Entry Type</label>
+            <select class="form-select" formControlName="visa_entry_type">
+              <option value="">Select Entry Type</option>
+              <option *ngFor="let type of entryTypes" [value]="type">{{ type }}</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Work Visit Category</label>
+            <select class="form-select" formControlName="work_visit_category">
+              <option value="">Select Category</option>
+              <option value="Technical">Technical</option>
+              <option value="Managerial">Managerial</option>
+              <option value="Training">Training</option>
+              <option value="Consultation">Consultation</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Application Fees Borne By</label>
+            <input type="text" class="form-control" formControlName="application_fees_borne_by" placeholder="Company, Individual, etc.">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Cost Centre Number</label>
+            <input type="text" class="form-control" formControlName="cost_centre_number">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION C: Travel Details -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header">
+        <h4><i class="bi bi-airplane"></i> Section C: Travel Details</h4>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Destination Country <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="destination" required>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('destination')">
+              Destination is required
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Visa Type <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="visa_type" required>
+              <option value="">Select Visa Type</option>
+              <option *ngFor="let type of visaTypes" [value]="type">{{ type }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('visa_type')">
+              Visa Type is required
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">TRF Reference Number</label>
+            <input type="text" class="form-control" formControlName="trf_reference_number">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Trip Start Date</label>
+            <input type="date" class="form-control" formControlName="trip_start_date">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Trip End Date</label>
+            <input type="date" class="form-control" formControlName="trip_end_date">
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Travel Purpose <span class="text-danger">*</span></label>
+            <textarea class="form-control" formControlName="travel_purpose" rows="3" required placeholder="Describe the purpose of your visit..."></textarea>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('travel_purpose')">
+              Travel Purpose is required
+            </div>
+          </div>
+          <div class="col-12 mb-3">
+            <label class="form-label">Itinerary Details</label>
+            <textarea class="form-control" formControlName="itinerary_details" rows="3" placeholder="Provide detailed travel itinerary including cities, dates, and activities..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approval Information (Optional/Admin) -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header">
+        <h4><i class="bi bi-check-circle"></i> Approval & Administrative Information</h4>
+      </div>
+      <div class="card-body">
+
+        <div class="subsection mb-4">
+          <h6 class="subsection-title">Line Focal Person</h6>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" formControlName="line_focal_person">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Department</label>
+              <input type="text" class="form-control" formControlName="line_focal_dept">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Contact</label>
+              <input type="text" class="form-control" formControlName="line_focal_contact">
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection mb-4">
+          <h6 class="subsection-title">Sponsoring Department Head</h6>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" formControlName="sponsoring_dept_head">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Department</label>
+              <input type="text" class="form-control" formControlName="sponsoring_dept_head_dept">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Contact</label>
+              <input type="text" class="form-control" formControlName="sponsoring_dept_head_contact">
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <h6 class="subsection-title">Additional Comments</h6>
+          <div class="row">
+            <div class="col-12 mb-3">
+              <label class="form-label">Comments</label>
+              <textarea class="form-control" formControlName="additional_comments" rows="3" placeholder="Any additional information or special requests..."></textarea>
+            </div>
+            <div class="col-12 mb-3">
+              <label class="form-label">Supporting Documents Notes</label>
+              <textarea class="form-control" formControlName="supporting_documents_notes" rows="2" placeholder="List any documents attached or to be attached..."></textarea>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-outline-secondary" (click)="onCancel()" [disabled]="isSubmitting">
+        <i class="bi bi-x-circle"></i> Cancel
+      </button>
+      <div class="action-buttons">
+        <button type="button" class="btn btn-outline-primary" (click)="onSaveDraft()" [disabled]="isSubmitting">
+          <i class="bi bi-save"></i> Save Draft
+        </button>
+        <button type="submit" class="btn btn-success" [disabled]="isSubmitting">
+          <i class="bi bi-check-circle"></i> {{ isSubmitting ? 'Submitting...' : 'Submit Application' }}
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>

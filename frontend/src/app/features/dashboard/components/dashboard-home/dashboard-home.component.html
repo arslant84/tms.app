@@ -1,0 +1,153 @@
+<div class="dashboard-container">
+  <!-- Hero Section -->
+  <div class="hero-section text-center">
+    <h1 class="hero-title">Welcome to <span class="brand-name">{{ applicationName$ | async }}</span></h1>
+    <p class="hero-subtitle">Travel is Synchronised</p>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions-card">
+    <div class="quick-actions-content">
+      <button class="btn btn-primary btn-action" routerLink="/trf/create">
+        <i class="bi bi-plus-circle me-2"></i>New TSR
+      </button>
+      <button class="btn btn-primary btn-action" routerLink="/accommodation/request">
+        <i class="bi bi-plus-circle me-2"></i>Accommodation
+      </button>
+      <button class="btn btn-primary btn-action" routerLink="/visa/new">
+        <i class="bi bi-plus-circle me-2"></i>Visa
+      </button>
+      <button class="btn btn-primary btn-action" routerLink="/transport/new">
+        <i class="bi bi-plus-circle me-2"></i>Transport
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards-grid">
+    <div class="summary-card shadow-lg">
+      <div class="summary-card-header">
+        <h5 class="summary-card-title">My Pending TSRs</h5>
+        <div class="icon-circle bg-warning-light">
+          <i class="bi bi-clipboard-check icon-warning"></i>
+        </div>
+      </div>
+      <div class="summary-card-body">
+        <div class="summary-value text-primary">{{ summary.pending_trfs || 0 }}</div>
+        <p class="summary-description">Requests awaiting approval</p>
+      </div>
+    </div>
+
+    <div class="summary-card shadow-lg">
+      <div class="summary-card-header">
+        <h5 class="summary-card-title">Pending Visa Applications</h5>
+        <div class="icon-circle bg-info-light">
+          <i class="bi bi-file-earmark-text icon-info"></i>
+        </div>
+      </div>
+      <div class="summary-card-body">
+        <div class="summary-value text-primary">{{ summary.pending_visa_applications || 0 }}</div>
+        <p class="summary-description">Applications awaiting approval</p>
+      </div>
+    </div>
+
+    <div class="summary-card shadow-lg">
+      <div class="summary-card-header">
+        <h5 class="summary-card-title">Book Accommodation</h5>
+        <div class="icon-circle bg-indigo-light">
+          <i class="bi bi-building icon-indigo"></i>
+        </div>
+      </div>
+      <div class="summary-card-body">
+        <div class="summary-value text-primary">{{ summary.active_bookings || 0 }}</div>
+        <p class="summary-description">Available locations / new requests</p>
+      </div>
+    </div>
+
+    <div class="summary-card shadow-lg">
+      <div class="summary-card-header">
+        <h5 class="summary-card-title">Pending Transport</h5>
+        <div class="icon-circle bg-success-light">
+          <i class="bi bi-car-front icon-success"></i>
+        </div>
+      </div>
+      <div class="summary-card-body">
+        <div class="summary-value text-primary">{{ summary.pending_transport_requests || 0 }}</div>
+        <p class="summary-description">Requests awaiting approval</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="activity-card shadow-lg">
+    <div class="activity-card-header">
+      <div class="activity-header-left">
+        <h2 class="activity-title">Recent Activity</h2>
+        <p class="activity-description">Overview of your latest travel-related actions.</p>
+      </div>
+      <div class="activity-header-right">
+        <button
+          class="btn btn-outline-secondary btn-sm refresh-btn"
+          (click)="refresh()"
+          [disabled]="isLoading">
+          <i class="bi bi-arrow-clockwise" [class.spin]="isLoading"></i>
+          Refresh
+        </button>
+        <div class="search-container">
+          <i class="bi bi-search search-icon"></i>
+          <input
+            type="search"
+            class="form-control search-input"
+            placeholder="Search activities..."
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchChange()">
+        </div>
+      </div>
+    </div>
+
+    <div class="activity-card-content">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-state">
+        <i class="bi bi-arrow-clockwise spin-animation"></i>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="!isLoading && error" class="error-state">
+        {{ error }}
+      </div>
+
+      <!-- Activities List -->
+      <div *ngIf="!isLoading && !error && filteredActivities.length > 0" class="activities-list">
+        <div *ngFor="let item of filteredActivities" class="activity-item-card">
+          <div class="activity-item-content">
+            <div class="activity-item-left">
+              <div class="activity-icon-circle" [ngClass]="getActivityIconBg(item.status)">
+                <i [class]="getActivityIcon(item.type)" [ngClass]="getActivityIconColor(item.status)"></i>
+              </div>
+              <div class="activity-item-info">
+                <h5 class="activity-item-title">{{ item.title }}</h5>
+                <p class="activity-item-meta">{{ item.type }} - {{ item.date }}</p>
+              </div>
+            </div>
+            <div class="activity-item-right">
+              <span class="badge" [ngClass]="getStatusBadgeClass(item.status)">{{ item.status }}</span>
+              <a [routerLink]="getActivityRoute(item)" class="view-details-link">View Details →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State (Search) -->
+      <div *ngIf="!isLoading && !error && filteredActivities.length === 0 && searchQuery.trim() !== ''" class="empty-state">
+        <p class="empty-message">No activities match your search.</p>
+      </div>
+
+      <!-- Empty State (No Data) -->
+      <div *ngIf="!isLoading && !error && filteredActivities.length === 0 && searchQuery.trim() === ''" class="empty-state">
+        <i class="bi bi-file-earmark-text empty-icon"></i>
+        <p class="empty-title">No recent activity found</p>
+        <p class="empty-subtitle">Your travel requests, claims, and applications will appear here once created.</p>
+      </div>
+    </div>
+  </div>
+</div>
