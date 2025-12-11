@@ -289,9 +289,9 @@ class AdminReportsView(APIView):
 
             total = (
                 TravelRequest.objects.filter(created_by__in=dept_users, created_at__gte=start_date).count() +
-                TransportRequest.objects.filter(created_by__in=dept_users, created_at__gte=start_date).count() +
-                VisaApplication.objects.filter(created_by__in=dept_users, created_at__gte=start_date).count() +
-                AccommodationRequest.objects.filter(created_by__in=dept_users, created_at__gte=start_date).count()
+                TransportRequest.objects.filter(requestor__in=dept_users, created_at__gte=start_date).count() +
+                VisaApplication.objects.filter(user__in=dept_users, created_at__gte=start_date).count() +
+                AccommodationRequest.objects.filter(trf__created_by__in=dept_users, created_at__gte=start_date).count()
             )
 
             if total == 0:
@@ -303,15 +303,15 @@ class AdminReportsView(APIView):
                     created_at__gte=start_date
                 ).exclude(status__in=['Approved', 'Rejected', 'Cancelled']).count() +
                 TransportRequest.objects.filter(
-                    created_by__in=dept_users,
+                    requestor__in=dept_users,
                     created_at__gte=start_date
                 ).exclude(status__in=['Approved', 'Rejected', 'Cancelled']).count() +
                 VisaApplication.objects.filter(
-                    created_by__in=dept_users,
+                    user__in=dept_users,
                     created_at__gte=start_date
                 ).exclude(status__in=['Approved', 'Rejected', 'Cancelled']).count() +
                 AccommodationRequest.objects.filter(
-                    created_by__in=dept_users,
+                    trf__created_by__in=dept_users,
                     created_at__gte=start_date
                 ).exclude(status__in=['Approved', 'Rejected', 'Cancelled']).count()
             )
@@ -323,17 +323,17 @@ class AdminReportsView(APIView):
                     status='Approved'
                 ).count() +
                 TransportRequest.objects.filter(
-                    created_by__in=dept_users,
+                    requestor__in=dept_users,
                     created_at__gte=start_date,
                     status='Approved'
                 ).count() +
                 VisaApplication.objects.filter(
-                    created_by__in=dept_users,
+                    user__in=dept_users,
                     created_at__gte=start_date,
                     status='Approved'
                 ).count() +
                 AccommodationRequest.objects.filter(
-                    created_by__in=dept_users,
+                    trf__created_by__in=dept_users,
                     created_at__gte=start_date,
                     status='Approved'
                 ).count()
