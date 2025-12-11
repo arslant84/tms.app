@@ -135,7 +135,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
    * Backend sends: /travelrequest/123, /transportrequest/123, /visaapplication/123
    * Frontend needs: /trf/123, /transport/123, /visa/123
    *
-   * For approval notifications, routes to admin approvals page instead of detail view
+   * For approval notifications, routes to admin approvals page with entity info
    */
   private mapActionUrlToRoute(notification: UserNotification): string {
     const actionUrl = notification.action_url;
@@ -149,8 +149,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
       notification.action_text?.toLowerCase().includes('approve') ||
       notification.action_text?.toLowerCase().includes('review');
 
-    // If it's an approval notification, route to admin approvals page
+    // If it's an approval notification, extract entity info and route to admin approvals
     if (isApprovalNotification) {
+      const entityInfo = this.extractEntityInfo(actionUrl);
+      if (entityInfo) {
+        // Navigate with query params to auto-select the item
+        this.router.navigate(['/admin/approvals'], {
+          queryParams: {
+            type: entityInfo.type,
+            id: entityInfo.id,
+            action: 'approve'
+          }
+        });
+        return '/admin/approvals'; // Return for fallback
+      }
       return '/admin/approvals';
     }
 
@@ -172,6 +184,33 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
 
     return mappedUrl;
+  }
+
+  /**
+   * Extracts entity type and ID from action URL
+   * Example: /transportrequest/37 -> { type: 'transport', id: '37' }
+   */
+  private extractEntityInfo(actionUrl: string): { type: string; id: string } | null {
+    const entityMappings: { [key: string]: string } = {
+      'travelrequest': 'trf',
+      'transportrequest': 'transport',
+      'visaapplication': 'visa',
+      'accommodation': 'accommodation',
+      'expenseclaim': 'expenses'
+    };
+
+    for (const [backendType, frontendType] of Object.entries(entityMappings)) {
+      const pattern = new RegExp(`/${backendType}/(\\d+)`);
+      const match = actionUrl.match(pattern);
+      if (match) {
+        return {
+          type: frontendType,
+          id: match[1]
+        };
+      }
+    }
+
+    return null;
   }
 
   /**
