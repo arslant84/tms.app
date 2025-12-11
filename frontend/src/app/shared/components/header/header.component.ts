@@ -111,7 +111,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         next: () => {
           // Navigate to action URL if provided
           if (notification.action_url) {
-            const mappedUrl = this.mapActionUrlToRoute(notification.action_url);
+            const mappedUrl = this.mapActionUrlToRoute(notification);
             this.router.navigate([mappedUrl]);
           }
           this.isNotificationsOpen = false;
@@ -123,7 +123,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     } else {
       // Just navigate if already read
       if (notification.action_url) {
-        const mappedUrl = this.mapActionUrlToRoute(notification.action_url);
+        const mappedUrl = this.mapActionUrlToRoute(notification);
         this.router.navigate([mappedUrl]);
       }
       this.isNotificationsOpen = false;
@@ -131,12 +131,28 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Maps backend entity types to frontend route paths
+   * Maps backend entity types to frontend route paths and handles approval notifications
    * Backend sends: /travelrequest/123, /transportrequest/123, /visaapplication/123
    * Frontend needs: /trf/123, /transport/123, /visa/123
+   *
+   * For approval notifications, routes to admin approvals page instead of detail view
    */
-  private mapActionUrlToRoute(actionUrl: string): string {
+  private mapActionUrlToRoute(notification: UserNotification): string {
+    const actionUrl = notification.action_url;
     if (!actionUrl) return '/dashboard';
+
+    // Check if this is an approval notification
+    const isApprovalNotification =
+      notification.title?.toLowerCase().includes('approval required') ||
+      notification.title?.toLowerCase().includes('approval delegated') ||
+      notification.title?.toLowerCase().includes('review') ||
+      notification.action_text?.toLowerCase().includes('approve') ||
+      notification.action_text?.toLowerCase().includes('review');
+
+    // If it's an approval notification, route to admin approvals page
+    if (isApprovalNotification) {
+      return '/admin/approvals';
+    }
 
     // Map backend entity types to frontend routes
     const mappings: { [key: string]: string } = {
