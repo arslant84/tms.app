@@ -204,73 +204,16 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# Email configuration - loaded from ApplicationSetting model
-# Default values in case settings are not yet configured
+# Email configuration - Brevo SMTP (configured via environment variables)
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp-relay.brevo.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='SynTra TMS <no-reply@pctsb-travel.site>')
-SERVER_EMAIL = config('SERVER_EMAIL', default='SynTra TMS <no-reply@pctsb-travel.site>')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='SynTra TMS <noreply@pctsb-travel.site>')
 EMAIL_TIMEOUT = 10  # seconds
-
-# Function to dynamically load email settings from database
-def load_email_settings():
-    """
-    Load email configuration from ApplicationSetting model.
-    This function is called after Django is fully initialized.
-    Updates both the settings module and django.conf.settings object.
-    """
-    try:
-        from accounts.models import ApplicationSetting
-        from django.conf import settings as django_settings
-        import sys
-
-        # Get current settings module
-        current_module = sys.modules[__name__]
-
-        # Load settings from database
-        settings_map = {
-            'smtp_host': 'EMAIL_HOST',
-            'smtp_port': 'EMAIL_PORT',
-            'smtp_use_tls': 'EMAIL_USE_TLS',
-            'smtp_use_ssl': 'EMAIL_USE_SSL',
-            'smtp_username': 'EMAIL_HOST_USER',
-            'smtp_password': 'EMAIL_HOST_PASSWORD',
-            'default_from_email': 'DEFAULT_FROM_EMAIL',
-            'server_email': 'SERVER_EMAIL',
-        }
-
-        settings_loaded = False
-        loaded_values = {}
-
-        for db_key, setting_key in settings_map.items():
-            value = ApplicationSetting.get_setting(db_key)
-            if value is not None:
-                # Update the settings module
-                setattr(current_module, setting_key, value)
-                globals()[setting_key] = value
-
-                # Update django.conf.settings (the LazySettings wrapper)
-                setattr(django_settings, setting_key, value)
-
-                loaded_values[setting_key] = value
-                settings_loaded = True
-
-        if settings_loaded:
-            print(f"✅ Loaded {len(loaded_values)} email settings from database")
-            print(f"   SMTP Host: {loaded_values.get('EMAIL_HOST', 'N/A')}")
-            print(f"   SMTP User: {loaded_values.get('EMAIL_HOST_USER', 'N/A')}")
-
-    except Exception as e:
-        # Fail silently during migrations or if ApplicationSetting doesn't exist yet
-        import sys
-        print(f"⚠️  Could not load email settings from database: {e}", file=sys.stderr)
-
-# Note: Call load_email_settings() in AppConfig.ready() method to load settings after startup
 
 # Security Settings
 # HTTPS/SSL
