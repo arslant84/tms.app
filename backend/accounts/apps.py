@@ -8,8 +8,7 @@ class AccountsConfig(AppConfig):
     def ready(self):
         """
         Called when Django starts up.
-        Load email settings from database into Django settings.
+        Register signal handlers and perform app initialization.
         """
-        # Import here to avoid circular imports
-        from tms_project.settings import load_email_settings
-        load_email_settings()
+        # Email settings are now loaded from .env file (no database loading needed)
+        pass
