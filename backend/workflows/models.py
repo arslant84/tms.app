@@ -156,6 +156,7 @@ class WorkflowStepNotificationConfig(models.Model):
     event_type = models.CharField(
         max_length=50,
         choices=EVENT_TYPE_CHOICES,
+        default='assignment',
         help_text="Workflow event that triggers this notification"
     )
 
