@@ -150,12 +150,16 @@ class WorkflowEngine:
 
         # Process based on action
         if action == 'approve' or action == 'skip':
-            # Send step approved notification
+            # Send step approved notification (legacy hardcoded)
             WorkflowNotifications.notify_step_approved(step_execution)
+            # Trigger configured notifications for approval
+            WorkflowNotifications.trigger_configured_notifications(step_execution, 'approval')
             return WorkflowEngine._handle_step_approval(workflow_instance, step_execution, actioned_by)
         elif action == 'reject':
-            # Send step rejected notification
+            # Send step rejected notification (legacy hardcoded)
             WorkflowNotifications.notify_step_rejected(step_execution)
+            # Trigger configured notifications for rejection
+            WorkflowNotifications.trigger_configured_notifications(step_execution, 'rejection')
             return WorkflowEngine._handle_step_rejection(workflow_instance, step_execution, actioned_by, comments)
 
         return {'success': True, 'workflow_status': workflow_instance.status}
@@ -366,6 +370,9 @@ class WorkflowEngine:
 
         # Update entity status to reflect current step
         WorkflowEngine._update_entity_status_from_step(workflow_instance, step)
+
+        # Trigger configured notifications for step assignment
+        WorkflowNotifications.trigger_configured_notifications(step_execution, 'assignment')
 
         return step_execution
 
