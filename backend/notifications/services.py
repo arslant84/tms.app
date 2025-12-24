@@ -12,6 +12,7 @@ from .models import (
 import re
 import logging
 import traceback
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -85,12 +86,34 @@ class NotificationService:
             try:
                 preferences = user.notification_preferences
                 if preferences.email_notifications_enabled:
-                    NotificationService.send_email_notification(notification)
+                    # Send email asynchronously in background thread to avoid blocking HTTP request
+                    NotificationService.send_email_async(notification)
             except Exception as e:
                 notification.email_error = str(e)
                 notification.save()
 
         return notification
+
+    @staticmethod
+    def send_email_async(notification):
+        """
+        Send email asynchronously in a background thread.
+        This prevents blocking the HTTP request while waiting for SMTP.
+
+        Args:
+            notification: UserNotification instance
+        """
+        def _send_in_background():
+            try:
+                NotificationService.send_email_notification(notification)
+            except Exception as e:
+                # Error is already logged in send_email_notification
+                logger.error(f"Background email send failed for notification {notification.id}: {str(e)}")
+
+        # Start background thread (daemon=True ensures thread doesn't block shutdown)
+        thread = threading.Thread(target=_send_in_background, daemon=True)
+        thread.start()
+        logger.info(f"Email queued for background sending to {notification.user.email}")
 
     @staticmethod
     def send_email_notification(notification):
@@ -163,7 +186,7 @@ class NotificationService:
             notification.email_sent_at = timezone.now()
             notification.save(update_fields=['sent_via_email', 'email_sent_at'])
 
-            logger.info(f"✅ Email sent successfully to {notification.user.email} (Notification ID: {notification.id})")
+            logger.info(f"[OK] Email sent successfully to {notification.user.email} (Notification ID: {notification.id})")
 
         except Exception as e:
             # Enhanced error logging with full traceback
@@ -171,7 +194,7 @@ class NotificationService:
             error_type = type(e).__name__
 
             logger.error(
-                f"❌ Email sending failed for notification {notification.id}\n"
+                f"[ERROR] Email sending failed for notification {notification.id}\n"
                 f"   Error Type: {error_type}\n"
                 f"   Error Message: {error_msg}\n"
                 f"   Recipient: {notification.user.email}\n"

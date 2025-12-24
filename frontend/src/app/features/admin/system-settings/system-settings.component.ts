@@ -17,16 +17,6 @@ interface SettingsForm {
   enable_email_notifications: boolean;
   session_timeout_minutes: number;
   max_file_upload_size: number;
-  smtp_host: string;
-  smtp_port: number;
-  smtp_use_tls: boolean;
-  smtp_use_ssl: boolean;
-  smtp_username: string;
-  smtp_password: string;
-  default_from_email: string;
-  server_email: string;
-  email_admin: string;
-  brevo_api_key: string;
 }
 
 @Component({
@@ -50,17 +40,7 @@ export class SystemSettingsComponent implements OnInit, DoCheck {
     timezone: '',
     enable_email_notifications: true,
     session_timeout_minutes: 480,
-    max_file_upload_size: 10485760,
-    smtp_host: '',
-    smtp_port: 587,
-    smtp_use_tls: true,
-    smtp_use_ssl: false,
-    smtp_username: '',
-    smtp_password: '',
-    default_from_email: '',
-    server_email: '',
-    email_admin: '',
-    brevo_api_key: ''
+    max_file_upload_size: 10485760
   };
   originalData: SettingsForm = { ...this.formData };
 
