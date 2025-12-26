@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../../../environments/environment';
 import { NotificationService } from '../../../../notifications/services/notification.service';
+import { AppSettingsService } from '../../../../../core/services/app-settings.service';
 
 interface ApprovableItem {
   id: string;
@@ -73,7 +74,8 @@ export class PendingApprovalsComponent implements OnInit {
     private http: HttpClient,
     private router: Router,
     private route: ActivatedRoute,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private appSettingsService: AppSettingsService
   ) {}
 
   ngOnInit(): void {
@@ -393,12 +395,24 @@ export class PendingApprovalsComponent implements OnInit {
     }
   }
 
-  formatCurrency(amount: number | undefined): string {
-    if (amount === undefined || amount === null) return 'N/A';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+  formatCurrency(amount: number | null | undefined, currency?: string | null): string {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return 'N/A';
+    }
+
+    const currencyCode = currency || this.appSettingsService.getDefaultCurrency();
+
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return `${currencyCode} ${amount.toFixed(2)}`;
+    }
   }
 
   getItemTypeLabel(itemType: string): string {

@@ -1,11 +1,11 @@
 <div class="approvals-container">
   <!-- Header -->
-  <div class="header-section">
-    <div class="header-left">
-      <div class="title-with-icon">
-        <i class="bi bi-check-square header-icon"></i>
-        <h1 class="page-title">Pending Approvals</h1>
-      </div>
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="bi bi-check-square me-2"></i>
+        Pending Approvals
+      </h1>
       <p class="page-subtitle">Review and approve requests across all modules</p>
     </div>
   </div>
@@ -49,27 +49,30 @@
   </div>
 
   <!-- Filters Card -->
-  <div class="filters-card shadow-lg">
-    <div class="filters-card-header">
-      <div class="card-title-with-icon">
-        <i class="bi bi-funnel"></i>
-        <h3 class="card-title">Filters</h3>
+  <div class="card mb-4">
+    <div class="card-header">
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-funnel me-2"></i>
+          <h3 class="card-title">Filter & Search</h3>
+        </div>
+        <p class="card-description">Search and filter approval requests by various criteria.</p>
       </div>
     </div>
-    <div class="filters-card-content">
-      <div class="filters-grid">
-        <div class="search-container">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-8">
           <input
             type="text"
-            class="search-input"
+            class="form-control"
             placeholder="Search by name, purpose, or ID..."
             [(ngModel)]="searchTerm"
             (input)="onSearchChange()"
           >
         </div>
-        <div class="filter-container">
+        <div class="col-md-4">
           <select
-            class="filter-select"
+            class="form-select"
             [(ngModel)]="statusFilter"
             (change)="onStatusFilterChange()">
             <option value="">All Statuses</option>
@@ -86,13 +89,15 @@
   </div>
 
   <!-- Approvals List Card -->
-  <div class="approvals-list-card shadow-lg">
-    <div class="approvals-card-header">
-      <div class="card-title-with-icon">
-        <i class="bi bi-list-ul"></i>
-        <h3 class="card-title">Approval Queue</h3>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-list-ul me-2"></i>
+          <h3 class="card-title">Approval Queue</h3>
+        </div>
+        <p class="card-description">Total: {{ filteredItems.length }} items</p>
       </div>
-      <p class="card-description">Total: {{ filteredItems.length }} items</p>
     </div>
 
     <!-- Loading State -->
@@ -116,8 +121,9 @@
     </div>
 
     <!-- Approvals Table -->
-    <div *ngIf="!isLoading && !error && filteredItems.length > 0" class="approvals-card-content">
-      <table class="approvals-table">
+    <div *ngIf="!isLoading && !error && filteredItems.length > 0" class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table">
         <thead>
           <tr>
             <th>Type</th>
@@ -181,9 +187,10 @@
           </tr>
         </tbody>
       </table>
+      </div>
 
       <!-- Pagination -->
-      <div class="pagination-section" *ngIf="totalPages > 1">
+      <div class="pagination-container" *ngIf="totalPages > 1">
         <span class="pagination-info">
           Showing {{ startIndex }} to {{ endIndex }} of {{ totalCount }} items
         </span>

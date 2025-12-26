@@ -3,16 +3,19 @@
  * Matches: Accommodation Admin Pattern (pctsb.syntra style)
  */
 
-// ========== COLORS ==========
-$primary: #0d9488;
-$primary-dark: #0f766e;
-$border: #e5e7eb;
-$gray-50: #f9fafb;
-$gray-100: #f3f4f6;
-$gray-500: #6b7280;
-$gray-600: #6b7280;
-$gray-700: #374151;
-$gray-900: #1f2937;
+// ========== COLORS (Petronas Green Theme) ==========
+$primary: #00B1A9; // Petronas Green
+$primary-dark: #009991; // Darker Petronas Green
+$primary-light: #e6f7f6; // Light Petronas Green tint
+$background: #F2F4F3; // Light Gray Background
+$foreground: #333333; // Dark Gray Text
+$border: #DEDEDE; // Border color
+$gray-50: #F9FAFB; // Very light gray
+$gray-100: #E6E6E6; // Muted background
+$gray-500: #6B7280; // Medium gray (icons)
+$gray-600: #666666; // Muted foreground
+$gray-700: #333333; // Dark text
+$gray-900: #1F2937; // Darkest text
 
 //=========== CONTAINER ==========
 .visa-admin-container {
@@ -21,6 +24,8 @@ $gray-900: #1f2937;
   margin: 0;
   padding: 2rem;
   box-sizing: border-box;
+  background-color: $background;
+  min-height: calc(100vh - 100px);
 }
 
 // ========== PAGE HEADER ==========
@@ -92,7 +97,13 @@ $gray-900: #1f2937;
   background: white;
   border: 1px solid $border;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.06);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+    transform: translateY(-1px);
+  }
 
   .stat-card-header {
     display: flex;
@@ -122,12 +133,13 @@ $gray-900: #1f2937;
       font-weight: 700;
       color: $gray-900;
       line-height: 1;
+      margin-bottom: 0.25rem;
     }
 
     .stat-description {
       font-size: 0.75rem;
       color: $gray-600;
-      margin: 0.25rem 0 0 0;
+      margin: 0;
     }
   }
 }
@@ -185,17 +197,19 @@ $gray-900: #1f2937;
   background: white;
   border: 1px solid $border;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.06);
   overflow: hidden;
 
   .card-header {
     padding: 1.5rem;
     border-bottom: 1px solid $border;
+    background-color: white;
 
     .card-header-content {
       .card-title-group {
         display: flex;
         align-items: center;
+        gap: 0.5rem;
         margin-bottom: 0.25rem;
 
         .card-title {
@@ -207,6 +221,7 @@ $gray-900: #1f2937;
 
         i {
           color: $gray-600;
+          font-size: 1.125rem;
         }
       }
 
@@ -220,6 +235,7 @@ $gray-900: #1f2937;
 
   .card-body {
     padding: 1.5rem;
+    background-color: white;
   }
 }
 
@@ -269,6 +285,9 @@ $gray-900: #1f2937;
 
 // ========== TABLES ==========
 .table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
   .table {
     margin: 0;
     width: 100%;
@@ -310,11 +329,19 @@ $gray-900: #1f2937;
           color: $gray-700;
           border: none;
           vertical-align: middle;
-        }
 
-        .fw-medium {
-          font-weight: 600;
-          color: $primary;
+          &.fw-medium {
+            font-weight: 600;
+            color: $gray-900;
+          }
+
+          a.fw-medium {
+            color: $primary;
+
+            &:hover {
+              color: $primary-dark;
+            }
+          }
         }
       }
     }
@@ -325,66 +352,71 @@ $gray-900: #1f2937;
 .badge {
   display: inline-flex;
   align-items: center;
+  gap: 0.25rem;
   padding: 0.25rem 0.625rem;
   font-size: 0.75rem;
   font-weight: 500;
   border-radius: 0.375rem;
   white-space: nowrap;
+
+  i {
+    font-size: 0.75rem;
+  }
 }
 
 .badge-blue {
-  background-color: #3b82f6;
-  color: white;
+  background-color: #DBEAFE;
+  color: #1E40AF;
 }
 
 .badge-green {
-  background-color: #22c55e;
-  color: white;
+  background-color: #D1FAE5;
+  color: #065F46;
 }
 
 .badge-amber {
-  background-color: #f59e0b;
-  color: white;
+  background-color: #FEF3C7;
+  color: #92400E;
 }
 
 .badge-purple {
-  background-color: #a855f7;
-  color: white;
+  background-color: #EDE9FE;
+  color: #5B21B6;
 }
 
 .badge-indigo {
-  background-color: #6366f1;
-  color: white;
+  background-color: #E0E7FF;
+  color: #3730A3;
 }
 
 .badge-gray {
-  background-color: $gray-500;
-  color: white;
+  background-color: #F3F4F6;
+  color: #374151;
 }
 
 .badge-success {
-  background-color: #22c55e;
-  color: white;
+  background-color: #D1FAE5;
+  color: #065F46;
 }
 
 .badge-red {
-  background-color: #ef4444;
-  color: white;
+  background-color: #FEE2E2;
+  color: #991B1B;
 }
 
 .badge-warning {
-  background-color: #f59e0b;
-  color: white;
+  background-color: #FEF3C7;
+  color: #92400E;
 }
 
 .badge-info {
-  background-color: #3b82f6;
-  color: white;
+  background-color: #DBEAFE;
+  color: #1E40AF;
 }
 
 .badge-secondary {
-  background-color: $gray-500;
-  color: white;
+  background-color: #F3F4F6;
+  color: #374151;
 }
 
 // ========== BUTTONS ==========
@@ -605,6 +637,90 @@ $gray-900: #1f2937;
   }
 }
 
+// ========== FORM CONTROLS ==========
+.form-control,
+.form-select {
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid $border;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(0, 177, 169, 0.1);
+  }
+}
+
+// ========== BOOTSTRAP GRID UTILITIES ==========
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: -0.75rem;
+  margin-left: -0.75rem;
+}
+
+.col,
+.col-md-2,
+.col-md-6 {
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
+}
+
+.g-3 {
+  --bs-gutter-x: 1rem;
+  --bs-gutter-y: 1rem;
+  margin-right: calc(var(--bs-gutter-x) * -0.5);
+  margin-left: calc(var(--bs-gutter-x) * -0.5);
+  margin-top: calc(var(--bs-gutter-y) * -1);
+
+  > * {
+    padding-right: calc(var(--bs-gutter-x) * 0.5);
+    padding-left: calc(var(--bs-gutter-x) * 0.5);
+    margin-top: var(--bs-gutter-y);
+  }
+}
+
+@media (min-width: 768px) {
+  .col-md-2 {
+    flex: 0 0 auto;
+    width: 16.666667%;
+  }
+
+  .col-md-6 {
+    flex: 0 0 auto;
+    width: 50%;
+  }
+}
+
+// ========== UTILITIES ==========
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+.p-0 {
+  padding: 0 !important;
+}
+
+.text-end {
+  text-align: right;
+}
+
+.text-muted {
+  color: $gray-600;
+}
+
+.d-block {
+  display: block;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 // ========== RESPONSIVE ==========
 @media (max-width: 768px) {
   .visa-admin-container {
@@ -638,5 +754,11 @@ $gray-900: #1f2937;
     .btn-icon {
       margin: 0.125rem;
     }
+  }
+
+  // Stack columns on mobile
+  .col-md-2,
+  .col-md-6 {
+    width: 100%;
   }
 }

@@ -64,17 +64,11 @@
                 class="form-control"
                 id="defaultCurrency"
                 [(ngModel)]="formData.default_currency"
-                placeholder="USD">
-            </div>
-
-            <div class="form-group">
-              <label for="timezone" class="form-label">Timezone</label>
-              <input
-                type="text"
-                class="form-control"
-                id="timezone"
-                [(ngModel)]="formData.timezone"
-                placeholder="UTC">
+                placeholder="USD"
+                maxlength="3"
+                pattern="[A-Z]{3}"
+                title="Enter a 3-letter currency code (e.g., USD, EUR, GBP)">
+              <small class="form-text text-muted">3-letter currency code (e.g., USD, EUR, GBP, MYR)</small>
             </div>
           </div>
         </div>

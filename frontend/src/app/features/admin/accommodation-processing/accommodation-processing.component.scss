@@ -1,9 +1,22 @@
+// ========== COLORS (Petronas Green Theme) ==========
+$primary: #00B1A9; // Petronas Green
+$primary-dark: #009991; // Darker Petronas Green
+$primary-light: #e6f7f6; // Light Petronas Green tint
+$background: #F2F4F3; // Light Gray Background
+$border: #DEDEDE; // Border color
+$gray-50: #F9FAFB;
+$gray-100: #E6E6E6;
+$gray-500: #6B7280;
+$gray-600: #666666;
+$gray-700: #333333;
+$gray-900: #1F2937;
+
 .accommodation-processing-container {
   width: 100%;
   max-width: 100vw;
   padding: 0.75rem clamp(0.5rem, 1.5vw, 1.5rem);
   min-height: calc(100vh - 100px);
-  background-color: #f5f7fa;
+  background-color: $background;
   font-size: clamp(0.75rem, 0.9vw, 0.95rem);
   overflow-x: hidden;
 }
@@ -20,9 +33,9 @@
     align-items: center;
     gap: 1rem;
 
-    .header-icon { font-size: clamp(1.5rem, 2vw, 2rem); color: #0d6efd; }
-    h1 { font-size: clamp(1.25rem, 1.8vw, 1.875rem); font-weight: 700; color: #1a202c; margin: 0 0 0.25rem; }
-    .subtitle { color: #718096; font-size: clamp(0.75rem, 0.9vw, 0.95rem); margin: 0; }
+    .header-icon { font-size: clamp(1.5rem, 2vw, 2rem); color: $primary; }
+    h1 { font-size: clamp(1.25rem, 1.8vw, 1.875rem); font-weight: 700; color: $gray-900; margin: 0 0 0.25rem; }
+    .subtitle { color: $gray-600; font-size: clamp(0.75rem, 0.9vw, 0.95rem); margin: 0; }
   }
 
   .back-button {
@@ -83,7 +96,7 @@
     background: transparent;
     border: none;
     border-radius: 0.375rem;
-    color: #718096;
+    color: $gray-600;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -92,8 +105,8 @@
     gap: 0.5rem;
     font-size: clamp(0.75rem, 0.9vw, 0.95rem);
 
-    &:hover { background-color: #edf2f7; color: #4a5568; }
-    &.active { background-color: #0d6efd; color: white; }
+    &:hover { background-color: $gray-50; color: $gray-700; }
+    &.active { background-color: $primary; color: white; }
 
     .badge {
       background-color: rgba(255, 255, 255, 0.2);
@@ -203,7 +216,7 @@
       cursor: pointer;
       font-size: clamp(0.75rem, 0.85vw, 0.875rem);
 
-      &:focus { outline: none; border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1); }
+      &:focus { outline: none; border-color: $primary; box-shadow: 0 0 0 3px rgba(0, 177, 169, 0.1); }
     }
 
     .slider-controls {
@@ -217,7 +230,7 @@
 
       .btn-slider {
         padding: 0.375rem 0.75rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
         color: white;
         border: none;
         border-radius: 0.375rem;
@@ -229,7 +242,7 @@
         font-weight: 500;
         transition: all 0.2s;
 
-        &:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); }
+        &:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 177, 169, 0.3); }
         &:disabled { opacity: 0.5; cursor: not-allowed; }
       }
 
@@ -300,7 +313,7 @@
       margin-bottom: 0.5rem;
 
       .room-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
         color: white;
         padding: clamp(0.5rem, 0.75vw, 0.75rem);
         border-radius: 0.5rem;
@@ -332,8 +345,8 @@
       margin-bottom: 0.75rem;
 
       .staff-house-header {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
+        background: linear-gradient(135deg, $primary-light 0%, $primary 100%);
+        color: $gray-900;
         padding: clamp(0.5rem, 0.625vw, 0.625rem) clamp(0.75rem, 1vw, 1rem);
         border-radius: 0.5rem;
         margin-bottom: 0.5rem;
@@ -435,7 +448,7 @@
 }
 
 .booking-details-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
   color: white;
   flex: 0 0 auto;
 }
@@ -463,15 +476,15 @@
   tbody tr {
     border-bottom: 1px solid #e5e7eb;
     transition: background-color 0.15s ease;
-    &:hover { background-color: #f9fafb; }
-    &.selected { background-color: #ebf8ff; }
+    &:hover { background-color: $gray-50; }
+    &.selected { background-color: $primary-light; }
 
     td {
       padding: 1rem 0.75rem;
       vertical-align: middle;
-      color: #374151;
+      color: $gray-700;
     }
-    .request-id { font-weight: 600; color: #0d9488; }
+    .request-id { font-weight: 600; color: $primary; }
   }
 }
 
@@ -494,10 +507,10 @@
   .btn-select, .btn-view {
     background: white;
     border: 1px solid #cbd5e0;
-    &:hover { background-color: #edf2f7; }
+    &:hover { background-color: $gray-50; }
   }
 
-  .btn-select.selected { background-color: #0d6efd; color: white; border-color: #0d6efd; }
+  .btn-select.selected { background-color: $primary; color: white; border-color: $primary; }
   .btn-view { width: clamp(1.75rem, 2vw, 2rem); height: clamp(1.75rem, 2vw, 2rem); padding: 0; justify-content: center; }
   .btn-cancel { border: 1px solid #fc8181; color: #c53030; background: white; &:hover { background-color: #fff5f5; } }
 }
@@ -546,7 +559,7 @@
       transition: all 0.2s;
       font-size: clamp(0.7rem, 0.8vw, 0.85rem);
 
-      &:focus { outline: none; border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1); }
+      &:focus { outline: none; border-color: $primary; box-shadow: 0 0 0 3px rgba(0, 177, 169, 0.1); }
       &:disabled { background-color: #f7fafc; cursor: not-allowed; }
     }
 
@@ -565,7 +578,7 @@
   .btn-primary {
     width: 100%;
     padding: clamp(0.75rem, 0.875vw, 0.875rem) clamp(1rem, 1.5vw, 1.5rem);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
     border: none;
     border-radius: 0.5rem;
     color: white;
@@ -577,7 +590,7 @@
     gap: 0.5rem;
     font-size: clamp(0.8rem, 0.9vw, 0.95rem);
 
-    &:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+    &:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 177, 169, 0.4); }
     &:disabled { opacity: 0.6; cursor: not-allowed; }
   }
 }
@@ -595,7 +608,7 @@
     width: clamp(2rem, 2.5vw, 2.5rem);
     height: clamp(2rem, 2.5vw, 2.5rem);
     border: 3px solid #e2e8f0;
-    border-top-color: #0d6efd;
+    border-top-color: $primary;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin-bottom: 1rem;
@@ -611,21 +624,21 @@
   font-weight: 600;
   white-space: nowrap;
 
-  &.badge-success { background-color: #c6f6d5; color: #22543d; }
-  &.badge-warning { background-color: #feebc8; color: #744210; }
-  &.badge-blue { background-color: #bee3f8; color: #2c5282; }
-  &.badge-green { background-color: #c6f6d5; color: #22543d; }
-  &.badge-amber { background-color: #feebc8; color: #744210; }
-  &.badge-gray, &.badge-secondary { background-color: #e2e8f0; color: #4a5568; }
+  &.badge-success { background-color: #D1FAE5; color: #065F46; }
+  &.badge-warning { background-color: #FEF3C7; color: #92400E; }
+  &.badge-blue { background-color: #DBEAFE; color: #1E40AF; }
+  &.badge-green { background-color: #D1FAE5; color: #065F46; }
+  &.badge-amber { background-color: #FEF3C7; color: #92400E; }
+  &.badge-gray, &.badge-secondary { background-color: #F3F4F6; color: #374151; }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
 // TSR Date Info Section
 .tsr-date-info {
-  background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
-  border: 1px solid #93c5fd;
-  border-left: 4px solid #3b82f6;
+  background: linear-gradient(135deg, $primary-light 0%, #f0faf9 100%);
+  border: 1px solid #b3e5e1;
+  border-left: 4px solid $primary;
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1.5rem;
@@ -637,21 +650,21 @@
     margin-bottom: 0.5rem;
 
     i {
-      color: #3b82f6;
+      color: $primary;
       font-size: 1.1rem;
     }
 
     span {
       font-size: 0.9rem;
       font-weight: 600;
-      color: #1e40af;
+      color: $primary-dark;
     }
   }
 
   .info-text {
     margin: 0;
     font-size: 0.85rem;
-    color: #1e3a8a;
+    color: $gray-700;
     padding-left: 1.6rem;
   }
 }

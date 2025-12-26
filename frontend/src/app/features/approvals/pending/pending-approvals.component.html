@@ -210,10 +210,10 @@
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.estimatedCost">
               <span class="detail-label">Est. Cost:</span>
-              <span class="detail-value">{{ selectedRequest.details.estimatedCost | currency:'MYR' }}</span>
+              <span class="detail-value">{{ selectedRequest.details.estimatedCost | currencyFormat }}</span>
             </div>
           </ng-container>
-          
+
           <!-- Accommodation Request -->
           <ng-container *ngSwitchCase="'accommodation'">
             <h5>Accommodation Details</h5>
@@ -264,7 +264,7 @@
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.estimatedCost">
               <span class="detail-label">Est. Cost:</span>
-              <span class="detail-value">{{ selectedRequest.details.estimatedCost | currency:'MYR' }}</span>
+              <span class="detail-value">{{ selectedRequest.details.estimatedCost | currencyFormat }}</span>
             </div>
           </ng-container>
 
@@ -293,7 +293,7 @@
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.estimatedCost">
               <span class="detail-label">Est. Cost:</span>
-              <span class="detail-value">{{ selectedRequest.details.estimatedCost | currency:'MYR' }}</span>
+              <span class="detail-value">{{ selectedRequest.details.estimatedCost | currencyFormat }}</span>
             </div>
           </ng-container>
 
@@ -310,7 +310,7 @@
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.totalAmount">
               <span class="detail-label">Total Amount:</span>
-              <span class="detail-value">{{ selectedRequest.details.totalAmount | currency:(selectedRequest.details.currency || 'MYR') }}</span>
+              <span class="detail-value">{{ selectedRequest.details.totalAmount | currencyFormat:selectedRequest.details.currency }}</span>
             </div>
             <div class="detail-item">
               <span class="detail-label">Receipts:</span>

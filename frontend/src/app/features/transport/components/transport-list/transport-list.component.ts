@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TransportService, TransportRequest } from '../../services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
 
 // Status constants for filtering (broad categories to match workflow statuses)
 export const TRANSPORT_STATUSES = [
@@ -49,7 +50,8 @@ export class TransportListComponent implements OnInit, OnDestroy {
   constructor(
     private transportService: TransportService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private appSettingsService: AppSettingsService
   ) {}
 
   ngOnInit(): void {
@@ -252,12 +254,24 @@ export class TransportListComponent implements OnInit, OnDestroy {
     return request.transportDetails[0].transportType || 'N/A';
   }
 
-  formatCurrency(amount: number, currency: string = 'USD'): string {
-    if (!amount && amount !== 0) return '$0.00';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency
-    }).format(amount);
+  formatCurrency(amount: number | null | undefined, currency?: string | null): string {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return 'N/A';
+    }
+
+    const currencyCode = currency || this.appSettingsService.getDefaultCurrency();
+
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return `${currencyCode} ${amount.toFixed(2)}`;
+    }
   }
 
   get totalPages(): number {

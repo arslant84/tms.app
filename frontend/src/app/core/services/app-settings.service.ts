@@ -7,7 +7,6 @@ export interface AppSettings {
   maintenance_mode: boolean;
   support_email: string;
   default_currency: string;
-  timezone: string;
   enable_email_notifications: boolean;
   session_timeout_minutes: number;
   max_file_upload_size: number;
@@ -22,7 +21,6 @@ export class AppSettingsService {
     maintenance_mode: false,
     support_email: 'support@example.com',
     default_currency: 'USD',
-    timezone: 'UTC',
     enable_email_notifications: true,
     session_timeout_minutes: 480,
     max_file_upload_size: 10485760

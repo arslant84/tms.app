@@ -36,7 +36,7 @@ class WorkflowNotifications:
                 message=f"Your {workflow_instance.workflow_template.entity_type} request has been submitted and the approval workflow has started.",
                 event_type=_get_event_type('WORKFLOW_STARTED'),
                 priority='normal',
-                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                 send_email=True
             )
 
@@ -54,7 +54,7 @@ class WorkflowNotifications:
                         message=f"You have been assigned to approve {first_step.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request.",
                         event_type=_get_event_type('APPROVAL_REQUESTED'),
                         priority='high',
-                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
+                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                         send_email=True
                     )
                 else:
@@ -82,7 +82,7 @@ class WorkflowNotifications:
                 message=f"{step_execution.workflow_step.step_name} has been approved by {step_execution.actioned_by.get_full_name() if step_execution.actioned_by else 'Unknown'}. Your request is progressing.",
                 event_type=_get_event_type('WORKFLOW_UPDATED'),
                 priority='normal',
-                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
             send_email=True
             )
 
@@ -99,7 +99,7 @@ class WorkflowNotifications:
                     message=f"You have been assigned to approve {next_step.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request.",
                     event_type=_get_event_type('APPROVAL_REQUESTED'),
                     priority='high',
-                    action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
+                    action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                     send_email=True
                 )
 
@@ -125,7 +125,7 @@ class WorkflowNotifications:
                 message=f"Your {workflow_instance.workflow_template.entity_type} request has been rejected at {step_execution.workflow_step.step_name}. Reason: {step_execution.comments or 'No reason provided'}",
                 event_type=_get_event_type('WORKFLOW_REJECTED'),
                 priority='urgent',
-                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
             send_email=True
             )
 
@@ -152,7 +152,7 @@ class WorkflowNotifications:
                 message=f"An approval for {workflow_instance.workflow_template.entity_type} has been delegated to you. Please review and take action.",
                 event_type=_get_event_type('APPROVAL_DELEGATED'),
                 priority='high',
-                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
             send_email=True
             )
 
@@ -163,7 +163,7 @@ class WorkflowNotifications:
                 message=f"The approval step has been delegated to {new_assignee.get_full_name()}.",
                 event_type=_get_event_type('WORKFLOW_UPDATED'),
                 priority='normal',
-                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
+                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
             send_email=True
             )
 
@@ -174,31 +174,58 @@ class WorkflowNotifications:
     @staticmethod
     def notify_workflow_completed(workflow_instance):
         """
-        Send notification when a workflow is completed.
+        Send notification when a workflow is completed (all approvals done).
+        Checks for configured 'workflow_completed' notifications.
 
         Args:
             workflow_instance: WorkflowInstance that was completed
         """
         try:
-            # Notify the requester
-            NotificationService.create_notification(
-                user=workflow_instance.initiated_by,
-                title=f"Request Approved: {workflow_instance.workflow_template.name}",
-                message=f"Your {workflow_instance.workflow_template.entity_type} request has been fully approved! All approval steps are complete.",
-                event_type=_get_event_type('WORKFLOW_APPROVED'),
-                priority='high',
-                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
-            send_email=True
+            from .models import WorkflowStepNotificationConfig
+
+            # Check if any step has workflow_completed notification configured
+            workflow_steps = workflow_instance.workflow_template.steps.all()
+            configs = WorkflowStepNotificationConfig.objects.filter(
+                workflow_step__in=workflow_steps,
+                event_type='workflow_completed',
+                is_active=True
             )
 
-            print(f"✅ Notification sent for workflow completion: {workflow_instance.id}")
+            if configs.exists():
+                print(f"[OK] Found {configs.count()} workflow_completed notification config(s)")
+
+                # Use last step execution for context
+                last_step_execution = workflow_instance.step_executions.order_by('-workflow_step__step_order').first()
+
+                if last_step_execution:
+                    # Trigger configured notifications
+                    WorkflowNotifications.trigger_configured_notifications(
+                        last_step_execution, 'workflow_completed'
+                    )
+                else:
+                    print(f"[WARNING] No step executions found for workflow {workflow_instance.id}")
+            else:
+                # Fall back to default notification (only to requestor)
+                print(f"[INFO] No workflow_completed configs found, using default notification")
+                NotificationService.create_notification(
+                    user=workflow_instance.initiated_by,
+                    title=f"Request Approved: {workflow_instance.workflow_template.name}",
+                    message=f"Your {workflow_instance.workflow_template.entity_type} request has been fully approved! All approval steps are complete.",
+                    event_type=_get_event_type('WORKFLOW_APPROVED'),
+                    priority='high',
+                    action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                    send_email=True
+                )
+
+            print(f"[OK] Workflow completion notifications sent for: {workflow_instance.id}")
         except Exception as e:
-            print(f"❌ Failed to send workflow completion notification: {str(e)}")
+            print(f"[ERROR] Failed to send workflow completion notification: {str(e)}")
 
     @staticmethod
     def notify_workflow_cancelled(workflow_instance, cancelled_by, reason=None):
         """
         Send notification when a workflow is cancelled.
+        Checks for configured 'workflow_cancelled' notifications.
 
         Args:
             workflow_instance: WorkflowInstance that was cancelled
@@ -206,21 +233,46 @@ class WorkflowNotifications:
             reason: Optional cancellation reason
         """
         try:
-            # Notify the requester (if they're not the one who cancelled)
-            if workflow_instance.initiated_by != cancelled_by:
-                NotificationService.create_notification(
-                    user=workflow_instance.initiated_by,
-                    title=f"Request Cancelled: {workflow_instance.workflow_template.name}",
-                    message=f"Your {workflow_instance.workflow_template.entity_type} request has been cancelled. {f'Reason: {reason}' if reason else ''}",
-                    event_type=_get_event_type('WORKFLOW_CANCELLED'),
-                    priority='normal',
-                    action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.entity_id}",
-                send_email=True
-                )
+            from .models import WorkflowStepNotificationConfig
 
-            print(f"✅ Notification sent for workflow cancellation: {workflow_instance.id}")
+            # Check if any step has workflow_cancelled notification configured
+            workflow_steps = workflow_instance.workflow_template.steps.all()
+            configs = WorkflowStepNotificationConfig.objects.filter(
+                workflow_step__in=workflow_steps,
+                event_type='workflow_cancelled',
+                is_active=True
+            )
+
+            if configs.exists():
+                print(f"[OK] Found {configs.count()} workflow_cancelled notification config(s)")
+
+                # Use current step execution for context
+                current_step = workflow_instance.step_executions.filter(status='pending').first()
+                if not current_step:
+                    current_step = workflow_instance.step_executions.order_by('-workflow_step__step_order').first()
+
+                if current_step:
+                    # Trigger configured notifications
+                    WorkflowNotifications.trigger_configured_notifications(
+                        current_step, 'workflow_cancelled'
+                    )
+            else:
+                # Fall back to default notification
+                print(f"[INFO] No workflow_cancelled configs found, using default notification")
+                if workflow_instance.initiated_by != cancelled_by:
+                    NotificationService.create_notification(
+                        user=workflow_instance.initiated_by,
+                        title=f"Request Cancelled: {workflow_instance.workflow_template.name}",
+                        message=f"Your {workflow_instance.workflow_template.entity_type} request has been cancelled. {f'Reason: {reason}' if reason else ''}",
+                        event_type=_get_event_type('WORKFLOW_CANCELLED'),
+                        priority='normal',
+                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        send_email=True
+                    )
+
+            print(f"[OK] Workflow cancellation notifications sent for: {workflow_instance.id}")
         except Exception as e:
-            print(f"❌ Failed to send workflow cancellation notification: {str(e)}")
+            print(f"[ERROR] Failed to send workflow cancellation notification: {str(e)}")
 
     @staticmethod
     def trigger_configured_notifications(step_execution, event_type):
@@ -274,21 +326,24 @@ class WorkflowNotifications:
 
                     # Send notification to each recipient
                     for recipient in recipients:
-                        # Email notifications are controlled by send_email parameter (user's config)
-                        send_email = True  # Email will be sent if user wants it
-                        send_system = config.send_system_notification  # In-app notification
+                        # Use configuration settings for email and in-app notifications
+                        send_email_flag = config.send_email
+                        send_system_flag = config.send_system_notification
 
-                        if send_system:
+                        # Send notification if either channel is enabled
+                        if send_email_flag or send_system_flag:
                             NotificationService.create_notification(
                                 user=recipient,
                                 title=title,
                                 message=message,
                                 event_type=template.event_type,
-                                priority='normal',
-                                action_url=f"/{step_execution.workflow_instance.workflow_template.entity_type}/{step_execution.workflow_instance.entity_id}",
-                                send_email=send_email,
+                                priority=config.priority,
+                                action_url=f"/{step_execution.workflow_instance.workflow_template.entity_type}/{step_execution.workflow_instance.object_id}",
+                                send_email=send_email_flag,
                                 content_object=step_execution.workflow_instance
                             )
+                        else:
+                            print(f"[WARNING] Notification config #{config.id} has both email and in-app disabled - skipping")
 
                     print(f"✅ Sent notification to {len(recipients)} recipient(s) using template '{template.name}'")
 
@@ -374,14 +429,33 @@ class WorkflowNotifications:
         """Build context dictionary for template rendering"""
         workflow_instance = step_execution.workflow_instance
         return {
+            # Workflow information
             'workflow_name': workflow_instance.workflow_template.name,
+            'workflowName': workflow_instance.workflow_template.name,
+
+            # Entity information (both snake_case and camelCase for compatibility)
             'entity_type': workflow_instance.workflow_template.entity_type,
-            'entity_id': workflow_instance.entity_id,
+            'entityType': workflow_instance.workflow_template.entity_type,
+            'request_type': workflow_instance.workflow_template.entity_type.title(),
+            'requestType': workflow_instance.workflow_template.entity_type.title(),
+
+            'entity_id': workflow_instance.object_id,
+            'entityId': workflow_instance.object_id,
+
+            # Step information
             'step_name': step_execution.workflow_step.step_name,
+            'stepName': step_execution.workflow_step.step_name,
+
+            # People
             'assigned_to': step_execution.assigned_to.get_full_name() if step_execution.assigned_to else 'Unassigned',
+            'assignedTo': step_execution.assigned_to.get_full_name() if step_execution.assigned_to else 'Unassigned',
             'requester': workflow_instance.initiated_by.get_full_name(),
+            'requesterName': workflow_instance.initiated_by.get_full_name(),
+
+            # Status
             'status': step_execution.status,
             'sla_due_date': step_execution.sla_due_date.strftime('%Y-%m-%d %H:%M') if step_execution.sla_due_date else 'N/A',
+            'slaDueDate': step_execution.sla_due_date.strftime('%Y-%m-%d %H:%M') if step_execution.sla_due_date else 'N/A',
         }
 
     @staticmethod
