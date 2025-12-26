@@ -258,6 +258,19 @@ export class TrfDetailComponent implements OnInit {
   }
 
   /**
+   * Format flight date and time for display
+   */
+  formatFlightDateTime(date: string | Date | null | undefined, time: string | null | undefined): string {
+    if (!date) return 'N/A';
+    const formattedDate = this.formatDate(date);
+    if (formattedDate === 'N/A' || formattedDate === 'Invalid Date') return formattedDate;
+
+    if (!time) return formattedDate;
+    const formattedTime = this.formatTime(time);
+    return formattedTime === 'N/A' ? formattedDate : `${formattedDate} at ${formattedTime}`;
+  }
+
+  /**
    * Format number for display
    */
   formatNumber(num: number | string | null | undefined, decimals: number = 0): string {
