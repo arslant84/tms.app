@@ -405,7 +405,7 @@ export class FlightsProcessingComponent implements OnInit {
    * View TRF details
    */
   viewTrf(trfId: string): void {
-    this.router.navigate(['/trf/view', trfId]);
+    this.router.navigate(['/trf', trfId]);
   }
 
   /**

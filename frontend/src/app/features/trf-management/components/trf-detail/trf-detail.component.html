@@ -405,6 +405,65 @@
       </div>
     </div>
 
+    <!-- Flight Processing Details -->
+    <div class="card mb-4" *ngIf="trfData.flightDetails">
+      <div class="card-header">
+        <h5><i class="bi bi-airplane"></i> Flight Processing Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Flight Number</label>
+            <p>{{ trfData.flightDetails.flightNumber || trfData.flightDetails.flight_number || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Airline</label>
+            <p>{{ trfData.flightDetails.airline || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Flight Class</label>
+            <p>{{ trfData.flightDetails.flightClass || trfData.flightDetails.flight_class || 'Economy' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Booking Reference (PNR)</label>
+            <p>{{ trfData.flightDetails.bookingReference || trfData.flightDetails.booking_reference || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Departure Airport</label>
+            <p>{{ trfData.flightDetails.departureLocation || trfData.flightDetails.departure_location || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Arrival Airport</label>
+            <p>{{ trfData.flightDetails.arrivalLocation || trfData.flightDetails.arrival_location || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Departure Date & Time</label>
+            <p>{{ formatFlightDateTime(trfData.flightDetails.departureDate || trfData.flightDetails.departure_date, trfData.flightDetails.departureTime || trfData.flightDetails.departure_time) }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Arrival Date & Time</label>
+            <p>{{ formatFlightDateTime(trfData.flightDetails.arrivalDate || trfData.flightDetails.arrival_date, trfData.flightDetails.arrivalTime || trfData.flightDetails.arrival_time) }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Flight Status</label>
+            <p><span class="badge bg-success">{{ trfData.flightDetails.status || 'Booked' }}</span></p>
+          </div>
+          <div class="detail-item" *ngIf="trfData.flightDetails.processedBy || trfData.flightDetails.processed_by">
+            <label>Processed By</label>
+            <p>{{ trfData.flightDetails.processedBy || trfData.flightDetails.processed_by }}</p>
+          </div>
+          <div class="detail-item" *ngIf="trfData.flightDetails.processedDate || trfData.flightDetails.processed_date">
+            <label>Processing Date</label>
+            <p>{{ formatDate(trfData.flightDetails.processedDate || trfData.flightDetails.processed_date) }}</p>
+          </div>
+          <div class="detail-item full-width" *ngIf="trfData.flightDetails.remarks">
+            <label>Remarks</label>
+            <p>{{ trfData.flightDetails.remarks }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modern Workflow Status -->
     <div class="card mb-4" *ngIf="workflow || workflowLoading">
       <div class="card-header">
