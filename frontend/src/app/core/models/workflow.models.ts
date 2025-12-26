@@ -51,12 +51,17 @@ export type RecipientType =
   | string; // Allow dynamic role IDs like 'role_123'
 
 export const EVENT_TYPE_OPTIONS = [
+  // Step-level events (during workflow)
   { value: 'assignment', label: 'On Step Assignment' },
-  { value: 'approval', label: 'On Approval' },
-  { value: 'rejection', label: 'On Rejection' },
-  { value: 'escalation', label: 'On Escalation' },
-  { value: 'reminder', label: 'On Reminder' },
-  { value: 'delegation', label: 'On Delegation' },
+  { value: 'approval', label: 'On Step Approval' },
+  { value: 'rejection', label: 'On Step Rejection' },
+  { value: 'escalation', label: 'On Step Escalation' },
+  { value: 'reminder', label: 'Reminder Notification' },
+  { value: 'delegation', label: 'On Step Delegation' },
+
+  // Workflow-level events (after all approvals)
+  { value: 'workflow_completed', label: 'When All Approvals Complete' },
+  { value: 'workflow_cancelled', label: 'When Workflow Cancelled' },
 ];
 
 export interface WorkflowStep {

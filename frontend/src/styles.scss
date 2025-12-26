@@ -3,6 +3,7 @@
 @use './styles/typography' as typography;
 @use './styles/colors' as colors;
 @use './styles/buttons';
+@use './styles/modal';
 
 // We're using Google Fonts for Raleway instead of local font files
 // The font is loaded in index.html

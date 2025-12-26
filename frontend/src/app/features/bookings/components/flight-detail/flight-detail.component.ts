@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { BookingsService, FlightBooking } from '../../services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
 
 @Component({
   selector: 'app-flight-detail',
@@ -21,7 +22,8 @@ export class FlightDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private bookingsService: BookingsService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private appSettingsService: AppSettingsService
   ) {}
 
   ngOnInit(): void {
@@ -144,9 +146,24 @@ export class FlightDetailComponent implements OnInit {
   }
 
   // Format helpers
-  formatCurrency(amount: number | undefined, currency: string = 'USD'): string {
-    if (!amount && amount !== 0) return 'N/A';
-    return `${currency} ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  formatCurrency(amount: number | null | undefined, currency?: string | null): string {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return 'N/A';
+    }
+
+    const currencyCode = currency || this.appSettingsService.getDefaultCurrency();
+
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return `${currencyCode} ${amount.toFixed(2)}`;
+    }
   }
 
   formatDate(date: string | undefined): string {

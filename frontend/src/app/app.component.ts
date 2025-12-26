@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ToastContainerComponent } from './shared/components/toast-container/toast-container.component';
 import { ConfirmationDialogComponent } from './shared/components/confirmation-dialog/confirmation-dialog.component';
+import { RootModalModule } from './core/components/root-modal/root-modal.module';
 
 @Component({
   selector: 'app-root',
@@ -13,7 +14,8 @@ import { ConfirmationDialogComponent } from './shared/components/confirmation-di
     CommonModule,
     RouterOutlet,
     ToastContainerComponent,
-    ConfirmationDialogComponent
+    ConfirmationDialogComponent,
+    RootModalModule
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']

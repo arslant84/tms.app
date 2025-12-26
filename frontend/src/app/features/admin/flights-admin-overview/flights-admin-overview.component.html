@@ -31,45 +31,34 @@
 
     <div class="stat-card">
       <div class="stat-card-header">
-        <div class="stat-card-title">Awaiting Flight Booking</div>
+        <div class="stat-card-title">Pending Review</div>
         <i class="bi bi-clock stat-icon"></i>
       </div>
       <div class="stat-card-content">
         <div class="stat-value">{{ stats.pending }}</div>
-        <p class="stat-description">Approved requests requiring booking</p>
+        <p class="stat-description">Awaiting approval</p>
       </div>
     </div>
 
     <div class="stat-card">
       <div class="stat-card-header">
-        <div class="stat-card-title">Booked Flights</div>
+        <div class="stat-card-title">Approved</div>
         <i class="bi bi-check-circle stat-icon"></i>
       </div>
       <div class="stat-card-content">
-        <div class="stat-value">{{ stats.booked }}</div>
-        <p class="stat-description">Flights processed by admin</p>
+        <div class="stat-value">{{ stats.approved }}</div>
+        <p class="stat-description">Approved requests</p>
       </div>
     </div>
 
     <div class="stat-card">
       <div class="stat-card-header">
-        <div class="stat-card-title">In Approval</div>
+        <div class="stat-card-title">Processing</div>
         <i class="bi bi-gear stat-icon"></i>
       </div>
       <div class="stat-card-content">
-        <div class="stat-value">{{ stats.in_approval }}</div>
-        <p class="stat-description">Pending departmental approval</p>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-card-header">
-        <div class="stat-card-title">Rejected</div>
-        <i class="bi bi-x-circle stat-icon"></i>
-      </div>
-      <div class="stat-card-content">
-        <div class="stat-value">{{ stats.rejected }}</div>
-        <p class="stat-description">Flight requests denied</p>
+        <div class="stat-value">{{ stats.processing }}</div>
+        <p class="stat-description">In progress</p>
       </div>
     </div>
   </div>

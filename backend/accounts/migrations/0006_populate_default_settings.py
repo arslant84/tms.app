@@ -37,13 +37,6 @@ def populate_default_settings(apps, schema_editor):
             'is_public': True
         },
         {
-            'setting_key': 'timezone',
-            'setting_value': 'UTC',
-            'setting_type': 'string',
-            'description': 'Default timezone for the application',
-            'is_public': True
-        },
-        {
             'setting_key': 'enable_email_notifications',
             'setting_value': 'true',
             'setting_type': 'boolean',
@@ -87,7 +80,6 @@ def remove_default_settings(apps, schema_editor):
         'maintenance_mode',
         'support_email',
         'default_currency',
-        'timezone',
         'enable_email_notifications',
         'session_timeout_minutes',
         'max_file_upload_size'

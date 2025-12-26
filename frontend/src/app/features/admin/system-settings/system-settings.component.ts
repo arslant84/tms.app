@@ -13,7 +13,6 @@ interface SettingsForm {
   maintenance_mode: boolean;
   support_email: string;
   default_currency: string;
-  timezone: string;
   enable_email_notifications: boolean;
   session_timeout_minutes: number;
   max_file_upload_size: number;
@@ -37,7 +36,6 @@ export class SystemSettingsComponent implements OnInit, DoCheck {
     maintenance_mode: false,
     support_email: '',
     default_currency: '',
-    timezone: '',
     enable_email_notifications: true,
     session_timeout_minutes: 480,
     max_file_upload_size: 10485760

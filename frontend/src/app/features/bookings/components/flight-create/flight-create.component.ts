@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { BookingsService, FlightBooking } from '../../services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
 
 @Component({
   selector: 'app-flight-create',
@@ -48,7 +49,8 @@ export class FlightCreateComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private bookingsService: BookingsService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private appSettingsService: AppSettingsService
   ) {}
 
   ngOnInit(): void {
@@ -79,7 +81,7 @@ export class FlightCreateComponent implements OnInit {
       status: ['PENDING', Validators.required],
       booking_reference: ['', Validators.required],
       cost: [0, [Validators.required, Validators.min(0)]],
-      currency: ['USD', Validators.required],
+      currency: [this.appSettingsService.getDefaultCurrency(), Validators.required],
       tax_amount: [0, [Validators.required, Validators.min(0)]],
 
       // Optional fields

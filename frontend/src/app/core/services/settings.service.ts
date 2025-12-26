@@ -35,8 +35,16 @@ export class SettingsService {
 
   /**
    * Get all settings as an array
+   * For admin use - returns all settings regardless of public flag
    */
   getAllSettings(): Observable<ApplicationSetting[]> {
+    return this.http.get<ApplicationSetting[]>(`${this.apiUrl}/`);
+  }
+
+  /**
+   * Get only public settings (for unauthenticated/non-admin users)
+   */
+  getPublicSettings(): Observable<ApplicationSetting[]> {
     return this.http.get<ApplicationSetting[]>(`${this.apiUrl}/`, {
       params: { public: 'true' }
     });

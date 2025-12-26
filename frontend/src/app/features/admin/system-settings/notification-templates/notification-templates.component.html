@@ -79,9 +79,9 @@
   </div>
 
   <!-- Modal Dialog -->
-  <div class="modal" [class.show]="isModalOpen" [style.display]="isModalOpen ? 'block' : 'none'" tabindex="-1">
+  <div class="modal" [class.show]="isModalOpen" [style.display]="isModalOpen ? 'flex' : 'none'" tabindex="-1">
     <div class="modal-backdrop" [class.show]="isModalOpen" (click)="closeModal()"></div>
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">

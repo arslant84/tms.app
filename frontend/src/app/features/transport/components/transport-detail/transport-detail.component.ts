@@ -9,6 +9,7 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
 
 @Component({
   selector: 'app-transport-detail',
@@ -42,7 +43,8 @@ export class TransportDetailComponent implements OnInit {
     private transportService: TransportService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
-    public workflowService: WorkflowService
+    public workflowService: WorkflowService,
+    private appSettingsService: AppSettingsService
   ) {}
 
   ngOnInit(): void {
@@ -270,12 +272,24 @@ export class TransportDetailComponent implements OnInit {
     window.print();
   }
 
-  formatCurrency(amount: number | undefined, currency: string = 'USD'): string {
-    if (!amount && amount !== 0) return '$0.00';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency
-    }).format(amount);
+  formatCurrency(amount: number | null | undefined, currency?: string | null): string {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return 'N/A';
+    }
+
+    const currencyCode = currency || this.appSettingsService.getDefaultCurrency();
+
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return `${currencyCode} ${amount.toFixed(2)}`;
+    }
   }
 
   formatDate(dateString: string | Date | undefined): string {

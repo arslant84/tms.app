@@ -36,14 +36,7 @@ class Command(BaseCommand):
                 'value': 'USD',
                 'setting_type': 'string',
                 'description': 'Default currency for financial calculations',
-                'is_public': False
-            },
-            {
-                'setting_key': 'timezone',
-                'value': 'UTC',
-                'setting_type': 'string',
-                'description': 'System timezone',
-                'is_public': False
+                'is_public': True
             },
             {
                 'setting_key': 'session_timeout',

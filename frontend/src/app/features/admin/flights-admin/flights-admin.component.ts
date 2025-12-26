@@ -307,10 +307,24 @@ export class FlightsAdminComponent implements OnInit {
   /**
    * Format currency
    */
-  formatCurrency(amount: number | null | undefined, currency?: string): string {
-    if (amount === null || amount === undefined) return 'N/A';
-    const defaultCurrency = this.appSettingsService.getDefaultCurrency();
-    return amount.toLocaleString('en-MY', { style: 'currency', currency: currency || defaultCurrency });
+  formatCurrency(amount: number | null | undefined, currency?: string | null): string {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return 'N/A';
+    }
+
+    const currencyCode = currency || this.appSettingsService.getDefaultCurrency();
+
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return `${currencyCode} ${amount.toFixed(2)}`;
+    }
   }
 
   /**
