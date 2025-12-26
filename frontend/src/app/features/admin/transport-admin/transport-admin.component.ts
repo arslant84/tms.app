@@ -320,10 +320,24 @@ export class TransportAdminComponent implements OnInit {
   /**
    * Format currency
    */
-  formatCurrency(amount: number | null | undefined): string {
-    if (amount === null || amount === undefined) return 'N/A';
-    const currency = this.appSettingsService.getDefaultCurrency();
-    return amount.toLocaleString('en-MY', { style: 'currency', currency: currency });
+  formatCurrency(amount: number | null | undefined, currency?: string | null): string {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return 'N/A';
+    }
+
+    const currencyCode = currency || this.appSettingsService.getDefaultCurrency();
+
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return `${currencyCode} ${amount.toFixed(2)}`;
+    }
   }
 
   /**

@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -124,6 +125,8 @@ class WorkflowStepNotificationConfig(models.Model):
     Configuration for notifications at each workflow step
     Defines what notifications are sent, when, and to whom
     """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     # Note: RECIPIENT_TYPE_CHOICES is for reference only
     # The actual recipient_types field is a JSONField that accepts any string values
     # This allows for dynamic role-based recipients (e.g., 'role_123')
@@ -138,12 +141,17 @@ class WorkflowStepNotificationConfig(models.Model):
     ]
 
     EVENT_TYPE_CHOICES = [
+        # Step-level events (during workflow)
         ('assignment', 'On Step Assignment'),
-        ('approval', 'On Approval'),
-        ('rejection', 'On Rejection'),
-        ('escalation', 'On Escalation'),
-        ('reminder', 'On Reminder'),
-        ('delegation', 'On Delegation'),
+        ('approval', 'On Step Approval'),
+        ('rejection', 'On Step Rejection'),
+        ('escalation', 'On Step Escalation'),
+        ('reminder', 'Reminder Notification'),
+        ('delegation', 'On Step Delegation'),
+
+        # Workflow-level events (after all approvals)
+        ('workflow_completed', 'When All Approvals Complete'),
+        ('workflow_cancelled', 'When Workflow Cancelled'),
     ]
 
     workflow_step = models.ForeignKey(

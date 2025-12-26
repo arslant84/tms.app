@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApprovalsService, ApprovalRequest } from '../services/approvals.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { CurrencyFormatPipe } from '../../../core/pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-pending-approvals',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe],
   templateUrl: './pending-approvals.component.html',
   styleUrl: './pending-approvals.component.scss'
 })

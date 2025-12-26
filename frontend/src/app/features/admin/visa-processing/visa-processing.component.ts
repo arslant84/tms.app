@@ -42,7 +42,7 @@ interface CompletedVisa {
   styleUrl: './visa-processing.component.scss'
 })
 export class VisaProcessingComponent implements OnInit {
-  activeTab: 'pending' | 'completed' = 'pending';
+  activeTab: 'pending' | 'processing' | 'completed' = 'pending';
 
   // Pending Visas
   pendingVisas: PendingVisa[] = [];
@@ -56,12 +56,20 @@ export class VisaProcessingComponent implements OnInit {
   // Selected Application for processing
   selectedApplication: PendingVisa | null = null;
   isProcessing = false;
+  showProcessingDialog = false;
 
   // Processing form fields
   processingNotes = '';
   visaNumber = '';
   visaIssueDate = '';
   visaExpiryDate = '';
+  paymentMethod = 'Bank Transfer';
+  bankTransferReference = '';
+  chequeNumber = '';
+  applicationFee = 0;
+  processingFee = 0;
+  totalFee = 0;
+  paymentDate = '';
 
   constructor(
     private visaService: VisaService,
@@ -275,13 +283,96 @@ export class VisaProcessingComponent implements OnInit {
   /**
    * Switch tab
    */
-  switchTab(tab: 'pending' | 'completed'): void {
+  switchTab(tab: 'pending' | 'processing' | 'completed'): void {
     this.activeTab = tab;
     if (tab === 'pending' && this.pendingVisas.length === 0) {
       this.fetchPendingVisas();
     } else if (tab === 'completed' && this.completedVisas.length === 0) {
       this.fetchCompletedVisas();
     }
+  }
+
+  /**
+   * Open processing dialog
+   */
+  openProcessingDialog(application: PendingVisa): void {
+    this.selectedApplication = application;
+    this.resetFormFields();
+    this.showProcessingDialog = true;
+    document.body.classList.add('modal-open');
+  }
+
+  /**
+   * Close processing dialog
+   */
+  closeProcessingDialog(): void {
+    this.showProcessingDialog = false;
+    this.selectedApplication = null;
+    this.resetFormFields();
+    document.body.classList.remove('modal-open');
+  }
+
+  /**
+   * Calculate total fee
+   */
+  calculateTotalFee(): void {
+    this.totalFee = (this.applicationFee || 0) + (this.processingFee || 0);
+  }
+
+  /**
+   * Complete processing from dialog
+   */
+  completeProcessingFromDialog(): void {
+    if (!this.selectedApplication) {
+      this.toastService.error('No application selected');
+      return;
+    }
+
+    if (!confirm(`Mark visa application ${this.selectedApplication.request_number} as completed?`)) {
+      return;
+    }
+
+    this.isProcessing = true;
+
+    const updateData: any = {
+      status: 'Completed',
+      processing_completed_at: new Date().toISOString()
+    };
+
+    if (this.processingNotes.trim()) {
+      updateData.additional_comments = this.processingNotes;
+    }
+
+    // Add processing details
+    updateData.processing_details = {
+      payment_method: this.paymentMethod,
+      bank_transfer_reference: this.bankTransferReference,
+      cheque_number: this.chequeNumber,
+      payment_date: this.paymentDate,
+      application_fee: this.applicationFee,
+      processing_fee: this.processingFee,
+      total_fee: this.totalFee,
+      visa_number: this.visaNumber,
+      visa_valid_from: this.visaIssueDate,
+      visa_valid_to: this.visaExpiryDate,
+      processing_notes: this.processingNotes,
+      completed_by_admin: true,
+      completed_at: new Date().toISOString()
+    };
+
+    this.visaService.updateApplication(this.selectedApplication.id, updateData).subscribe({
+      next: () => {
+        this.toastService.success(`Visa application for ${this.selectedApplication!.requestorName} marked as completed`);
+        this.fetchPendingVisas();
+        this.fetchCompletedVisas();
+        this.closeProcessingDialog();
+        this.isProcessing = false;
+      },
+      error: (err) => {
+        this.toastService.error('Failed to complete processing: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.isProcessing = false;
+      }
+    });
   }
 
   /**

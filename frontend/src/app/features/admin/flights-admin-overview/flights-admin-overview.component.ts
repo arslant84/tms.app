@@ -22,9 +22,8 @@ interface FlightApplication {
 interface FlightStats {
   total: number;
   pending: number;
-  booked: number;
-  rejected: number;
-  in_approval: number;
+  approved: number;
+  processing: number;
 }
 
 @Component({
@@ -50,9 +49,8 @@ export class FlightsAdminOverviewComponent implements OnInit {
   stats: FlightStats = {
     total: 0,
     pending: 0,
-    booked: 0,
-    rejected: 0,
-    in_approval: 0
+    approved: 0,
+    processing: 0
   };
 
   // Status options
@@ -105,22 +103,19 @@ export class FlightsAdminOverviewComponent implements OnInit {
         this.stats = {
           total: flightTrfs.length,
           pending: flightTrfs.filter((trf: any) =>
+            trf.status.includes('Pending')
+          ).length,
+          approved: flightTrfs.filter((trf: any) =>
             trf.status === 'Approved' && !trf.has_flight_booking
           ).length,
-          booked: flightTrfs.filter((trf: any) =>
+          processing: flightTrfs.filter((trf: any) =>
             trf.has_flight_booking === true
-          ).length,
-          rejected: flightTrfs.filter((trf: any) =>
-            trf.status === 'Rejected'
-          ).length,
-          in_approval: flightTrfs.filter((trf: any) =>
-            trf.status.includes('Pending')
           ).length
         };
       },
       error: (err) => {
         console.error('Failed to fetch flight statistics:', err);
-        this.stats = { total: 0, pending: 0, booked: 0, rejected: 0, in_approval: 0 };
+        this.stats = { total: 0, pending: 0, approved: 0, processing: 0 };
       }
     });
   }

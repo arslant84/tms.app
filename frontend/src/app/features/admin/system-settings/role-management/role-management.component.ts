@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
-import { TmsApp_Core_Services_RolesService, TmsApp_Roles_RoleWithPermissions, TmsApp_Roles_Permission, TmsApp_Roles_RoleFormValues } from '../../../../core/services/roles.service';
+import { TmsApp_Core_Services_RolesService, TmsApp_Roles_RoleWithPermissions, TmsApp_Roles_Permission } from '../../../../core/services/roles.service';
+import { RoleFormComponent } from '../role-form/role-form.component';
 import { ToastService } from '../../../../core/services/toast.service';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { Permission } from '../../../../core/models/permission.models';
+import { ModalService } from '../../../../core/services/modal.service';
 
 @Component({
   selector: 'tmsapp-admin-systemsettings-role-management',
@@ -14,16 +16,12 @@ import { Permission } from '../../../../core/models/permission.models';
   templateUrl: './role-management.component.html',
   styleUrls: ['./role-management.component.scss']
 })
-export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnInit {
+export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnInit, OnDestroy {
   isLoading = true;
   isSaving = false;
   roles: TmsApp_Roles_RoleWithPermissions[] = [];
   permissions: TmsApp_Roles_Permission[] = [];
 
-  showForm = false;
-  editId: string | null = null;
-  form: TmsApp_Roles_RoleFormValues = { name: '', description: '', permissionIds: [] };
-  submitError = '';
 
   showDeleteConfirm = false;
   roleToDelete: TmsApp_Roles_RoleWithPermissions | null = null;
@@ -32,7 +30,8 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
     private rolesService: TmsApp_Core_Services_RolesService,
     private toast: ToastService,
     private rbacService: RbacService,
-    private router: Router
+    private router: Router,
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {
@@ -106,98 +105,40 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
   }
 
   openCreate(): void {
-    this.showForm = true;
-    this.editId = null;
-    this.form = { name: '', description: '', permissionIds: [] };
-    this.submitError = '';
-  }
-
-  openEdit(role: TmsApp_Roles_RoleWithPermissions): void {
-    this.showForm = true;
-    this.editId = role.id;
-    this.form = {
-      name: role.name,
-      description: role.description || '',
-      permissionIds: role.permissionIds || []
-    };
-    this.submitError = '';
-  }
-
-  cancelForm(): void {
-    this.showForm = false;
-    this.editId = null;
-    this.submitError = '';
-  }
-
-  togglePermission(id: string): void {
-    const list = new Set(this.form.permissionIds || []);
-    if (list.has(id)) list.delete(id); else list.add(id);
-    this.form.permissionIds = Array.from(list);
-  }
-
-  submitForm(): void {
-    // Validate form
-    if (!this.form.name || !this.form.name.trim()) {
-      this.submitError = 'Role name is required';
-      return;
-    }
-
-    if (!this.form.permissionIds || this.form.permissionIds.length === 0) {
-      this.submitError = 'At least one permission must be selected';
-      return;
-    }
-
-    this.isSaving = true;
-    this.submitError = '';
-
-    console.log('Submitting role form:', this.form);
-
-    const op = this.editId
-      ? this.rolesService.updateRole(this.editId, this.form)
-      : this.rolesService.createRole(this.form);
-
-    op.subscribe({
-      next: (response) => {
-        console.log('Role saved successfully:', response);
-        this.toast.success(this.editId ? 'Role updated successfully' : 'Role created successfully');
-        this.showForm = false;
-        this.editId = null;
-        this.form = { name: '', description: '', permissionIds: [] };
+    this.modalService.open(RoleFormComponent, { permissions: this.permissions });
+    this.modalService.afterClosed.subscribe(result => {
+      if (result) {
         this.loadData();
-      },
-      error: (err) => {
-        console.error('Error saving role:', err);
-
-        if (err.status === 401) {
-          this.submitError = 'Unauthorized. Please login again.';
-        } else if (err.status === 403) {
-          this.submitError = 'You do not have permission to perform this action. Admin access required.';
-        } else if (err.status === 400) {
-          this.submitError = err.error?.message || 'Invalid form data. Please check your input.';
-        } else if (err.error && typeof err.error === 'string') {
-          this.submitError = err.error;
-        } else if (err.error && err.error.message) {
-          this.submitError = err.error.message;
-        } else {
-          this.submitError = `Failed to save role: ${err.statusText || 'Unknown error'}`;
-        }
-
-        this.toast.error(this.submitError);
-      },
-      complete: () => {
-        this.isSaving = false;
       }
     });
   }
 
+  openEdit(role: TmsApp_Roles_RoleWithPermissions): void {
+    this.modalService.open(RoleFormComponent, { 
+      editId: role.id, 
+      role: role, 
+      permissions: this.permissions 
+    });
+    this.modalService.afterClosed.subscribe(result => {
+      if (result) {
+        this.loadData();
+      }
+    });
+  }
+
+
   confirmDelete(role: TmsApp_Roles_RoleWithPermissions): void {
     this.roleToDelete = role;
     this.showDeleteConfirm = true;
+    // Lock body scroll
+    document.body.classList.add('modal-open');
   }
 
   cancelDelete(): void {
     this.roleToDelete = null;
     this.showDeleteConfirm = false;
+    // Unlock body scroll
+    document.body.classList.remove('modal-open');
   }
 
   executeDelete(): void {
@@ -209,6 +150,8 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
         this.toast.success('Role deleted successfully');
         this.showDeleteConfirm = false;
         this.roleToDelete = null;
+        // Unlock body scroll
+        document.body.classList.remove('modal-open');
         this.loadData();
       },
       error: (err) => {
@@ -219,6 +162,13 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
         this.isSaving = false;
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    // Close any open modals when the component is destroyed
+    if (this.showDeleteConfirm) {
+      document.body.classList.remove('modal-open');
+    }
   }
 
   getPermissionNames(permissionIds: string[]): string {

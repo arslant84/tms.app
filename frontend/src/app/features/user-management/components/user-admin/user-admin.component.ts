@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { UserService, User, Role } from '../../services/user.service';
@@ -11,7 +11,7 @@ import { ToastService } from '../../../../core/services/toast.service';
   templateUrl: './user-admin.component.html',
   styleUrls: ['./user-admin.component.scss']
 })
-export class UserAdminComponent implements OnInit {
+export class UserAdminComponent implements OnInit, OnDestroy {
   users: User[] = [];
   roles: Role[] = [];
   loading = false;
@@ -140,6 +140,8 @@ export class UserAdminComponent implements OnInit {
     this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(8)]);
     this.userForm.get('password_confirm')?.setValidators([Validators.required]);
     this.showModal = true;
+    // Lock body scroll
+    document.body.classList.add('modal-open');
   }
 
   openEditModal(user: User): void {
@@ -159,11 +161,22 @@ export class UserAdminComponent implements OnInit {
     this.userForm.get('password')?.clearValidators();
     this.userForm.get('password_confirm')?.clearValidators();
     this.showModal = true;
+    // Lock body scroll
+    document.body.classList.add('modal-open');
   }
 
   closeModal(): void {
     this.showModal = false;
     this.userForm.reset();
+    // Unlock body scroll
+    document.body.classList.remove('modal-open');
+  }
+
+  ngOnDestroy(): void {
+    // Ensure modal is closed and scroll unlocked when component is destroyed
+    if (this.showModal) {
+      document.body.classList.remove('modal-open');
+    }
   }
 
   onSubmit(): void {
