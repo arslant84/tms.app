@@ -143,7 +143,7 @@ export class TrfDetailComponent implements OnInit {
       createdAt: data.created_at || data.createdAt,
       updatedAt: data.updated_at || data.updatedAt,
       submittedAt: data.submitted_at || data.submittedAt,
-      flightDetails: data.flightDetails || null
+      flightDetails: data.flight_details || data.flightDetails || null
     };
   }
 
