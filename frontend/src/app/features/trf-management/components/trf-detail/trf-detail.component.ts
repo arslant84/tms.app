@@ -407,6 +407,8 @@ export class TrfDetailComponent implements OnInit {
         if (instance && instance.id) {
           this.workflowService.getInstance(instance.id).subscribe({
             next: (workflow) => {
+              console.log('Workflow loaded for TRF:', workflow);
+              console.log('Step executions:', workflow.step_executions);
               this.workflow = workflow;
               this.updateCurrentStepExecution();
               this.workflowLoading = false;
