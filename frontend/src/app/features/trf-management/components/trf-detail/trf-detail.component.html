@@ -448,13 +448,13 @@
             <label>Flight Status</label>
             <p><span class="badge bg-success">{{ trfData.flightDetails.status || 'Booked' }}</span></p>
           </div>
-          <div class="detail-item" *ngIf="trfData.flightDetails.processedBy || trfData.flightDetails.processed_by">
+          <div class="detail-item" *ngIf="trfData.flightDetails.processedBy">
             <label>Processed By</label>
-            <p>{{ trfData.flightDetails.processedBy || trfData.flightDetails.processed_by }}</p>
+            <p>{{ trfData.flightDetails.processedBy }}</p>
           </div>
-          <div class="detail-item" *ngIf="trfData.flightDetails.processedDate || trfData.flightDetails.processed_date">
+          <div class="detail-item" *ngIf="trfData.flightDetails.processedDate">
             <label>Processing Date</label>
-            <p>{{ formatDate(trfData.flightDetails.processedDate || trfData.flightDetails.processed_date) }}</p>
+            <p>{{ formatDate(trfData.flightDetails.processedDate) }}</p>
           </div>
           <div class="detail-item full-width" *ngIf="trfData.flightDetails.remarks">
             <label>Remarks</label>
