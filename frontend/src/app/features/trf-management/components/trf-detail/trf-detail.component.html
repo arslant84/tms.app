@@ -465,39 +465,45 @@
     </div>
 
     <!-- Modern Workflow Status -->
-    <div class="card mb-4" *ngIf="workflow || workflowLoading">
-      <div class="card-header">
-        <h5><i class="bi bi-diagram-3"></i> Approval Workflow</h5>
-      </div>
-      <div class="card-body">
-
-        <!-- Loading State -->
-        <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
+    <div *ngIf="workflow || workflowLoading">
+      <!-- Loading State -->
+      <div *ngIf="workflowLoading && !workflow" class="card mb-4">
+        <div class="card-header">
+          <h5><i class="bi bi-diagram-3"></i> Approval Workflow</h5>
+        </div>
+        <div class="card-body text-center py-3">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading workflow...</span>
           </div>
           <p class="text-muted mt-2">Loading workflow status...</p>
         </div>
+      </div>
 
-        <!-- Workflow Status Timeline -->
-        <app-workflow-status
-          *ngIf="workflow && !workflowLoading"
-          [workflowInstance]="workflow">
-        </app-workflow-status>
+      <!-- Workflow Status Timeline (component has its own card) -->
+      <app-workflow-status
+        *ngIf="workflow && !workflowLoading"
+        [workflowInstance]="workflow">
+      </app-workflow-status>
 
-        <!-- Approval Action Buttons -->
-        <app-approval-actions
-          *ngIf="currentStepExecution && !workflowLoading"
-          [stepExecution]="currentStepExecution"
-          (approved)="onWorkflowApproved()"
-          (rejected)="onWorkflowRejected()"
-          (delegated)="onWorkflowDelegated()">
-        </app-approval-actions>
+      <!-- Approval Action Buttons -->
+      <app-approval-actions
+        *ngIf="currentStepExecution && !workflowLoading"
+        [stepExecution]="currentStepExecution"
+        (approved)="onWorkflowApproved()"
+        (rejected)="onWorkflowRejected()"
+        (delegated)="onWorkflowDelegated()">
+      </app-approval-actions>
 
-        <!-- No Workflow Message -->
-        <div *ngIf="!workflow && !workflowLoading" class="alert alert-info">
-          <i class="bi bi-info-circle"></i>
-          No workflow has been initiated for this TRF yet.
+      <!-- No Workflow Message -->
+      <div *ngIf="!workflow && !workflowLoading" class="card mb-4">
+        <div class="card-header">
+          <h5><i class="bi bi-diagram-3"></i> Approval Workflow</h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            No workflow has been initiated for this TRF yet.
+          </div>
         </div>
       </div>
     </div>
