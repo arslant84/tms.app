@@ -173,14 +173,19 @@ class TravelRequestSerializer(serializers.ModelSerializer):
                 'id': flight_booking.id,
                 'airline': flight_booking.airline,
                 'flightNumber': flight_booking.flight_number,
-                'departureLocation': flight_booking.departure_airport,
-                'arrivalLocation': flight_booking.arrival_airport,
-                'departureDate': flight_booking.departure_time.isoformat() if flight_booking.departure_time else None,
-                'arrivalDate': flight_booking.arrival_time.isoformat() if flight_booking.arrival_time else None,
+                'flightClass': flight_booking.flight_class,
+                'departureLocation': flight_booking.departure_location,
+                'arrivalLocation': flight_booking.arrival_location,
+                'departureDate': flight_booking.departure_date.isoformat() if flight_booking.departure_date else None,
+                'departureTime': flight_booking.departure_time.isoformat() if flight_booking.departure_time else None,
+                'arrivalDate': flight_booking.arrival_date.isoformat() if flight_booking.arrival_date else None,
+                'arrivalTime': flight_booking.arrival_time.isoformat() if flight_booking.arrival_time else None,
                 'bookingReference': flight_booking.booking_reference,
                 'pnr': flight_booking.booking_reference,
                 'status': flight_booking.status,
-                'remarks': flight_booking.notes
+                'remarks': flight_booking.remarks,
+                'createdBy': flight_booking.created_by,
+                'createdAt': flight_booking.created_at.isoformat() if flight_booking.created_at else None
             }
         return None
 
@@ -308,6 +313,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
     overseasTravelDetails = serializers.SerializerMethodField()
     externalPartiesTravelDetails = serializers.SerializerMethodField()
     externalPartyRequestorInfo = serializers.SerializerMethodField()
+    flight_details = serializers.SerializerMethodField()
 
     class Meta:
         model = TravelRequest
@@ -320,7 +326,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             'submitted_at', 'created_at', 'updated_at', 'additional_data',
             'advance_amounts', 'bank_detail',
             'approval_steps', 'daily_meals',
-            'flight_bookings', 'itinerary_segments', 'meal_provisions',
+            'flight_bookings', 'flight_details', 'itinerary_segments', 'meal_provisions',
             'passport_details',
             'domesticTravelDetails', 'overseasTravelDetails',
             'externalPartiesTravelDetails', 'externalPartyRequestorInfo'
@@ -451,6 +457,30 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
                 'externalOrganization': obj.external_organization,
                 'externalRefToAuthorityLetter': obj.external_ref_to_authority_letter,
                 'externalCostCenter': obj.external_cost_center
+            }
+        return None
+
+    def get_flight_details(self, obj):
+        """Get flight booking details if exists"""
+        flight_booking = obj.flight_bookings.first()
+        if flight_booking:
+            return {
+                'id': flight_booking.id,
+                'airline': flight_booking.airline,
+                'flightNumber': flight_booking.flight_number,
+                'flightClass': flight_booking.flight_class,
+                'departureLocation': flight_booking.departure_location,
+                'arrivalLocation': flight_booking.arrival_location,
+                'departureDate': flight_booking.departure_date.isoformat() if flight_booking.departure_date else None,
+                'departureTime': flight_booking.departure_time.isoformat() if flight_booking.departure_time else None,
+                'arrivalDate': flight_booking.arrival_date.isoformat() if flight_booking.arrival_date else None,
+                'arrivalTime': flight_booking.arrival_time.isoformat() if flight_booking.arrival_time else None,
+                'bookingReference': flight_booking.booking_reference,
+                'pnr': flight_booking.booking_reference,
+                'status': flight_booking.status,
+                'remarks': flight_booking.remarks,
+                'processedBy': flight_booking.created_by,
+                'processedDate': flight_booking.created_at.isoformat() if flight_booking.created_at else None
             }
         return None
 
