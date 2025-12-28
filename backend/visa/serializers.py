@@ -25,9 +25,9 @@ class VisaApplicationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = VisaApplication
         fields = [
-            'id', 'request_number', 'applicant_name', 'requestor_name', 'staff_id', 'destination', 'visa_type', 'request_type',
+            'id', 'request_number', 'applicant_name', 'requestor_name', 'staff_id', 'department', 'destination', 'visa_type', 'request_type',
             'travel_purpose', 'passport_number', 'status', 'trip_start_date', 'trip_end_date', 'submitted_date',
-            'last_updated_date'
+            'last_updated_date', 'processing_started_at', 'processing_completed_at', 'processing_details', 'additional_comments', 'created_at', 'updated_at'
         ]
 
 
@@ -60,11 +60,6 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
             # Travel Details
             'destination', 'travel_purpose', 'visa_type',
             'trip_start_date', 'trip_end_date', 'itinerary_details',
-
-            # Approvals
-            'line_focal_person', 'line_focal_dept', 'line_focal_contact', 'line_focal_date',
-            'sponsoring_dept_head', 'sponsoring_dept_head_dept', 'sponsoring_dept_head_contact',
-            'sponsoring_dept_head_date', 'ceo_approval_name', 'ceo_approval_date',
 
             # Status & Processing
             'status', 'submitted_date', 'last_updated_date',
@@ -104,11 +99,6 @@ class VisaApplicationCreateUpdateSerializer(serializers.ModelSerializer):
             # Travel Details
             'destination', 'travel_purpose', 'visa_type',
             'trip_start_date', 'trip_end_date', 'itinerary_details',
-
-            # Approvals (for admin/management use)
-            'line_focal_person', 'line_focal_dept', 'line_focal_contact', 'line_focal_date',
-            'sponsoring_dept_head', 'sponsoring_dept_head_dept', 'sponsoring_dept_head_contact',
-            'sponsoring_dept_head_date', 'ceo_approval_name', 'ceo_approval_date',
 
             # Status & Processing
             'status', 'processing_started_at', 'processing_completed_at', 'processing_details',

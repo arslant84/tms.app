@@ -253,7 +253,7 @@
 <!-- Process Application Modal -->
 <div class="modal fade" [class.show]="showProcessModal" [style.display]="showProcessModal ? 'flex' : 'none'"
      tabindex="-1" role="dialog" *ngIf="showProcessModal">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog" [class.modal-lg]="processAction === 'complete'" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">{{ getActionLabel() }} Application</h5>
@@ -267,14 +267,42 @@
           <strong>Visa Type:</strong> {{ selectedApplication.visa_type }}
         </div>
 
+        <!-- Processing Details (only for complete action) -->
+        <div *ngIf="processAction === 'complete'">
+          <h6 class="mb-3">Visa Processing Details</h6>
+
+          <div class="mb-3">
+            <label for="visaNumber" class="form-label">Visa Number</label>
+            <input type="text" id="visaNumber" class="form-control"
+                   [(ngModel)]="visaNumber"
+                   placeholder="Enter visa number">
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="visaValidFrom" class="form-label">Visa Valid From</label>
+              <input type="date" id="visaValidFrom" class="form-control"
+                     [(ngModel)]="visaValidFrom">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="visaValidTo" class="form-label">Visa Valid To</label>
+              <input type="date" id="visaValidTo" class="form-control"
+                     [(ngModel)]="visaValidTo">
+            </div>
+          </div>
+        </div>
+
         <div class="mb-3">
           <label for="processComments" class="form-label">
-            Comments
+            {{ processAction === 'complete' ? 'Processing Notes' : 'Comments' }}
             <span class="text-danger" *ngIf="processAction === 'reject'">*</span>
           </label>
           <textarea id="processComments" class="form-control" rows="4"
                     [(ngModel)]="processComments"
-                    [placeholder]="processAction === 'reject' ? 'Please provide rejection reason (required)' : 'Additional comments (optional)'"
+                    [placeholder]="processAction === 'reject' ? 'Please provide rejection reason (required)' :
+                                   processAction === 'complete' ? 'Enter any processing notes or comments (optional)' :
+                                   'Additional comments (optional)'"
                     [required]="processAction === 'reject'"></textarea>
         </div>
       </div>

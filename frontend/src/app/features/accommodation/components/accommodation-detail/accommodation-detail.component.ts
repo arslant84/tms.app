@@ -79,7 +79,6 @@ export class AccommodationDetailComponent implements OnInit {
       error: (err) => {
         this.error = 'Failed to load accommodation request: ' + (err.error?.message || err.message || 'Unknown error');
         this.loading = false;
-        console.error('Error loading accommodation request:', err);
       }
     });
   }
@@ -157,7 +156,6 @@ export class AccommodationDetailComponent implements OnInit {
           },
           error: (err) => {
             this.toastService.error('Failed to cancel request: ' + (err.error?.message || err.message));
-            console.error('Error cancelling request:', err);
           }
         });
       }
@@ -174,7 +172,6 @@ export class AccommodationDetailComponent implements OnInit {
           },
           error: (err) => {
             this.toastService.error('Failed to delete request: ' + (err.error?.message || err.message));
-            console.error('Error deleting request:', err);
           }
         });
       }
@@ -449,7 +446,6 @@ export class AccommodationDetailComponent implements OnInit {
               this.workflowLoading = false;
             },
             error: (err) => {
-              console.error('Error loading workflow details:', err);
               this.workflowLoading = false;
             }
           });
@@ -458,7 +454,6 @@ export class AccommodationDetailComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error loading workflow:', err);
         this.workflowLoading = false;
       }
     });

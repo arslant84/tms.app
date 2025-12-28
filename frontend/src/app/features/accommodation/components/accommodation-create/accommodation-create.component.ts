@@ -65,7 +65,6 @@ export class AccommodationCreateComponent implements OnInit {
         this.loadingTrfs = false;
       },
       error: (err) => {
-        console.error('Error loading TRFs:', err);
         this.availableTrfs = [];
         this.loadingTrfs = false;
       }
@@ -134,7 +133,6 @@ export class AccommodationCreateComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error checking TSR availability:', err);
         this.toastService.error('Failed to check TSR availability');
       }
     });
@@ -143,7 +141,6 @@ export class AccommodationCreateComponent implements OnInit {
   private populateUserDetails(): void {
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
-      console.log('Accommodation - Current user data:', currentUser);
       // Auto-populate user details from logged-in user
       this.accommodationForm.patchValue({
         requestorName: currentUser.name || '',
@@ -202,7 +199,6 @@ export class AccommodationCreateComponent implements OnInit {
       error: (err) => {
         this.toastService.error('Failed to load request data');
         this.loading = false;
-        console.error('Error loading request:', err);
         this.router.navigate(['/accommodation']);
       }
     });
@@ -249,7 +245,6 @@ export class AccommodationCreateComponent implements OnInit {
         }
 
         this.toastService.error(errorMessage);
-        console.error(`Error ${action}ing request:`, err);
       }
     });
   }
@@ -274,7 +269,6 @@ export class AccommodationCreateComponent implements OnInit {
       error: (err) => {
         this.submitting = false;
         this.toastService.error('Failed to save draft');
-        console.error('Error saving draft:', err);
       }
     });
   }

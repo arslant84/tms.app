@@ -91,12 +91,6 @@ export class TrfWizardComponent implements OnInit {
         this.loadExistingTrf(this.trfId);
       }
     });
-
-    console.log('TRF Wizard initialized');
-    console.log('Current step:', this.currentStep);
-    console.log('Total steps:', this.totalSteps);
-    console.log('Selected travel type:', this.selectedTravelType);
-    console.log('Edit mode:', this.isEditMode);
   }
 
   /**
@@ -112,13 +106,6 @@ export class TrfWizardComponent implements OnInit {
         // The backend returns { trf: { ...data } }, so we need to extract the trf object
         const data = response.trf || response;
 
-        console.log('=== LOADED TRF DATA ===');
-        console.log('TRF ID:', id);
-        console.log('TRF Status:', data.status);
-        console.log('Full TRF data:', data);
-        console.log('Domestic Travel Details:', data.domesticTravelDetails);
-        console.log('Overseas Travel Details:', data.overseasTravelDetails);
-
         this.existingTrfData = data;
         this.selectedTravelType = data.travel_type || data.travelType;
 
@@ -132,7 +119,6 @@ export class TrfWizardComponent implements OnInit {
           const errorMsg = `This TRF cannot be edited because its status is "${data.status}". Only Draft, Rejected, or Pending TRFs can be edited.`;
           this.submitError = errorMsg;
           this.isLoadingTrf = false;
-          console.warn('TRF cannot be edited - status:', data.status);
 
           // Show error toast and redirect back to list
           this.toastService.error(errorMsg);
@@ -169,7 +155,6 @@ export class TrfWizardComponent implements OnInit {
       error: (err: any) => {
         this.submitError = 'Failed to load TRF: ' + (err.error?.message || err.message || 'Unknown error');
         this.isLoadingTrf = false;
-        console.error('Error loading TRF:', err);
       }
     });
   }
@@ -180,9 +165,6 @@ export class TrfWizardComponent implements OnInit {
   private prePopulateTravelData(data: any): void {
     switch (this.selectedTravelType) {
       case 'Domestic':
-        console.log('=== DOMESTIC TRAVEL DATA ===');
-        console.log('Raw domesticTravelDetails:', data.domesticTravelDetails);
-
         // Backend returns nested structure: data.domesticTravelDetails.itinerary
         const domesticDetails = data.domesticTravelDetails || {};
         const itineraryData = domesticDetails.itinerary || data.itinerary_segments || data.itinerary || [];
@@ -196,16 +178,9 @@ export class TrfWizardComponent implements OnInit {
             dailySelections: this.transformMealSelectionsData(mealData)
           }
         };
-
-        console.log('Transformed domesticTravelData:', this.domesticTravelData);
-        console.log('Itinerary count:', this.domesticTravelData.itinerary.length);
-        console.log('Meal provisions dailySelections:', this.domesticTravelData.mealProvisions.dailySelections);
         break;
 
       case 'Overseas':
-        console.log('=== OVERSEAS TRAVEL DATA ===');
-        console.log('Raw overseasTravelDetails:', data.overseasTravelDetails);
-
         // Backend returns nested structure: data.overseasTravelDetails
         const overseasDetails = data.overseasTravelDetails || {};
         const overseasItinerary = overseasDetails.itinerary || data.itinerary_segments || data.itinerary || [];
@@ -219,16 +194,9 @@ export class TrfWizardComponent implements OnInit {
           advanceBankDetails: this.transformBankDetails(bankDetails),
           advanceAmountRequested: this.transformAdvanceAmounts(advanceAmounts)
         };
-
-        console.log('Transformed bank details:', this.overseasTravelData.advanceBankDetails);
-        console.log('Transformed advance amounts:', this.overseasTravelData.advanceAmountRequested);
-        console.log('Itinerary count:', this.overseasTravelData.itinerary.length);
         break;
 
       case 'Home Leave':
-        console.log('=== HOME LEAVE TRAVEL DATA ===');
-        console.log('Raw overseasTravelDetails (Home Leave uses same structure):', data.overseasTravelDetails);
-
         // Backend returns nested structure: data.overseasTravelDetails (Home Leave reuses overseas structure)
         const homeLeaveDetails = data.overseasTravelDetails || {};
         const homeLeaveItinerary = homeLeaveDetails.itinerary || data.itinerary_segments || data.itinerary || [];
@@ -242,28 +210,13 @@ export class TrfWizardComponent implements OnInit {
           passportDetails: this.transformPassportDetails(passportDetails),
           advanceBankDetails: this.transformBankDetails(homeLeaveBank)
         };
-
-        console.log('Transformed passport details:', this.homeLeaveData.passportDetails);
-        console.log('Transformed bank details:', this.homeLeaveData.advanceBankDetails);
-        console.log('Itinerary count:', this.homeLeaveData.itinerary.length);
         break;
 
       case 'External Parties':
-        console.log('=== EXTERNAL PARTIES TRAVEL DATA ===');
-        console.log('Full data object:', JSON.stringify(data, null, 2));
-        console.log('Raw externalPartiesTravelDetails:', data.externalPartiesTravelDetails);
-        console.log('Raw externalPartyRequestorInfo:', data.externalPartyRequestorInfo);
-        console.log('Fallback itinerary_segments:', data.itinerary_segments);
-        console.log('Fallback itinerary:', data.itinerary);
-
         // Backend returns nested structure: data.externalPartiesTravelDetails
         const externalDetails = data.externalPartiesTravelDetails || {};
         const externalRequestorInfo = data.externalPartyRequestorInfo || {};
         const externalItinerary = externalDetails.itinerary || data.itinerary_segments || data.itinerary || [];
-
-        console.log('Extracted externalDetails:', externalDetails);
-        console.log('Extracted externalItinerary (before transform):', externalItinerary);
-        console.log('Itinerary length before transform:', externalItinerary.length);
 
         this.externalPartiesData = {
           purpose: externalDetails.purpose || data.purpose || '',
@@ -274,10 +227,6 @@ export class TrfWizardComponent implements OnInit {
           externalCostCenter: externalRequestorInfo.externalCostCenter || data.external_cost_center || data.externalCostCenter || '',
           itinerary: this.transformExternalPartiesItineraryData(externalItinerary)
         };
-
-        console.log('Transformed externalPartiesData:', this.externalPartiesData);
-        console.log('Final itinerary count:', this.externalPartiesData.itinerary.length);
-        console.log('Final itinerary data:', JSON.stringify(this.externalPartiesData.itinerary, null, 2));
         break;
     }
   }
@@ -522,14 +471,8 @@ export class TrfWizardComponent implements OnInit {
 
     if (this.isEditMode && this.trfId) {
       // Update existing TRF
-      console.log('=== UPDATE MODE ===');
-      console.log('TRF ID:', this.trfId);
-      console.log('Combined data:', combinedData);
-      console.log('Main TRF data being sent:', combinedData.mainTrf);
-
       this.trfService.updateTrf(this.trfId, combinedData.mainTrf).subscribe({
         next: (updatedTrf: any) => {
-          console.log('TRF updated successfully:', updatedTrf);
 
           // For edit mode, we might need to delete and recreate nested resources
           // This is a simplified approach - ideally, you'd update existing ones
@@ -537,29 +480,14 @@ export class TrfWizardComponent implements OnInit {
             next: () => {
               // If not saving as draft, submit the TRF to workflow
               if (!isDraft) {
-                console.log('Submitting TRF to workflow after update...');
                 this.trfService.submitTrf(this.trfId!).subscribe({
                   next: (submittedTrf: any) => {
-                    console.log('TRF submitted to workflow successfully:', submittedTrf);
                     this.isSubmitting = false;
                     this.toastService.success('TRF updated and submitted successfully!');
                     this.router.navigate(['/trf']);
                   },
                   error: (error: any) => {
                     this.isSubmitting = false;
-                    console.error('=== ERROR SUBMITTING TO WORKFLOW ===');
-                    console.error('Full error object:', error);
-                    console.error('Error status:', error.status);
-                    console.error('Error statusText:', error.statusText);
-                    console.error('Error error:', error.error);
-                    console.error('Error error type:', typeof error.error);
-                    if (error.error && typeof error.error === 'object') {
-                      console.error('Error error keys:', Object.keys(error.error));
-                      console.error('Error error.error:', error.error.error);
-                      console.error('Error error.message:', error.error.message);
-                      console.error('Error error.detail:', error.error.detail);
-                    }
-                    console.error('Error message:', error.message);
 
                     let errorMessage = 'Error submitting TRF to workflow: ';
                     if (error.error && typeof error.error === 'object') {
@@ -594,16 +522,11 @@ export class TrfWizardComponent implements OnInit {
               this.isSubmitting = false;
               this.submitError = 'Error updating nested resources: ' + (error.message || 'Unknown error');
               this.toastService.error(this.submitError);
-              console.error('Error updating nested resources:', error);
             }
           });
         },
         error: (error: any) => {
           this.isSubmitting = false;
-          console.error('=== ERROR UPDATING TRF ===');
-          console.error('Error object:', error);
-          console.error('Error status:', error.status);
-          console.error('Error error:', error.error);
 
           // Extract validation errors if available
           let errorMessage = 'Error updating TRF: ';
@@ -636,28 +559,20 @@ export class TrfWizardComponent implements OnInit {
       // Create new TRF
       this.trfService.createTravelRequest(combinedData.mainTrf).subscribe({
         next: (createdTrf: any) => {
-          console.log('TRF created successfully:', createdTrf);
-          console.log('TRF response keys:', Object.keys(createdTrf));
-          console.log('TRF.id:', createdTrf.id);
-          console.log('TRF.pk:', createdTrf.pk);
 
           // Step 2: Create nested resources (itinerary, meals, etc.)
           from(this.createNestedResources(createdTrf.id, combinedData)).subscribe({
             next: () => {
               // If not saving as draft, submit the TRF to generate request number and start workflow
               if (!isDraft) {
-                console.log('Submitting TRF to workflow after create...');
                 this.trfService.submitTrf(createdTrf.id).subscribe({
                   next: (submittedTrf: any) => {
-                    console.log('TRF submitted to workflow successfully:', submittedTrf);
                     this.isSubmitting = false;
                     this.toastService.success('TRF submitted successfully!');
                     this.router.navigate(['/trf']);
                   },
                   error: (error: any) => {
                     this.isSubmitting = false;
-                    console.error('=== ERROR SUBMITTING TO WORKFLOW (CREATE) ===');
-                    console.error('Full error object:', error);
                     this.submitError = 'Error submitting TRF: ' + (error.error?.error || error.error?.message || error.message || 'Unknown error');
                     this.toastService.error(this.submitError);
                   }
@@ -672,7 +587,6 @@ export class TrfWizardComponent implements OnInit {
               this.isSubmitting = false;
               this.submitError = 'Error creating nested resources: ' + (error.message || 'Unknown error');
               this.toastService.error(this.submitError);
-              console.error('Error creating nested resources:', error);
             }
           });
         },
@@ -680,7 +594,6 @@ export class TrfWizardComponent implements OnInit {
           this.isSubmitting = false;
           this.submitError = 'Error creating TRF: ' + (error.error?.message || error.message || 'Unknown error');
           this.toastService.error(this.submitError);
-          console.error('Error creating TRF:', error);
         }
       });
     }
@@ -803,7 +716,6 @@ export class TrfWizardComponent implements OnInit {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
 
     if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
-      console.warn('Invalid date:', date);
       return '';
     }
 
@@ -818,40 +730,32 @@ export class TrfWizardComponent implements OnInit {
    * Delete existing nested resources for a TRF (used during update to prevent duplicates)
    */
   private deleteExistingNestedResources(trfId: number): Promise<void> {
-    console.log('=== Deleting Existing Nested Resources ===');
-    console.log('TRF ID:', trfId);
 
     const promises: Promise<any>[] = [];
 
     // Delete all existing nested resources
     promises.push(
       firstValueFrom(this.trfService.deleteNestedResources(trfId, 'itinerary')).catch(err => {
-        console.warn('No itinerary segments to delete or error:', err);
       })
     );
     promises.push(
       firstValueFrom(this.trfService.deleteNestedResources(trfId, 'meals')).catch(err => {
-        console.warn('No meal selections to delete or error:', err);
       })
     );
     promises.push(
       firstValueFrom(this.trfService.deleteNestedResources(trfId, 'passport')).catch(err => {
-        console.warn('No passport details to delete or error:', err);
       })
     );
     promises.push(
       firstValueFrom(this.trfService.deleteNestedResources(trfId, 'bank')).catch(err => {
-        console.warn('No bank details to delete or error:', err);
       })
     );
     promises.push(
       firstValueFrom(this.trfService.deleteNestedResources(trfId, 'advance-amounts')).catch(err => {
-        console.warn('No advance amounts to delete or error:', err);
       })
     );
 
     return Promise.all(promises).then(() => {
-      console.log('✓ Existing nested resources deleted successfully');
     });
   }
 
@@ -860,17 +764,10 @@ export class TrfWizardComponent implements OnInit {
    */
   private createNestedResources(trfId: number, data: any): any {
     return new Promise(async (resolve, reject) => {
-      console.log('=== Creating Nested Resources ===');
-      console.log('TRF ID:', trfId);
-      console.log('TRF ID type:', typeof trfId);
-      console.log('TRF ID is number:', typeof trfId === 'number');
-      console.log('TRF ID is valid:', trfId && trfId > 0);
-      console.log('Data:', JSON.stringify(data, null, 2));
 
       // Guard: Ensure trfId is valid
       if (!trfId || typeof trfId !== 'number' || trfId <= 0) {
         const error = `Invalid TRF ID: ${trfId}`;
-        console.error(error);
         reject(new Error(error));
         return;
       }
@@ -880,7 +777,6 @@ export class TrfWizardComponent implements OnInit {
         try {
           await this.deleteExistingNestedResources(trfId);
         } catch (err) {
-          console.error('Error deleting existing nested resources:', err);
           // Continue anyway - some resources might not exist
         }
       }
@@ -897,7 +793,6 @@ export class TrfWizardComponent implements OnInit {
 
           // Skip segments with missing required fields
           if (!date || !from || !to) {
-            console.warn('Skipping itinerary segment with missing required fields:', segment);
             return;
           }
 
@@ -913,7 +808,6 @@ export class TrfWizardComponent implements OnInit {
             remarks: segment.remarks || ''
           };
 
-          console.log('Creating itinerary segment:', itineraryData);
           promises.push(
             firstValueFrom(this.trfService.createItinerarySegment(itineraryData))
           );
@@ -925,7 +819,6 @@ export class TrfWizardComponent implements OnInit {
         data.mealSelections.forEach((meal: any) => {
           // Skip meals with missing required meal_date
           if (!meal.date) {
-            console.warn('Skipping meal selection with missing date:', meal);
             return;
           }
 
@@ -939,7 +832,6 @@ export class TrfWizardComponent implements OnInit {
             refreshment: meal.refreshment || false
           };
 
-          console.log('Creating meal selection:', mealData);
           promises.push(
             firstValueFrom(this.trfService.createDailyMeal(mealData))
           );
@@ -1004,18 +896,13 @@ export class TrfWizardComponent implements OnInit {
       }
 
       // Wait for all nested resources to be created
-      console.log(`Created ${promises.length} promises for nested resources`);
 
       Promise.all(promises)
         .then(() => {
-          console.log('✓ All nested resources created successfully');
           resolve(true);
         })
         .catch((error) => {
-          console.error('✗ Error creating nested resources:', error);
-          console.error('Error details:', JSON.stringify(error, null, 2));
           if (error.error) {
-            console.error('Validation errors:', error.error);
           }
           reject(error);
         });
@@ -1072,8 +959,6 @@ export class TrfWizardComponent implements OnInit {
    * External Parties component expects different field names
    */
   private transformExternalPartiesItineraryData(itinerary: any[]): any[] {
-    console.log('=== TRANSFORMING EXTERNAL PARTIES ITINERARY ===');
-    console.log('Raw itinerary:', itinerary);
 
     const transformed = itinerary.map((segment: any) => {
       const result = {
@@ -1087,11 +972,9 @@ export class TrfWizardComponent implements OnInit {
         modeOfTransport: segment.mode_of_transport || segment.modeOfTransport || segment.flight_number || segment.flightNumber || '',
         remarks: segment.remarks || ''
       };
-      console.log('Transformed segment:', result);
       return result;
     });
 
-    console.log('All transformed External Parties itinerary:', transformed);
     return transformed;
   }
 
@@ -1099,8 +982,6 @@ export class TrfWizardComponent implements OnInit {
    * Transform meal selections data from backend format to component format
    */
   private transformMealSelectionsData(mealSelections: any[]): any[] {
-    console.log('=== TRANSFORMING MEAL SELECTIONS ===');
-    console.log('Raw meal data:', mealSelections);
 
     const transformed = mealSelections.map((meal: any) => {
       const result = {
@@ -1112,11 +993,9 @@ export class TrfWizardComponent implements OnInit {
         supper: meal.supper === true || meal.supper === 'true' || meal.supper === 1,
         refreshment: meal.refreshment === true || meal.refreshment === 'true' || meal.refreshment === 1
       };
-      console.log('Transformed meal:', result);
       return result;
     });
 
-    console.log('All transformed meals:', transformed);
     return transformed;
   }
 

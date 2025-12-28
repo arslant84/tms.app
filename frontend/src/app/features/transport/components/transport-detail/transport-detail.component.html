@@ -236,6 +236,41 @@
       </div>
     </div>
 
+    <!-- Status & Tracking -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-clock-history"></i> Status & Tracking</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Current Status</label>
+              <p><span class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span></p>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="request.submittedAt">
+            <div class="info-group">
+              <label>Submitted Date</label>
+              <p>{{ formatDate(request.submittedAt) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="request.createdAt">
+            <div class="info-group">
+              <label>Created At</label>
+              <p>{{ formatDate(request.createdAt) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="request.updatedAt">
+            <div class="info-group">
+              <label>Last Updated</label>
+              <p>{{ formatDate(request.updatedAt) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modern Workflow Status -->
     <div class="card mb-4" *ngIf="workflow || workflowLoading">
       <div class="card-header">

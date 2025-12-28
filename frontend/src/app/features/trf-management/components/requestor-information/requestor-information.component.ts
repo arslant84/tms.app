@@ -58,8 +58,6 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
       email: [this.initialData.email || currentUser?.email || '', [Validators.required, Validators.email]]
     });
 
-    console.log('Requestor Information - Current user:', currentUser);
-    console.log('Requestor Information - Auto-populated with:', {
       fullName: this.requestorForm.get('fullName')?.value,
       staffId: this.requestorForm.get('staffId')?.value,
       department: this.requestorForm.get('department')?.value,

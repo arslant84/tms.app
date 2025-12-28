@@ -83,8 +83,6 @@ export class TransportCreateComponent implements OnInit {
     if (currentUser) {
       const position = this.authService.getUserPosition(currentUser);
 
-      console.log('Transport - Current user data:', currentUser);
-      console.log('Transport - Extracted position:', position);
 
       this.transportForm.patchValue({
         requestorName: currentUser.name || currentUser.email || '',
@@ -136,7 +134,6 @@ export class TransportCreateComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading transport request:', error);
         this.toastService.error('Failed to load transport request');
         this.loading = false;
         this.router.navigate(['/transport']);
@@ -195,7 +192,6 @@ export class TransportCreateComponent implements OnInit {
     };
 
     const backendData = toBackendFormat(formData);
-    console.log('📤 Sending to backend:', JSON.stringify(backendData, null, 2));
 
     const saveOperation = this.isEditMode && this.requestId
       ? this.transportService.updateRequest(this.requestId, backendData)
@@ -213,11 +209,8 @@ export class TransportCreateComponent implements OnInit {
       },
       error: (err) => {
         this.submitting = false;
-        console.error('❌ Full error:', err);
-        console.error('❌ Error details:', JSON.stringify(err.error, null, 2));
         const errorMessage = err.error?.message || err.error?.detail || err.message || 'Failed to create transport request';
         this.toastService.error(errorMessage);
-        console.error('Error creating transport request:', err);
       }
     });
   }
@@ -250,7 +243,6 @@ export class TransportCreateComponent implements OnInit {
         this.submitting = false;
         const errorMessage = err.error?.message || err.error?.detail || err.message || 'Failed to save draft';
         this.toastService.error(errorMessage);
-        console.error('Error saving draft:', err);
       }
     });
   }

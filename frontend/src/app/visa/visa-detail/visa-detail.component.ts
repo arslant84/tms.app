@@ -59,7 +59,6 @@ export class VisaDetailComponent implements OnInit {
         this.loadDocuments();
       },
       error: (error) => {
-        console.error('Error loading visa application:', error);
         this.isLoading = false;
         alert('Failed to load visa application details');
       }
@@ -94,7 +93,6 @@ export class VisaDetailComponent implements OnInit {
               this.workflowLoading = false;
             },
             error: (err) => {
-              console.error('Error loading workflow details:', err);
               this.workflowLoading = false;
             }
           });
@@ -103,7 +101,6 @@ export class VisaDetailComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error loading workflow:', err);
         this.workflowLoading = false;
       }
     });
@@ -146,7 +143,6 @@ export class VisaDetailComponent implements OnInit {
         this.approvalSteps = steps;
       },
       error: (error) => {
-        console.error('Error loading approval steps:', error);
       }
     });
   }
@@ -157,7 +153,6 @@ export class VisaDetailComponent implements OnInit {
         this.documents = documents;
       },
       error: (error) => {
-        console.error('Error loading documents:', error);
       }
     });
   }
@@ -208,11 +203,14 @@ export class VisaDetailComponent implements OnInit {
           this.loadApplicationDetails();
         },
         error: (error) => {
-          console.error('Error cancelling visa application:', error);
           alert('Failed to cancel visa application');
         }
       });
     }
+  }
+
+  onPrint(): void {
+    window.print();
   }
 
   onDelete(): void {
@@ -223,7 +221,6 @@ export class VisaDetailComponent implements OnInit {
           this.router.navigate(['/visa']);
         },
         error: (error) => {
-          console.error('Error deleting visa application:', error);
           alert('Failed to delete visa application');
         }
       });
