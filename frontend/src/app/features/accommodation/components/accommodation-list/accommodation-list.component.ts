@@ -93,7 +93,6 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.error = 'Failed to load accommodation requests';
         this.loading = false;
-        console.error('Error fetching requests:', err);
       }
     });
   }
@@ -186,7 +185,6 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
           this.fetchRequests();
         },
         error: (error) => {
-          console.error('Error deleting accommodation request:', error);
           this.toastService.error('Failed to delete accommodation request');
         }
       });

@@ -64,14 +64,12 @@ export class TrfDetailComponent implements OnInit {
       next: (response: any) => {
         // Backend returns { trf: { ...data } }, so extract the trf object
         const data = response.trf || response;
-        console.log('TRF Detail - Loaded data:', data);
         this.trfData = this.transformTrfData(data);
         this.loading = false;
       },
       error: (err) => {
         this.error = 'Failed to load TRF details: ' + (err.message || 'Unknown error');
         this.loading = false;
-        console.error('Error loading TRF:', err);
       }
     });
   }
@@ -109,7 +107,6 @@ export class TrfDetailComponent implements OnInit {
       purpose = externalDetails.purpose || data.purpose || '';
     }
 
-    console.log(`TRF Detail Transform - Travel Type: ${travelType}, Itinerary Count: ${itinerary.length}`);
 
     // Extract external party info from nested structure
     const externalRequestorInfo = data.externalPartyRequestorInfo || {};
@@ -329,7 +326,6 @@ export class TrfDetailComponent implements OnInit {
           },
           error: (err) => {
             this.toastService.error('Failed to cancel TRF: ' + (err.message || 'Unknown error'));
-            console.error('Error cancelling TRF:', err);
           }
         });
       }
@@ -350,7 +346,6 @@ export class TrfDetailComponent implements OnInit {
           },
           error: (err) => {
             this.toastService.error('Failed to delete TRF: ' + (err.message || 'Unknown error'));
-            console.error('Error deleting TRF:', err);
           }
         });
       }
@@ -380,7 +375,6 @@ export class TrfDetailComponent implements OnInit {
       },
       error: (err: any) => {
         this.toastService.error('Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error'));
-        console.error('Error exporting PDF:', err);
       }
     });
   }
@@ -391,7 +385,8 @@ export class TrfDetailComponent implements OnInit {
     this.workflowLoading = true;
 
     this.workflowService.getInstances({
-      entity_type: 'travelrequest'
+      entity_type: 'travelrequest',
+      object_id: this.trfId
     }).subscribe({
       next: (response: any) => {
         // Handle both paginated response and array response
@@ -407,14 +402,11 @@ export class TrfDetailComponent implements OnInit {
         if (instance && instance.id) {
           this.workflowService.getInstance(instance.id).subscribe({
             next: (workflow) => {
-              console.log('Workflow loaded for TRF:', workflow);
-              console.log('Step executions:', workflow.step_executions);
               this.workflow = workflow;
               this.updateCurrentStepExecution();
               this.workflowLoading = false;
             },
             error: (err) => {
-              console.error('Error loading workflow details:', err);
               this.workflowLoading = false;
             }
           });
@@ -423,7 +415,6 @@ export class TrfDetailComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error loading workflow:', err);
         this.workflowLoading = false;
       }
     });

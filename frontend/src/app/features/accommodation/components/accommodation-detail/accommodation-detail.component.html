@@ -349,6 +349,41 @@
       </div>
     </div>
 
+    <!-- Status & Tracking -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-clock-history"></i> Status & Tracking</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Current Status</label>
+              <p><span class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span></p>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="request.createdAt">
+            <div class="info-group">
+              <label>Created At</label>
+              <p>{{ formatDate(request.createdAt) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="request.updatedAt">
+            <div class="info-group">
+              <label>Last Updated</label>
+              <p>{{ formatDate(request.updatedAt) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="request.submittedDate">
+            <div class="info-group">
+              <label>Submitted Date</label>
+              <p>{{ formatDate(request.submittedDate) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modern Workflow Status -->
     <section class="detail-card" *ngIf="workflow || workflowLoading">
       <div class="card-header">
@@ -426,29 +461,5 @@
         </div>
       </div>
     </section>
-
-    <!-- Timeline Card (Created/Updated) -->
-    <div class="detail-card">
-      <div class="card-header">
-        <i class="bi bi-clock-history"></i>
-        <h3>Timeline</h3>
-      </div>
-      <div class="card-body">
-        <div class="detail-grid">
-          <div class="detail-item">
-            <label>Created</label>
-            <span class="value">{{ formatDateTime(request.createdAt) }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Last Updated</label>
-            <span class="value">{{ formatDateTime(request.lastUpdatedDate) }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Submitted</label>
-            <span class="value">{{ formatDateTime(request.submittedDate) }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </div>

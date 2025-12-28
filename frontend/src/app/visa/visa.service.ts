@@ -55,18 +55,6 @@ export interface VisaApplication {
   current_employer_name?: string;
   current_employer_address?: string;
 
-  // Approval & Processing
-  line_focal_person?: string;
-  line_focal_dept?: string;
-  line_focal_contact?: string;
-  line_focal_date?: string;
-  sponsoring_dept_head?: string;
-  sponsoring_dept_head_dept?: string;
-  sponsoring_dept_head_contact?: string;
-  sponsoring_dept_head_date?: string;
-  ceo_approval_name?: string;
-  ceo_approval_date?: string;
-
   // Cost & References
   application_fees_borne_by?: string;
   cost_centre_number?: string;
@@ -140,6 +128,8 @@ export class VisaService {
       if (filters.page) params = params.set('page', filters.page.toString());
       if (filters.page_size) params = params.set('page_size', filters.page_size.toString());
     }
+    // Add cache-busting parameter to prevent stale data
+    params = params.set('_t', Date.now().toString());
     return this.http.get<any>(this.apiUrl, { params });
   }
 
@@ -207,6 +197,10 @@ export class VisaService {
     return this.http.patch<VisaApplication>(`${this.apiUrl}${id}/`, {
       status: 'Cancelled'
     });
+  }
+
+  completeApplication(id: number, data?: { processing_details?: any; additional_comments?: string }): Observable<VisaApplication> {
+    return this.http.post<VisaApplication>(`${this.apiUrl}${id}/complete/`, data || {});
   }
 
   // Approval Steps
