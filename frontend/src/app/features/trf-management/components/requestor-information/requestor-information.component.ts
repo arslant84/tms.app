@@ -57,14 +57,6 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
       contactNo: [this.initialData.contactNo || currentUser?.phone || '', Validators.required],
       email: [this.initialData.email || currentUser?.email || '', [Validators.required, Validators.email]]
     });
-
-      fullName: this.requestorForm.get('fullName')?.value,
-      staffId: this.requestorForm.get('staffId')?.value,
-      department: this.requestorForm.get('department')?.value,
-      position: this.requestorForm.get('position')?.value,
-      contactNo: this.requestorForm.get('contactNo')?.value,
-      email: this.requestorForm.get('email')?.value
-    });
   }
 
   private patchFormWithInitialData(): void {
