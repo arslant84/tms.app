@@ -42,7 +42,6 @@ export class TrfCreateComponent implements OnInit {
 
   private populateUserDetails(): void {
     const currentUser = this.authService.getCurrentUser();
-    console.log('TRF - Current user data:', currentUser);
     if (currentUser) {
       // Auto-populate employee details from logged-in user
       this.trfForm.get('employeeDetails')?.patchValue({
@@ -56,7 +55,6 @@ export class TrfCreateComponent implements OnInit {
       this.trfForm.get('approval')?.patchValue({
         preparedBy: currentUser.name || ''
       });
-      console.log('TRF - Form values after population:', this.trfForm.get('employeeDetails')?.value);
     }
   }
   
@@ -382,7 +380,6 @@ export class TrfCreateComponent implements OnInit {
   
   // Export to PDF
   exportToPdf(): void {
-    console.log('Exporting to PDF');
     
     if (this.trfForm.invalid) {
       this.markFormGroupTouched(this.trfForm);
@@ -413,7 +410,6 @@ export class TrfCreateComponent implements OnInit {
         document.body.removeChild(a);
       },
       error: (error: any) => {
-        console.error('Error exporting PDF:', error);
         // Show error message
       }
     });

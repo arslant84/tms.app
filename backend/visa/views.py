@@ -101,6 +101,12 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user=user)
             print(f"✅ Personal view: User {user.username} - showing only own visa applications")
 
+        # Apply status filter if provided
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+            print(f"🔍 Filtering by status: {status_filter}")
+
         return queryset
 
     def get_serializer_class(self):
@@ -415,6 +421,140 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 {'error': f'Failed to process rejection: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=['post'], url_path='complete')
+    def complete(self, request, pk=None):
+        """Mark visa application as completed after processing"""
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
+        visa = self.get_object()
+
+        # If already completed, just return success with current data
+        if visa.status == 'Completed':
+            serializer = VisaApplicationDetailSerializer(visa)
+            return Response(serializer.data)
+
+        # Validate that visa is in a processable status
+        valid_statuses = ['Approved', 'Processing', 'Processing with Visa Clerk']
+        if visa.status not in valid_statuses:
+            return Response(
+                {'error': f'Cannot complete visa with status "{visa.status}". Only visas with status {", ".join(valid_statuses)} can be marked as completed.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update visa status and processing details
+        visa.status = 'Completed'
+        visa.processing_completed_at = timezone.now()
+
+        # Update processing details if provided
+        if 'processing_details' in request.data:
+            visa.processing_details = request.data['processing_details']
+
+        if 'additional_comments' in request.data:
+            visa.additional_comments = request.data['additional_comments']
+
+        visa.save()
+
+        # Update workflow instance status to completed
+        try:
+            content_type = ContentType.objects.get_for_model(visa)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=visa.id,
+                status='approved'
+            ).first()
+
+            if workflow_instance:
+                workflow_instance.status = 'completed'
+                workflow_instance.save()
+                print(f"✅ Workflow instance #{workflow_instance.id} marked as completed for Visa #{visa.id}")
+            else:
+                print(f"⚠️ No approved workflow instance found for Visa #{visa.id}")
+        except Exception as e:
+            print(f"⚠️ Error updating workflow instance: {str(e)}")
+            # Don't fail the completion if workflow update fails
+
+        serializer = VisaApplicationDetailSerializer(visa)
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        """Update submitted_date when status changes from Draft and start workflow"""
+        from django.utils import timezone
+
+        instance = serializer.instance
+        old_status = instance.status
+        new_status = serializer.validated_data.get('status', old_status)
+
+        # Set submitted_date if changing from Draft and not already set
+        extra_kwargs = {}
+        if old_status == 'Draft' and new_status != 'Draft' and not instance.submitted_date:
+            extra_kwargs['submitted_date'] = timezone.now()
+
+        # Generate request number if transitioning from Draft and doesn't have one
+        if old_status == 'Draft' and new_status not in ['Draft'] and not instance.request_number:
+            try:
+                # Extract context from destination field
+                destination = serializer.validated_data.get('destination', instance.destination)
+                context = destination if destination else 'VIS'  # Let generate_request_id handle validation
+
+                print(f"🔍 Extracted context for Visa Application #{instance.id}: {context}")
+
+                # Generate unique request number (will auto-validate and limit context to 5 chars)
+                request_number = generate_request_id('VIS', context)
+                extra_kwargs['request_number'] = request_number
+                print(f"✅ Generated request number: {request_number}")
+            except Exception as e:
+                print(f"❌ Error generating request number: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                # Fallback to simple format
+                extra_kwargs['request_number'] = f"VIS-{datetime.now().strftime('%Y%m%d-%H%M')}-VIS-{instance.id}"
+                print(f"⚠️ Using fallback request number: {extra_kwargs['request_number']}")
+
+        # Save the visa application
+        visa_application = serializer.save(**extra_kwargs)
+
+        # Start workflow if transitioning from Draft to submitted status
+        if old_status == 'Draft' and new_status in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
+            try:
+                workflow_instance = WorkflowRouter.start_workflow_for_request(
+                    entity=visa_application,
+                    entity_type='visaapplication',
+                    initiated_by=self.request.user
+                )
+
+                if workflow_instance:
+                    visa_application.refresh_from_db()
+                    print(f"✅ Workflow started for Visa Application #{visa_application.id}: Workflow Instance #{workflow_instance.id}")
+                else:
+                    print(f"⚠️ No active workflow configured for visaapplication")
+            except Exception as e:
+                print(f"❌ Error starting workflow for Visa Application #{visa_application.id}: {str(e)}")
+                pass
+
+        # Handle status change to Completed
+        if old_status == 'Approved' and new_status == 'Completed':
+            from workflows.models import WorkflowInstance
+            from django.contrib.contenttypes.models import ContentType
+
+            try:
+                content_type = ContentType.objects.get_for_model(visa_application)
+                workflow_instance = WorkflowInstance.objects.filter(
+                    content_type=content_type,
+                    object_id=visa_application.id,
+                    status='approved'
+                ).first()
+
+                if workflow_instance:
+                    workflow_instance.status = 'completed'
+                    workflow_instance.save()
+                    print(f"✅ Workflow instance #{workflow_instance.id} marked as completed for Visa #{visa_application.id}")
+                else:
+                    print(f"⚠️ No approved workflow instance found for Visa #{visa_application.id}")
+            except Exception as e:
+                print(f"⚠️ Error updating workflow instance on completion: {str(e)}")
+                # Don't fail the update if workflow update fails
 
 
 class VisaApprovalStepViewSet(viewsets.ModelViewSet):

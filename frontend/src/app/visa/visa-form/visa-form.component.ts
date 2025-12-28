@@ -84,8 +84,6 @@ export class VisaFormComponent implements OnInit {
       const position = this.authService.getUserPosition(currentUser);
 
       // Auto-populate user details from logged-in user
-      console.log('Visa - Current user data:', currentUser);
-      console.log('Visa - Extracted position:', position);
 
       this.visaForm.patchValue({
         requestor_name: currentUser.name || '',
@@ -143,18 +141,6 @@ export class VisaFormComponent implements OnInit {
       current_employer_name: [''],
       current_employer_address: [''],
 
-      // Approval Information
-      line_focal_person: [''],
-      line_focal_dept: [''],
-      line_focal_contact: [''],
-      line_focal_date: [''],
-      sponsoring_dept_head: [''],
-      sponsoring_dept_head_dept: [''],
-      sponsoring_dept_head_contact: [''],
-      sponsoring_dept_head_date: [''],
-      ceo_approval_name: [''],
-      ceo_approval_date: [''],
-
       // Cost Information
       application_fees_borne_by: [''],
       cost_centre_number: [''],
@@ -175,7 +161,6 @@ export class VisaFormComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error loading visa application:', error);
         this.toastService.error('Failed to load visa application');
         this.isLoading = false;
       }
@@ -217,7 +202,6 @@ export class VisaFormComponent implements OnInit {
         this.router.navigate(['/visa']);
       },
       error: (error) => {
-        console.error('Error saving visa application:', error);
 
         // Handle validation errors from backend
         if (error.status === 400 && error.error) {
@@ -271,7 +255,6 @@ export class VisaFormComponent implements OnInit {
         this.router.navigate(['/visa']);
       },
       error: (error) => {
-        console.error('Error saving draft:', error);
 
         // Handle validation errors from backend
         if (error.status === 400 && error.error) {
@@ -322,8 +305,7 @@ export class VisaFormComponent implements OnInit {
     // List of date fields that should be null instead of empty strings
     const dateFields = [
       'trip_start_date', 'trip_end_date', 'passport_expiry_date',
-      'passport_date_of_issuance', 'date_of_birth', 'approximately_arrival_date',
-      'line_focal_date', 'sponsoring_dept_head_date', 'ceo_approval_date'
+      'passport_date_of_issuance', 'date_of_birth', 'approximately_arrival_date'
     ];
 
     // Convert empty strings to null for date fields

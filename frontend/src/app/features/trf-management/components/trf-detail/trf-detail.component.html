@@ -464,6 +464,35 @@
       </div>
     </div>
 
+    <!-- Status & Tracking -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="bi bi-clock-history"></i> Status & Tracking</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-group">
+              <label>Current Status</label>
+              <p><span class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span></p>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="trfData.createdAt">
+            <div class="info-group">
+              <label>Created At</label>
+              <p>{{ formatDate(trfData.createdAt) }}</p>
+            </div>
+          </div>
+          <div class="col-md-6" *ngIf="trfData.updatedAt">
+            <div class="info-group">
+              <label>Last Updated</label>
+              <p>{{ formatDate(trfData.updatedAt) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modern Workflow Status -->
     <div *ngIf="workflow || workflowLoading">
       <!-- Loading State -->

@@ -180,6 +180,11 @@ class WorkflowInstanceViewSet(viewsets.ModelViewSet):
         if template_id:
             queryset = queryset.filter(workflow_template_id=template_id)
 
+        # Filter by object_id
+        object_id = self.request.query_params.get('object_id', None)
+        if object_id:
+            queryset = queryset.filter(object_id=object_id)
+
         return queryset.select_related(
             'workflow_template', 'content_type', 'initiated_by'
         ).prefetch_related('step_executions', 'step_executions__workflow_step')

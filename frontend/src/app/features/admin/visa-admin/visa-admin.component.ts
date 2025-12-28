@@ -54,6 +54,11 @@ export class VisaAdminComponent implements OnInit {
   processAction: 'approve' | 'reject' | 'complete' | null = null;
   processComments: string = '';
 
+  // Processing details fields (for complete action)
+  visaNumber: string = '';
+  visaValidFrom: string = '';
+  visaValidTo: string = '';
+
   // Status options for filter
   statusOptions = [
     { value: 'all', label: 'All Statuses' },
@@ -116,7 +121,6 @@ export class VisaAdminComponent implements OnInit {
         ).length;
       },
       error: (err) => {
-        console.error('Error fetching stats:', err);
         // Keep default values on error
       }
     });
@@ -163,7 +167,6 @@ export class VisaAdminComponent implements OnInit {
       error: (err) => {
         this.error = 'Failed to load visa applications: ' + (err.error?.message || err.message || 'Unknown error');
         this.loadingApplications = false;
-        console.error('Error loading applications:', err);
       }
     });
   }
@@ -244,6 +247,9 @@ export class VisaAdminComponent implements OnInit {
     this.selectedApplication = null;
     this.processAction = null;
     this.processComments = '';
+    this.visaNumber = '';
+    this.visaValidFrom = '';
+    this.visaValidTo = '';
   }
 
   /**
@@ -265,27 +271,40 @@ export class VisaAdminComponent implements OnInit {
     } else if (this.processAction === 'reject') {
       action$ = this.visaService.rejectApplication(this.selectedApplication.id, this.processComments);
     } else {
-      // Complete - update status to 'Completed'
-      action$ = this.visaService.updateApplication(this.selectedApplication.id, {
-        status: 'Completed',
-        additional_comments: this.processComments,
-        processing_completed_at: new Date().toISOString()
-      });
+      // Complete - use the proper complete endpoint
+      const completionData: any = {};
+      if (this.processComments) {
+        completionData.additional_comments = this.processComments;
+      }
+
+      // Add processing details if any field is provided
+      if (this.visaNumber || this.visaValidFrom || this.visaValidTo || this.processComments) {
+        completionData.processing_details = {
+          visa_number: this.visaNumber,
+          visa_valid_from: this.visaValidFrom,
+          visa_valid_to: this.visaValidTo,
+          processing_notes: this.processComments,
+          completed_by_admin: true,
+          completed_at: new Date().toISOString()
+        };
+      }
+
+      action$ = this.visaService.completeApplication(this.selectedApplication.id, completionData);
     }
 
     action$.subscribe({
-      next: () => {
+      next: (response) => {
         const actionLabel = this.processAction === 'approve' ? 'approved' :
                            this.processAction === 'reject' ? 'rejected' : 'completed';
         this.toastService.success(`Application ${actionLabel} successfully`);
         this.closeProcessModal();
         this.processingId = null;
+        this.fetchStats(); // Refresh stats
         this.loadApplications();
       },
       error: (err) => {
         this.toastService.error('Failed to process application: ' + (err.error?.message || err.message || 'Unknown error'));
         this.processingId = null;
-        console.error('Error processing application:', err);
       }
     });
   }
@@ -312,7 +331,6 @@ export class VisaAdminComponent implements OnInit {
       error: (err) => {
         this.toastService.error('Failed to start processing: ' + (err.error?.message || err.message || 'Unknown error'));
         this.processingId = null;
-        console.error('Error starting processing:', err);
       }
     });
   }

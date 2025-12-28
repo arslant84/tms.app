@@ -199,6 +199,8 @@
                 <th>STAFF NAME</th>
                 <th>DESTINATION</th>
                 <th>VISA TYPE</th>
+                <th>VISA #</th>
+                <th>VISA VALIDITY</th>
                 <th>STATUS</th>
                 <th>COMPLETED DATE</th>
                 <th class="text-center">ACTIONS</th>
@@ -216,6 +218,18 @@
                 </td>
                 <td>
                   <span class="badge" [class]="getVisaTypeBadgeClass(visa.visaType)">{{ visa.visaType }}</span>
+                </td>
+                <td>
+                  <span *ngIf="visa.processing_details?.visa_number" class="fw-medium">{{ visa.processing_details.visa_number }}</span>
+                  <span *ngIf="!visa.processing_details?.visa_number" class="text-muted">N/A</span>
+                </td>
+                <td>
+                  <div *ngIf="visa.processing_details?.visa_valid_from && visa.processing_details?.visa_valid_to">
+                    <span class="fw-medium">{{ formatDate(visa.processing_details.visa_valid_from) }}</span>
+                    <span class="text-muted"> to </span>
+                    <span class="fw-medium">{{ formatDate(visa.processing_details.visa_valid_to) }}</span>
+                  </div>
+                  <span *ngIf="!visa.processing_details?.visa_valid_from" class="text-muted">N/A</span>
                 </td>
                 <td>
                   <span class="badge" [class]="getStatusClass(visa.status)">{{ visa.status }}</span>
@@ -272,60 +286,13 @@
 
           <!-- Processing Form -->
           <div class="mt-4">
-            <h6 class="fw-medium mb-3">Processing Details</h6>
+            <h6 class="fw-medium mb-3">Visa Details</h6>
 
             <div class="row g-3">
-              <!-- Payment Method -->
-              <div class="col-md-6">
-                <label for="paymentMethod" class="form-label">Payment Method</label>
-                <select id="paymentMethod" class="form-select" [(ngModel)]="paymentMethod">
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Credit Card">Credit Card</option>
-                </select>
-              </div>
-
-              <!-- Bank Transfer Reference -->
-              <div class="col-md-6" *ngIf="paymentMethod === 'Bank Transfer'">
-                <label for="bankTransferRef" class="form-label">Bank Transfer Reference</label>
-                <input type="text" id="bankTransferRef" class="form-control" [(ngModel)]="bankTransferReference" placeholder="Enter reference number">
-              </div>
-
-              <!-- Cheque Number -->
-              <div class="col-md-6" *ngIf="paymentMethod === 'Cheque'">
-                <label for="chequeNumber" class="form-label">Cheque Number</label>
-                <input type="text" id="chequeNumber" class="form-control" [(ngModel)]="chequeNumber" placeholder="Enter cheque number">
-              </div>
-
-              <!-- Application Fee -->
-              <div class="col-md-4">
-                <label for="applicationFee" class="form-label">Application Fee</label>
-                <input type="number" id="applicationFee" class="form-control" [(ngModel)]="applicationFee" (ngModelChange)="calculateTotalFee()" placeholder="0.00">
-              </div>
-
-              <!-- Processing Fee -->
-              <div class="col-md-4">
-                <label for="processingFee" class="form-label">Processing Fee</label>
-                <input type="number" id="processingFee" class="form-control" [(ngModel)]="processingFee" (ngModelChange)="calculateTotalFee()" placeholder="0.00">
-              </div>
-
-              <!-- Total Fee -->
-              <div class="col-md-4">
-                <label for="totalFee" class="form-label">Total Fee</label>
-                <input type="number" id="totalFee" class="form-control" [(ngModel)]="totalFee" readonly>
-              </div>
-
               <!-- Visa Number -->
-              <div class="col-md-6">
+              <div class="col-md-12">
                 <label for="visaNumber" class="form-label">Visa Number</label>
                 <input type="text" id="visaNumber" class="form-control" [(ngModel)]="visaNumber" placeholder="Enter visa number">
-              </div>
-
-              <!-- Payment Date -->
-              <div class="col-md-6">
-                <label for="paymentDate" class="form-label">Payment Date</label>
-                <input type="date" id="paymentDate" class="form-control" [(ngModel)]="paymentDate">
               </div>
 
               <!-- Visa Valid From -->
@@ -343,7 +310,7 @@
               <!-- Processing Notes -->
               <div class="col-12">
                 <label for="processingNotes" class="form-label">Processing Notes</label>
-                <textarea id="processingNotes" class="form-control" rows="3" [(ngModel)]="processingNotes" placeholder="Enter any processing notes or comments"></textarea>
+                <textarea id="processingNotes" class="form-control" rows="4" [(ngModel)]="processingNotes" placeholder="Enter any processing notes or comments (optional)"></textarea>
               </div>
             </div>
           </div>

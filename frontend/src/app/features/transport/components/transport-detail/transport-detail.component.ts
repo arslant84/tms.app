@@ -69,7 +69,6 @@ export class TransportDetailComponent implements OnInit {
       error: (err) => {
         this.error = 'Failed to load transport request: ' + (err.error?.message || err.message || 'Unknown error');
         this.loading = false;
-        console.error('Error loading request:', err);
       }
     });
   }
@@ -79,7 +78,8 @@ export class TransportDetailComponent implements OnInit {
 
     // Try to get workflow for this transport request
     this.workflowService.getInstances({
-      entity_type: 'transportrequest'
+      entity_type: 'transportrequest',
+      object_id: this.requestId
     }).subscribe({
       next: (response: any) => {
         // Check if response is an array or paginated object
@@ -101,7 +101,6 @@ export class TransportDetailComponent implements OnInit {
               this.workflowLoading = false;
             },
             error: (err) => {
-              console.error('Error loading workflow details:', err);
               this.workflowLoading = false;
             }
           });
@@ -110,7 +109,6 @@ export class TransportDetailComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Error loading workflow:', err);
         this.workflowLoading = false;
       }
     });
@@ -244,7 +242,6 @@ export class TransportDetailComponent implements OnInit {
           },
           error: (err) => {
             this.toastService.error('Failed to cancel request: ' + (err.error?.message || err.message));
-            console.error('Error cancelling request:', err);
           }
         });
       }
@@ -261,7 +258,6 @@ export class TransportDetailComponent implements OnInit {
           },
           error: (err) => {
             this.toastService.error('Failed to delete request: ' + (err.error?.message || err.message));
-            console.error('Error deleting request:', err);
           }
         });
       }
@@ -287,7 +283,6 @@ export class TransportDetailComponent implements OnInit {
         maximumFractionDigits: 2
       }).format(amount);
     } catch (error) {
-      console.error('Error formatting currency:', error);
       return `${currencyCode} ${amount.toFixed(2)}`;
     }
   }

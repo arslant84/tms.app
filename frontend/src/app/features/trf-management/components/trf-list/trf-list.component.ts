@@ -105,7 +105,6 @@ export class TrfListComponent implements OnInit, OnDestroy {
         filter((event: any) => event.url === '/trf' || event.url.startsWith('/trf?'))
       )
       .subscribe(() => {
-        console.log('TRF list refreshing due to navigation');
         this.fetchTrfs();
       });
 
@@ -158,7 +157,6 @@ export class TrfListComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (response: any) => {
-          console.log('✅ TRFs loaded:', response);
 
           // Handle both array response and paginated response
           if (Array.isArray(response)) {
@@ -172,12 +170,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
           }
 
           this.totalPages = Math.ceil(this.totalTrfs / this.pageSize);
-          console.log('Total TRFs:', this.totalTrfs);
-          console.log('Current Page:', this.currentPage, 'Total Pages:', this.totalPages);
-          console.log('TRFs array:', this.trfs);
         },
         error: (err) => {
-          console.error('❌ Error fetching TRFs:', err);
           this.error = err.message || 'Failed to load TRFs';
           this.trfs = [];
           this.totalTrfs = 0;
@@ -249,7 +243,6 @@ export class TrfListComponent implements OnInit, OnDestroy {
           this.fetchTrfs();
         },
         error: (error: any) => {
-          console.error('Error deleting travel request:', error);
           this.toastService.error('Failed to delete travel request');
         }
       });

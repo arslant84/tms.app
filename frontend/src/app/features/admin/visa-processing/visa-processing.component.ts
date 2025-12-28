@@ -32,6 +32,7 @@ interface CompletedVisa {
   status: string;
   completedDate: string;
   notes?: string;
+  processing_details?: any;
 }
 
 @Component({
@@ -63,13 +64,6 @@ export class VisaProcessingComponent implements OnInit {
   visaNumber = '';
   visaIssueDate = '';
   visaExpiryDate = '';
-  paymentMethod = 'Bank Transfer';
-  bankTransferReference = '';
-  chequeNumber = '';
-  applicationFee = 0;
-  processingFee = 0;
-  totalFee = 0;
-  paymentDate = '';
 
   constructor(
     private visaService: VisaService,
@@ -112,7 +106,6 @@ export class VisaProcessingComponent implements OnInit {
         this.isLoadingPending = false;
       },
       error: (err) => {
-        console.error('Failed to fetch pending visas:', err);
         this.errorPending = 'Failed to load pending visa applications. Please try again.';
         this.pendingVisas = [];
         this.isLoadingPending = false;
@@ -138,13 +131,15 @@ export class VisaProcessingComponent implements OnInit {
           visaType: app.visa_type || 'N/A',
           status: app.status,
           completedDate: app.processing_completed_at || app.updated_at,
-          notes: app.additional_comments
+          notes: app.additional_comments,
+          staffId: app.staff_id || 'N/A',
+          department: app.department || 'N/A',
+          processing_details: app.processing_details
         }));
 
         this.isLoadingCompleted = false;
       },
       error: (err) => {
-        console.error('Failed to fetch completed visas:', err);
         this.completedVisas = [];
         this.isLoadingCompleted = false;
       }
@@ -213,18 +208,15 @@ export class VisaProcessingComponent implements OnInit {
 
     this.isProcessing = true;
 
-    const updateData: any = {
-      status: 'Completed',
-      processing_completed_at: new Date().toISOString()
-    };
+    const completionData: any = {};
 
     if (this.processingNotes.trim()) {
-      updateData.additional_comments = this.processingNotes;
+      completionData.additional_comments = this.processingNotes;
     }
 
     // Add visa details if provided
     if (this.visaNumber || this.visaIssueDate || this.visaExpiryDate) {
-      updateData.processing_details = {
+      completionData.processing_details = {
         visa_number: this.visaNumber,
         visa_issue_date: this.visaIssueDate,
         visa_expiry_date: this.visaExpiryDate,
@@ -233,17 +225,23 @@ export class VisaProcessingComponent implements OnInit {
       };
     }
 
-    this.visaService.updateApplication(this.selectedApplication.id, updateData).subscribe({
-      next: () => {
+    this.visaService.completeApplication(this.selectedApplication.id, completionData).subscribe({
+      next: (response) => {
         this.toastService.success(`Visa application for ${this.selectedApplication!.requestorName} marked as completed`);
-        this.fetchPendingVisas();
-        this.fetchCompletedVisas();
+
+        // Clear selected application first
+        const appName = this.selectedApplication!.requestorName;
         this.selectedApplication = null;
         this.resetFormFields();
+
+        // Refresh both lists to ensure UI is in sync
+        this.fetchPendingVisas();
+        this.fetchCompletedVisas();
+
         this.isProcessing = false;
       },
       error: (err) => {
-        this.toastService.error('Failed to complete processing: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.toastService.error('Failed to complete processing: ' + (err.error?.message || err.error?.error || err.message || 'Unknown error'));
         this.isProcessing = false;
       }
     });
@@ -313,13 +311,6 @@ export class VisaProcessingComponent implements OnInit {
   }
 
   /**
-   * Calculate total fee
-   */
-  calculateTotalFee(): void {
-    this.totalFee = (this.applicationFee || 0) + (this.processingFee || 0);
-  }
-
-  /**
    * Complete processing from dialog
    */
   completeProcessingFromDialog(): void {
@@ -334,42 +325,37 @@ export class VisaProcessingComponent implements OnInit {
 
     this.isProcessing = true;
 
-    const updateData: any = {
-      status: 'Completed',
-      processing_completed_at: new Date().toISOString()
-    };
+    const completionData: any = {};
 
     if (this.processingNotes.trim()) {
-      updateData.additional_comments = this.processingNotes;
+      completionData.additional_comments = this.processingNotes;
     }
 
-    // Add processing details
-    updateData.processing_details = {
-      payment_method: this.paymentMethod,
-      bank_transfer_reference: this.bankTransferReference,
-      cheque_number: this.chequeNumber,
-      payment_date: this.paymentDate,
-      application_fee: this.applicationFee,
-      processing_fee: this.processingFee,
-      total_fee: this.totalFee,
-      visa_number: this.visaNumber,
-      visa_valid_from: this.visaIssueDate,
-      visa_valid_to: this.visaExpiryDate,
-      processing_notes: this.processingNotes,
-      completed_by_admin: true,
-      completed_at: new Date().toISOString()
-    };
+    // Add processing details (visa information only)
+    if (this.visaNumber || this.visaIssueDate || this.visaExpiryDate || this.processingNotes) {
+      completionData.processing_details = {
+        visa_number: this.visaNumber,
+        visa_valid_from: this.visaIssueDate,
+        visa_valid_to: this.visaExpiryDate,
+        processing_notes: this.processingNotes,
+        completed_by_admin: true,
+        completed_at: new Date().toISOString()
+      };
+    }
 
-    this.visaService.updateApplication(this.selectedApplication.id, updateData).subscribe({
-      next: () => {
+    this.visaService.completeApplication(this.selectedApplication.id, completionData).subscribe({
+      next: (response) => {
         this.toastService.success(`Visa application for ${this.selectedApplication!.requestorName} marked as completed`);
+
+        // Close dialog and refresh lists
+        this.closeProcessingDialog();
         this.fetchPendingVisas();
         this.fetchCompletedVisas();
-        this.closeProcessingDialog();
+
         this.isProcessing = false;
       },
       error: (err) => {
-        this.toastService.error('Failed to complete processing: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.toastService.error('Failed to complete processing: ' + (err.error?.message || err.error?.error || err.message || 'Unknown error'));
         this.isProcessing = false;
       }
     });

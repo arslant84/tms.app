@@ -112,7 +112,6 @@ export class VisaListComponent implements OnInit, OnDestroy {
         this.loadWorkflowInstances();
       },
       error: (error) => {
-        console.error('Error fetching visa applications:', error);
         this.isLoading = false;
       }
     });
@@ -140,7 +139,6 @@ export class VisaListComponent implements OnInit, OnDestroy {
         });
       },
       error: (err) => {
-        console.error('Error loading workflow instances:', err);
       }
     });
   }
@@ -249,7 +247,6 @@ export class VisaListComponent implements OnInit, OnDestroy {
           this.fetchApplications();
         },
         error: (error) => {
-          console.error('Error deleting visa application:', error);
           this.toastService.error('Failed to delete visa application');
         }
       });

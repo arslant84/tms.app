@@ -85,6 +85,7 @@ export class WorkflowService {
     status?: string;
     entity_type?: string;
     template?: string;
+    object_id?: number;
   }): Observable<WorkflowInstanceList[]> {
     let params = new HttpParams();
     if (filters?.status) {
@@ -95,6 +96,9 @@ export class WorkflowService {
     }
     if (filters?.template) {
       params = params.set('template', filters.template);
+    }
+    if (filters?.object_id) {
+      params = params.set('object_id', filters.object_id.toString());
     }
     return this.http.get<WorkflowInstanceList[]>(`${this.apiUrl}/instances/`, { params });
   }

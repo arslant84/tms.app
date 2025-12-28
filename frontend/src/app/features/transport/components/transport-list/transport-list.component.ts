@@ -99,7 +99,6 @@ export class TransportListComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.error = 'Failed to load transport requests';
         this.loading = false;
-        console.error('Error fetching transport requests:', err);
       }
     });
   }
@@ -202,7 +201,6 @@ export class TransportListComponent implements OnInit, OnDestroy {
           this.fetchRequests();
         },
         error: (error) => {
-          console.error('Error deleting transport request:', error);
           this.toastService.error('Failed to delete transport request');
         }
       });
@@ -269,7 +267,6 @@ export class TransportListComponent implements OnInit, OnDestroy {
         maximumFractionDigits: 2
       }).format(amount);
     } catch (error) {
-      console.error('Error formatting currency:', error);
       return `${currencyCode} ${amount.toFixed(2)}`;
     }
   }

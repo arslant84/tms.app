@@ -123,15 +123,11 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   }
 
   onSubmit(): void {
-    console.log('=== EXTERNAL PARTIES FORM SUBMIT ===');
-    console.log('Form valid:', this.externalForm.valid);
 
     if (this.externalForm.valid) {
       const formValue = this.externalForm.getRawValue();
-      console.log('Form value:', formValue);
       this.formSubmit.emit(formValue);
     } else {
-      console.log('Form is INVALID. Errors:');
       this.logFormErrors(this.externalForm);
       this.markFormGroupTouched(this.externalForm);
     }
@@ -145,7 +141,6 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
       if (control instanceof FormGroup || control instanceof FormArray) {
         this.logFormErrors(control, currentPath);
       } else if (control?.invalid) {
-        console.log(`  - ${currentPath}:`, control.errors);
       }
     });
   }

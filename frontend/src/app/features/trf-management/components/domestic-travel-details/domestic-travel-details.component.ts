@@ -67,9 +67,6 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     // When initialData changes (e.g., loaded from API in edit mode), rebuild the form
     if (changes['initialData'] && !changes['initialData'].firstChange && this.travelForm) {
-      console.log('=== DOMESTIC TRAVEL DETAILS ngOnChanges ===');
-      console.log('initialData changed:', changes['initialData']);
-      console.log('New initialData:', this.initialData);
       this.initForm();  // Rebuild form with new data
     }
   }
