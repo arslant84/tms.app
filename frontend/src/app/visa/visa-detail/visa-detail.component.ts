@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { VisaService, VisaApplication, VisaApprovalStep, VisaDocument } from '../visa.service';
 import { WorkflowService } from '../../core/services/workflow.service';
+import { ToastService } from '../../core/services/toast.service';
 import { ApprovalActionsComponent } from '../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowStatusComponent } from '../../shared/components/workflow-status/workflow-status.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../core/models/workflow.models';
@@ -36,7 +37,8 @@ export class VisaDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private visaService: VisaService,
-    public workflowService: WorkflowService
+    public workflowService: WorkflowService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -60,7 +62,7 @@ export class VisaDetailComponent implements OnInit {
       },
       error: (error) => {
         this.isLoading = false;
-        alert('Failed to load visa application details');
+        this.toastService.error('Failed to load visa application details');
       }
     });
   }
@@ -121,19 +123,19 @@ export class VisaDetailComponent implements OnInit {
   }
 
   onWorkflowApproved(): void {
-    alert('Approval successful');
+    this.toastService.success('Approval successful');
     this.loadApplicationDetails();
     this.loadWorkflow();
   }
 
   onWorkflowRejected(): void {
-    alert('Request rejected');
+    this.toastService.info('Request rejected');
     this.loadApplicationDetails();
     this.loadWorkflow();
   }
 
   onWorkflowDelegated(): void {
-    alert('Successfully delegated');
+    this.toastService.success('Successfully delegated');
     this.loadWorkflow();
   }
 
@@ -188,7 +190,7 @@ export class VisaDetailComponent implements OnInit {
   onEdit(): void {
     // Check if request can be edited
     if (!this.canEdit()) {
-      alert('This visa application cannot be edited because it has been approved. Approved requests can only be viewed, not modified.');
+      this.toastService.warning('This visa application cannot be edited because it has been approved. Approved requests can only be viewed, not modified.');
       return;
     }
 
@@ -199,11 +201,11 @@ export class VisaDetailComponent implements OnInit {
     if (confirm('Are you sure you want to cancel this visa application?')) {
       this.visaService.cancelApplication(this.applicationId).subscribe({
         next: () => {
-          alert('Visa application cancelled successfully');
+          this.toastService.success('Visa application cancelled successfully');
           this.loadApplicationDetails();
         },
         error: (error) => {
-          alert('Failed to cancel visa application');
+          this.toastService.error('Failed to cancel visa application');
         }
       });
     }
@@ -217,11 +219,11 @@ export class VisaDetailComponent implements OnInit {
     if (confirm('Are you sure you want to delete this visa application? This action cannot be undone.')) {
       this.visaService.deleteApplication(this.applicationId).subscribe({
         next: () => {
-          alert('Visa application deleted successfully');
+          this.toastService.success('Visa application deleted successfully');
           this.router.navigate(['/visa']);
         },
         error: (error) => {
-          alert('Failed to delete visa application');
+          this.toastService.error('Failed to delete visa application');
         }
       });
     }
