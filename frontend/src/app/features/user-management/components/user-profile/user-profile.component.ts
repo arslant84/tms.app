@@ -220,13 +220,26 @@ export class UserProfileComponent implements OnInit {
     }
 
     this.submitting = true;
-    // TODO: Implement password change API call
-    // For now, just show a success message
-    setTimeout(() => {
-      this.toastService.success('Password changed successfully');
-      this.closePasswordModal();
-      this.submitting = false;
-    }, 1000);
+
+    const oldPassword = this.passwordForm.get('old_password')?.value;
+    const passwordData = {
+      old_password: oldPassword,
+      new_password: newPassword
+    };
+
+    this.userService.changePassword(passwordData).subscribe({
+      next: (response) => {
+        this.toastService.success(response.message || 'Password changed successfully');
+        this.closePasswordModal();
+        this.submitting = false;
+        this.passwordForm.reset();
+      },
+      error: (err) => {
+        const errorMsg = err.error?.error || err.error?.detail || err.error?.old_password?.[0] || 'Failed to change password';
+        this.toastService.error(errorMsg);
+        this.submitting = false;
+      }
+    });
   }
 
   isFieldInvalid(formName: 'profile' | 'password', fieldName: string): boolean {

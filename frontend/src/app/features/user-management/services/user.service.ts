@@ -97,6 +97,10 @@ export class UserService {
     return this.http.delete<void>(`${this.apiUrl}/users/${id}/`);
   }
 
+  changePassword(data: { old_password: string; new_password: string }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/users/change-password/`, data);
+  }
+
   // Role operations
   getAllRoles(): Observable<any> {
     // Disable pagination for roles by requesting a large page size

@@ -58,4 +58,19 @@ export class ReportsService {
       params: { date_range: dateRange }
     });
   }
+
+  /**
+   * Export reports in specified format
+   * @param format - pdf, excel, or csv
+   * @param dateRange - week, month, quarter, or year
+   */
+  exportReports(format: 'pdf' | 'excel' | 'csv', dateRange: 'week' | 'month' | 'quarter' | 'year' = 'month'): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/export/`, {
+      params: {
+        format: format,
+        date_range: dateRange
+      },
+      responseType: 'blob'
+    });
+  }
 }
