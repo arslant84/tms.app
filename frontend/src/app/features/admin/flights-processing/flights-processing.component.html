@@ -126,7 +126,7 @@
                     <td>
                       <span class="badge" [class]="getStatusClass(trf.status)">{{ trf.status }}</span>
                     </td>
-                    <td>{{ formatDate(trf.requestedDate) }}</td>
+                    <td>{{ dateUtils.formatDate(trf.requestedDate) }}</td>
                     <td>
                       <div class="d-flex gap-2 justify-content-center">
                         <button
@@ -416,7 +416,7 @@
                 <td>{{ flight.airline }}</td>
                 <td>{{ flight.flightNumber }}</td>
                 <td>{{ flight.departureLocation }} → {{ flight.arrivalLocation }}</td>
-                <td>{{ formatDate(flight.departureDate) }}</td>
+                <td>{{ dateUtils.formatDate(flight.departureDate) }}</td>
                 <td>{{ flight.bookingReference }}</td>
                 <td>
                   <span class="badge" [class]="getStatusClass(flight.status)">{{ flight.status }}</span>

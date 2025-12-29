@@ -167,7 +167,7 @@
                   {{ application.status }}
                 </span>
               </td>
-              <td>{{ formatDate(application.submittedAt) }}</td>
+              <td>{{ dateUtils.formatDate(application.submittedAt) }}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-icon btn-view" (click)="viewTrf(application.id)" title="View Details">
                   <i class="bi bi-eye"></i>

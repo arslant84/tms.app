@@ -55,7 +55,7 @@
               <td>
                 <span class="badge bg-info">{{ template.notification_type }}</span>
               </td>
-              <td>{{ formatDate(template.created_at) }}</td>
+              <td>{{ dateUtils.formatDate(template.created_at) }}</td>
               <td class="text-end">
                 <div class="action-buttons">
                   <button class="btn btn-sm btn-outline-secondary" (click)="openEditModal(template)" title="Edit">

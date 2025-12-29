@@ -8,6 +8,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { finalize } from 'rxjs/operators';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 // Status and type constants matching backend
 export const TRF_STATUSES = [
@@ -84,7 +85,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private trfService: TrfService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -335,9 +337,4 @@ export class TrfListComponent implements OnInit, OnDestroy {
     return type.replace(/_/g, ' ');
   }
 
-  formatDate(dateString: string): string {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
 }

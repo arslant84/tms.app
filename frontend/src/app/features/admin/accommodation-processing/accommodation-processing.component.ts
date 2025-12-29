@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AccommodationService, AccommodationRequest, AccommodationRoom, AccommodationStaffHouse, AccommodationBooking } from '../../accommodation/services/accommodation.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 interface PendingAccommodation {
   id: number;
@@ -110,7 +111,8 @@ export class AccommodationProcessingComponent implements OnInit {
   constructor(
     private accommodationService: AccommodationService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -894,16 +896,6 @@ export class AccommodationProcessingComponent implements OnInit {
   /**
    * Format date for display
    */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
-    }
-  }
-
   formatDateForAPI(date: Date): string {
     return date.toISOString().split('T')[0];
   }

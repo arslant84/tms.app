@@ -7,6 +7,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 export const FLIGHT_STATUSES = [
   'PENDING',
@@ -58,7 +59,8 @@ export class FlightListComponent implements OnInit {
     private bookingsService: BookingsService,
     private router: Router,
     private toastService: ToastService,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -176,17 +178,6 @@ export class FlightListComponent implements OnInit {
       console.error('Error formatting currency:', error);
       return `${currencyCode} ${amount.toFixed(2)}`;
     }
-  }
-
-  formatDateTime(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   }
 
   formatRoute(booking: FlightBooking): string {

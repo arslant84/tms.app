@@ -2,6 +2,7 @@ import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../core/models/workflow.models';
 import { WorkflowService } from '../../../core/services/workflow.service';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-workflow-status',
@@ -19,7 +20,10 @@ export class WorkflowStatusComponent implements OnInit, OnChanges {
   loading: boolean = false;
   error: string = '';
 
-  constructor(public workflowService: WorkflowService) {}
+  constructor(
+    public workflowService: WorkflowService,
+    public dateUtils: DateUtilsService
+  ) {}
 
   ngOnInit(): void {
     if (this.workflowInstance) {
@@ -111,18 +115,6 @@ export class WorkflowStatusComponent implements OnInit, OnChanges {
       }
     }
     return 'Unknown';
-  }
-
-  formatDate(dateString: string | undefined): string {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   }
 
   getTimeRemaining(step: WorkflowStepExecution): string {

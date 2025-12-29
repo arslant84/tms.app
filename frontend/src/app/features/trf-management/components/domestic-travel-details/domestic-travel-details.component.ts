@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Outpu
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 export interface ItinerarySegment {
   date: Date | null;
@@ -59,7 +60,11 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     refreshment: 0
   };
 
-  constructor(private fb: FormBuilder, private formUtils: FormUtilsService) {}
+  constructor(
+    private fb: FormBuilder,
+    private formUtils: FormUtilsService,
+    public dateUtils: DateUtilsService
+  ) {}
 
   ngOnInit(): void {
     this.initForm();
@@ -259,11 +264,6 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     });
   }
 
-  formatDate(date: Date | string): string {
-    if (!date) return '';
-    const d = new Date(date);
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  }
 
   // Form submission
   onSubmit(): void {

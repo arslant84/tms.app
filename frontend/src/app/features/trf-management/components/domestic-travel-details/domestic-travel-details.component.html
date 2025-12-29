@@ -187,7 +187,7 @@
             <div class="period-header">Travel Period</div>
             <div class="period-details">
               <span class="days-count">{{ dailyMealDates.length }} {{ dailyMealDates.length === 1 ? 'day' : 'days' }}</span>
-              <span class="date-range">{{ formatDate(dailyMealDates[0]) }} → {{ formatDate(dailyMealDates[dailyMealDates.length - 1]) }}</span>
+              <span class="date-range">{{ dateUtils.formatDate(dailyMealDates[0]) }} → {{ dateUtils.formatDate(dailyMealDates[dailyMealDates.length - 1]) }}</span>
             </div>
           </div>
         </div>
@@ -259,7 +259,7 @@
                [formGroupName]="i"
                class="meal-grid-row">
             <div class="grid-cell date-cell">
-              {{ formatDate(selection.get('date')?.value) }}
+              {{ dateUtils.formatDate(selection.get('date')?.value) }}
             </div>
             <div class="grid-cell checkbox-cell">
               <input
