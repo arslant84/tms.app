@@ -102,7 +102,7 @@
             <td class="ref-cell">{{ booking.booking_reference }}</td>
             <td>{{ booking.airline }} {{ booking.flight_number }}</td>
             <td>{{ formatRoute(booking) }}</td>
-            <td>{{ formatDateTime(booking.departure_time) }}</td>
+            <td>{{ dateUtils.formatDateTime(booking.departure_time) }}</td>
             <td>{{ booking.booking_class }}</td>
             <td class="amount-cell">{{ formatCurrency(booking.cost, booking.currency) }}</td>
             <td>

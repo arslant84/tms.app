@@ -8,6 +8,7 @@ import { WorkflowService } from '../../../../core/services/workflow.service';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-trf-detail',
@@ -41,7 +42,8 @@ export class TrfDetailComponent implements OnInit {
     private trfService: TrfService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
-    public workflowService: WorkflowService
+    public workflowService: WorkflowService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -222,18 +224,6 @@ export class TrfDetailComponent implements OnInit {
     return 'badge-info';
   }
 
-  /**
-   * Format date for display
-   */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
-    }
-  }
 
   /**
    * Format time for display
@@ -259,7 +249,7 @@ export class TrfDetailComponent implements OnInit {
    */
   formatFlightDateTime(date: string | Date | null | undefined, time: string | null | undefined): string {
     if (!date) return 'N/A';
-    const formattedDate = this.formatDate(date);
+    const formattedDate = this.dateUtils.formatDate(date);
     if (formattedDate === 'N/A' || formattedDate === 'Invalid Date') return formattedDate;
 
     if (!time) return formattedDate;

@@ -10,6 +10,7 @@ import { ApprovalActionsComponent } from '../../../../shared/components/approval
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-transport-detail',
@@ -44,7 +45,8 @@ export class TransportDetailComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -285,12 +287,6 @@ export class TransportDetailComponent implements OnInit {
     } catch (error) {
       return `${currencyCode} ${amount.toFixed(2)}`;
     }
-  }
-
-  formatDate(dateString: string | Date | undefined): string {
-    if (!dateString) return 'N/A';
-    const date = dateString instanceof Date ? dateString : new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }
 
   formatTime(timeString: string | undefined): string {

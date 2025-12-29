@@ -198,11 +198,11 @@
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.departureDate">
               <span class="detail-label">Departure:</span>
-              <span class="detail-value">{{ formatDate(selectedRequest.details.departureDate) }}</span>
+              <span class="detail-value">{{ dateUtils.formatDate(selectedRequest.details.departureDate) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.returnDate">
               <span class="detail-label">Return:</span>
-              <span class="detail-value">{{ formatDate(selectedRequest.details.returnDate) }}</span>
+              <span class="detail-value">{{ dateUtils.formatDate(selectedRequest.details.returnDate) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.destination">
               <span class="detail-label">Destination:</span>
@@ -227,11 +227,11 @@
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.checkInDate">
               <span class="detail-label">Check-in:</span>
-              <span class="detail-value">{{ formatDate(selectedRequest.details.checkInDate) }}</span>
+              <span class="detail-value">{{ dateUtils.formatDate(selectedRequest.details.checkInDate) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.checkOutDate">
               <span class="detail-label">Check-out:</span>
-              <span class="detail-value">{{ formatDate(selectedRequest.details.checkOutDate) }}</span>
+              <span class="detail-value">{{ dateUtils.formatDate(selectedRequest.details.checkOutDate) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.roomType">
               <span class="detail-label">Room Type:</span>
@@ -256,7 +256,7 @@
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.pickupDate">
               <span class="detail-label">Date:</span>
-              <span class="detail-value">{{ formatDate(selectedRequest.details.pickupDate) }}</span>
+              <span class="detail-value">{{ dateUtils.formatDate(selectedRequest.details.pickupDate) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.pickupTime">
               <span class="detail-label">Time:</span>
@@ -285,11 +285,11 @@
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.travelDate">
               <span class="detail-label">Travel Date:</span>
-              <span class="detail-value">{{ formatDate(selectedRequest.details.travelDate) }}</span>
+              <span class="detail-value">{{ dateUtils.formatDate(selectedRequest.details.travelDate) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.returnDate">
               <span class="detail-label">Return Date:</span>
-              <span class="detail-value">{{ formatDate(selectedRequest.details.returnDate) }}</span>
+              <span class="detail-value">{{ dateUtils.formatDate(selectedRequest.details.returnDate) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.estimatedCost">
               <span class="detail-label">Est. Cost:</span>
@@ -306,7 +306,7 @@
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.claimDate">
               <span class="detail-label">Claim Date:</span>
-              <span class="detail-value">{{ formatDate(selectedRequest.details.claimDate) }}</span>
+              <span class="detail-value">{{ dateUtils.formatDate(selectedRequest.details.claimDate) }}</span>
             </div>
             <div class="detail-item" *ngIf="selectedRequest.details.totalAmount">
               <span class="detail-label">Total Amount:</span>

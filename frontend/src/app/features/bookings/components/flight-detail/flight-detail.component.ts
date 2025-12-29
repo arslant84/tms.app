@@ -4,6 +4,7 @@ import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { BookingsService, FlightBooking } from '../../services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-flight-detail',
@@ -23,7 +24,8 @@ export class FlightDetailComponent implements OnInit {
     private router: Router,
     private bookingsService: BookingsService,
     private toastService: ToastService,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -164,26 +166,6 @@ export class FlightDetailComponent implements OnInit {
       console.error('Error formatting currency:', error);
       return `${currencyCode} ${amount.toFixed(2)}`;
     }
-  }
-
-  formatDate(date: string | undefined): string {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  }
-
-  formatDateTime(date: string | undefined): string {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   }
 
   formatTime(time: string | undefined): string {

@@ -58,7 +58,7 @@
         Loading workflow...
       </span>
       <span class="text-muted">Request ID: #{{ request.id }}</span>
-      <span class="text-muted">Submitted: {{ formatDate(request.submittedDate) }}</span>
+      <span class="text-muted">Submitted: {{ dateUtils.formatDate(request.submittedDate) }}</span>
     </div>
 
     <!-- CARD 1: Requestor & Trip Information -->
@@ -113,11 +113,11 @@
         <div class="detail-grid">
           <div class="detail-item">
             <label>Check-In Date</label>
-            <span class="value">{{ formatDate(request.requestedCheckInDate) }}</span>
+            <span class="value">{{ dateUtils.formatDate(request.requestedCheckInDate) }}</span>
           </div>
           <div class="detail-item">
             <label>Check-Out Date</label>
-            <span class="value">{{ formatDate(request.requestedCheckOutDate) }}</span>
+            <span class="value">{{ dateUtils.formatDate(request.requestedCheckOutDate) }}</span>
           </div>
           <div class="detail-item">
             <label>Number of Nights</label>
@@ -313,7 +313,7 @@
           </div>
           <div class="detail-item" *ngIf="request.rejectionDetails?.rejectedAt">
             <label>Rejected At</label>
-            <span class="value">{{ formatDateTime(request.rejectionDetails?.rejectedAt) }}</span>
+            <span class="value">{{ dateUtils.formatDateTime(request.rejectionDetails?.rejectedAt) }}</span>
           </div>
           <div class="rejection-reason" *ngIf="request.rejectionDetails?.reason">
             <label>Reason</label>
@@ -365,19 +365,19 @@
           <div class="col-md-6" *ngIf="request.createdAt">
             <div class="info-group">
               <label>Created At</label>
-              <p>{{ formatDate(request.createdAt) }}</p>
+              <p>{{ dateUtils.formatDate(request.createdAt) }}</p>
             </div>
           </div>
           <div class="col-md-6" *ngIf="request.updatedAt">
             <div class="info-group">
               <label>Last Updated</label>
-              <p>{{ formatDate(request.updatedAt) }}</p>
+              <p>{{ dateUtils.formatDate(request.updatedAt) }}</p>
             </div>
           </div>
           <div class="col-md-6" *ngIf="request.submittedDate">
             <div class="info-group">
               <label>Submitted Date</label>
-              <p>{{ formatDate(request.submittedDate) }}</p>
+              <p>{{ dateUtils.formatDate(request.submittedDate) }}</p>
             </div>
           </div>
         </div>
@@ -449,7 +449,7 @@
                 </div>
                 <div class="detail-row" *ngIf="step.timestamp">
                   <i class="bi bi-clock"></i>
-                  <span>{{ formatDateTime(step.timestamp) }}</span>
+                  <span>{{ dateUtils.formatDateTime(step.timestamp) }}</span>
                 </div>
                 <div class="detail-row" *ngIf="step.comments">
                   <i class="bi bi-chat"></i>

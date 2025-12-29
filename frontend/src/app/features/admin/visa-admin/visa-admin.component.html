@@ -178,7 +178,7 @@
                   {{ app.status }}
                 </span>
               </td>
-              <td>{{ formatDate(app.submitted_date) }}</td>
+              <td>{{ dateUtils.formatDate(app.submitted_date) }}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-icon btn-view" (click)="viewApplication(app)" title="View">
                   <i class="bi bi-eye"></i>

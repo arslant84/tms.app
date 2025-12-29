@@ -9,16 +9,16 @@ import { Injectable } from '@angular/core';
 export class DateUtilsService {
 
   /**
-   * Formats a date string to a localized date format (e.g., "January 1, 2024")
-   * @param dateString The date string to format
+   * Formats a date string or Date object to a localized date format (e.g., "January 1, 2024")
+   * @param dateString The date string or Date object to format
    * @param defaultValue The value to return if date is invalid (default: 'N/A')
    * @returns Formatted date string
    */
-  formatDate(dateString: string | null | undefined, defaultValue: string = 'N/A'): string {
+  formatDate(dateString: string | Date | null | undefined, defaultValue: string = 'N/A'): string {
     if (!dateString) return defaultValue;
 
     try {
-      const date = new Date(dateString);
+      const date = dateString instanceof Date ? dateString : new Date(dateString);
       if (isNaN(date.getTime())) return defaultValue;
 
       return date.toLocaleDateString('en-US', {
@@ -32,16 +32,16 @@ export class DateUtilsService {
   }
 
   /**
-   * Formats a date string to a localized date and time format (e.g., "January 1, 2024, 12:00 PM")
-   * @param dateString The date string to format
+   * Formats a date string or Date object to a localized date and time format (e.g., "January 1, 2024, 12:00 PM")
+   * @param dateString The date string or Date object to format
    * @param defaultValue The value to return if date is invalid (default: 'N/A')
    * @returns Formatted date-time string
    */
-  formatDateTime(dateString: string | null | undefined, defaultValue: string = 'N/A'): string {
+  formatDateTime(dateString: string | Date | null | undefined, defaultValue: string = 'N/A'): string {
     if (!dateString) return defaultValue;
 
     try {
-      const date = new Date(dateString);
+      const date = dateString instanceof Date ? dateString : new Date(dateString);
       if (isNaN(date.getTime())) return defaultValue;
 
       return date.toLocaleString('en-US', {
