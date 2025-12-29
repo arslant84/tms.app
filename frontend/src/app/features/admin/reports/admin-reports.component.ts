@@ -161,9 +161,32 @@ export class AdminReportsComponent implements OnInit {
   
   // Export report data
   exportReport(format: 'pdf' | 'excel' | 'csv'): void {
-    // TODO: Implement actual export functionality
-    console.log(`Exporting report in ${format} format...`);
-    alert(`Export to ${format.toUpperCase()} - Feature coming soon!`);
+    this.reportsService.exportReports(format, this.dateRange).subscribe({
+      next: (blob) => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+
+        // Set filename based on format
+        const extensions: Record<string, string> = {
+          'pdf': 'pdf',
+          'excel': 'xlsx',
+          'csv': 'csv'
+        };
+        const filename = `tms-report-${this.dateRange}-${new Date().toISOString().split('T')[0]}.${extensions[format]}`;
+        link.download = filename;
+
+        // Trigger download
+        link.click();
+
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        this.error = `Failed to export report: ${err.error?.error || err.message || 'Unknown error'}`;
+      }
+    });
   }
 
   // Print report
