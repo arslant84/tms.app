@@ -57,7 +57,7 @@
         Loading workflow...
       </span>
       <span class="text-muted">Application ID: #{{ application.id }}</span>
-      <span class="text-muted" *ngIf="application.submitted_date">Submitted: {{ formatDate(application.submitted_date) }}</span>
+      <span class="text-muted" *ngIf="application.submitted_date">Submitted: {{ dateUtils.formatDate(application.submitted_date) }}</span>
     </div>
 
     <!-- Personal Information -->
@@ -135,19 +135,19 @@
           <div class="col-md-6">
             <div class="info-group">
               <label>Trip Start Date</label>
-              <p>{{ formatDate(application.trip_start_date) }}</p>
+              <p>{{ dateUtils.formatDate(application.trip_start_date) }}</p>
             </div>
           </div>
           <div class="col-md-6">
             <div class="info-group">
               <label>Trip End Date</label>
-              <p>{{ formatDate(application.trip_end_date) }}</p>
+              <p>{{ dateUtils.formatDate(application.trip_end_date) }}</p>
             </div>
           </div>
           <div class="col-md-6">
             <div class="info-group">
               <label>Approximate Arrival Date</label>
-              <p>{{ formatDate(application.approximately_arrival_date) }}</p>
+              <p>{{ dateUtils.formatDate(application.approximately_arrival_date) }}</p>
             </div>
           </div>
           <div class="col-md-6">
@@ -223,7 +223,7 @@
           <div class="col-md-6">
             <div class="info-group">
               <label>Passport Expiry Date</label>
-              <p>{{ formatDate(application.passport_expiry_date) }}</p>
+              <p>{{ dateUtils.formatDate(application.passport_expiry_date) }}</p>
             </div>
           </div>
           <div class="col-md-6">
@@ -235,13 +235,13 @@
           <div class="col-md-6">
             <div class="info-group">
               <label>Date of Issuance</label>
-              <p>{{ formatDate(application.passport_date_of_issuance) }}</p>
+              <p>{{ dateUtils.formatDate(application.passport_date_of_issuance) }}</p>
             </div>
           </div>
           <div class="col-md-6">
             <div class="info-group">
               <label>Date of Birth</label>
-              <p>{{ formatDate(application.date_of_birth) }}</p>
+              <p>{{ dateUtils.formatDate(application.date_of_birth) }}</p>
             </div>
           </div>
           <div class="col-md-6">
@@ -336,7 +336,7 @@
               <div>
                 <strong>{{ doc.document_name }}</strong>
                 <small class="text-muted d-block">{{ doc.document_type || 'Document' }}</small>
-                <small class="text-muted">Uploaded: {{ formatDateTime(doc.uploaded_at) }}</small>
+                <small class="text-muted">Uploaded: {{ dateUtils.formatDateTime(doc.uploaded_at) }}</small>
               </div>
               <a [href]="doc.document_path" target="_blank" class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-download"></i> Download
@@ -377,31 +377,31 @@
           <div class="col-md-6">
             <div class="info-group">
               <label>Submitted Date</label>
-              <p>{{ formatDateTime(application.submitted_date) }}</p>
+              <p>{{ dateUtils.formatDateTime(application.submitted_date) }}</p>
             </div>
           </div>
           <div class="col-md-6">
             <div class="info-group">
               <label>Last Updated</label>
-              <p>{{ formatDateTime(application.last_updated_date) }}</p>
+              <p>{{ dateUtils.formatDateTime(application.last_updated_date) }}</p>
             </div>
           </div>
           <div class="col-md-6">
             <div class="info-group">
               <label>Created At</label>
-              <p>{{ formatDateTime(application.created_at) }}</p>
+              <p>{{ dateUtils.formatDateTime(application.created_at) }}</p>
             </div>
           </div>
           <div class="col-md-6" *ngIf="application.processing_started_at">
             <div class="info-group">
               <label>Processing Started</label>
-              <p>{{ formatDateTime(application.processing_started_at) }}</p>
+              <p>{{ dateUtils.formatDateTime(application.processing_started_at) }}</p>
             </div>
           </div>
           <div class="col-md-6" *ngIf="application.processing_completed_at">
             <div class="info-group">
               <label>Processing Completed</label>
-              <p>{{ formatDateTime(application.processing_completed_at) }}</p>
+              <p>{{ dateUtils.formatDateTime(application.processing_completed_at) }}</p>
             </div>
           </div>
         </div>
@@ -434,13 +434,13 @@
             <div class="col-md-6">
               <div class="processing-detail-item">
                 <label class="text-muted small d-block mb-1">Visa Valid From</label>
-                <p class="mb-0 fw-medium">{{ application.processing_details.visa_valid_from ? formatDate(application.processing_details.visa_valid_from) : 'N/A' }}</p>
+                <p class="mb-0 fw-medium">{{ application.processing_details.visa_valid_from ? dateUtils.formatDate(application.processing_details.visa_valid_from) : 'N/A' }}</p>
               </div>
             </div>
             <div class="col-md-6">
               <div class="processing-detail-item">
                 <label class="text-muted small d-block mb-1">Visa Valid To</label>
-                <p class="mb-0 fw-medium">{{ application.processing_details.visa_valid_to ? formatDate(application.processing_details.visa_valid_to) : 'N/A' }}</p>
+                <p class="mb-0 fw-medium">{{ application.processing_details.visa_valid_to ? dateUtils.formatDate(application.processing_details.visa_valid_to) : 'N/A' }}</p>
               </div>
             </div>
 
@@ -506,7 +506,7 @@
               <h6>{{ step.step_name }}</h6>
               <p class="text-muted mb-1">Role: {{ step.step_role }}</p>
               <p class="mb-1"><span class="badge bg-info">{{ step.status }}</span></p>
-              <small class="text-muted">{{ formatDateTime(step.step_date) }}</small>
+              <small class="text-muted">{{ dateUtils.formatDateTime(step.step_date) }}</small>
               <p class="mt-2" *ngIf="step.comments">{{ step.comments }}</p>
             </div>
           </div>

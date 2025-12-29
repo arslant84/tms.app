@@ -61,7 +61,7 @@
         <span class="spinner-border spinner-border-sm me-1" role="status"></span>
         Loading workflow...
       </span>
-      <span class="text-muted">Created: {{ formatDate(request.updatedAt) }}</span>
+      <span class="text-muted">Created: {{ dateUtils.formatDate(request.updatedAt) }}</span>
     </div>
 
     <!-- Request Information -->
@@ -136,7 +136,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let detail of request.transportDetails">
-                <td>{{ detail.date ? formatDate(detail.date.toString()) : 'N/A' }}</td>
+                <td>{{ detail.date ? dateUtils.formatDate(detail.date.toString()) : 'N/A' }}</td>
                 <td>{{ detail.day }}</td>
                 <td>{{ detail.from }}</td>
                 <td>{{ detail.to }}</td>
@@ -252,19 +252,19 @@
           <div class="col-md-6" *ngIf="request.submittedAt">
             <div class="info-group">
               <label>Submitted Date</label>
-              <p>{{ formatDate(request.submittedAt) }}</p>
+              <p>{{ dateUtils.formatDate(request.submittedAt) }}</p>
             </div>
           </div>
           <div class="col-md-6" *ngIf="request.createdAt">
             <div class="info-group">
               <label>Created At</label>
-              <p>{{ formatDate(request.createdAt) }}</p>
+              <p>{{ dateUtils.formatDate(request.createdAt) }}</p>
             </div>
           </div>
           <div class="col-md-6" *ngIf="request.updatedAt">
             <div class="info-group">
               <label>Last Updated</label>
-              <p>{{ formatDate(request.updatedAt) }}</p>
+              <p>{{ dateUtils.formatDate(request.updatedAt) }}</p>
             </div>
           </div>
         </div>
@@ -326,7 +326,7 @@
             <div class="step-content">
               <h4>{{ step.step_role || 'Unknown Role' }}</h4>
               <p class="step-status">{{ step.status || 'Pending' }}</p>
-              <p class="step-date" *ngIf="step.step_date">{{ formatDate(step.step_date) }}</p>
+              <p class="step-date" *ngIf="step.step_date">{{ dateUtils.formatDate(step.step_date) }}</p>
               <p class="step-comments" *ngIf="step.comments">{{ step.comments }}</p>
             </div>
           </div>

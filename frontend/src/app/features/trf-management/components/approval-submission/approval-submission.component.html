@@ -105,7 +105,7 @@
               </span>
             </div>
             <p class="step-name">{{ step.name }}</p>
-            <p class="step-date" *ngIf="step.date">{{ formatDate(step.date) }}</p>
+            <p class="step-date" *ngIf="step.date">{{ dateUtils.formatDate(step.date) }}</p>
             <p class="step-comments" *ngIf="step.comments">{{ step.comments }}</p>
           </div>
         </div>

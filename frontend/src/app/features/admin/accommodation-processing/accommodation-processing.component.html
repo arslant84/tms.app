@@ -202,7 +202,7 @@
                   <td>
                     <span class="badge" [class]="getStatusClass(request.status)">{{ request.status }}</span>
                   </td>
-                  <td>{{ formatDate(request.requestedDate) }}</td>
+                  <td>{{ dateUtils.formatDate(request.requestedDate) }}</td>
                   <td>
                     <div class="action-buttons">
                       <button
@@ -435,8 +435,8 @@
                   </span>
                 </div>
               </td>
-              <td>{{ formatDate(booking.checkInDate) }}</td>
-              <td>{{ formatDate(booking.checkOutDate) }}</td>
+              <td>{{ dateUtils.formatDate(booking.checkInDate) }}</td>
+              <td>{{ dateUtils.formatDate(booking.checkOutDate) }}</td>
               <td>
                 <span class="badge" [class]="getStatusClass(booking.status)">{{ booking.status }}</span>
               </td>

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ApprovalsService, ApprovalRequest } from '../services/approvals.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { CurrencyFormatPipe } from '../../../core/pipes/currency-format.pipe';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-pending-approvals',
@@ -37,7 +38,8 @@ export class PendingApprovalsComponent implements OnInit {
   constructor(
     private approvalsService: ApprovalsService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -301,16 +303,4 @@ export class PendingApprovalsComponent implements OnInit {
     return deadlineDate < today;
   }
 
-  /**
-   * Format date for display
-   */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
-    }
-  }
 }

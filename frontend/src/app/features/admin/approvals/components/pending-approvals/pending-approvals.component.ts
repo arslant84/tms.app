@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../../../environments/environment';
 import { NotificationService } from '../../../../notifications/services/notification.service';
 import { AppSettingsService } from '../../../../../core/services/app-settings.service';
+import { DateUtilsService } from '../../../../../core/utils/date-utils.service';
 
 interface ApprovableItem {
   id: string;
@@ -75,7 +76,8 @@ export class PendingApprovalsComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private notificationService: NotificationService,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -379,20 +381,6 @@ export class PendingApprovalsComponent implements OnInit {
     }
     // Default roles for non-specific statuses
     return 'Department Focal';
-  }
-
-  formatDate(dateString: string | undefined): string {
-    if (!dateString) return 'N/A';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch {
-      return 'Invalid Date';
-    }
   }
 
   formatCurrency(amount: number | null | undefined, currency?: string | null): string {

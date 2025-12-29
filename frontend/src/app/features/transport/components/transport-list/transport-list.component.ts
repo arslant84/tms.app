@@ -7,6 +7,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TransportService, TransportRequest } from '../../services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 // Status constants for filtering (broad categories to match workflow statuses)
 export const TRANSPORT_STATUSES = [
@@ -51,7 +52,8 @@ export class TransportListComponent implements OnInit, OnDestroy {
     private transportService: TransportService,
     private router: Router,
     private toastService: ToastService,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -236,11 +238,6 @@ export class TransportListComponent implements OnInit, OnDestroy {
     return 'badge-info';
   }
 
-  formatDate(dateString: string | Date | undefined): string {
-    if (!dateString) return 'N/A';
-    const date = dateString instanceof Date ? dateString : new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
 
   getTotalPassengers(request: TransportRequest): number {
     if (!request.transportDetails || request.transportDetails.length === 0) return 0;

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { BookingsService, FlightBooking } from '../../bookings/services/bookings.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AppSettingsService } from '../../../core/services/app-settings.service';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-flights-admin',
@@ -66,7 +67,8 @@ export class FlightsAdminComponent implements OnInit {
     private bookingsService: BookingsService,
     private toastService: ToastService,
     private router: Router,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -324,38 +326,6 @@ export class FlightsAdminComponent implements OnInit {
     } catch (error) {
       console.error('Error formatting currency:', error);
       return `${currencyCode} ${amount.toFixed(2)}`;
-    }
-  }
-
-  /**
-   * Format date
-   */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
-    }
-  }
-
-  /**
-   * Format date and time
-   */
-  formatDateTime(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return 'Invalid Date';
     }
   }
 

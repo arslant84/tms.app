@@ -7,6 +7,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ApprovalActionsComponent } from '../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowStatusComponent } from '../../shared/components/workflow-status/workflow-status.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../core/models/workflow.models';
+import { DateUtilsService } from '../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-visa-detail',
@@ -38,7 +39,8 @@ export class VisaDetailComponent implements OnInit {
     private router: Router,
     private visaService: VisaService,
     public workflowService: WorkflowService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -229,27 +231,6 @@ export class VisaDetailComponent implements OnInit {
     }
   }
 
-  formatDate(dateString: string | null | undefined): string {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  }
-
-  formatDateTime(dateString: string | null | undefined): string {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
 
   getStatusBadgeClass(status: string): string {
     const statusLower = status.toLowerCase();

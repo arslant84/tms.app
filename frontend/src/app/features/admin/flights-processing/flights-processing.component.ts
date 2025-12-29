@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TrfService } from '../../trf-management/services/trf.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 interface ItinerarySegment {
   from_location?: string;
@@ -92,7 +93,8 @@ export class FlightsProcessingComponent implements OnInit {
   constructor(
     private trfService: TrfService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -425,19 +427,6 @@ export class FlightsProcessingComponent implements OnInit {
       return d.toISOString().split('T')[0];
     } catch {
       return '';
-    }
-  }
-
-  /**
-   * Format date
-   */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
     }
   }
 

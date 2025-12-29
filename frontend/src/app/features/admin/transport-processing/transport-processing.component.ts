@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TransportService, TransportRequest } from '../../transport/services/transport.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 interface BookingDetails {
   vehicleType: string;
@@ -59,7 +60,8 @@ export class TransportProcessingComponent implements OnInit {
   constructor(
     private transportService: TransportService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -312,19 +314,6 @@ export class TransportProcessingComponent implements OnInit {
     this.showCompletingDialog = false;
     this.showDetailsDialog = false;
     this.selectedRequest = null;
-  }
-
-  /**
-   * Format date
-   */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
-    }
   }
 
   /**

@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TransportService, TransportRequest, VehicleAssignment } from '../../transport/services/transport.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AppSettingsService } from '../../../core/services/app-settings.service';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-transport-admin',
@@ -76,7 +77,8 @@ export class TransportAdminComponent implements OnInit {
     private transportService: TransportService,
     private toastService: ToastService,
     public router: Router,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -337,19 +339,6 @@ export class TransportAdminComponent implements OnInit {
     } catch (error) {
       console.error('Error formatting currency:', error);
       return `${currencyCode} ${amount.toFixed(2)}`;
-    }
-  }
-
-  /**
-   * Format date
-   */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
     }
   }
 

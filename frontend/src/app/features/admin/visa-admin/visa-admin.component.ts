@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { VisaService, VisaApplication } from '../../../visa/visa.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-visa-admin',
@@ -87,7 +88,8 @@ export class VisaAdminComponent implements OnInit {
   constructor(
     private visaService: VisaService,
     private toastService: ToastService,
-    public router: Router
+    public router: Router,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -363,19 +365,6 @@ export class VisaAdminComponent implements OnInit {
     const hash = destination?.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) || 0;
     const colors = ['badge-blue', 'badge-green', 'badge-purple', 'badge-amber', 'badge-indigo'];
     return colors[hash % colors.length];
-  }
-
-  /**
-   * Format date
-   */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
-    }
   }
 
   /**

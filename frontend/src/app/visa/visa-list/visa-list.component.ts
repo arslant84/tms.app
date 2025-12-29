@@ -7,6 +7,7 @@ import { VisaService, VisaApplication } from '../visa.service';
 import { WorkflowService } from '../../core/services/workflow.service';
 import { WorkflowInstanceList } from '../../core/models/workflow.models';
 import { ToastService } from '../../core/services/toast.service';
+import { DateUtilsService } from '../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-visa-list',
@@ -59,7 +60,8 @@ export class VisaListComponent implements OnInit, OnDestroy {
   constructor(
     private visaService: VisaService,
     public workflowService: WorkflowService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -262,15 +264,6 @@ export class VisaListComponent implements OnInit, OnDestroy {
     }
   }
 
-  formatDate(dateString: string | null | undefined): string {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  }
 
   getStatusBadgeClass(status: string): string {
     const statusMap: { [key: string]: string } = {

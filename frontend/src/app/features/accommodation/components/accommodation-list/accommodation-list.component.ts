@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AccommodationService, AccommodationRequest } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 export const ACCOMMODATION_STATUSES = [
   'Draft',
@@ -47,7 +48,8 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
   constructor(
     private accommodationService: AccommodationService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -217,16 +219,11 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
     return 'badge-info';
   }
 
-  formatDate(dateString: string): string {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
 
   getCheckInDate(request: AccommodationRequest): string {
     const checkInDate = request.additional_data?.requested_check_in_date;
     if (!checkInDate) return 'N/A';
-    return this.formatDate(checkInDate);
+    return this.dateUtils.formatDate(checkInDate);
   }
 
   getLocation(request: AccommodationRequest): string {

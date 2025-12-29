@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TrfService } from '../../trf-management/services/trf.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 interface FlightApplication {
   id: string;
@@ -72,7 +73,8 @@ export class FlightsAdminOverviewComponent implements OnInit {
   constructor(
     private trfService: TrfService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -305,19 +307,6 @@ export class FlightsAdminOverviewComponent implements OnInit {
       case 'Home Leave Passage': return 'badge-purple';
       case 'Domestic': return 'badge-green';
       default: return 'badge-gray';
-    }
-  }
-
-  /**
-   * Format date
-   */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
     }
   }
 

@@ -171,7 +171,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let segment of trfData.itinerary">
-                <td>{{ formatDate(segment.segment_date || segment.date) }}</td>
+                <td>{{ dateUtils.formatDate(segment.segment_date || segment.date) }}</td>
                 <td>{{ segment.day_of_week || segment.day || 'N/A' }}</td>
                 <td>{{ segment.from_location || segment.from || 'N/A' }}</td>
                 <td>{{ segment.to_location || segment.to || 'N/A' }}</td>
@@ -206,7 +206,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let meal of trfData.mealSelections">
-                <td>{{ formatDate(meal.meal_date) }}</td>
+                <td>{{ dateUtils.formatDate(meal.meal_date) }}</td>
                 <td class="text-center">{{ meal.breakfast ? '✓' : '—' }}</td>
                 <td class="text-center">{{ meal.lunch ? '✓' : '—' }}</td>
                 <td class="text-center">{{ meal.dinner ? '✓' : '—' }}</td>
@@ -265,7 +265,7 @@
           </div>
           <div class="detail-item">
             <label>Date of Birth</label>
-            <p>{{ formatDate(trfData.passportDetails[0]?.date_of_birth || trfData.passportDetails[0]?.dateOfBirth) }}</p>
+            <p>{{ dateUtils.formatDate(trfData.passportDetails[0]?.date_of_birth || trfData.passportDetails[0]?.dateOfBirth) }}</p>
           </div>
           <div class="detail-item">
             <label>Place of Birth</label>
@@ -273,11 +273,11 @@
           </div>
           <div class="detail-item">
             <label>Passport Issue Date</label>
-            <p>{{ formatDate(trfData.passportDetails[0]?.passport_issue_date || trfData.passportDetails[0]?.passportIssueDate) }}</p>
+            <p>{{ dateUtils.formatDate(trfData.passportDetails[0]?.passport_issue_date || trfData.passportDetails[0]?.passportIssueDate) }}</p>
           </div>
           <div class="detail-item">
             <label>Passport Expiry Date</label>
-            <p>{{ formatDate(trfData.passportDetails[0]?.passport_expiry_date || trfData.passportDetails[0]?.passportExpiryDate) }}</p>
+            <p>{{ dateUtils.formatDate(trfData.passportDetails[0]?.passport_expiry_date || trfData.passportDetails[0]?.passportExpiryDate) }}</p>
           </div>
         </div>
       </div>
@@ -343,8 +343,8 @@
               </thead>
               <tbody>
                 <tr *ngFor="let amount of trfData.advanceAmounts">
-                  <td>{{ formatDate(amount.date_from || amount.dateFrom) }}</td>
-                  <td>{{ formatDate(amount.date_to || amount.dateTo) }}</td>
+                  <td>{{ dateUtils.formatDate(amount.date_from || amount.dateFrom) }}</td>
+                  <td>{{ dateUtils.formatDate(amount.date_to || amount.dateTo) }}</td>
                   <td class="text-right">{{ formatNumber(amount.lh) }}</td>
                   <td class="text-right">{{ formatNumber(amount.ma) }}</td>
                   <td class="text-right">{{ formatNumber(amount.oa) }}</td>
@@ -395,11 +395,11 @@
           </div>
           <div class="detail-item">
             <label>Created At</label>
-            <p>{{ formatDate(trfData.createdAt) }}</p>
+            <p>{{ dateUtils.formatDate(trfData.createdAt) }}</p>
           </div>
           <div class="detail-item">
             <label>Last Updated</label>
-            <p>{{ formatDate(trfData.updatedAt) }}</p>
+            <p>{{ dateUtils.formatDate(trfData.updatedAt) }}</p>
           </div>
         </div>
       </div>
@@ -454,7 +454,7 @@
           </div>
           <div class="detail-item" *ngIf="trfData.flightDetails.processedDate">
             <label>Processing Date</label>
-            <p>{{ formatDate(trfData.flightDetails.processedDate) }}</p>
+            <p>{{ dateUtils.formatDate(trfData.flightDetails.processedDate) }}</p>
           </div>
           <div class="detail-item full-width" *ngIf="trfData.flightDetails.remarks">
             <label>Remarks</label>
@@ -480,13 +480,13 @@
           <div class="col-md-6" *ngIf="trfData.createdAt">
             <div class="info-group">
               <label>Created At</label>
-              <p>{{ formatDate(trfData.createdAt) }}</p>
+              <p>{{ dateUtils.formatDate(trfData.createdAt) }}</p>
             </div>
           </div>
           <div class="col-md-6" *ngIf="trfData.updatedAt">
             <div class="info-group">
               <label>Last Updated</label>
-              <p>{{ formatDate(trfData.updatedAt) }}</p>
+              <p>{{ dateUtils.formatDate(trfData.updatedAt) }}</p>
             </div>
           </div>
         </div>
@@ -562,7 +562,7 @@
               <h4>{{ step.role || 'Unknown Role' }}</h4>
               <p class="step-status">{{ step.status || 'Pending' }}</p>
               <p class="step-date" *ngIf="step.approvedAt || step.rejectedAt">
-                {{ formatDate(step.approvedAt || step.rejectedAt) }}
+                {{ dateUtils.formatDate(step.approvedAt || step.rejectedAt) }}
               </p>
               <p class="step-comments" *ngIf="step.comments">{{ step.comments }}</p>
             </div>

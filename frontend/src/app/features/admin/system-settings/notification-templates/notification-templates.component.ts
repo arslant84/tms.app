@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TmsApp_Core_Services_NotificationsService, TmsApp_Notifications_NotificationTemplate, TmsApp_Notifications_NotificationEventType, TmsApp_Notifications_NotificationTemplateFormValues } from '../../../../core/services/notifications.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 @Component({
   selector: 'tmsapp-admin-systemsettings-notification-templates',
@@ -36,7 +37,8 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
 
   constructor(
     private notificationsService: TmsApp_Core_Services_NotificationsService,
-    private toast: ToastService
+    private toast: ToastService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -187,8 +189,4 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
     return generalVars;
   }
 
-  formatDate(dateString?: string): string {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  }
 }

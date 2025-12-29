@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 export interface ApprovalStep {
   role: string;
@@ -38,7 +39,11 @@ export class ApprovalSubmissionComponent implements OnInit {
   approvalForm!: FormGroup;
   isInternationalTravel: boolean = false;
 
-  constructor(private fb: FormBuilder, private formUtils: FormUtilsService) {}
+  constructor(
+    private fb: FormBuilder,
+    private formUtils: FormUtilsService,
+    public dateUtils: DateUtilsService
+  ) {}
 
   ngOnInit(): void {
     // Determine if international travel (requires T&C confirmation)
@@ -99,15 +104,6 @@ export class ApprovalSubmissionComponent implements OnInit {
     return iconMap[this.travelType || ''] || 'bi-airplane';
   }
 
-  formatDate(date: Date | string | undefined): string {
-    if (!date) return '';
-    const d = new Date(date);
-    return d.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  }
 
   onSubmit(): void {
     if (this.approvalForm.valid) {

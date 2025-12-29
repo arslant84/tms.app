@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { VisaService, VisaApplication } from '../../../visa/visa.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 interface PendingVisa {
   id: number;
@@ -68,7 +69,8 @@ export class VisaProcessingComponent implements OnInit {
   constructor(
     private visaService: VisaService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -373,19 +375,6 @@ export class VisaProcessingComponent implements OnInit {
    */
   goToOverview(): void {
     this.router.navigate(['/admin/visa']);
-  }
-
-  /**
-   * Format date
-   */
-  formatDate(date: string | Date | null | undefined): string {
-    if (!date) return 'N/A';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    } catch {
-      return 'Invalid Date';
-    }
   }
 
   /**

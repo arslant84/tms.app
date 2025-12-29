@@ -124,8 +124,8 @@
                 </small>
               </td>
               <td>
-                <div class="small">{{ formatDateTime(booking.departure_time) }}</div>
-                <small class="text-muted">Arr: {{ formatDateTime(booking.arrival_time) }}</small>
+                <div class="small">{{ dateUtils.formatDateTime(booking.departure_time) }}</div>
+                <small class="text-muted">Arr: {{ dateUtils.formatDateTime(booking.arrival_time) }}</small>
               </td>
               <td>
                 <span class="badge" [ngClass]="getBookingClassBadge(booking.booking_class)">

@@ -20,6 +20,7 @@ import {
   isDeletable,
   formatTime12Hour
 } from '../../models/accommodation.model';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 @Component({
   selector: 'app-accommodation-detail',
@@ -52,7 +53,8 @@ export class AccommodationDetailComponent implements OnInit {
     private accommodationService: AccommodationService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
-    public workflowService: WorkflowService
+    public workflowService: WorkflowService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -184,13 +186,6 @@ export class AccommodationDetailComponent implements OnInit {
 
   // ========== HELPER METHODS ==========
 
-  formatDate(dateValue: Date | string | null | undefined): string {
-    if (!dateValue) return 'N/A';
-    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
-    if (isNaN(date.getTime())) return 'Invalid Date';
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
-
   formatDateLong(dateValue: Date | string | null | undefined): string {
     if (!dateValue) return 'N/A';
     const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
@@ -237,8 +232,8 @@ export class AccommodationDetailComponent implements OnInit {
     if (!this.hasAssignment) return 'N/A';
     const staffHouse = this.request?.assignedStaffHouseName || 'N/A';
     const room = this.request?.assignedRoomName || 'N/A';
-    const checkIn = this.formatDate(this.request?.requestedCheckInDate);
-    const checkOut = this.formatDate(this.request?.requestedCheckOutDate);
+    const checkIn = this.dateUtils.formatDate(this.request?.requestedCheckInDate);
+    const checkOut = this.dateUtils.formatDate(this.request?.requestedCheckOutDate);
     return `${staffHouse} - ${room} (${checkIn} - ${checkOut})`;
   }
 
@@ -263,7 +258,7 @@ export class AccommodationDetailComponent implements OnInit {
     return this.request.dailyBookings
       .filter(b => b.notes && b.notes.trim().length > 0)
       .map(b => ({
-        date: this.formatDate(b.date),
+        date: this.dateUtils.formatDate(b.date),
         note: b.notes!
       }));
   }
@@ -289,19 +284,6 @@ export class AccommodationDetailComponent implements OnInit {
     return { text: 'Not Ready', class: 'badge-secondary' };
   }
 
-  formatDateTime(dateValue: Date | string | null | undefined): string {
-    if (!dateValue) return 'N/A';
-    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
-    if (isNaN(date.getTime())) return 'Invalid Date';
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  }
 
   formatTime(timeStr: string | null | undefined): string {
     return formatTime12Hour(timeStr || undefined);
@@ -398,7 +380,7 @@ export class AccommodationDetailComponent implements OnInit {
     const grouped = new Map<string, DailyBooking[]>();
 
     this.request.dailyBookings.forEach(booking => {
-      const dateKey = this.formatDate(booking.date);
+      const dateKey = this.dateUtils.formatDate(booking.date);
       if (!grouped.has(dateKey)) {
         grouped.set(dateKey, []);
       }

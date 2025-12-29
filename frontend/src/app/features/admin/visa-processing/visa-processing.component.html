@@ -140,7 +140,7 @@
                 {{ app.status }}
               </span>
             </td>
-            <td>{{ formatDate(app.submittedDate) }}</td>
+            <td>{{ dateUtils.formatDate(app.submittedDate) }}</td>
             <td>
               <div class="d-flex gap-2 justify-content-center">
                 <button class="btn btn-sm btn-outline-secondary" (click)="viewApplication(app.id)" title="View Details">
@@ -225,16 +225,16 @@
                 </td>
                 <td>
                   <div *ngIf="visa.processing_details?.visa_valid_from && visa.processing_details?.visa_valid_to">
-                    <span class="fw-medium">{{ formatDate(visa.processing_details.visa_valid_from) }}</span>
+                    <span class="fw-medium">{{ dateUtils.formatDate(visa.processing_details.visa_valid_from) }}</span>
                     <span class="text-muted"> to </span>
-                    <span class="fw-medium">{{ formatDate(visa.processing_details.visa_valid_to) }}</span>
+                    <span class="fw-medium">{{ dateUtils.formatDate(visa.processing_details.visa_valid_to) }}</span>
                   </div>
                   <span *ngIf="!visa.processing_details?.visa_valid_from" class="text-muted">N/A</span>
                 </td>
                 <td>
                   <span class="badge" [class]="getStatusClass(visa.status)">{{ visa.status }}</span>
                 </td>
-                <td>{{ formatDate(visa.completedDate) }}</td>
+                <td>{{ dateUtils.formatDate(visa.completedDate) }}</td>
                 <td>
                   <div class="d-flex gap-2 justify-content-center">
                     <button class="btn btn-sm btn-outline-secondary" (click)="viewApplication(visa.id)">
@@ -279,7 +279,7 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label fw-medium">Submitted</label>
-                <p class="mb-0">{{ formatDate(selectedApplication.submittedDate) }}</p>
+                <p class="mb-0">{{ dateUtils.formatDate(selectedApplication.submittedDate) }}</p>
               </div>
             </div>
           </div>

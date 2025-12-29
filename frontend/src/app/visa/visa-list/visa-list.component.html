@@ -127,8 +127,8 @@
               <td>
                 <span class="badge badge-visa-type">{{ app.visa_type }}</span>
               </td>
-              <td>{{ formatDate(app.trip_start_date) }}</td>
-              <td>{{ formatDate(app.submitted_date) }}</td>
+              <td>{{ dateUtils.formatDate(app.trip_start_date) }}</td>
+              <td>{{ dateUtils.formatDate(app.submitted_date) }}</td>
               <td>
                 <span class="badge" [ngClass]="getDisplayStatusClass(app)">
                   {{ getDisplayStatus(app) }}
