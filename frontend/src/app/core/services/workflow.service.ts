@@ -278,6 +278,7 @@ export class WorkflowService {
       'pending': 'badge-secondary',
       'in_progress': 'badge-warning',
       'approved': 'badge-success',
+      'completed': 'badge-success',
       'rejected': 'badge-danger',
       'cancelled': 'badge-secondary',
       'on_hold': 'badge-info'
