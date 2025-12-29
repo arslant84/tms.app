@@ -5,6 +5,7 @@ import { BookingsService, FlightBooking } from '../../services/bookings.service'
 import { ToastService } from '../../../../core/services/toast.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
 @Component({
   selector: 'app-flight-detail',
@@ -25,7 +26,8 @@ export class FlightDetailComponent implements OnInit {
     private bookingsService: BookingsService,
     private toastService: ToastService,
     private appSettingsService: AppSettingsService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -55,16 +57,8 @@ export class FlightDetailComponent implements OnInit {
 
   // Status badge helpers
   getStatusBadgeClass(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'PENDING': 'bg-secondary',
-      'REQUESTED': 'bg-info',
-      'CONFIRMED': 'bg-primary',
-      'TICKETED': 'bg-success',
-      'CANCELLED': 'bg-danger',
-      'REFUNDED': 'bg-warning',
-      'NO_SHOW': 'bg-dark'
-    };
-    return statusMap[status] || 'bg-secondary';
+    // Convert badge- to bg- prefix for compatibility
+    return this.statusUtils.getFlightStatusBadgeClass(status).replace('badge-', 'bg-');
   }
 
   getBookingClassBadgeClass(bookingClass: string): string {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
 export interface ApprovalStep {
   role: string;
@@ -42,7 +43,8 @@ export class ApprovalSubmissionComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private formUtils: FormUtilsService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -83,15 +85,7 @@ export class ApprovalSubmissionComponent implements OnInit {
   }
 
   getStatusBadgeClass(status: string): string {
-    const classMap: { [key: string]: string } = {
-      'Current': 'badge-primary',
-      'Approved': 'badge-success',
-      'Pending': 'badge-warning',
-      'Rejected': 'badge-danger',
-      'Cancelled': 'badge-secondary',
-      'Not Started': 'badge-light'
-    };
-    return classMap[status] || 'badge-secondary';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   getTravelTypeIcon(): string {

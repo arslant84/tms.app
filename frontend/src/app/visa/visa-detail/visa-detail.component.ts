@@ -8,6 +8,7 @@ import { ApprovalActionsComponent } from '../../shared/components/approval-actio
 import { WorkflowStatusComponent } from '../../shared/components/workflow-status/workflow-status.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../core/models/workflow.models';
 import { DateUtilsService } from '../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../core/utils/status-utils.service';
 
 @Component({
   selector: 'app-visa-detail',
@@ -40,7 +41,8 @@ export class VisaDetailComponent implements OnInit {
     private visaService: VisaService,
     public workflowService: WorkflowService,
     private toastService: ToastService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -233,13 +235,7 @@ export class VisaDetailComponent implements OnInit {
 
 
   getStatusBadgeClass(status: string): string {
-    const statusLower = status.toLowerCase();
-    if (statusLower.includes('approved') || statusLower.includes('completed')) return 'badge-success';
-    if (statusLower.includes('rejected')) return 'badge-danger';
-    if (statusLower.includes('pending')) return 'badge-warning';
-    if (statusLower.includes('draft')) return 'badge-secondary';
-    if (statusLower.includes('cancelled')) return 'badge-secondary';
-    return 'badge-info';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   getWorkflowStatus(): string {
@@ -264,15 +260,7 @@ export class VisaDetailComponent implements OnInit {
   }
 
   getWorkflowStatusClass(): string {
-    if (!this.workflow) return 'badge-secondary';
-
-    const status = this.workflow.status;
-    if (status === 'approved') return 'badge-success';
-    if (status === 'rejected') return 'badge-danger';
-    if (status === 'cancelled') return 'badge-secondary';
-    if (status === 'in_progress' || status === 'pending') return 'badge-warning';
-
-    return 'badge-info';
+    return this.statusUtils.getWorkflowStatusClass(this.workflow?.status);
   }
 
 }

@@ -9,6 +9,7 @@ import { WorkflowStatusComponent } from '../../../../shared/components/workflow-
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
 @Component({
   selector: 'app-trf-detail',
@@ -43,7 +44,8 @@ export class TrfDetailComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -216,12 +218,7 @@ export class TrfDetailComponent implements OnInit {
    * Get status badge class
    */
   getStatusClass(): string {
-    const status = this.trfData?.status?.toLowerCase() || '';
-    if (status.includes('approved')) return 'badge-success';
-    if (status.includes('rejected')) return 'badge-danger';
-    if (status.includes('pending')) return 'badge-warning';
-    if (status.includes('draft')) return 'badge-secondary';
-    return 'badge-info';
+    return this.statusUtils.getStatusBadgeClass(this.trfData?.status);
   }
 
 
@@ -468,14 +465,6 @@ export class TrfDetailComponent implements OnInit {
    * Get workflow status badge class
    */
   getWorkflowStatusClass(): string {
-    if (!this.workflow) return 'badge-secondary';
-
-    const status = this.workflow.status;
-    if (status === 'approved') return 'badge-success';
-    if (status === 'rejected') return 'badge-danger';
-    if (status === 'cancelled') return 'badge-secondary';
-    if (status === 'in_progress' || status === 'pending') return 'badge-warning';
-
-    return 'badge-info';
+    return this.statusUtils.getWorkflowStatusClass(this.workflow?.status);
   }
 }

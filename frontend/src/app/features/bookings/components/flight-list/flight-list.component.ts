@@ -8,6 +8,7 @@ import { AppSettingsService } from '../../../../core/services/app-settings.servi
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
 export const FLIGHT_STATUSES = [
   'PENDING',
@@ -60,7 +61,8 @@ export class FlightListComponent implements OnInit {
     private router: Router,
     private toastService: ToastService,
     private appSettingsService: AppSettingsService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -148,16 +150,7 @@ export class FlightListComponent implements OnInit {
   }
 
   getStatusBadgeClass(status: string): string {
-    switch (status) {
-      case 'PENDING': return 'badge-secondary';
-      case 'REQUESTED': return 'badge-warning';
-      case 'CONFIRMED': return 'badge-success';
-      case 'TICKETED': return 'badge-primary';
-      case 'CANCELLED': return 'badge-danger';
-      case 'REFUNDED': return 'badge-info';
-      case 'NO_SHOW': return 'badge-dark';
-      default: return 'badge-secondary';
-    }
+    return this.statusUtils.getFlightStatusBadgeClass(status);
   }
 
   formatCurrency(amount: number | null | undefined, currency?: string | null): string {

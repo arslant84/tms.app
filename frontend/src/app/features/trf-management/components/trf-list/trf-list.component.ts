@@ -9,6 +9,7 @@ import { finalize } from 'rxjs/operators';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
 // Status and type constants matching backend
 export const TRF_STATUSES = [
@@ -86,7 +87,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
     private router: Router,
     private trfService: TrfService,
     private toastService: ToastService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -315,18 +317,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
   }
 
   getStatusBadgeClass(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'Draft': 'badge-secondary',
-      'Pending Department Focal': 'badge-warning',
-      'Pending HOD': 'badge-warning',
-      'Pending Travel Desk': 'badge-warning',
-      'Pending Finance': 'badge-warning',
-      'Approved': 'badge-success',
-      'Rejected': 'badge-danger',
-      'Cancelled': 'badge-secondary',
-      'Completed': 'badge-success'
-    };
-    return statusMap[status] || 'badge-secondary';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   formatStatusDisplay(status: string): string {
