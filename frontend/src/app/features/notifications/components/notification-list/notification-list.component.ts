@@ -4,6 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { NotificationService, UserNotification } from '../../services/notification.service';
+import { ListStateService } from '../../../../core/services/list-state.service';
 
 @Component({
   selector: 'app-notification-list',
@@ -15,20 +16,16 @@ import { NotificationService, UserNotification } from '../../services/notificati
 export class NotificationListComponent implements OnInit, OnDestroy {
   notifications: UserNotification[] = [];
   filteredNotifications: UserNotification[] = [];
-  isLoading = false;
 
   // Filters
   filterStatus: 'all' | 'unread' | 'read' = 'all';
   filterPriority: string = 'all';
 
-  // Pagination
-  currentPage = 1;
-  pageSize = 20;
-  totalNotifications = 0;
-  totalPages = 1;
-
   // Expose Math to template
   Math = Math;
+
+  // Create list state service manually (not via DI)
+  listState = new ListStateService({ pageSize: 20 });
 
   private destroy$ = new Subject<void>();
 
@@ -52,13 +49,13 @@ export class NotificationListComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.listState.destroy();
   }
 
   loadNotifications(): void {
-    this.isLoading = true;
+    this.listState.setLoading(true);
     const filters: any = {
-      page: this.currentPage,
-      page_size: this.pageSize
+      ...this.listState.getFilters()
     };
 
     if (this.filterStatus !== 'all') {
@@ -72,14 +69,13 @@ export class NotificationListComponent implements OnInit, OnDestroy {
     this.notificationService.getAllNotifications(filters).subscribe({
       next: (response) => {
         this.notifications = Array.isArray(response) ? response : response.results || [];
-        this.totalNotifications = response.count || this.notifications.length;
-        this.totalPages = Math.ceil(this.totalNotifications / this.pageSize);
+        this.listState.setTotalItems(response.count || this.notifications.length);
         this.applyFilters();
-        this.isLoading = false;
+        this.listState.setLoading(false);
       },
       error: (err) => {
         console.error('Error loading notifications:', err);
-        this.isLoading = false;
+        this.listState.setLoading(false);
       }
     });
   }
@@ -103,7 +99,7 @@ export class NotificationListComponent implements OnInit, OnDestroy {
   }
 
   onFilterChange(): void {
-    this.currentPage = 1;
+    this.listState.resetToFirstPage();
     this.loadNotifications();
   }
 
@@ -287,40 +283,17 @@ export class NotificationListComponent implements OnInit, OnDestroy {
 
   // Pagination
   goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      this.loadNotifications();
-    }
+    this.listState.setCurrentPage(page);
+    this.loadNotifications();
   }
 
   previousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.loadNotifications();
-    }
+    this.listState.previousPage();
+    this.loadNotifications();
   }
 
   nextPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.loadNotifications();
-    }
-  }
-
-  get paginationPages(): number[] {
-    const pages: number[] = [];
-    const maxPagesToShow = 5;
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(this.totalPages, startPage + maxPagesToShow - 1);
-
-    if (endPage - startPage + 1 < maxPagesToShow) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    return pages;
+    this.listState.nextPage();
+    this.loadNotifications();
   }
 }
