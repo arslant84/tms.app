@@ -6,6 +6,7 @@ import { AccommodationService } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { TrfService } from '../../../trf-management/services/trf.service';
 
 @Component({
@@ -35,7 +36,8 @@ export class AccommodationCreateComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private authService: AuthService,
-    private trfService: TrfService
+    private trfService: TrfService,
+    private formUtils: FormUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -206,7 +208,7 @@ export class AccommodationCreateComponent implements OnInit {
 
   onSubmit(): void {
     if (this.accommodationForm.invalid) {
-      this.markFormGroupTouched(this.accommodationForm);
+      this.formUtils.markFormGroupTouched(this.accommodationForm);
       this.toastService.warning('Please fill in all required fields');
       return;
     }
@@ -308,15 +310,5 @@ export class AccommodationCreateComponent implements OnInit {
         special_requests: formValue.specialRequests
       }
     };
-  }
-
-  private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-
-      if ((control as FormGroup).controls) {
-        this.markFormGroupTouched(control as FormGroup);
-      }
-    });
   }
 }

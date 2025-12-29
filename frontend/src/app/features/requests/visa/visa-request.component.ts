@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormUtilsService } from '../../../core/utils/form-utils.service';
 import { Router } from '@angular/router';
 import { VisaService } from '../../../visa/visa.service';
 
@@ -27,7 +28,8 @@ export class VisaRequestComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private visaService: VisaService
+    private visaService: VisaService,
+    private formUtils: FormUtilsService
   ) {
     this.initForm();
   }
@@ -172,20 +174,10 @@ export class VisaRequestComponent implements OnInit {
       });
     } else {
       // Mark all fields as touched to show validation errors
-      this.markFormGroupTouched(this.visaForm);
+      this.formUtils.markFormGroupTouched(this.visaForm);
     }
   }
   
-  // Helper to mark all controls as touched
-  private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-      
-      if ((control as FormGroup).controls) {
-        this.markFormGroupTouched(control as FormGroup);
-      }
-    });
-  }
   
   // Get progress percentage for the progress bar
   get progressPercentage(): number {

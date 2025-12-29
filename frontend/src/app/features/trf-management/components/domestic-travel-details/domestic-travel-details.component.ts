@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 
 export interface ItinerarySegment {
   date: Date | null;
@@ -58,7 +59,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     refreshment: 0
   };
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder, private formUtils: FormUtilsService) {}
 
   ngOnInit(): void {
     this.initForm();
@@ -269,7 +270,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     if (this.travelForm.valid) {
       this.formSubmit.emit(this.travelForm.value);
     } else {
-      this.markFormGroupTouched(this.travelForm);
+      this.formUtils.markFormGroupTouched(this.travelForm);
     }
   }
 
@@ -288,22 +289,6 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   }
 
   markAllAsTouched(): void {
-    this.markFormGroupTouched(this.travelForm);
-  }
-
-  private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-
-      if (control instanceof FormGroup) {
-        this.markFormGroupTouched(control);
-      } else if (control instanceof FormArray) {
-        control.controls.forEach(arrayControl => {
-          if (arrayControl instanceof FormGroup) {
-            this.markFormGroupTouched(arrayControl);
-          }
-        });
-      }
-    });
+    this.formUtils.markFormGroupTouched(this.travelForm);
   }
 }

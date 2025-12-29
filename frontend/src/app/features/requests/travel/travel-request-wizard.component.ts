@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormUtilsService } from '../../../core/utils/form-utils.service';
 import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -28,7 +29,8 @@ export class TravelRequestWizardComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private formUtils: FormUtilsService
   ) {
     this.initForm();
   }
@@ -182,20 +184,10 @@ export class TravelRequestWizardComponent implements OnInit {
       }, 1500);
     } else {
       // Mark all fields as touched to show validation errors
-      this.markFormGroupTouched(this.travelRequestForm);
+      this.formUtils.markFormGroupTouched(this.travelRequestForm);
     }
   }
   
-  // Helper to mark all controls as touched
-  private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-      
-      if ((control as FormGroup).controls) {
-        this.markFormGroupTouched(control as FormGroup);
-      }
-    });
-  }
   
   // Get progress percentage for the progress bar
   get progressPercentage(): number {

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { VisaService, VisaApplication } from '../visa.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
+import { FormUtilsService } from '../../core/utils/form-utils.service';
 
 @Component({
   selector: 'app-visa-form',
@@ -60,7 +61,8 @@ export class VisaFormComponent implements OnInit {
     private router: Router,
     private visaService: VisaService,
     private toastService: ToastService,
-    private authService: AuthService
+    private authService: AuthService,
+    private formUtils: FormUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -169,7 +171,7 @@ export class VisaFormComponent implements OnInit {
 
   onSubmit(): void {
     if (this.visaForm.invalid) {
-      const invalidFields = this.markFormGroupTouched(this.visaForm);
+      const invalidFields = this.formUtils.markFormGroupTouched(this.visaForm, true);
 
       // Build error message with field names
       if (invalidFields.length > 0) {
@@ -325,21 +327,6 @@ export class VisaFormComponent implements OnInit {
     return formValue;
   }
 
-  markFormGroupTouched(formGroup: FormGroup): string[] {
-    const invalidFields: string[] = [];
-
-    Object.keys(formGroup.controls).forEach(key => {
-      const control = formGroup.get(key);
-      control?.markAsTouched();
-
-      // Collect invalid required fields
-      if (control?.invalid && control?.errors?.['required']) {
-        invalidFields.push(key);
-      }
-    });
-
-    return invalidFields;
-  }
 
   scrollToFirstInvalidField(): void {
     // Find the first invalid control

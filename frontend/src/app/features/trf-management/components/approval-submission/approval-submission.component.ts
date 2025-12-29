@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 
 export interface ApprovalStep {
   role: string;
@@ -37,7 +38,7 @@ export class ApprovalSubmissionComponent implements OnInit {
   approvalForm!: FormGroup;
   isInternationalTravel: boolean = false;
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder, private formUtils: FormUtilsService) {}
 
   ngOnInit(): void {
     // Determine if international travel (requires T&C confirmation)
@@ -112,7 +113,7 @@ export class ApprovalSubmissionComponent implements OnInit {
     if (this.approvalForm.valid) {
       this.formSubmit.emit(this.approvalForm.value);
     } else {
-      this.markFormGroupTouched(this.approvalForm);
+      this.formUtils.markFormGroupTouched(this.approvalForm);
     }
   }
 
@@ -130,17 +131,7 @@ export class ApprovalSubmissionComponent implements OnInit {
   }
 
   markAllAsTouched(): void {
-    this.markFormGroupTouched(this.approvalForm);
-  }
-
-  private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-
-      if (control instanceof FormGroup) {
-        this.markFormGroupTouched(control);
-      }
-    });
+    this.formUtils.markFormGroupTouched(this.approvalForm);
   }
 
   // Helper methods for displaying travel summary

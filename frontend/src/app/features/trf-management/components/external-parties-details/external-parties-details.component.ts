@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 
 export interface ExternalPartiesDetails {
   purpose: string;
@@ -26,7 +27,10 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   externalForm!: FormGroup;
   weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private formUtils: FormUtilsService
+  ) {}
 
   ngOnInit(): void {
     this.initForm();
@@ -129,7 +133,7 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
       this.formSubmit.emit(formValue);
     } else {
       this.logFormErrors(this.externalForm);
-      this.markFormGroupTouched(this.externalForm);
+      this.formUtils.markFormGroupTouched(this.externalForm);
     }
   }
 
@@ -155,15 +159,6 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   }
 
   markAllAsTouched(): void {
-    this.markFormGroupTouched(this.externalForm);
-  }
-
-  private markFormGroupTouched(formGroup: FormGroup | FormArray): void {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-      if (control instanceof FormGroup || control instanceof FormArray) {
-        this.markFormGroupTouched(control);
-      }
-    });
+    this.formUtils.markFormGroupTouched(this.externalForm);
   }
 }
