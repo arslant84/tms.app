@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 
 export interface ItinerarySegment {
   date: string;
@@ -52,7 +53,7 @@ export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
   overseasForm!: FormGroup;
   weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder, private formUtils: FormUtilsService) {}
 
   ngOnInit(): void {
     this.initForm();
@@ -201,7 +202,7 @@ export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
       const formValue = this.overseasForm.getRawValue();
       this.formSubmit.emit(formValue);
     } else {
-      this.markFormGroupTouched(this.overseasForm);
+      this.formUtils.markFormGroupTouched(this.overseasForm);
     }
   }
 
@@ -215,15 +216,6 @@ export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
   }
 
   markAllAsTouched(): void {
-    this.markFormGroupTouched(this.overseasForm);
-  }
-
-  private markFormGroupTouched(formGroup: FormGroup | FormArray): void {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-      if (control instanceof FormGroup || control instanceof FormArray) {
-        this.markFormGroupTouched(control);
-      }
-    });
+    this.formUtils.markFormGroupTouched(this.overseasForm);
   }
 }
