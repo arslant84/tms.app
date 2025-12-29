@@ -150,7 +150,10 @@ export class StatusUtilsService {
 
     const statusLower = status.toLowerCase();
 
-    if (statusLower.includes('confirmed') || statusLower.includes('checked-in')) {
+    if (statusLower.includes('approved') ||
+        statusLower.includes('confirmed') ||
+        statusLower.includes('assigned') ||
+        statusLower.includes('checked-in')) {
       return 'badge-success';
     }
     if (statusLower.includes('pending') || statusLower.includes('requested')) {
