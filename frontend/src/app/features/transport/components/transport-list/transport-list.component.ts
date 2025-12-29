@@ -6,6 +6,7 @@ import { TransportService, TransportRequest } from '../../services/transport.ser
 import { ToastService } from '../../../../core/services/toast.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
 
 // Status constants for filtering (broad categories to match workflow statuses)
@@ -44,7 +45,8 @@ export class TransportListComponent implements OnInit, OnDestroy {
     private router: Router,
     private toastService: ToastService,
     private appSettingsService: AppSettingsService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -169,23 +171,7 @@ export class TransportListComponent implements OnInit, OnDestroy {
   }
 
   getStatusClass(status: string): string {
-    const lowerStatus = status.toLowerCase();
-    if (lowerStatus.includes('approved') || lowerStatus.includes('completed')) {
-      return 'badge-success';
-    }
-    if (lowerStatus.includes('rejected')) {
-      return 'badge-danger';
-    }
-    if (lowerStatus.includes('pending')) {
-      return 'badge-warning';
-    }
-    if (lowerStatus.includes('cancelled')) {
-      return 'badge-secondary';
-    }
-    if (lowerStatus.includes('draft')) {
-      return 'badge-secondary';
-    }
-    return 'badge-info';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
 

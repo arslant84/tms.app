@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AccommodationService, AccommodationRequest } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
 
 export const ACCOMMODATION_STATUSES = [
@@ -40,7 +41,8 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
     private accommodationService: AccommodationService,
     private router: Router,
     private toastService: ToastService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -154,20 +156,7 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
   }
 
   getStatusClass(status: string): string {
-    const lowerStatus = status.toLowerCase();
-    if (lowerStatus.includes('approved') || lowerStatus.includes('confirmed') || lowerStatus.includes('checked-out')) {
-      return 'badge-success';
-    }
-    if (lowerStatus.includes('rejected')) {
-      return 'badge-danger';
-    }
-    if (lowerStatus.includes('pending') || lowerStatus.includes('checked-in')) {
-      return 'badge-warning';
-    }
-    if (lowerStatus.includes('cancelled') || lowerStatus.includes('draft')) {
-      return 'badge-secondary';
-    }
-    return 'badge-info';
+    return this.statusUtils.getAccommodationStatusBadgeClass(status);
   }
 
 
