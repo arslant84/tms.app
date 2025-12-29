@@ -2,13 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
 import { VisaService, VisaApplication } from '../visa.service';
 import { WorkflowService } from '../../core/services/workflow.service';
 import { WorkflowInstanceList } from '../../core/models/workflow.models';
 import { ToastService } from '../../core/services/toast.service';
 import { DateUtilsService } from '../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../core/utils/status-utils.service';
+import { ListStateService } from '../../core/services/list-state.service';
 
 @Component({
   selector: 'app-visa-list',
@@ -19,18 +19,12 @@ import { StatusUtilsService } from '../../core/utils/status-utils.service';
 })
 export class VisaListComponent implements OnInit, OnDestroy {
   applications: VisaApplication[] = [];
-  isLoading = false;
-  searchTerm = '';
   filterStatus = '';
   filterVisaType = '';
 
   // Workflow data
   workflowMap: Map<number, WorkflowInstanceList> = new Map();
 
-  // Pagination
-  currentPage = 1;
-  pageSize = 10;
-  totalCount = 0;
   Math = Math; // Expose Math to template
 
   // Filter options
@@ -55,8 +49,8 @@ export class VisaListComponent implements OnInit, OnDestroy {
     'Official'
   ];
 
-  private searchSubject = new Subject<string>();
-  private destroy$ = new Subject<void>();
+  // Create list state service manually (not via DI)
+  listState = new ListStateService({ pageSize: 10 });
 
   constructor(
     private visaService: VisaService,
@@ -67,56 +61,49 @@ export class VisaListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.setupSearch();
+    // Subscribe to debounced search changes
+    this.listState.search$.subscribe(() => {
+      this.fetchApplications();
+    });
+
+    // Initial load
     this.fetchApplications();
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  setupSearch(): void {
-    this.searchSubject.pipe(
-      debounceTime(500),
-      distinctUntilChanged()
-    ).subscribe(searchTerm => {
-      this.searchTerm = searchTerm;
-      this.resetToFirstPage();
-      this.fetchApplications();
-    });
+    this.listState.destroy();
   }
 
   onSearchChange(value: string): void {
-    this.searchSubject.next(value);
+    this.listState.setSearch(value);
   }
 
   onFilterChange(): void {
-    this.resetToFirstPage();
+    this.listState.resetToFirstPage();
     this.fetchApplications();
   }
 
   fetchApplications(): void {
-    this.isLoading = true;
+    this.listState.setLoading(true);
+
+    // Add filter parameters to the request
     const filters = {
-      status: this.filterStatus,
-      visa_type: this.filterVisaType,
-      search: this.searchTerm,
-      page: this.currentPage,
-      page_size: this.pageSize
+      ...this.listState.getFilters(),
+      ...(this.filterStatus && { status: this.filterStatus }),
+      ...(this.filterVisaType && { visa_type: this.filterVisaType })
     };
 
     this.visaService.getAllApplications(filters).subscribe({
       next: (response) => {
         this.applications = response.results || response;
-        this.totalCount = response.count || this.applications.length;
-        this.isLoading = false;
+        this.listState.setTotalItems(response.count || this.applications.length);
+        this.listState.setLoading(false);
 
         // Load workflow instances for each application
         this.loadWorkflowInstances();
       },
       error: (error) => {
-        this.isLoading = false;
+        this.listState.setLoading(false);
       }
     });
   }
@@ -167,63 +154,24 @@ export class VisaListComponent implements OnInit, OnDestroy {
     return this.getStatusBadgeClass(app.status || 'Draft');
   }
 
-  resetToFirstPage(): void {
-    this.currentPage = 1;
-  }
-
   onPageChange(page: number): void {
-    this.currentPage = page;
+    this.listState.setCurrentPage(page);
     this.fetchApplications();
   }
 
   previousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.fetchApplications();
-    }
+    this.listState.previousPage();
+    this.fetchApplications();
   }
 
   nextPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.fetchApplications();
-    }
+    this.listState.nextPage();
+    this.fetchApplications();
   }
 
   goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      this.fetchApplications();
-    }
-  }
-
-  getPageNumbers(): number[] {
-    const maxPagesToShow = 5;
-    const pages: number[] = [];
-
-    if (this.totalPages <= maxPagesToShow) {
-      for (let i = 1; i <= this.totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      const half = Math.floor(maxPagesToShow / 2);
-      let start = Math.max(1, this.currentPage - half);
-      let end = Math.min(this.totalPages, start + maxPagesToShow - 1);
-
-      if (end - start < maxPagesToShow - 1) {
-        start = Math.max(1, end - maxPagesToShow + 1);
-      }
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-    }
-
-    return pages;
-  }
-
-  get totalPages(): number {
-    return Math.ceil(this.totalCount / this.pageSize);
+    this.listState.setCurrentPage(page);
+    this.fetchApplications();
   }
 
   navigateToDetail(id: number): void {
@@ -275,17 +223,17 @@ export class VisaListComponent implements OnInit, OnDestroy {
    * Check if any filters are currently active
    */
   hasActiveFilters(): boolean {
-    return this.searchTerm !== '' || this.filterStatus !== '' || this.filterVisaType !== '';
+    return this.listState.hasActiveFilters() || this.filterStatus !== '' || this.filterVisaType !== '';
   }
 
   /**
    * Clear all active filters and reset to first page
    */
   clearFilters(): void {
-    this.searchTerm = '';
+    this.listState.clearSearch();
+    this.listState.clearFilters();
     this.filterStatus = '';
     this.filterVisaType = '';
-    this.resetToFirstPage();
     this.fetchApplications();
   }
 }
