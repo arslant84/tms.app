@@ -43,6 +43,9 @@ export class AccommodationDetailComponent implements OnInit {
   isRejected: boolean = false;
   hasAdminNotes: boolean = false;
 
+  // Room details cache
+  roomDetails: { type: string; capacity: number } | null = null;
+
   // Workflow properties
   workflow: WorkflowInstance | null = null;
   workflowLoading: boolean = false;
@@ -115,6 +118,37 @@ export class AccommodationDetailComponent implements OnInit {
 
     // Check if has admin notes
     this.hasAdminNotes = !!(this.request.notes && this.request.notes.trim().length > 0);
+
+    // Fetch room details if we have bookings with a room ID
+    this.loadRoomDetails();
+  }
+
+  loadRoomDetails(): void {
+    if (!this.request?.dailyBookings || this.request.dailyBookings.length === 0) {
+      return;
+    }
+
+    const firstBooking = this.request.dailyBookings[0];
+    if (!firstBooking.roomId) {
+      return;
+    }
+
+    // Fetch room details from the backend
+    this.accommodationService.getRoomById(firstBooking.roomId).subscribe({
+      next: (room) => {
+        this.roomDetails = {
+          type: room.room_type || 'Single',
+          capacity: room.capacity || 1
+        };
+      },
+      error: (err) => {
+        // Silently fail and use defaults if room details can't be fetched
+        this.roomDetails = {
+          type: 'Single',
+          capacity: 1
+        };
+      }
+    });
   }
 
   canEdit(): boolean {
@@ -247,8 +281,8 @@ export class AccommodationDetailComponent implements OnInit {
     const firstBooking = this.request.dailyBookings[0];
     return {
       name: firstBooking.roomName || 'N/A',
-      type: 'Single', // TODO: Get from room details
-      capacity: 1,    // TODO: Get from room details
+      type: this.roomDetails?.type || 'Single',
+      capacity: this.roomDetails?.capacity || 1,
       location: this.request.location,
       gender: this.request.requestorGender
     };
