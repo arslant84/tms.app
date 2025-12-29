@@ -99,8 +99,6 @@ export class TrfWizardComponent implements OnInit {
   private loadExistingTrf(id: number): void {
     this.isLoadingTrf = true;
 
-    // TODO: Use the proper GET endpoint once available
-    // For now, this is a placeholder
     this.trfService.getTrfById(id).subscribe({
       next: (response: any) => {
         // The backend returns { trf: { ...data } }, so we need to extract the trf object
