@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { UserService, User } from '../../services/user.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-user-profile',
@@ -36,7 +37,8 @@ export class UserProfileComponent implements OnInit {
     private fb: FormBuilder,
     private userService: UserService,
     private authService: AuthService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -235,7 +237,7 @@ export class UserProfileComponent implements OnInit {
         this.passwordForm.reset();
       },
       error: (err) => {
-        const errorMsg = err.error?.error || err.error?.detail || err.error?.old_password?.[0] || 'Failed to change password';
+        const errorMsg = this.errorHandler.getErrorMessage(err, 'Failed to change password');
         this.toastService.error(errorMsg);
         this.submitting = false;
       }
