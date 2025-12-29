@@ -6,6 +6,7 @@ import { AccommodationService, AccommodationStaffHouse, AccommodationRoom } from
 import { ToastService } from '../../../core/services/toast.service';
 import { LocationDialogComponent, LocationDialogData } from './location-dialog.component';
 import { RoomDialogComponent, RoomDialogData } from './room-dialog.component';
+import { StatusUtilsService } from '../../../core/utils/status-utils.service';
 
 @Component({
   selector: 'app-accommodation-admin',
@@ -52,7 +53,8 @@ export class AccommodationAdminComponent implements OnInit {
   constructor(
     private accommodationService: AccommodationService,
     private toastService: ToastService,
-    public router: Router
+    public router: Router,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -215,12 +217,7 @@ export class AccommodationAdminComponent implements OnInit {
   }
 
   getStatusBadgeClass(status: string): string {
-    switch (status) {
-      case 'Available': return 'badge-success';
-      case 'Maintenance': return 'badge-warning';
-      case 'Reserved': return 'badge-info';
-      default: return 'badge-secondary';
-    }
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   /**
