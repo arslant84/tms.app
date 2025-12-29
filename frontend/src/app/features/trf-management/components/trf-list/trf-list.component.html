@@ -28,7 +28,7 @@
           type="text"
           class="form-control search-input"
           placeholder="Search by ID, Requestor, Purpose..."
-          [value]="searchTerm"
+          [value]="(listState.searchTerm | async) || ''"
           (input)="onSearchChange($any($event.target).value)">
 
         <select
@@ -69,30 +69,30 @@
       </div>
       <p class="card-description">
         List of your submitted travel requests. Total:
-        <span *ngIf="isLoading && totalTrfs === 0" class="loading-inline">
+        <span *ngIf="(listState.loading | async) && listState.getTotalItems() === 0" class="loading-inline">
           <i class="bi bi-arrow-clockwise spin-animation"></i>
         </span>
-        <span *ngIf="!isLoading || totalTrfs > 0">{{ totalTrfs }}</span>
+        <span *ngIf="!(listState.loading | async) || listState.getTotalItems() > 0">{{ listState.getTotalItems() }}</span>
       </p>
     </div>
 
     <div class="tsr-card-content">
       <!-- Loading State -->
-      <div *ngIf="isLoading && trfs.length === 0" class="loading-state">
+      <div *ngIf="(listState.loading | async) && trfs.length === 0" class="loading-state">
         <i class="bi bi-arrow-clockwise spin-animation"></i>
         <p class="loading-text">Loading TSRs...</p>
       </div>
 
       <!-- Error State -->
-      <div *ngIf="!isLoading && error" class="error-state">
+      <div *ngIf="!(listState.loading | async) && (listState.error | async)" class="error-state">
         <i class="bi bi-exclamation-triangle error-icon"></i>
         <h3 class="error-title">Error Loading TSRs</h3>
-        <p class="error-message">{{ error }}</p>
+        <p class="error-message">{{ listState.error | async }}</p>
         <button class="btn btn-primary" (click)="fetchTrfs()">Try Again</button>
       </div>
 
       <!-- Table with Data -->
-      <div *ngIf="!isLoading && !error && trfs.length > 0" class="table-container">
+      <div *ngIf="!(listState.loading | async) && !(listState.error | async) && trfs.length > 0" class="table-container">
         <div class="table-responsive">
           <table class="tsr-table">
             <thead>
@@ -185,22 +185,22 @@
         </div>
 
         <!-- Pagination -->
-        <div *ngIf="totalPages > 1" class="pagination-container">
+        <div *ngIf="listState.getTotalPages() > 1" class="pagination-container">
           <nav aria-label="Page navigation">
             <ul class="pagination justify-content-center mb-0">
-              <li class="page-item" [class.disabled]="currentPage === 1">
+              <li class="page-item" [class.disabled]="!listState.hasPreviousPage()">
                 <a class="page-link" (click)="previousPage()" aria-label="Previous">
                   <span aria-hidden="true">&laquo;</span>
                 </a>
               </li>
               <li
                 class="page-item"
-                *ngFor="let page of getPageNumbers()"
-                [class.active]="currentPage === page"
+                *ngFor="let page of listState.getPageNumbers()"
+                [class.active]="(listState.currentPage | async) === page"
               >
                 <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
               </li>
-              <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <li class="page-item" [class.disabled]="!listState.hasNextPage()">
                 <a class="page-link" (click)="nextPage()" aria-label="Next">
                   <span aria-hidden="true">&raquo;</span>
                 </a>
@@ -209,15 +209,15 @@
           </nav>
           <div class="text-center mt-3 pagination-info">
             <small>
-              Showing {{ (currentPage - 1) * pageSize + 1 }} -
-              {{ Math.min(currentPage * pageSize, totalTrfs) }} of {{ totalTrfs }} requests
+              Showing {{ ((listState.currentPage | async)! - 1) * listState.getPageSize() + 1 }} -
+              {{ Math.min((listState.currentPage | async)! * listState.getPageSize(), listState.getTotalItems()) }} of {{ listState.getTotalItems() }} requests
             </small>
           </div>
         </div>
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!isLoading && !error && trfs.length === 0" class="empty-state">
+      <div *ngIf="!(listState.loading | async) && !(listState.error | async) && trfs.length === 0" class="empty-state">
         <i class="bi bi-file-text empty-icon"></i>
         <p class="empty-message">
           {{ hasActiveFilters() ? 'No TSRs found matching your criteria.' : 'No TSRs found.' }}
