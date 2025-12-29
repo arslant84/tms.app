@@ -6,10 +6,11 @@ import { TrfService } from '../../../../core/services/trf.service';
 import { TravelRequestForm } from '../../../../core/models/trf.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { finalize } from 'rxjs/operators';
-import { Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { ListStateService } from '../../../../core/services/list-state.service';
 
 // Status and type constants matching backend
 export const TRF_STATUSES = [
@@ -52,28 +53,14 @@ export interface TrfListItem {
   styleUrls: ['./trf-list.component.scss']
 })
 export class TrfListComponent implements OnInit, OnDestroy {
-  // Pagination
-  currentPage = 1;
-  totalPages = 1;
-  totalTrfs = 0;
-  limit = 10;
-  pageSize = 10;
-
-  // Search and filter properties
-  searchTerm = '';
+  // Filter properties
   statusFilter = '';
   travelTypeFilter = '';
 
-  // Search debouncing
-  private searchSubject = new Subject<string>();
   private routerSubscription?: Subscription;
 
   // TRF data
   trfs: TrfListItem[] = [];
-
-  // Loading states
-  isLoading = false;
-  error: string | null = null;
 
   // Sort configuration
   sortKey: string | null = 'submitted_at';
@@ -82,6 +69,9 @@ export class TrfListComponent implements OnInit, OnDestroy {
   // Constants for template
   readonly TRF_STATUSES = TRF_STATUSES;
   readonly TRAVEL_TYPES = TRAVEL_TYPES;
+
+  // Create list state service manually (not via DI)
+  listState = new ListStateService({ pageSize: 10 });
 
   constructor(
     private router: Router,
@@ -92,13 +82,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Setup search debouncing
-    this.searchSubject.pipe(
-      debounceTime(500),
-      distinctUntilChanged()
-    ).subscribe(searchTerm => {
-      this.searchTerm = searchTerm;
-      this.resetToFirstPage();
+    // Subscribe to debounced search changes
+    this.listState.search$.subscribe(() => {
       this.fetchTrfs();
     });
 
@@ -120,25 +105,21 @@ export class TrfListComponent implements OnInit, OnDestroy {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
     }
+    this.listState.destroy();
   }
 
   onSearchChange(value: string): void {
-    this.searchSubject.next(value);
+    this.listState.setSearch(value);
   }
 
   fetchTrfs(): void {
-    this.isLoading = true;
-    this.error = null;
+    this.listState.setLoading(true);
+    this.listState.clearError();
 
     const params: any = {
-      page: this.currentPage,
-      page_size: this.pageSize,
-      limit: this.limit
+      ...this.listState.getFilters(),
+      limit: this.listState.getPageSize()
     };
-
-    if (this.searchTerm) {
-      params.search = this.searchTerm;
-    }
 
     if (this.statusFilter) {
       params.status = this.statusFilter;
@@ -156,41 +137,36 @@ export class TrfListComponent implements OnInit, OnDestroy {
     this.trfService.getAllTrfs(params)
       .pipe(
         finalize(() => {
-          this.isLoading = false;
+          this.listState.setLoading(false);
         })
       )
       .subscribe({
         next: (response: any) => {
-
           // Handle both array response and paginated response
           if (Array.isArray(response)) {
             // Direct array response from Django
             this.trfs = response;
-            this.totalTrfs = response.length;
+            this.listState.setTotalItems(response.length);
           } else {
             // Paginated response
             this.trfs = response.results || response.trfs || [];
-            this.totalTrfs = response.count || response.totalCount || 0;
+            this.listState.setTotalItems(response.count || response.totalCount || 0);
           }
-
-          this.totalPages = Math.ceil(this.totalTrfs / this.pageSize);
         },
         error: (err) => {
-          this.error = err.message || 'Failed to load TRFs';
+          this.listState.setError(err.message || 'Failed to load TRFs');
           this.trfs = [];
-          this.totalTrfs = 0;
-          this.totalPages = 1;
         }
       });
   }
 
   onStatusFilterChange(): void {
-    this.resetToFirstPage();
+    this.listState.resetToFirstPage();
     this.fetchTrfs();
   }
 
   onTravelTypeFilterChange(): void {
-    this.resetToFirstPage();
+    this.listState.resetToFirstPage();
     this.fetchTrfs();
   }
 
@@ -205,17 +181,17 @@ export class TrfListComponent implements OnInit, OnDestroy {
   }
 
   clearFilters(): void {
-    this.searchTerm = '';
+    this.listState.clearSearch();
+    this.listState.clearFilters();
     this.statusFilter = '';
     this.travelTypeFilter = '';
     this.sortKey = 'submitted_at';
     this.sortDirection = 'descending';
-    this.resetToFirstPage();
     this.fetchTrfs();
   }
 
   hasActiveFilters(): boolean {
-    return this.searchTerm !== '' || this.statusFilter !== '' || this.travelTypeFilter !== '';
+    return this.listState.hasActiveFilters() || this.statusFilter !== '' || this.travelTypeFilter !== '';
   }
 
   navigateToCreate(): void {
@@ -263,57 +239,22 @@ export class TrfListComponent implements OnInit, OnDestroy {
   }
 
   previousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.fetchTrfs();
-    }
+    this.listState.previousPage();
+    this.fetchTrfs();
   }
 
   nextPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.fetchTrfs();
-    }
+    this.listState.nextPage();
+    this.fetchTrfs();
   }
 
   goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      this.fetchTrfs();
-    }
-  }
-
-  getPageNumbers(): number[] {
-    const maxPagesToShow = 5;
-    const pages: number[] = [];
-
-    if (this.totalPages <= maxPagesToShow) {
-      for (let i = 1; i <= this.totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      const half = Math.floor(maxPagesToShow / 2);
-      let start = Math.max(1, this.currentPage - half);
-      let end = Math.min(this.totalPages, start + maxPagesToShow - 1);
-
-      if (end - start < maxPagesToShow - 1) {
-        start = Math.max(1, end - maxPagesToShow + 1);
-      }
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-    }
-
-    return pages;
+    this.listState.setCurrentPage(page);
+    this.fetchTrfs();
   }
 
   get Math() {
     return Math;
-  }
-
-  private resetToFirstPage(): void {
-    this.currentPage = 1;
   }
 
   getStatusBadgeClass(status: string): string {
