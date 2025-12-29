@@ -1,37 +1,36 @@
-// Primary Colors - New Teal Scheme
-$primary-teal: #0d9488;              // Main teal color for primary buttons
-$primary-teal-hover: #0f766e;        // Darker teal for hover states
-$primary-teal-active: #115e59;       // Even darker for active/pressed states
-$primary-teal-light: #5eead4;        // Light teal for subtle backgrounds
-$primary-teal-lightest: #ccfbf1;     // Very light teal for backgrounds
+/**
+ * Colors - Legacy compatibility layer
+ * Forwards all variables from the design system and adds legacy aliases
+ */
+@forward 'variables';
+@use 'variables' as *;
 
-$primary-brown: rgb(255, 255, 255);  // R: 255 G: 255 B: 255 (This appears to be white in the image)
-$primary-dark-gray: rgb(60, 56, 53); // R: 060 G: 056 B: 053
+// Primary Colors - Legacy aliases that map to unified design system
+$primary-teal: $primary-color !default;
+$primary-teal-hover: $primary-hover !default;
+$primary-teal-active: $primary-active !default;
+$primary-teal-light: $primary-light !default;
+$primary-teal-lightest: $primary-lightest !default;
 
-// Secondary Colors
-$secondary-purple-dark: rgb(64, 43, 83);    // R: 064 G: 043 B: 083
-$secondary-purple-medium: rgb(104, 70, 139); // R: 104 G: 070 B: 139
-$secondary-blue: rgb(97, 94, 154);      // R: 097 G: 094 B: 154
-$secondary-light-blue: rgb(148, 189, 229);  // R: 148 G: 189 B: 229
-$secondary-green: rgb(58, 84, 65);      // R: 058 G: 084 B: 065
-$secondary-yellow: rgb(212, 214, 82);   // R: 212 G: 214 B: 082
-$secondary-orange: rgb(242, 176, 47);   // R: 242 G: 176 B: 047
-$neutral-color: rgb(205, 182, 134);     // R: 205 G: 182 B: 134
-$highlight-color: rgb(217, 39, 44);     // R: 217 G: 039 B: 044
+$primary-brown: rgb(255, 255, 255) !default;
+$primary-dark-gray: $text-primary !default;
 
-// Utility color variables
-$text-primary: $primary-dark-gray;
-$text-inverse: white;
-$background-primary: #F5F6F7;  // SAP Fiori enterprise background
-$background-secondary: #EDEFF0; // SAP Fiori shell background
-$background-card: white;        // Card/container background
-$accent-color: $primary-teal;
-$error-color: $highlight-color;
-$success-color: $secondary-green;
-$warning-color: $secondary-orange;
-$info-color: $secondary-light-blue;
+// Secondary Colors - Maintained for specific use cases
+$secondary-purple-dark: rgb(64, 43, 83) !default;
+$secondary-purple-medium: rgb(104, 70, 139) !default;
+$secondary-blue: rgb(97, 94, 154) !default;
+$secondary-light-blue: $info-color !default;
+$secondary-green: $success-color !default;
+$secondary-yellow: rgb(212, 214, 82) !default;
+$secondary-orange: $warning-color !default;
+$neutral-color: rgb(205, 182, 134) !default;
+$highlight-color: $error-color !default;
+
+// Utility color variables - Legacy aliases
+$background-card: $bg-primary !default;
+$accent-color: $primary-color !default;
 
 // SAP Fiori Navigation Colors
-$sap-shell-header: #354A5F;     // SAP Fiori shell header dark blue-gray
-$sap-shell-sidebar: #FAFAFA;    // SAP Fiori sidebar light gray
-$sap-shell-footer: #354A5F;     // SAP Fiori footer matching header
+$sap-shell-header: #354A5F !default;
+$sap-shell-sidebar: #FAFAFA !default;
+$sap-shell-footer: #354A5F !default;
