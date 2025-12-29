@@ -2,11 +2,10 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AccommodationService, AccommodationRequest } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { ListStateService } from '../../../../core/services/list-state.service';
 
 export const ACCOMMODATION_STATUSES = [
   'Draft',
@@ -28,22 +27,14 @@ export const ACCOMMODATION_STATUSES = [
 })
 export class AccommodationListComponent implements OnInit, OnDestroy {
   requests: AccommodationRequest[] = [];
-  loading = false;
-  error = '';
-
-  searchTerm = '';
-  statusFilter = '';
   statuses = ACCOMMODATION_STATUSES;
 
-  currentPage = 1;
-  pageSize = 10;
-  totalRequests = 0;
-
+  statusFilter = '';
   sortField = 'created_at';
   sortDirection: 'asc' | 'desc' = 'desc';
 
-  private searchSubject = new Subject<string>();
-  private destroy$ = new Subject<void>();
+  // Create list state service manually (not via DI)
+  listState = new ListStateService({ pageSize: 10 });
 
   constructor(
     private accommodationService: AccommodationService,
@@ -53,109 +44,69 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.searchSubject.pipe(
-      debounceTime(500),
-      distinctUntilChanged()
-    ).subscribe(searchTerm => {
-      this.searchTerm = searchTerm;
-      this.resetToFirstPage();
+    // Subscribe to debounced search changes
+    this.listState.search$.subscribe(() => {
       this.fetchRequests();
     });
 
+    // Initial load
     this.fetchRequests();
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    this.listState.destroy();
   }
 
   fetchRequests(): void {
-    this.loading = true;
-    this.error = '';
+    this.listState.setLoading(true);
+    this.listState.clearError();
 
+    // Add status filter to the request
     const filters = {
-      status: this.statusFilter,
-      search: this.searchTerm,
-      page: this.currentPage,
-      page_size: this.pageSize
+      ...this.listState.getFilters(),
+      ...(this.statusFilter && { status: this.statusFilter })
     };
 
     this.accommodationService.getAllRequests(filters).subscribe({
       next: (response) => {
         if (Array.isArray(response)) {
           this.requests = response;
-          this.totalRequests = response.length;
+          this.listState.setTotalItems(response.length);
         } else {
           this.requests = response.results || [];
-          this.totalRequests = response.count || 0;
+          this.listState.setTotalItems(response.count || 0);
         }
-        this.loading = false;
+        this.listState.setLoading(false);
       },
       error: (err) => {
-        this.error = 'Failed to load accommodation requests';
-        this.loading = false;
+        this.listState.setError('Failed to load accommodation requests');
+        this.listState.setLoading(false);
       }
     });
   }
 
   onSearchChange(value: string): void {
-    this.searchSubject.next(value);
+    this.listState.setSearch(value);
   }
 
   onStatusFilterChange(): void {
-    this.resetToFirstPage();
+    this.listState.resetToFirstPage();
     this.fetchRequests();
   }
 
-  resetToFirstPage(): void {
-    this.currentPage = 1;
-  }
-
   nextPage(): void {
-    if (this.currentPage * this.pageSize < this.totalRequests) {
-      this.currentPage++;
-      this.fetchRequests();
-    }
+    this.listState.nextPage();
+    this.fetchRequests();
   }
 
   previousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.fetchRequests();
-    }
+    this.listState.previousPage();
+    this.fetchRequests();
   }
 
   goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      this.fetchRequests();
-    }
-  }
-
-  getPageNumbers(): number[] {
-    const maxPagesToShow = 5;
-    const pages: number[] = [];
-
-    if (this.totalPages <= maxPagesToShow) {
-      for (let i = 1; i <= this.totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      const half = Math.floor(maxPagesToShow / 2);
-      let start = Math.max(1, this.currentPage - half);
-      let end = Math.min(this.totalPages, start + maxPagesToShow - 1);
-
-      if (end - start < maxPagesToShow - 1) {
-        start = Math.max(1, end - maxPagesToShow + 1);
-      }
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-    }
-
-    return pages;
+    this.listState.setCurrentPage(page);
+    this.fetchRequests();
   }
 
   navigateToCreate(): void {
@@ -235,15 +186,15 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
     return status.includes('draft') || status.includes('pending');
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.totalRequests / this.pageSize);
-  }
-
+  // Pagination display helpers
   get startIndex(): number {
-    return (this.currentPage - 1) * this.pageSize + 1;
+    return (this.listState.getCurrentPage() - 1) * this.listState.getPageSize() + 1;
   }
 
   get endIndex(): number {
-    return Math.min(this.currentPage * this.pageSize, this.totalRequests);
+    return Math.min(
+      this.listState.getCurrentPage() * this.listState.getPageSize(),
+      this.listState.getTotalItems()
+    );
   }
 }
