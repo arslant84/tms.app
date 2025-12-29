@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Outpu
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
+import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 
 export interface RequestorInformation {
   fullName: string;
@@ -28,7 +29,8 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService
+    private authService: AuthService,
+    private formUtils: FormUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -77,7 +79,7 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
     if (this.requestorForm.valid) {
       this.formSubmit.emit(this.requestorForm.value);
     } else {
-      this.markFormGroupTouched(this.requestorForm);
+      this.formUtils.markFormGroupTouched(this.requestorForm);
     }
   }
 
@@ -91,15 +93,6 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
   }
 
   markAllAsTouched(): void {
-    this.markFormGroupTouched(this.requestorForm);
-  }
-
-  private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-      if (control instanceof FormGroup) {
-        this.markFormGroupTouched(control);
-      }
-    });
+    this.formUtils.markFormGroupTouched(this.requestorForm);
   }
 }

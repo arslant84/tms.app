@@ -6,6 +6,7 @@ import { TrfService } from '../../services/trf.service';
 import { DomesticTravelRequestForm, OverseasTravelRequestForm } from '../../models/trf.model';
 import { HttpClientModule } from '@angular/common/http';
 import { AuthService } from '../../../../core/services/auth.service';
+import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 
 @Component({
   selector: 'app-trf-create',
@@ -32,7 +33,8 @@ export class TrfCreateComponent implements OnInit {
     private fb: FormBuilder,
     private trfService: TrfService,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private formUtils: FormUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -232,7 +234,7 @@ export class TrfCreateComponent implements OnInit {
   // Form submission
   onSubmit(): void {
     if (this.trfForm.invalid) {
-      this.markFormGroupTouched(this.trfForm);
+      this.formUtils.markFormGroupTouched(this.trfForm);
       return;
     }
     
@@ -380,9 +382,9 @@ export class TrfCreateComponent implements OnInit {
   
   // Export to PDF
   exportToPdf(): void {
-    
+
     if (this.trfForm.invalid) {
-      this.markFormGroupTouched(this.trfForm);
+      this.formUtils.markFormGroupTouched(this.trfForm);
       return;
     }
     
@@ -415,22 +417,4 @@ export class TrfCreateComponent implements OnInit {
     });
   }
   
-  // Helper to mark all controls as touched for validation display
-  private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.values(formGroup.controls).forEach(control => {
-      control.markAsTouched();
-      
-      if (control instanceof FormGroup) {
-        this.markFormGroupTouched(control);
-      } else if (control instanceof FormArray) {
-        control.controls.forEach((ctrl: any) => {
-          if (ctrl instanceof FormGroup) {
-            this.markFormGroupTouched(ctrl);
-          } else {
-            ctrl.markAsTouched();
-          }
-        });
-      }
-    });
-  }
 }

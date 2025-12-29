@@ -10,6 +10,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { TransportService } from '../../services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { TransportRequestForm, TransportDetail, TransportType, toBackendFormat } from '../../models/transport.model';
 
 @Component({
@@ -34,7 +35,8 @@ export class TransportCreateComponent implements OnInit {
     private route: ActivatedRoute,
     private transportService: TransportService,
     private toastService: ToastService,
-    private authService: AuthService
+    private authService: AuthService,
+    private formUtils: FormUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -180,7 +182,7 @@ export class TransportCreateComponent implements OnInit {
 
   onSubmit(): void {
     if (this.transportForm.invalid) {
-      this.markFormGroupTouched(this.transportForm);
+      this.formUtils.markFormGroupTouched(this.transportForm);
       this.toastService.warning('Please fill in all required fields and confirm all checkboxes');
       return;
     }
@@ -251,17 +253,6 @@ export class TransportCreateComponent implements OnInit {
     if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
       this.router.navigate(['/transport']);
     }
-  }
-
-  private markFormGroupTouched(formGroup: FormGroup | FormArray): void {
-    Object.keys(formGroup.controls).forEach(key => {
-      const control = formGroup.get(key);
-      control?.markAsTouched();
-
-      if (control instanceof FormGroup || control instanceof FormArray) {
-        this.markFormGroupTouched(control);
-      }
-    });
   }
 
   // Helper methods for template
