@@ -2,12 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TransportService, TransportRequest } from '../../services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { ListStateService } from '../../../../core/services/list-state.service';
 
 // Status constants for filtering (broad categories to match workflow statuses)
 export const TRANSPORT_STATUSES = [
@@ -28,25 +27,17 @@ export const TRANSPORT_STATUSES = [
 })
 export class TransportListComponent implements OnInit, OnDestroy {
   requests: TransportRequest[] = [];
-  loading = false;
-  error = '';
 
   // Filters
-  searchTerm = '';
   statusFilter = '';
   statuses = TRANSPORT_STATUSES;
-
-  // Pagination
-  currentPage = 1;
-  pageSize = 10;
-  totalRequests = 0;
 
   // Sorting
   sortField = 'submittedAt';
   sortDirection: 'asc' | 'desc' = 'desc';
 
-  private searchSubject = new Subject<string>();
-  private destroy$ = new Subject<void>();
+  // Create list state service manually (not via DI)
+  listState = new ListStateService({ pageSize: 10 });
 
   constructor(
     private transportService: TransportService,
@@ -57,33 +48,27 @@ export class TransportListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Setup debounced search
-    this.searchSubject.pipe(
-      debounceTime(500),
-      distinctUntilChanged()
-    ).subscribe(searchTerm => {
-      this.searchTerm = searchTerm;
-      this.resetToFirstPage();
+    // Subscribe to debounced search changes
+    this.listState.search$.subscribe(() => {
       this.fetchRequests();
     });
 
+    // Initial load
     this.fetchRequests();
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    this.listState.destroy();
   }
 
   fetchRequests(): void {
-    this.loading = true;
-    this.error = '';
+    this.listState.setLoading(true);
+    this.listState.clearError();
 
+    // Add status filter to the request
     const filters = {
-      status: this.statusFilter,
-      search: this.searchTerm,
-      page: this.currentPage,
-      page_size: this.pageSize
+      ...this.listState.getFilters(),
+      ...(this.statusFilter && { status: this.statusFilter })
     };
 
     this.transportService.getAllRequests(filters).subscribe({
@@ -91,31 +76,27 @@ export class TransportListComponent implements OnInit, OnDestroy {
         // Handle both array and paginated responses
         if (Array.isArray(response)) {
           this.requests = response;
-          this.totalRequests = response.length;
+          this.listState.setTotalItems(response.length);
         } else {
           this.requests = response.results || [];
-          this.totalRequests = response.count || 0;
+          this.listState.setTotalItems(response.count || 0);
         }
-        this.loading = false;
+        this.listState.setLoading(false);
       },
       error: (err) => {
-        this.error = 'Failed to load transport requests';
-        this.loading = false;
+        this.listState.setError('Failed to load transport requests');
+        this.listState.setLoading(false);
       }
     });
   }
 
   onSearchChange(value: string): void {
-    this.searchSubject.next(value);
+    this.listState.setSearch(value);
   }
 
   onStatusFilterChange(): void {
-    this.resetToFirstPage();
+    this.listState.resetToFirstPage();
     this.fetchRequests();
-  }
-
-  resetToFirstPage(): void {
-    this.currentPage = 1;
   }
 
   onSort(field: string): void {
@@ -129,49 +110,18 @@ export class TransportListComponent implements OnInit, OnDestroy {
   }
 
   nextPage(): void {
-    if (this.currentPage * this.pageSize < this.totalRequests) {
-      this.currentPage++;
-      this.fetchRequests();
-    }
+    this.listState.nextPage();
+    this.fetchRequests();
   }
 
   previousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.fetchRequests();
-    }
+    this.listState.previousPage();
+    this.fetchRequests();
   }
 
   goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      this.fetchRequests();
-    }
-  }
-
-  getPageNumbers(): number[] {
-    const maxPagesToShow = 5;
-    const pages: number[] = [];
-
-    if (this.totalPages <= maxPagesToShow) {
-      for (let i = 1; i <= this.totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      const half = Math.floor(maxPagesToShow / 2);
-      let start = Math.max(1, this.currentPage - half);
-      let end = Math.min(this.totalPages, start + maxPagesToShow - 1);
-
-      if (end - start < maxPagesToShow - 1) {
-        start = Math.max(1, end - maxPagesToShow + 1);
-      }
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-    }
-
-    return pages;
+    this.listState.setCurrentPage(page);
+    this.fetchRequests();
   }
 
   navigateToCreate(): void {
@@ -268,15 +218,15 @@ export class TransportListComponent implements OnInit, OnDestroy {
     }
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.totalRequests / this.pageSize);
-  }
-
+  // Pagination display helpers
   get startIndex(): number {
-    return (this.currentPage - 1) * this.pageSize + 1;
+    return (this.listState.getCurrentPage() - 1) * this.listState.getPageSize() + 1;
   }
 
   get endIndex(): number {
-    return Math.min(this.currentPage * this.pageSize, this.totalRequests);
+    return Math.min(
+      this.listState.getCurrentPage() * this.listState.getPageSize(),
+      this.listState.getTotalItems()
+    );
   }
 }
