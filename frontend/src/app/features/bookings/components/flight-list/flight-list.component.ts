@@ -1,14 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BookingsService, FlightBooking } from '../../services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { ListStateService } from '../../../../core/services/list-state.service';
 
 export const FLIGHT_STATUSES = [
   'PENDING',
@@ -34,27 +33,20 @@ export const BOOKING_CLASSES = [
   templateUrl: './flight-list.component.html',
   styleUrls: ['./flight-list.component.scss']
 })
-export class FlightListComponent implements OnInit {
+export class FlightListComponent implements OnInit, OnDestroy {
   bookings: FlightBooking[] = [];
-  isLoading = false;
 
   // Filters
-  searchTerm = '';
   filterStatus = '';
   filterClass = '';
-
-  // Pagination
-  currentPage = 1;
-  pageSize = 20;
-  totalBookings = 0;
-  totalPages = 1;
 
   // Constants for template
   statuses = FLIGHT_STATUSES;
   bookingClasses = BOOKING_CLASSES;
   Math = Math; // Expose Math to template
 
-  private searchSubject = new Subject<string>();
+  // Create list state service manually (not via DI)
+  listState = new ListStateService({ pageSize: 20 });
 
   constructor(
     private bookingsService: BookingsService,
@@ -66,58 +58,50 @@ export class FlightListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.setupSearch();
+    // Subscribe to debounced search changes
+    this.listState.search$.subscribe(() => {
+      this.fetchBookings();
+    });
+
+    // Initial load
     this.fetchBookings();
   }
 
-  setupSearch(): void {
-    this.searchSubject.pipe(
-      debounceTime(500),
-      distinctUntilChanged()
-    ).subscribe(searchTerm => {
-      this.searchTerm = searchTerm;
-      this.resetToFirstPage();
-      this.fetchBookings();
-    });
+  ngOnDestroy(): void {
+    this.listState.destroy();
   }
 
   onSearchChange(term: string): void {
-    this.searchSubject.next(term);
+    this.listState.setSearch(term);
   }
 
   fetchBookings(): void {
-    this.isLoading = true;
-    const filters: any = {
-      page: this.currentPage,
-      page_size: this.pageSize
-    };
+    this.listState.setLoading(true);
+    this.listState.clearError();
 
-    if (this.filterStatus) {
-      filters.status = this.filterStatus;
-    }
+    // Add status filter to the request
+    const filters = {
+      ...this.listState.getFilters(),
+      ...(this.filterStatus && { status: this.filterStatus })
+    };
 
     this.bookingsService.getAllFlightBookings(filters).subscribe({
       next: (response) => {
         this.bookings = Array.isArray(response) ? response : response.results || [];
-        this.totalBookings = response.count || this.bookings.length;
-        this.totalPages = Math.ceil(this.totalBookings / this.pageSize);
-        this.isLoading = false;
+        this.listState.setTotalItems(response.count || this.bookings.length);
+        this.listState.setLoading(false);
       },
       error: (err) => {
         console.error('Error fetching bookings:', err);
-        this.toastService.error('Failed to load flight bookings');
-        this.isLoading = false;
+        this.listState.setError('Failed to load flight bookings');
+        this.listState.setLoading(false);
       }
     });
   }
 
   onFilterChange(): void {
-    this.resetToFirstPage();
+    this.listState.resetToFirstPage();
     this.fetchBookings();
-  }
-
-  resetToFirstPage(): void {
-    this.currentPage = 1;
   }
 
   navigateToCreate(): void {
@@ -181,40 +165,17 @@ export class FlightListComponent implements OnInit {
 
   // Pagination
   goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      this.fetchBookings();
-    }
+    this.listState.setCurrentPage(page);
+    this.fetchBookings();
   }
 
   previousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.fetchBookings();
-    }
+    this.listState.previousPage();
+    this.fetchBookings();
   }
 
   nextPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.fetchBookings();
-    }
-  }
-
-  get paginationPages(): number[] {
-    const pages: number[] = [];
-    const maxPagesToShow = 5;
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(this.totalPages, startPage + maxPagesToShow - 1);
-
-    if (endPage - startPage + 1 < maxPagesToShow) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    return pages;
+    this.listState.nextPage();
+    this.fetchBookings();
   }
 }
