@@ -11,6 +11,7 @@ import { WorkflowStatusComponent } from '../../../../shared/components/workflow-
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
 @Component({
   selector: 'app-transport-detail',
@@ -46,7 +47,8 @@ export class TransportDetailComponent implements OnInit {
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
     private appSettingsService: AppSettingsService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -180,13 +182,7 @@ export class TransportDetailComponent implements OnInit {
   }
 
   getStatusClass(): string {
-    const status = this.request?.status?.toLowerCase() || '';
-    if (status.includes('approved') || status.includes('completed')) return 'badge-success';
-    if (status.includes('rejected')) return 'badge-danger';
-    if (status.includes('pending')) return 'badge-warning';
-    if (status.includes('draft')) return 'badge-secondary';
-    if (status.includes('cancelled')) return 'badge-secondary';
-    return 'badge-info';
+    return this.statusUtils.getStatusBadgeClass(this.request?.status);
   }
 
   getWorkflowStatus(): string {
@@ -206,15 +202,7 @@ export class TransportDetailComponent implements OnInit {
   }
 
   getWorkflowStatusClass(): string {
-    if (!this.workflow) return 'badge-secondary';
-
-    const status = this.workflow.status;
-    if (status === 'approved') return 'badge-success';
-    if (status === 'rejected') return 'badge-danger';
-    if (status === 'cancelled') return 'badge-secondary';
-    if (status === 'in_progress' || status === 'pending') return 'badge-warning';
-
-    return 'badge-info';
+    return this.statusUtils.getWorkflowStatusClass(this.workflow?.status);
   }
 
   goBack(): void {

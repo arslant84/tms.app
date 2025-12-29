@@ -8,6 +8,7 @@ import { WorkflowService } from '../../core/services/workflow.service';
 import { WorkflowInstanceList } from '../../core/models/workflow.models';
 import { ToastService } from '../../core/services/toast.service';
 import { DateUtilsService } from '../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../core/utils/status-utils.service';
 
 @Component({
   selector: 'app-visa-list',
@@ -61,7 +62,8 @@ export class VisaListComponent implements OnInit, OnDestroy {
     private visaService: VisaService,
     public workflowService: WorkflowService,
     private toastService: ToastService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -266,21 +268,7 @@ export class VisaListComponent implements OnInit, OnDestroy {
 
 
   getStatusBadgeClass(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'Pending Department Focal': 'badge-pending',
-      'Pending Manager': 'badge-pending',
-      'Pending HOD': 'badge-pending',
-      'Pending Visa Clerk': 'badge-pending',
-      'Submitted': 'badge-info',
-      'Under Review': 'badge-info',
-      'Approved': 'badge-success',
-      'Rejected': 'badge-danger',
-      'Cancelled': 'badge-secondary',
-      'Processing': 'badge-processing',
-      'Completed': 'badge-success',
-      'Draft': 'badge-draft'
-    };
-    return statusMap[status] || 'badge-secondary';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   /**

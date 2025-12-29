@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { VisaService, VisaApplication } from '../../../visa/visa.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../core/utils/status-utils.service';
 
 @Component({
   selector: 'app-visa-admin',
@@ -89,7 +90,8 @@ export class VisaAdminComponent implements OnInit {
     private visaService: VisaService,
     private toastService: ToastService,
     public router: Router,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -341,23 +343,11 @@ export class VisaAdminComponent implements OnInit {
    * Badge classes
    */
   getStatusBadgeClass(status: string): string {
-    const statusLower = status.toLowerCase();
-    if (statusLower.includes('completed')) return 'badge-success';
-    if (statusLower.includes('approved')) return 'badge-blue';
-    if (statusLower.includes('processing') || statusLower.includes('under review')) return 'badge-purple';
-    if (statusLower.includes('rejected')) return 'badge-red';
-    if (statusLower.includes('cancelled')) return 'badge-gray';
-    if (statusLower.includes('pending') || statusLower.includes('submitted')) return 'badge-amber';
-    return 'badge-gray';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   getVisaTypeBadgeClass(visaType: string): string {
-    const typeLower = visaType?.toLowerCase() || '';
-    if (typeLower === 'business' || typeLower === 'work') return 'badge-blue';
-    if (typeLower === 'diplomatic' || typeLower === 'official') return 'badge-amber';
-    if (typeLower === 'student') return 'badge-purple';
-    if (typeLower === 'tourist' || typeLower === 'transit') return 'badge-green';
-    return 'badge-gray';
+    return this.statusUtils.getVisaTypeBadgeClass(visaType);
   }
 
   getDestinationBadgeClass(destination: string): string {

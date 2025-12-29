@@ -21,6 +21,7 @@ import {
   formatTime12Hour
 } from '../../models/accommodation.model';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
 @Component({
   selector: 'app-accommodation-detail',
@@ -54,7 +55,8 @@ export class AccommodationDetailComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -488,14 +490,6 @@ export class AccommodationDetailComponent implements OnInit {
   }
 
   getWorkflowStatusClass(): string {
-    if (!this.workflow) return 'badge-secondary';
-
-    const status = this.workflow.status;
-    if (status === 'approved') return 'badge-success';
-    if (status === 'rejected') return 'badge-danger';
-    if (status === 'cancelled') return 'badge-secondary';
-    if (status === 'in_progress' || status === 'pending') return 'badge-warning';
-
-    return 'badge-info';
+    return this.statusUtils.getWorkflowStatusClass(this.workflow?.status);
   }
 }

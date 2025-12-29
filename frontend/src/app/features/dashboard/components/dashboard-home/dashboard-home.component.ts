@@ -6,6 +6,7 @@ import { InsightsService, DashboardSummary, RecentActivity } from '../../../../c
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { Observable, map } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -45,7 +46,8 @@ export class DashboardHomeComponent implements OnInit {
 
   constructor(
     private insightsService: InsightsService,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    public statusUtils: StatusUtilsService
   ) {
     this.applicationName$ = this.appSettingsService.settings$.pipe(
       map(settings => settings.application_name || 'TMS')
@@ -115,16 +117,7 @@ export class DashboardHomeComponent implements OnInit {
   }
 
   getStatusBadgeClass(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'PENDING': 'badge-warning',
-      'APPROVED': 'badge-success',
-      'REJECTED': 'badge-danger',
-      'DRAFT': 'badge-secondary',
-      'SUBMITTED': 'badge-info',
-      'CONFIRMED': 'badge-success',
-      'CANCELLED': 'badge-danger'
-    };
-    return statusMap[status.toUpperCase()] || 'badge-secondary';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   getActivityIcon(type: string): string {
