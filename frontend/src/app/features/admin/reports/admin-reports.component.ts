@@ -7,6 +7,7 @@ import {
   DepartmentStats,
   TopPerformer
 } from './services/reports.service';
+import { HttpErrorHandlerService } from '../../../core/utils/http-error-handler.service';
 
 interface ChartData {
   labels: string[];
@@ -49,7 +50,10 @@ export class AdminReportsComponent implements OnInit {
   // Top performers
   topClerks: TopPerformer[] = [];
 
-  constructor(private reportsService: ReportsService) {}
+  constructor(
+    private reportsService: ReportsService,
+    private errorHandler: HttpErrorHandlerService
+  ) {}
 
   ngOnInit(): void {
     this.loadReportData();
@@ -184,7 +188,7 @@ export class AdminReportsComponent implements OnInit {
         window.URL.revokeObjectURL(url);
       },
       error: (err) => {
-        this.error = `Failed to export report: ${err.error?.error || err.message || 'Unknown error'}`;
+        this.error = this.errorHandler.getErrorMessage(err, 'Failed to export report');
       }
     });
   }
