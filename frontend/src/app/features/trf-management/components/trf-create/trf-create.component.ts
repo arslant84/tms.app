@@ -5,8 +5,8 @@ import { Router, RouterModule } from '@angular/router';
 import { TrfService } from '../../services/trf.service';
 import { DomesticTravelRequestForm, OverseasTravelRequestForm } from '../../models/trf.model';
 import { HttpClientModule } from '@angular/common/http';
-import { AuthService } from '../../../../core/services/auth.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
+import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 
 @Component({
   selector: 'app-trf-create',
@@ -33,8 +33,8 @@ export class TrfCreateComponent implements OnInit {
     private fb: FormBuilder,
     private trfService: TrfService,
     private router: Router,
-    private authService: AuthService,
-    private formUtils: FormUtilsService
+    private formUtils: FormUtilsService,
+    private userFormHelper: UserFormHelperService
   ) {}
 
   ngOnInit(): void {
@@ -43,21 +43,19 @@ export class TrfCreateComponent implements OnInit {
   }
 
   private populateUserDetails(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      // Auto-populate employee details from logged-in user
-      this.trfForm.get('employeeDetails')?.patchValue({
-        fullName: currentUser.name || '',
-        staffId: currentUser.staff_id || '',
-        department: currentUser.department || '',
-        email: currentUser.email || ''
-      });
+    // Auto-populate employee details using helper service
+    const userDefaults = this.userFormHelper.getUserFormDefaults();
+    this.trfForm.get('employeeDetails')?.patchValue({
+      fullName: userDefaults.fullName,
+      staffId: userDefaults.staffId,
+      department: userDefaults.department,
+      email: userDefaults.email
+    });
 
-      // Auto-populate prepared by fields
-      this.trfForm.get('approval')?.patchValue({
-        preparedBy: currentUser.name || ''
-      });
-    }
+    // Auto-populate prepared by fields
+    this.trfForm.get('approval')?.patchValue({
+      preparedBy: userDefaults.fullName
+    });
   }
   
   initForm(): void {

@@ -4,8 +4,8 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { VisaService, VisaApplication } from '../visa.service';
 import { ToastService } from '../../core/services/toast.service';
-import { AuthService } from '../../core/services/auth.service';
 import { FormUtilsService } from '../../core/utils/form-utils.service';
+import { UserFormHelperService } from '../../core/utils/user-form-helper.service';
 
 @Component({
   selector: 'app-visa-form',
@@ -61,8 +61,8 @@ export class VisaFormComponent implements OnInit {
     private router: Router,
     private visaService: VisaService,
     private toastService: ToastService,
-    private authService: AuthService,
-    private formUtils: FormUtilsService
+    private formUtils: FormUtilsService,
+    private userFormHelper: UserFormHelperService
   ) {}
 
   ngOnInit(): void {
@@ -81,21 +81,17 @@ export class VisaFormComponent implements OnInit {
   }
 
   private populateUserDetails(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      const position = this.authService.getUserPosition(currentUser);
+    // Auto-populate user details using helper service
+    const userDefaults = this.userFormHelper.getUserFormDefaults();
 
-      // Auto-populate user details from logged-in user
-
-      this.visaForm.patchValue({
-        requestor_name: currentUser.name || '',
-        staff_id: currentUser.staff_id || '',
-        department: currentUser.department || '',
-        position: position || '',
-        email: currentUser.email || '',
-        contact_telephone: currentUser.phone || ''
-      });
-    }
+    this.visaForm.patchValue({
+      requestor_name: userDefaults.fullName,
+      staff_id: userDefaults.staffId,
+      department: userDefaults.department,
+      position: userDefaults.position,
+      email: userDefaults.email,
+      contact_telephone: userDefaults.phone
+    });
   }
 
   initForm(): void {

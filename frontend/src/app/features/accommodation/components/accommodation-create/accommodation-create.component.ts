@@ -5,9 +5,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AccommodationService } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
-import { AuthService } from '../../../../core/services/auth.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { TrfService } from '../../../trf-management/services/trf.service';
+import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 
 @Component({
   selector: 'app-accommodation-create',
@@ -35,9 +35,9 @@ export class AccommodationCreateComponent implements OnInit {
     private accommodationService: AccommodationService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
-    private authService: AuthService,
     private trfService: TrfService,
-    private formUtils: FormUtilsService
+    private formUtils: FormUtilsService,
+    private userFormHelper: UserFormHelperService
   ) {}
 
   ngOnInit(): void {
@@ -141,16 +141,13 @@ export class AccommodationCreateComponent implements OnInit {
   }
 
   private populateUserDetails(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      // Auto-populate user details from logged-in user
-      this.accommodationForm.patchValue({
-        requestorName: currentUser.name || '',
-        requestorId: currentUser.staff_id || '',
-        requestorGender: currentUser.gender || '',
-        department: currentUser.department || ''
-      });
-    }
+    // Auto-populate user details using helper service
+    const userDefaults = this.userFormHelper.getUserFormDefaults();
+    this.accommodationForm.patchValue({
+      requestorName: userDefaults.fullName,
+      requestorId: userDefaults.staffId,
+      department: userDefaults.department
+    });
   }
 
   initForm(): void {

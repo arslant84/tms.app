@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from '../../../../core/services/auth.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
+import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 
 export interface RequestorInformation {
   fullName: string;
@@ -29,8 +29,8 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService,
-    private formUtils: FormUtilsService
+    private formUtils: FormUtilsService,
+    private userFormHelper: UserFormHelperService
   ) {}
 
   ngOnInit(): void {
@@ -45,19 +45,25 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
   }
 
   private initForm(): void {
-    // Get current user data for auto-population
-    const currentUser = this.authService.getCurrentUser();
-    const position = this.authService.getUserPosition(currentUser);
+    // Merge initial data with user defaults
+    const formDefaults = this.userFormHelper.mergeWithUserDefaults({
+      fullName: this.initialData.fullName,
+      staffId: this.initialData.staffId,
+      department: this.initialData.department,
+      position: this.initialData.position,
+      email: this.initialData.email,
+      phone: this.initialData.contactNo
+    });
 
-    // Use initialData if provided (edit mode), otherwise use current user data (create mode)
+    // Use merged data for form initialization
     this.requestorForm = this.fb.group({
-      fullName: [this.initialData.fullName || currentUser?.name || '', Validators.required],
-      staffId: [this.initialData.staffId || currentUser?.staff_id || '', Validators.required],
-      department: [this.initialData.department || currentUser?.department || '', Validators.required],
-      position: [this.initialData.position || position || ''],
+      fullName: [formDefaults.fullName, Validators.required],
+      staffId: [formDefaults.staffId, Validators.required],
+      department: [formDefaults.department, Validators.required],
+      position: [formDefaults.position],
       costCenter: [this.initialData.costCenter || '', Validators.required],
-      contactNo: [this.initialData.contactNo || currentUser?.phone || '', Validators.required],
-      email: [this.initialData.email || currentUser?.email || '', [Validators.required, Validators.email]]
+      contactNo: [formDefaults.phone, Validators.required],
+      email: [formDefaults.email, [Validators.required, Validators.email]]
     });
   }
 
