@@ -161,7 +161,10 @@ export class AccommodationListComponent implements OnInit, OnDestroy {
 
 
   getCheckInDate(request: AccommodationRequest): string {
-    const checkInDate = request.additional_data?.requested_check_in_date;
+    // Try multiple sources for check-in date
+    const checkInDate = request.additional_data?.requested_check_in_date ||
+                        request.additional_data?.check_in_date ||
+                        request.tsr_departure_date;
     if (!checkInDate) return 'N/A';
     return this.dateUtils.formatDate(checkInDate);
   }

@@ -42,16 +42,17 @@ export class AccommodationCreateComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    this.loadAvailableTrfs();
 
     // Check if we're in edit mode
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.isEditMode = true;
         this.requestId = +params['id'];
-        this.loadRequestData(this.requestId);
+        // Load TRFs first, then load request data in the callback
+        this.loadAvailableTrfsAndRequestData(this.requestId);
       } else {
-        // Only auto-populate in create mode
+        // In create mode, just load TRFs and populate user details
+        this.loadAvailableTrfs();
         this.populateUserDetails();
       }
     });
@@ -69,6 +70,26 @@ export class AccommodationCreateComponent implements OnInit {
       error: (err) => {
         this.availableTrfs = [];
         this.loadingTrfs = false;
+      }
+    });
+  }
+
+  loadAvailableTrfsAndRequestData(requestId: number): void {
+    this.loadingTrfs = true;
+    this.trfService.getAllTrfs({ page_size: 1000 }).subscribe({
+      next: (response: any) => {
+        // Handle both paginated and non-paginated responses
+        const trfs = response.results || response;
+        this.availableTrfs = Array.isArray(trfs) ? trfs : [];
+        this.loadingTrfs = false;
+        // Now that TRFs are loaded, load the request data
+        this.loadRequestData(requestId);
+      },
+      error: (err) => {
+        this.availableTrfs = [];
+        this.loadingTrfs = false;
+        // Still try to load request data even if TRFs failed
+        this.loadRequestData(requestId);
       }
     });
   }

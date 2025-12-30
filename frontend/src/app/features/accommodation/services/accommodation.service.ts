@@ -38,12 +38,15 @@ export interface AccommodationRequest {
   tel_email?: string;
   email?: string;
   trf?: number;
+  trf_request_number?: string;
   status: string;
   additional_comments?: string;
   submitted_at?: string;
   created_at: string;
   updated_at: string;
   additional_data?: any;
+  tsr_departure_date?: string;
+  tsr_return_date?: string;
 }
 
 export interface AccommodationRequestDetail extends AccommodationRequest {
