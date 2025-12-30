@@ -307,16 +307,18 @@ export class AccommodationCreateComponent implements OnInit {
     return {
       requestor_name: formValue.requestorName,
       staff_id: formValue.requestorId,
-      requestor_gender: formValue.requestorGender,
       department: formValue.department,
-      location: formValue.location,
       trf: formValue.trfId ? parseInt(formValue.trfId) : null,
-      requested_check_in_date: formValue.requestedCheckInDate,
-      requested_check_out_date: formValue.requestedCheckOutDate,
-      requested_room_type: formValue.requestedRoomType,
-      flight_arrival_time: formValue.flightArrivalTime,
-      flight_departure_time: formValue.flightDepartureTime,
-      special_requests: formValue.specialRequests
+      additional_data: {
+        requestor_gender: formValue.requestorGender,
+        location: formValue.location,
+        requested_check_in_date: formValue.requestedCheckInDate,
+        requested_check_out_date: formValue.requestedCheckOutDate,
+        requested_room_type: formValue.requestedRoomType,
+        flight_arrival_time: formValue.flightArrivalTime,
+        flight_departure_time: formValue.flightDepartureTime,
+        special_requests: formValue.specialRequests
+      }
     };
   }
 }
