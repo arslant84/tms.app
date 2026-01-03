@@ -1,0 +1,52 @@
+// ============================================================================
+// Unified Design System - Single Import Point
+// ============================================================================
+// Import this file in your components instead of individual style files
+//
+// Usage in components:
+//   @use '../../styles/index' as *;  // For most feature components
+//   @use '../../../styles/index' as *;  // For nested components
+//   @use '../../../../styles/index' as *;  // For deeply nested components
+//
+// Or use the existing pattern:
+//   @use '../../styles/variables' as vars;
+//
+// This file provides access to ALL design system resources
+// ============================================================================
+
+// 1. Variables (Colors, Typography, Spacing, etc.)
+@forward 'variables';
+
+// 2. Mixins (Reusable style patterns)
+@forward 'mixins';
+
+// 3. Buttons (Pre-defined button styles)
+@forward 'buttons';
+
+// ============================================================================
+// Quick Reference
+// ============================================================================
+//
+// COLORS:
+//   $primary-color, $secondary-color, $success-color, $error-color,
+//   $warning-color, $info-color, $gray-50 through $gray-900
+//
+// TYPOGRAPHY:
+//   $font-family-base, $font-size-xs through $font-size-5xl,
+//   $font-weight-normal, $font-weight-medium, $font-weight-semibold, $font-weight-bold
+//
+// SPACING:
+//   $spacing-1 through $spacing-12 (0.25rem through 3rem)
+//   $spacing-xs, $spacing-sm, $spacing-md, $spacing-lg, $spacing-xl, $spacing-2xl, $spacing-3xl
+//
+// BORDERS & RADIUS:
+//   $radius-sm, $radius-base, $radius-lg, $radius-full
+//   $border-light, $border-color
+//
+// SHADOWS:
+//   $shadow-sm, $shadow-md, $shadow-lg, $shadow-xl
+//
+// BREAKPOINTS:
+//   $breakpoint-sm, $breakpoint-md, $breakpoint-lg, $breakpoint-xl
+//
+// ============================================================================

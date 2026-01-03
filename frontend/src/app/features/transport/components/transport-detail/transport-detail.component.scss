@@ -1,6 +1,8 @@
-// Transport Detail Component - Matching TRF/Expense detail design
+// Transport Detail Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
 .transport-detail-container {
-  padding: 1rem;
+  padding: vars.$spacing-md;
 }
 
 .loading-state, .error-state {
@@ -13,34 +15,34 @@
 }
 
 .error-icon {
-  font-size: 3rem;
-  color: #ef4444;
+  font-size: vars.$font-size-3xl;
+  color: vars.$error-color;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
+  margin-bottom: vars.$spacing-6;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: vars.$spacing-md;
 }
 
 .header-left {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: vars.$spacing-2;
 }
 
 .btn-back {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: vars.$spacing-2;
   background: transparent;
   border: none;
-  color: #0d9488;
+  color: vars.$primary-color;
   cursor: pointer;
-  padding: 0.5rem 0;
+  padding: vars.$spacing-2 0;
 
   &:hover {
     text-decoration: underline;
@@ -50,32 +52,32 @@
 .page-title {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #1f2937;
+  gap: vars.$spacing-3;
+  font-size: vars.$font-size-3xl;
+  font-weight: vars.$font-weight-bold;
+  color: vars.$text-primary;
   margin: 0;
 
   i {
-    color: #0d9488;
+    color: vars.$primary-color;
   }
 }
 
 .header-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: vars.$spacing-2;
   flex-wrap: wrap;
 
   .btn {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    border-radius: 0.375rem;
+    gap: vars.$spacing-2;
+    padding: vars.$spacing-2 vars.$spacing-md;
+    font-size: vars.$font-size-sm;
+    border-radius: vars.$radius-base;
 
     i {
-      font-size: 1rem;
+      font-size: vars.$font-size-base;
     }
   }
 }
@@ -83,78 +85,78 @@
 .status-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 0.5rem;
+  gap: vars.$spacing-md;
+  margin-bottom: vars.$spacing-6;
+  padding: vars.$spacing-md;
+  background: vars.$gray-50;
+  border-radius: vars.$radius-md;
 }
 
 .badge {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
+  padding: vars.$badge-padding-y vars.$badge-padding-x;
+  font-size: vars.$badge-font-size;
+  font-weight: vars.$font-weight-medium;
+  border-radius: vars.$radius-base;
 }
 
-.badge-success { background-color: #22c55e; color: white; }
-.badge-warning { background-color: #f59e0b; color: white; }
-.badge-danger { background-color: #ef4444; color: white; }
-.badge-secondary { background-color: #6b7280; color: white; }
-.badge-info { background-color: #3b82f6; color: white; }
+.badge-success { background-color: vars.$success-color; color: white; }
+.badge-warning { background-color: vars.$warning-color; color: white; }
+.badge-danger { background-color: vars.$error-color; color: white; }
+.badge-secondary { background-color: vars.$gray-600; color: white; }
+.badge-info { background-color: vars.$info-color; color: white; }
 
 .text-muted {
-  color: #6b7280;
-  font-size: 0.875rem;
+  color: vars.$text-secondary;
+  font-size: vars.$font-size-sm;
 }
 
 .detail-card {
   background: white;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: vars.$radius-md;
+  border: 1px solid vars.$border-light;
+  box-shadow: vars.$shadow-sm;
 }
 
 // Card Styling (matching accommodation)
 .card {
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid vars.$gray-300;
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-sm;
   overflow: hidden;
-  margin-bottom: 1.5rem;
+  margin-bottom: vars.$spacing-6;
   background: white;
 }
 
 .card-header {
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
-  border-bottom: 2px solid #0d9488;
-  padding: 1.25rem 1.5rem !important;
+  background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%) !important;
+  border-bottom: 2px solid vars.$primary-color;
+  padding: vars.$spacing-5 vars.$spacing-6 !important;
   color: white;
 
   h5 {
     margin: 0 !important;
-    font-size: 1.125rem !important;
-    font-weight: 600 !important;
-    color: #ffffff !important;
+    font-size: vars.$font-size-lg !important;
+    font-weight: vars.$font-weight-semibold !important;
+    color: vars.$text-inverse !important;
     display: flex;
     align-items: center;
 
     i {
-      margin-right: 0.75rem;
-      font-size: 1.5rem;
-      color: #ffffff !important;
+      margin-right: vars.$spacing-3;
+      font-size: vars.$font-size-xl;
+      color: vars.$text-inverse !important;
     }
   }
 }
 
 .card-body {
-  padding: 1.5rem;
-  background-color: #ffffff;
+  padding: vars.$spacing-6;
+  background-color: white;
 }
 
 .detail-section {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  padding: vars.$spacing-6;
+  border-bottom: 1px solid vars.$border-light;
 
   &:last-child {
     border-bottom: none;
@@ -164,43 +166,43 @@
 .section-title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 1rem;
+  gap: vars.$spacing-2;
+  font-size: vars.$font-size-lg;
+  font-weight: vars.$font-weight-semibold;
+  color: vars.$text-primary;
+  margin-bottom: vars.$spacing-md;
 
   i {
-    color: #0d9488;
+    color: vars.$primary-color;
   }
 }
 
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  gap: vars.$spacing-md;
 }
 
 .detail-item {
   label {
     display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #6b7280;
-    margin-bottom: 0.25rem;
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-medium;
+    color: vars.$gray-600;
+    margin-bottom: vars.$spacing-1;
   }
 
   p {
-    font-size: 1rem;
-    color: #1f2937;
+    font-size: vars.$font-size-base;
+    color: vars.$text-primary;
     margin: 0;
   }
 }
 
 .purpose-text {
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 0.375rem;
+  padding: vars.$spacing-md;
+  background: vars.$gray-50;
+  border-radius: vars.$radius-base;
   white-space: pre-wrap;
 }
 
@@ -208,23 +210,23 @@
   .summary-row {
     display: flex;
     justify-content: space-between;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #e5e7eb;
+    padding: vars.$spacing-3 0;
+    border-bottom: 1px solid vars.$border-light;
 
     &.total {
-      border-top: 2px solid #1f2937;
-      border-bottom: 2px solid #1f2937;
-      font-weight: 600;
-      font-size: 1.125rem;
+      border-top: 2px solid vars.$text-primary;
+      border-bottom: 2px solid vars.$text-primary;
+      font-weight: vars.$font-weight-semibold;
+      font-size: vars.$font-size-lg;
     }
 
     .label {
-      color: #6b7280;
+      color: vars.$gray-600;
     }
 
     .value {
-      color: #1f2937;
-      font-weight: 500;
+      color: vars.$text-primary;
+      font-weight: vars.$font-weight-medium;
     }
   }
 }
@@ -232,17 +234,17 @@
 .detail-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: vars.$font-size-sm;
 
   thead {
-    background: #f9fafb;
+    background: vars.$gray-50;
 
     th {
-      padding: 0.75rem;
+      padding: vars.$spacing-3;
       text-align: left;
-      font-weight: 600;
-      color: #374151;
-      border-bottom: 2px solid #e5e7eb;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-700;
+      border-bottom: 2px solid vars.$border-light;
 
       &.text-right {
         text-align: right;
@@ -252,10 +254,10 @@
 
   tbody {
     tr {
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid vars.$border-light;
 
       td {
-        padding: 0.75rem;
+        padding: vars.$spacing-3;
 
         &.text-right {
           text-align: right;
@@ -268,45 +270,45 @@
 .approval-timeline {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: vars.$spacing-md;
 }
 
 .approval-step {
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  border-radius: 0.375rem;
-  border: 1px solid #e5e7eb;
+  gap: vars.$spacing-md;
+  padding: vars.$spacing-md;
+  border-radius: vars.$radius-base;
+  border: 1px solid vars.$border-light;
 
   &.completed {
     background: #f0fdf4;
-    border-color: #22c55e;
+    border-color: vars.$success-color;
   }
 
   &.rejected {
     background: #fef2f2;
-    border-color: #ef4444;
+    border-color: vars.$error-color;
   }
 
   &.pending {
     background: #fffbeb;
-    border-color: #f59e0b;
+    border-color: vars.$warning-color;
   }
 
   .step-icon {
     i {
-      font-size: 1.5rem;
+      font-size: vars.$font-size-xl;
 
       &.icon-success {
-        color: #22c55e;
+        color: vars.$success-color;
       }
 
       &.icon-error {
-        color: #ef4444;
+        color: vars.$error-color;
       }
 
       &.icon-pending {
-        color: #f59e0b;
+        color: vars.$warning-color;
       }
     }
   }
@@ -315,28 +317,28 @@
     flex: 1;
 
     h4 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #1f2937;
-      margin: 0 0 0.25rem 0;
+      font-size: vars.$font-size-base;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$text-primary;
+      margin: 0 0 vars.$spacing-1 0;
     }
 
     .step-status {
-      font-size: 0.875rem;
-      color: #6b7280;
+      font-size: vars.$font-size-sm;
+      color: vars.$gray-600;
       margin: 0;
     }
 
     .step-date {
-      font-size: 0.75rem;
-      color: #9ca3af;
-      margin: 0.25rem 0 0 0;
+      font-size: vars.$font-size-xs;
+      color: vars.$gray-400;
+      margin: vars.$spacing-1 0 0 0;
     }
 
     .step-comments {
-      font-size: 0.875rem;
-      color: #374151;
-      margin: 0.5rem 0 0 0;
+      font-size: vars.$font-size-sm;
+      color: vars.$gray-700;
+      margin: vars.$spacing-2 0 0 0;
       font-style: italic;
     }
   }
@@ -362,11 +364,11 @@
 
 // Assignment card styling
 .assignment-card {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid #e5e7eb;
+  background: vars.$gray-50;
+  padding: vars.$spacing-md;
+  border-radius: vars.$radius-md;
+  margin-bottom: vars.$spacing-md;
+  border: 1px solid vars.$border-light;
 
   &:last-child {
     margin-bottom: 0;

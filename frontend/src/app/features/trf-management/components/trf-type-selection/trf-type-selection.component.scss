@@ -1,19 +1,20 @@
-// Travel Type Selection - Bootstrap Design
+// Travel Type Selection Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
 
 .hover-card {
   transition: all 0.2s ease-in-out;
-  border: 1px solid var(--bs-border-color);
+  border: 1px solid vars.$border-light;
 
   &:hover,
   &:focus {
     transform: translateY(-2px);
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-    border-color: var(--bs-primary);
-    background-color: rgba(var(--bs-primary-rgb), 0.03);
+    border-color: vars.$primary-color;
+    background-color: rgba(13, 148, 136, 0.03);
   }
 
   &:focus {
-    outline: 2px solid var(--bs-primary);
+    outline: 2px solid vars.$primary-color;
     outline-offset: 2px;
   }
 }
