@@ -1,77 +1,80 @@
+// Approvals Dashboard Component - Using Unified Design System
+@use '../../../../styles/variables' as vars;
+
 .approvals-dashboard {
-  padding: 1.5rem;
+  padding: vars.$spacing-6;
 
   .dashboard-header {
     h2 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #2c3e50;
+      font-size: vars.$font-size-2xl;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$text-primary;
     }
   }
 
   .approvals-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 1.5rem;
+    gap: vars.$spacing-6;
   }
 
   .approval-card {
     background: white;
-    border: 2px solid #e9ecef;
-    border-radius: 12px;
+    border: 2px solid vars.$border-light;
+    border-radius: vars.$radius-md;
     overflow: hidden;
     transition: all 0.3s ease;
 
     &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: vars.$shadow-lg;
       transform: translateY(-2px);
     }
 
     &.overdue {
-      border-color: #dc3545;
+      border-color: vars.$error-color;
       background: #fff5f5;
     }
 
     &.warning {
-      border-color: #ffc107;
+      border-color: vars.$warning-color;
       background: #fffbf0;
     }
 
     .card-header-section {
-      padding: 1rem;
-      background: #f8f9fa;
-      border-bottom: 1px solid #e9ecef;
+      padding: vars.$spacing-md;
+      background: vars.$gray-50;
+      border-bottom: 1px solid vars.$border-light;
     }
 
     .card-body-section {
-      padding: 1.25rem;
+      padding: vars.$spacing-5;
     }
 
     .approval-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 1rem;
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$text-primary;
+      margin-bottom: vars.$spacing-md;
     }
 
     .approval-details {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: vars.$spacing-3;
     }
 
     .detail-item {
       display: flex;
       align-items: center;
-      font-size: 0.875rem;
+      font-size: vars.$font-size-sm;
     }
 
     .card-actions {
-      padding: 1rem;
-      background: #f8f9fa;
-      border-top: 1px solid #e9ecef;
+      padding: vars.$spacing-md;
+      background: vars.$gray-50;
+      border-top: 1px solid vars.$border-light;
       display: flex;
-      gap: 0.5rem;
+      gap: vars.$spacing-2;
       justify-content: flex-end;
     }
   }
@@ -99,56 +102,56 @@
 
     .modal-content {
       background: white;
-      border-radius: 12px;
+      border-radius: vars.$radius-md;
       width: 90%;
       max-width: 600px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      box-shadow: vars.$shadow-lg;
     }
 
     .modal-header {
-      padding: 1.5rem;
-      border-bottom: 1px solid #e9ecef;
+      padding: vars.$spacing-6;
+      border-bottom: 1px solid vars.$border-light;
       display: flex;
       justify-content: space-between;
       align-items: center;
 
       .modal-title {
-        font-size: 1.25rem;
-        font-weight: 600;
+        font-size: vars.$font-size-lg;
+        font-weight: vars.$font-weight-semibold;
         margin: 0;
       }
 
       .btn-close {
         background: none;
         border: none;
-        font-size: 1.5rem;
+        font-size: vars.$font-size-xl;
         cursor: pointer;
       }
     }
 
     .modal-body {
-      padding: 1.5rem;
+      padding: vars.$spacing-6;
     }
 
     .modal-footer {
-      padding: 1rem 1.5rem;
-      border-top: 1px solid #e9ecef;
+      padding: vars.$spacing-md vars.$spacing-6;
+      border-top: 1px solid vars.$border-light;
       display: flex;
-      gap: 0.5rem;
+      gap: vars.$spacing-2;
       justify-content: flex-end;
     }
 
     .approval-summary {
-      background: #f8f9fa;
-      padding: 1rem;
-      border-radius: 8px;
+      background: vars.$gray-50;
+      padding: vars.$spacing-md;
+      border-radius: vars.$radius-base;
 
       label {
         display: block;
-        margin-bottom: 0.25rem;
-        font-size: 0.75rem;
+        margin-bottom: vars.$spacing-1;
+        font-size: vars.$font-size-xs;
         text-transform: uppercase;
         letter-spacing: 0.5px;
       }

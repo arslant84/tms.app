@@ -1,5 +1,6 @@
 @use '../styles/typography' as typography;
 @use '../styles/colors' as colors;
+@use '../styles/variables' as vars;
 
 :host {
   font-family: typography.$font-family-primary;
@@ -24,8 +25,8 @@
   align-items: center;
   min-height: 100vh;
   width: 100%;
-  background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-  padding: 1rem;
+  background: linear-gradient(135deg, vars.$bg-dark 0%, vars.$info-color 100%);
+  padding: vars.$spacing-md;
 }
 
 .flex-grow-1 {
@@ -41,15 +42,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: vars.$spacing-md vars.$spacing-8;
   background-color: colors.$primary-teal;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: vars.$text-inverse;
+  box-shadow: vars.$shadow-sm;
 
   .logo {
     @include typography.title;
-    color: white;
-    font-size: 1.5rem;
+    color: vars.$text-inverse;
+    font-size: vars.$font-size-xl;
     font-weight: typography.$font-weight-900;
   }
 
@@ -61,15 +62,15 @@
       padding: 0;
 
       li {
-        margin-left: 1.5rem;
+        margin-left: vars.$spacing-6;
 
         a {
-          color: white;
+          color: vars.$text-inverse;
           text-decoration: none;
           font-weight: typography.$font-weight-700;
-          padding: 0.5rem 1rem;
-          border-radius: 4px;
-          transition: background-color 0.3s ease;
+          padding: vars.$spacing-2 vars.$spacing-md;
+          border-radius: vars.$radius-base;
+          transition: background-color vars.$transition-base;
 
           &:hover {
             background-color: rgba(255, 255, 255, 0.2);
@@ -86,15 +87,15 @@
 
 .app-content {
   flex: 1;
-  padding: 2rem;
+  padding: vars.$spacing-8;
   background-color: rgba(248, 249, 250, 0.85);
   backdrop-filter: blur(5px);
 }
 
 .app-footer {
-  padding: 1rem 2rem;
+  padding: vars.$spacing-md vars.$spacing-8;
   background-color: colors.$primary-dark-gray;
-  color: white;
+  color: vars.$text-inverse;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: vars.$font-size-sm;
 }

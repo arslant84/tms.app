@@ -1,3 +1,6 @@
+// Toast Container Component - Using Unified Design System
+@use '../../../../styles/variables' as vars;
+
 .toast-container {
   z-index: 9999;
 }
@@ -5,61 +8,61 @@
 ngb-toast {
   min-width: 300px;
   max-width: 500px;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  box-shadow: vars.$shadow-lg;
 
   &.toast-success {
-    background-color: #10b981;
-    color: white;
+    background-color: vars.$success-color;
+    color: vars.$text-inverse;
 
     .btn-close-white {
       filter: brightness(0) invert(1);
     }
 
     i {
-      color: white;
-      font-size: 1.25rem;
+      color: vars.$text-inverse;
+      font-size: vars.$font-size-lg;
     }
   }
 
   &.toast-error {
-    background-color: #ef4444;
-    color: white;
+    background-color: vars.$error-color;
+    color: vars.$text-inverse;
 
     .btn-close-white {
       filter: brightness(0) invert(1);
     }
 
     i {
-      color: white;
-      font-size: 1.25rem;
+      color: vars.$text-inverse;
+      font-size: vars.$font-size-lg;
     }
   }
 
   &.toast-warning {
-    background-color: #f59e0b;
-    color: white;
+    background-color: vars.$warning-color;
+    color: vars.$text-inverse;
 
     .btn-close-white {
       filter: brightness(0) invert(1);
     }
 
     i {
-      color: white;
-      font-size: 1.25rem;
+      color: vars.$text-inverse;
+      font-size: vars.$font-size-lg;
     }
   }
 
   &.toast-info {
-    background-color: #3b82f6;
-    color: white;
+    background-color: vars.$info-color;
+    color: vars.$text-inverse;
 
     .btn-close-white {
       filter: brightness(0) invert(1);
     }
 
     i {
-      color: white;
-      font-size: 1.25rem;
+      color: vars.$text-inverse;
+      font-size: vars.$font-size-lg;
     }
   }
 }

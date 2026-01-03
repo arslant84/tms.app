@@ -1,10 +1,13 @@
+// Notification Preferences Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
 .preferences-container {
-  padding: 2rem;
+  padding: vars.$spacing-6;
   max-width: 1000px;
   margin: 0 auto;
 
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: vars.$spacing-md;
   }
 }
 
@@ -13,9 +16,9 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
+  margin-bottom: vars.$spacing-6;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: vars.$spacing-md;
 
   .header-left {
     flex: 1;
@@ -24,44 +27,44 @@
   .title-with-icon {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
+    gap: vars.$spacing-3;
+    margin-bottom: vars.$spacing-2;
 
     .header-icon {
-      font-size: 2rem;
-      color: #0d9488;
+      font-size: vars.$font-size-2xl;
+      color: vars.$primary-color;
     }
 
     .page-title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1f2937;
+      font-size: vars.$font-size-2xl;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$text-primary;
       margin: 0;
     }
   }
 
   .page-subtitle {
-    font-size: 1rem;
-    color: #6b7280;
+    font-size: vars.$font-size-base;
+    color: vars.$text-secondary;
     margin: 0;
   }
 
   .btn-outline-secondary {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 0.5rem;
+    gap: vars.$spacing-2;
+    padding: vars.$spacing-2 vars.$spacing-5;
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-medium;
+    border-radius: vars.$radius-base;
     background: white;
-    border: 1px solid #d1d5db;
-    color: #374151;
+    border: 1px solid vars.$gray-300;
+    color: vars.$gray-700;
     transition: all 0.2s;
 
     &:hover {
-      background: #f9fafb;
-      border-color: #9ca3af;
+      background: vars.$gray-50;
+      border-color: vars.$gray-400;
     }
   }
 }
@@ -72,18 +75,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: vars.$spacing-10 vars.$spacing-6;
   text-align: center;
 
   .spinner-border {
     width: 3rem;
     height: 3rem;
-    margin-bottom: 1rem;
+    margin-bottom: vars.$spacing-md;
   }
 
   p {
-    color: #6b7280;
-    font-size: 1rem;
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-base;
   }
 }
 
@@ -91,45 +94,45 @@
 .preferences-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: vars.$spacing-6;
 }
 
 // Preferences Card
 .preferences-card {
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-md;
   overflow: hidden;
 
   .card-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f9fafb;
+    padding: vars.$spacing-6;
+    border-bottom: 1px solid vars.$border-light;
+    background: vars.$gray-50;
 
     .card-title {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #1f2937;
-      margin: 0 0 0.5rem 0;
+      gap: vars.$spacing-3;
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$text-primary;
+      margin: 0 0 vars.$spacing-2 0;
 
       i {
-        font-size: 1.5rem;
-        color: #0d9488;
+        font-size: vars.$font-size-xl;
+        color: vars.$primary-color;
       }
     }
 
     .card-subtitle {
-      font-size: 0.875rem;
-      color: #6b7280;
+      font-size: vars.$font-size-sm;
+      color: vars.$text-secondary;
       margin: 0;
     }
   }
 
   .card-body {
-    padding: 1.5rem;
+    padding: vars.$spacing-6;
   }
 }
 
@@ -138,10 +141,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem;
-  border-radius: 0.5rem;
-  background: #f9fafb;
-  margin-bottom: 1rem;
+  padding: vars.$spacing-5;
+  border-radius: vars.$radius-base;
+  background: vars.$gray-50;
+  margin-bottom: vars.$spacing-md;
 
   &:last-child {
     margin-bottom: 0;
@@ -153,22 +156,22 @@
     .form-check-label {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #1f2937;
-      margin-bottom: 0.25rem;
+      gap: vars.$spacing-2;
+      font-size: vars.$font-size-base;
+      font-weight: vars.$font-weight-medium;
+      color: vars.$text-primary;
+      margin-bottom: vars.$spacing-1;
       cursor: pointer;
 
       i {
-        font-size: 1.125rem;
-        color: #0d9488;
+        font-size: vars.$font-size-lg;
+        color: vars.$primary-color;
       }
     }
 
     .check-description {
-      font-size: 0.875rem;
-      color: #6b7280;
+      font-size: vars.$font-size-sm;
+      color: vars.$text-secondary;
       margin: 0;
     }
   }
@@ -182,13 +185,13 @@
       cursor: pointer;
 
       &:checked {
-        background-color: #0d9488;
-        border-color: #0d9488;
+        background-color: vars.$primary-color;
+        border-color: vars.$primary-color;
       }
 
       &:focus {
-        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
-        border-color: #0d9488;
+        box-shadow: vars.$input-focus-shadow;
+        border-color: vars.$primary-color;
       }
     }
   }
@@ -196,7 +199,7 @@
 
 // Form Group
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: vars.$spacing-6;
 
   &:last-child {
     margin-bottom: 0;
@@ -205,38 +208,38 @@
   .form-label {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 0.5rem;
+    gap: vars.$spacing-2;
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-medium;
+    color: vars.$gray-700;
+    margin-bottom: vars.$spacing-2;
 
     i {
-      font-size: 1rem;
-      color: #0d9488;
+      font-size: vars.$font-size-base;
+      color: vars.$primary-color;
     }
   }
 
   .form-select,
   .form-control {
-    padding: 0.625rem 0.75rem;
-    font-size: 0.875rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
+    padding: vars.$spacing-2 vars.$spacing-3;
+    font-size: vars.$font-size-sm;
+    border: 1px solid vars.$gray-300;
+    border-radius: vars.$radius-base;
     background-color: white;
 
     &:focus {
-      border-color: #0d9488;
-      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+      border-color: vars.$primary-color;
+      box-shadow: vars.$input-focus-shadow;
       outline: none;
     }
   }
 
   .form-text {
     display: block;
-    margin-top: 0.5rem;
-    font-size: 0.813rem;
-    color: #6b7280;
+    margin-top: vars.$spacing-2;
+    font-size: vars.$font-size-xs;
+    color: vars.$text-secondary;
   }
 }
 
@@ -244,11 +247,11 @@
 .time-range-group {
   display: flex;
   align-items: flex-end;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 0.5rem;
+  gap: vars.$spacing-md;
+  margin-top: vars.$spacing-md;
+  padding: vars.$spacing-md;
+  background: vars.$gray-50;
+  border-radius: vars.$radius-base;
 
   .form-group {
     flex: 1;
@@ -256,28 +259,28 @@
   }
 
   .time-separator {
-    padding-bottom: 0.625rem;
-    font-size: 0.875rem;
-    color: #6b7280;
-    font-weight: 500;
+    padding-bottom: vars.$spacing-2;
+    font-size: vars.$font-size-sm;
+    color: vars.$text-secondary;
+    font-weight: vars.$font-weight-medium;
   }
 }
 
 // Category Section
 .category-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: vars.$spacing-6;
 
   &:last-child {
     margin-bottom: 0;
   }
 
   .category-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #374151;
-    margin: 0 0 1rem 0;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #e5e7eb;
+    font-size: vars.$font-size-base;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-700;
+    margin: 0 0 vars.$spacing-md 0;
+    padding-bottom: vars.$spacing-2;
+    border-bottom: 2px solid vars.$border-light;
   }
 }
 
@@ -285,35 +288,35 @@
 .event-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: vars.$spacing-3;
 }
 
 .event-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  background: #f9fafb;
+  padding: vars.$spacing-md;
+  border-radius: vars.$radius-base;
+  background: vars.$gray-50;
   transition: all 0.2s;
 
   &:hover {
-    background: #f3f4f6;
+    background: vars.$gray-100;
   }
 
   .event-content {
     flex: 1;
 
     .event-name {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #1f2937;
-      margin-bottom: 0.25rem;
+      font-size: vars.$font-size-sm;
+      font-weight: vars.$font-weight-medium;
+      color: vars.$text-primary;
+      margin-bottom: vars.$spacing-1;
     }
 
     .event-description {
-      font-size: 0.813rem;
-      color: #6b7280;
+      font-size: vars.$font-size-xs;
+      color: vars.$text-secondary;
     }
   }
 
@@ -326,13 +329,13 @@
       cursor: pointer;
 
       &:checked {
-        background-color: #0d9488;
-        border-color: #0d9488;
+        background-color: vars.$primary-color;
+        border-color: vars.$primary-color;
       }
 
       &:focus {
-        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
-        border-color: #0d9488;
+        box-shadow: vars.$input-focus-shadow;
+        border-color: vars.$primary-color;
       }
 
       &:disabled {
@@ -347,33 +350,33 @@
 .action-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  gap: vars.$spacing-md;
+  padding-top: vars.$spacing-6;
+  border-top: 1px solid vars.$border-light;
 
   .btn {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 0.5rem;
+    gap: vars.$spacing-2;
+    padding: vars.$spacing-3 vars.$spacing-6;
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-medium;
+    border-radius: vars.$radius-base;
     transition: all 0.2s;
 
     i {
-      font-size: 1rem;
+      font-size: vars.$font-size-base;
     }
   }
 
   .btn-outline-secondary {
     background: white;
-    border: 1px solid #d1d5db;
-    color: #374151;
+    border: 1px solid vars.$gray-300;
+    color: vars.$gray-700;
 
     &:hover:not(:disabled) {
-      background: #f9fafb;
-      border-color: #9ca3af;
+      background: vars.$gray-50;
+      border-color: vars.$gray-400;
     }
 
     &:disabled {
@@ -383,13 +386,13 @@
   }
 
   .btn-primary {
-    background: #0d9488;
-    border: 1px solid #0d9488;
+    background: vars.$primary-color;
+    border: 1px solid vars.$primary-color;
     color: white;
 
     &:hover:not(:disabled) {
-      background: #0f766e;
-      border-color: #0f766e;
+      background: vars.$primary-hover;
+      border-color: vars.$primary-hover;
     }
 
     &:disabled {
@@ -419,7 +422,7 @@
   .form-check-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: vars.$spacing-md;
 
     .form-check {
       align-self: flex-end;
@@ -439,7 +442,7 @@
   .event-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: vars.$spacing-3;
 
     .form-check {
       align-self: flex-end;

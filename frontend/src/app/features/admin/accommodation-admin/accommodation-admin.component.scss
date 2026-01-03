@@ -1,30 +1,16 @@
 /**
- * Accommodation Administration - React Shadcn UI Style
- * Matches: pctsb.syntra/src/app/admin/accommodation/page.tsx
+ * Accommodation Administration - Using Unified Design System
  */
-
-// ========== COLORS (Petronas Green Theme from pctsb.syntra) ==========
-$primary: #00B1A9; // Petronas Green - hsl(176 100% 35%)
-$primary-dark: #009991; // Darker Petronas Green
-$primary-light: #e6f7f6; // Light Petronas Green tint
-$background: #F2F4F3; // Light Gray Background
-$foreground: #333333; // Dark Gray Text
-$border: #DEDEDE; // Border color
-$gray-50: #F9FAFB; // Very light gray
-$gray-100: #E6E6E6; // Muted background
-$gray-500: #6B7280; // Medium gray (icons)
-$gray-600: #666666; // Muted foreground
-$gray-700: #333333; // Dark text
-$gray-900: #1F2937; // Darkest text
+@use '../../../../styles/variables' as vars;
 
 //=========== CONTAINER ==========
 .accommodation-admin-container {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 2rem;
+  padding: vars.$spacing-6;
   box-sizing: border-box;
-  background-color: $background;
+  background-color: vars.$gray-50;
   min-height: calc(100vh - 100px);
 }
 
@@ -33,8 +19,8 @@ $gray-900: #1F2937; // Darkest text
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
-  gap: 1rem;
+  margin-bottom: vars.$spacing-6;
+  gap: vars.$spacing-md;
   flex-wrap: wrap;
 
   @media (max-width: 768px) {
@@ -44,34 +30,34 @@ $gray-900: #1F2937; // Darkest text
 
   .header-content {
     .page-title {
-      font-size: 1.875rem;
-      font-weight: 700;
-      color: $gray-900;
+      font-size: vars.$font-size-2xl;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$gray-900;
       letter-spacing: -0.025em;
-      margin: 0 0 0.5rem 0;
+      margin: 0 0 vars.$spacing-2 0;
       display: flex;
       align-items: center;
 
       i {
-        color: $primary;
+        color: vars.$primary-color;
       }
     }
 
     .page-subtitle {
-      color: $gray-600;
-      font-size: 0.875rem;
+      color: vars.$gray-600;
+      font-size: vars.$font-size-sm;
       margin: 0;
     }
   }
 
   .header-actions {
     .btn-primary {
-      background-color: $primary;
-      border-color: $primary;
+      background-color: vars.$primary-color;
+      border-color: vars.$primary-color;
 
       &:hover {
-        background-color: $primary-dark;
-        border-color: $primary-dark;
+        background-color: vars.$primary-hover;
+        border-color: vars.$primary-hover;
       }
     }
   }
@@ -80,9 +66,9 @@ $gray-900: #1F2937; // Darkest text
 // ========== STATS CARDS GRID ==========
 .stats-grid {
   display: grid;
-  gap: 1rem;
+  gap: vars.$spacing-md;
   grid-template-columns: repeat(1, 1fr);
-  margin-bottom: 2rem;
+  margin-bottom: vars.$spacing-6;
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
@@ -95,13 +81,13 @@ $gray-900: #1F2937; // Darkest text
 
 .stat-card {
   background: white;
-  border: 1px solid $border;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.06);
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-base;
+  box-shadow: vars.$shadow-sm;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 
   &:hover {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+    box-shadow: vars.$shadow-md;
     transform: translateY(-1px);
   }
 
@@ -110,35 +96,35 @@ $gray-900: #1F2937; // Darkest text
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 1.5rem 0.5rem;
+    padding: vars.$spacing-md vars.$spacing-5 vars.$spacing-2;
 
     .stat-card-title {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: $gray-700;
+      font-size: vars.$font-size-sm;
+      font-weight: vars.$font-weight-medium;
+      color: vars.$gray-700;
     }
 
     .stat-icon {
       width: 1rem;
       height: 1rem;
-      color: $gray-500;
+      color: vars.$gray-500;
     }
   }
 
   .stat-card-content {
-    padding: 0 1.5rem 1rem;
+    padding: 0 vars.$spacing-5 vars.$spacing-md;
 
     .stat-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: $gray-900;
+      font-size: vars.$font-size-xl;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$gray-900;
       line-height: 1;
-      margin-bottom: 0.25rem;
+      margin-bottom: vars.$spacing-1;
     }
 
     .stat-description {
-      font-size: 0.75rem;
-      color: $gray-600;
+      font-size: vars.$font-size-xs;
+      color: vars.$gray-600;
       margin: 0;
     }
   }
@@ -146,36 +132,36 @@ $gray-900: #1F2937; // Darkest text
 
 // ========== TABS ==========
 .tabs-container {
-  margin-bottom: 2rem;
+  margin-bottom: vars.$spacing-6;
 }
 
 .tabs-list {
   display: inline-flex;
-  padding: 0.25rem;
-  background-color: $gray-100;
-  border-radius: 0.375rem;
-  margin-bottom: 1rem;
+  padding: vars.$spacing-1;
+  background-color: vars.$gray-100;
+  border-radius: vars.$radius-sm;
+  margin-bottom: vars.$spacing-md;
 }
 
 .tab-trigger {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: $gray-700;
+  padding: vars.$spacing-2 vars.$spacing-md;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
+  color: vars.$gray-700;
   background: transparent;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: vars.$radius-sm;
   cursor: pointer;
   transition: all 0.15s ease;
 
   &:hover {
-    color: $gray-900;
+    color: vars.$gray-900;
   }
 
   &.active {
     background: white;
-    color: $gray-900;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    color: vars.$gray-900;
+    box-shadow: vars.$shadow-sm;
   }
 }
 
@@ -195,46 +181,46 @@ $gray-900: #1F2937; // Darkest text
 // ========== CARD ==========
 .card {
   background: white;
-  border: 1px solid $border;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.06);
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-base;
+  box-shadow: vars.$shadow-sm;
   overflow: hidden;
 
   .card-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid $border;
+    padding: vars.$spacing-5;
+    border-bottom: 1px solid vars.$border-light;
     background-color: white;
 
     .card-header-content {
       .card-title-group {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.25rem;
+        gap: vars.$spacing-2;
+        margin-bottom: vars.$spacing-1;
 
         .card-title {
-          font-size: 1.125rem;
-          font-weight: 600;
-          color: $gray-900;
+          font-size: vars.$font-size-lg;
+          font-weight: vars.$font-weight-semibold;
+          color: vars.$gray-900;
           margin: 0;
         }
 
         i {
-          color: $gray-600;
-          font-size: 1.125rem;
+          color: vars.$gray-600;
+          font-size: vars.$font-size-lg;
         }
       }
 
       .card-description {
-        font-size: 0.875rem;
-        color: $gray-600;
+        font-size: vars.$font-size-sm;
+        color: vars.$gray-600;
         margin: 0;
       }
     }
   }
 
   .card-body {
-    padding: 1.5rem;
+    padding: vars.$spacing-5;
     background-color: white;
   }
 }
@@ -246,39 +232,39 @@ $gray-900: #1F2937; // Darkest text
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: vars.$spacing-5;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: vars.$spacing-md;
 
     .management-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: $gray-900;
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-900;
       margin: 0;
     }
 
     .filters-group {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: vars.$spacing-3;
       flex-wrap: wrap;
 
       .filter-label {
         display: flex;
         align-items: center;
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: $gray-700;
+        font-size: vars.$font-size-sm;
+        font-weight: vars.$font-weight-medium;
+        color: vars.$gray-700;
 
         i {
-          color: $gray-500;
+          color: vars.$gray-500;
         }
       }
 
       .filter-select {
         width: auto;
         min-width: 180px;
-        font-size: 0.875rem;
+        font-size: vars.$font-size-sm;
       }
     }
   }
@@ -295,15 +281,15 @@ $gray-900: #1F2937; // Darkest text
     border-collapse: collapse;
 
     thead {
-      background-color: $gray-50;
-      border-bottom: 1px solid $border;
+      background-color: vars.$gray-50;
+      border-bottom: 1px solid vars.$border-light;
 
       th {
-        padding: 0.75rem 1rem;
+        padding: vars.$spacing-3 vars.$spacing-md;
         text-align: left;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: $gray-700;
+        font-size: vars.$font-size-sm;
+        font-weight: vars.$font-weight-semibold;
+        color: vars.$gray-700;
         border: none;
         white-space: nowrap;
       }
@@ -311,7 +297,7 @@ $gray-900: #1F2937; // Darkest text
 
     tbody {
       tr {
-        border-bottom: 1px solid $border;
+        border-bottom: 1px solid vars.$border-light;
         transition: background-color 0.15s ease;
 
         &:last-child {
@@ -319,19 +305,19 @@ $gray-900: #1F2937; // Darkest text
         }
 
         &:hover {
-          background-color: $gray-50;
+          background-color: vars.$gray-50;
         }
 
         td {
-          padding: 0.75rem 1rem;
-          font-size: 0.875rem;
-          color: $gray-700;
+          padding: vars.$spacing-3 vars.$spacing-md;
+          font-size: vars.$font-size-sm;
+          color: vars.$gray-700;
           border: none;
           vertical-align: middle;
 
           &.fw-medium {
-            font-weight: 600;
-            color: $gray-900;
+            font-weight: vars.$font-weight-semibold;
+            color: vars.$gray-900;
           }
         }
       }
@@ -343,15 +329,15 @@ $gray-900: #1F2937; // Darkest text
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.625rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
+  gap: vars.$spacing-1;
+  padding: vars.$spacing-1 vars.$spacing-2;
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-medium;
+  border-radius: vars.$radius-sm;
   white-space: nowrap;
 
   i {
-    font-size: 0.75rem;
+    font-size: vars.$font-size-xs;
   }
 }
 
@@ -413,13 +399,13 @@ $gray-900: #1F2937; // Darkest text
   width: 2rem;
   height: 2rem;
   padding: 0;
-  margin: 0 0.25rem;
-  border-radius: 0.375rem;
+  margin: 0 vars.$spacing-1;
+  border-radius: vars.$radius-sm;
   border-width: 1px;
   transition: all 0.15s ease;
 
   i {
-    font-size: 1rem;
+    font-size: vars.$font-size-base;
   }
 }
 
@@ -436,8 +422,8 @@ $gray-900: #1F2937; // Darkest text
 }
 
 .btn-delete {
-  color: #ef4444;
-  border-color: #ef4444;
+  color: vars.$error-color;
+  border-color: vars.$error-color;
   background: white;
 
   &:hover {
@@ -453,17 +439,17 @@ $gray-900: #1F2937; // Darkest text
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1rem;
+  padding: vars.$spacing-10 vars.$spacing-md;
   text-align: center;
 
   i {
-    font-size: 2rem;
-    color: $primary;
-    margin-bottom: 1rem;
+    font-size: vars.$font-size-3xl;
+    color: vars.$primary-color;
+    margin-bottom: vars.$spacing-md;
   }
 
   p {
-    color: $gray-600;
+    color: vars.$gray-600;
     margin: 0;
   }
 }
@@ -487,17 +473,17 @@ $gray-900: #1F2937; // Darkest text
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1rem;
+  padding: vars.$spacing-10 vars.$spacing-md;
   text-align: center;
 
   i {
     font-size: 3rem;
-    color: $gray-500;
-    margin-bottom: 1rem;
+    color: vars.$gray-500;
+    margin-bottom: vars.$spacing-md;
   }
 
   p {
-    color: $gray-600;
+    color: vars.$gray-600;
     margin: 0;
   }
 }
@@ -505,12 +491,12 @@ $gray-900: #1F2937; // Darkest text
 // ========== RESPONSIVE ==========
 @media (max-width: 768px) {
   .accommodation-admin-container {
-    padding: 1rem;
+    padding: vars.$spacing-md;
   }
 
   .page-header {
     .header-content .page-title {
-      font-size: 1.5rem;
+      font-size: vars.$font-size-xl;
     }
   }
 

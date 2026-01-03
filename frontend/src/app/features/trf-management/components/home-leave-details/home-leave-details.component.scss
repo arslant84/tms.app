@@ -1,6 +1,9 @@
-// Home Leave Details Component Styles
-// Matches the Tailwind design from React project
+// Home Leave Details Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
 
 :host {
   display: block;
 }
+
+// Component-specific styles
+// Most styling is handled by shared form styles and utilities

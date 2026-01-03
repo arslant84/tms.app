@@ -1,4 +1,5 @@
-// Transport Create Component - Matching expense claims form design
+// Transport Create Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
 
 // Loading state
 .loading-container {
@@ -11,15 +12,15 @@
     text-align: center;
 
     i {
-      font-size: 3rem;
-      color: #0d9488;
+      font-size: vars.$font-size-3xl;
+      color: vars.$primary-color;
       display: block;
-      margin-bottom: 1rem;
+      margin-bottom: vars.$spacing-md;
     }
 
     p {
-      color: #6b7280;
-      font-size: 1rem;
+      color: vars.$text-secondary;
+      font-size: vars.$font-size-base;
     }
   }
 }
@@ -35,24 +36,24 @@
 
 // Page header section
 .page-header-section {
-  margin-bottom: 2rem;
+  margin-bottom: vars.$spacing-8;
 
   .header-left {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: vars.$spacing-2;
   }
 
   .btn-back {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: vars.$spacing-2;
     background: transparent;
     border: none;
-    color: #0d9488;
+    color: vars.$primary-color;
     cursor: pointer;
-    padding: 0.5rem 0;
-    font-size: 1rem;
+    padding: vars.$spacing-2 0;
+    font-size: vars.$font-size-base;
 
     &:hover {
       text-decoration: underline;
@@ -62,14 +63,14 @@
   .page-title {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 1.875rem;
-    font-weight: 700;
-    color: #1f2937;
+    gap: vars.$spacing-3;
+    font-size: vars.$font-size-3xl;
+    font-weight: vars.$font-weight-bold;
+    color: vars.$text-primary;
     margin: 0;
 
     i {
-      color: #0d9488;
+      color: vars.$primary-color;
     }
   }
 }
@@ -80,31 +81,31 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 1.5rem 2rem;
+  padding: vars.$spacing-6 vars.$spacing-8;
   box-sizing: border-box;
 }
 
 .form-card {
   background: white;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-radius: vars.$radius-md;
+  border: 1px solid vars.$border-light;
+  box-shadow: vars.$shadow-lg;
   overflow: hidden;
 }
 
 .form-section {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  padding: vars.$spacing-6;
+  border-bottom: 1px solid vars.$border-light;
 
   &:first-child {
     .section-title {
-      border-radius: 0.5rem 0.5rem 0 0;
+      border-radius: vars.$radius-md vars.$radius-md 0 0;
     }
   }
 
   &:last-child {
     border-bottom: none;
-    border-radius: 0 0 0.5rem 0.5rem;
+    border-radius: 0 0 vars.$radius-md vars.$radius-md;
   }
 }
 
@@ -112,46 +113,46 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: vars.$spacing-6;
 }
 
 .section-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  font-size: 1.25rem;
-  font-weight: 600;
+  gap: vars.$spacing-3;
+  font-size: vars.$font-size-lg;
+  font-weight: vars.$font-weight-semibold;
   color: white;
-  margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-  padding: 1.25rem 1.5rem;
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-  border-radius: 0.5rem 0.5rem 0 0;
+  margin: calc(-1 * vars.$spacing-6) calc(-1 * vars.$spacing-6) vars.$spacing-6 calc(-1 * vars.$spacing-6);
+  padding: vars.$spacing-5 vars.$spacing-6;
+  background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
+  border-radius: vars.$radius-md vars.$radius-md 0 0;
 
   .title-text {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: vars.$spacing-3;
   }
 
   i {
     color: white;
-    font-size: 1.5rem;
+    font-size: vars.$font-size-xl;
   }
 
   .btn-add-journey {
     background-color: rgba(255, 255, 255, 0.2);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-    font-weight: 500;
+    padding: vars.$spacing-2 vars.$spacing-md;
+    border-radius: vars.$radius-base;
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-medium;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: vars.$spacing-2;
 
     &:hover {
       background-color: rgba(255, 255, 255, 0.3);
@@ -159,7 +160,7 @@
     }
 
     i {
-      font-size: 1rem;
+      font-size: vars.$font-size-base;
     }
   }
 }
@@ -167,8 +168,8 @@
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: vars.$spacing-md;
+  margin-bottom: vars.$spacing-md;
 }
 
 .form-group {
@@ -180,32 +181,32 @@
   }
 
   label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 0.25rem;
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-medium;
+    color: vars.$gray-700;
+    margin-bottom: vars.$spacing-1;
 
     .required {
-      color: #ef4444;
-      margin-left: 0.25rem;
+      color: vars.$error-color;
+      margin-left: vars.$spacing-1;
     }
   }
 
   .form-control {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
+    padding: vars.$spacing-2 vars.$spacing-3;
+    font-size: vars.$font-size-sm;
+    border: 1px solid vars.$gray-300;
+    border-radius: vars.$radius-base;
     transition: all 0.2s;
 
     &:focus {
       outline: none;
-      border-color: #0d9488;
-      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+      border-color: vars.$primary-color;
+      box-shadow: vars.$input-focus-shadow;
     }
 
     &:disabled {
-      background-color: #f9fafb;
+      background-color: vars.$gray-50;
       cursor: not-allowed;
     }
   }
@@ -216,9 +217,9 @@
   }
 
   .error-message {
-    font-size: 0.75rem;
-    color: #ef4444;
-    margin-top: 0.25rem;
+    font-size: vars.$font-size-xs;
+    color: vars.$error-color;
+    margin-top: vars.$spacing-1;
   }
 }
 
@@ -226,40 +227,40 @@
 .segments-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: vars.$spacing-md;
 }
 
 .segment-card {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
+  background: vars.$gray-50;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-md;
+  padding: vars.$spacing-md;
 
   .segment-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: vars.$spacing-md;
+    padding-bottom: vars.$spacing-3;
+    border-bottom: 1px solid vars.$border-light;
 
     h4 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #1f2937;
+      font-size: vars.$font-size-base;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$text-primary;
       margin: 0;
     }
 
     .btn-remove {
       display: flex;
       align-items: center;
-      gap: 0.375rem;
-      padding: 0.375rem 0.75rem;
-      font-size: 0.875rem;
-      background-color: #ef4444;
+      gap: vars.$spacing-2;
+      padding: vars.$spacing-2 vars.$spacing-3;
+      font-size: vars.$font-size-sm;
+      background-color: vars.$error-color;
       color: white;
       border: none;
-      border-radius: 0.375rem;
+      border-radius: vars.$radius-base;
       cursor: pointer;
       transition: background-color 0.2s;
 
@@ -268,7 +269,7 @@
       }
 
       i {
-        font-size: 1rem;
+        font-size: vars.$font-size-base;
       }
     }
   }
@@ -278,26 +279,26 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
+  gap: vars.$spacing-3;
+  padding: vars.$spacing-6;
+  background: vars.$gray-50;
+  border-top: 1px solid vars.$border-light;
   flex-wrap: wrap;
 
   .btn {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    border-radius: 0.375rem;
+    gap: vars.$spacing-2;
+    padding: vars.$spacing-2 vars.$spacing-5;
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-semibold;
+    border-radius: vars.$radius-base;
     border: none;
     cursor: pointer;
     transition: all 0.2s;
 
     i {
-      font-size: 1rem;
+      font-size: vars.$font-size-base;
     }
 
     &:disabled {
@@ -307,7 +308,7 @@
   }
 
   .btn-cancel {
-    background-color: #ef4444;
+    background-color: vars.$error-color;
     color: white;
 
     &:hover:not(:disabled) {
@@ -316,7 +317,7 @@
   }
 
   .btn-draft {
-    background-color: #6b7280;
+    background-color: vars.$gray-600;
     color: white;
 
     &:hover:not(:disabled) {
@@ -325,11 +326,11 @@
   }
 
   .btn-submit {
-    background-color: #0d9488;
+    background-color: vars.$primary-color;
     color: white;
 
     &:hover:not(:disabled) {
-      background-color: #0f766e;
+      background-color: vars.$primary-hover;
     }
   }
 }
@@ -343,13 +344,13 @@
   .section-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: vars.$spacing-md;
   }
 
   .section-title {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: vars.$spacing-md;
 
     .btn-add-journey {
       width: 100%;

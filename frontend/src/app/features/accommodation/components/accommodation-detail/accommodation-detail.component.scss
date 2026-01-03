@@ -1,25 +1,16 @@
 /**
  * Accommodation Detail Component - Modern Card-Based Design
- * Matching Expense Claims redesign pattern
+ * Matching Expense Claims redesign pattern - Using Unified Design System
  * Created: 2025-10-19
  */
 
 @use 'sass:color';
 
 // Import global design tokens
-@use '../../../../../styles/variables' as *;
+@use '../../../../../styles/variables' as vars;
 
 // Import print styles
 @use './print' as *;
-
-// Local aliases for component colors (mapped to global design tokens)
-$primary: $primary-color;
-$primary-dark: $primary-hover;
-$success: $success-color;
-$warning: $warning-color;
-$danger: $error-color;  // Maps to $error-color in design system
-$info: $info-color;
-$secondary: $gray-600;  // Use gray-600 for secondary color
 
 // ========== CONTAINER ==========
 .accommodation-detail-container {
@@ -27,9 +18,9 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 1.5rem 2rem;
+  padding: vars.$spacing-6 vars.$spacing-8;
   box-sizing: border-box;
-  background-color: $gray-50;
+  background-color: vars.$gray-50;
   min-height: 100vh;
 }
 
@@ -42,17 +33,17 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
   justify-content: center;
   min-height: 400px;
   text-align: center;
-  padding: 2rem;
+  padding: vars.$spacing-8;
 }
 
 .spinner {
-  border: 4px solid $gray-200;
-  border-top: 4px solid $primary;
+  border: 4px solid vars.$gray-200;
+  border-top: 4px solid vars.$primary-color;
   border-radius: 50%;
   width: 50px;
   height: 50px;
   animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+  margin-bottom: vars.$spacing-md;
 }
 
 @keyframes spin {
@@ -61,20 +52,20 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 }
 
 .error-icon {
-  font-size: 3rem;
-  color: $danger;
-  margin-bottom: 1rem;
+  font-size: vars.$font-size-3xl;
+  color: vars.$error-color;
+  margin-bottom: vars.$spacing-md;
 }
 
 .error-state {
   h3 {
-    color: $gray-900;
-    margin-bottom: 0.5rem;
+    color: vars.$gray-900;
+    margin-bottom: vars.$spacing-2;
   }
 
   p {
-    color: $gray-600;
-    margin-bottom: 1.5rem;
+    color: vars.$gray-600;
+    margin-bottom: vars.$spacing-6;
   }
 }
 
@@ -83,122 +74,122 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
+  margin-bottom: vars.$spacing-6;
   flex-wrap: wrap;
-  gap: 1rem;
-  padding-bottom: 1rem;
+  gap: vars.$spacing-md;
+  padding-bottom: vars.$spacing-md;
 }
 
 .header-left {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: vars.$spacing-2;
 }
 
 .btn-back {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: vars.$spacing-2;
   background: transparent;
   border: none;
-  color: $primary;
+  color: vars.$primary-color;
   cursor: pointer;
-  padding: 0.25rem 0;
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: vars.$spacing-1 0;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
   transition: all 0.2s;
 
   &:hover {
-    color: $primary-dark;
+    color: vars.$primary-hover;
     text-decoration: underline;
   }
 
   i {
-    font-size: 1rem;
+    font-size: vars.$font-size-base;
   }
 }
 
 .page-title {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: $gray-900;
+  gap: vars.$spacing-3;
+  font-size: vars.$font-size-3xl;
+  font-weight: vars.$font-weight-bold;
+  color: vars.$gray-900;
   margin: 0;
 
   i {
-    color: $primary;
-    font-size: 2rem;
+    color: vars.$primary-color;
+    font-size: vars.$font-size-2xl;
   }
 }
 
 .header-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: vars.$spacing-3;
   flex-wrap: wrap;
 
   .btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: 0.5rem;
+    gap: vars.$spacing-2;
+    padding: vars.$spacing-2 vars.$spacing-5;
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-medium;
+    border-radius: vars.$radius-md;
     border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.2s;
 
     i {
-      font-size: 1rem;
+      font-size: vars.$font-size-base;
     }
   }
 
   .btn-outline {
     background: white;
-    color: $gray-700;
-    border-color: $gray-300;
+    color: vars.$gray-700;
+    border-color: vars.$gray-300;
 
     &:hover {
-      background: $gray-50;
-      border-color: $gray-600;
+      background: vars.$gray-50;
+      border-color: vars.$gray-600;
     }
   }
 
   .btn-secondary {
-    background: $secondary;
+    background: vars.$gray-600;
     color: white;
 
     &:hover {
-      background: color.adjust($secondary, $lightness: -10%);
+      background: color.adjust(vars.$gray-600, $lightness: -10%);
     }
   }
 
   .btn-warning {
-    background: $warning;
+    background: vars.$warning-color;
     color: white;
 
     &:hover {
-      background: color.adjust($warning, $lightness: -10%);
+      background: color.adjust(vars.$warning-color, $lightness: -10%);
     }
   }
 
   .btn-danger {
-    background: $danger;
+    background: vars.$error-color;
     color: white;
 
     &:hover {
-      background: color.adjust($danger, $lightness: -10%);
+      background: color.adjust(vars.$error-color, $lightness: -10%);
     }
   }
 
   .btn-primary {
-    background: $primary;
+    background: vars.$primary-color;
     color: white;
 
     &:hover {
-      background: $primary-dark;
+      background: vars.$primary-hover;
     }
   }
 }
@@ -207,72 +198,72 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 .status-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem 1.25rem;
+  gap: vars.$spacing-md;
+  margin-bottom: vars.$spacing-6;
+  padding: vars.$spacing-md vars.$spacing-5;
   background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-sm;
   flex-wrap: wrap;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.375rem 0.875rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border-radius: 0.375rem;
+  padding: vars.$badge-padding-y vars.$badge-padding-x;
+  font-size: vars.$badge-font-size;
+  font-weight: vars.$font-weight-semibold;
+  border-radius: vars.$radius-base;
   text-transform: uppercase;
   letter-spacing: 0.025em;
 }
 
 .badge-success {
-  background-color: $success;
+  background-color: vars.$success-color;
   color: white;
 }
 
 .badge-warning {
-  background-color: $warning;
+  background-color: vars.$warning-color;
   color: white;
 }
 
 .badge-danger {
-  background-color: $danger;
+  background-color: vars.$error-color;
   color: white;
 }
 
 .badge-secondary {
-  background-color: $secondary;
+  background-color: vars.$gray-600;
   color: white;
 }
 
 .badge-info {
-  background-color: $info;
+  background-color: vars.$info-color;
   color: white;
 }
 
 .badge-primary {
-  background-color: $primary;
+  background-color: vars.$primary-color;
   color: white;
 }
 
 .badge-dark {
-  background-color: $gray-900;
+  background-color: vars.$gray-900;
   color: white;
 }
 
 .text-muted {
-  color: $gray-600;
-  font-size: 0.875rem;
+  color: vars.$gray-600;
+  font-size: vars.$font-size-sm;
 }
 
 // ========== DETAIL CARDS ==========
 .detail-card {
   background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-bottom: 1.5rem;
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-sm;
+  margin-bottom: vars.$spacing-6;
   overflow: hidden;
 
   &:last-child {
@@ -281,82 +272,82 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 }
 
 .card-header {
-  background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
+  background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
   color: white;
-  padding: 1.25rem 1.5rem;
+  padding: vars.$spacing-5 vars.$spacing-6;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: vars.$spacing-3;
 
   i {
-    font-size: 1.5rem;
+    font-size: vars.$font-size-xl;
   }
 
   h3 {
     margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-semibold;
   }
 
   &.assignment-header {
-    background: linear-gradient(135deg, $success 0%, color.adjust($success, $lightness: -10%) 100%);
+    background: linear-gradient(135deg, vars.$success-color 0%, color.adjust(vars.$success-color, $lightness: -10%) 100%);
   }
 
   &.rejection-header {
-    background: linear-gradient(135deg, $danger 0%, color.adjust($danger, $lightness: -10%) 100%);
+    background: linear-gradient(135deg, vars.$error-color 0%, color.adjust(vars.$error-color, $lightness: -10%) 100%);
   }
 }
 
 .card-body {
-  padding: 1.5rem;
+  padding: vars.$spacing-6;
 }
 
 // ========== DETAIL GRID ==========
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.25rem;
+  gap: vars.$spacing-5;
 }
 
 .detail-item {
   label {
     display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: $gray-600;
+    font-size: vars.$font-size-xs;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.375rem;
+    margin-bottom: vars.$spacing-2;
 
     i {
-      margin-right: 0.25rem;
-      color: $primary;
+      margin-right: vars.$spacing-1;
+      color: vars.$primary-color;
     }
   }
 
   .value {
     display: block;
-    font-size: 1rem;
-    color: $gray-900;
-    font-weight: 500;
+    font-size: vars.$font-size-base;
+    color: vars.$gray-900;
+    font-weight: vars.$font-weight-medium;
 
     &.highlight {
-      color: $primary;
-      font-weight: 600;
+      color: vars.$primary-color;
+      font-weight: vars.$font-weight-semibold;
     }
 
     &.link {
-      color: $primary;
+      color: vars.$primary-color;
       text-decoration: none;
       transition: color 0.2s;
 
       &:hover {
-        color: $primary-dark;
+        color: vars.$primary-hover;
         text-decoration: underline;
       }
 
       i {
-        margin-right: 0.25rem;
+        margin-right: vars.$spacing-1;
       }
     }
   }
@@ -366,31 +357,31 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 .special-requests,
 .notes-content,
 .comments-content {
-  margin-top: 1.5rem;
-  padding: 1.25rem;
-  background: $gray-50;
-  border-radius: 0.5rem;
-  border-left: 4px solid $primary;
+  margin-top: vars.$spacing-6;
+  padding: vars.$spacing-5;
+  background: vars.$gray-50;
+  border-radius: vars.$radius-md;
+  border-left: 4px solid vars.$primary-color;
 
   .section-label {
     display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: $gray-600;
+    font-size: vars.$font-size-xs;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.75rem;
+    margin-bottom: vars.$spacing-3;
 
     i {
-      margin-right: 0.5rem;
-      color: $primary;
+      margin-right: vars.$spacing-2;
+      color: vars.$primary-color;
     }
   }
 
   .requests-text,
   p {
-    font-size: 0.9375rem;
-    color: $gray-700;
+    font-size: vars.$font-size-sm;
+    color: vars.$gray-700;
     line-height: 1.6;
     margin: 0;
     white-space: pre-wrap;
@@ -401,22 +392,22 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 .assignment-info {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  gap: vars.$spacing-6;
 }
 
 .assignment-item {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: $gray-50;
-  border-radius: 0.5rem;
-  border: 1px solid $gray-200;
+  gap: vars.$spacing-md;
+  padding: vars.$spacing-5;
+  background: vars.$gray-50;
+  border-radius: vars.$radius-md;
+  border: 1px solid vars.$border-light;
 
   > i {
-    font-size: 2rem;
-    color: $success;
-    margin-top: 0.25rem;
+    font-size: vars.$font-size-2xl;
+    color: vars.$success-color;
+    margin-top: vars.$spacing-1;
   }
 
   .assignment-details {
@@ -424,19 +415,19 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 
     label {
       display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: $gray-600;
+      font-size: vars.$font-size-xs;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 0.375rem;
+      margin-bottom: vars.$spacing-2;
     }
 
     .value {
       display: block;
-      font-size: 1.125rem;
-      color: $gray-900;
-      font-weight: 600;
+      font-size: vars.$font-size-lg;
+      color: vars.$gray-900;
+      font-weight: vars.$font-weight-semibold;
     }
   }
 }
@@ -444,75 +435,75 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 // ========== BOOKING TABLE ==========
 .table-responsive {
   overflow-x: auto;
-  margin-bottom: 1rem;
+  margin-bottom: vars.$spacing-md;
 }
 
 .booking-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: vars.$font-size-sm;
 
   thead {
-    background: $gray-50;
+    background: vars.$gray-50;
 
     th {
-      padding: 0.875rem;
+      padding: vars.$spacing-3;
       text-align: left;
-      font-weight: 600;
-      color: $gray-700;
-      border-bottom: 2px solid $gray-300;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-700;
+      border-bottom: 2px solid vars.$gray-300;
       white-space: nowrap;
     }
   }
 
   tbody {
     tr {
-      border-bottom: 1px solid $gray-200;
+      border-bottom: 1px solid vars.$border-light;
       transition: background 0.2s;
 
       &:hover {
-        background: $gray-50;
+        background: vars.$gray-50;
       }
 
       td {
-        padding: 0.875rem;
-        color: $gray-700;
+        padding: vars.$spacing-3;
+        color: vars.$gray-700;
 
         .status-badge {
           display: inline-block;
-          padding: 0.25rem 0.625rem;
-          font-size: 0.75rem;
-          font-weight: 600;
-          border-radius: 0.25rem;
+          padding: vars.$spacing-1 vars.$spacing-2;
+          font-size: vars.$font-size-xs;
+          font-weight: vars.$font-weight-semibold;
+          border-radius: vars.$radius-base;
           text-transform: uppercase;
           letter-spacing: 0.025em;
 
           &.status-checked-in {
-            background: color.adjust($success, $lightness: 40%);
-            color: color.adjust($success, $lightness: -20%);
+            background: color.adjust(vars.$success-color, $lightness: 40%);
+            color: color.adjust(vars.$success-color, $lightness: -20%);
           }
 
           &.status-not-checked-in {
-            background: $gray-100;
-            color: $gray-600;
+            background: vars.$gray-100;
+            color: vars.$gray-600;
           }
 
           &.status-checked-out {
-            background: color.adjust($primary, $lightness: 40%);
-            color: color.adjust($primary, $lightness: -20%);
+            background: color.adjust(vars.$primary-color, $lightness: 40%);
+            color: color.adjust(vars.$primary-color, $lightness: -20%);
           }
 
           &.status-not-checked-out {
-            background: $gray-100;
-            color: $gray-600;
+            background: vars.$gray-100;
+            color: vars.$gray-600;
           }
         }
 
         .time-text {
           display: block;
-          font-size: 0.75rem;
-          color: $gray-600;
-          margin-top: 0.25rem;
+          font-size: vars.$font-size-xs;
+          color: vars.$gray-600;
+          margin-top: vars.$spacing-1;
         }
       }
     }
@@ -520,10 +511,10 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 }
 
 .booking-summary {
-  padding: 1rem;
-  background: $gray-50;
-  border-radius: 0.5rem;
-  border-top: 2px solid $gray-300;
+  padding: vars.$spacing-md;
+  background: vars.$gray-50;
+  border-radius: vars.$radius-md;
+  border-top: 2px solid vars.$gray-300;
 
   .summary-item {
     display: flex;
@@ -531,27 +522,27 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
     align-items: center;
 
     label {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: $gray-700;
+      font-size: vars.$font-size-sm;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-700;
     }
 
     .value {
-      font-size: 1.125rem;
-      font-weight: 700;
-      color: $primary;
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$primary-color;
     }
   }
 }
 
 // ========== REJECTION DETAILS ==========
 .rejection-card {
-  border: 2px solid color.adjust($danger, $lightness: 20%);
+  border: 2px solid color.adjust(vars.$error-color, $lightness: 20%);
 }
 
 .rejection-info {
   .detail-item {
-    margin-bottom: 1rem;
+    margin-bottom: vars.$spacing-md;
 
     &:last-child {
       margin-bottom: 0;
@@ -559,25 +550,25 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
   }
 
   .rejection-reason {
-    margin-top: 1.5rem;
-    padding: 1.25rem;
-    background: color.adjust($danger, $lightness: 45%);
-    border-radius: 0.5rem;
-    border-left: 4px solid $danger;
+    margin-top: vars.$spacing-6;
+    padding: vars.$spacing-5;
+    background: color.adjust(vars.$error-color, $lightness: 45%);
+    border-radius: vars.$radius-md;
+    border-left: 4px solid vars.$error-color;
 
     label {
       display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: color.adjust($danger, $lightness: -20%);
+      font-size: vars.$font-size-xs;
+      font-weight: vars.$font-weight-semibold;
+      color: color.adjust(vars.$error-color, $lightness: -20%);
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 0.75rem;
+      margin-bottom: vars.$spacing-3;
     }
 
     .reason-text {
-      font-size: 0.9375rem;
-      color: $gray-700;
+      font-size: vars.$font-size-sm;
+      color: vars.$gray-700;
       line-height: 1.6;
       margin: 0;
       white-space: pre-wrap;
@@ -599,14 +590,14 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
     top: 2rem;
     bottom: 2rem;
     width: 2px;
-    background: $gray-200;
+    background: vars.$border-light;
   }
 }
 
 .timeline-item {
   display: flex;
-  gap: 1.5rem;
-  padding: 1.25rem 0;
+  gap: vars.$spacing-6;
+  padding: vars.$spacing-5 0;
   position: relative;
 
   &:first-child {
@@ -627,90 +618,90 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
   align-items: center;
   justify-content: center;
   background: white;
-  border: 3px solid $gray-300;
+  border: 3px solid vars.$gray-300;
   position: relative;
   z-index: 1;
 
   i {
-    font-size: 1.25rem;
-    color: $gray-600;
+    font-size: vars.$font-size-lg;
+    color: vars.$gray-600;
   }
 
   &.status-approved {
-    border-color: $success;
-    background: color.adjust($success, $lightness: 45%);
+    border-color: vars.$success-color;
+    background: color.adjust(vars.$success-color, $lightness: 45%);
 
     i {
-      color: $success;
+      color: vars.$success-color;
     }
   }
 
   &.status-rejected {
-    border-color: $danger;
-    background: color.adjust($danger, $lightness: 45%);
+    border-color: vars.$error-color;
+    background: color.adjust(vars.$error-color, $lightness: 45%);
 
     i {
-      color: $danger;
+      color: vars.$error-color;
     }
   }
 
   &.status-pending {
-    border-color: $warning;
-    background: color.adjust($warning, $lightness: 45%);
+    border-color: vars.$warning-color;
+    background: color.adjust(vars.$warning-color, $lightness: 45%);
 
     i {
-      color: $warning;
+      color: vars.$warning-color;
     }
   }
 }
 
 .timeline-content {
   flex: 1;
-  padding-bottom: 1.5rem;
+  padding-bottom: vars.$spacing-6;
 }
 
 .timeline-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: vars.$spacing-3;
+  margin-bottom: vars.$spacing-3;
   flex-wrap: wrap;
 
   .step-number {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: $gray-600;
+    font-size: vars.$font-size-xs;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
   .step-role {
-    font-size: 1rem;
-    font-weight: 600;
-    color: $gray-900;
+    font-size: vars.$font-size-base;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-900;
   }
 
   .step-status {
-    padding: 0.25rem 0.625rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 0.25rem;
+    padding: vars.$spacing-1 vars.$spacing-2;
+    font-size: vars.$font-size-xs;
+    font-weight: vars.$font-weight-semibold;
+    border-radius: vars.$radius-base;
     text-transform: uppercase;
     letter-spacing: 0.025em;
 
     &.status-approved {
-      background: color.adjust($success, $lightness: 40%);
-      color: color.adjust($success, $lightness: -20%);
+      background: color.adjust(vars.$success-color, $lightness: 40%);
+      color: color.adjust(vars.$success-color, $lightness: -20%);
     }
 
     &.status-rejected {
-      background: color.adjust($danger, $lightness: 40%);
-      color: color.adjust($danger, $lightness: -20%);
+      background: color.adjust(vars.$error-color, $lightness: 40%);
+      color: color.adjust(vars.$error-color, $lightness: -20%);
     }
 
     &.status-pending {
-      background: color.adjust($warning, $lightness: 40%);
-      color: color.adjust($warning, $lightness: -20%);
+      background: color.adjust(vars.$warning-color, $lightness: 40%);
+      color: color.adjust(vars.$warning-color, $lightness: -20%);
     }
   }
 }
@@ -718,17 +709,17 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 .timeline-details {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: vars.$spacing-2;
 
   .detail-row {
     display: flex;
     align-items: flex-start;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: $gray-700;
+    gap: vars.$spacing-2;
+    font-size: vars.$font-size-sm;
+    color: vars.$gray-700;
 
     i {
-      color: $gray-600;
+      color: vars.$gray-600;
       margin-top: 0.125rem;
       flex-shrink: 0;
     }
@@ -743,7 +734,7 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 // ========== RESPONSIVE DESIGN ==========
 @media (max-width: 768px) {
   .accommodation-detail-container {
-    padding: 1rem;
+    padding: vars.$spacing-md;
   }
 
   .page-header {
@@ -775,16 +766,16 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
   }
 
   .booking-table {
-    font-size: 0.75rem;
+    font-size: vars.$font-size-xs;
 
     thead th,
     tbody td {
-      padding: 0.625rem 0.5rem;
+      padding: vars.$spacing-2 vars.$spacing-2;
     }
   }
 
   .approval-timeline::before {
-    left: 1rem;
+    left: vars.$spacing-md;
   }
 
   .timeline-marker {
@@ -792,34 +783,34 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
     height: 2rem;
 
     i {
-      font-size: 1rem;
+      font-size: vars.$font-size-base;
     }
   }
 }
 
 @media (max-width: 640px) {
   .page-title {
-    font-size: 1.5rem;
+    font-size: vars.$font-size-xl;
 
     i {
-      font-size: 1.5rem;
+      font-size: vars.$font-size-xl;
     }
   }
 
   .card-header {
-    padding: 1rem;
+    padding: vars.$spacing-md;
 
     i {
-      font-size: 1.25rem;
+      font-size: vars.$font-size-lg;
     }
 
     h3 {
-      font-size: 1rem;
+      font-size: vars.$font-size-base;
     }
   }
 
   .card-body {
-    padding: 1rem;
+    padding: vars.$spacing-md;
   }
 }
 
@@ -827,7 +818,7 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 
 // ========== NEW ACCOMMODATION ASSIGNED CARD ==========
 .accommodation-assigned-card {
-  border-left: 4px solid #f59e0b !important; // Orange border to match PDF
+  border-left: 4px solid vars.$warning-color !important; // Orange border
 
   .card-header.assignment-header {
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
@@ -835,57 +826,57 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
     border-bottom: 1px solid #fcd34d;
 
     i {
-      color: #f59e0b;
+      color: vars.$warning-color;
     }
   }
 
   .card-body {
-    padding: 1.5rem;
+    padding: vars.$spacing-6;
   }
 
   .assignment-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    gap: vars.$spacing-6;
+    margin-bottom: vars.$spacing-6;
 
     .assignment-item {
       label {
         display: block;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: $gray-600;
+        font-size: vars.$font-size-xs;
+        font-weight: vars.$font-weight-semibold;
+        color: vars.$gray-600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 0.5rem;
+        margin-bottom: vars.$spacing-2;
       }
 
       .value {
         display: block;
-        font-size: 1rem;
-        font-weight: 500;
-        color: $gray-900;
+        font-size: vars.$font-size-base;
+        font-weight: vars.$font-weight-medium;
+        color: vars.$gray-900;
       }
     }
   }
 
   .assignment-details-section {
-    padding-top: 1rem;
-    border-top: 1px solid $gray-200;
+    padding-top: vars.$spacing-md;
+    border-top: 1px solid vars.$border-light;
 
     label {
       display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: $gray-600;
+      font-size: vars.$font-size-xs;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 0.5rem;
+      margin-bottom: vars.$spacing-2;
     }
 
     .assignment-details-text {
-      font-size: 0.95rem;
-      color: $gray-700;
+      font-size: vars.$font-size-sm;
+      color: vars.$gray-700;
       margin: 0;
       line-height: 1.6;
     }
@@ -894,7 +885,7 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 
 // ========== NEW ROOM BOOKING DETAILS CARD ==========
 .room-booking-details-card {
-  border-left: 4px solid #3b82f6 !important; // Blue border to match PDF
+  border-left: 4px solid vars.$info-color !important; // Blue border
 
   .card-header.booking-header {
     background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
@@ -902,74 +893,74 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
     border-bottom: 1px solid #93c5fd;
 
     i {
-      color: #3b82f6;
+      color: vars.$info-color;
     }
   }
 
   .card-subtitle {
-    padding: 0.75rem 1.5rem 0;
-    background: #f8fafc;
+    padding: vars.$spacing-3 vars.$spacing-6 0;
+    background: vars.$gray-50;
 
     p {
       margin: 0;
-      font-size: 0.875rem;
-      color: $gray-600;
+      font-size: vars.$font-size-sm;
+      color: vars.$gray-600;
     }
   }
 
   .card-body {
-    padding: 1.5rem;
+    padding: vars.$spacing-6;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: vars.$spacing-8;
   }
 
   // Booking Summary Section
   .booking-summary-section {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 8px;
-    padding: 1.25rem;
+    background: color.adjust(vars.$info-color, $lightness: 45%);
+    border: 1px solid color.adjust(vars.$info-color, $lightness: 30%);
+    border-radius: vars.$radius-md;
+    padding: vars.$spacing-5;
 
     .summary-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
+      margin-bottom: vars.$spacing-md;
 
       h4 {
-        font-size: 1rem;
-        font-weight: 600;
-        color: $gray-900;
+        font-size: vars.$font-size-base;
+        font-weight: vars.$font-weight-semibold;
+        color: vars.$gray-900;
         margin: 0;
       }
 
       .days-badge {
-        background: #3b82f6;
+        background: vars.$info-color;
         color: white;
-        padding: 0.35rem 0.85rem;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        font-weight: 500;
+        padding: vars.$spacing-2 vars.$spacing-3;
+        border-radius: vars.$radius-full;
+        font-size: vars.$font-size-sm;
+        font-weight: vars.$font-weight-medium;
       }
     }
 
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
+      gap: vars.$spacing-md;
 
       .summary-item {
         label {
-          font-size: 0.875rem;
-          font-weight: 600;
-          color: #1e40af;
-          margin-right: 0.5rem;
+          font-size: vars.$font-size-sm;
+          font-weight: vars.$font-weight-semibold;
+          color: color.adjust(vars.$info-color, $lightness: -20%);
+          margin-right: vars.$spacing-2;
         }
 
         .value {
-          font-size: 0.875rem;
-          color: $gray-900;
+          font-size: vars.$font-size-sm;
+          color: vars.$gray-900;
         }
       }
     }
@@ -978,31 +969,31 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
   // Daily Booking Records Section
   .daily-bookings-section {
     h4 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: $gray-900;
-      margin-bottom: 1rem;
+      font-size: vars.$font-size-base;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-900;
+      margin-bottom: vars.$spacing-md;
     }
 
     .booking-list {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: vars.$spacing-3;
     }
 
     .booking-item {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      padding: 1rem;
+      gap: vars.$spacing-md;
+      padding: vars.$spacing-md;
       background: white;
-      border: 1px solid $gray-200;
-      border-radius: 8px;
+      border: 1px solid vars.$border-light;
+      border-radius: vars.$radius-md;
       transition: all 0.2s ease;
 
       &:hover {
-        border-color: #3b82f6;
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        border-color: vars.$info-color;
+        box-shadow: 0 2px 8px color.adjust(vars.$info-color, $alpha: -0.9);
       }
 
       .booking-number {
@@ -1010,34 +1001,34 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
         width: 36px;
         height: 36px;
         background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        color: #1e40af;
+        color: color.adjust(vars.$info-color, $lightness: -20%);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 600;
-        font-size: 1rem;
+        font-weight: vars.$font-weight-semibold;
+        font-size: vars.$font-size-base;
       }
 
       .booking-content {
         flex: 1;
 
         .booking-date {
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: $gray-900;
-          margin-bottom: 0.25rem;
+          font-size: vars.$font-size-sm;
+          font-weight: vars.$font-weight-semibold;
+          color: vars.$gray-900;
+          margin-bottom: vars.$spacing-1;
         }
 
         .booking-room {
-          font-size: 0.85rem;
-          color: $gray-600;
+          font-size: vars.$font-size-sm;
+          color: vars.$gray-600;
         }
       }
 
       .booking-badges {
         display: flex;
-        gap: 0.5rem;
+        gap: vars.$spacing-2;
         flex-wrap: wrap;
       }
     }
@@ -1046,37 +1037,37 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
   // Room Information Section
   .room-info-section {
     background: white;
-    border: 1px solid $gray-200;
-    border-radius: 8px;
-    padding: 1.25rem;
+    border: 1px solid vars.$border-light;
+    border-radius: vars.$radius-md;
+    padding: vars.$spacing-5;
 
     h4 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: $gray-900;
-      margin-bottom: 1rem;
+      font-size: vars.$font-size-base;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-900;
+      margin-bottom: vars.$spacing-md;
     }
 
     .room-info-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.25rem;
+      gap: vars.$spacing-5;
 
       .info-item {
         label {
           display: block;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: $gray-600;
+          font-size: vars.$font-size-xs;
+          font-weight: vars.$font-weight-semibold;
+          color: vars.$gray-600;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          margin-bottom: 0.5rem;
+          margin-bottom: vars.$spacing-2;
         }
 
         .value {
           display: block;
-          font-size: 0.95rem;
-          color: $gray-900;
+          font-size: vars.$font-size-sm;
+          color: vars.$gray-900;
         }
       }
     }
@@ -1084,26 +1075,26 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 
   // Stay Status Section
   .stay-status-section {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 8px;
-    padding: 1.25rem;
+    background: color.adjust(vars.$success-color, $lightness: 45%);
+    border: 1px solid color.adjust(vars.$success-color, $lightness: 30%);
+    border-radius: vars.$radius-md;
+    padding: vars.$spacing-5;
 
     h4 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: $gray-900;
-      margin-bottom: 1rem;
+      font-size: vars.$font-size-base;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-900;
+      margin-bottom: vars.$spacing-md;
     }
 
     .status-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
+      gap: vars.$spacing-6;
 
       .status-item {
         display: flex;
-        gap: 1rem;
+        gap: vars.$spacing-md;
         align-items: flex-start;
 
         .status-icon {
@@ -1117,24 +1108,24 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
           justify-content: center;
 
           i {
-            font-size: 1.25rem;
-            color: $gray-600;
+            font-size: vars.$font-size-lg;
+            color: vars.$gray-600;
           }
         }
 
         .status-content {
           label {
             display: block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: $gray-900;
-            margin-bottom: 0.25rem;
+            font-size: vars.$font-size-sm;
+            font-weight: vars.$font-weight-semibold;
+            color: vars.$gray-900;
+            margin-bottom: vars.$spacing-1;
           }
 
           .status-text {
             display: block;
-            font-size: 0.85rem;
-            color: $gray-600;
+            font-size: vars.$font-size-sm;
+            color: vars.$gray-600;
           }
         }
       }
@@ -1143,47 +1134,47 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 
   // Booking Notes & Instructions Section
   .booking-notes-section {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    border-radius: 8px;
-    padding: 1.25rem;
+    background: color.adjust(vars.$warning-color, $lightness: 45%);
+    border: 1px solid color.adjust(vars.$warning-color, $lightness: 30%);
+    border-radius: vars.$radius-md;
+    padding: vars.$spacing-5;
 
     h4 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: $gray-900;
-      margin-bottom: 1rem;
+      font-size: vars.$font-size-base;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-900;
+      margin-bottom: vars.$spacing-md;
     }
 
     .notes-list {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: vars.$spacing-md;
     }
 
     .note-item {
       background: white;
-      padding: 1rem;
-      border-radius: 6px;
-      border-left: 3px solid #f59e0b;
+      padding: vars.$spacing-md;
+      border-radius: vars.$radius-md;
+      border-left: 3px solid vars.$warning-color;
 
       .note-date {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #92400e;
-        margin-bottom: 0.5rem;
+        gap: vars.$spacing-2;
+        font-size: vars.$font-size-sm;
+        font-weight: vars.$font-weight-semibold;
+        color: color.adjust(vars.$warning-color, $lightness: -20%);
+        margin-bottom: vars.$spacing-2;
 
         i {
-          color: #f59e0b;
+          color: vars.$warning-color;
         }
       }
 
       .note-content {
-        font-size: 0.9rem;
-        color: $gray-700;
+        font-size: vars.$font-size-sm;
+        color: vars.$gray-700;
         line-height: 1.6;
       }
     }
@@ -1192,18 +1183,18 @@ $secondary: $gray-600;  // Use gray-600 for secondary color
 
 // ========== BADGE STYLES ==========
 .badge-ready {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #6ee7b7;
-  padding: 0.35rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  background: color.adjust(vars.$success-color, $lightness: 40%);
+  color: color.adjust(vars.$success-color, $lightness: -30%);
+  border: 1px solid color.adjust(vars.$success-color, $lightness: 20%);
+  padding: vars.$spacing-2 vars.$spacing-3;
+  border-radius: vars.$radius-full;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: vars.$spacing-2;
 
   i {
-    font-size: 0.85rem;
+    font-size: vars.$font-size-sm;
   }
 }

@@ -34,7 +34,7 @@
             ],
             "styles": [
               {
-                "input": "src/assets/css/bootstrap.fixed.min.css",
+                "input": "public/css/bootstrap.fixed.min.css",
                 "inject": true,
                 "bundleName": "bootstrap"
               },

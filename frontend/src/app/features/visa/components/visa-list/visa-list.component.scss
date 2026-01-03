@@ -1,0 +1,453 @@
+// Visa List Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
+.visa-list-container {
+  padding: 0;
+
+  > * + * {
+    margin-top: vars.$spacing-8;
+  }
+}
+
+// Header Section
+.header-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: vars.$spacing-md;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$spacing-1;
+}
+
+.title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-3;
+}
+
+.header-icon {
+  width: vars.$spacing-8;
+  height: vars.$spacing-8;
+  color: vars.$primary-color;
+  font-size: vars.$font-size-2xl;
+}
+
+.page-title {
+  font-size: vars.$font-size-3xl;
+  font-weight: vars.$font-weight-bold;
+  letter-spacing: -0.025em;
+  color: vars.$text-primary;
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: vars.$font-size-sm;
+  color: vars.$text-secondary;
+  margin: 0 0 0 2.75rem;
+}
+
+.btn-create {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-2;
+  padding: vars.$spacing-2 vars.$spacing-md;
+  font-size: vars.$font-size-base;
+  background-color: vars.$primary-color;
+  border-color: vars.$primary-color;
+  color: vars.$text-inverse;
+
+  &:hover {
+    background-color: vars.$primary-hover;
+    border-color: vars.$primary-hover;
+  }
+
+  i {
+    font-size: vars.$font-size-lg;
+  }
+}
+
+// Filters Card
+.filters-card {
+  background: white;
+  border-radius: vars.$radius-md;
+  border: 1px solid vars.$border-light;
+  box-shadow: vars.$shadow-lg;
+}
+
+.filters-card-header {
+  padding: vars.$spacing-6;
+}
+
+.card-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-2;
+
+  i {
+    font-size: vars.$font-size-lg;
+    color: vars.$gray-600;
+  }
+}
+
+.card-title {
+  font-size: vars.$font-size-lg;
+  font-weight: vars.$font-weight-semibold;
+  color: vars.$text-primary;
+  margin: 0;
+}
+
+.card-description {
+  font-size: vars.$font-size-sm;
+  color: vars.$text-secondary;
+  margin: vars.$spacing-1 0 0 0;
+
+  .loading-inline {
+    display: inline-flex;
+    align-items: center;
+    color: vars.$primary-color;
+
+    i {
+      font-size: vars.$font-size-sm;
+    }
+  }
+}
+
+.filters-card-content {
+  padding: 0 vars.$spacing-6 vars.$spacing-6;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: vars.$spacing-md;
+  align-items: end;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
+}
+
+.search-input,
+.filter-select {
+  padding: vars.$spacing-2 vars.$spacing-3;
+  font-size: vars.$font-size-sm;
+  border: 1px solid vars.$gray-300;
+  border-radius: vars.$radius-base;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    outline: none;
+    border-color: vars.$primary-color;
+    box-shadow: vars.$input-focus-shadow;
+  }
+}
+
+.clear-filters-section {
+  padding-top: vars.$spacing-md;
+}
+
+.btn-clear {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-1;
+  font-size: vars.$font-size-sm;
+  padding: vars.$spacing-2 vars.$spacing-3;
+}
+
+// Visa List Card
+.visa-list-card {
+  background: white;
+  border-radius: vars.$radius-md;
+  border: 1px solid vars.$border-light;
+  box-shadow: vars.$shadow-lg;
+}
+
+.visa-card-header {
+  padding: vars.$spacing-6;
+  border-bottom: 1px solid vars.$border-light;
+}
+
+.visa-card-content {
+  padding: 0;
+}
+
+// Loading State
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: vars.$spacing-10 vars.$spacing-6;
+  text-align: center;
+
+  .spinner-lg {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.25rem;
+  }
+
+  .loading-text {
+    margin-top: vars.$spacing-md;
+    font-size: vars.$font-size-sm;
+    color: vars.$gray-600;
+  }
+}
+
+// Empty State
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: vars.$spacing-10 vars.$spacing-6;
+  text-align: center;
+
+  .empty-icon {
+    font-size: 4rem;
+    color: vars.$gray-300;
+    margin-bottom: vars.$spacing-md;
+  }
+
+  .empty-title {
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-primary;
+    margin: 0 0 vars.$spacing-2 0;
+  }
+
+  .empty-description {
+    font-size: vars.$font-size-sm;
+    color: vars.$text-secondary;
+    margin: 0 0 vars.$spacing-6 0;
+    max-width: 32rem;
+  }
+
+  .btn-create-empty {
+    background-color: vars.$primary-color;
+    border-color: vars.$primary-color;
+
+    &:hover {
+      background-color: vars.$primary-hover;
+      border-color: vars.$primary-hover;
+    }
+  }
+}
+
+// Table Styling
+.table-responsive {
+  overflow-x: auto;
+}
+
+.applications-table {
+  margin-bottom: 0;
+  font-size: vars.$font-size-sm;
+
+  thead {
+    background-color: vars.$gray-50;
+
+    th {
+      font-weight: vars.$font-weight-semibold;
+      font-size: vars.$font-size-xs;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: vars.$gray-600;
+      border-bottom: 1px solid vars.$border-light;
+      padding: vars.$spacing-3;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    tr {
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      border-bottom: 1px solid vars.$border-light;
+
+      &:hover {
+        background-color: vars.$gray-50;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      td {
+        padding: vars.$spacing-md vars.$spacing-3;
+        vertical-align: middle;
+        color: vars.$gray-700;
+      }
+    }
+  }
+
+  .request-number {
+    color: vars.$primary-color;
+    font-weight: vars.$font-weight-semibold;
+  }
+
+  .applicant-info {
+    strong {
+      display: block;
+      color: vars.$text-primary;
+      font-weight: vars.$font-weight-semibold;
+      font-size: vars.$font-size-sm;
+    }
+
+    small {
+      color: vars.$text-secondary;
+      font-size: vars.$font-size-xs;
+      margin-top: 0.125rem;
+    }
+  }
+
+  .destination-text {
+    color: vars.$gray-700;
+    font-weight: vars.$font-weight-medium;
+  }
+
+  // badge-visa-type is now in global styles.scss
+
+  .action-buttons {
+    display: flex;
+    gap: vars.$spacing-2;
+    justify-content: flex-end;
+
+    .action-btn {
+      padding: vars.$spacing-1 vars.$spacing-2;
+      font-size: vars.$font-size-sm;
+      border-width: 1px;
+
+      i {
+        font-size: vars.$font-size-base;
+      }
+
+      &.btn-outline-primary {
+        color: vars.$primary-color;
+        border-color: vars.$primary-color;
+
+        &:hover {
+          background-color: vars.$primary-color;
+          border-color: vars.$primary-color;
+          color: white;
+        }
+      }
+
+      &.btn-outline-danger {
+        &:hover {
+          background-color: vars.$error-color;
+          border-color: vars.$error-color;
+          color: white;
+        }
+      }
+    }
+  }
+}
+
+// Badge styles are now unified in global styles.scss
+
+// Pagination
+.pagination-container {
+  padding: vars.$spacing-6;
+  border-top: 1px solid vars.$border-light;
+
+  .pagination {
+    margin-bottom: 0;
+
+    .page-item {
+      .page-link {
+        color: vars.$primary-color;
+        border-color: vars.$border-light;
+        padding: vars.$spacing-2 vars.$spacing-3;
+        font-size: vars.$font-size-sm;
+        cursor: pointer;
+
+        &:hover {
+          background-color: #f0fdfa;
+          border-color: vars.$primary-color;
+        }
+      }
+
+      &.active .page-link {
+        background-color: vars.$primary-color;
+        border-color: vars.$primary-color;
+        color: white;
+
+        &:hover {
+          background-color: vars.$primary-hover;
+          border-color: vars.$primary-hover;
+        }
+      }
+
+      &.disabled .page-link {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+    }
+  }
+
+  .pagination-info {
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-sm;
+  }
+}
+
+// Animation
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin-animation {
+  animation: spin 1s linear infinite;
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-subtitle {
+    margin-left: 2.75rem;
+  }
+
+  .btn-create {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .applications-table {
+    font-size: vars.$font-size-xs;
+
+    thead th {
+      font-size: 0.625rem;
+      padding: vars.$spacing-2;
+    }
+
+    tbody td {
+      padding: vars.$spacing-3 vars.$spacing-2;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+      gap: vars.$spacing-1;
+
+      .action-btn {
+        width: 100%;
+      }
+    }
+  }
+}

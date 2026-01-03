@@ -1,10 +1,11 @@
-// TRF Detail Component - Matching React Design
+// TRF Detail Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
 .trf-detail-container {
-  /* Full-width adaptive layout */
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 1.5rem 2rem;
+  padding: vars.$spacing-6 vars.$spacing-8;
   box-sizing: border-box;
 }
 
@@ -21,29 +22,29 @@
   .spinner {
     width: 48px;
     height: 48px;
-    border: 4px solid #e2e8f0;
-    border-top-color: #3b82f6;
-    border-radius: 50%;
+    border: 4px solid vars.$gray-200;
+    border-top-color: vars.$info-color;
+    border-radius: vars.$radius-full;
     animation: spin 1s linear infinite;
   }
 
   h3 {
-    margin-top: 1rem;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1e293b;
+    margin-top: vars.$spacing-md;
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-800;
   }
 
   p {
-    margin-top: 0.5rem;
-    color: #64748b;
+    margin-top: vars.$spacing-2;
+    color: vars.$gray-600;
   }
 
   .icon {
     width: 64px;
     height: 64px;
-    color: #ef4444;
-    margin-bottom: 1rem;
+    color: vars.$error-color;
+    margin-bottom: vars.$spacing-md;
   }
 }
 
@@ -56,60 +57,60 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: vars.$spacing-6;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: vars.$spacing-md;
 
   .header-left {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: vars.$spacing-md;
   }
 
   .btn-back {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    color: #64748b;
-    font-size: 0.875rem;
+    gap: vars.$spacing-2;
+    padding: vars.$spacing-2 vars.$spacing-md;
+    background: vars.$bg-primary;
+    border: 1px solid vars.$gray-200;
+    border-radius: vars.$radius-lg;
+    color: vars.$gray-600;
+    font-size: vars.$font-size-sm;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: vars.$transition-base;
 
     svg {
-      width: 1rem;
-      height: 1rem;
+      width: vars.$spacing-md;
+      height: vars.$spacing-md;
     }
 
     &:hover {
-      background: #f8fafc;
-      color: #3b82f6;
-      border-color: #3b82f6;
+      background: vars.$gray-50;
+      color: vars.$info-color;
+      border-color: vars.$info-color;
     }
   }
 
   .page-title {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #1e293b;
+    gap: vars.$spacing-3;
+    font-size: vars.$font-size-2xl;
+    font-weight: vars.$font-weight-bold;
+    color: vars.$gray-800;
     margin: 0;
 
     .icon {
       width: 1.75rem;
       height: 1.75rem;
-      color: #3b82f6;
+      color: vars.$info-color;
     }
   }
 
   .header-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: vars.$spacing-3;
     flex-wrap: wrap;
   }
 }
@@ -118,64 +119,64 @@
 .status-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: vars.$spacing-md;
+  margin-bottom: vars.$spacing-6;
 
   .text-muted {
-    color: #64748b;
-    font-size: 0.875rem;
+    color: vars.$gray-600;
+    font-size: vars.$font-size-sm;
   }
 }
 
 // Main Card
 .detail-card {
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: vars.$bg-primary;
+  border-radius: vars.$radius-lg;
+  box-shadow: vars.$shadow-base;
   overflow: hidden;
 }
 
-// Card Styling (matching accommodation)
+// Card Styling
 .card {
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid vars.$gray-300;
+  border-radius: vars.$radius-lg;
+  box-shadow: vars.$shadow-base;
   overflow: hidden;
-  margin-bottom: 1.5rem;
-  background: white;
+  margin-bottom: vars.$spacing-6;
+  background: vars.$bg-primary;
 }
 
 .card-header {
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%) !important;
-  border-bottom: 2px solid #0d9488;
-  padding: 1.25rem 1.5rem !important;
-  color: white;
+  background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%) !important;
+  border-bottom: 2px solid vars.$primary-color;
+  padding: vars.$spacing-5 vars.$spacing-6 !important;
+  color: vars.$text-inverse;
 
   h5 {
     margin: 0 !important;
-    font-size: 1.125rem !important;
-    font-weight: 600 !important;
-    color: #ffffff !important;
+    font-size: vars.$font-size-lg !important;
+    font-weight: vars.$font-weight-semibold !important;
+    color: vars.$text-inverse !important;
     display: flex;
     align-items: center;
 
     i {
-      margin-right: 0.75rem;
-      font-size: 1.5rem;
-      color: #ffffff !important;
+      margin-right: vars.$spacing-3;
+      font-size: vars.$font-size-xl;
+      color: vars.$text-inverse !important;
     }
   }
 }
 
 .card-body {
-  padding: 1.5rem;
-  background-color: #ffffff;
+  padding: vars.$spacing-6;
+  background-color: vars.$bg-primary;
 }
 
 // Detail Section
 .detail-section {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  padding: vars.$spacing-6;
+  border-bottom: 1px solid vars.$gray-200;
 
   &:last-child {
     border-bottom: none;
@@ -184,26 +185,26 @@
   .section-title {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0 0 1rem 0;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid #e2e8f0;
+    gap: vars.$spacing-3;
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-800;
+    margin: 0 0 vars.$spacing-md 0;
+    padding-bottom: vars.$spacing-3;
+    border-bottom: 2px solid vars.$gray-200;
 
     .icon {
-      width: 1.25rem;
-      height: 1.25rem;
-      color: #3b82f6;
+      width: vars.$spacing-5;
+      height: vars.$spacing-5;
+      color: vars.$info-color;
     }
   }
 
   .sub-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #64748b;
-    margin: 0 0 0.75rem 0;
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-600;
+    margin: 0 0 vars.$spacing-3 0;
   }
 }
 
@@ -211,22 +212,22 @@
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem 1.5rem;
+  gap: vars.$spacing-md vars.$spacing-6;
 
   .detail-item {
     label {
       display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #64748b;
+      font-size: vars.$font-size-xs;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      margin-bottom: 0.25rem;
+      margin-bottom: vars.$spacing-1;
     }
 
     p {
-      font-size: 0.875rem;
-      color: #1e293b;
+      font-size: vars.$font-size-sm;
+      color: vars.$gray-800;
       margin: 0;
       word-wrap: break-word;
     }
@@ -239,13 +240,13 @@
 
 // Purpose Text
 .purpose-text {
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 0.5rem;
+  padding: vars.$spacing-md;
+  background: vars.$gray-50;
+  border-radius: vars.$radius-lg;
 
   p {
-    font-size: 0.875rem;
-    color: #1e293b;
+    font-size: vars.$font-size-sm;
+    color: vars.$gray-800;
     margin: 0;
     white-space: pre-wrap;
   }
@@ -254,27 +255,27 @@
 // Table Container
 .table-container {
   overflow-x: auto;
-  margin-top: 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
+  margin-top: vars.$spacing-3;
+  border-radius: vars.$radius-lg;
+  border: 1px solid vars.$gray-200;
 
   .detail-table {
     width: 100%;
     border-collapse: collapse;
 
     th, td {
-      padding: 0.75rem 1rem;
+      padding: vars.$spacing-3 vars.$spacing-md;
       text-align: left;
-      border-bottom: 1px solid #e2e8f0;
-      font-size: 0.875rem;
+      border-bottom: 1px solid vars.$gray-200;
+      font-size: vars.$font-size-sm;
     }
 
     th {
-      background: #f8fafc;
-      color: #64748b;
-      font-weight: 600;
+      background: vars.$gray-50;
+      color: vars.$gray-600;
+      font-weight: vars.$font-weight-semibold;
       text-transform: uppercase;
-      font-size: 0.75rem;
+      font-size: vars.$font-size-xs;
       letter-spacing: 0.05em;
 
       &.text-center {
@@ -287,7 +288,7 @@
     }
 
     td {
-      color: #1e293b;
+      color: vars.$gray-800;
 
       &.text-center {
         text-align: center;
@@ -298,7 +299,7 @@
       }
 
       &.font-semibold {
-        font-weight: 600;
+        font-weight: vars.$font-weight-semibold;
       }
     }
 
@@ -308,28 +309,28 @@
       }
 
       &:hover {
-        background: #f8fafc;
+        background: vars.$gray-50;
       }
     }
   }
 
   .table-legend {
-    padding: 0.75rem 1rem;
-    background: #f8fafc;
-    border-top: 1px solid #e2e8f0;
-    font-size: 0.75rem;
-    color: #64748b;
+    padding: vars.$spacing-3 vars.$spacing-md;
+    background: vars.$gray-50;
+    border-top: 1px solid vars.$gray-200;
+    font-size: vars.$font-size-xs;
+    color: vars.$gray-600;
     margin: 0;
   }
 }
 
 // Sub Section
 .sub-section {
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background: #f8fafc;
-  border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
+  padding: vars.$spacing-md;
+  margin-bottom: vars.$spacing-md;
+  background: vars.$gray-50;
+  border-radius: vars.$radius-lg;
+  border: 1px solid vars.$gray-200;
 
   &:last-child {
     margin-bottom: 0;
@@ -338,41 +339,41 @@
 
 // Meal Summary
 .meal-summary {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
+  margin-top: vars.$spacing-6;
+  padding: vars.$spacing-md;
+  background: vars.$gray-50;
+  border-radius: vars.$radius-lg;
+  border: 1px solid vars.$gray-200;
 
   h4 {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #64748b;
-    margin: 0 0 0.75rem 0;
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-600;
+    margin: 0 0 vars.$spacing-3 0;
   }
 
   .summary-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 1rem;
+    gap: vars.$spacing-md;
 
     .summary-item {
       text-align: center;
 
       span {
         display: block;
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: #64748b;
+        font-size: vars.$font-size-xs;
+        font-weight: vars.$font-weight-medium;
+        color: vars.$gray-600;
         text-transform: capitalize;
-        margin-bottom: 0.25rem;
+        margin-bottom: vars.$spacing-1;
       }
 
       strong {
         display: block;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #3b82f6;
+        font-size: vars.$font-size-xl;
+        font-weight: vars.$font-weight-bold;
+        color: vars.$info-color;
       }
     }
   }
@@ -382,60 +383,60 @@
 .approval-timeline {
   .approval-step {
     display: flex;
-    gap: 1rem;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    background: #f8fafc;
-    border-radius: 0.5rem;
-    border-left: 4px solid #e2e8f0;
-    transition: all 0.2s;
+    gap: vars.$spacing-md;
+    padding: vars.$spacing-md;
+    margin-bottom: vars.$spacing-3;
+    background: vars.$gray-50;
+    border-radius: vars.$radius-lg;
+    border-left: 4px solid vars.$gray-200;
+    transition: vars.$transition-base;
 
     &.completed {
       background: #f0fdf4;
-      border-left-color: #22c55e;
+      border-left-color: vars.$success-color;
     }
 
     &.rejected {
       background: #fef2f2;
-      border-left-color: #ef4444;
+      border-left-color: vars.$error-color;
     }
 
     &.pending {
       background: #fffbeb;
-      border-left-color: #f59e0b;
+      border-left-color: vars.$warning-color;
     }
 
     .step-icon {
       flex-shrink: 0;
-      width: 2.5rem;
-      height: 2.5rem;
+      width: vars.$spacing-10;
+      height: vars.$spacing-10;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 50%;
-      background: white;
-      border: 2px solid #e2e8f0;
+      border-radius: vars.$radius-full;
+      background: vars.$bg-primary;
+      border: 2px solid vars.$gray-200;
 
       svg {
-        width: 1.5rem;
-        height: 1.5rem;
+        width: vars.$spacing-6;
+        height: vars.$spacing-6;
       }
 
       .icon-success {
-        color: #22c55e;
+        color: vars.$success-color;
       }
 
       .icon-error {
-        color: #ef4444;
+        color: vars.$error-color;
       }
 
       .icon-pending {
-        color: #f59e0b;
+        color: vars.$warning-color;
       }
 
       span {
-        font-weight: 600;
-        color: #64748b;
+        font-weight: vars.$font-weight-semibold;
+        color: vars.$gray-600;
       }
     }
 
@@ -443,32 +444,32 @@
       flex: 1;
 
       h4 {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #1e293b;
-        margin: 0 0 0.25rem 0;
+        font-size: vars.$font-size-sm;
+        font-weight: vars.$font-weight-semibold;
+        color: vars.$gray-800;
+        margin: 0 0 vars.$spacing-1 0;
       }
 
       .step-status {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: #64748b;
-        margin: 0 0 0.25rem 0;
+        font-size: vars.$font-size-xs;
+        font-weight: vars.$font-weight-medium;
+        color: vars.$gray-600;
+        margin: 0 0 vars.$spacing-1 0;
       }
 
       .step-date {
-        font-size: 0.75rem;
-        color: #94a3b8;
+        font-size: vars.$font-size-xs;
+        color: vars.$gray-400;
         margin: 0;
       }
 
       .step-comments {
-        font-size: 0.875rem;
-        color: #475569;
-        margin: 0.5rem 0 0 0;
-        padding: 0.5rem;
-        background: white;
-        border-radius: 0.375rem;
+        font-size: vars.$font-size-sm;
+        color: vars.$gray-700;
+        margin: vars.$spacing-2 0 0 0;
+        padding: vars.$spacing-2;
+        background: vars.$bg-primary;
+        border-radius: vars.$radius-md;
       }
     }
   }
@@ -478,43 +479,43 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.375rem 0.875rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: vars.$badge-padding-y vars.$badge-padding-x;
+  border-radius: vars.$radius-full;
+  font-size: vars.$badge-font-size;
+  font-weight: vars.$font-weight-semibold;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 
   &.badge-success {
-    background: #22c55e;
-    color: white;
+    background: vars.$success-color;
+    color: vars.$text-inverse;
   }
 
   &.badge-danger {
-    background: #ef4444;
-    color: white;
+    background: vars.$error-color;
+    color: vars.$text-inverse;
   }
 
   &.badge-warning {
-    background: #f59e0b;
-    color: white;
+    background: vars.$warning-color;
+    color: vars.$text-inverse;
   }
 
   &.badge-secondary {
-    background: #64748b;
-    color: white;
+    background: vars.$gray-600;
+    color: vars.$text-inverse;
   }
 
   &.badge-info {
-    background: #3b82f6;
-    color: white;
+    background: vars.$info-color;
+    color: vars.$text-inverse;
   }
 }
 
 // Responsive Design
-@media (max-width: 768px) {
+@media (max-width: vars.$breakpoint-md) {
   .trf-detail-container {
-    padding: 1rem;
+    padding: vars.$spacing-md;
   }
 
   .page-header {
@@ -523,11 +524,11 @@
     }
 
     .page-title {
-      font-size: 1.25rem;
+      font-size: vars.$font-size-lg;
 
       .icon {
-        width: 1.25rem;
-        height: 1.25rem;
+        width: vars.$spacing-5;
+        height: vars.$spacing-5;
       }
     }
 
@@ -545,6 +546,6 @@
   }
 
   .detail-section {
-    padding: 1rem;
+    padding: vars.$spacing-md;
   }
 }

@@ -1,13 +1,15 @@
+// Clerk Panel Component - Using Unified Design System
+@use '../../../../styles/variables' as vars;
+
 .clerk-panel-container {
   /* Full-width adaptive layout */
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 1.5rem 2rem;
+  padding: vars.$spacing-6 vars.$spacing-8;
   box-sizing: border-box;
-  height: 100%; // Use 100% instead of calc to work with flexbox
+  height: 100%;
   overflow: hidden;
-  // Flexbox properties are set globally in styles.scss
 }
 
 .row {
@@ -16,9 +18,9 @@
 
 /* Panel Styling */
 .task-list-panel, .task-details-panel {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background-color: white;
+  border-radius: vars.$radius-base;
+  box-shadow: vars.$shadow-sm;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -26,43 +28,43 @@
 }
 
 .panel-header {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e9ecef;
+  padding: vars.$spacing-4 vars.$spacing-6;
+  border-bottom: 1px solid vars.$border-light;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   h2 {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: vars.$font-size-xl;
+    font-weight: vars.$font-weight-semibold;
     display: flex;
     align-items: center;
-    
+
     i {
-      margin-right: 0.5rem;
+      margin-right: vars.$spacing-2;
     }
   }
 }
 
 /* Filter Controls */
 .filter-controls {
-  padding: 0 1rem;
+  padding: 0 vars.$spacing-4;
   width: 100%;
-  
+
   .filter-row {
     display: flex;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: vars.$spacing-3;
+    margin-bottom: vars.$spacing-4;
   }
-  
+
   .filter-item {
     flex: 1;
-    
+
     label {
-      font-size: 0.8rem;
-      color: #6c757d;
-      margin-bottom: 0.25rem;
+      font-size: vars.$font-size-sm;
+      color: vars.$text-secondary;
+      margin-bottom: vars.$spacing-1;
     }
   }
 }
@@ -71,7 +73,7 @@
 .task-list {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
+  padding: vars.$spacing-4;
 }
 
 .no-tasks {
@@ -80,40 +82,40 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #6c757d;
-  
+  color: vars.$text-secondary;
+
   i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: vars.$font-size-3xl;
+    margin-bottom: vars.$spacing-4;
   }
-  
+
   p {
-    margin-bottom: 1.5rem;
+    margin-bottom: vars.$spacing-6;
   }
 }
 
 .task-card {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  background-color: vars.$gray-50;
+  border-radius: vars.$radius-base;
+  padding: vars.$spacing-4;
+  margin-bottom: vars.$spacing-4;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
-  gap: 1rem;
-  border-left: 4px solid #dee2e6;
-  
+  gap: vars.$spacing-4;
+  border-left: 4px solid vars.$gray-300;
+
   &:hover {
-    background-color: #e9ecef;
+    background-color: vars.$gray-200;
   }
-  
+
   &.selected {
     background-color: #e7f5ff;
-    border-left-color: #0d6efd;
+    border-left-color: vars.$info-color;
   }
-  
+
   &.overdue {
-    border-left-color: #dc3545;
+    border-left-color: vars.$error-color;
   }
 }
 
@@ -123,12 +125,12 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  background-color: #e9ecef;
-  border-radius: 50%;
-  
+  background-color: vars.$gray-200;
+  border-radius: vars.$radius-full;
+
   i {
-    font-size: 1.2rem;
-    color: #495057;
+    font-size: vars.$font-size-xl;
+    color: vars.$gray-700;
   }
 }
 
@@ -140,32 +142,32 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.5rem;
+  margin-bottom: vars.$spacing-2;
 }
 
 .task-title {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: vars.$font-size-base;
+  font-weight: vars.$font-weight-semibold;
 }
 
 .task-priority {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-weight: 600;
+  font-size: vars.$font-size-xs;
+  padding: vars.$spacing-1 vars.$spacing-2;
+  border-radius: vars.$radius-sm;
+  font-weight: vars.$font-weight-semibold;
   text-transform: uppercase;
 }
 
 .task-details {
   p {
     margin: 0;
-    margin-bottom: 0.25rem;
-    font-size: 0.85rem;
-    color: #6c757d;
-    
+    margin-bottom: vars.$spacing-1;
+    font-size: vars.$font-size-sm;
+    color: vars.$text-secondary;
+
     i {
-      margin-right: 0.25rem;
+      margin-right: vars.$spacing-1;
     }
   }
 }
@@ -173,86 +175,86 @@
 .task-footer {
   display: flex;
   justify-content: space-between;
-  margin-top: 0.75rem;
-  font-size: 0.85rem;
+  margin-top: vars.$spacing-3;
+  font-size: vars.$font-size-sm;
 }
 
 .task-status, .task-assignee {
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-weight: 500;
+  padding: vars.$spacing-1 vars.$spacing-2;
+  border-radius: vars.$radius-sm;
+  font-weight: vars.$font-weight-medium;
 }
 
 /* Task Details Panel */
 .task-details-content {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem;
+  padding: vars.$spacing-6;
 }
 
 .detail-section {
-  margin-bottom: 2rem;
-  
+  margin-bottom: vars.$spacing-8;
+
   h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: #343a40;
-    border-bottom: 1px solid #e9ecef;
-    padding-bottom: 0.5rem;
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-semibold;
+    margin-bottom: vars.$spacing-4;
+    color: vars.$gray-800;
+    border-bottom: 1px solid vars.$border-light;
+    padding-bottom: vars.$spacing-2;
   }
-  
+
   h4 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 0.75rem;
-    color: #495057;
+    font-size: vars.$font-size-base;
+    font-weight: vars.$font-weight-semibold;
+    margin-bottom: vars.$spacing-3;
+    color: vars.$gray-700;
   }
 }
 
 .detail-item {
-  margin-bottom: 0.75rem;
+  margin-bottom: vars.$spacing-3;
   display: flex;
-  
+
   .detail-label {
-    font-weight: 500;
-    color: #6c757d;
+    font-weight: vars.$font-weight-medium;
+    color: vars.$text-secondary;
     width: 40%;
   }
-  
+
   .detail-value {
     flex: 1;
   }
 }
 
 .vendor-integration {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px dashed #dee2e6;
+  margin-top: vars.$spacing-6;
+  padding-top: vars.$spacing-4;
+  border-top: 1px dashed vars.$gray-300;
 }
 
 .vendor-buttons {
   display: flex;
-  gap: 0.75rem;
+  gap: vars.$spacing-3;
   flex-wrap: wrap;
-  
+
   button {
-    margin-bottom: 0.5rem;
+    margin-bottom: vars.$spacing-2;
   }
 }
 
 .processing-notes {
-  margin-bottom: 1.5rem;
-  
+  margin-bottom: vars.$spacing-6;
+
   label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
+    font-weight: vars.$font-weight-medium;
+    margin-bottom: vars.$spacing-2;
   }
 }
 
 .action-buttons {
   display: flex;
-  gap: 1rem;
+  gap: vars.$spacing-4;
 }
 
 /* Empty State */
@@ -260,22 +262,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   .empty-state-content {
     text-align: center;
-    color: #6c757d;
-    
+    color: vars.$text-secondary;
+
     i {
-      font-size: 4rem;
-      margin-bottom: 1.5rem;
-      color: #adb5bd;
+      font-size: vars.$font-size-3xl;
+      margin-bottom: vars.$spacing-6;
+      color: vars.$gray-400;
     }
-    
+
     h3 {
-      font-size: 1.5rem;
-      margin-bottom: 0.75rem;
+      font-size: vars.$font-size-2xl;
+      margin-bottom: vars.$spacing-3;
     }
-    
+
     p {
       max-width: 400px;
     }
@@ -284,59 +286,59 @@
 
 /* Status and Priority Colors */
 .priority-high {
-  background-color: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: vars.$error-color;
 }
 
 .priority-medium {
-  background-color: rgba(255, 193, 7, 0.1);
-  color: #fd7e14;
+  background-color: rgba(245, 158, 11, 0.1);
+  color: vars.$warning-color;
 }
 
 .priority-low {
-  background-color: rgba(40, 167, 69, 0.1);
-  color: #28a745;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: vars.$success-color;
 }
 
 .status-pending {
-  background-color: rgba(108, 117, 125, 0.1);
-  color: #6c757d;
+  background-color: rgba(107, 114, 128, 0.1);
+  color: vars.$gray-600;
 }
 
 .status-in-progress {
-  background-color: rgba(0, 123, 255, 0.1);
-  color: #0d6efd;
+  background-color: rgba(59, 130, 246, 0.1);
+  color: vars.$info-color;
 }
 
 .status-completed {
-  background-color: rgba(40, 167, 69, 0.1);
-  color: #28a745;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: vars.$success-color;
 }
 
 .status-cancelled {
-  background-color: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: vars.$error-color;
 }
 
 .overdue {
-  color: #dc3545;
-  font-weight: 600;
+  color: vars.$error-color;
+  font-weight: vars.$font-weight-semibold;
 }
 
 /* Responsive adjustments */
 @media (max-width: 992px) {
   .clerk-panel-container {
     height: auto;
-    padding: 1rem;
+    padding: vars.$spacing-4;
   }
-  
+
   .row {
     height: auto;
   }
-  
+
   .task-list-panel, .task-details-panel {
     height: auto;
     max-height: 600px;
-    margin-bottom: 1.5rem;
+    margin-bottom: vars.$spacing-6;
   }
 }

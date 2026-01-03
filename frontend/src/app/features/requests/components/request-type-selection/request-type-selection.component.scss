@@ -1,34 +1,37 @@
+// Request Type Selection Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
 .request-type-selection-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
-  background-color: #f5f7f8;
+  padding: vars.$spacing-6;
+  background-color: vars.$gray-50;
   min-height: calc(100vh - 120px);
 }
 
 .request-header {
   text-align: center;
-  margin-bottom: 2.5rem;
-  
+  margin-bottom: vars.$spacing-8;
+
   .icon-container {
-    margin-bottom: 1rem;
-    
+    margin-bottom: vars.$spacing-md;
+
     i {
-      font-size: 2rem;
-      color: #3498db;
+      font-size: vars.$font-size-2xl;
+      color: vars.$primary-color;
     }
   }
-  
+
   .request-title {
-    font-size: 2rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.75rem;
+    font-size: vars.$font-size-2xl;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-primary;
+    margin-bottom: vars.$spacing-3;
   }
-  
+
   .request-subtitle {
-    font-size: 1.1rem;
-    color: #6c757d;
+    font-size: vars.$font-size-lg;
+    color: vars.$text-secondary;
     max-width: 600px;
     margin: 0 auto;
   }
@@ -37,8 +40,8 @@
 .request-types-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-  gap: 1.5rem;
-  
+  gap: vars.$spacing-6;
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -48,15 +51,15 @@
   display: flex;
   align-items: flex-start;
   background-color: white;
-  border-radius: 0.5rem;
-  padding: 2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: vars.$radius-base;
+  padding: vars.$spacing-6;
+  box-shadow: vars.$shadow-sm;
   transition: all 0.3s ease;
   cursor: pointer;
-  
+
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: vars.$shadow-lg;
   }
 }
 
@@ -67,27 +70,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 1.5rem;
-  
+  margin-right: vars.$spacing-6;
+
   i {
-    font-size: 2rem;
-    color: #3498db;
+    font-size: vars.$font-size-2xl;
+    color: vars.$primary-color;
   }
 }
 
 .request-type-content {
   flex: 1;
-  
+
   .request-type-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-primary;
+    margin-bottom: vars.$spacing-2;
   }
-  
+
   .request-type-description {
-    font-size: 0.95rem;
-    color: #6c757d;
+    font-size: vars.$font-size-sm;
+    color: vars.$text-secondary;
     margin: 0;
   }
 }

@@ -1,0 +1,223 @@
+// Visa Form Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
+.visa-form-container {
+  /* Full-width adaptive layout */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: vars.$spacing-6 vars.$spacing-8;
+  box-sizing: border-box;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: vars.$spacing-8;
+
+  h2 {
+    margin: 0;
+    font-size: vars.$font-size-2xl;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-primary;
+  }
+}
+
+// Section Cards - React Style
+.section-card {
+  border: 1px solid vars.$gray-300;
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-sm;
+  overflow: hidden;
+
+  .section-header {
+    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
+    border-bottom: 2px solid vars.$primary-color;
+    padding: vars.$spacing-5 vars.$spacing-6;
+
+    h4 {
+      margin: 0;
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$text-inverse;
+      display: flex;
+      align-items: center;
+
+      i {
+        margin-right: vars.$spacing-3;
+        font-size: vars.$font-size-xl;
+      }
+    }
+  }
+
+  .card-body {
+    padding: vars.$spacing-8;
+    background-color: white;
+  }
+}
+
+// Subsections within cards
+.subsection {
+  margin-bottom: 0;
+
+  .subsection-title {
+    color: vars.$text-primary;
+    font-weight: vars.$font-weight-semibold;
+    font-size: vars.$font-size-base;
+    margin-bottom: vars.$spacing-5;
+    padding-bottom: vars.$spacing-2;
+    border-bottom: 1px solid vars.$border-light;
+    display: flex;
+    align-items: center;
+
+    i {
+      margin-right: vars.$spacing-2;
+      font-size: vars.$font-size-lg;
+      color: vars.$primary-color;
+    }
+  }
+}
+
+.form-label {
+  font-weight: vars.$font-weight-medium;
+  font-size: vars.$font-size-sm;
+  color: vars.$gray-700;
+  margin-bottom: vars.$spacing-2;
+
+  .text-danger {
+    color: vars.$error-color;
+  }
+}
+
+.form-control,
+.form-select {
+  border: 1px solid vars.$gray-300;
+  padding: vars.$spacing-2 vars.$spacing-3;
+  font-size: vars.$font-size-sm;
+  border-radius: vars.$radius-base;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: vars.$primary-color;
+    box-shadow: vars.$input-focus-shadow;
+  }
+
+  &:disabled {
+    background-color: vars.$gray-50;
+    cursor: not-allowed;
+  }
+
+  // Invalid field styling
+  &.ng-invalid.ng-touched {
+    border-color: vars.$error-color;
+    background-color: #fef2f2;
+
+    &:focus {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+  }
+}
+
+// Add validation feedback
+.invalid-feedback {
+  display: block;
+  color: vars.$error-color;
+  font-size: vars.$font-size-sm;
+  margin-top: vars.$spacing-1;
+  font-weight: vars.$font-weight-medium;
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: vars.$spacing-md;
+  margin-top: vars.$spacing-8;
+  padding: vars.$spacing-6 vars.$spacing-8;
+  border-top: 2px solid vars.$border-light;
+  background-color: vars.$gray-50;
+  border-radius: vars.$radius-md;
+
+  .action-buttons {
+    display: flex;
+    gap: vars.$spacing-3;
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-2;
+    padding: vars.$spacing-2 vars.$spacing-5;
+    font-weight: vars.$font-weight-medium;
+    font-size: vars.$font-size-sm;
+    transition: all 0.2s ease;
+
+    i {
+      font-size: vars.$font-size-lg;
+    }
+
+    &.btn-success {
+      background-color: vars.$primary-color;
+      border-color: vars.$primary-color;
+
+      &:hover {
+        background-color: vars.$primary-hover;
+        border-color: vars.$primary-hover;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(13, 148, 136, 0.2);
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .visa-form-container {
+    padding: vars.$spacing-md;
+  }
+
+  .section-card {
+    .section-header {
+      padding: vars.$spacing-md;
+
+      h4 {
+        font-size: vars.$font-size-lg;
+
+        i {
+          font-size: vars.$font-size-lg;
+        }
+      }
+    }
+
+    .card-body {
+      padding: vars.$spacing-5;
+    }
+  }
+
+  .subsection {
+    .subsection-title {
+      font-size: vars.$font-size-sm;
+    }
+  }
+
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    padding: vars.$spacing-md;
+
+    .action-buttons {
+      width: 100%;
+
+      button {
+        flex: 1;
+      }
+    }
+  }
+}

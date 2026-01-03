@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { VisaService, VisaApplication } from '../../../visa/visa.service';
+import { VisaService, VisaApplication } from '../../visa/services/visa.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../core/utils/status-utils.service';

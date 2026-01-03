@@ -7,7 +7,7 @@ import { MainLayoutComponent } from './components/main-layout/main-layout.compon
 import { TravelRequestWizardComponent } from './features/requests/travel/travel-request-wizard.component';
 import { AccommodationRequestComponent } from './features/requests/accommodation/accommodation-request.component';
 import { TransportRequestComponent } from './features/requests/transport/transport-request.component';
-import { VisaRequestComponent } from './features/requests/visa/visa-request.component';
+import { VisaRequestComponent } from './features/visa/components/visa-request/visa-request.component';
 import { PendingApprovalsComponent } from './features/approvals/pending/pending-approvals.component';
 import { PendingApprovalsComponent as UnifiedApprovalsComponent } from './features/admin/approvals/components/pending-approvals/pending-approvals.component';
 import { ClerkPanelComponent } from './features/admin/clerk-panel/clerk-panel.component';
@@ -205,7 +205,7 @@ export const routes: Routes = [
       // Visa Management
       {
         path: 'visa',
-        loadChildren: () => import('./visa/visa.module').then(m => m.VisaModule)
+        loadChildren: () => import('./features/visa/visa.module').then(m => m.VisaModule)
       }
       ,
       // Secondary Settings entry from avatar menu

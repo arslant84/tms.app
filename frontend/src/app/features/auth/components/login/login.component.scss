@@ -1,3 +1,6 @@
+// Login Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
 .login-wrapper {
   display: flex;
   justify-content: center;
@@ -30,93 +33,93 @@
 }
 
 .login-card {
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background-color: vars.$bg-primary;
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-xl;
   width: 100%;
   max-width: 450px;
   overflow: hidden;
-  margin: 0 1rem;
+  margin: 0 vars.$spacing-md;
 }
 
 .login-header {
-  background-color: #2c3e50;
-  color: white;
-  padding: 2rem;
+  background-color: vars.$bg-dark;
+  color: vars.$text-inverse;
+  padding: vars.$spacing-8;
   text-align: center;
-  
+
   .logo-container {
-    margin-bottom: 1.5rem;
+    margin-bottom: vars.$spacing-6;
   }
-  
+
   .app-logo {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: vars.$font-size-2xl;
+    font-weight: vars.$font-weight-bold;
     margin: 0;
     letter-spacing: -1px;
   }
-  
+
   h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 0.5rem;
+    font-size: vars.$font-size-xl;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-inverse;
+    margin-bottom: vars.$spacing-2;
   }
-  
+
   p {
-    font-size: 1rem;
+    font-size: vars.$font-size-base;
     opacity: 0.8;
     margin: 0;
   }
 }
 
 .login-body {
-  padding: 2rem;
-  
+  padding: vars.$spacing-8;
+
   .form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
+    font-weight: vars.$font-weight-medium;
+    margin-bottom: vars.$spacing-2;
   }
-  
+
   .input-group {
     .input-group-text {
-      background-color: #f8f9fa;
-      color: #6c757d;
-      
+      background-color: vars.$gray-50;
+      color: vars.$gray-600;
+
       i {
-        font-size: 1rem;
+        font-size: vars.$font-size-base;
       }
     }
-    
+
     .form-control {
       &:focus {
         box-shadow: none;
       }
     }
   }
-  
+
   .btn-primary {
-    background-color: #3498db;
-    border-color: #3498db;
-    padding: 0.75rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    
+    background-color: vars.$info-color;
+    border-color: vars.$info-color;
+    padding: vars.$spacing-3;
+    font-weight: vars.$font-weight-medium;
+    transition: vars.$transition-base;
+
     &:hover:not(:disabled) {
-      background-color: #2980b9;
-      border-color: #2980b9;
+      background-color: vars.$info-hover;
+      border-color: vars.$info-hover;
       transform: translateY(-2px);
     }
-    
+
     &:disabled {
-      background-color: #3498db;
-      border-color: #3498db;
+      background-color: vars.$info-color;
+      border-color: vars.$info-color;
       opacity: 0.7;
     }
   }
-  
+
   .invalid-feedback {
-    font-size: 0.8rem;
-    color: #dc3545;
+    font-size: vars.$font-size-xs;
+    color: vars.$error-color;
   }
 }

@@ -1,13 +1,13 @@
-// TRF Stepper Component - Matching React pctsb.syntra design
-// Colors based on Tailwind CSS palette matching the React project
+// TRF Stepper Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
 
 .stepper-container {
   display: flex;
   justify-content: center;
-  border-bottom: 1px solid #e5e7eb; // border-gray-200
-  background-color: rgba(243, 244, 246, 0.2); // bg-muted/20 (gray-100/20)
-  border-top-left-radius: 0.5rem; // rounded-t-lg
-  border-top-right-radius: 0.5rem;
+  border-bottom: 1px solid vars.$border-light;
+  background-color: rgba(243, 244, 246, 0.2);
+  border-top-left-radius: vars.$radius-lg;
+  border-top-right-radius: vars.$radius-lg;
 }
 
 .stepper {
@@ -18,44 +18,44 @@
 }
 
 .step-button {
-  padding: 0.75rem 1rem; // py-3 px-4
-  font-size: 0.875rem; // text-sm
-  font-weight: 500; // font-medium
+  padding: vars.$spacing-3 vars.$spacing-md;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem; // gap-2
+  gap: vars.$spacing-2;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
   cursor: pointer;
-  color: #6b7280; // text-muted-foreground (gray-500)
+  color: vars.$gray-600;
   transition: color 0.15s ease, border-color 0.15s ease;
 
-  @media (min-width: 768px) {
-    padding: 1rem 1.5rem; // md:py-4 md:px-6
+  @include vars.media-md {
+    padding: vars.$spacing-md vars.$spacing-6;
   }
 
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); // ring-primary/10
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
   }
 
   &.active {
-    color: #0d9488; // text-primary (teal-600)
-    border-bottom-color: #0d9488; // border-b-2 border-primary
-    font-weight: 600; // font-semibold
+    color: vars.$primary-color;
+    border-bottom-color: vars.$primary-color;
+    font-weight: vars.$font-weight-semibold;
 
     .step-label {
-      font-weight: 600;
+      font-weight: vars.$font-weight-semibold;
     }
   }
 
   &.completed {
-    color: #16a34a; // text-green-600
+    color: vars.$success-color;
 
     &:hover {
-      color: #15803d; // hover:text-green-700
+      color: #15803d;
     }
   }
 
@@ -65,27 +65,27 @@
   }
 
   &:not(:disabled):not(.active):hover {
-    color: #374151; // hover:text-gray-700 (darker on hover)
+    color: vars.$gray-700;
   }
 }
 
 .step-icon {
   display: inline-flex;
   align-items: center;
-  font-size: 1rem; // h-4 w-4
-  color: #22c55e; // text-green-500
+  font-size: vars.$font-size-base;
+  color: vars.$success-color;
 
   i {
-    font-size: 1rem;
+    font-size: vars.$font-size-base;
   }
 }
 
 .step-label {
-  font-size: 0.75rem; // text-xs
-  font-weight: 500; // font-medium
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-medium;
 
-  @media (min-width: 768px) {
-    font-size: 0.875rem; // md:text-sm
+  @include vars.media-md {
+    font-size: vars.$font-size-sm;
   }
 }
 
@@ -95,15 +95,15 @@
   top: 50%;
   transform: translateY(-50%);
   width: 1px;
-  height: 1.25rem; // h-5
-  background-color: #e5e7eb; // bg-gray-200
+  height: vars.$spacing-5;
+  background-color: vars.$border-light;
 }
 
 // Responsive adjustments
-@media (max-width: 768px) {
+@media (max-width: vars.$breakpoint-md) {
   .step-button {
-    padding: 0.75rem 1rem; // py-3 px-4
-    font-size: 0.75rem; // text-xs
+    padding: vars.$spacing-3 vars.$spacing-md;
+    font-size: vars.$font-size-xs;
   }
 
   .step-separator {
