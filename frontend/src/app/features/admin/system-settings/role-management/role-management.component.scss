@@ -1,3 +1,6 @@
+// Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
 // Card styling matching React shadcn/ui design
 .card {
   border: 1px solid rgba(0, 0, 0, 0.125);

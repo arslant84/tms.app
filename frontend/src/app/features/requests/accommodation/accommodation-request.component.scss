@@ -1,39 +1,43 @@
+// Accommodation Request Component - Using Unified Design System
+@use 'sass:color';
+@use '../../../../styles/variables' as vars;
+
 .request-wizard-container {
   /* Full-width adaptive layout */
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 1.5rem 2rem;
+  padding: vars.$spacing-6 vars.$spacing-8;
   box-sizing: border-box;
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-lg;
+
   .wizard-header {
     text-align: center;
-    margin-bottom: 2rem;
-    
+    margin-bottom: vars.$spacing-8;
+
     h2 {
-      color: #2c3e50;
-      margin-bottom: 0.5rem;
+      color: vars.$gray-900;
+      margin-bottom: vars.$spacing-2;
     }
-    
+
     p {
-      color: #6c757d;
-      font-size: 1.1rem;
+      color: vars.$gray-600;
+      font-size: vars.$font-size-lg;
     }
   }
-  
+
   .progress-container {
-    margin-bottom: 2rem;
-    
+    margin-bottom: vars.$spacing-8;
+
     .progress {
-      height: 0.5rem;
-      border-radius: 1rem;
+      height: vars.$spacing-2;
+      border-radius: vars.$radius-full;
     }
-    
+
     .progress-bar {
-      background-color: #3498db;
+      background-color: vars.$info-color;
       transition: width 0.3s ease;
     }
   }
@@ -41,73 +45,73 @@
   .steps-indicator {
     display: flex;
     justify-content: space-between;
-    margin-top: 1rem;
-    
+    margin-top: vars.$spacing-md;
+
     .step-item {
       flex: 1;
       text-align: center;
       position: relative;
-      
+
       .step-number {
         width: 30px;
         height: 30px;
         border-radius: 50%;
-        background-color: #e9ecef;
-        color: #6c757d;
+        background-color: vars.$gray-100;
+        color: vars.$gray-600;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 0.5rem;
-        font-weight: 600;
+        margin: 0 auto vars.$spacing-2;
+        font-weight: vars.$font-weight-semibold;
         transition: all 0.3s ease;
       }
-      
+
       .step-title {
-        font-size: 0.85rem;
-        color: #6c757d;
+        font-size: vars.$font-size-sm;
+        color: vars.$gray-600;
         transition: all 0.3s ease;
       }
-      
+
       &.active {
         .step-number {
-          background-color: #3498db;
+          background-color: vars.$info-color;
           color: white;
         }
-        
+
         .step-title {
-          color: #2c3e50;
-          font-weight: 600;
+          color: vars.$gray-900;
+          font-weight: vars.$font-weight-semibold;
         }
       }
-      
+
       &.completed {
         .step-number {
-          background-color: #2ecc71;
+          background-color: vars.$success-color;
           color: white;
         }
       }
     }
   }
-  
+
   .step-content {
-    margin-bottom: 2rem;
-    
+    margin-bottom: vars.$spacing-8;
+
     h3 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 1.5rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid #e9ecef;
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-900;
+      margin-bottom: vars.$spacing-6;
+      padding-bottom: vars.$spacing-3;
+      border-bottom: 1px solid vars.$border-light;
     }
   }
-  
+
   .wizard-actions {
     display: flex;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #e9ecef;
-    
+    margin-top: vars.$spacing-8;
+    padding-top: vars.$spacing-6;
+    border-top: 1px solid vars.$border-light;
+
     button {
       min-width: 100px;
     }
@@ -118,122 +122,122 @@
       th, td {
         text-align: center;
         vertical-align: middle;
-        padding: 0.5rem;
+        padding: vars.$spacing-2;
         min-width: 40px;
         height: 40px;
       }
-      
+
       td.available {
-        background-color: #b8e986; // Green from your images
+        background-color: color.adjust(vars.$success-color, $lightness: 35%); // Light green for available
       }
-      
+
       td.booked {
-        background-color: #d8d8d8; // Gray from your images
+        background-color: vars.$gray-200; // Gray for booked
       }
     }
-    
+
     .legend {
       .legend-box {
         width: 20px;
         height: 20px;
-        border-radius: 4px;
-        
+        border-radius: vars.$radius-base;
+
         &.available {
-          background-color: #b8e986;
+          background-color: color.adjust(vars.$success-color, $lightness: 35%);
         }
-        
+
         &.booked {
-          background-color: #d8d8d8;
+          background-color: vars.$gray-200;
         }
       }
     }
   }
-  
+
   .calendar-option-2 {
     .calendar-table {
       th {
         text-align: center;
-        background-color: #b8e986;
+        background-color: color.adjust(vars.$success-color, $lightness: 35%);
       }
-      
+
       .day-cell {
         height: 80px;
         width: 14.28%;
         vertical-align: top;
-        padding: 5px;
-        background-color: #b8e986; // Available by default
+        padding: vars.$spacing-1;
+        background-color: color.adjust(vars.$success-color, $lightness: 35%); // Available by default
         position: relative;
-        
+
         .rooms-count {
-          font-size: 0.8rem;
-          color: #2c3e50;
+          font-size: vars.$font-size-sm;
+          color: vars.$gray-900;
           position: absolute;
-          bottom: 5px;
-          right: 5px;
+          bottom: vars.$spacing-1;
+          right: vars.$spacing-1;
         }
       }
     }
   }
-  
+
   .booking-summary {
     .card-header {
-      background-color: #f8f9fa;
+      background-color: vars.$gray-50;
     }
-    
+
     .card-body {
       p {
-        margin-bottom: 0.5rem;
+        margin-bottom: vars.$spacing-2;
       }
     }
   }
-  
+
   .male-room {
-    background-color: #cce5ff; // Light blue for male rooms
+    background-color: color.adjust(vars.$info-color, $lightness: 35%); // Light blue for male rooms
   }
-  
+
   .female-room {
-    background-color: #f8d7da; // Light pink for female rooms
+    background-color: color.adjust(vars.$error-color, $lightness: 40%); // Light pink for female rooms
   }
 }
 
 .priority-options {
   display: flex;
-  gap: 1rem;
-  margin-top: 0.5rem;
+  gap: vars.$spacing-md;
+  margin-top: vars.$spacing-2;
 }
 
 // Form validation styles
 .form-control.ng-touched.ng-invalid,
 .form-select.ng-touched.ng-invalid {
-  border-color: #dc3545;
+  border-color: vars.$error-color;
 }
 
 .invalid-feedback {
   display: block;
-  font-size: 0.8rem;
+  font-size: vars.$font-size-sm;
 }
 
 // Responsive styles
 @media (max-width: 768px) {
   .request-wizard-container {
-    padding: 1.5rem;
+    padding: vars.$spacing-6;
   }
-  
+
   .steps-indicator {
     .step-title {
       display: none;
     }
   }
-  
+
   .priority-options {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: vars.$spacing-2;
   }
-  
+
   .wizard-actions {
     flex-wrap: wrap;
-    gap: 1rem;
-    
+    gap: vars.$spacing-md;
+
     button {
       flex: 1;
       min-width: auto;

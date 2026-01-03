@@ -1,11 +1,11 @@
-// TRF List Component - Matching React pctsb.syntra design
-// Colors based on Tailwind CSS palette matching the React project
+// TRF List Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
 
 .trf-list-container {
   padding: 0;
 
   > * + * {
-    margin-top: 2rem; // space-y-8
+    margin-top: vars.$spacing-8;
   }
 }
 
@@ -15,161 +15,161 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: vars.$spacing-md;
 }
 
 .header-left {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem; // gap-1
+  gap: vars.$spacing-1;
 }
 
 .title-with-icon {
   display: flex;
   align-items: center;
-  gap: 0.75rem; // gap-3
+  gap: vars.$spacing-3;
 }
 
 .header-icon {
-  width: 2rem; // w-8
-  height: 2rem; // h-8
-  color: #0d9488; // text-primary (teal-600)
-  font-size: 2rem;
+  width: vars.$spacing-8;
+  height: vars.$spacing-8;
+  color: vars.$primary-color;
+  font-size: vars.$font-size-2xl;
 }
 
 .page-title {
-  font-size: 1.875rem; // text-3xl
-  font-weight: 700; // font-bold
-  letter-spacing: -0.025em; // tracking-tight
-  color: #1f2937; // gray-800
+  font-size: vars.$font-size-3xl;
+  font-weight: vars.$font-weight-bold;
+  letter-spacing: -0.025em;
+  color: vars.$text-primary;
   margin: 0;
 }
 
 .page-subtitle {
-  font-size: 0.875rem; // text-sm
-  color: #6b7280; // text-muted-foreground
-  margin: 0 0 0 2.75rem; // ml-11 to align with title
+  font-size: vars.$font-size-sm;
+  color: vars.$text-secondary;
+  margin: 0 0 0 2.75rem;
 }
 
 .btn-create {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  background-color: #0d9488; // primary-teal
-  border-color: #0d9488;
-  color: white;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  transition: all 0.2s;
+  gap: vars.$spacing-2;
+  padding: vars.$spacing-2 vars.$spacing-md;
+  font-size: vars.$font-size-base;
+  background-color: vars.$primary-color;
+  border-color: vars.$primary-color;
+  color: vars.$text-inverse;
+  border-radius: vars.$radius-md;
+  font-weight: vars.$font-weight-medium;
+  transition: vars.$transition-base;
 
   &:hover {
-    background-color: #0f766e; // teal-700
-    border-color: #0f766e;
+    background-color: vars.$primary-hover;
+    border-color: vars.$primary-hover;
   }
 
   i {
-    font-size: 1.25rem; // h-5 w-5
+    font-size: vars.$font-size-lg;
   }
 }
 
 // Filters Card
 .filters-card {
-  background: white;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); // shadow-lg
+  background: vars.$bg-primary;
+  border-radius: vars.$radius-lg;
+  border: 1px solid vars.$border-light;
+  box-shadow: vars.$shadow-lg;
 }
 
 .filters-card-header {
-  padding: 1.5rem; // p-6
+  padding: vars.$spacing-6;
 }
 
 .card-title-with-icon {
   display: flex;
   align-items: center;
-  gap: 0.5rem; // gap-2
+  gap: vars.$spacing-2;
 
   i {
-    font-size: 1.25rem; // h-5 w-5
-    color: #6b7280;
+    font-size: vars.$font-size-lg;
+    color: vars.$gray-600;
   }
 }
 
 .card-title {
-  font-size: 1.125rem; // text-lg
-  font-weight: 600; // font-semibold
-  color: #1f2937;
+  font-size: vars.$font-size-lg;
+  font-weight: vars.$font-weight-semibold;
+  color: vars.$text-primary;
   margin: 0;
 }
 
 .card-description {
-  font-size: 0.875rem; // text-sm
-  color: #6b7280; // text-muted-foreground
-  margin: 0.25rem 0 0 0; // mt-1
+  font-size: vars.$font-size-sm;
+  color: vars.$text-secondary;
+  margin: vars.$spacing-1 0 0 0;
 }
 
 .filters-card-content {
-  padding: 0 1.5rem 1.5rem; // px-6 pb-6
+  padding: 0 vars.$spacing-6 vars.$spacing-6;
 }
 
 .filters-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem; // gap-4
+  gap: vars.$spacing-md;
   align-items: end;
 
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(2, 1fr); // md:grid-cols-2
+  @include vars.media-md {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (min-width: 1024px) {
-    grid-template-columns: 2fr 1fr 1fr; // lg:grid-cols-4 with first column spanning 2
+  @include vars.media-lg {
+    grid-template-columns: 2fr 1fr 1fr;
   }
 }
 
 .search-input,
 .filter-select {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem; // text-sm
-  border: 1px solid #d1d5db; // border-gray-300
-  border-radius: 0.375rem;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  padding: vars.$spacing-2 vars.$spacing-3;
+  font-size: vars.$font-size-sm;
+  border: 1px solid vars.$gray-300;
+  border-radius: vars.$radius-md;
+  transition: vars.$transition-base;
 
   &:focus {
     outline: none;
-    border-color: #0d9488; // primary-teal
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    border-color: vars.$primary-color;
+    box-shadow: vars.$input-focus-shadow;
   }
 }
 
 .clear-filters-section {
-  padding-top: 1rem;
+  padding-top: vars.$spacing-md;
 }
 
 .btn-clear {
   display: flex;
   align-items: center;
-  gap: 0.375rem; // gap-1.5
-  font-size: 0.75rem; // text-xs
-  padding: 0.375rem 0.75rem;
+  gap: vars.$spacing-1;
+  font-size: vars.$font-size-xs;
+  padding: vars.$spacing-1 vars.$spacing-3;
 }
 
 // TSR List Card
 .tsr-list-card {
-  background: white;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); // shadow-lg
+  background: vars.$bg-primary;
+  border-radius: vars.$radius-lg;
+  border: 1px solid vars.$border-light;
+  box-shadow: vars.$shadow-lg;
 }
 
 .tsr-card-header {
-  padding: 1.5rem;
+  padding: vars.$spacing-6;
 }
 
 .tsr-card-content {
-  padding: 0 0 1.5rem; // px-0 pb-6
+  padding: 0 0 vars.$spacing-6;
 }
 
 // Loading State
@@ -178,28 +178,28 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 10rem; // h-40
-  gap: 0.5rem;
+  height: 10rem;
+  gap: vars.$spacing-2;
 
   i {
-    font-size: 2rem; // h-8 w-8
-    color: #0d9488; // text-primary
+    font-size: vars.$font-size-2xl;
+    color: vars.$primary-color;
   }
 
   .loading-text {
-    margin-left: 0.5rem;
-    color: #6b7280; // text-muted-foreground
-    font-size: 0.875rem;
+    margin-left: vars.$spacing-2;
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-sm;
   }
 }
 
 .loading-inline {
   display: inline-block;
-  margin-left: 0.25rem;
+  margin-left: vars.$spacing-1;
 
   i {
-    font-size: 1rem; // h-4 w-4
-    color: #0d9488;
+    font-size: vars.$font-size-base;
+    color: vars.$primary-color;
   }
 }
 
@@ -219,29 +219,29 @@
 // Error State
 .error-state {
   text-align: center;
-  padding: 2rem 0; // py-8
+  padding: vars.$spacing-8 0;
 
   .error-icon {
     margin: 0 auto;
-    font-size: 3rem; // h-12 w-12
-    color: #ef4444; // text-destructive (red-500)
+    font-size: vars.$font-size-3xl;
+    color: vars.$error-color;
   }
 
   .error-title {
-    margin-top: 0.5rem; // mt-2
-    font-size: 1.125rem; // text-lg
-    font-weight: 500; // font-medium
-    color: #ef4444;
+    margin-top: vars.$spacing-2;
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-medium;
+    color: vars.$error-color;
   }
 
   .error-message {
-    margin-top: 0.25rem; // mt-1
-    font-size: 0.875rem; // text-sm
-    color: #6b7280; // text-muted-foreground
+    margin-top: vars.$spacing-1;
+    font-size: vars.$font-size-sm;
+    color: vars.$text-secondary;
   }
 
   .btn {
-    margin-top: 1rem; // mt-4
+    margin-top: vars.$spacing-md;
   }
 }
 
@@ -257,19 +257,19 @@
 .tsr-table {
   width: 100%;
   margin-bottom: 0;
-  font-size: 0.875rem;
+  font-size: vars.$font-size-sm;
 
   thead {
-    background-color: #f9fafb;
+    background-color: vars.$gray-50;
 
     th {
-      font-weight: 600;
-      font-size: 0.75rem;
+      font-weight: vars.$font-weight-semibold;
+      font-size: vars.$font-size-xs;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #6b7280;
-      border-bottom: 1px solid #e5e7eb;
-      padding: 0.75rem;
+      color: vars.$gray-600;
+      border-bottom: 1px solid vars.$border-light;
+      padding: vars.$spacing-3;
       white-space: nowrap;
     }
   }
@@ -277,11 +277,11 @@
   tbody {
     tr {
       cursor: pointer;
-      transition: background-color 0.15s ease;
-      border-bottom: 1px solid #e5e7eb;
+      transition: vars.$transition-base;
+      border-bottom: 1px solid vars.$border-light;
 
       &:hover {
-        background-color: #f9fafb;
+        background-color: vars.$gray-50;
       }
 
       &:last-child {
@@ -289,9 +289,9 @@
       }
 
       td {
-        padding: 1rem 0.75rem;
+        padding: vars.$spacing-md vars.$spacing-3;
         vertical-align: middle;
-        color: #374151;
+        color: vars.$gray-700;
       }
     }
   }
@@ -305,21 +305,21 @@
 .sort-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem; // ml-2
+  gap: vars.$spacing-2;
   background: transparent;
   border: none;
-  padding: 0.25rem;
-  font-weight: 600;
-  color: #374151;
+  padding: vars.$spacing-1;
+  font-weight: vars.$font-weight-semibold;
+  color: vars.$gray-700;
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition: vars.$transition-base;
 
   &:hover {
-    background-color: rgba(107, 114, 128, 0.1); // hover:bg-muted/80
+    background-color: rgba(107, 114, 128, 0.1);
   }
 
   i {
-    font-size: 0.75rem; // h-3 w-3
+    font-size: vars.$font-size-xs;
     transition: transform 0.2s;
   }
 
@@ -329,90 +329,88 @@
 }
 
 .font-medium {
-  font-weight: 500;
+  font-weight: vars.$font-weight-medium;
 }
 
 .purpose-cell {
-  max-width: 20rem; // max-w-xs
+  max-width: 20rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-// Badge Styles - using global styles from _variables.scss
-
 // Request Number Styling
 .request-number {
-  color: #0d9488;
-  font-weight: 600;
+  color: vars.$primary-color;
+  font-weight: vars.$font-weight-semibold;
 }
 
-// Action Buttons - Matching Visa List Design
+// Action Buttons
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: vars.$spacing-2;
   justify-content: flex-end;
 
   .action-btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
+    padding: vars.$spacing-1 vars.$spacing-2;
+    font-size: vars.$font-size-sm;
     border-width: 1px;
 
     i {
-      font-size: 1rem;
+      font-size: vars.$font-size-base;
     }
 
     &.btn-outline-primary {
-      color: #0d9488;
-      border-color: #0d9488;
+      color: vars.$primary-color;
+      border-color: vars.$primary-color;
 
       &:hover {
-        background-color: #0d9488;
-        border-color: #0d9488;
-        color: white;
+        background-color: vars.$primary-color;
+        border-color: vars.$primary-color;
+        color: vars.$text-inverse;
       }
     }
 
     &.btn-outline-danger {
       &:hover {
-        background-color: #dc3545;
-        border-color: #dc3545;
-        color: white;
+        background-color: vars.$error-color;
+        border-color: vars.$error-color;
+        color: vars.$text-inverse;
       }
     }
   }
 }
 
-// Pagination - Matching Visa List Design
+// Pagination
 .pagination-container {
-  padding: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  padding: vars.$spacing-6;
+  border-top: 1px solid vars.$border-light;
 
   .pagination {
     margin-bottom: 0;
 
     .page-item {
       .page-link {
-        color: #0d9488;
-        border-color: #e5e7eb;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.875rem;
+        color: vars.$primary-color;
+        border-color: vars.$border-light;
+        padding: vars.$spacing-2 vars.$spacing-3;
+        font-size: vars.$font-size-sm;
         cursor: pointer;
 
         &:hover {
           background-color: #f0fdfa;
-          border-color: #0d9488;
+          border-color: vars.$primary-color;
         }
       }
 
       &.active .page-link {
-        background-color: #0d9488;
-        border-color: #0d9488;
-        color: white;
+        background-color: vars.$primary-color;
+        border-color: vars.$primary-color;
+        color: vars.$text-inverse;
 
         &:hover {
-          background-color: #0f766e;
-          border-color: #0f766e;
+          background-color: vars.$primary-hover;
+          border-color: vars.$primary-hover;
         }
       }
 
@@ -424,8 +422,8 @@
   }
 
   .pagination-info {
-    color: #6b7280;
-    font-size: 0.875rem;
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-sm;
   }
 }
 
@@ -435,34 +433,34 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 16rem; // h-64
-  border: 2px dashed #e5e7eb; // border-2 border-dashed
-  border-radius: 0.5rem; // rounded-lg
-  margin: 0 1.5rem; // mx-6
+  height: 16rem;
+  border: 2px dashed vars.$border-light;
+  border-radius: vars.$radius-lg;
+  margin: 0 vars.$spacing-6;
 
   .empty-icon {
-    width: 4rem; // w-16
-    height: 4rem; // h-16
-    color: #9ca3af; // text-muted-foreground (gray-400)
-    margin-bottom: 1rem; // mb-4
-    font-size: 4rem;
+    width: 4rem;
+    height: 4rem;
+    color: vars.$gray-400;
+    margin-bottom: vars.$spacing-md;
+    font-size: vars.$font-size-3xl;
   }
 
   .empty-message {
-    color: #6b7280; // text-muted-foreground
-    font-size: 1rem;
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-base;
     margin: 0;
   }
 
   .empty-subtitle {
-    font-size: 0.875rem; // text-sm
-    color: #6b7280;
-    margin: 0.5rem 0 0 0;
+    font-size: vars.$font-size-sm;
+    color: vars.$text-secondary;
+    margin: vars.$spacing-2 0 0 0;
   }
 
   .btn-link {
-    margin-top: 0.5rem; // mt-2
-    color: #0d9488;
+    margin-top: vars.$spacing-2;
+    color: vars.$primary-color;
     background: transparent;
     border: none;
     text-decoration: none;
@@ -474,9 +472,9 @@
 }
 
 // Responsive adjustments
-@media (max-width: 768px) {
+@media (max-width: vars.$breakpoint-md) {
   .trf-list-container {
-    padding: 0.5rem;
+    padding: vars.$spacing-2;
   }
 
   .header-section {
@@ -489,11 +487,11 @@
   }
 
   .tsr-table {
-    font-size: 0.75rem;
+    font-size: vars.$font-size-xs;
 
     thead tr th,
     tbody tr td {
-      padding: 0.5rem 0.75rem;
+      padding: vars.$spacing-2 vars.$spacing-3;
     }
   }
 

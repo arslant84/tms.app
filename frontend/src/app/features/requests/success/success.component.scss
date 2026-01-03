@@ -1,16 +1,19 @@
+// Success Component - Using Unified Design System
+@use '../../../../styles/variables' as vars;
+
 .success-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 80vh;
-  padding: 2rem;
+  padding: vars.$spacing-6;
 }
 
 .success-card {
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 3rem;
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-lg;
+  padding: vars.$spacing-10;
   text-align: center;
   max-width: 500px;
   width: 100%;
@@ -18,32 +21,32 @@
 
 .success-icon {
   font-size: 5rem;
-  color: #2ecc71;
-  margin-bottom: 1.5rem;
-  
+  color: vars.$success-color;
+  margin-bottom: vars.$spacing-6;
+
   i {
     filter: drop-shadow(0 4px 6px rgba(46, 204, 113, 0.3));
   }
 }
 
 h2 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 1rem;
+  font-size: vars.$font-size-2xl;
+  font-weight: vars.$font-weight-bold;
+  color: vars.$text-primary;
+  margin-bottom: vars.$spacing-md;
 }
 
 .success-message {
-  font-size: 1.1rem;
-  color: #6c757d;
-  margin-bottom: 2rem;
+  font-size: vars.$font-size-lg;
+  color: vars.$text-secondary;
+  margin-bottom: vars.$spacing-6;
 }
 
 .success-actions {
   display: flex;
-  gap: 1rem;
+  gap: vars.$spacing-md;
   justify-content: center;
-  
+
   button {
     min-width: 180px;
   }
@@ -51,12 +54,12 @@ h2 {
 
 @media (max-width: 576px) {
   .success-card {
-    padding: 2rem 1.5rem;
+    padding: vars.$spacing-6 vars.$spacing-5;
   }
-  
+
   .success-actions {
     flex-direction: column;
-    
+
     button {
       width: 100%;
     }

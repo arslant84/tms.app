@@ -1,15 +1,18 @@
+// Approval Actions Component - Using Unified Design System
+@use '../../../../styles/variables' as vars;
+
 .approval-actions {
-  margin: 20px 0;
+  margin: vars.$spacing-5 0;
 }
 
 .actions-container {
-  padding: 20px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  padding: vars.$spacing-5;
+  background: vars.$bg-primary;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-lg;
 
   &.actions-compact {
-    padding: 12px;
+    padding: vars.$spacing-3;
     border: none;
     background: transparent;
   }
@@ -17,12 +20,12 @@
 
 .actions-header {
   h6 {
-    color: #333;
-    font-weight: 600;
+    color: vars.$gray-800;
+    font-weight: vars.$font-weight-semibold;
 
     i {
-      color: #28a745;
-      margin-right: 8px;
+      color: vars.$success-color;
+      margin-right: vars.$spacing-2;
     }
   }
 }
@@ -30,15 +33,15 @@
 .action-buttons {
   &.btn-group {
     display: flex;
-    gap: 8px;
+    gap: vars.$spacing-2;
   }
 
   .btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-weight: 500;
-    padding: 10px 20px;
+    gap: vars.$spacing-2;
+    font-weight: vars.$font-weight-medium;
+    padding: vars.$spacing-3 vars.$spacing-5;
     transition: all 0.2s ease;
 
     &:hover:not(:disabled) {
@@ -52,22 +55,22 @@
     }
 
     i {
-      font-size: 16px;
+      font-size: vars.$font-size-base;
     }
 
     &.btn-sm {
-      padding: 6px 12px;
-      font-size: 14px;
+      padding: vars.$spacing-2 vars.$spacing-3;
+      font-size: vars.$font-size-sm;
 
       i {
-        font-size: 14px;
+        font-size: vars.$font-size-sm;
       }
     }
   }
 
   .btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
+    background-color: vars.$success-color;
+    border-color: vars.$success-color;
 
     &:hover:not(:disabled) {
       background-color: #218838;
@@ -76,8 +79,8 @@
   }
 
   .btn-danger {
-    background-color: #dc3545;
-    border-color: #dc3545;
+    background-color: vars.$error-color;
+    border-color: vars.$error-color;
 
     &:hover:not(:disabled) {
       background-color: #c82333;
@@ -86,9 +89,9 @@
   }
 
   .btn-info {
-    background-color: #17a2b8;
-    border-color: #17a2b8;
-    color: #fff;
+    background-color: vars.$info-color;
+    border-color: vars.$info-color;
+    color: vars.$text-inverse;
 
     &:hover:not(:disabled) {
       background-color: #138496;
@@ -97,8 +100,8 @@
   }
 
   .btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
+    background-color: vars.$gray-600;
+    border-color: vars.$gray-600;
 
     &:hover:not(:disabled) {
       background-color: #5a6268;
@@ -108,12 +111,12 @@
 }
 
 .alert-sm {
-  padding: 10px 12px;
-  font-size: 13px;
+  padding: vars.$spacing-3;
+  font-size: vars.$font-size-xs;
   margin-bottom: 0;
 
   i {
-    margin-right: 6px;
+    margin-right: vars.$spacing-2;
   }
 }
 
@@ -144,8 +147,8 @@
 }
 
 .modal-dialog {
-  background: #fff;
-  border-radius: 8px;
+  background: vars.$bg-primary;
+  border-radius: vars.$radius-lg;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   max-width: 500px;
   width: 90%;
@@ -154,31 +157,31 @@
   animation: slideIn 0.3s ease;
 
   .modal-header {
-    padding: 20px;
-    border-bottom: 1px solid #e0e0e0;
+    padding: vars.$spacing-5;
+    border-bottom: 1px solid vars.$border-light;
     display: flex;
     justify-content: space-between;
     align-items: center;
 
     .modal-title {
       margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
+      font-size: vars.$font-size-base;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-800;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: vars.$spacing-2;
 
       i {
-        font-size: 20px;
+        font-size: vars.$font-size-lg;
       }
     }
 
     .btn-close {
       background: none;
       border: none;
-      font-size: 24px;
-      color: #6c757d;
+      font-size: vars.$font-size-2xl;
+      color: vars.$gray-600;
       cursor: pointer;
       padding: 0;
       width: 30px;
@@ -186,48 +189,48 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 4px;
+      border-radius: vars.$radius-md;
       transition: all 0.2s ease;
 
       &:hover {
-        background: #f8f9fa;
-        color: #333;
+        background: vars.$gray-50;
+        color: vars.$gray-800;
       }
     }
   }
 
   .modal-body {
-    padding: 20px;
+    padding: vars.$spacing-5;
 
     .form-group {
       margin-bottom: 0;
 
       .form-label {
-        font-weight: 500;
-        color: #333;
-        margin-bottom: 8px;
+        font-weight: vars.$font-weight-medium;
+        color: vars.$gray-800;
+        margin-bottom: vars.$spacing-2;
         display: block;
 
         .text-danger {
-          color: #dc3545;
+          color: vars.$error-color;
         }
       }
 
       .form-control {
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        padding: 10px 12px;
-        font-size: 14px;
+        border: 1px solid vars.$gray-300;
+        border-radius: vars.$radius-md;
+        padding: vars.$spacing-3;
+        font-size: vars.$font-size-sm;
         transition: border-color 0.2s ease;
 
         &:focus {
           border-color: #80bdff;
           outline: 0;
-          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+          box-shadow: vars.$input-focus-shadow;
         }
 
         &::placeholder {
-          color: #999;
+          color: vars.$gray-400;
         }
       }
 
@@ -238,19 +241,19 @@
 
       small {
         display: block;
-        margin-top: 6px;
-        font-size: 12px;
-        color: #6c757d;
+        margin-top: vars.$spacing-2;
+        font-size: vars.$font-size-xs;
+        color: vars.$gray-600;
       }
     }
 
     .alert {
-      padding: 12px;
-      border-radius: 4px;
-      margin-bottom: 20px;
+      padding: vars.$spacing-3;
+      border-radius: vars.$radius-md;
+      margin-bottom: vars.$spacing-5;
 
       i {
-        margin-right: 6px;
+        margin-right: vars.$spacing-2;
       }
     }
 
@@ -262,11 +265,11 @@
   }
 
   .modal-footer {
-    padding: 15px 20px;
-    border-top: 1px solid #e0e0e0;
+    padding: vars.$spacing-md vars.$spacing-5;
+    border-top: 1px solid vars.$border-light;
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: vars.$spacing-3;
 
     .btn {
       min-width: 100px;
@@ -297,13 +300,13 @@
 // ==================== No Permission Message ====================
 
 .no-permission {
-  margin: 20px 0;
+  margin: vars.$spacing-5 0;
 
   .alert {
     margin: 0;
 
     i {
-      margin-right: 6px;
+      margin-right: vars.$spacing-2;
     }
 
     strong {
@@ -314,10 +317,10 @@
 
 // ==================== Responsive ====================
 
-@media (max-width: 768px) {
+@media (max-width: vars.$breakpoint-md) {
   .modal-dialog {
     max-width: 95%;
-    margin: 10px;
+    margin: vars.$spacing-3;
   }
 
   .action-buttons:not(.btn-group) {

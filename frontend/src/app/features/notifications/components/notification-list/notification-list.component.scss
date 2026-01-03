@@ -1,13 +1,16 @@
+// Notification List Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
 .notifications-container {
   /* Full-width adaptive layout */
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 1.5rem 2rem;
+  padding: vars.$spacing-6 vars.$spacing-6;
   box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: vars.$spacing-md;
   }
 }
 
@@ -16,9 +19,9 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
+  margin-bottom: vars.$spacing-6;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: vars.$spacing-md;
 
   .header-left {
     flex: 1;
@@ -27,67 +30,67 @@
   .title-with-icon {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
+    gap: vars.$spacing-3;
+    margin-bottom: vars.$spacing-2;
 
     .header-icon {
-      font-size: 2rem;
-      color: #0d9488;
+      font-size: vars.$font-size-2xl;
+      color: vars.$primary-color;
     }
 
     .page-title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1f2937;
+      font-size: vars.$font-size-2xl;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$text-primary;
       margin: 0;
     }
   }
 
   .page-subtitle {
-    font-size: 1rem;
-    color: #6b7280;
+    font-size: vars.$font-size-base;
+    color: vars.$text-secondary;
     margin: 0;
   }
 
   .header-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: vars.$spacing-3;
     flex-wrap: wrap;
 
     .btn {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.625rem 1.25rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      border-radius: 0.5rem;
+      gap: vars.$spacing-2;
+      padding: vars.$spacing-2 vars.$spacing-5;
+      font-size: vars.$font-size-sm;
+      font-weight: vars.$font-weight-medium;
+      border-radius: vars.$radius-base;
       transition: all 0.2s;
 
       i {
-        font-size: 1rem;
+        font-size: vars.$font-size-base;
       }
     }
 
     .btn-outline-primary {
       background: white;
-      border: 1px solid #0d9488;
-      color: #0d9488;
+      border: 1px solid vars.$primary-color;
+      color: vars.$primary-color;
 
       &:hover {
-        background: #0d9488;
+        background: vars.$primary-color;
         color: white;
       }
     }
 
     .btn-primary {
-      background: #0d9488;
-      border: 1px solid #0d9488;
+      background: vars.$primary-color;
+      border: 1px solid vars.$primary-color;
       color: white;
 
       &:hover:not(:disabled) {
-        background: #0f766e;
-        border-color: #0f766e;
+        background: vars.$primary-hover;
+        border-color: vars.$primary-hover;
       }
 
       &:disabled {
@@ -101,34 +104,34 @@
 // Filters Section
 .filters-section {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: vars.$spacing-md;
+  margin-bottom: vars.$spacing-6;
   flex-wrap: wrap;
 
   .filter-group {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: vars.$spacing-2;
 
     label {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #374151;
+      font-size: vars.$font-size-sm;
+      font-weight: vars.$font-weight-medium;
+      color: vars.$gray-700;
       margin: 0;
     }
 
     .form-select {
       min-width: 160px;
-      padding: 0.5rem 0.75rem;
-      font-size: 0.875rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
+      padding: vars.$spacing-2 vars.$spacing-3;
+      font-size: vars.$font-size-sm;
+      border: 1px solid vars.$gray-300;
+      border-radius: vars.$radius-base;
       background-color: white;
       cursor: pointer;
 
       &:focus {
-        border-color: #0d9488;
-        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+        border-color: vars.$primary-color;
+        box-shadow: vars.$input-focus-shadow;
         outline: none;
       }
     }
@@ -146,38 +149,38 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  padding: vars.$spacing-10 vars.$spacing-6;
   text-align: center;
 
   .spinner-border {
     width: 3rem;
     height: 3rem;
-    margin-bottom: 1rem;
+    margin-bottom: vars.$spacing-md;
   }
 
   p {
-    color: #6b7280;
-    font-size: 1rem;
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-base;
   }
 }
 
 .empty-state {
   .empty-icon {
     font-size: 4rem;
-    color: #d1d5db;
-    margin-bottom: 1rem;
+    color: vars.$gray-300;
+    margin-bottom: vars.$spacing-md;
   }
 
   h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 0.5rem;
+    font-size: vars.$font-size-xl;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-700;
+    margin-bottom: vars.$spacing-2;
   }
 
   p {
-    font-size: 1rem;
-    color: #6b7280;
+    font-size: vars.$font-size-base;
+    color: vars.$text-secondary;
   }
 }
 
@@ -185,28 +188,28 @@
 .notification-cards {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: vars.$spacing-3;
 }
 
 .notification-card {
   position: relative;
   display: flex;
-  gap: 1rem;
-  padding: 1.25rem;
+  gap: vars.$spacing-md;
+  padding: vars.$spacing-5;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-md;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border-color: #0d9488;
+    box-shadow: vars.$shadow-md;
+    border-color: vars.$primary-color;
   }
 
   &.unread {
     background: #f0fdfa;
-    border-left: 4px solid #0d9488;
+    border-left: 4px solid vars.$primary-color;
   }
 
   .notification-icon-wrapper {
@@ -217,10 +220,10 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: #f3f4f6;
+    background: vars.$gray-100;
 
     i {
-      font-size: 1.5rem;
+      font-size: vars.$font-size-xl;
     }
   }
 
@@ -233,24 +236,24 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
+    gap: vars.$spacing-md;
+    margin-bottom: vars.$spacing-2;
   }
 
   .notification-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
+    font-size: vars.$font-size-base;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-primary;
     margin: 0;
     line-height: 1.5;
   }
 
   .badge {
     flex-shrink: 0;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 0.375rem;
+    padding: vars.$spacing-1 vars.$spacing-3;
+    font-size: vars.$font-size-xs;
+    font-weight: vars.$font-weight-semibold;
+    border-radius: vars.$radius-base;
     text-transform: uppercase;
 
     &.badge-danger {
@@ -269,16 +272,16 @@
     }
 
     &.badge-secondary {
-      background: #f3f4f6;
-      color: #4b5563;
+      background: vars.$gray-100;
+      color: vars.$gray-700;
     }
   }
 
   .notification-message {
-    font-size: 0.875rem;
-    color: #6b7280;
+    font-size: vars.$font-size-sm;
+    color: vars.$text-secondary;
     line-height: 1.5;
-    margin: 0 0 0.75rem 0;
+    margin: 0 0 vars.$spacing-3 0;
   }
 
   .notification-footer {
@@ -286,32 +289,32 @@
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: vars.$spacing-2;
 
     .notification-time {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
-      font-size: 0.813rem;
-      color: #9ca3af;
+      gap: vars.$spacing-1;
+      font-size: vars.$font-size-xs;
+      color: vars.$gray-400;
 
       i {
-        font-size: 0.875rem;
+        font-size: vars.$font-size-sm;
       }
     }
 
     .notification-action {
-      font-size: 0.813rem;
-      color: #0d9488;
-      font-weight: 500;
+      font-size: vars.$font-size-xs;
+      color: vars.$primary-color;
+      font-weight: vars.$font-weight-medium;
     }
   }
 
   .notification-actions {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding-left: 0.5rem;
+    gap: vars.$spacing-2;
+    padding-left: vars.$spacing-2;
 
     .action-btn {
       display: flex;
@@ -320,71 +323,71 @@
       width: 2rem;
       height: 2rem;
       background: transparent;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      color: #6b7280;
+      border: 1px solid vars.$gray-300;
+      border-radius: vars.$radius-base;
+      color: vars.$gray-600;
       cursor: pointer;
       transition: all 0.2s;
 
       &:hover {
-        background: #f3f4f6;
-        color: #0d9488;
-        border-color: #0d9488;
+        background: vars.$gray-100;
+        color: vars.$primary-color;
+        border-color: vars.$primary-color;
       }
 
       &.action-delete:hover {
         background: #fef2f2;
-        color: #dc2626;
-        border-color: #dc2626;
+        color: vars.$error-color;
+        border-color: vars.$error-color;
       }
 
       i {
-        font-size: 1rem;
+        font-size: vars.$font-size-base;
       }
     }
   }
 
   .unread-indicator {
     position: absolute;
-    top: 1.25rem;
-    right: 1.25rem;
+    top: vars.$spacing-5;
+    right: vars.$spacing-5;
     width: 10px;
     height: 10px;
-    background: #0d9488;
+    background: vars.$primary-color;
     border-radius: 50%;
   }
 }
 
 // Pagination
 .pagination-container {
-  padding: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  padding: vars.$spacing-6;
+  border-top: 1px solid vars.$border-light;
 
   .pagination {
     margin-bottom: 0;
 
     .page-item {
       .page-link {
-        color: #0d9488;
-        border-color: #e5e7eb;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.875rem;
+        color: vars.$primary-color;
+        border-color: vars.$border-light;
+        padding: vars.$spacing-2 vars.$spacing-3;
+        font-size: vars.$font-size-sm;
         cursor: pointer;
 
         &:hover {
           background-color: #f0fdfa;
-          border-color: #0d9488;
+          border-color: vars.$primary-color;
         }
       }
 
       &.active .page-link {
-        background-color: #0d9488;
-        border-color: #0d9488;
+        background-color: vars.$primary-color;
+        border-color: vars.$primary-color;
         color: white;
 
         &:hover {
-          background-color: #0f766e;
-          border-color: #0f766e;
+          background-color: vars.$primary-hover;
+          border-color: vars.$primary-hover;
         }
       }
 
@@ -396,8 +399,8 @@
   }
 
   .pagination-info {
-    color: #6b7280;
-    font-size: 0.875rem;
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-sm;
   }
 }
 
@@ -417,22 +420,22 @@
   }
 
   .notification-card {
-    padding: 1rem;
+    padding: vars.$spacing-md;
 
     .notification-icon-wrapper {
       width: 2.5rem;
       height: 2.5rem;
 
       i {
-        font-size: 1.25rem;
+        font-size: vars.$font-size-lg;
       }
     }
 
     .notification-actions {
       flex-direction: row;
       padding-left: 0;
-      padding-top: 0.5rem;
-      border-top: 1px solid #e5e7eb;
+      padding-top: vars.$spacing-2;
+      border-top: 1px solid vars.$border-light;
       width: 100%;
     }
   }
