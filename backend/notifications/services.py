@@ -154,17 +154,49 @@ class NotificationService:
                 logger.debug(f"Using event type template: {notification.event_type.name}")
                 template = notification.event_type.templates.filter(is_active=True).first()
                 if template and template.subject:
+                    # Render subject with variables
                     subject = NotificationService._render_template(
                         template.subject,
                         notification
                     )
                     if template.body:
-                        html_message_body = NotificationService._render_template(
+                        # Step 1: Render template with variables
+                        rendered_body = NotificationService._render_template(
                             template.body,
                             notification
                         )
-                        # Create plain text version by stripping HTML tags
-                        message_body = re.sub('<[^<]+?>', '', html_message_body)
+
+                        # Step 2: Convert markdown to HTML
+                        try:
+                            from notifications.utils.markdown_to_html import markdown_to_html
+                            html_content = markdown_to_html(rendered_body)
+                            logger.debug(f"Converted markdown to HTML for notification {notification.id}")
+                        except Exception as e:
+                            logger.warning(f"Markdown conversion failed, using plain text: {str(e)}")
+                            html_content = rendered_body
+
+                        # Step 3: Wrap in base HTML email template
+                        try:
+                            from notifications.email_renderer import EmailTemplateRenderer
+                            html_message_body = EmailTemplateRenderer.render_email(
+                                subject=subject,
+                                content=html_content,
+                                user_name=notification.user.get_full_name(),
+                                action_url=notification.action_url,
+                                action_text=notification.action_text or 'View Details'
+                            )
+                            logger.debug(f"Wrapped content in HTML email template for notification {notification.id}")
+
+                            # Create plain text version by stripping HTML tags
+                            message_body = re.sub('<[^<]+?>', '', html_message_body)
+                            message_body = re.sub(r'\n\s*\n\s*\n', '\n\n', message_body)  # Clean up extra newlines
+                            message_body = message_body.strip()
+
+                        except Exception as e:
+                            logger.warning(f"HTML template wrapping failed, using converted markdown: {str(e)}")
+                            html_message_body = html_content
+                            message_body = re.sub('<[^<]+?>', '', html_content)
+
                         logger.debug(f"Rendered HTML email template for notification {notification.id}")
 
             # Log SMTP configuration being used
