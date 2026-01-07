@@ -10,6 +10,10 @@
 // COLOR SYSTEM
 // ============================================================================
 
+// Base Colors
+$white: #ffffff;                      // Pure white
+$black: #000000;                      // Pure black
+
 // Primary Brand Colors (Teal Theme)
 $primary-color: #0d9488;              // Main brand color
 $primary-hover: #0f766e;              // Hover state
@@ -21,15 +25,12 @@ $primary-lightest: #ccfbf1;           // Lightest variant for backgrounds
 $success-color: #10b981;              // Success states
 $success-hover: #059669;
 $success-light: #d1fae5;
-
 $warning-color: #f59e0b;              // Warning states
 $warning-hover: #d97706;
 $warning-light: #fef3c7;
-
 $error-color: #ef4444;                // Error states
 $error-hover: #dc2626;
 $error-light: #fee2e2;
-
 $info-color: #3b82f6;                 // Info states
 $info-hover: #2563eb;
 $info-light: #dbeafe;
@@ -48,7 +49,7 @@ $gray-900: #111827;
 
 // Text Colors
 $text-primary: #1f2937;               // Main text color
-$text-secondary: #6b7280;             // Secondary text
+$text-secondary: $gray-500;             // Secondary text
 $text-muted: #9ca3af;                 // Muted/disabled text
 $text-inverse: #ffffff;               // Text on dark backgrounds
 $text-link: $primary-color;           // Link color
@@ -56,13 +57,13 @@ $text-link-hover: $primary-hover;     // Link hover
 
 // Background Colors
 $bg-primary: #ffffff;                 // Main background
-$bg-secondary: #f9fafb;               // Secondary background
+$bg-secondary: $gray-50;               // Secondary background
 $bg-tertiary: #f3f4f6;                // Tertiary background
 $bg-dark: #1f2937;                    // Dark background
-$bg-overlay: rgba(0, 0, 0, 0.5);     // Modal overlay
+$bg-overlay: rgb(0 0 0 / 50%);     // Modal overlay
 
 // Border Colors
-$border-light: #e5e7eb;               // Light borders
+$border-light: $gray-200;               // Light borders
 $border-medium: #d1d5db;              // Medium borders
 $border-dark: #9ca3af;                // Dark borders
 
@@ -79,7 +80,7 @@ $status-completed: $primary-color;
 // ============================================================================
 
 // Font Families
-$font-primary: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+$font-primary: 'Raleway', -apple-system, blinkmacsystemfont, 'Segoe UI', sans-serif;
 $font-secondary: 'Verdana', sans-serif;
 $font-mono: 'Courier New', monospace;
 
@@ -139,13 +140,13 @@ $spacing-2xl: $spacing-12;  // 48px
 // ============================================================================
 
 $shadow-none: none;
-$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-$shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-$shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-$shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 5%);
+$shadow-base: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
+$shadow-md: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 6%);
+$shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 5%);
+$shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 10%), 0 10px 10px -5px rgb(0 0 0 / 4%);
+$shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 25%);
+$shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 6%);
 
 // ============================================================================
 // BORDER RADIUS SYSTEM
@@ -218,7 +219,7 @@ $input-padding-x: $spacing-3;
 $input-border: 1px solid $border-light;
 $input-border-radius: $radius-md;
 $input-focus-border: $primary-color;
-$input-focus-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+$input-focus-shadow: 0 0 0 3px rgb(13 148 136 / 10%);
 
 // Tables
 $table-cell-padding-y: $spacing-3;
@@ -319,6 +320,7 @@ $alert-border-width: 1px;
   font: inherit;
   color: inherit;
 
+  /* stylelint-disable-next-line nesting-selector-no-missing-scoping-root */
   &:focus {
     outline: none;
   }
@@ -329,6 +331,7 @@ $alert-border-width: 1px;
   outline: 2px solid transparent;
   outline-offset: 2px;
 
+  /* stylelint-disable-next-line nesting-selector-no-missing-scoping-root */
   &:focus-visible {
     outline: 2px solid $primary-color;
     outline-offset: 2px;
@@ -341,6 +344,7 @@ $alert-border-width: 1px;
     transition: all $transition-base;
   } @else {
     $transitions: ();
+
     @each $property in $properties {
       $transitions: append($transitions, #{$property} $transition-base, comma);
     }

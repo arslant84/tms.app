@@ -106,14 +106,14 @@
         <!-- Notification Actions -->
         <div class="notification-actions">
           <button
-            class="action-btn"
+            class="btn-icon"
             *ngIf="!notification.is_read"
             (click)="markAsRead(notification, $event)"
             title="Mark as read">
             <i class="bi bi-check2"></i>
           </button>
           <button
-            class="action-btn action-delete"
+            class="btn-icon action-delete"
             (click)="deleteNotification(notification.id, $event)"
             title="Delete">
             <i class="bi bi-trash"></i>

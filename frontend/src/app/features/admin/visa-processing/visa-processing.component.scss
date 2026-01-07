@@ -1,4 +1,5 @@
 // Visa Processing Component - Using Unified Design System
+@use 'sass:color';
 @use '../../../../styles/variables' as vars;
 
 // Container
@@ -28,7 +29,7 @@
     justify-content: center;
     width: 3rem;
     height: 3rem;
-    background-color: rgba(13, 148, 136, 0.1);
+    background-color: rgb(13 148 136 / 10%);
     border-radius: vars.$radius-base;
 
     svg {
@@ -64,7 +65,7 @@
 }
 
 .stat-card {
-  background: white;
+  background: vars.$white;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   padding: vars.$spacing-5;
@@ -112,14 +113,14 @@
 
 // Main Card
 .main-card {
-  background: white;
+  background: vars.$white;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
   overflow: hidden;
 
   .card-header {
-    background: white;
+    background: vars.$white;
     border-bottom: 2px solid vars.$border-light;
     padding: 0;
   }
@@ -152,7 +153,7 @@
 
   &:hover {
     color: vars.$primary-color;
-    background-color: rgba(13, 148, 136, 0.05);
+    background-color: rgb(13 148 136 / 5%);
   }
 
   &.active {
@@ -244,13 +245,13 @@
 
   &.badge-success {
     background-color: vars.$success-color;
-    color: white;
+    color: vars.$white;
     border: none;
   }
 
   &.badge-warning {
     background-color: transparent;
-    color: darken(vars.$warning-color, 10%);
+    color: color.adjust(vars.$warning-color, $lightness: -10%);
     border: 1px solid vars.$warning-color;
   }
 
@@ -267,7 +268,7 @@
   }
 
   &.badge-amber {
-    background-color: #fff3cd;
+    background-color: vars.$warning-light;
     color: #664d03;
     border: none;
   }
@@ -295,17 +296,17 @@
 .btn-primary-custom {
   background-color: vars.$primary-color;
   border-color: vars.$primary-color;
-  color: white;
+  color: vars.$white;
   font-weight: vars.$font-weight-medium;
 
   &:hover:not(:disabled) {
-    background-color: darken(vars.$primary-color, 10%);
-    border-color: darken(vars.$primary-color, 10%);
-    color: white;
+    background-color: color.adjust(vars.$primary-color, $lightness: -10%);
+    border-color: color.adjust(vars.$primary-color, $lightness: -10%);
+    color: vars.$white;
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
+    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
   }
 
   &:disabled {
@@ -347,22 +348,6 @@
     font-size: vars.$font-size-base;
   }
 
-  .retry-button {
-    margin-top: vars.$spacing-4;
-    padding: vars.$spacing-2 vars.$spacing-6;
-    background-color: vars.$primary-color;
-    color: white;
-    border: none;
-    border-radius: vars.$radius-md;
-    font-size: vars.$font-size-sm;
-    font-weight: vars.$font-weight-medium;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      background-color: darken(vars.$primary-color, 10%);
-    }
-  }
 }
 
 .error-container svg {
@@ -448,7 +433,7 @@
 
       &:focus {
         border-color: vars.$primary-color;
-        box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
+        box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
       }
     }
 
@@ -465,7 +450,7 @@
 }
 
 .modal-backdrop {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgb(0 0 0 / 50%);
 
   &.show {
     opacity: 1;
@@ -473,7 +458,7 @@
 }
 
 // Responsive Design
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .visa-processing-container {
     padding: vars.$spacing-4;
   }

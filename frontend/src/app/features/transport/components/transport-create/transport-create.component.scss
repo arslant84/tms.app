@@ -86,7 +86,7 @@
 }
 
 .form-card {
-  background: white;
+  background: vars.$white;
   border-radius: vars.$radius-md;
   border: 1px solid vars.$border-light;
   box-shadow: vars.$shadow-lg;
@@ -123,7 +123,7 @@
   gap: vars.$spacing-3;
   font-size: vars.$font-size-lg;
   font-weight: vars.$font-weight-semibold;
-  color: white;
+  color: vars.$white;
   margin: calc(-1 * vars.$spacing-6) calc(-1 * vars.$spacing-6) vars.$spacing-6 calc(-1 * vars.$spacing-6);
   padding: vars.$spacing-5 vars.$spacing-6;
   background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
@@ -136,14 +136,14 @@
   }
 
   i {
-    color: white;
+    color: vars.$white;
     font-size: vars.$font-size-xl;
   }
 
   .btn-add-journey {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: rgb(255 255 255 / 20%);
+    color: vars.$white;
+    border: 1px solid rgb(255 255 255 / 30%);
     padding: vars.$spacing-2 vars.$spacing-md;
     border-radius: vars.$radius-base;
     font-size: vars.$font-size-sm;
@@ -155,8 +155,8 @@
     gap: vars.$spacing-2;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.3);
-      border-color: rgba(255, 255, 255, 0.5);
+      background-color: rgb(255 255 255 / 30%);
+      border-color: rgb(255 255 255 / 50%);
     }
 
     i {
@@ -258,14 +258,14 @@
       padding: vars.$spacing-2 vars.$spacing-3;
       font-size: vars.$font-size-sm;
       background-color: vars.$error-color;
-      color: white;
+      color: vars.$white;
       border: none;
       border-radius: vars.$radius-base;
       cursor: pointer;
       transition: background-color 0.2s;
 
       &:hover {
-        background-color: #dc2626;
+        background-color: vars.$error-hover;
       }
 
       i {
@@ -309,25 +309,25 @@
 
   .btn-cancel {
     background-color: vars.$error-color;
-    color: white;
+    color: vars.$white;
 
     &:hover:not(:disabled) {
-      background-color: #dc2626;
+      background-color: vars.$error-hover;
     }
   }
 
   .btn-draft {
     background-color: vars.$gray-600;
-    color: white;
+    color: vars.$white;
 
     &:hover:not(:disabled) {
-      background-color: #4b5563;
+      background-color: vars.$gray-600;
     }
   }
 
   .btn-submit {
     background-color: vars.$primary-color;
-    color: white;
+    color: vars.$white;
 
     &:hover:not(:disabled) {
       background-color: vars.$primary-hover;
@@ -336,7 +336,7 @@
 }
 
 // Responsive design
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .form-grid {
     grid-template-columns: 1fr;
   }

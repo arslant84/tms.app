@@ -3,53 +3,53 @@
 
 // Card styling matching React shadcn/ui design
 .card {
-  border: 1px solid rgba(0, 0, 0, 0.125);
+  border: 1px solid rgb(0 0 0 / 12.5%);
   transition: box-shadow 0.3s ease;
 
   &.shadow-lg {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 5%);
   }
 }
 
 .card-header {
-  padding: 1.25rem 1.5rem;
+  padding: vars.$spacing-5 1.5rem;
   border-bottom: none;
 
   &.gradient-header {
-    background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
 
     .card-title {
-      color: white;
+      color: vars.$white;
       display: flex;
       align-items: center;
 
       i {
-        font-size: 1.25rem;
+        font-size: vars.$font-size-lg;
       }
     }
 
     .card-description {
-      font-size: 0.875rem;
-      color: rgba(255, 255, 255, 0.95);
+      font-size: vars.$font-size-sm;
+      color: rgb(255 255 255 / 95%);
     }
   }
 }
 
 .card-title {
-  font-weight: 600;
-  font-size: 1.25rem;
+  font-weight: vars.$font-weight-semibold;
+  font-size: vars.$font-size-lg;
   color: #1a202c;
 }
 
 .card-body {
-  padding: 1.5rem;
+  padding: vars.$spacing-6;
 }
 
 // Scroll areas matching React ScrollArea component
 .roles-scroll-area {
   max-height: 240px;
   overflow-y: auto;
-  background-color: #f9fafb;
+  background-color: vars.$gray-50;
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -73,7 +73,7 @@
 .permissions-scroll-area {
   max-height: 160px;
   overflow-y: auto;
-  background-color: #f9fafb;
+  background-color: vars.$gray-50;
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -97,7 +97,7 @@
 .permissions-form-scroll {
   max-height: 192px;
   overflow-y: auto;
-  background-color: #fff;
+  background-color: #ffffff;
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -135,7 +135,7 @@
 // Form elements
 .form-check-label {
   cursor: pointer;
-  font-weight: 400;
+  font-weight: vars.$font-weight-normal;
 }
 
 .form-check-input {
@@ -148,16 +148,16 @@
 // Button styling enhancements
 .btn {
   transition: all 0.2s ease;
-  font-weight: 500;
+  font-weight: vars.$font-weight-medium;
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    box-shadow: 0 0 0 0.2rem rgb(var(--bs-primary-rgb), 0.25);
   }
 
   &.btn-primary {
     &:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 6%);
     }
   }
 
@@ -171,15 +171,15 @@
 
 // Text utilities
 .text-muted {
-  color: #6b7280 !important;
+  color: vars.$gray-500 !important;
 }
 
 .fw-semibold {
-  font-weight: 600;
+  font-weight: vars.$font-weight-semibold;
 }
 
 .fw-medium {
-  font-weight: 500;
+  font-weight: vars.$font-weight-medium;
 }
 
 // Spacing utilities
@@ -192,7 +192,7 @@
 }
 
 // Responsive improvements
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .roles-scroll-area,
   .permissions-scroll-area {
     max-height: 200px;

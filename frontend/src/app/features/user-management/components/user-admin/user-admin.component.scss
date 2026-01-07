@@ -13,7 +13,7 @@
 }
 
 .card {
-  background: white;
+  background: vars.$white;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
@@ -26,7 +26,7 @@
 
   .card-body {
     padding: vars.$spacing-6;
-    background-color: white;
+    background-color: vars.$white;
   }
 
   .card-footer {
@@ -88,14 +88,14 @@
   height: 40px;
   border-radius: 50%;
   background: linear-gradient(135deg, vars.$primary-color, vars.$primary-hover);
-  color: white;
+  color: vars.$white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: vars.$font-weight-semibold;
   font-size: vars.$font-size-base;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 }
 
 .badge {
@@ -116,7 +116,7 @@
 
   &.bg-success,
   &.badge-success {
-    background-color: #D1FAE5 !important;
+    background-color: vars.$success-light !important;
     color: #065F46 !important;
   }
 
@@ -127,17 +127,17 @@
   }
 
   &.badge-warning {
-    background-color: #FEF3C7 !important;
+    background-color: vars.$warning-light !important;
     color: #92400E !important;
   }
 
   &.badge-info {
-    background-color: #DBEAFE !important;
+    background-color: vars.$info-light !important;
     color: #1E40AF !important;
   }
 
   &.badge-danger {
-    background-color: #FEE2E2 !important;
+    background-color: vars.$error-light !important;
     color: #991B1B !important;
   }
 }
@@ -175,7 +175,7 @@
   padding: vars.$spacing-2 vars.$spacing-3;
   font-size: vars.$font-size-sm;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  background: white;
+  background: vars.$white;
 
   &:focus {
     outline: none;
@@ -193,7 +193,7 @@
     border-color: vars.$error-color;
 
     &:focus {
-      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+      box-shadow: 0 0 0 3px rgb(220 53 69 / 10%);
     }
   }
 }
@@ -214,7 +214,7 @@
   &.btn-primary {
     background-color: vars.$primary-color;
     border-color: vars.$primary-color;
-    color: white;
+    color: vars.$white;
 
     &:hover:not(:disabled) {
       background-color: vars.$primary-hover;
@@ -223,18 +223,18 @@
   }
 
   &.btn-outline-primary {
-    background-color: white;
+    background-color: vars.$white;
     border-color: vars.$primary-color;
     color: vars.$primary-color;
 
     &:hover:not(:disabled) {
       background-color: vars.$primary-color;
-      color: white;
+      color: vars.$white;
     }
   }
 
   &.btn-outline-secondary {
-    background-color: white;
+    background-color: vars.$white;
     border-color: vars.$gray-600;
     color: vars.$gray-600;
 
@@ -246,33 +246,33 @@
   }
 
   &.btn-outline-warning {
-    background-color: white;
+    background-color: vars.$white;
     border-color: vars.$warning-color;
     color: vars.$warning-color;
 
     &:hover:not(:disabled) {
       background-color: #fffbeb;
-      border-color: #d97706;
-      color: #d97706;
+      border-color: vars.$warning-hover;
+      color: vars.$warning-hover;
     }
   }
 
   &.btn-outline-danger {
-    background-color: white;
+    background-color: vars.$white;
     border-color: vars.$error-color;
     color: vars.$error-color;
 
     &:hover:not(:disabled) {
-      background-color: #fef2f2;
-      border-color: #dc2626;
-      color: #dc2626;
+      background-color: vars.$error-light;
+      border-color: vars.$error-hover;
+      color: vars.$error-hover;
     }
   }
 
   &.btn-secondary {
     background-color: vars.$gray-600;
     border-color: vars.$gray-600;
-    color: white;
+    color: vars.$white;
 
     &:hover:not(:disabled) {
       background-color: vars.$gray-700;
@@ -306,7 +306,7 @@
 
   &.text-primary {
     color: vars.$primary-color !important;
-    border-color: currentColor transparent currentColor transparent;
+    border-color: currentcolor transparent;
   }
 }
 
@@ -374,7 +374,7 @@
 }
 
 // Responsive
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .container-fluid {
     padding: vars.$spacing-md;
   }

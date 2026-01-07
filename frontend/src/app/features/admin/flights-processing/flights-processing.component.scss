@@ -59,38 +59,18 @@
     }
   }
 
-  .back-button {
-    padding: vars.$spacing-2 vars.$spacing-md;
-    background: white;
-    border: 1px solid vars.$border-light;
-    border-radius: vars.$radius-base;
-    color: vars.$text-primary;
-    font-size: vars.$font-size-sm;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    white-space: nowrap;
-
-    &:hover {
-      background-color: #f7fafc;
-      border-color: vars.$primary-color;
-      color: vars.$primary-color;
-    }
-  }
 }
 
 // Main Card
 .main-card {
-  background: white;
+  background: vars.$white;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
   overflow: hidden;
 
   .card-header {
-    background: white;
+    background: vars.$white;
     border-bottom: 2px solid vars.$border-light;
     padding: 0;
   }
@@ -125,7 +105,7 @@
 
   &:hover {
     color: vars.$primary-color;
-    background-color: rgba(0, 177, 169, 0.05);
+    background-color: rgb(0 177 169 / 5%);
   }
 
   &.active {
@@ -148,17 +128,17 @@
   gap: vars.$spacing-5;
   align-items: start;
 
-  @media (max-width: 1600px) {
+  @media (width <= 1600px) {
     grid-template-columns: 1fr 380px;
     gap: vars.$spacing-4;
   }
 
-  @media (max-width: 1400px) {
+  @media (width <= 1400px) {
     grid-template-columns: 1fr 340px;
     gap: vars.$spacing-md;
   }
 
-  @media (max-width: 1200px) {
+  @media (width <= 1200px) {
     grid-template-columns: 1fr;
     gap: vars.$spacing-5;
   }
@@ -182,7 +162,7 @@
 // Search & Filter Section
 .search-filter-section {
   padding: vars.$spacing-md;
-  background-color: #f9fafb;
+  background-color: vars.$gray-50;
   border-radius: vars.$radius-base;
   display: flex;
   gap: vars.$spacing-md;
@@ -214,7 +194,7 @@
       &:focus {
         outline: none;
         border-color: vars.$primary-color;
-        box-shadow: 0 0 0 3px rgba(0, 177, 169, 0.1);
+        box-shadow: 0 0 0 3px rgb(0 177 169 / 10%);
       }
     }
   }
@@ -224,14 +204,14 @@
     border: 1px solid vars.$border-light;
     border-radius: vars.$radius-sm;
     font-size: vars.$font-size-sm;
-    background: white;
+    background: vars.$white;
     cursor: pointer;
     min-width: 150px;
 
     &:focus {
       outline: none;
       border-color: vars.$primary-color;
-      box-shadow: 0 0 0 3px rgba(0, 177, 169, 0.1);
+      box-shadow: 0 0 0 3px rgb(0 177 169 / 10%);
     }
   }
 }
@@ -273,7 +253,7 @@
   margin: 0;
 
   thead {
-    background-color: #f9fafb;
+    background-color: vars.$gray-50;
 
     th {
       padding: vars.$spacing-3;
@@ -282,7 +262,7 @@
       font-size: vars.$font-size-xs;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #6b7280;
+      color: vars.$gray-500;
       border-bottom: 1px solid vars.$border-light;
       white-space: nowrap;
     }
@@ -294,17 +274,17 @@
       transition: background-color 0.15s ease;
 
       &:hover {
-        background-color: #f9fafb;
+        background-color: vars.$gray-50;
       }
 
       &.selected {
-        background-color: rgba(0, 177, 169, 0.1);
+        background-color: rgb(0 177 169 / 10%);
       }
 
       td {
         padding: vars.$spacing-md vars.$spacing-3;
         vertical-align: middle;
-        color: #374151;
+        color: vars.$gray-700;
         white-space: nowrap;
       }
     }
@@ -336,14 +316,14 @@
   white-space: nowrap;
 
   &.badge-success {
-    background-color: #10b981;
-    color: white;
+    background-color: vars.$success-color;
+    color: vars.$white;
   }
 
   &.badge-warning {
     background-color: transparent;
-    color: #d97706;
-    border: 1px solid #f59e0b;
+    color: vars.$warning-hover;
+    border: 1px solid vars.$warning-color;
   }
 
   &.badge-blue {
@@ -357,7 +337,7 @@
   }
 
   &.badge-amber {
-    background-color: #fff3cd;
+    background-color: vars.$warning-light;
     color: #664d03;
   }
 
@@ -375,7 +355,7 @@
 
 // Booking Details Card
 .booking-details-card {
-  background: white;
+  background: vars.$white;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
@@ -387,18 +367,18 @@
   position: sticky;
   top: vars.$spacing-md;
 
-  @media (max-width: 1400px) {
+  @media (width <= 1400px) {
     max-height: calc(100vh - 100px);
   }
 
-  @media (max-width: 1200px) {
+  @media (width <= 1200px) {
     position: static;
     max-height: none;
   }
 
   .booking-details-header {
     background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
-    color: white;
+    color: vars.$white;
     padding: vars.$spacing-md vars.$spacing-5;
     flex-shrink: 0;
 
@@ -409,7 +389,7 @@
       display: flex;
       align-items: center;
 
-      @media (max-width: 1400px) {
+      @media (width <= 1400px) {
         font-size: vars.$font-size-base;
       }
     }
@@ -419,7 +399,7 @@
       margin: 0;
       opacity: 0.95;
 
-      @media (max-width: 1400px) {
+      @media (width <= 1400px) {
         font-size: 0.8125rem;
       }
     }
@@ -450,7 +430,7 @@
   overflow-y: auto;
   max-height: calc(100vh - 220px);
 
-  @media (max-width: 1200px) {
+  @media (width <= 1200px) {
     max-height: none;
     overflow-y: visible;
   }
@@ -473,7 +453,7 @@
   }
 
   .request-info {
-    background-color: #f9fafb;
+    background-color: vars.$gray-50;
     border: 1px solid vars.$border-light;
     border-radius: vars.$radius-base;
     padding: vars.$spacing-md;
@@ -486,12 +466,12 @@
       padding: vars.$spacing-2 0;
       font-size: vars.$font-size-sm;
 
-      @media (max-width: 1400px) {
+      @media (width <= 1400px) {
         font-size: 0.8125rem;
       }
 
       &:not(:last-child) {
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid vars.$gray-200;
       }
 
       .info-label {
@@ -505,7 +485,7 @@
         font-weight: vars.$font-weight-semibold;
         color: vars.$text-primary;
         text-align: right;
-        word-break: break-word;
+        overflow-wrap: break-word;
       }
     }
   }
@@ -538,7 +518,7 @@
       &:focus {
         outline: none;
         border-color: vars.$primary-color;
-        box-shadow: 0 0 0 3px rgba(0, 177, 169, 0.1);
+        box-shadow: 0 0 0 3px rgb(0 177 169 / 10%);
       }
 
       &:disabled {
@@ -549,23 +529,17 @@
   }
 
   .action-buttons-group {
-    margin-top: vars.$spacing-5;
-    padding-top: vars.$spacing-5;
+    margin: vars.$spacing-5 calc(-1 * vars.$spacing-5) calc(-1 * vars.$spacing-5) calc(-1 * vars.$spacing-5);
+    padding: vars.$spacing-5 vars.$spacing-5 vars.$spacing-5 vars.$spacing-5;
     border-top: 1px solid vars.$border-light;
     display: flex;
     flex-direction: column;
     gap: vars.$spacing-3;
     position: sticky;
     bottom: 0;
-    background: white;
-    margin-left: calc(-1 * vars.$spacing-5);
-    margin-right: calc(-1 * vars.$spacing-5);
-    margin-bottom: calc(-1 * vars.$spacing-5);
-    padding-left: vars.$spacing-5;
-    padding-right: vars.$spacing-5;
-    padding-bottom: vars.$spacing-5;
+    background: vars.$white;
 
-    @media (max-width: 1200px) {
+    @media (width <= 1200px) {
       position: static;
       margin: vars.$spacing-5 0 0 0;
       padding: vars.$spacing-5 0 0 0;
@@ -577,17 +551,17 @@
 .btn-primary-custom {
   background-color: vars.$primary-color;
   border-color: vars.$primary-color;
-  color: white;
+  color: vars.$white;
   font-weight: vars.$font-weight-medium;
 
   &:hover:not(:disabled) {
     background-color: vars.$primary-hover;
     border-color: vars.$primary-hover;
-    color: white;
+    color: vars.$white;
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(0, 177, 169, 0.25);
+    box-shadow: 0 0 0 0.2rem rgb(0 177 169 / 25%);
   }
 
   &:disabled {
@@ -629,22 +603,6 @@
     font-size: vars.$font-size-base;
   }
 
-  .retry-button {
-    margin-top: vars.$spacing-md;
-    padding: vars.$spacing-2 vars.$spacing-5;
-    background-color: vars.$primary-color;
-    color: white;
-    border: none;
-    border-radius: vars.$radius-sm;
-    font-size: vars.$font-size-sm;
-    font-weight: vars.$font-weight-medium;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      background-color: vars.$primary-hover;
-    }
-  }
 }
 
 .error-container svg {
@@ -671,7 +629,7 @@
 }
 
 // Responsive Design
-@media (max-width: 1200px) {
+@media (width <= 1200px) {
   .flights-processing-container {
     padding: vars.$spacing-md;
   }
@@ -681,9 +639,6 @@
     gap: vars.$spacing-md;
     align-items: stretch;
 
-    .back-button {
-      align-self: flex-start;
-    }
   }
 
   .tab-panel {
@@ -691,7 +646,7 @@
   }
 }
 
-@media (max-width: 992px) {
+@media (width <= 992px) {
   .processing-header {
     .header-text {
       h1 {
@@ -710,7 +665,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .flights-processing-container {
     padding: vars.$spacing-3;
   }
@@ -740,10 +695,6 @@
       }
     }
 
-    .back-button {
-      font-size: 0.8125rem;
-      padding: 0.4rem vars.$spacing-3;
-    }
   }
 
   .search-filter-section {
@@ -849,7 +800,7 @@
   }
 }
 
-@media (max-width: 576px) {
+@media (width <= 576px) {
   .requests-table,
   .booked-table {
     min-width: 600px;
