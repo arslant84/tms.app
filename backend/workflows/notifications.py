@@ -29,6 +29,15 @@ class WorkflowNotifications:
             workflow_instance: WorkflowInstance that was started
         """
         try:
+            # Get first approver
+            first_approver_name = "the approval team"
+            if workflow_instance.step_executions.exists():
+                first_step = workflow_instance.step_executions.filter(
+                    workflow_step__step_order=1
+                ).first()
+                if first_step and first_step.assigned_to:
+                    first_approver_name = first_step.assigned_to.get_full_name()
+
             # Notify the person who initiated the workflow
             NotificationService.create_notification(
                 user=workflow_instance.initiated_by,
@@ -37,6 +46,13 @@ class WorkflowNotifications:
                 event_type=_get_event_type('WORKFLOW_STARTED'),
                 priority='normal',
                 action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                additional_data={
+                    'requestorName': workflow_instance.initiated_by.get_full_name(),
+                    'requestType': workflow_instance.workflow_template.entity_type.title(),
+                    'entityId': str(workflow_instance.object_id),
+                    'approverName': first_approver_name,
+                    'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                },
                 send_email=True
             )
 
@@ -55,6 +71,15 @@ class WorkflowNotifications:
                         event_type=_get_event_type('APPROVAL_REQUESTED'),
                         priority='high',
                         action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        additional_data={
+                            'approverName': first_step.assigned_to.get_full_name(),
+                            'requestType': workflow_instance.workflow_template.entity_type.title(),
+                            'entityId': str(workflow_instance.object_id),
+                            'requestorName': workflow_instance.initiated_by.get_full_name(),
+                            'dueDate': first_step.sla_due_date.strftime('%B %d, %Y at %I:%M %p') if first_step.sla_due_date else 'Not specified',
+                            'urgencyHint': 'High priority' if getattr(first_step.workflow_step, 'is_urgent', False) else 'Normal priority',
+                            'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        },
                         send_email=True
                     )
                 else:
@@ -83,7 +108,15 @@ class WorkflowNotifications:
                 event_type=_get_event_type('WORKFLOW_UPDATED'),
                 priority='normal',
                 action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
-            send_email=True
+                additional_data={
+                    'requestorName': workflow_instance.initiated_by.get_full_name(),
+                    'requestType': workflow_instance.workflow_template.entity_type.title(),
+                    'entityId': str(workflow_instance.object_id),
+                    'approverName': step_execution.actioned_by.get_full_name() if step_execution.actioned_by else 'Unknown',
+                    'stepName': step_execution.workflow_step.step_name,
+                    'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                },
+                send_email=True
             )
 
             # Notify the next approver (if exists)
@@ -100,6 +133,16 @@ class WorkflowNotifications:
                     event_type=_get_event_type('APPROVAL_REQUESTED'),
                     priority='high',
                     action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                    additional_data={
+                        'approverName': next_step.assigned_to.get_full_name(),
+                        'requestType': workflow_instance.workflow_template.entity_type.title(),
+                        'entityId': str(workflow_instance.object_id),
+                        'requestorName': workflow_instance.initiated_by.get_full_name(),
+                        'dueDate': next_step.sla_due_date.strftime('%B %d, %Y at %I:%M %p') if next_step.sla_due_date else 'Not specified',
+                        'urgencyHint': 'High priority' if getattr(next_step.workflow_step, 'is_urgent', False) else 'Normal priority',
+                        'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        'processorHint': f"Please review and approve {next_step.workflow_step.step_name}",
+                    },
                     send_email=True
                 )
 
@@ -126,7 +169,15 @@ class WorkflowNotifications:
                 event_type=_get_event_type('WORKFLOW_REJECTED'),
                 priority='urgent',
                 action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
-            send_email=True
+                additional_data={
+                    'requestorName': workflow_instance.initiated_by.get_full_name(),
+                    'requestType': workflow_instance.workflow_template.entity_type.title(),
+                    'entityId': str(workflow_instance.object_id),
+                    'approverName': step_execution.actioned_by.get_full_name() if step_execution.actioned_by else 'Unknown',
+                    'rejectionReason': step_execution.comments or 'No reason provided',
+                    'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                },
+                send_email=True
             )
 
             print(f"✅ Notification sent for step rejection: {step_execution.id}")
@@ -144,6 +195,8 @@ class WorkflowNotifications:
         """
         try:
             workflow_instance = step_execution.workflow_instance
+            # Get the original assignee (delegator)
+            delegator_name = step_execution.assigned_to.get_full_name() if step_execution.assigned_to else 'Previous approver'
 
             # Notify the new assignee
             NotificationService.create_notification(
@@ -153,7 +206,14 @@ class WorkflowNotifications:
                 event_type=_get_event_type('APPROVAL_DELEGATED'),
                 priority='high',
                 action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
-            send_email=True
+                additional_data={
+                    'approverName': new_assignee.get_full_name(),
+                    'delegatorName': delegator_name,
+                    'requestType': workflow_instance.workflow_template.entity_type.title(),
+                    'entityId': str(workflow_instance.object_id),
+                    'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                },
+                send_email=True
             )
 
             # Notify the requester
@@ -164,7 +224,15 @@ class WorkflowNotifications:
                 event_type=_get_event_type('WORKFLOW_UPDATED'),
                 priority='normal',
                 action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
-            send_email=True
+                additional_data={
+                    'requestorName': workflow_instance.initiated_by.get_full_name(),
+                    'requestType': workflow_instance.workflow_template.entity_type.title(),
+                    'entityId': str(workflow_instance.object_id),
+                    'approverName': new_assignee.get_full_name(),
+                    'delegatorName': delegator_name,
+                    'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                },
+                send_email=True
             )
 
             print(f"✅ Notifications sent for step delegation: {step_execution.id}")
@@ -207,6 +275,14 @@ class WorkflowNotifications:
             else:
                 # Fall back to default notification (only to requestor)
                 print(f"[INFO] No workflow_completed configs found, using default notification")
+
+                # Get last approver for completion context
+                last_step_execution = workflow_instance.step_executions.order_by('-workflow_step__step_order').first()
+                processor_name = last_step_execution.actioned_by.get_full_name() if last_step_execution and last_step_execution.actioned_by else 'The approval team'
+
+                from django.utils import timezone
+                completion_date = timezone.now().strftime('%B %d, %Y at %I:%M %p')
+
                 NotificationService.create_notification(
                     user=workflow_instance.initiated_by,
                     title=f"Request Approved: {workflow_instance.workflow_template.name}",
@@ -214,6 +290,15 @@ class WorkflowNotifications:
                     event_type=_get_event_type('WORKFLOW_APPROVED'),
                     priority='high',
                     action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                    additional_data={
+                        'requestorName': workflow_instance.initiated_by.get_full_name(),
+                        'requestType': workflow_instance.workflow_template.entity_type.title(),
+                        'entityId': str(workflow_instance.object_id),
+                        'processorName': processor_name,
+                        'completionDate': completion_date,
+                        'completionDetails': 'All approval steps have been successfully completed.',
+                        'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                    },
                     send_email=True
                 )
 
@@ -427,7 +512,19 @@ class WorkflowNotifications:
     @staticmethod
     def _build_notification_context(step_execution):
         """Build context dictionary for template rendering"""
+        from django.utils import timezone
         workflow_instance = step_execution.workflow_instance
+
+        # Get processor/approver info
+        processor_name = step_execution.actioned_by.get_full_name() if step_execution.actioned_by else 'The approval team'
+        approver_name = step_execution.assigned_to.get_full_name() if step_execution.assigned_to else 'Unassigned'
+
+        # Get completion date
+        completion_date = timezone.now().strftime('%B %d, %Y at %I:%M %p')
+
+        # Get due date formatted nicely
+        due_date = step_execution.sla_due_date.strftime('%B %d, %Y at %I:%M %p') if step_execution.sla_due_date else 'Not specified'
+
         return {
             # Workflow information
             'workflow_name': workflow_instance.workflow_template.name,
@@ -439,23 +536,42 @@ class WorkflowNotifications:
             'request_type': workflow_instance.workflow_template.entity_type.title(),
             'requestType': workflow_instance.workflow_template.entity_type.title(),
 
-            'entity_id': workflow_instance.object_id,
-            'entityId': workflow_instance.object_id,
+            'entity_id': str(workflow_instance.object_id),
+            'entityId': str(workflow_instance.object_id),
 
             # Step information
             'step_name': step_execution.workflow_step.step_name,
             'stepName': step_execution.workflow_step.step_name,
 
-            # People
-            'assigned_to': step_execution.assigned_to.get_full_name() if step_execution.assigned_to else 'Unassigned',
-            'assignedTo': step_execution.assigned_to.get_full_name() if step_execution.assigned_to else 'Unassigned',
+            # People - for improved templates
+            'requestorName': workflow_instance.initiated_by.get_full_name(),
+            'approverName': approver_name,
+            'processorName': processor_name,
+            'userName': workflow_instance.initiated_by.get_full_name(),  # For comment notifications
+
+            # People - legacy compatibility
+            'assigned_to': approver_name,
+            'assignedTo': approver_name,
             'requester': workflow_instance.initiated_by.get_full_name(),
             'requesterName': workflow_instance.initiated_by.get_full_name(),
 
+            # Dates
+            'dueDate': due_date,
+            'completionDate': completion_date,
+
             # Status
             'status': step_execution.status,
+            'urgencyHint': 'High priority' if getattr(step_execution.workflow_step, 'is_urgent', False) else 'Normal priority',
+            'processorHint': f"Please review and approve {step_execution.workflow_step.step_name}",
+            'completionDetails': 'All approval steps have been successfully completed.',
+            'rejectionReason': step_execution.comments or 'No reason provided',
+
+            # Legacy compatibility
             'sla_due_date': step_execution.sla_due_date.strftime('%Y-%m-%d %H:%M') if step_execution.sla_due_date else 'N/A',
             'slaDueDate': step_execution.sla_due_date.strftime('%Y-%m-%d %H:%M') if step_execution.sla_due_date else 'N/A',
+
+            # Action URL
+            'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
         }
 
     @staticmethod
