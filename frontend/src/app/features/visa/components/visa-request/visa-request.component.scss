@@ -8,7 +8,7 @@
   margin: 0;
   padding: vars.$spacing-6 vars.$spacing-8;
   box-sizing: border-box;
-  background-color: white;
+  background-color: vars.$white;
   border-radius: vars.$radius-md;
   box-shadow: vars.$shadow-lg;
 }
@@ -93,7 +93,7 @@
     &.active {
       .step-number {
         background-color: vars.$info-color;
-        color: white;
+        color: vars.$white;
       }
 
       .step-title {
@@ -105,7 +105,7 @@
     &.completed {
       .step-number {
         background-color: vars.$success-color;
-        color: white;
+        color: vars.$white;
       }
 
       &:not(:last-child)::after {
@@ -175,7 +175,7 @@
 }
 
 // Responsive styles
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .request-wizard-container {
     padding: vars.$spacing-6;
   }

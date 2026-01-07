@@ -1,5 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
 /* Bootstrap CSS is imported in angular.json */
+@use './styles/variables' as vars;
 @use './styles/typography' as typography;
 @use './styles/colors' as colors;
 @use './styles/buttons';
@@ -245,11 +246,11 @@ tmsapp-admin-systemsettings-workflow-configuration,
 
   // Page breaks
   .page-break {
-    page-break-before: always;
+    break-before: always;
   }
 
   .no-page-break {
-    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }
 
@@ -263,7 +264,6 @@ tmsapp-admin-systemsettings-workflow-configuration,
 .accommodation-list-container,
 .expense-list-container,
 .trf-list-container {
-
   // Standardize header button width and styling
   .header-section {
     .btn-primary {
@@ -293,7 +293,7 @@ tmsapp-admin-systemsettings-workflow-configuration,
     
     .empty-icon {
       font-size: 4rem; // 64px - consistent icon size
-      color: #d1d5db; // gray-300
+      color: vars.$gray-300; // gray-300
       margin-bottom: 1rem;
     }
     
@@ -302,8 +302,8 @@ tmsapp-admin-systemsettings-workflow-configuration,
     h3 {
       font-size: 1.125rem; // 18px - consistent title size
       font-weight: 600; // semibold
-      color: #1f2937; // gray-800
-      margin: 0 0 0.5rem 0;
+      color: vars.$gray-800; // gray-800
+      margin: 0 0 0.5rem;
       line-height: 1.5;
     }
     
@@ -311,8 +311,8 @@ tmsapp-admin-systemsettings-workflow-configuration,
     .empty-subtitle,
     p {
       font-size: 0.875rem; // 14px - consistent description size
-      color: #6b7280; // gray-500
-      margin: 0.5rem 0 0 0;
+      color: vars.$gray-500; // gray-500
+      margin: 0.5rem 0 0;
       line-height: 1.5;
       max-width: 32rem; // Limit width for readability
     }
@@ -322,7 +322,7 @@ tmsapp-admin-systemsettings-workflow-configuration,
   .card-title {
     font-size: 1.125rem; // 18px
     font-weight: 600;
-    color: #1f2937;
+    color: vars.$gray-800;
     margin: 0;
   }
   
@@ -331,26 +331,19 @@ tmsapp-admin-systemsettings-workflow-configuration,
     font-size: 1.875rem; // 30px
     font-weight: 700;
     letter-spacing: -0.025em;
-    color: #1f2937;
+    color: vars.$gray-800;
     margin: 0;
   }
   
   .page-subtitle {
     font-size: 0.875rem; // 14px
-    color: #6b7280;
+    color: vars.$gray-500;
     margin: 0;
   }
-}
 
-// ==================== Unified Request Table Styles ====================
-// Standardizes data tables across request modules (Visa, Transport, Accommodation,
-// Expense, TRF) for consistent padding, alignment, typography, and action buttons.
-
-.visa-list-container,
-.transport-list-container,
-.accommodation-list-container,
-.expense-list-container,
-.trf-list-container {
+  // ==================== Unified Request Table Styles ====================
+  // Standardizes data tables across request modules (Visa, Transport, Accommodation,
+  // Expense, TRF) for consistent padding, alignment, typography, and action buttons.
 
   // Base table layout and typography
   table {
@@ -360,14 +353,14 @@ tmsapp-admin-systemsettings-workflow-configuration,
   }
 
   thead {
-    background-color: #f9fafb; // gray-50
-    border-bottom: 1px solid #e5e7eb;
+    background-color: vars.$gray-50; // gray-50
+    border-bottom: 1px solid vars.$gray-200;
 
     th {
       padding: 0.75rem 1rem; // unified cell padding
       text-align: left;
       font-weight: 600;
-      color: #374151; // gray-700
+      color: vars.$gray-700; // gray-700
       vertical-align: middle;
       white-space: nowrap;
     }
@@ -381,18 +374,18 @@ tmsapp-admin-systemsettings-workflow-configuration,
 
   tbody {
     tr {
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid vars.$gray-200;
       transition: background-color 0.15s ease;
       min-height: 3rem; // consistent row height
 
       &:hover {
-        background-color: #f9fafb;
+        background-color: vars.$gray-50;
       }
 
       td {
         padding: 0.75rem 1rem; // unified cell padding
         vertical-align: middle;
-        color: #374151;
+        color: vars.$gray-700;
       }
 
       td:last-child,
@@ -432,7 +425,7 @@ tmsapp-admin-systemsettings-workflow-configuration,
     &:focus-visible {
       outline: none;
       transform: translateY(-1px);
-      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.15);
+      box-shadow: 0 1px 4px rgb(15 23 42 / 15%);
     }
   }
 }
@@ -474,26 +467,26 @@ tmsapp-admin-systemsettings-workflow-configuration,
 .badge-info {
   background-color: #dbeafe; // blue-100
   color: #1e3a8a; // blue-900
-  border: 1px solid #3b82f6; // blue-500
+  border: 1px solid vars.$info-color; // blue-500
 }
 
 .badge-success {
-  background-color: #d1fae5; // green-100
+  background-color: vars.$success-light; // green-100
   color: #065f46; // green-900
-  border: 1px solid #10b981; // green-500
+  border: 1px solid vars.$success-color; // green-500
 }
 
 .badge-danger {
-  background-color: #fee2e2; // red-100
+  background-color: vars.$error-light; // red-100
   color: #991b1b; // red-900
-  border: 1px solid #ef4444; // red-500
+  border: 1px solid vars.$error-color; // red-500
 }
 
 .badge-secondary,
 .badge-draft {
-  background-color: #f3f4f6; // gray-100
-  color: #6b7280; // gray-500
-  border: 1px solid #d1d5db; // gray-300
+  background-color: vars.$gray-100; // gray-100
+  color: vars.$gray-500; // gray-500
+  border: 1px solid vars.$gray-300; // gray-300
 }
 
 .badge-processing {

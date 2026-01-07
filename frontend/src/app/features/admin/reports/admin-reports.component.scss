@@ -62,7 +62,7 @@
 }
 
 .metric-card {
-  background-color: white;
+  background-color: vars.$white;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
   padding: vars.$spacing-6;
@@ -136,7 +136,7 @@
 }
 
 .chart-card {
-  background-color: white;
+  background-color: vars.$white;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
   margin-bottom: vars.$spacing-6;
@@ -241,7 +241,7 @@
   width: 60%;
   height: 60%;
   border-radius: vars.$radius-full;
-  background: white;
+  background: vars.$white;
   position: absolute;
   top: 20%;
   left: 20%;
@@ -285,7 +285,7 @@
 
 /* Table Cards */
 .table-card {
-  background-color: white;
+  background-color: vars.$white;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
   margin-bottom: vars.$spacing-6;
@@ -354,7 +354,7 @@
 }
 
 /* Responsive Adjustments */
-@media (max-width: 992px) {
+@media (width <= 992px) {
   .reports-header {
     flex-direction: column;
     align-items: flex-start;

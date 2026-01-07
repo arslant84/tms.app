@@ -63,7 +63,7 @@
     border-color: vars.$error-color;
 
     &:focus {
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+      box-shadow: 0 0 0 0.2rem rgb(220 53 69 / 15%);
     }
   }
 }
@@ -82,7 +82,7 @@
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
   }
 
   &:disabled {
@@ -108,11 +108,11 @@
 .btn-warning {
   background-color: vars.$warning-color;
   border-color: vars.$warning-color;
-  color: #000;
+  color: #000000;
 
   &:hover:not(:disabled) {
-    background-color: #f59e0b;
-    border-color: #f59e0b;
+    background-color: vars.$warning-color;
+    border-color: vars.$warning-color;
   }
 }
 
@@ -122,7 +122,7 @@
 
   &:hover:not(:disabled) {
     background-color: vars.$gray-600;
-    color: white;
+    color: vars.$white;
   }
 }
 
@@ -155,7 +155,7 @@ h2 {
 }
 
 // Responsive
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .container-fluid {
     padding: vars.$spacing-md;
   }

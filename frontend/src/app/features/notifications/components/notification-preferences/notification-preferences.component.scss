@@ -6,7 +6,7 @@
   max-width: 1000px;
   margin: 0 auto;
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     padding: vars.$spacing-md;
   }
 }
@@ -57,7 +57,7 @@
     font-size: vars.$font-size-sm;
     font-weight: vars.$font-weight-medium;
     border-radius: vars.$radius-base;
-    background: white;
+    background: vars.$white;
     border: 1px solid vars.$gray-300;
     color: vars.$gray-700;
     transition: all 0.2s;
@@ -99,7 +99,7 @@
 
 // Preferences Card
 .preferences-card {
-  background: white;
+  background: vars.$white;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-md;
   overflow: hidden;
@@ -226,7 +226,7 @@
     font-size: vars.$font-size-sm;
     border: 1px solid vars.$gray-300;
     border-radius: vars.$radius-base;
-    background-color: white;
+    background-color: vars.$white;
 
     &:focus {
       border-color: vars.$primary-color;
@@ -370,7 +370,7 @@
   }
 
   .btn-outline-secondary {
-    background: white;
+    background: vars.$white;
     border: 1px solid vars.$gray-300;
     color: vars.$gray-700;
 
@@ -388,7 +388,7 @@
   .btn-primary {
     background: vars.$primary-color;
     border: 1px solid vars.$primary-color;
-    color: white;
+    color: vars.$white;
 
     &:hover:not(:disabled) {
       background: vars.$primary-hover;
@@ -409,7 +409,7 @@
 }
 
 // Mobile Responsive
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .header-section {
     flex-direction: column;
 

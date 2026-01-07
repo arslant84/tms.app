@@ -9,7 +9,7 @@
   padding: vars.$spacing-6 vars.$spacing-6;
   box-sizing: border-box;
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     padding: vars.$spacing-md;
   }
 }
@@ -73,20 +73,20 @@
     }
 
     .btn-outline-primary {
-      background: white;
+      background: vars.$white;
       border: 1px solid vars.$primary-color;
       color: vars.$primary-color;
 
       &:hover {
         background: vars.$primary-color;
-        color: white;
+        color: vars.$white;
       }
     }
 
     .btn-primary {
       background: vars.$primary-color;
       border: 1px solid vars.$primary-color;
-      color: white;
+      color: vars.$white;
 
       &:hover:not(:disabled) {
         background: vars.$primary-hover;
@@ -126,7 +126,7 @@
       font-size: vars.$font-size-sm;
       border: 1px solid vars.$gray-300;
       border-radius: vars.$radius-base;
-      background-color: white;
+      background-color: vars.$white;
       cursor: pointer;
 
       &:focus {
@@ -196,7 +196,7 @@
   display: flex;
   gap: vars.$spacing-md;
   padding: vars.$spacing-5;
-  background: white;
+  background: vars.$white;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-md;
   cursor: pointer;
@@ -257,17 +257,17 @@
     text-transform: uppercase;
 
     &.badge-danger {
-      background: #fef2f2;
+      background: vars.$error-light;
       color: #991b1b;
     }
 
     &.badge-warning {
-      background: #fef3c7;
+      background: vars.$warning-light;
       color: #92400e;
     }
 
     &.badge-info {
-      background: #dbeafe;
+      background: vars.$info-light;
       color: #1e40af;
     }
 
@@ -316,35 +316,6 @@
     gap: vars.$spacing-2;
     padding-left: vars.$spacing-2;
 
-    .action-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 2rem;
-      height: 2rem;
-      background: transparent;
-      border: 1px solid vars.$gray-300;
-      border-radius: vars.$radius-base;
-      color: vars.$gray-600;
-      cursor: pointer;
-      transition: all 0.2s;
-
-      &:hover {
-        background: vars.$gray-100;
-        color: vars.$primary-color;
-        border-color: vars.$primary-color;
-      }
-
-      &.action-delete:hover {
-        background: #fef2f2;
-        color: vars.$error-color;
-        border-color: vars.$error-color;
-      }
-
-      i {
-        font-size: vars.$font-size-base;
-      }
-    }
   }
 
   .unread-indicator {
@@ -383,7 +354,7 @@
       &.active .page-link {
         background-color: vars.$primary-color;
         border-color: vars.$primary-color;
-        color: white;
+        color: vars.$white;
 
         &:hover {
           background-color: vars.$primary-hover;
@@ -405,7 +376,7 @@
 }
 
 // Mobile Responsive
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .header-section {
     flex-direction: column;
 

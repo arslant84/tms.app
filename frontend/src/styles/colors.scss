@@ -11,19 +11,18 @@ $primary-teal-hover: $primary-hover !default;
 $primary-teal-active: $primary-active !default;
 $primary-teal-light: $primary-light !default;
 $primary-teal-lightest: $primary-lightest !default;
-
-$primary-brown: rgb(255, 255, 255) !default;
+$primary-brown: rgb(255 255 255) !default;
 $primary-dark-gray: $text-primary !default;
 
 // Secondary Colors - Maintained for specific use cases
-$secondary-purple-dark: rgb(64, 43, 83) !default;
-$secondary-purple-medium: rgb(104, 70, 139) !default;
-$secondary-blue: rgb(97, 94, 154) !default;
+$secondary-purple-dark: rgb(64 43 83) !default;
+$secondary-purple-medium: rgb(104 70 139) !default;
+$secondary-blue: rgb(97 94 154) !default;
 $secondary-light-blue: $info-color !default;
 $secondary-green: $success-color !default;
-$secondary-yellow: rgb(212, 214, 82) !default;
+$secondary-yellow: rgb(212 214 82) !default;
 $secondary-orange: $warning-color !default;
-$neutral-color: rgb(205, 182, 134) !default;
+$neutral-color: rgb(205 182 134) !default;
 $highlight-color: $error-color !default;
 
 // Utility color variables - Legacy aliases

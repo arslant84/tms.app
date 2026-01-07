@@ -13,9 +13,9 @@ $primary-light: #e6f7f6; // Light Petronas Green tint
 $background: #F2F4F3; // Light Gray Background
 $foreground: #333333; // Dark Gray Text
 $border: #DEDEDE; // Border color
-$gray-50: #F9FAFB; // Very light gray
+$gray-50: vars.$gray-50; // Very light gray
 $gray-100: #E6E6E6; // Muted background
-$gray-500: #6B7280; // Medium gray (icons)
+$gray-500: vars.$gray-500; // Medium gray (icons)
 $gray-600: #666666; // Muted foreground
 $gray-700: #333333; // Dark text
 $gray-900: #1F2937; // Darkest text
@@ -25,7 +25,7 @@ $gray-900: #1F2937; // Darkest text
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 2rem;
+  padding: vars.$spacing-8;
   box-sizing: border-box;
   background-color: $background;
   min-height: calc(100vh - 100px);
@@ -37,11 +37,11 @@ $gray-900: #1F2937; // Darkest text
 
   .header-content {
     .page-title {
-      font-size: 1.875rem;
-      font-weight: 700;
+      font-size: vars.$font-size-2xl;
+      font-weight: vars.$font-weight-bold;
       color: $gray-900;
       letter-spacing: -0.025em;
-      margin: 0 0 0.5rem 0;
+      margin: 0 0 0.5rem;
       display: flex;
       align-items: center;
 
@@ -52,7 +52,7 @@ $gray-900: #1F2937; // Darkest text
 
     .page-subtitle {
       color: $gray-600;
-      font-size: 0.875rem;
+      font-size: vars.$font-size-sm;
       margin: 0;
     }
   }
@@ -68,13 +68,13 @@ $gray-900: #1F2937; // Darkest text
   margin-bottom: 2rem;
 
   .tab-button {
-    padding: 0.75rem 1.5rem;
+    padding: vars.$spacing-3 1.5rem;
     border: none;
     background: transparent;
     border-bottom: 3px solid transparent;
     cursor: pointer;
-    font-weight: 500;
-    font-size: 0.875rem;
+    font-weight: vars.$font-weight-medium;
+    font-size: vars.$font-size-sm;
     color: $gray-600;
     transition: all 0.2s ease;
     display: flex;
@@ -83,7 +83,7 @@ $gray-900: #1F2937; // Darkest text
     margin-bottom: -2px;
 
     i {
-      font-size: 1rem;
+      font-size: vars.$font-size-base;
     }
 
     .tab-count {
@@ -98,23 +98,23 @@ $gray-900: #1F2937; // Darkest text
     &.active {
       color: $primary;
       border-bottom-color: $primary;
-      font-weight: 600;
+      font-weight: vars.$font-weight-semibold;
     }
   }
 }
 
 // ========== CARD ==========
 .card {
-  background: white;
+  background: vars.$white;
   border: 1px solid $border;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px 0 rgb(0 0 0 / 0.06);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
   overflow: hidden;
 
   .card-header {
-    padding: 1.5rem;
+    padding: vars.$spacing-6;
     border-bottom: 1px solid $border;
-    background-color: white;
+    background-color: vars.$white;
 
     .card-header-content {
       .card-title-group {
@@ -124,20 +124,20 @@ $gray-900: #1F2937; // Darkest text
         margin-bottom: 0.25rem;
 
         .card-title {
-          font-size: 1.125rem;
-          font-weight: 600;
+          font-size: vars.$font-size-md;
+          font-weight: vars.$font-weight-semibold;
           color: $gray-900;
           margin: 0;
         }
 
         i {
           color: $gray-600;
-          font-size: 1.125rem;
+          font-size: vars.$font-size-md;
         }
       }
 
       .card-description {
-        font-size: 0.875rem;
+        font-size: vars.$font-size-sm;
         color: $gray-600;
         margin: 0;
       }
@@ -145,8 +145,8 @@ $gray-900: #1F2937; // Darkest text
   }
 
   .card-body {
-    padding: 1.5rem;
-    background-color: white;
+    padding: vars.$spacing-6;
+    background-color: vars.$white;
   }
 }
 
@@ -156,14 +156,14 @@ $gray-900: #1F2937; // Darkest text
   border-radius: 0.375rem;
   border: 1px solid $border;
   padding: 0.625rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: vars.$font-size-sm;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  background: white;
+  background: vars.$white;
 
   &:focus {
     outline: none;
     border-color: $primary;
-    box-shadow: 0 0 0 3px rgba(0, 177, 169, 0.1);
+    box-shadow: 0 0 0 3px rgb(0 177 169 / 10%);
   }
 
   &::placeholder {
@@ -183,10 +183,10 @@ $gray-900: #1F2937; // Darkest text
       border-bottom: 1px solid $border;
 
       th {
-        padding: 0.75rem 1rem;
+        padding: vars.$spacing-3 1rem;
         text-align: left;
-        font-size: 0.75rem;
-        font-weight: 600;
+        font-size: vars.$font-size-xs;
+        font-weight: vars.$font-weight-semibold;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: $gray-500;
@@ -209,8 +209,8 @@ $gray-900: #1F2937; // Darkest text
         }
 
         td {
-          padding: 1rem;
-          font-size: 0.875rem;
+          padding: vars.$spacing-4;
+          font-size: vars.$font-size-sm;
           color: $gray-700;
           border: none;
           vertical-align: middle;
@@ -227,20 +227,20 @@ $gray-900: #1F2937; // Darkest text
   padding: 0.375rem 0.75rem;
   background: $gray-50;
   border-radius: 0.375rem;
-  font-weight: 500;
-  font-size: 0.75rem;
+  font-weight: vars.$font-weight-medium;
+  font-size: vars.$font-size-xs;
   color: $gray-700;
   white-space: nowrap;
 
   i {
-    font-size: 0.875rem;
+    font-size: vars.$font-size-sm;
   }
 }
 
 .request-number {
   font-family: 'Courier New', monospace;
-  font-weight: 600;
-  font-size: 0.875rem;
+  font-weight: vars.$font-weight-semibold;
+  font-size: vars.$font-size-sm;
   color: $primary;
 }
 
@@ -248,14 +248,14 @@ $gray-900: #1F2937; // Darkest text
   max-width: 300px;
 
   .purpose-text {
-    font-weight: 500;
-    font-size: 0.875rem;
+    font-weight: vars.$font-weight-medium;
+    font-size: vars.$font-size-sm;
     color: $gray-900;
     margin-bottom: 0.25rem;
   }
 
   .purpose-details {
-    font-size: 0.75rem;
+    font-size: vars.$font-size-xs;
     color: $gray-600;
 
     span {
@@ -272,35 +272,35 @@ $gray-900: #1F2937; // Darkest text
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.25rem 0.625rem;
-  font-size: 0.75rem;
-  font-weight: 500;
+  padding: vars.$spacing-1 0.625rem;
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-medium;
   border-radius: 0.375rem;
   white-space: nowrap;
 
   &.badge-warning {
-    background: #FEF3C7;
+    background: vars.$warning-light;
     color: #92400E;
   }
 
   &.badge-info {
-    background: #DBEAFE;
+    background: vars.$info-light;
     color: #1E40AF;
   }
 
   &.badge-success {
-    background: #D1FAE5;
+    background: vars.$success-light;
     color: #065F46;
   }
 
   &.badge-danger {
-    background: #FEE2E2;
+    background: vars.$error-light;
     color: #991B1B;
   }
 
   &.badge-secondary {
-    background: #F3F4F6;
-    color: #374151;
+    background: vars.$gray-100;
+    color: vars.$gray-700;
   }
 
   &.badge-primary {
@@ -315,56 +315,6 @@ $gray-900: #1F2937; // Darkest text
   gap: 0.5rem;
   justify-content: flex-end;
 
-  .action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    padding: 0;
-    margin: 0;
-    border-radius: 0.375rem;
-    border-width: 1px;
-    transition: all 0.15s ease;
-
-    i {
-      font-size: 1rem;
-    }
-
-    &.btn-outline-primary {
-      color: #3b82f6;
-      border-color: #3b82f6;
-      background: white;
-
-      &:hover {
-        background-color: #eff6ff;
-        border-color: #2563eb;
-        color: #2563eb;
-      }
-    }
-
-    &.btn-success {
-      color: white;
-      border-color: #22c55e;
-      background: #22c55e;
-
-      &:hover {
-        background-color: #16a34a;
-        border-color: #16a34a;
-      }
-    }
-
-    &.btn-danger {
-      color: white;
-      border-color: #ef4444;
-      background: #ef4444;
-
-      &:hover {
-        background-color: #dc2626;
-        border-color: #dc2626;
-      }
-    }
-  }
 }
 
 // ========== STATES ==========
@@ -381,7 +331,7 @@ $gray-900: #1F2937; // Darkest text
 
   p,
   h3 {
-    margin: 0.5rem 0;
+    margin: vars.$spacing-2 0;
   }
 }
 
@@ -393,18 +343,18 @@ $gray-900: #1F2937; // Darkest text
 
 .error-state {
   .error-icon {
-    color: #dc3545;
+    color: vars.$error-hover;
   }
 
   .error-title {
     color: #721c24;
-    font-weight: 600;
-    font-size: 1.125rem;
+    font-weight: vars.$font-weight-semibold;
+    font-size: vars.$font-size-md;
   }
 
   .error-message {
     color: $gray-600;
-    font-size: 0.875rem;
+    font-size: vars.$font-size-sm;
   }
 }
 
@@ -415,32 +365,32 @@ $gray-900: #1F2937; // Darkest text
 
   .empty-message {
     color: $gray-900;
-    font-weight: 600;
-    font-size: 1.125rem;
+    font-weight: vars.$font-weight-semibold;
+    font-size: vars.$font-size-md;
   }
 
   .empty-subtitle {
     color: $gray-600;
-    font-size: 0.875rem;
+    font-size: vars.$font-size-sm;
   }
 }
 
 // ========== PAGINATION ==========
 .pagination-container {
-  padding: 1.5rem;
+  padding: vars.$spacing-6;
   border-top: 1px solid $border;
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     flex-direction: column;
     gap: 1rem;
   }
 
   .pagination-info {
     color: $gray-600;
-    font-size: 0.875rem;
+    font-size: vars.$font-size-sm;
   }
 
   .pagination-controls {
@@ -449,12 +399,12 @@ $gray-900: #1F2937; // Darkest text
     align-items: center;
 
     .btn {
-      padding: 0.5rem 1rem;
+      padding: vars.$spacing-2 1rem;
       border-radius: 0.375rem;
       border: 1px solid $border;
-      background: white;
+      background: vars.$white;
       color: $gray-700;
-      font-size: 0.875rem;
+      font-size: vars.$font-size-sm;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
@@ -473,8 +423,8 @@ $gray-900: #1F2937; // Darkest text
     }
 
     .page-indicator {
-      font-weight: 500;
-      font-size: 0.875rem;
+      font-weight: vars.$font-weight-medium;
+      font-size: vars.$font-size-sm;
       color: $gray-700;
       min-width: 120px;
       text-align: center;
@@ -499,25 +449,25 @@ $gray-900: #1F2937; // Darkest text
   }
 
   .modal-dialog {
-    background: white;
+    background: vars.$white;
     border-radius: 0.5rem;
     width: 90%;
     max-width: 600px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 40px rgb(0 0 0 / 30%);
     z-index: 1051;
   }
 
   .modal-content {
     .modal-header {
-      padding: 1.5rem;
+      padding: vars.$spacing-6;
       border-bottom: 1px solid $border;
       display: flex;
       justify-content: space-between;
       align-items: center;
 
       .modal-title {
-        font-size: 1.125rem;
-        font-weight: 600;
+        font-size: vars.$font-size-md;
+        font-weight: vars.$font-weight-semibold;
         color: $gray-900;
         margin: 0;
       }
@@ -525,7 +475,7 @@ $gray-900: #1F2937; // Darkest text
       .btn-close {
         background: none;
         border: none;
-        font-size: 1.5rem;
+        font-size: vars.$font-size-xl;
         cursor: pointer;
         color: $gray-600;
         padding: 0;
@@ -546,11 +496,11 @@ $gray-900: #1F2937; // Darkest text
     }
 
     .modal-body {
-      padding: 1.5rem;
+      padding: vars.$spacing-6;
 
       p {
-        margin: 0.5rem 0;
-        font-size: 0.875rem;
+        margin: vars.$spacing-2 0;
+        font-size: vars.$font-size-sm;
 
         strong {
           color: $gray-900;
@@ -564,21 +514,21 @@ $gray-900: #1F2937; // Darkest text
         label {
           display: block;
           margin-bottom: 0.5rem;
-          font-weight: 500;
-          font-size: 0.875rem;
+          font-weight: vars.$font-weight-medium;
+          font-size: vars.$font-size-sm;
           color: $gray-900;
 
           .text-danger {
-            color: #dc3545;
+            color: vars.$error-hover;
           }
         }
 
         .form-control {
           width: 100%;
-          padding: 0.75rem;
+          padding: vars.$spacing-3;
           border: 1px solid $border;
           border-radius: 0.375rem;
-          font-size: 0.875rem;
+          font-size: vars.$font-size-sm;
           font-family: inherit;
           transition: all 0.3s ease;
           resize: vertical;
@@ -586,26 +536,26 @@ $gray-900: #1F2937; // Darkest text
           &:focus {
             outline: none;
             border-color: $primary;
-            box-shadow: 0 0 0 3px rgba(0, 177, 169, 0.1);
+            box-shadow: 0 0 0 3px rgb(0 177 169 / 10%);
           }
         }
       }
     }
 
     .modal-footer {
-      padding: 1.5rem;
+      padding: vars.$spacing-6;
       border-top: 1px solid $border;
       display: flex;
       justify-content: flex-end;
       gap: 1rem;
 
       .btn {
-        padding: 0.75rem 1.5rem;
+        padding: vars.$spacing-3 1.5rem;
         border-radius: 0.375rem;
         border: none;
         cursor: pointer;
-        font-weight: 500;
-        font-size: 0.875rem;
+        font-weight: vars.$font-weight-medium;
+        font-size: vars.$font-size-sm;
         transition: all 0.2s ease;
         display: flex;
         align-items: center;
@@ -613,7 +563,7 @@ $gray-900: #1F2937; // Darkest text
 
         &.btn-secondary {
           background: $gray-600;
-          color: white;
+          color: vars.$white;
 
           &:hover:not(:disabled) {
             background: $gray-700;
@@ -621,20 +571,20 @@ $gray-900: #1F2937; // Darkest text
         }
 
         &.btn-success {
-          background: #22c55e;
-          color: white;
+          background: vars.$success-color;
+          color: vars.$white;
 
           &:hover:not(:disabled) {
-            background: #16a34a;
+            background: vars.$success-hover;
           }
         }
 
         &.btn-danger {
-          background: #ef4444;
-          color: white;
+          background: vars.$error-color;
+          color: vars.$white;
 
           &:hover:not(:disabled) {
-            background: #dc2626;
+            background: vars.$error-hover;
           }
         }
 
@@ -653,7 +603,7 @@ $gray-900: #1F2937; // Darkest text
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgb(0 0 0 / 50%);
   z-index: 1040;
 }
 
@@ -677,18 +627,18 @@ $gray-900: #1F2937; // Darkest text
 }
 
 .small {
-  font-size: 0.875rem !important;
+  font-size: vars.$font-size-sm !important;
 }
 
 // ========== RESPONSIVE ==========
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .approvals-container {
-    padding: 1rem;
+    padding: vars.$spacing-4;
   }
 
   .page-header {
     .header-content .page-title {
-      font-size: 1.5rem;
+      font-size: vars.$font-size-xl;
     }
   }
 
@@ -701,18 +651,18 @@ $gray-900: #1F2937; // Darkest text
 
   .card {
     .card-header {
-      padding: 1rem;
+      padding: vars.$spacing-4;
     }
 
     .card-body {
-      padding: 1rem;
+      padding: vars.$spacing-4;
     }
   }
 
   .table-responsive {
     font-size: 0.8rem;
 
-    .action-btn {
+    .btn-icon {
       margin: 0.125rem;
     }
   }

@@ -3,7 +3,7 @@
  */
 @use '../../../../styles/variables' as vars;
 
-//=========== CONTAINER ==========
+// =========== CONTAINER ==========
 .flights-overview-container {
   width: 100%;
   max-width: none;
@@ -23,7 +23,7 @@
   gap: vars.$spacing-md;
   flex-wrap: wrap;
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -70,17 +70,17 @@
   grid-template-columns: repeat(1, 1fr);
   margin-bottom: vars.$spacing-6;
 
-  @media (min-width: 768px) {
+  @media (width >= 768px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (min-width: 1024px) {
+  @media (width >= 1024px) {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
 .stat-card {
-  background: white;
+  background: vars.$white;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
@@ -132,7 +132,7 @@
 
 // ========== CARD ==========
 .card {
-  background: white;
+  background: vars.$white;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
@@ -141,7 +141,7 @@
   .card-header {
     padding: vars.$spacing-5;
     border-bottom: 1px solid vars.$border-light;
-    background-color: white;
+    background-color: vars.$white;
 
     .card-header-content {
       .card-title-group {
@@ -173,7 +173,7 @@
 
   .card-body {
     padding: vars.$spacing-5;
-    background-color: white;
+    background-color: vars.$white;
   }
 }
 
@@ -262,17 +262,17 @@
 }
 
 .badge-blue {
-  background-color: #DBEAFE;
+  background-color: vars.$info-light;
   color: #1E40AF;
 }
 
 .badge-green {
-  background-color: #D1FAE5;
+  background-color: vars.$success-light;
   color: #065F46;
 }
 
 .badge-amber {
-  background-color: #FEF3C7;
+  background-color: vars.$warning-light;
   color: #92400E;
 }
 
@@ -287,33 +287,33 @@
 }
 
 .badge-gray {
-  background-color: #F3F4F6;
-  color: #374151;
+  background-color: vars.$gray-100;
+  color: vars.$gray-700;
 }
 
 .badge-success {
-  background-color: #D1FAE5;
+  background-color: vars.$success-light;
   color: #065F46;
 }
 
 .badge-red {
-  background-color: #FEE2E2;
+  background-color: vars.$error-light;
   color: #991B1B;
 }
 
 .badge-warning {
-  background-color: #FEF3C7;
+  background-color: vars.$warning-light;
   color: #92400E;
 }
 
 .badge-info {
-  background-color: #DBEAFE;
+  background-color: vars.$info-light;
   color: #1E40AF;
 }
 
 .badge-secondary {
-  background-color: #F3F4F6;
-  color: #374151;
+  background-color: vars.$gray-100;
+  color: vars.$gray-700;
 }
 
 // ========== BUTTONS ==========
@@ -335,38 +335,38 @@
 }
 
 .btn-view {
-  color: #3b82f6;
-  border-color: #3b82f6;
-  background: white;
+  color: vars.$info-color;
+  border-color: vars.$info-color;
+  background: vars.$white;
 
   &:hover {
-    background-color: #eff6ff;
-    border-color: #2563eb;
-    color: #2563eb;
+    background-color: vars.$info-light;
+    border-color: vars.$info-hover;
+    color: vars.$info-hover;
   }
 }
 
 .btn-edit {
-  color: #f59e0b;
-  border-color: #f59e0b;
-  background: white;
+  color: vars.$warning-color;
+  border-color: vars.$warning-color;
+  background: vars.$white;
 
   &:hover {
     background-color: #fffbeb;
-    border-color: #d97706;
-    color: #d97706;
+    border-color: vars.$warning-hover;
+    color: vars.$warning-hover;
   }
 }
 
 .btn-delete {
   color: vars.$error-color;
   border-color: vars.$error-color;
-  background: white;
+  background: vars.$white;
 
   &:hover {
-    background-color: #fef2f2;
-    border-color: #dc2626;
-    color: #dc2626;
+    background-color: vars.$error-light;
+    border-color: vars.$error-hover;
+    color: vars.$error-hover;
   }
 }
 
@@ -426,7 +426,7 @@
 }
 
 // ========== RESPONSIVE ==========
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .flights-overview-container {
     padding: vars.$spacing-md;
   }
