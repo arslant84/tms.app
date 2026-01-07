@@ -215,6 +215,10 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='SynTra TMS <noreply@pctsb-travel.site>')
 EMAIL_TIMEOUT = 10  # seconds
 
+# Frontend URL for email links
+# This is used to generate absolute URLs in email notifications
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:4200')
+
 # Security Settings
 # HTTPS/SSL
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
