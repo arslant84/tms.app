@@ -425,7 +425,8 @@ class WorkflowNotifications:
                                 priority=config.priority,
                                 action_url=f"/{step_execution.workflow_instance.workflow_template.entity_type}/{step_execution.workflow_instance.object_id}",
                                 send_email=send_email_flag,
-                                content_object=step_execution.workflow_instance
+                                content_object=step_execution.workflow_instance,
+                                additional_data=context  # Pass context for email template rendering
                             )
                         else:
                             print(f"[WARNING] Notification config #{config.id} has both email and in-app disabled - skipping")
