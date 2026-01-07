@@ -10,7 +10,7 @@
 }
 
 .success-card {
-  background-color: white;
+  background-color: vars.$white;
   border-radius: vars.$radius-md;
   box-shadow: vars.$shadow-lg;
   padding: vars.$spacing-10;
@@ -25,7 +25,7 @@
   margin-bottom: vars.$spacing-6;
 
   i {
-    filter: drop-shadow(0 4px 6px rgba(46, 204, 113, 0.3));
+    filter: drop-shadow(0 4px 6px rgb(46 204 113 / 30%));
   }
 }
 
@@ -52,7 +52,7 @@ h2 {
   }
 }
 
-@media (max-width: 576px) {
+@media (width <= 576px) {
   .success-card {
     padding: vars.$spacing-6 vars.$spacing-5;
   }

@@ -124,7 +124,7 @@
 
   .card-body {
     padding: vars.$spacing-6;
-    background-color: white;
+    background-color: vars.$white;
   }
 }
 
@@ -179,14 +179,14 @@
     width: vars.$spacing-md;
     height: vars.$spacing-md;
     background-color: vars.$primary-color;
-    border: 3px solid white;
+    border: 3px solid vars.$white;
     border-radius: 50%;
-    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);
+    box-shadow: 0 0 0 3px rgb(13 148 136 / 20%);
     transition: all 0.3s ease;
 
     &:hover {
       transform: scale(1.2);
-      box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.3);
+      box-shadow: 0 0 0 4px rgb(13 148 136 / 30%);
     }
   }
 
@@ -297,7 +297,7 @@
 .btn-primary {
   background-color: vars.$primary-color;
   border-color: vars.$primary-color;
-  color: white;
+  color: vars.$white;
 
   &:hover {
     background-color: vars.$primary-hover;
@@ -308,7 +308,7 @@
 .btn-secondary {
   background-color: vars.$gray-600;
   border-color: vars.$gray-600;
-  color: white;
+  color: vars.$white;
 
   &:hover {
     background-color: vars.$gray-700;
@@ -316,7 +316,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .visa-detail-container {
     padding: vars.$spacing-2;
   }

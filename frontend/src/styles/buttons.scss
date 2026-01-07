@@ -1,4 +1,5 @@
-// Use colors
+// Use colors and variables
+@use './variables' as vars;
 @use './colors' as colors;
 
 // Button Base Styles - Consistent sizing and typography
@@ -26,17 +27,17 @@
   gap: 0.5rem;              // Space between icon and text
 
   // Responsive font sizing
-  @media (min-width: 768px) {
+  @media (width >= 768px) {
     font-size: 0.9375rem;   // 15px on tablets and up
   }
 
-  @media (min-width: 1024px) {
+  @media (width >= 1024px) {
     font-size: 1rem;        // 16px on desktop
   }
 
   &:focus {
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
+    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
   }
 
   &:disabled,
@@ -51,19 +52,41 @@
     font-size: 1em;
     line-height: 1;
   }
+
+  // Loading state
+  &.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+
+    &::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      top: 50%;
+      left: 50%;
+      margin-left: -7px;
+      margin-top: -7px;
+      border: 2px solid currentcolor;
+      border-radius: 50%;
+      border-right-color: transparent;
+      animation: spinner-border 0.75s linear infinite;
+    }
+  }
 }
 
 // Primary Button - Main teal color
 .btn-primary {
   background-color: colors.$primary-teal;
   border-color: colors.$primary-teal;
-  color: white;
+  color: vars.$white;
 
   &:hover:not(:disabled) {
     background-color: colors.$primary-teal-hover;
     border-color: colors.$primary-teal-hover;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);
+    box-shadow: 0 2px 4px rgb(13 148 136 / 20%);
   }
 
   &:active,
@@ -74,7 +97,7 @@
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.5);
+    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 50%);
   }
 }
 
@@ -98,7 +121,7 @@
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+    box-shadow: 0 0 0 0.2rem rgb(108 117 125 / 25%);
   }
 }
 
@@ -111,21 +134,21 @@
   &:hover:not(:disabled) {
     background-color: colors.$primary-teal;
     border-color: colors.$primary-teal;
-    color: white;
+    color: vars.$white;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);
+    box-shadow: 0 2px 4px rgb(13 148 136 / 20%);
   }
 
   &:active,
   &.active {
     background-color: colors.$primary-teal-hover;
     border-color: colors.$primary-teal-hover;
-    color: white;
+    color: vars.$white;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(13, 148, 136, 0.25);
+    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
   }
 }
 
@@ -138,7 +161,7 @@
   &:hover:not(:disabled) {
     background-color: #6c757d;
     border-color: #6c757d;
-    color: white;
+    color: vars.$white;
     transform: translateY(-1px);
   }
 
@@ -146,12 +169,12 @@
   &.active {
     background-color: #5a6268;
     border-color: #545b62;
-    color: white;
+    color: vars.$white;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+    box-shadow: 0 0 0 0.2rem rgb(108 117 125 / 25%);
   }
 }
 
@@ -159,13 +182,13 @@
 .btn-success {
   background-color: #14b8a6;  // Teal-green
   border-color: #14b8a6;
-  color: white;
+  color: vars.$white;
 
   &:hover:not(:disabled) {
     background-color: #0f9785;
     border-color: #0f9785;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(20, 184, 166, 0.2);
+    box-shadow: 0 2px 4px rgb(20 184 166 / 20%);
   }
 
   &:active,
@@ -176,21 +199,21 @@
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(20, 184, 166, 0.5);
+    box-shadow: 0 0 0 0.2rem rgb(20 184 166 / 50%);
   }
 }
 
 // Danger Button - Red (keeping standard red for danger)
 .btn-danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  color: white;
+  background-color: #dc2626;
+  border-color: #dc2626;
+  color: vars.$white;
 
   &:hover:not(:disabled) {
     background-color: #c82333;
     border-color: #bd2130;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+    box-shadow: 0 2px 4px rgb(220 53 69 / 20%);
   }
 
   &:active,
@@ -201,34 +224,34 @@
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5);
+    box-shadow: 0 0 0 0.2rem rgb(220 53 69 / 50%);
   }
 }
 
 // Outline Danger
 .btn-outline-danger {
   background-color: transparent;
-  border-color: #dc3545;
-  color: #dc3545;
+  border-color: #dc2626;
+  color: #dc2626;
 
   &:hover:not(:disabled) {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: white;
+    background-color: #dc2626;
+    border-color: #dc2626;
+    color: vars.$white;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+    box-shadow: 0 2px 4px rgb(220 53 69 / 20%);
   }
 
   &:active,
   &.active {
     background-color: #c82333;
     border-color: #bd2130;
-    color: white;
+    color: vars.$white;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    box-shadow: 0 0 0 0.2rem rgb(220 53 69 / 25%);
   }
 }
 
@@ -236,13 +259,13 @@
 .btn-warning {
   background-color: #f59e0b;
   border-color: #f59e0b;
-  color: white;
+  color: vars.$white;
 
   &:hover:not(:disabled) {
     background-color: #d97706;
     border-color: #d97706;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+    box-shadow: 0 2px 4px rgb(245 158 11 / 20%);
   }
 
   &:active,
@@ -253,7 +276,7 @@
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(245, 158, 11, 0.5);
+    box-shadow: 0 0 0 0.2rem rgb(245 158 11 / 50%);
   }
 }
 
@@ -261,13 +284,13 @@
 .btn-info {
   background-color: #06b6d4;
   border-color: #06b6d4;
-  color: white;
+  color: vars.$white;
 
   &:hover:not(:disabled) {
     background-color: #0891b2;
     border-color: #0891b2;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(6, 182, 212, 0.2);
+    box-shadow: 0 2px 4px rgb(6 182 212 / 20%);
   }
 
   &:active,
@@ -278,14 +301,14 @@
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(6, 182, 212, 0.5);
+    box-shadow: 0 0 0 0.2rem rgb(6 182 212 / 50%);
   }
 }
 
 // Light Button
 .btn-light {
-  background-color: #f8f9fa;
-  border-color: #f8f9fa;
+  background-color: #f9fafb;
+  border-color: #f9fafb;
   color: #212529;
 
   &:hover:not(:disabled) {
@@ -302,7 +325,7 @@
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(248, 249, 250, 0.5);
+    box-shadow: 0 0 0 0.2rem rgb(248 249 250 / 50%);
   }
 }
 
@@ -310,13 +333,13 @@
 .btn-dark {
   background-color: #134e4a;  // Dark teal
   border-color: #134e4a;
-  color: white;
+  color: vars.$white;
 
   &:hover:not(:disabled) {
     background-color: #0f3a38;
     border-color: #0f3a38;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(19, 78, 74, 0.2);
+    box-shadow: 0 2px 4px rgb(19 78 74 / 20%);
   }
 
   &:active,
@@ -327,7 +350,7 @@
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba(19, 78, 74, 0.5);
+    box-shadow: 0 0 0 0.2rem rgb(19 78 74 / 50%);
   }
 }
 
@@ -364,7 +387,7 @@
   min-height: 32px;
   border-radius: 0.25rem;
 
-  @media (min-width: 768px) {
+  @media (width >= 768px) {
     font-size: 0.875rem;    // 14px on tablets and up
   }
 }
@@ -375,11 +398,11 @@
   min-height: 44px;
   border-radius: 0.5rem;
 
-  @media (min-width: 768px) {
+  @media (width >= 768px) {
     font-size: 1.0625rem;   // 17px on tablets and up
   }
 
-  @media (min-width: 1024px) {
+  @media (width >= 1024px) {
     font-size: 1.125rem;    // 18px on desktop
   }
 }
@@ -419,30 +442,6 @@
     &:last-child {
       border-top-right-radius: 0.375rem;
       border-bottom-right-radius: 0.375rem;
-    }
-  }
-}
-
-// Loading state for buttons
-.btn {
-  &.loading {
-    position: relative;
-    pointer-events: none;
-    opacity: 0.7;
-
-    &::after {
-      content: '';
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      top: 50%;
-      left: 50%;
-      margin-left: -7px;
-      margin-top: -7px;
-      border: 2px solid currentColor;
-      border-radius: 50%;
-      border-right-color: transparent;
-      animation: spinner-border 0.75s linear infinite;
     }
   }
 }

@@ -18,7 +18,7 @@
 
 /* Panel Styling */
 .task-list-panel, .task-details-panel {
-  background-color: white;
+  background-color: vars.$white;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
   height: 100%;
@@ -286,37 +286,37 @@
 
 /* Status and Priority Colors */
 .priority-high {
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: rgb(239 68 68 / 10%);
   color: vars.$error-color;
 }
 
 .priority-medium {
-  background-color: rgba(245, 158, 11, 0.1);
+  background-color: rgb(245 158 11 / 10%);
   color: vars.$warning-color;
 }
 
 .priority-low {
-  background-color: rgba(16, 185, 129, 0.1);
+  background-color: rgb(16 185 129 / 10%);
   color: vars.$success-color;
 }
 
 .status-pending {
-  background-color: rgba(107, 114, 128, 0.1);
+  background-color: rgb(107 114 128 / 10%);
   color: vars.$gray-600;
 }
 
 .status-in-progress {
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgb(59 130 246 / 10%);
   color: vars.$info-color;
 }
 
 .status-completed {
-  background-color: rgba(16, 185, 129, 0.1);
+  background-color: rgb(16 185 129 / 10%);
   color: vars.$success-color;
 }
 
 .status-cancelled {
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: rgb(239 68 68 / 10%);
   color: vars.$error-color;
 }
 
@@ -326,7 +326,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 992px) {
+@media (width <= 992px) {
   .clerk-panel-container {
     height: auto;
     padding: vars.$spacing-4;

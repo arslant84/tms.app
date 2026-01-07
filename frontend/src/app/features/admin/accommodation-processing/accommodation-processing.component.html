@@ -8,7 +8,7 @@
         <p class="subtitle">Process accommodation requests with integrated booking system</p>
       </div>
     </div>
-    <button class="back-button" (click)="goToOverview()">
+    <button class="btn btn-secondary back" (click)="goToOverview()">
       <i class="bi bi-arrow-left"></i>
       Back to Admin
     </button>
@@ -169,7 +169,7 @@
           <div *ngIf="errorPending && !isLoadingPending" class="error-container">
             <i class="bi bi-exclamation-triangle"></i>
             <p>{{ errorPending }}</p>
-            <button class="retry-button" (click)="retryPending()">Retry</button>
+            <button class="btn btn-primary retry" (click)="retryPending()">Retry</button>
           </div>
 
           <!-- Empty State -->

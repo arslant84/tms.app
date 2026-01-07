@@ -229,7 +229,7 @@
       font-size: vars.$font-size-sm;
       color: vars.$gray-800;
       margin: 0;
-      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
 
     &.full-width {
@@ -397,7 +397,7 @@
     }
 
     &.rejected {
-      background: #fef2f2;
+      background: vars.$error-light;
       border-left-color: vars.$error-color;
     }
 

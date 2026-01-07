@@ -42,7 +42,7 @@
   grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
   gap: vars.$spacing-6;
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     grid-template-columns: 1fr;
   }
 }
@@ -50,7 +50,7 @@
 .request-type-card {
   display: flex;
   align-items: flex-start;
-  background-color: white;
+  background-color: vars.$white;
   border-radius: vars.$radius-base;
   padding: vars.$spacing-6;
   box-shadow: vars.$shadow-sm;

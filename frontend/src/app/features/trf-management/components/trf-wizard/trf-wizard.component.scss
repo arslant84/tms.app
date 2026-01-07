@@ -66,7 +66,7 @@
     gap: vars.$spacing-3;
     padding: vars.$spacing-md;
     margin-top: vars.$spacing-md;
-    background-color: #fef2f2;
+    background-color: vars.$error-light;
     border: 1px solid #fecaca;
     border-radius: vars.$radius-lg;
     color: vars.$error-color;

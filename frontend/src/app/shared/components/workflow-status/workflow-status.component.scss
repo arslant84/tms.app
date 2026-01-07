@@ -85,7 +85,7 @@
     &.step-current {
       color: vars.$warning-color;
       border-color: vars.$warning-color;
-      background: #fff3cd;
+      background: vars.$warning-light;
       animation: pulse 2s infinite;
     }
 
@@ -112,11 +112,11 @@
 @keyframes pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+    box-shadow: 0 0 0 0 rgb(255 193 7 / 70%);
   }
   50% {
     transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+    box-shadow: 0 0 0 10px rgb(255 193 7 / 0%);
   }
 }
 
@@ -171,7 +171,7 @@
     align-items: center;
     gap: vars.$spacing-2;
     padding: vars.$spacing-2 vars.$spacing-3;
-    background: #fff3cd;
+    background: vars.$warning-light;
     border: 1px solid vars.$warning-color;
     border-radius: vars.$radius-md;
     color: #856404;

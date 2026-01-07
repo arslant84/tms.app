@@ -11,7 +11,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 1rem;
+    padding: vars.$spacing-3 1rem;
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     border-radius: 0.375rem 0.375rem 0 0;
     cursor: pointer;
@@ -27,25 +27,25 @@
       gap: 0.5rem;
 
       i.bi {
-        color: white;
-        font-size: 1rem;
+        color: vars.$white;
+        font-size: vars.$font-size-base;
       }
 
       .section-title {
-        font-weight: 600;
+        font-weight: vars.$font-weight-semibold;
         font-size: 0.9375rem;
-        color: white;
+        color: vars.$white;
       }
 
       .badge {
-        font-size: 0.75rem;
-        font-weight: 500;
+        font-size: vars.$font-size-xs;
+        font-weight: vars.$font-weight-medium;
       }
     }
   }
 
   .section-content {
-    padding: 1rem;
+    padding: vars.$spacing-4;
     border-top: 1px solid #dee2e6;
   }
 
@@ -60,9 +60,9 @@
       justify-content: space-between;
       align-items: flex-start;
       padding: 0.875rem;
-      border: 1px solid #e5e7eb;
+      border: 1px solid vars.$gray-200;
       border-radius: 0.375rem;
-      background: #f9fafb;
+      background: vars.$gray-50;
       transition: border-color 0.2s ease;
 
       &:hover {
@@ -79,20 +79,20 @@
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          font-size: 0.875rem;
+          font-size: vars.$font-size-sm;
 
           .config-label {
-            font-weight: 500;
-            color: #6b7280;
+            font-weight: vars.$font-weight-medium;
+            color: vars.$gray-500;
             min-width: 90px;
           }
 
           .config-value {
-            color: #1f2937;
+            color: vars.$gray-800;
           }
 
           .badge {
-            font-size: 0.75rem;
+            font-size: vars.$font-size-xs;
           }
         }
       }
@@ -103,7 +103,7 @@
         margin-left: 1rem;
 
         .btn {
-          padding: 0.25rem 0.5rem;
+          padding: vars.$spacing-1 0.5rem;
         }
       }
     }
@@ -112,12 +112,12 @@
   // Empty State
   .empty-state {
     text-align: center;
-    padding: 2rem 1rem;
-    color: #6b7280;
+    padding: vars.$spacing-8 1rem;
+    color: vars.$gray-500;
 
     i {
       font-size: 3rem;
-      color: #d1d5db;
+      color: vars.$gray-300;
       margin-bottom: 0.75rem;
     }
 
@@ -129,52 +129,52 @@
 
   // Config Form
   .config-form {
-    padding: 1rem;
-    border: 1px solid #e5e7eb;
+    padding: vars.$spacing-4;
+    border: 1px solid vars.$gray-200;
     border-radius: 0.375rem;
     background: #ffffff;
 
     .form-title {
       margin-bottom: 1rem;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #1f2937;
+      font-size: vars.$font-size-base;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-800;
       padding-bottom: 0.5rem;
-      border-bottom: 2px solid #e5e7eb;
+      border-bottom: 2px solid vars.$gray-200;
     }
 
     .form-label {
-      font-weight: 500;
-      font-size: 0.875rem;
-      color: #374151;
+      font-weight: vars.$font-weight-medium;
+      font-size: vars.$font-size-sm;
+      color: vars.$gray-700;
       margin-bottom: 0.375rem;
 
       .text-danger {
-        color: #dc2626;
+        color: vars.$error-hover;
       }
     }
 
     .form-select,
     .form-control {
-      font-size: 0.875rem;
-      border-color: #d1d5db;
+      font-size: vars.$font-size-sm;
+      border-color: vars.$gray-300;
 
       &:focus {
         border-color: #6366f1;
-        box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.15);
+        box-shadow: 0 0 0 0.25rem rgb(99 102 241 / 15%);
       }
     }
 
     .form-text {
-      font-size: 0.75rem;
+      font-size: vars.$font-size-xs;
       margin-top: 0.25rem;
     }
 
     // Recipient Checkboxes
     .recipient-checkboxes {
-      padding: 0.75rem;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
+      padding: vars.$spacing-3;
+      background: vars.$gray-50;
+      border: 1px solid vars.$gray-200;
       border-radius: 0.375rem;
 
       .recipient-category {
@@ -185,14 +185,14 @@
         }
 
         .category-label {
-          font-size: 0.75rem;
-          font-weight: 600;
+          font-size: vars.$font-size-xs;
+          font-weight: vars.$font-weight-semibold;
           color: #6366f1;
           text-transform: uppercase;
           letter-spacing: 0.5px;
           margin-bottom: 0.5rem;
           padding-bottom: 0.375rem;
-          border-bottom: 1px solid #e5e7eb;
+          border-bottom: 1px solid vars.$gray-200;
         }
 
         .form-check {
@@ -206,13 +206,13 @@
 
             &:focus {
               border-color: #6366f1;
-              box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.15);
+              box-shadow: 0 0 0 0.25rem rgb(99 102 241 / 15%);
             }
           }
 
           .form-check-label {
-            font-size: 0.875rem;
-            color: #374151;
+            font-size: vars.$font-size-sm;
+            color: vars.$gray-700;
           }
         }
       }
@@ -223,28 +223,28 @@
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
-      padding: 0.75rem;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
+      padding: vars.$spacing-3;
+      background: vars.$gray-50;
+      border: 1px solid vars.$gray-200;
       border-radius: 0.375rem;
 
       .email-tag {
         display: inline-flex;
         align-items: center;
         gap: 0.375rem;
-        padding: 0.25rem 0.625rem;
+        padding: vars.$spacing-1 0.625rem;
         background: #6366f1;
-        color: white;
+        color: vars.$white;
         border-radius: 0.25rem;
         font-size: 0.8125rem;
 
         .btn-remove {
           border: none;
           background: transparent;
-          color: white;
+          color: vars.$white;
           padding: 0;
           cursor: pointer;
-          font-size: 1.125rem;
+          font-size: vars.$font-size-md;
           line-height: 1;
           opacity: 0.8;
           transition: opacity 0.2s ease;
@@ -263,7 +263,7 @@
       gap: 0.5rem;
       margin-top: 1.5rem;
       padding-top: 1rem;
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid vars.$gray-200;
     }
   }
 }

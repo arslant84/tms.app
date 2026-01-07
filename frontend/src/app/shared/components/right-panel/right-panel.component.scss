@@ -329,27 +329,27 @@
 
 /* Role Colors */
 .role-employee {
-  background-color: rgba(13, 110, 253, 0.1);
+  background-color: rgb(13 110 253 / 10%);
   color: vars.$info-color;
 }
 
 .role-focal {
-  background-color: rgba(108, 117, 125, 0.1);
+  background-color: rgb(108 117 125 / 10%);
   color: vars.$gray-600;
 }
 
 .role-hod {
-  background-color: rgba(220, 53, 69, 0.1);
+  background-color: rgb(220 53 69 / 10%);
   color: vars.$error-color;
 }
 
 .role-clerk {
-  background-color: rgba(25, 135, 84, 0.1);
+  background-color: rgb(25 135 84 / 10%);
   color: vars.$success-color;
 }
 
 .role-admin {
-  background-color: rgba(102, 16, 242, 0.1);
+  background-color: rgb(102 16 242 / 10%);
   color: #6610f2;
 }
 

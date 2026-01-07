@@ -7,7 +7,7 @@
   top: 0;
   z-index: 50;
   width: 100%;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgb(0 0 0 / 10%);
   background: vars.$bg-dark;
   box-shadow: vars.$shadow-sm;
 }
@@ -35,8 +35,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgb(255 255 255 / 10%);
+    border: 1px solid rgb(255 255 255 / 20%);
     color: vars.$text-inverse;
     padding: vars.$spacing-2;
     font-size: vars.$font-size-lg;
@@ -48,7 +48,7 @@
     margin-right: vars.$spacing-md;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgb(255 255 255 / 20%);
     }
   }
 
@@ -92,19 +92,19 @@
     align-items: center;
     gap: vars.$spacing-1;
     text-decoration: none;
-    color: rgba(255, 255, 255, 0.85);
+    color: rgb(255 255 255 / 85%);
     transition: vars.$transition-base;
     padding: vars.$spacing-2 vars.$spacing-3;
     border-radius: vars.$radius-base;
 
     &:hover {
       color: vars.$text-inverse;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgb(255 255 255 / 10%);
     }
 
     &.active {
       color: vars.$text-inverse;
-      background: rgba(255, 255, 255, 0.15);
+      background: rgb(255 255 255 / 15%);
       font-weight: vars.$font-weight-semibold;
     }
 
@@ -132,7 +132,7 @@
   .notifications-dropdown {
     position: relative;
 
-    @media (max-width: 480px) {
+    @media (width <= 480px) {
       position: static;
     }
   }
@@ -144,14 +144,14 @@
     justify-content: center;
     width: vars.$spacing-10;
     height: vars.$spacing-10;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgb(255 255 255 / 10%);
+    border: 1px solid rgb(255 255 255 / 20%);
     border-radius: vars.$radius-full;
     cursor: pointer;
     transition: vars.$transition-base;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgb(255 255 255 / 20%);
       box-shadow: vars.$shadow-sm;
     }
 
@@ -188,19 +188,19 @@
     display: flex;
     align-items: center;
     gap: vars.$spacing-2;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgb(255 255 255 / 10%);
+    border: 1px solid rgb(255 255 255 / 20%);
     border-radius: vars.$radius-full;
     padding: vars.$spacing-1 vars.$spacing-3 vars.$spacing-1 vars.$spacing-1;
     cursor: pointer;
     transition: vars.$transition-base;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgb(255 255 255 / 20%);
       box-shadow: vars.$shadow-sm;
 
       .user-avatar {
-        border-color: rgba(255, 255, 255, 0.5);
+        border-color: rgb(255 255 255 / 50%);
         box-shadow: vars.$shadow-md;
         transform: scale(1.05);
       }
@@ -216,7 +216,7 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid rgb(255 255 255 / 30%);
       box-shadow: vars.$shadow-sm;
       transition: vars.$transition-base;
       position: relative;
@@ -257,7 +257,7 @@
     .chevron-icon {
       display: none;
       font-size: vars.$font-size-xs;
-      color: rgba(255, 255, 255, 0.8);
+      color: rgb(255 255 255 / 80%);
 
       @include vars.media-md {
         display: inline-block;
@@ -305,8 +305,7 @@
     width: 24rem;
     max-width: calc(100vw - 2rem);
     max-height: 32rem;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden auto;
     position: absolute;
     right: 0;
     top: 100%;
@@ -341,7 +340,7 @@
       max-width: calc(100vw - 1rem);
     }
 
-    @media (max-width: 480px) {
+    @media (width <= 480px) {
       width: calc(100vw - 1rem);
       max-width: calc(100vw - 1rem);
       right: -(vars.$spacing-2);
@@ -453,7 +452,6 @@
       max-width: calc(100% - 3rem);
       overflow: hidden;
       box-sizing: border-box;
-      word-wrap: break-word;
       overflow-wrap: break-word;
     }
 
@@ -468,8 +466,6 @@
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       line-height: vars.$line-height-tight;
-      word-break: break-word;
-      word-wrap: break-word;
       overflow-wrap: break-word;
       hyphens: auto;
     }
@@ -483,8 +479,6 @@
       line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      word-break: break-word;
-      word-wrap: break-word;
       overflow-wrap: break-word;
       text-overflow: ellipsis;
       hyphens: auto;
@@ -512,7 +506,7 @@
         height: 8px;
         background-color: vars.$primary-color;
         border-radius: vars.$radius-full;
-        box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+        box-shadow: 0 0 0 2px rgb(13 148 136 / 20%);
       }
     }
 
@@ -555,7 +549,7 @@
 }
 
 // Mobile Responsive
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .header-container {
     padding: 0 vars.$spacing-2;
   }
@@ -577,7 +571,7 @@
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border-width: 0;
 }

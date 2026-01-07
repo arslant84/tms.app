@@ -17,7 +17,7 @@ body.modal-open {
   z-index: 1040; /* Below modal but above everything else */
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgb(0 0 0 / 50%);
   opacity: 0;
   transition: opacity 0.15s linear;
 
@@ -29,10 +29,7 @@ body.modal-open {
 /* Modal Container - Fixed positioning, centered in viewport */
 .modal {
   position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
+  inset: 0 !important;
   z-index: 1050 !important; /* Above backdrop */
   width: 100% !important;
   height: 100% !important;
@@ -64,25 +61,25 @@ body.modal-open {
     flex-direction: column;
 
     /* Allow content to be taller than viewport */
-    @media (min-width: 576px) {
+    @media (width >= 576px) {
       max-width: 500px;
       margin: 0 auto;
     }
 
     &.modal-lg {
-      @media (min-width: 992px) {
+      @media (width >= 992px) {
         max-width: 800px;
       }
     }
 
     &.modal-xl {
-      @media (min-width: 1200px) {
+      @media (width >= 1200px) {
         max-width: 1140px;
       }
     }
 
     &.modal-sm {
-      @media (min-width: 576px) {
+      @media (width >= 576px) {
         max-width: 300px;
       }
     }
@@ -97,13 +94,12 @@ body.modal-open {
     max-height: 90vh; /* Ensure content doesn't exceed viewport height */
     overflow-y: auto; /* Make content scrollable if too tall */
     pointer-events: auto;
-    background-color: #fff;
+    background-color: #ffffff;
     background-clip: padding-box;
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    border: 1px solid rgb(0 0 0 / 20%);
     border-radius: 0.5rem;
-    outline: 0;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* Add shadow for better visibility */
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    outline: 0; /* Add shadow for better visibility */
+    box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
     /* Removed max-height - let modal-body handle scrolling */
     /* Removed overflow - not needed with flex layout */
   }
@@ -118,7 +114,7 @@ body.modal-open {
     border-bottom: 1px solid #dee2e6;
     border-top-left-radius: calc(0.5rem - 1px);
     border-top-right-radius: calc(0.5rem - 1px);
-    background-color: #fff;
+    background-color: #ffffff;
     position: relative; /* Changed from sticky - not needed with proper flex layout */
     z-index: 1;
 
@@ -145,7 +141,7 @@ body.modal-open {
 
       &:focus {
         outline: 0;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        box-shadow: 0 0 0 0.25rem rgb(13 110 253 / 25%);
         opacity: 1;
       }
     }
@@ -156,11 +152,14 @@ body.modal-open {
     position: relative;
     flex: 1 1 auto;
     padding: 1.5rem;
-    overflow-y: auto; /* Allow body content to scroll */
-    overflow-x: hidden;
+    overflow: hidden auto; /* Allow body content to scroll */
     max-height: calc(100vh - 14rem); /* Leave space for header, footer, and padding */
 
-    /* Custom scrollbar for better UX */
+    /* Scrollbar styling for Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #888888 #f1f1f1;
+
+    /* Custom scrollbar for better UX - Webkit browsers */
     &::-webkit-scrollbar {
       width: 8px;
     }
@@ -171,11 +170,11 @@ body.modal-open {
     }
 
     &::-webkit-scrollbar-thumb {
-      background: #888;
+      background: #888888;
       border-radius: 4px;
 
       &:hover {
-        background: #555;
+        background: #555555;
       }
     }
   }
@@ -191,7 +190,7 @@ body.modal-open {
     border-top: 1px solid #dee2e6;
     border-bottom-right-radius: calc(0.5rem - 1px);
     border-bottom-left-radius: calc(0.5rem - 1px);
-    background-color: #fff;
+    background-color: #ffffff;
     position: relative; /* Changed from sticky - not needed with proper flex layout */
     z-index: 1;
 
@@ -212,7 +211,7 @@ body.modal-open {
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 576px) {
+@media (width <= 576px) {
   .modal {
     padding: 10px;
   }
@@ -226,12 +225,6 @@ body.modal-open {
     max-height: 100vh;
     border-radius: 0;
   }
-}
-
-/* Scrollbar styling for modal on all browsers */
-.modal .modal-body {
-  scrollbar-width: thin;
-  scrollbar-color: #888 #f1f1f1;
 }
 
 /* Ensure buttons are always accessible */
@@ -248,8 +241,4 @@ body.modal-open {
 .modal-backdrop.fade {
   opacity: 0;
   transition: opacity 0.15s linear;
-}
-
-.modal-backdrop.show {
-  opacity: 0.5;
 }

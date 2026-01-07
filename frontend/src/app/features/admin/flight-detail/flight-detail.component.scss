@@ -82,7 +82,7 @@ label.small {
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
   }
 
   i {
@@ -105,19 +105,19 @@ label.small {
   border-color: vars.$success-color;
 
   &:hover {
-    background-color: #16a34a;
-    border-color: #16a34a;
+    background-color: vars.$success-hover;
+    border-color: vars.$success-hover;
   }
 }
 
 .btn-warning {
   background-color: vars.$warning-color;
   border-color: vars.$warning-color;
-  color: #000;
+  color: #000000;
 
   &:hover {
-    background-color: #f59e0b;
-    border-color: #f59e0b;
+    background-color: vars.$warning-color;
+    border-color: vars.$warning-color;
   }
 }
 
@@ -126,8 +126,8 @@ label.small {
   border-color: vars.$error-color;
 
   &:hover {
-    background-color: #dc2626;
-    border-color: #dc2626;
+    background-color: vars.$error-hover;
+    border-color: vars.$error-hover;
   }
 }
 
@@ -137,7 +137,7 @@ label.small {
 
   &:hover {
     background-color: vars.$gray-600;
-    color: white;
+    color: vars.$white;
   }
 }
 
@@ -168,7 +168,7 @@ h2 {
 }
 
 // Responsive
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .container-fluid {
     padding: vars.$spacing-md;
   }

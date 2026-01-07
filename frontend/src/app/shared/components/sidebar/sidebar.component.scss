@@ -36,8 +36,7 @@
   padding: vars.$spacing-md;
   flex: 1 1 0;
   background: transparent;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden auto;
   min-height: 0;
   margin-bottom: 0;
 
@@ -50,11 +49,11 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgb(255 255 255 / 20%);
     border-radius: vars.$radius-base;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.3);
+      background-color: rgb(255 255 255 / 30%);
     }
   }
 }
@@ -63,8 +62,8 @@
 .sidebar-footer {
   height: 50px;
   padding: 0 vars.$spacing-md;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(0 0 0 / 15%);
   display: flex;
   align-items: center;
   flex-direction: row;
@@ -76,16 +75,16 @@
 
   .settings-item {
     font-weight: vars.$font-weight-medium;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgb(255 255 255 / 75%);
     padding: vars.$spacing-1 vars.$spacing-3;
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.95);
+      background-color: rgb(255 255 255 / 10%);
+      color: rgb(255 255 255 / 95%);
     }
 
     &.active {
-      background-color: rgba(78, 115, 223, 0.2);
+      background-color: rgb(78 115 223 / 20%);
       color: #6C9EFF;
       font-weight: vars.$font-weight-semibold;
     }
@@ -98,7 +97,7 @@
   align-items: center;
   gap: vars.$spacing-3;
   padding: vars.$spacing-2 vars.$spacing-3;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgb(255 255 255 / 75%);
   text-decoration: none;
   border-radius: vars.$radius-md;
   transition: vars.$transition-base;
@@ -119,12 +118,12 @@
   }
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.95);
+    background-color: rgb(255 255 255 / 10%);
+    color: rgb(255 255 255 / 95%);
   }
 
   &.active {
-    background-color: rgba(78, 115, 223, 0.2);
+    background-color: rgb(78 115 223 / 20%);
     color: #6C9EFF;
     font-weight: vars.$font-weight-semibold;
   }

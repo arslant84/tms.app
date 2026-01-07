@@ -137,7 +137,7 @@
 .summary-card-title {
   font-size: vars.$font-size-base;
   font-weight: vars.$font-weight-medium;
-  color: rgba(0, 0, 0, 0.8);
+  color: rgb(0 0 0 / 80%);
   margin: 0;
 }
 
@@ -175,7 +175,7 @@
 }
 
 .bg-muted-light {
-  background-color: rgba(243, 244, 246, 0.5);
+  background-color: rgb(243 244 246 / 50%);
 }
 
 // Icon colors
@@ -294,10 +294,7 @@
 }
 
 .search-input {
-  padding-left: vars.$spacing-10;
-  padding-right: vars.$spacing-md;
-  padding-top: vars.$spacing-2;
-  padding-bottom: vars.$spacing-2;
+  padding: vars.$spacing-2 vars.$spacing-md vars.$spacing-2 vars.$spacing-10;
   height: 2.5rem;
   font-size: vars.$font-size-sm;
   border-radius: vars.$radius-lg;

@@ -98,37 +98,37 @@
             <thead>
               <tr>
                 <th class="sortable-header" (click)="handleSort('id')">
-                  <button class="sort-button">
+                  <button class="btn btn-link sort">
                     REQUEST NUMBER
                     <i *ngIf="sortKey === 'id'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
                 <th class="sortable-header" (click)="handleSort('requestor_name')">
-                  <button class="sort-button">
+                  <button class="btn btn-link sort">
                     STAFF NAME
                     <i *ngIf="sortKey === 'requestor_name'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
                 <th class="sortable-header" (click)="handleSort('travel_type')">
-                  <button class="sort-button">
+                  <button class="btn btn-link sort">
                     TYPE
                     <i *ngIf="sortKey === 'travel_type'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
                 <th class="sortable-header" (click)="handleSort('purpose')">
-                  <button class="sort-button">
+                  <button class="btn btn-link sort">
                     PURPOSE
                     <i *ngIf="sortKey === 'purpose'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
                 <th class="sortable-header" (click)="handleSort('status')">
-                  <button class="sort-button">
+                  <button class="btn btn-link sort">
                     STATUS
                     <i *ngIf="sortKey === 'status'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
                 </th>
                 <th class="sortable-header" (click)="handleSort('submitted_at')">
-                  <button class="sort-button">
+                  <button class="btn btn-link sort">
                     SUBMITTED
                     <i *ngIf="sortKey === 'submitted_at'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
                   </button>
@@ -157,21 +157,21 @@
                 <td class="text-end">
                   <div class="action-buttons">
                     <button
-                      class="btn btn-sm btn-outline-primary action-btn"
+                      class="btn btn-sm btn-outline-primary btn-icon"
                       (click)="navigateToView(trf.id)"
                       title="View Details"
                     >
                       <i class="bi bi-eye"></i>
                     </button>
                     <button
-                      class="btn btn-sm btn-outline-primary action-btn"
+                      class="btn btn-sm btn-outline-primary btn-icon"
                       (click)="navigateToEdit(trf.id)"
                       title="Edit Request"
                     >
                       <i class="bi bi-pencil"></i>
                     </button>
                     <button
-                      class="btn btn-sm btn-outline-danger action-btn"
+                      class="btn btn-sm btn-outline-danger btn-icon"
                       (click)="deleteTrf(trf.id, $event)"
                       title="Delete Request"
                     >

@@ -53,7 +53,7 @@
 
   .card-body {
     padding: vars.$spacing-8;
-    background-color: white;
+    background-color: vars.$white;
   }
 }
 
@@ -112,11 +112,11 @@
   // Invalid field styling
   &.ng-invalid.ng-touched {
     border-color: vars.$error-color;
-    background-color: #fef2f2;
+    background-color: vars.$error-light;
 
     &:focus {
-      border-color: #dc2626;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+      border-color: vars.$error-hover;
+      box-shadow: 0 0 0 3px rgb(239 68 68 / 10%);
     }
   }
 }
@@ -172,13 +172,13 @@ textarea.form-control {
         background-color: vars.$primary-hover;
         border-color: vars.$primary-hover;
         transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(13, 148, 136, 0.2);
+        box-shadow: 0 4px 6px rgb(13 148 136 / 20%);
       }
     }
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .visa-form-container {
     padding: vars.$spacing-md;
   }

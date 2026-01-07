@@ -4,43 +4,43 @@
 // Workflow Configuration - Matching System Settings Style
 
 .settings-card {
-  background: white;
+  background: vars.$white;
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%);
   overflow: hidden;
-  border: 1px solid #e5e7eb;
+  border: 1px solid vars.$gray-200;
   margin-bottom: 1.5rem;
 
   .card-header {
-    padding: 1.25rem 1.5rem;
-    background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+    padding: vars.$spacing-5 1.5rem;
+    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
     border-bottom: none;
 
     .card-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: white;
-      margin: 0 0 0.25rem 0;
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$white;
+      margin: 0 0 0.25rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
 
       i {
-        font-size: 1.25rem;
-        color: white;
+        font-size: vars.$font-size-lg;
+        color: vars.$white;
       }
     }
 
     .card-description {
-      font-size: 0.875rem;
-      color: rgba(255, 255, 255, 0.95);
+      font-size: vars.$font-size-sm;
+      color: rgb(255 255 255 / 95%);
       margin: 0;
     }
   }
 
   .card-body {
-    padding: 1.5rem;
-    background: white;
+    padding: vars.$spacing-6;
+    background: vars.$white;
   }
 }
 
