@@ -16,11 +16,6 @@ export class AuthGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-    // For development purposes, always allow access
-    return true;
-    
-    // Original implementation:
-    /*
     return this.authService.isAuthenticated().pipe(
       map(isAuthenticated => {
         // If user is authenticated, allow access
@@ -39,11 +34,10 @@ export class AuthGuard implements CanActivate {
           }
           return true;
         }
-        
+
         // Redirect to login page if not authenticated
         return this.router.createUrlTree(['/auth/login'], { queryParams: { returnUrl: state.url } });
       })
     );
-    */
   }
 }
