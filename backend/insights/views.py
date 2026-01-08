@@ -200,7 +200,7 @@ def dashboard_summary(request):
             recent_activities.append({
                 'type': 'TSR',
                 'id': trf.id,
-                'title': f"TSR: {trf.purpose_of_travel[:50] if trf.purpose_of_travel else 'Travel Request'}",
+                'title': f"TSR: {trf.purpose[:50] if trf.purpose else 'Travel Request'}",
                 'status': trf.status or 'Draft',
                 'date': format_date_info({
                     'status': trf.status,
@@ -436,9 +436,9 @@ def travel_pattern_analytics(request):
 
     # Travel by purpose
     travel_by_purpose = dict(
-        trfs.values('purpose_of_travel')
+        trfs.values('purpose')
         .annotate(count=Count('id'))
-        .values_list('purpose_of_travel', 'count')
+        .values_list('purpose', 'count')
     )
 
     data = {
