@@ -11,6 +11,11 @@
 !backend/
 !.gitignore
 
+# Exception: Allow security and documentation files at root
+!VULNERABILITY_FIX_ROADMAP.md
+!README.md
+!LICENSE
+
 # ========== Python Cache & Compiled Files ==========
 __pycache__/
 *.py[cod]
