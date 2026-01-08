@@ -1,0 +1,21 @@
+# Production requirements for TMS Backend
+# Install with: pip install -r requirements/production.txt
+
+-r base.txt
+
+# Production Web Server
+gunicorn>=21.2.0
+
+# Static file serving
+whitenoise>=6.5.0
+
+# Monitoring & Error Tracking
+sentry-sdk>=1.32.0
+
+# Caching
+redis>=5.0.0
+django-redis>=5.3.0
+hiredis>=2.2.3
+
+# Performance
+gevent>=23.9.1

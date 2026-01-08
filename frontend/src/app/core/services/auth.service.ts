@@ -4,8 +4,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { map, tap, catchError } from 'rxjs/operators';
 import { User, UserRole, AuthResponse } from '../models/user.model';
-// Define a fallback environment if the import fails
-const API_URL = 'http://localhost:8000';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +13,7 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   private tokenKey = 'auth_token';
-  private apiUrl = API_URL;
+  private apiUrl = environment.apiUrl.replace('/api', ''); // Remove /api suffix for backward compatibility
 
   constructor(private http: HttpClient, private router: Router) {
     // Check if user is already logged in from local storage
@@ -143,14 +142,37 @@ export class AuthService {
   }
 
   isAuthenticated(): Observable<boolean> {
-    // For development purposes, always return true
-    // In production, this should check if the user is actually authenticated
-    return of(true);
-    
-    // Original implementation:
-    // return this.currentUser$.pipe(
-    //   map(user => !!user)
-    // );
+    return this.currentUser$.pipe(
+      map(user => {
+        // Check if user exists and has valid token
+        if (!user) return false;
+
+        const token = this.getToken();
+        if (!token) return false;
+
+        // Validate token expiry for JWT tokens
+        try {
+          // JWT tokens have 3 parts separated by dots
+          if (token.includes('.')) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            if (payload.exp) {
+              const isExpired = Date.now() >= payload.exp * 1000;
+              if (isExpired) {
+                console.log('Token expired, logging out');
+                this.logout();
+                return false;
+              }
+            }
+          }
+        } catch (error) {
+          // If token parsing fails, it's likely a Django Token (not JWT)
+          // For Django Token auth, we just check if token and user exist
+          console.debug('Token validation: Using Django Token authentication');
+        }
+
+        return true;
+      })
+    );
   }
 
   getCurrentUser(): User | null {

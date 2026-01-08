@@ -1,0 +1,26 @@
+# Development requirements for TMS Backend
+# Install with: pip install -r requirements/development.txt
+
+-r base.txt
+
+# Development & Debugging Tools
+django-debug-toolbar>=4.2.0
+django-extensions>=3.2.3
+ipython>=8.12.0
+
+# Testing
+pytest>=7.4.0
+pytest-django>=4.5.2
+pytest-cov>=4.1.0
+factory-boy>=3.3.0
+faker>=19.12.0
+
+# Code Quality
+flake8>=6.1.0
+black>=23.9.0
+isort>=5.12.0
+mypy>=1.5.0
+django-stubs>=4.2.4
+
+# Documentation
+drf-spectacular>=0.26.5
