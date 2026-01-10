@@ -7,7 +7,7 @@ import {
   HttpErrorResponse
 } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
 
@@ -32,9 +32,29 @@ export const AuthInterceptor: HttpInterceptorFn = (
     catchError((error: HttpErrorResponse) => {
       // Handle 401 Unauthorized errors (expired token or invalid session)
       if (error.status === 401) {
-        // Logout the user and redirect to login
-        authService.logout();
-        router.navigate(['/auth/login']);
+        // Skip refresh for login and refresh endpoints to avoid infinite loops
+        if (request.url.includes('/api/login/') || request.url.includes('/api/token/refresh/')) {
+          authService.logout();
+          router.navigate(['/auth/login']);
+          return throwError(() => error);
+        }
+
+        // SECURITY: Try to refresh the JWT token automatically
+        return authService.refreshToken().pipe(
+          switchMap((success: boolean) => {
+            if (success) {
+              // Refresh successful - retry the original request with new token
+              console.log('Token refreshed successfully, retrying request');
+              return next(authReq);
+            } else {
+              // Refresh failed - logout and redirect to login
+              console.log('Token refresh failed, logging out');
+              authService.logout();
+              router.navigate(['/auth/login']);
+              return throwError(() => error);
+            }
+          })
+        );
       }
       return throwError(() => error);
     })

@@ -130,6 +130,21 @@ export class AuthService {
     });
   }
 
+  /**
+   * SECURITY: Refresh JWT access token using refresh token from HttpOnly cookie
+   * Called automatically when access token expires (401 error)
+   */
+  refreshToken(): Observable<boolean> {
+    const url = `${this.apiUrl}/api/token/refresh/`;
+    return this.http.post(url, {}, { withCredentials: true }).pipe(
+      map(() => true),  // Refresh successful, new tokens set in cookies
+      catchError(error => {
+        console.error('Token refresh failed', error);
+        return of(false);  // Refresh failed
+      })
+    );
+  }
+
   isAuthenticated(): Observable<boolean> {
     return this.currentUser$.pipe(
       map(user => {
