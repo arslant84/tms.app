@@ -66,18 +66,20 @@ export class NotificationListComponent implements OnInit, OnDestroy {
       filters.priority = this.filterPriority;
     }
 
-    this.notificationService.getAllNotifications(filters).subscribe({
-      next: (response) => {
-        this.notifications = Array.isArray(response) ? response : response.results || [];
-        this.listState.setTotalItems(response.count || this.notifications.length);
-        this.applyFilters();
-        this.listState.setLoading(false);
-      },
-      error: (err) => {
-        console.error('Error loading notifications:', err);
-        this.listState.setLoading(false);
-      }
-    });
+    this.notificationService.getAllNotifications(filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.notifications = Array.isArray(response) ? response : response.results || [];
+          this.listState.setTotalItems(response.count || this.notifications.length);
+          this.applyFilters();
+          this.listState.setLoading(false);
+        },
+        error: (err) => {
+          console.error('Error loading notifications:', err);
+          this.listState.setLoading(false);
+        }
+      });
   }
 
   applyFilters(): void {
@@ -105,17 +107,19 @@ export class NotificationListComponent implements OnInit, OnDestroy {
 
   onNotificationClick(notification: UserNotification): void {
     if (!notification.is_read) {
-      this.notificationService.markAsRead(notification.id).subscribe({
-        next: () => {
-          if (notification.action_url) {
-            const mappedUrl = this.mapActionUrlToRoute(notification);
-            this.router.navigate([mappedUrl]);
+      this.notificationService.markAsRead(notification.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            if (notification.action_url) {
+              const mappedUrl = this.mapActionUrlToRoute(notification);
+              this.router.navigate([mappedUrl]);
+            }
+          },
+          error: (err) => {
+            console.error('Error marking notification as read:', err);
           }
-        },
-        error: (err) => {
-          console.error('Error marking notification as read:', err);
-        }
-      });
+        });
     } else {
       if (notification.action_url) {
         const mappedUrl = this.mapActionUrlToRoute(notification);
@@ -210,39 +214,45 @@ export class NotificationListComponent implements OnInit, OnDestroy {
   markAsRead(notification: UserNotification, event: Event): void {
     event.stopPropagation();
     if (!notification.is_read) {
-      this.notificationService.markAsRead(notification.id).subscribe({
-        next: () => {
-          notification.is_read = true;
-        },
-        error: (err) => {
-          console.error('Error marking notification as read:', err);
-        }
-      });
+      this.notificationService.markAsRead(notification.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            notification.is_read = true;
+          },
+          error: (err) => {
+            console.error('Error marking notification as read:', err);
+          }
+        });
     }
   }
 
   markAllAsRead(): void {
-    this.notificationService.markAllAsRead().subscribe({
-      next: () => {
-        this.loadNotifications();
-      },
-      error: (err) => {
-        console.error('Error marking all as read:', err);
-      }
-    });
+    this.notificationService.markAllAsRead()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.loadNotifications();
+        },
+        error: (err) => {
+          console.error('Error marking all as read:', err);
+        }
+      });
   }
 
   deleteNotification(id: number, event: Event): void {
     event.stopPropagation();
     if (confirm('Are you sure you want to delete this notification?')) {
-      this.notificationService.deleteNotification(id).subscribe({
-        next: () => {
-          this.loadNotifications();
-        },
-        error: (err) => {
-          console.error('Error deleting notification:', err);
-        }
-      });
+      this.notificationService.deleteNotification(id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.loadNotifications();
+          },
+          error: (err) => {
+            console.error('Error deleting notification:', err);
+          }
+        });
     }
   }
 

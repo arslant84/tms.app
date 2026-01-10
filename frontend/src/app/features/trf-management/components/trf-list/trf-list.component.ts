@@ -2,11 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TrfService } from '../../../../core/services/trf.service';
+import { TrfService } from '../../services/trf.service';
 import { TravelRequestForm } from '../../../../core/models/trf.model';
 import { ToastService } from '../../../../core/services/toast.service';
-import { finalize } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
@@ -57,7 +57,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
   statusFilter = '';
   travelTypeFilter = '';
 
-  private routerSubscription?: Subscription;
+  private destroy$ = new Subject<void>();
 
   // TRF data
   trfs: TrfListItem[] = [];
@@ -83,15 +83,18 @@ export class TrfListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Subscribe to debounced search changes
-    this.listState.search$.subscribe(() => {
-      this.fetchTrfs();
-    });
+    this.listState.search$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.fetchTrfs();
+      });
 
     // Refresh list when navigating back to this page
-    this.routerSubscription = this.router.events
+    this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
-        filter((event: any) => event.url === '/trf' || event.url.startsWith('/trf?'))
+        filter((event: any) => event.url === '/trf' || event.url.startsWith('/trf?')),
+        takeUntil(this.destroy$)
       )
       .subscribe(() => {
         this.fetchTrfs();
@@ -102,9 +105,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.routerSubscription) {
-      this.routerSubscription.unsubscribe();
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
     this.listState.destroy();
   }
 
@@ -136,6 +138,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
 
     this.trfService.getAllTrfs(params)
       .pipe(
+        takeUntil(this.destroy$),
         finalize(() => {
           this.listState.setLoading(false);
         })
@@ -217,15 +220,17 @@ export class TrfListComponent implements OnInit, OnDestroy {
       clearTimeout(this.deleteConfirmTimeout);
       this.deleteConfirmId = null;
 
-      this.trfService.deleteTrf(id).subscribe({
-        next: () => {
-          this.toastService.success('Travel request deleted successfully');
-          this.fetchTrfs();
-        },
-        error: (error: any) => {
-          this.toastService.error('Failed to delete travel request');
-        }
-      });
+      this.trfService.deleteTrf(id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.toastService.success('Travel request deleted successfully');
+            this.fetchTrfs();
+          },
+          error: (error: any) => {
+            this.toastService.error('Failed to delete travel request');
+          }
+        });
     } else {
       // First click - show confirmation toast
       this.deleteConfirmId = id;
