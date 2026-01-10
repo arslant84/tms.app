@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, BehaviorSubject, interval } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { Observable, BehaviorSubject, interval, Subscription } from 'rxjs';
+import { tap, catchError, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { AuthService } from '../../../core/services/auth.service';
 
 // Notification Interfaces
 export interface UserNotification {
@@ -55,6 +56,8 @@ export interface NotificationEventType {
 })
 export class NotificationService {
   private apiUrl = `${environment.apiUrl}/notifications`;
+  private authService = inject(AuthService);
+  private pollingSubscription?: Subscription;
 
   // Observable for unread count (used by header badge)
   private unreadCountSubject = new BehaviorSubject<number>(0);
@@ -65,10 +68,39 @@ export class NotificationService {
   public notifications$ = this.notificationsSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    // Poll for new notifications every 30 seconds
-    interval(30000).subscribe(() => {
+    // SECURITY: Only poll when user is authenticated
+    this.authService.currentUser$.pipe(
+      filter(user => user !== null)
+    ).subscribe(() => {
+      this.startPolling();
+    });
+
+    // Stop polling when user logs out
+    this.authService.currentUser$.pipe(
+      filter(user => user === null)
+    ).subscribe(() => {
+      this.stopPolling();
+    });
+  }
+
+  // Start polling for notifications (only when authenticated)
+  private startPolling(): void {
+    if (this.pollingSubscription) {
+      return; // Already polling
+    }
+    this.pollingSubscription = interval(30000).subscribe(() => {
       this.refreshUnreadCount();
     });
+  }
+
+  // Stop polling (on logout)
+  private stopPolling(): void {
+    if (this.pollingSubscription) {
+      this.pollingSubscription.unsubscribe();
+      this.pollingSubscription = undefined;
+      this.unreadCountSubject.next(0);
+      this.notificationsSubject.next([]);
+    }
   }
 
   // Get all notifications for current user
@@ -196,8 +228,11 @@ export class NotificationService {
   }
 
   // Initialize service (call this on app init)
+  // SECURITY: Only initialize if user is authenticated
   initialize(): void {
-    this.refreshUnreadCount();
-    this.refreshNotifications();
+    if (this.authService.getCurrentUser()) {
+      this.refreshUnreadCount();
+      this.refreshNotifications();
+    }
   }
 }

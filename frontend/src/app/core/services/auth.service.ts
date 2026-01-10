@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { map, tap, catchError } from 'rxjs/operators';
+import { map, tap, catchError, shareReplay } from 'rxjs/operators';
 import { User, UserRole, AuthResponse } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 
@@ -13,6 +13,7 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   private apiUrl = environment.apiUrl.replace('/api', ''); // Remove /api suffix for backward compatibility
+  private initializationRequest$?: Observable<User>;
 
   constructor(private http: HttpClient, private router: Router) {
     // SECURITY: Token now stored in HttpOnly cookie (not accessible to JavaScript)
@@ -23,19 +24,29 @@ export class AuthService {
   /**
    * SECURITY: Initialize user from backend instead of localStorage
    * Token is in HttpOnly cookie, automatically sent by browser
+   * Uses shareReplay to prevent multiple concurrent initialization requests
    */
   private initializeUser(): void {
-    // Try to fetch current user if cookie exists
-    this.http.get<User>(`${this.apiUrl}/api/users/me/`, { withCredentials: true })
-      .subscribe({
-        next: (user) => {
-          this.currentUserSubject.next(user);
-        },
-        error: () => {
-          // No valid session, user not logged in
-          this.currentUserSubject.next(null);
-        }
-      });
+    // Prevent multiple concurrent initialization requests
+    if (this.initializationRequest$) {
+      return;
+    }
+
+    // Create shared observable for initialization
+    this.initializationRequest$ = this.http.get<User>(`${this.apiUrl}/api/users/me/`, { withCredentials: true }).pipe(
+      tap((user) => {
+        this.currentUserSubject.next(user);
+      }),
+      catchError(() => {
+        // No valid session, user not logged in
+        this.currentUserSubject.next(null);
+        return of(null as any);
+      }),
+      shareReplay(1) // Share the result with all subscribers
+    );
+
+    // Subscribe to trigger the request
+    this.initializationRequest$.subscribe();
   }
 
   login(email: string, password: string): Observable<User> {

@@ -45,9 +45,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Initialize notification service
-    this.notificationService.initialize();
-
+    // SECURITY: NotificationService now auto-initializes when user is authenticated
     // Subscribe to notifications updates
     this.notificationService.notifications$
       .pipe(takeUntil(this.destroy$))
