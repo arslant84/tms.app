@@ -7,6 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.views import ObtainAuthToken
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, UserAdminUpdateSerializer, RoleSerializer, PermissionSerializer,
@@ -18,7 +20,7 @@ from .permissions import HasManageRolesPermission, HasManageUsersPermission, Has
 User = get_user_model()
 
 
-class LoginView(ObtainAuthToken):
+class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
     @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True))
@@ -33,24 +35,50 @@ class LoginView(ObtainAuthToken):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            # Create or get token
-            token, created = Token.objects.get_or_create(user=user)
+            # SECURITY: Generate JWT tokens with expiration
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
 
-            # SECURITY: Set token in HttpOnly cookie instead of response body
-            # This prevents XSS attacks from stealing the token
+            # Response with user data
             response = Response({
                 'user': UserSerializer(user).data,
                 'message': 'Login successful'
             })
 
-            # Set HttpOnly cookie with token
+            # SECURITY: Set JWT tokens in HttpOnly cookies
+            # Access token for authentication (short-lived)
             response.set_cookie(
-                key='auth_token',
-                value=token.key,
+                key='access_token',
+                value=access_token,
                 httponly=True,  # Prevents JavaScript access (XSS protection)
                 secure=True,    # Only send over HTTPS in production
                 samesite='Lax', # CSRF protection
-                max_age=86400 * 7,  # 7 days expiration
+                max_age=3600,   # 1 hour (matches ACCESS_TOKEN_LIFETIME)
+                path='/'
+            )
+
+            # Refresh token for getting new access tokens (long-lived)
+            response.set_cookie(
+                key='refresh_token',
+                value=refresh_token,
+                httponly=True,  # Prevents JavaScript access (XSS protection)
+                secure=True,    # Only send over HTTPS in production
+                samesite='Lax', # CSRF protection
+                max_age=86400 * 7,  # 7 days (matches REFRESH_TOKEN_LIFETIME)
+                path='/'
+            )
+
+            # Keep legacy token for backward compatibility during migration
+            # TODO: Remove this after full JWT migration
+            token, created = Token.objects.get_or_create(user=user)
+            response.set_cookie(
+                key='auth_token',
+                value=token.key,
+                httponly=True,
+                secure=True,
+                samesite='Lax',
+                max_age=86400 * 7,
                 path='/'
             )
 
@@ -65,17 +93,99 @@ class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        # Delete the token to logout
         try:
-            request.user.auth_token.delete()
+            # SECURITY: Blacklist the refresh token to prevent reuse
+            refresh_token = request.COOKIES.get('refresh_token')
+            if refresh_token:
+                try:
+                    token = RefreshToken(refresh_token)
+                    token.blacklist()  # Add to blacklist
+                except TokenError:
+                    pass  # Token already invalid or blacklisted
 
-            # SECURITY: Clear the HttpOnly cookie
+            # Delete legacy token for backward compatibility
+            # TODO: Remove this after full JWT migration
+            try:
+                request.user.auth_token.delete()
+            except:
+                pass
+
+            # SECURITY: Clear all auth cookies
             response = Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
-            response.delete_cookie('auth_token', path='/')
+            response.delete_cookie('access_token', path='/')
+            response.delete_cookie('refresh_token', path='/')
+            response.delete_cookie('auth_token', path='/')  # Legacy token
 
             return response
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class TokenRefreshView(APIView):
+    """
+    Refresh access token using refresh token from HttpOnly cookie.
+
+    SECURITY: Rotates refresh tokens and blacklists old ones.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        # Get refresh token from cookie
+        refresh_token_str = request.COOKIES.get('refresh_token')
+
+        if not refresh_token_str:
+            return Response(
+                {'error': 'Refresh token not found'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        try:
+            # Validate and refresh the token
+            refresh = RefreshToken(refresh_token_str)
+
+            # SECURITY: Token rotation - generate new refresh token
+            # Old token is automatically blacklisted (BLACKLIST_AFTER_ROTATION=True)
+            new_access_token = str(refresh.access_token)
+
+            # For full rotation, generate a completely new refresh token
+            if hasattr(refresh, 'rotate'):
+                refresh.rotate()
+            new_refresh_token = str(refresh)
+
+            # Response
+            response = Response({
+                'message': 'Token refreshed successfully'
+            })
+
+            # Set new access token cookie
+            response.set_cookie(
+                key='access_token',
+                value=new_access_token,
+                httponly=True,
+                secure=True,
+                samesite='Lax',
+                max_age=3600,  # 1 hour
+                path='/'
+            )
+
+            # Set new refresh token cookie
+            response.set_cookie(
+                key='refresh_token',
+                value=new_refresh_token,
+                httponly=True,
+                secure=True,
+                samesite='Lax',
+                max_age=86400 * 7,  # 7 days
+                path='/'
+            )
+
+            return response
+
+        except TokenError as e:
+            return Response(
+                {'error': f'Invalid refresh token: {str(e)}'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
 
 class UserViewSet(viewsets.ModelViewSet):
