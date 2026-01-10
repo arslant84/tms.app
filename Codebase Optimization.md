@@ -1008,21 +1008,118 @@ Closes #123"
 
 ---
 
-### Phase 4: Integration & Polish (Days 18-24) ⏸️ NOT STARTED
+### Phase 4: Security Hardening (Days 18-21) ⏸️ NOT STARTED
+**Progress**: 0% (0/8 tasks)
+
+**🔒 CRITICAL & HIGH PRIORITY (Days 18-19)**
+- [ ] Migrate to HttpOnly cookie authentication (replaces localStorage - CRITICAL)
+- [ ] Implement JWT with token expiration (replaces Token auth - HIGH)
+- [ ] Fix hardcoded default passwords in init scripts (HIGH)
+- [ ] Implement forced password change on first login (HIGH)
+
+**🟡 MEDIUM PRIORITY (Days 20-21)**
+- [ ] Implement password reset functionality
+- [ ] Pin dependency versions (requirements.txt + package.json)
+- [ ] Add Content Security Policy (CSP) headers
+- [ ] Implement admin action audit logging
+
+**Dependencies**: Phase 1 basic security completed ✅
+**Security Risk**: Current - MEDIUM | After Phase 4 - LOW
+
+**Notes**:
+- HttpOnly cookies prevent XSS token theft
+- JWT expiration limits damage from stolen tokens
+- CSP prevents XSS attacks
+- Audit logging tracks admin actions
+
+---
+
+### Phase 5: Integration & Polish (Days 22-28) ⏸️ NOT STARTED
 **Progress**: 0% (0/10 tasks)
 
 - [ ] Standardize API responses
 - [ ] Add pagination/filtering
-- [ ] Implement JWT refresh
 - [ ] Complete reports module (M1)
 - [ ] Complete insights module (M2)
 - [ ] Complete approvals module (C5)
-- [ ] Add API documentation
+- [ ] Add API documentation (drf-spectacular)
 - [ ] Write integration tests
-- [ ] Create README files
-- [ ] Final deployment
+- [ ] Set up automated security scanning (CI/CD)
+- [ ] Create security.txt file
+- [ ] Final deployment preparation
 
-**Dependencies**: Phases 2 & 3 must complete first
+**Dependencies**: Phases 2, 3, & 4 must complete first
+
+---
+
+## 🔒 Security Status & Vulnerability Tracking
+
+**Last Security Audit:** January 7, 2026
+**Overall Risk Rating:** MEDIUM (Critical issues fixed, some high-priority items remain)
+
+### ✅ Security Fixes Completed (Phase 1)
+
+**Fixed in Previous Audits (9 Critical/High Issues):**
+1. ✅ Hardcoded secrets moved to environment variables
+2. ✅ DEBUG mode properly configured for production
+3. ✅ CORS restricted to specific origins
+4. ✅ Rate limiting implemented on login endpoints
+5. ✅ SQL injection in migrations fixed
+6. ✅ Settings endpoint secured with proper permissions
+7. ✅ Privilege escalation prevented
+8. ✅ File upload validation implemented
+9. ✅ Security headers added (X-Frame-Options, X-Content-Type-Options)
+
+### 🔴 Critical Vulnerabilities Remaining
+
+| # | Issue | Severity | Impact | Phase |
+|---|-------|----------|--------|-------|
+| 1 | Token storage in localStorage (XSS risk) | CRITICAL | Account takeover via XSS | Phase 4 |
+| 2 | Legacy Token auth without expiration | HIGH | Indefinite session hijacking | Phase 4 |
+| 3 | Hardcoded default passwords in init scripts | HIGH | Unauthorized admin access | Phase 4 |
+| 4 | Missing password reset functionality | MEDIUM | User account recovery issues | Phase 4 |
+| 5 | Loose dependency version constraints | MEDIUM | Future vulnerability exposure | Phase 4 |
+| 6 | Missing Content Security Policy | MEDIUM | XSS attack vulnerability | Phase 4 |
+| 7 | Missing admin action audit logging | MEDIUM | No security incident tracking | Phase 4 |
+| 8 | Missing security.txt file | LOW | Security researcher contact | Phase 5 |
+
+**Total Remaining:** 8 vulnerabilities (1 Critical, 2 High, 4 Medium, 1 Low)
+
+### Security Improvement Roadmap
+
+**Phase 4 Tasks (Days 18-21):**
+1. **HttpOnly Cookie Migration** (8-12 hours) - Eliminate localStorage XSS risk
+2. **JWT Implementation** (6-10 hours) - Add token expiration
+3. **Password Security** (3-4 hours) - Fix hardcoded defaults, add forced change
+4. **Password Reset** (8-10 hours) - Implement reset flow
+5. **Dependency Pinning** (2 hours) - Lock versions in requirements.txt
+6. **CSP Headers** (4 hours) - Configure Content Security Policy
+7. **Audit Logging** (6-8 hours) - Track admin actions
+
+**Estimated Effort:** 37-50 hours (5-7 days)
+
+**Risk Reduction:**
+- Current Risk Score: 6.5/10 (MEDIUM)
+- After Phase 4: 2.0/10 (LOW)
+- After Phase 5: 1.0/10 (VERY LOW)
+
+### Security Checklist for Code Reviews
+
+- [ ] No hardcoded secrets, passwords, or API keys
+- [ ] All user input validated and sanitized
+- [ ] SQL queries use parameterized queries (no f-strings)
+- [ ] All API endpoints have appropriate permission classes
+- [ ] No sensitive data in localStorage
+- [ ] Rate limiting on authentication endpoints
+- [ ] Proper error handling (no stack traces to users)
+- [ ] Security headers configured (CSP, HSTS, X-Frame-Options)
+- [ ] File uploads have size and type validation
+- [ ] Authentication tokens have expiration
+- [ ] HTTPS enforced in production
+- [ ] Security-relevant actions are logged
+- [ ] Dependencies pinned to specific versions
+- [ ] No `DEBUG = True` in production
+- [ ] CORS configured with specific allowed origins
 
 ---
 
@@ -1053,6 +1150,40 @@ Closes #123"
 ---
 
 ## Change Log
+
+### 2026-01-10 - Security Roadmap Integration! 🔒
+**Completed (~30 minutes):**
+
+**Integrated VULNERABILITY_FIX_ROADMAP.md into main roadmap:**
+- **Created Phase 4: Security Hardening** (8 tasks, Days 18-21)
+  - Migrated all security vulnerability tracking
+  - Organized by priority: 1 Critical, 2 High, 4 Medium, 1 Low
+  - Estimated effort: 37-50 hours (5-7 days)
+- **Added Security Status Section**
+  - Documented 9 security fixes completed in Phase 1
+  - Listed 8 remaining vulnerabilities with severity ratings
+  - Risk reduction roadmap (MEDIUM → LOW → VERY LOW)
+  - Security checklist for code reviews
+- **Renumbered Phases**
+  - Old "Phase 4: Integration & Polish" → "Phase 5"
+  - Inserted security hardening as critical Phase 4
+- **Consolidated Documentation**
+  - Deleted VULNERABILITY_FIX_ROADMAP.md (integrated into main roadmap)
+  - Single source of truth for all optimization and security work
+- **Impact**:
+  - Clear security roadmap with actionable tasks
+  - Proper prioritization of critical vulnerabilities
+  - Estimated 75% risk reduction after Phase 4 completion
+  - Comprehensive vulnerability tracking
+
+**Security Summary:**
+- ✅ **Completed**: 9 critical/high vulnerabilities fixed
+- 🔴 **Remaining**: 1 Critical, 2 High, 4 Medium, 1 Low
+- 📋 **Phase 4 Tasks**: 8 security hardening tasks
+- ⏱️ **Estimated Effort**: 37-50 hours
+- 📊 **Risk Reduction**: 6.5/10 (MEDIUM) → 2.0/10 (LOW)
+
+---
 
 ### 2026-01-10 - Phase 3 Complete: Documentation! 🎉
 **Completed (1 task - ~15 minutes):**
