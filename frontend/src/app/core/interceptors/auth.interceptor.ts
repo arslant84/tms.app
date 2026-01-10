@@ -18,41 +18,25 @@ export const AuthInterceptor: HttpInterceptorFn = (
 ): Observable<HttpEvent<unknown>> => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  
-  // Get the auth token from the service
-  const token = authService.getToken();
 
-  // Skip adding token for login and public endpoints
-  if (request.url.includes('/api/login/') || request.url.includes('/public/')) {
-    return next(request);
-  }
+  // SECURITY: Token is now in HttpOnly cookie (automatically sent by browser)
+  // No need to manually add Authorization header
 
-  // Clone the request and add the token if available
-  if (token) {
-    // Make sure we're using the correct format for the Authorization header
-    // Django REST Framework expects: Token <token>
-    const authReq = request.clone({
-      setHeaders: {
-        Authorization: `Token ${token}`
+  // Clone the request and add withCredentials to include cookies
+  const authReq = request.clone({
+    withCredentials: true  // Enables sending/receiving cookies
+  });
+
+  // Handle the authenticated request
+  return next(authReq).pipe(
+    catchError((error: HttpErrorResponse) => {
+      // Handle 401 Unauthorized errors (expired token or invalid session)
+      if (error.status === 401) {
+        // Logout the user and redirect to login
+        authService.logout();
+        router.navigate(['/auth/login']);
       }
-    });
-    
-    console.log('Adding auth token to request:', request.url);
-    
-    // Handle the authenticated request
-    return next(authReq).pipe(
-      catchError((error: HttpErrorResponse) => {
-        // Handle 401 Unauthorized errors (expired token)
-        if (error.status === 401) {
-          // Logout the user and redirect to login
-          authService.logout();
-          router.navigate(['/auth/login']);
-        }
-        return throwError(() => error);
-      })
-    );
-  }
-  
-  // If no token is available, just pass the request through
-  return next(request);
+      return throwError(() => error);
+    })
+  );
 };

@@ -156,9 +156,11 @@ AUTH_USER_MODEL = 'accounts.User'
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        # SECURITY: Custom cookie-based authentication (prevents XSS)
+        'accounts.cookie_auth.CookieTokenAuthentication',
+        # Fallback to token auth for backward compatibility during migration
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -214,6 +216,15 @@ FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:4200')
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
+# CSRF Protection for cookie-based authentication
+# Allow CSRF cookie to be sent from frontend
+CSRF_COOKIE_HTTPONLY = False  # Frontend needs to read this for CSRF token
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = True  # Only send over HTTPS in production
+CSRF_COOKIE_NAME = 'csrftoken'
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='http://localhost:4200,http://127.0.0.1:4200', cast=Csv())
 
 # JWT Settings (Simple JWT)
 # SECURITY: Tokens with expiration and rotation

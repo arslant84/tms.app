@@ -12,33 +12,36 @@ import { environment } from '../../../environments/environment';
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
-  private tokenKey = 'auth_token';
   private apiUrl = environment.apiUrl.replace('/api', ''); // Remove /api suffix for backward compatibility
 
   constructor(private http: HttpClient, private router: Router) {
-    // Check if user is already logged in from local storage
-    this.loadUserFromLocalStorage();
+    // SECURITY: Token now stored in HttpOnly cookie (not accessible to JavaScript)
+    // Try to load user data from backend on init
+    this.initializeUser();
   }
 
-  private loadUserFromLocalStorage(): void {
-    const token = localStorage.getItem(this.tokenKey);
-    const userJson = localStorage.getItem('user_data');
-    
-    if (token && userJson) {
-      try {
-        const userData = JSON.parse(userJson);
-        this.currentUserSubject.next(userData);
-      } catch (error) {
-        console.error('Failed to parse user data from localStorage', error);
-        this.logout();
-      }
-    }
+  /**
+   * SECURITY: Initialize user from backend instead of localStorage
+   * Token is in HttpOnly cookie, automatically sent by browser
+   */
+  private initializeUser(): void {
+    // Try to fetch current user if cookie exists
+    this.http.get<User>(`${this.apiUrl}/api/users/me/`, { withCredentials: true })
+      .subscribe({
+        next: (user) => {
+          this.currentUserSubject.next(user);
+        },
+        error: () => {
+          // No valid session, user not logged in
+          this.currentUserSubject.next(null);
+        }
+      });
   }
 
   login(email: string, password: string): Observable<User> {
     // The backend login endpoint is at /api/login/
     const url = `${this.apiUrl}/api/login/`;
-    
+
     // Django expects JSON data
     const body = {
       email: email,
@@ -52,15 +55,15 @@ export class AuthService {
     console.log('Attempting login to:', url);
     console.log('With credentials:', { email });
 
-    return this.http.post<AuthResponse>(url, body, { headers }).pipe(
+    // SECURITY: withCredentials: true allows cookies to be sent/received
+    return this.http.post<AuthResponse>(url, body, { headers, withCredentials: true }).pipe(
       map(response => {
         console.log('Login successful, response:', response);
         console.log('Full user data from backend:', response.user);
 
-        // Store token in local storage
-        localStorage.setItem(this.tokenKey, response.token);
+        // SECURITY: No localStorage - token is in HttpOnly cookie
+        // Backend sets the cookie, we just store user data in memory
 
-        // Store ALL user data from backend response
         const user: User = {
           id: response.user.id!,
           name: response.user.name || email.split('@')[0],
@@ -82,8 +85,7 @@ export class AuthService {
         console.log('Stored user data:', user);
         console.log('User permissions:', user.permissions);
 
-        // Store user data
-        localStorage.setItem('user_data', JSON.stringify(user));
+        // Store user data in memory (not localStorage)
         this.currentUserSubject.next(user);
         return user;
       }),
@@ -92,9 +94,9 @@ export class AuthService {
         console.error('Error status:', error.status);
         console.error('Error message:', error.message);
         console.error('Error details:', error.error);
-        
+
         let errorMessage = 'Login failed. Please check your credentials.';
-        
+
         if (error.status === 0) {
           errorMessage = 'Cannot connect to the server. Please check your network connection.';
         } else if (error.status === 404) {
@@ -104,7 +106,7 @@ export class AuthService {
         } else if (error.error?.detail) {
           errorMessage = error.error.detail;
         }
-        
+
         return throwError(() => new Error(errorMessage));
       })
     );
@@ -113,64 +115,27 @@ export class AuthService {
   logout(): void {
     // Call the backend logout endpoint
     const url = `${this.apiUrl}/api/logout/`;
-    const token = this.getToken();
-    
-    if (token) {
-      const headers = new HttpHeaders({
-        'Authorization': `Token ${token}`
-      });
-      
-      this.http.post(url, {}, { headers }).pipe(
-        catchError(error => {
-          console.error('Logout failed', error);
-          return of(null);
-        })
-      ).subscribe(() => {
-        // Remove token and user data from local storage
-        localStorage.removeItem(this.tokenKey);
-        localStorage.removeItem('user_data');
-        this.currentUserSubject.next(null);
-        this.router.navigate(['/auth/login']);
-      });
-    } else {
-      // If no token, just clear local storage
-      localStorage.removeItem(this.tokenKey);
-      localStorage.removeItem('user_data');
+
+    // SECURITY: withCredentials: true sends the HttpOnly cookie
+    this.http.post(url, {}, { withCredentials: true }).pipe(
+      catchError(error => {
+        console.error('Logout failed', error);
+        return of(null);
+      })
+    ).subscribe(() => {
+      // SECURITY: Cookie is cleared by backend
+      // Just clear user data from memory
       this.currentUserSubject.next(null);
       this.router.navigate(['/auth/login']);
-    }
+    });
   }
 
   isAuthenticated(): Observable<boolean> {
     return this.currentUser$.pipe(
       map(user => {
-        // Check if user exists and has valid token
-        if (!user) return false;
-
-        const token = this.getToken();
-        if (!token) return false;
-
-        // Validate token expiry for JWT tokens
-        try {
-          // JWT tokens have 3 parts separated by dots
-          if (token.includes('.')) {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            if (payload.exp) {
-              const isExpired = Date.now() >= payload.exp * 1000;
-              if (isExpired) {
-                console.log('Token expired, logging out');
-                this.logout();
-                return false;
-              }
-            }
-          }
-        } catch (error) {
-          // If token parsing fails, it's likely a Django Token (not JWT)
-          // For Django Token auth, we just check if token and user exist
-          console.debug('Token validation: Using Django Token authentication');
-        }
-
-        return true;
+        // SECURITY: Check if user exists
+        // Token validation is handled by backend
+        return user !== null;
       })
     );
   }
@@ -191,35 +156,33 @@ export class AuthService {
   hasRole(allowedRoles: UserRole[]): boolean {
     const user = this.currentUserSubject.value;
     if (!user) return false;
-    
+
     return allowedRoles.includes(user.role);
   }
-  
+
   isAdmin(): boolean {
     const user = this.currentUserSubject.value;
     return user?.is_admin || false;
   }
 
-  // Get the JWT token for API requests
-  getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
-  }
-  
+  // SECURITY: No getToken() method - token is in HttpOnly cookie
+  // Token is automatically sent by browser with withCredentials: true
+
   // Get user profile
   getUserProfile(): Observable<User> {
-    const url = `${this.apiUrl}/users/me`;
-    return this.http.get<User>(url).pipe(
+    const url = `${this.apiUrl}/api/users/me/`;
+    return this.http.get<User>(url, { withCredentials: true }).pipe(
       catchError(error => {
         console.error('Failed to get user profile', error);
         return throwError(() => new Error('Failed to get user profile'));
       })
     );
   }
-  
+
   // Create a new user (admin only)
   createUser(userData: Partial<User>): Observable<User> {
-    const url = `${this.apiUrl}/users`;
-    return this.http.post<User>(url, userData).pipe(
+    const url = `${this.apiUrl}/api/users/`;
+    return this.http.post<User>(url, userData, { withCredentials: true }).pipe(
       catchError(error => {
         console.error('Failed to create user', error);
         return throwError(() => new Error(error.error?.detail || 'Failed to create user'));
