@@ -1009,11 +1009,11 @@ Closes #123"
 ---
 
 ### Phase 4: Security Hardening (Days 18-21) 🚀 IN PROGRESS
-**Progress**: 12.5% (1/8 tasks)
+**Progress**: 25% (2/8 tasks)
 
 **🔒 CRITICAL & HIGH PRIORITY (Days 18-19)**
 - [x] Migrate to HttpOnly cookie authentication (replaces localStorage - CRITICAL) ✅
-- [ ] Implement JWT with token expiration (replaces Token auth - HIGH)
+- [x] Implement JWT with token expiration (replaces Token auth - HIGH) ✅
 - [ ] Fix hardcoded default passwords in init scripts (HIGH)
 - [ ] Implement forced password change on first login (HIGH)
 
@@ -1055,7 +1055,7 @@ Closes #123"
 ## 🔒 Security Status & Vulnerability Tracking
 
 **Last Security Audit:** January 10, 2026
-**Overall Risk Rating:** LOW-MEDIUM (All critical issues fixed, 2 high-priority items remain)
+**Overall Risk Rating:** LOW-MEDIUM (All critical issues fixed, 1 high-priority item remains)
 
 ### ✅ Security Fixes Completed (Phase 1)
 
@@ -1075,7 +1075,7 @@ Closes #123"
 | # | Issue | Severity | Impact | Status |
 |---|-------|----------|--------|--------|
 | ~~1~~ | ~~Token storage in localStorage (XSS risk)~~ | ~~CRITICAL~~ | ~~Account takeover via XSS~~ | ✅ **FIXED** |
-| 2 | Legacy Token auth without expiration | HIGH | Indefinite session hijacking | Phase 4 |
+| ~~2~~ | ~~Legacy Token auth without expiration~~ | ~~HIGH~~ | ~~Indefinite session hijacking~~ | ✅ **FIXED** |
 | 3 | Hardcoded default passwords in init scripts | HIGH | Unauthorized admin access | Phase 4 |
 | 4 | Missing password reset functionality | MEDIUM | User account recovery issues | Phase 4 |
 | 5 | Loose dependency version constraints | MEDIUM | Future vulnerability exposure | Phase 4 |
@@ -1083,24 +1083,24 @@ Closes #123"
 | 7 | Missing admin action audit logging | MEDIUM | No security incident tracking | Phase 4 |
 | 8 | Missing security.txt file | LOW | Security researcher contact | Phase 5 |
 
-**Total Remaining:** 7 vulnerabilities (0 Critical, 2 High, 4 Medium, 1 Low)
+**Total Remaining:** 6 vulnerabilities (0 Critical, 1 High, 4 Medium, 1 Low)
 
 ### Security Improvement Roadmap
 
 **Phase 4 Tasks (Days 18-21):**
 1. ✅ **HttpOnly Cookie Migration** (8-12 hours) - Eliminate localStorage XSS risk **COMPLETED**
-2. **JWT Implementation** (6-10 hours) - Add token expiration
+2. ✅ **JWT Implementation** (6-10 hours) - Add token expiration **COMPLETED**
 3. **Password Security** (3-4 hours) - Fix hardcoded defaults, add forced change
 4. **Password Reset** (8-10 hours) - Implement reset flow
 5. **Dependency Pinning** (2 hours) - Lock versions in requirements.txt
 6. **CSP Headers** (4 hours) - Configure Content Security Policy
 7. **Audit Logging** (6-8 hours) - Track admin actions
 
-**Estimated Effort:** 29-38 hours remaining (4-5 days)
+**Estimated Effort:** 23-28 hours remaining (3-4 days)
 
 **Risk Reduction:**
 - Original Risk Score: 7.0/10 (MEDIUM-HIGH)
-- Current Risk Score: 4.5/10 (MEDIUM) - Critical XSS vulnerability eliminated ✅
+- Current Risk Score: 3.5/10 (LOW-MEDIUM) - Critical XSS + session hijacking fixed ✅
 - After Phase 4: 2.0/10 (LOW)
 - After Phase 5: 1.0/10 (VERY LOW)
 
@@ -1115,7 +1115,7 @@ Closes #123"
 - [x] Proper error handling (no stack traces to users) ✅
 - [ ] Security headers configured (CSP, HSTS, X-Frame-Options) - Partial (some headers)
 - [x] File uploads have size and type validation ✅
-- [ ] Authentication tokens have expiration - In progress (HttpOnly cookies ✅, JWT pending)
+- [x] Authentication tokens have expiration ✅ (JWT: 1h access, 7d refresh with rotation)
 - [ ] HTTPS enforced in production
 - [ ] Security-relevant actions are logged
 - [ ] Dependencies pinned to specific versions
