@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { FlightListComponent } from '../admin/flight-list/flight-list.component';
-import { FlightDetailComponent } from '../admin/flight-detail/flight-detail.component';
-import { FlightCreateComponent } from '../admin/flight-create/flight-create.component';
+import { FlightListComponent } from '../admin/flights/components/flight-list.component';
+import { FlightDetailComponent } from '../admin/flights/components/flight-detail.component';
+import { FlightCreateComponent } from '../admin/flights/components/flight-create.component';
 
 const routes: Routes = [
   {

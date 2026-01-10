@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { WorkflowStepExecution } from '../../../core/models/workflow.models';
 import { WorkflowService } from '../../../core/services/workflow.service';
 import { ConfirmationService } from '../../../core/services/confirmation.service';
@@ -13,7 +14,7 @@ import { ToastService } from '../../../core/services/toast.service';
   templateUrl: './approval-actions.component.html',
   styleUrls: ['./approval-actions.component.scss']
 })
-export class ApprovalActionsComponent implements OnInit {
+export class ApprovalActionsComponent implements OnInit, OnDestroy {
   @Input() stepExecution!: WorkflowStepExecution;
   @Input() compact: boolean = false;
 
@@ -35,6 +36,8 @@ export class ApprovalActionsComponent implements OnInit {
   // Action type for comment dialog
   currentAction: 'approve' | 'reject' | 'skip' | null = null;
 
+  private destroy$ = new Subject<void>();
+
   constructor(
     public workflowService: WorkflowService,
     private confirmationService: ConfirmationService,
@@ -45,6 +48,11 @@ export class ApprovalActionsComponent implements OnInit {
     if (!this.stepExecution) {
       console.error('ApprovalActionsComponent: stepExecution is required');
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get canAction(): boolean {
@@ -79,30 +87,34 @@ export class ApprovalActionsComponent implements OnInit {
         confirmText: 'Approve',
         cancelText: 'Cancel',
         type: 'success'
-      }).subscribe(confirmed => {
-        if (confirmed) {
-          this.approveStep();
-        }
-      });
+      })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(confirmed => {
+          if (confirmed) {
+            this.approveStep();
+          }
+        });
     }
   }
 
   private approveStep(comments?: string): void {
     this.processing = true;
 
-    this.workflowService.approveStep(this.stepExecution.id, comments).subscribe({
-      next: () => {
-        this.processing = false;
-        this.showCommentDialog = false;
-        this.toastService.success('Step approved successfully');
-        this.approved.emit();
-      },
-      error: (err) => {
-        this.processing = false;
-        this.toastService.error('Failed to approve step: ' + (err.error?.error || err.message));
-        console.error('Error approving step:', err);
-      }
-    });
+    this.workflowService.approveStep(this.stepExecution.id, comments)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.processing = false;
+          this.showCommentDialog = false;
+          this.toastService.success('Step approved successfully');
+          this.approved.emit();
+        },
+        error: (err) => {
+          this.processing = false;
+          this.toastService.error('Failed to approve step: ' + (err.error?.error || err.message));
+          console.error('Error approving step:', err);
+        }
+      });
   }
 
   // ==================== Reject Action ====================
@@ -119,19 +131,21 @@ export class ApprovalActionsComponent implements OnInit {
   private rejectStep(comments: string): void {
     this.processing = true;
 
-    this.workflowService.rejectStep(this.stepExecution.id, comments).subscribe({
-      next: () => {
-        this.processing = false;
-        this.showCommentDialog = false;
-        this.toastService.success('Step rejected successfully');
-        this.rejected.emit();
-      },
-      error: (err) => {
-        this.processing = false;
-        this.toastService.error('Failed to reject step: ' + (err.error?.error || err.message));
-        console.error('Error rejecting step:', err);
-      }
-    });
+    this.workflowService.rejectStep(this.stepExecution.id, comments)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.processing = false;
+          this.showCommentDialog = false;
+          this.toastService.success('Step rejected successfully');
+          this.rejected.emit();
+        },
+        error: (err) => {
+          this.processing = false;
+          this.toastService.error('Failed to reject step: ' + (err.error?.error || err.message));
+          console.error('Error rejecting step:', err);
+        }
+      });
   }
 
   // ==================== Skip Action ====================
@@ -145,28 +159,32 @@ export class ApprovalActionsComponent implements OnInit {
       confirmText: 'Skip',
       cancelText: 'Cancel',
       type: 'warning'
-    }).subscribe(confirmed => {
-      if (confirmed) {
-        this.skipStep();
-      }
-    });
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.skipStep();
+        }
+      });
   }
 
   private skipStep(comments?: string): void {
     this.processing = true;
 
-    this.workflowService.skipStep(this.stepExecution.id, comments).subscribe({
-      next: () => {
-        this.processing = false;
-        this.toastService.success('Step skipped successfully');
-        this.skipped.emit();
-      },
-      error: (err) => {
-        this.processing = false;
-        this.toastService.error('Failed to skip step: ' + (err.error?.error || err.message));
-        console.error('Error skipping step:', err);
-      }
-    });
+    this.workflowService.skipStep(this.stepExecution.id, comments)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.processing = false;
+          this.toastService.success('Step skipped successfully');
+          this.skipped.emit();
+        },
+        error: (err) => {
+          this.processing = false;
+          this.toastService.error('Failed to skip step: ' + (err.error?.error || err.message));
+          console.error('Error skipping step:', err);
+        }
+      });
   }
 
   // ==================== Delegate Action ====================
@@ -192,19 +210,21 @@ export class ApprovalActionsComponent implements OnInit {
       this.stepExecution.id,
       this.delegationUserId,
       this.delegationReason
-    ).subscribe({
-      next: () => {
-        this.processing = false;
-        this.showDelegationDialog = false;
-        this.toastService.success('Step delegated successfully');
-        this.delegated.emit();
-      },
-      error: (err) => {
-        this.processing = false;
-        this.toastService.error('Failed to delegate step: ' + (err.error?.error || err.message));
-        console.error('Error delegating step:', err);
-      }
-    });
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.processing = false;
+          this.showDelegationDialog = false;
+          this.toastService.success('Step delegated successfully');
+          this.delegated.emit();
+        },
+        error: (err) => {
+          this.processing = false;
+          this.toastService.error('Failed to delegate step: ' + (err.error?.error || err.message));
+          console.error('Error delegating step:', err);
+        }
+      });
   }
 
   // ==================== Dialog Actions ====================

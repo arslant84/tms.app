@@ -12,17 +12,17 @@ import { PendingApprovalsComponent } from './features/approvals/pending/pending-
 import { PendingApprovalsComponent as UnifiedApprovalsComponent } from './features/admin/approvals/components/pending-approvals/pending-approvals.component';
 import { ClerkPanelComponent } from './features/admin/clerk-panel/clerk-panel.component';
 import { AdminReportsComponent } from './features/admin/reports/admin-reports.component';
-import { TransportAdminComponent } from './features/admin/transport-admin/transport-admin.component';
-import { TransportProcessingComponent } from './features/admin/transport-processing/transport-processing.component';
-import { FlightsAdminComponent } from './features/admin/flights-admin/flights-admin.component';
-import { FlightsAdminOverviewComponent } from './features/admin/flights-admin-overview/flights-admin-overview.component';
-import { FlightsProcessingComponent } from './features/admin/flights-processing/flights-processing.component';
-import { AccommodationAdminComponent } from './features/admin/accommodation-admin/accommodation-admin.component';
-import { AccommodationProcessingComponent } from './features/admin/accommodation-processing/accommodation-processing.component';
-import { VisaAdminComponent } from './features/admin/visa-admin/visa-admin.component';
-import { VisaProcessingComponent } from './features/admin/visa-processing/visa-processing.component';
-import { SystemSettingsComponent } from './features/admin/system-settings/system-settings.component';
-import { TmsApp_Admin_SystemSettings_NotificationTemplatesComponent } from './features/admin/system-settings/notification-templates/notification-templates.component';
+import { TransportAdminComponent } from './features/admin/transport/components/transport-admin.component';
+import { TransportProcessingComponent } from './features/admin/transport/components/transport-processing.component';
+import { FlightsAdminComponent } from './features/admin/flights/components/flights-admin.component';
+import { FlightsAdminOverviewComponent } from './features/admin/flights/components/flights-admin-overview.component';
+import { FlightsProcessingComponent } from './features/admin/flights/components/flights-processing.component';
+import { AccommodationAdminComponent } from './features/admin/accommodation/components/accommodation-admin.component';
+import { AccommodationProcessingComponent } from './features/admin/accommodation/components/accommodation-processing.component';
+import { VisaAdminComponent } from './features/admin/visa/components/visa-admin.component';
+import { VisaProcessingComponent } from './features/admin/visa/components/visa-processing.component';
+import { SystemSettingsComponent } from './features/admin/settings/system-settings.component';
+import { TmsApp_Admin_SystemSettings_NotificationTemplatesComponent } from './features/admin/settings/notification-templates/notification-templates.component';
 import { SuccessComponent } from './features/requests/success/success.component';
 import { RequestTypeSelectionComponent } from './features/requests/components/request-type-selection/request-type-selection.component';
 

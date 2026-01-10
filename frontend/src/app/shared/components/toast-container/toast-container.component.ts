@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../../core/services/toast.service';
@@ -8,7 +8,8 @@ import { ToastService } from '../../../core/services/toast.service';
   standalone: true,
   imports: [CommonModule, NgbToastModule],
   templateUrl: './toast-container.component.html',
-  styleUrls: ['./toast-container.component.scss']
+  styleUrls: ['./toast-container.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ToastContainerComponent {
   constructor(public toastService: ToastService) {}
