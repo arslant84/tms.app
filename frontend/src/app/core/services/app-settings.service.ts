@@ -1,6 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { SettingsService, ApplicationSetting } from './settings.service';
+import { AuthService } from './auth.service';
+import { filter } from 'rxjs/operators';
 
 export interface AppSettings {
   application_name: string;
@@ -27,59 +29,94 @@ export class AppSettingsService {
   });
 
   public settings$ = this.settingsSubject.asObservable();
+  private authService = inject(AuthService);
 
   constructor(private settingsService: SettingsService) {
-    this.loadSettings();
+    // SECURITY: Load public settings first (no auth required)
+    this.loadPublicSettings();
+
+    // Load full settings when user authenticates
+    this.authService.currentUser$.pipe(
+      filter(user => user !== null)
+    ).subscribe(() => {
+      this.loadSettings();
+    });
   }
 
   /**
-   * Load settings from backend and update the BehaviorSubject
+   * Load public settings (no authentication required)
+   */
+  private loadPublicSettings(): void {
+    this.settingsService.getPublicSettings().subscribe({
+      next: (response) => {
+        this.processSettings(response);
+      },
+      error: (err) => {
+        console.error('Error loading public settings:', err);
+      }
+    });
+  }
+
+  /**
+   * Load all settings from backend (requires authentication)
    */
   loadSettings(): void {
+    // Only load if authenticated
+    if (!this.authService.getCurrentUser()) {
+      return;
+    }
+
     this.settingsService.getAllSettings().subscribe({
       next: (response) => {
-        const settingsData = Array.isArray(response) ? response : (response as any).results || [];
-
-        if (Array.isArray(settingsData)) {
-          const currentSettings = this.settingsSubject.value;
-          const updatedSettings = settingsData.reduce((acc, setting: ApplicationSetting) => {
-            if (Object.prototype.hasOwnProperty.call(currentSettings, setting.setting_key)) {
-              let typedValue: any;
-
-              if (setting.value !== undefined) {
-                typedValue = setting.value;
-              } else {
-                const rawValue = setting.setting_value;
-                if (setting.setting_type === 'boolean') {
-                  typedValue = rawValue === 'true' || rawValue === true;
-                } else if (setting.setting_type === 'number') {
-                  typedValue = parseFloat(rawValue);
-                } else if (setting.setting_type === 'json') {
-                  try {
-                    typedValue = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
-                  } catch (e) {
-                    console.error('Failed to parse JSON setting:', setting.setting_key, e);
-                    typedValue = rawValue;
-                  }
-                } else {
-                  typedValue = rawValue;
-                }
-              }
-
-              (acc as any)[setting.setting_key] = typedValue;
-            }
-            return acc;
-          }, {} as AppSettings);
-
-          // Merge with current settings and emit
-          this.settingsSubject.next({ ...currentSettings, ...updatedSettings });
-          console.log('App settings loaded:', this.settingsSubject.value);
-        }
+        this.processSettings(response);
       },
       error: (err) => {
         console.error('Error loading app settings:', err);
       }
     });
+  }
+
+  /**
+   * Process settings response and update the BehaviorSubject
+   */
+  private processSettings(response: ApplicationSetting[]): void {
+    const settingsData = Array.isArray(response) ? response : (response as any).results || [];
+
+    if (Array.isArray(settingsData)) {
+      const currentSettings = this.settingsSubject.value;
+      const updatedSettings = settingsData.reduce((acc, setting: ApplicationSetting) => {
+        if (Object.prototype.hasOwnProperty.call(currentSettings, setting.setting_key)) {
+          let typedValue: any;
+
+          if (setting.value !== undefined) {
+            typedValue = setting.value;
+          } else {
+            const rawValue = setting.setting_value;
+            if (setting.setting_type === 'boolean') {
+              typedValue = rawValue === 'true' || rawValue === true;
+            } else if (setting.setting_type === 'number') {
+              typedValue = parseFloat(rawValue);
+            } else if (setting.setting_type === 'json') {
+              try {
+                typedValue = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
+              } catch (e) {
+                console.error('Failed to parse JSON setting:', setting.setting_key, e);
+                typedValue = rawValue;
+              }
+            } else {
+              typedValue = rawValue;
+            }
+          }
+
+          (acc as any)[setting.setting_key] = typedValue;
+        }
+        return acc;
+      }, {} as AppSettings);
+
+      // Merge with current settings and emit
+      this.settingsSubject.next({ ...currentSettings, ...updatedSettings });
+      console.log('App settings loaded:', this.settingsSubject.value);
+    }
   }
 
   /**
