@@ -156,9 +156,10 @@ AUTH_USER_MODEL = 'accounts.User'
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # SECURITY: Custom cookie-based authentication (prevents XSS)
+        # SECURITY: JWT cookie authentication with token expiration (prevents XSS + session hijacking)
+        'accounts.jwt_cookie_auth.JWTCookieAuthentication',
+        # Fallback to legacy token auth for backward compatibility during migration
         'accounts.cookie_auth.CookieTokenAuthentication',
-        # Fallback to token auth for backward compatibility during migration
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
