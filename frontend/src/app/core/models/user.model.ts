@@ -30,6 +30,8 @@ export interface User {
   phone?: string;
   // Last login timestamp
   last_login_at?: string;
+  // SECURITY: Password change required flag
+  password_change_required?: boolean;
 }
 
 export enum UserRole {
