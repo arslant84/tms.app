@@ -36,11 +36,25 @@ class LoginView(ObtainAuthToken):
             # Create or get token
             token, created = Token.objects.get_or_create(user=user)
 
-            # Return token and user data in format expected by Angular frontend
-            return Response({
-                'token': token.key,
-                'user': UserSerializer(user).data
+            # SECURITY: Set token in HttpOnly cookie instead of response body
+            # This prevents XSS attacks from stealing the token
+            response = Response({
+                'user': UserSerializer(user).data,
+                'message': 'Login successful'
             })
+
+            # Set HttpOnly cookie with token
+            response.set_cookie(
+                key='auth_token',
+                value=token.key,
+                httponly=True,  # Prevents JavaScript access (XSS protection)
+                secure=True,    # Only send over HTTPS in production
+                samesite='Lax', # CSRF protection
+                max_age=86400 * 7,  # 7 days expiration
+                path='/'
+            )
+
+            return response
         else:
             print(f"Authentication failed for user: {username}")
             # SECURITY: Generic error message to prevent user enumeration
@@ -49,12 +63,17 @@ class LoginView(ObtainAuthToken):
 
 class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def post(self, request):
         # Delete the token to logout
         try:
             request.user.auth_token.delete()
-            return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
+
+            # SECURITY: Clear the HttpOnly cookie
+            response = Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
+            response.delete_cookie('auth_token', path='/')
+
+            return response
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
