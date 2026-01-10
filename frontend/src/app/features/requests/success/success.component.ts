@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 
@@ -7,7 +7,8 @@ import { Router, RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './success.component.html',
-  styleUrl: './success.component.scss'
+  styleUrl: './success.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SuccessComponent implements OnInit {
   successMessage: string = 'Your request has been submitted successfully!';

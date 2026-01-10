@@ -1,0 +1,192 @@
+// Flight Create Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
+.container-fluid {
+  /* Full-width adaptive layout */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: vars.$spacing-6 vars.$spacing-8;
+  box-sizing: border-box;
+}
+
+.card {
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-sm;
+  transition: box-shadow 0.3s ease;
+
+  .card-header {
+    font-weight: vars.$font-weight-semibold;
+    padding: vars.$spacing-md vars.$spacing-5;
+
+    h5 {
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      margin: 0;
+
+      i {
+        font-size: vars.$font-size-lg;
+      }
+    }
+  }
+
+  .card-body {
+    padding: vars.$spacing-6;
+  }
+}
+
+.form-label {
+  font-weight: vars.$font-weight-medium;
+  margin-bottom: vars.$spacing-2;
+  color: vars.$text-primary;
+
+  .text-danger {
+    font-weight: vars.$font-weight-bold;
+  }
+}
+
+.form-control,
+.form-select {
+  border-radius: vars.$radius-base;
+  border: 1px solid vars.$border-light;
+  padding: vars.$spacing-2 vars.$spacing-3;
+  font-size: vars.$font-size-sm;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: vars.$primary-color;
+    box-shadow: vars.$input-focus-shadow;
+  }
+
+  &.is-invalid {
+    border-color: vars.$error-color;
+
+    &:focus {
+      box-shadow: 0 0 0 0.2rem rgb(220 53 69 / 15%);
+    }
+  }
+}
+
+.invalid-feedback {
+  display: block;
+  font-size: vars.$font-size-xs;
+  margin-top: vars.$spacing-1;
+}
+
+.btn {
+  border-radius: vars.$radius-base;
+  padding: vars.$spacing-2 vars.$spacing-5;
+  font-weight: vars.$font-weight-medium;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  i {
+    font-size: vars.$font-size-base;
+  }
+}
+
+.btn-primary {
+  background-color: vars.$primary-color;
+  border-color: vars.$primary-color;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$primary-hover;
+    border-color: vars.$primary-hover;
+  }
+}
+
+.btn-warning {
+  background-color: vars.$warning-color;
+  border-color: vars.$warning-color;
+  color: #000000;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$warning-color;
+    border-color: vars.$warning-color;
+  }
+}
+
+.btn-outline-secondary {
+  border-color: vars.$gray-600;
+  color: vars.$gray-600;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$gray-600;
+    color: vars.$white;
+  }
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+
+  &.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.gap-2 {
+  gap: vars.$spacing-2;
+}
+
+h2 {
+  font-size: vars.$font-size-2xl;
+  font-weight: vars.$font-weight-bold;
+  color: vars.$text-primary;
+}
+
+.text-muted {
+  color: vars.$text-secondary !important;
+}
+
+.text-danger {
+  color: vars.$error-color !important;
+}
+
+// Responsive
+@media (width <= 768px) {
+  .container-fluid {
+    padding: vars.$spacing-md;
+  }
+
+  h2 {
+    font-size: vars.$font-size-xl;
+  }
+
+  .card {
+    margin-bottom: vars.$spacing-md;
+  }
+
+  .card-body {
+    padding: vars.$spacing-md;
+  }
+
+  .btn {
+    width: 100%;
+    margin-bottom: vars.$spacing-2;
+  }
+
+  .d-flex.gap-2 {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .col-md-3,
+  .col-md-4,
+  .col-md-6,
+  .col-md-12 {
+    padding-left: vars.$spacing-2;
+    padding-right: vars.$spacing-2;
+  }
+}

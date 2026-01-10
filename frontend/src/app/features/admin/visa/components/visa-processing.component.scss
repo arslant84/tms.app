@@ -1,0 +1,521 @@
+// Visa Processing Component - Using Unified Design System
+@use 'sass:color';
+@use '../../../../../styles/variables' as vars;
+
+// Container
+.visa-processing-container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: vars.$spacing-6;
+  box-sizing: border-box;
+  min-height: calc(100vh - 100px);
+  background-color: vars.$gray-50;
+}
+
+// Header Styles
+.processing-header {
+  margin-bottom: vars.$spacing-6;
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-4;
+  }
+
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    background-color: rgb(13 148 136 / 10%);
+    border-radius: vars.$radius-base;
+
+    svg {
+      width: 2rem;
+      height: 2rem;
+      color: vars.$primary-color;
+    }
+  }
+
+  .header-text {
+    h1 {
+      font-size: vars.$font-size-3xl;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$text-primary;
+      margin: 0;
+      margin-bottom: vars.$spacing-1;
+    }
+
+    .subtitle {
+      color: vars.$text-secondary;
+      font-size: vars.$font-size-base;
+      margin: 0;
+    }
+  }
+}
+
+// Statistics Cards Grid
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: vars.$spacing-6;
+  margin-bottom: vars.$spacing-6;
+}
+
+.stat-card {
+  background: vars.$white;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-base;
+  padding: vars.$spacing-5;
+  box-shadow: vars.$shadow-sm;
+  transition: all 0.2s;
+
+  &:hover {
+    box-shadow: vars.$shadow-md;
+    transform: translateY(-2px);
+  }
+
+  .stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: vars.$spacing-3;
+
+    .stat-title {
+      font-size: vars.$font-size-sm;
+      font-weight: vars.$font-weight-medium;
+      color: vars.$text-secondary;
+    }
+
+    .stat-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: vars.$text-secondary;
+      opacity: 0.7;
+    }
+  }
+
+  .stat-value {
+    font-size: vars.$font-size-3xl;
+    font-weight: vars.$font-weight-bold;
+    color: vars.$text-primary;
+    margin-bottom: vars.$spacing-1;
+  }
+
+  .stat-description {
+    font-size: vars.$font-size-xs;
+    color: vars.$text-secondary;
+    margin: 0;
+  }
+}
+
+// Main Card
+.main-card {
+  background: vars.$white;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-base;
+  box-shadow: vars.$shadow-sm;
+  overflow: hidden;
+
+  .card-header {
+    background: vars.$white;
+    border-bottom: 2px solid vars.$border-light;
+    padding: 0;
+  }
+
+  .card-body {
+    padding: 0;
+  }
+}
+
+// Tab Navigation (custom styled)
+.tabs-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: none;
+  padding: 0 vars.$spacing-4;
+}
+
+.tab-nav-button {
+  padding: vars.$spacing-4 vars.$spacing-6;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: vars.$text-secondary;
+  font-weight: vars.$font-weight-medium;
+  font-size: vars.$font-size-base;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  white-space: nowrap;
+
+  &:hover {
+    color: vars.$primary-color;
+    background-color: rgb(13 148 136 / 5%);
+  }
+
+  &.active {
+    color: vars.$primary-color;
+    border-bottom-color: vars.$primary-color;
+    background-color: transparent;
+  }
+}
+
+// Tab Panel
+.tab-panel {
+  padding: vars.$spacing-6;
+  min-height: 400px;
+}
+
+// Table Styling
+.visa-table {
+  margin: 0;
+  font-size: vars.$font-size-sm;
+
+  thead {
+    background-color: vars.$gray-50;
+
+    th {
+      padding: vars.$spacing-3;
+      text-align: left;
+      font-weight: vars.$font-weight-semibold;
+      font-size: vars.$font-size-xs;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: vars.$gray-600;
+      border-bottom: 1px solid vars.$border-light;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid vars.$border-light;
+      transition: background-color 0.15s ease;
+
+      &:hover {
+        background-color: vars.$gray-50;
+      }
+
+      td {
+        padding: vars.$spacing-4 vars.$spacing-3;
+        vertical-align: middle;
+        color: vars.$gray-700;
+
+        &.fw-medium {
+          font-weight: vars.$font-weight-semibold;
+          color: vars.$primary-color;
+        }
+      }
+
+      .fw-medium {
+        font-weight: vars.$font-weight-semibold;
+        color: vars.$primary-color;
+      }
+    }
+  }
+}
+
+// Icon Styles
+.icon-sm {
+  width: 1rem;
+  height: 1rem;
+  display: inline-block;
+}
+
+.badge-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-right: vars.$spacing-1;
+}
+
+// Badge Styles
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: vars.$spacing-1 vars.$spacing-3;
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-semibold;
+  border-radius: vars.$radius-md;
+  text-transform: capitalize;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+
+  &.badge-success {
+    background-color: vars.$success-color;
+    color: vars.$white;
+    border: none;
+  }
+
+  &.badge-warning {
+    background-color: transparent;
+    color: color.adjust(vars.$warning-color, $lightness: -10%);
+    border: 1px solid vars.$warning-color;
+  }
+
+  &.badge-blue {
+    background-color: #cfe2ff;
+    color: #084298;
+    border: none;
+  }
+
+  &.badge-green {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    border: none;
+  }
+
+  &.badge-amber {
+    background-color: vars.$warning-light;
+    color: #664d03;
+    border: none;
+  }
+
+  &.badge-purple {
+    background-color: #e2d9f3;
+    color: #432874;
+    border: none;
+  }
+
+  &.badge-gray {
+    background-color: vars.$gray-200;
+    color: vars.$gray-700;
+    border: none;
+  }
+
+  &.badge-secondary {
+    background-color: vars.$gray-200;
+    color: vars.$gray-700;
+    border: none;
+  }
+}
+
+// Primary Custom Button
+.btn-primary-custom {
+  background-color: vars.$primary-color;
+  border-color: vars.$primary-color;
+  color: vars.$white;
+  font-weight: vars.$font-weight-medium;
+
+  &:hover:not(:disabled) {
+    background-color: color.adjust(vars.$primary-color, $lightness: -10%);
+    border-color: color.adjust(vars.$primary-color, $lightness: -10%);
+    color: vars.$white;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+// Loading States
+.loading-container,
+.error-container,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: vars.$spacing-16 vars.$spacing-4;
+  text-align: center;
+  min-height: 300px;
+
+  svg {
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: vars.$spacing-4;
+    color: vars.$text-secondary;
+    opacity: 0.7;
+  }
+
+  h3 {
+    font-size: vars.$font-size-xl;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-primary;
+    margin-bottom: vars.$spacing-2;
+  }
+
+  p {
+    color: vars.$text-secondary;
+    margin: vars.$spacing-2 0 0 0;
+    font-size: vars.$font-size-base;
+  }
+
+}
+
+.error-container svg {
+  color: vars.$error-color;
+}
+
+// Spinner
+.spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid vars.$gray-100;
+  border-top: 4px solid vars.$primary-color;
+  border-radius: vars.$radius-full;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Modal Styling
+.modal {
+  &.show {
+    display: block;
+    opacity: 1;
+  }
+
+  .modal-dialog {
+    max-height: calc(100vh - 2rem);
+  }
+
+  .modal-header {
+    background-color: vars.$gray-50;
+    border-bottom: 1px solid vars.$border-light;
+
+    .modal-title {
+      font-size: vars.$font-size-xl;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$text-primary;
+    }
+
+    .btn-close {
+      &:focus {
+        box-shadow: none;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: vars.$spacing-6;
+
+    .info-panel {
+      background-color: vars.$gray-50;
+      border: 1px solid vars.$border-light;
+      border-radius: vars.$radius-base;
+      padding: vars.$spacing-4;
+      margin-bottom: vars.$spacing-6;
+
+      .form-label {
+        font-size: vars.$font-size-sm;
+        font-weight: vars.$font-weight-medium;
+        color: vars.$text-secondary;
+        margin-bottom: vars.$spacing-1;
+      }
+
+      p {
+        font-size: vars.$font-size-base;
+        color: vars.$text-primary;
+      }
+    }
+
+    .form-label {
+      font-size: vars.$font-size-sm;
+      font-weight: vars.$font-weight-medium;
+      color: vars.$text-primary;
+      margin-bottom: vars.$spacing-2;
+    }
+
+    .form-control,
+    .form-select {
+      font-size: vars.$font-size-sm;
+
+      &:focus {
+        border-color: vars.$primary-color;
+        box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
+      }
+    }
+
+    .form-control[readonly] {
+      background-color: vars.$gray-200;
+    }
+  }
+
+  .modal-footer {
+    background-color: vars.$gray-50;
+    border-top: 1px solid vars.$border-light;
+    padding: vars.$spacing-4 vars.$spacing-6;
+  }
+}
+
+.modal-backdrop {
+  background-color: rgb(0 0 0 / 50%);
+
+  &.show {
+    opacity: 1;
+  }
+}
+
+// Responsive Design
+@media (width <= 768px) {
+  .visa-processing-container {
+    padding: vars.$spacing-4;
+  }
+
+  .processing-header {
+    .header-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+  }
+
+  .tab-nav-button {
+    padding: vars.$spacing-3 vars.$spacing-4;
+    font-size: vars.$font-size-sm;
+  }
+
+  .tab-panel {
+    padding: vars.$spacing-4;
+  }
+
+  .visa-table {
+    font-size: 0.8rem;
+
+    thead th,
+    tbody td {
+      padding: vars.$spacing-2;
+    }
+  }
+
+  .icon-sm {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+}
+
+// Bootstrap Gap Utility Fix
+.gap-1 {
+  gap: vars.$spacing-1 !important;
+}
+
+.gap-2 {
+  gap: vars.$spacing-2 !important;
+}
+
+.gap-3 {
+  gap: vars.$spacing-4 !important;
+}

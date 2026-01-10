@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { InsightsService, DashboardSummary, RecentActivity } from '../../../../core/services/insights.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
-import { Observable, map } from 'rxjs';
+import { Observable, map, Subject, takeUntil } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
@@ -15,7 +15,7 @@ import { StatusUtilsService } from '../../../../core/utils/status-utils.service'
   templateUrl: './dashboard-home.component.html',
   styleUrls: ['./dashboard-home.component.scss']
 })
-export class DashboardHomeComponent implements OnInit {
+export class DashboardHomeComponent implements OnInit, OnDestroy {
   // Summary statistics
   summary: DashboardSummary = {
     total_trfs: 0,
@@ -44,6 +44,8 @@ export class DashboardHomeComponent implements OnInit {
   // Application name
   applicationName$: Observable<string>;
 
+  private destroy$ = new Subject<void>();
+
   constructor(
     private insightsService: InsightsService,
     private appSettingsService: AppSettingsService,
@@ -61,6 +63,11 @@ export class DashboardHomeComponent implements OnInit {
     }, 100);
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   fetchDashboardData(): void {
     // Prevent multiple concurrent requests
     if (this.isFetching) {
@@ -75,6 +82,7 @@ export class DashboardHomeComponent implements OnInit {
 
     this.insightsService.getDashboardSummary()
       .pipe(
+        takeUntil(this.destroy$),
         finalize(() => {
           this.isLoading = false;
           this.isFetching = false;

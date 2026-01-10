@@ -107,19 +107,21 @@ export class HeaderComponent implements OnInit, OnDestroy {
    */
   onNotificationClick(notification: UserNotification): void {
     if (!notification.is_read) {
-      this.notificationService.markAsRead(notification.id).subscribe({
-        next: () => {
-          // Navigate to action URL if provided
-          if (notification.action_url) {
-            const mappedUrl = this.mapActionUrlToRoute(notification);
-            this.router.navigate([mappedUrl]);
+      this.notificationService.markAsRead(notification.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            // Navigate to action URL if provided
+            if (notification.action_url) {
+              const mappedUrl = this.mapActionUrlToRoute(notification);
+              this.router.navigate([mappedUrl]);
+            }
+            this.isNotificationsOpen = false;
+          },
+          error: (err) => {
+            console.error('Error marking notification as read:', err);
           }
-          this.isNotificationsOpen = false;
-        },
-        error: (err) => {
-          console.error('Error marking notification as read:', err);
-        }
-      });
+        });
     } else {
       // Just navigate if already read
       if (notification.action_url) {
@@ -219,14 +221,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
   markAllAsRead(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this.notificationService.markAllAsRead().subscribe({
-      next: () => {
-        console.log('All notifications marked as read');
-      },
-      error: (err) => {
-        console.error('Error marking all as read:', err);
-      }
-    });
+    this.notificationService.markAllAsRead()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          console.log('All notifications marked as read');
+        },
+        error: (err) => {
+          console.error('Error marking all as read:', err);
+        }
+      });
   }
 
   /**

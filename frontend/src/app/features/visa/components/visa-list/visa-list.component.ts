@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { VisaService, VisaApplication } from '../../services/visa.service';
 import { WorkflowService } from '../../../../core/services/workflow.service';
 import { WorkflowInstanceList } from '../../../../core/models/workflow.models';
@@ -21,6 +22,8 @@ export class VisaListComponent implements OnInit, OnDestroy {
   applications: VisaApplication[] = [];
   filterStatus = '';
   filterVisaType = '';
+
+  private destroy$ = new Subject<void>();
 
   // Workflow data
   workflowMap: Map<number, WorkflowInstanceList> = new Map();
@@ -62,15 +65,19 @@ export class VisaListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Subscribe to debounced search changes
-    this.listState.search$.subscribe(() => {
-      this.fetchApplications();
-    });
+    this.listState.search$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.fetchApplications();
+      });
 
     // Initial load
     this.fetchApplications();
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.listState.destroy();
   }
 
@@ -93,19 +100,21 @@ export class VisaListComponent implements OnInit, OnDestroy {
       ...(this.filterVisaType && { visa_type: this.filterVisaType })
     };
 
-    this.visaService.getAllApplications(filters).subscribe({
-      next: (response) => {
-        this.applications = response.results || response;
-        this.listState.setTotalItems(response.count || this.applications.length);
-        this.listState.setLoading(false);
+    this.visaService.getAllApplications(filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.applications = response.results || response;
+          this.listState.setTotalItems(response.count || this.applications.length);
+          this.listState.setLoading(false);
 
-        // Load workflow instances for each application
-        this.loadWorkflowInstances();
-      },
-      error: (error) => {
-        this.listState.setLoading(false);
-      }
-    });
+          // Load workflow instances for each application
+          this.loadWorkflowInstances();
+        },
+        error: (error) => {
+          this.listState.setLoading(false);
+        }
+      });
   }
 
   loadWorkflowInstances(): void {
@@ -114,24 +123,26 @@ export class VisaListComponent implements OnInit, OnDestroy {
     // Fetch all workflow instances for visa applications
     this.workflowService.getInstances({
       entity_type: 'visaapplication'
-    }).subscribe({
-      next: (response: any) => {
-        // Handle both paginated response and array response
-        const instances = Array.isArray(response) ? response : (response.results || []);
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          // Handle both paginated response and array response
+          const instances = Array.isArray(response) ? response : (response.results || []);
 
-        // Create a map of entity_id to workflow instance
-        this.workflowMap.clear();
+          // Create a map of entity_id to workflow instance
+          this.workflowMap.clear();
 
-        instances.forEach((instance: any) => {
-          const entityId = instance.object_id || instance.entity_info?.id || instance.entity_id;
-          if (entityId) {
-            this.workflowMap.set(entityId, instance);
-          }
-        });
-      },
-      error: (err) => {
-      }
-    });
+          instances.forEach((instance: any) => {
+            const entityId = instance.object_id || instance.entity_info?.id || instance.entity_id;
+            if (entityId) {
+              this.workflowMap.set(entityId, instance);
+            }
+          });
+        },
+        error: (err) => {
+        }
+      });
   }
 
   getWorkflowForApplication(appId: number): WorkflowInstanceList | undefined {
@@ -193,15 +204,17 @@ export class VisaListComponent implements OnInit, OnDestroy {
       clearTimeout(this.deleteConfirmTimeout);
       this.deleteConfirmId = null;
 
-      this.visaService.deleteApplication(id).subscribe({
-        next: () => {
-          this.toastService.success('Visa application deleted successfully');
-          this.fetchApplications();
-        },
-        error: (error) => {
-          this.toastService.error('Failed to delete visa application');
-        }
-      });
+      this.visaService.deleteApplication(id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.toastService.success('Visa application deleted successfully');
+            this.fetchApplications();
+          },
+          error: (error) => {
+            this.toastService.error('Failed to delete visa application');
+          }
+        });
     } else {
       // First click - show confirmation toast
       this.deleteConfirmId = id;
