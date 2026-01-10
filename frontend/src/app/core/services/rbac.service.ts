@@ -349,22 +349,32 @@ export class RbacService {
     const user = this.authService.getCurrentUser();
 
     if (!user) {
+      console.warn('hasAnyPermission: No user found');
       return false;
     }
 
     const roleName = this.getRoleName(user);
+    console.log('hasAnyPermission check:', {
+      permissionNames,
+      roleName,
+      is_admin: user.is_admin,
+      userPermissions: user.permissions
+    });
 
     // Admin roles have all permissions
     if (roleName === ROLES.SYSTEM_ADMINISTRATOR ||
         roleName === ROLES.ADMIN ||
         user.is_admin) {
+      console.log('hasAnyPermission: Admin access granted');
       return true;
     }
 
     // Check if the user has any of the specified permissions
-    return permissionNames.some(permission =>
+    const hasPermission = permissionNames.some(permission =>
       user.permissions?.includes(permission) || false
     );
+    console.log('hasAnyPermission: Permission check result:', hasPermission);
+    return hasPermission;
   }
 
   /**
