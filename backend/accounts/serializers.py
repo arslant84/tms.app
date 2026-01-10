@@ -64,9 +64,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions']
+        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password_change_required']
         # SECURITY: Prevent privilege escalation - these fields can only be modified by admins
-        read_only_fields = ['id', 'email', 'is_admin', 'is_active', 'role', 'last_login_at', 'permissions']
+        read_only_fields = ['id', 'email', 'is_admin', 'is_active', 'role', 'last_login_at', 'permissions', 'password_change_required']
 
     def get_permissions(self, obj):
         """Get list of permission names for this user"""
@@ -84,6 +84,7 @@ class UserSerializer(serializers.ModelSerializer):
         data.pop('is_active', None)
         data.pop('email', None)
         data.pop('permissions', None)
+        data.pop('password_change_required', None)  # SECURITY: Only admins can modify this
         return super().to_internal_value(data)
 
     def update(self, instance, validated_data):
@@ -135,7 +136,7 @@ class UserAdminUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password', 'password_confirm']
+        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password', 'password_confirm', 'password_change_required']
         read_only_fields = ['id', 'last_login_at', 'permissions']
 
     def get_permissions(self, obj):
@@ -216,6 +217,18 @@ class UserCreateSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(required=True, style={'input_type': 'password'})
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """Serializer for password change (including forced password change)"""
+    old_password = serializers.CharField(required=True, style={'input_type': 'password'})
+    new_password = serializers.CharField(required=True, validators=[validate_password], style={'input_type': 'password'})
+    new_password_confirm = serializers.CharField(required=True, style={'input_type': 'password'})
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({"new_password": "Password fields didn't match."})
+        return attrs
 
 
 class ApplicationSettingSerializer(serializers.ModelSerializer):

@@ -79,7 +79,8 @@ class User(AbstractUser):
     profile_photo = models.TextField(blank=True, null=True)  # Changed to TextField for base64 images
     gender = models.CharField(max_length=10, blank=True, null=True)
     last_login_at = models.DateTimeField(blank=True, null=True)
-    
+    password_change_required = models.BooleanField(default=False, help_text='User must change password on next login')
+
     objects = UserManager()
     
     USERNAME_FIELD = 'email'

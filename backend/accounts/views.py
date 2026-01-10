@@ -12,7 +12,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, UserAdminUpdateSerializer, RoleSerializer, PermissionSerializer,
-    ApplicationSettingSerializer, ApplicationSettingCreateSerializer, ApplicationSettingUpdateSerializer
+    ApplicationSettingSerializer, ApplicationSettingCreateSerializer, ApplicationSettingUpdateSerializer, PasswordChangeSerializer
 )
 from .models import Role, Permission, ApplicationSetting
 from .permissions import HasManageRolesPermission, HasManageUsersPermission, HasViewSystemSettingsPermission
@@ -186,6 +186,41 @@ class TokenRefreshView(APIView):
                 {'error': f'Invalid refresh token: {str(e)}'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+
+class PasswordChangeView(APIView):
+    """
+    Change password for authenticated user.
+    SECURITY: Clears password_change_required flag after successful change.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = PasswordChangeSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        old_password = serializer.validated_data['old_password']
+        new_password = serializer.validated_data['new_password']
+
+        # Verify old password
+        if not user.check_password(old_password):
+            return Response(
+                {'error': 'Current password is incorrect'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Set new password
+        user.set_password(new_password)
+        # SECURITY: Clear password change requirement
+        user.password_change_required = False
+        user.save()
+
+        return Response({
+            'message': 'Password changed successfully',
+            'password_change_required': False
+        })
 
 
 class UserViewSet(viewsets.ModelViewSet):
