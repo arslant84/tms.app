@@ -20,6 +20,12 @@ export class AuthGuard implements CanActivate {
       map(isAuthenticated => {
         // If user is authenticated, allow access
         if (isAuthenticated) {
+          // SECURITY: Check if password change is required
+          const user = this.authService.getCurrentUser();
+          if (user?.password_change_required && !state.url.includes('/auth/change-password')) {
+            return this.router.createUrlTree(['/auth/change-password']);
+          }
+
           // Check if route has required roles
           const roleStrings = route.data['roles'] as Array<string>;
           if (roleStrings) {
