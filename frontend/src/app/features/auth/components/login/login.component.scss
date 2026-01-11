@@ -7,7 +7,10 @@
   align-items: center;
   min-height: 100vh;
   width: 100%;
-  background-color: vars.$white;
+  background-image: url('/img/login-background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .login-card {
@@ -16,6 +19,7 @@
   max-width: 450px;
   overflow: hidden;
   margin: 0 vars.$spacing-md;
+  box-shadow: vars.$shadow-xl;
 }
 
 .login-header {
