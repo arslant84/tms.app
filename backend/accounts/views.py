@@ -18,9 +18,9 @@ from datetime import timedelta
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, UserAdminUpdateSerializer, RoleSerializer, PermissionSerializer,
     ApplicationSettingSerializer, ApplicationSettingCreateSerializer, ApplicationSettingUpdateSerializer, PasswordChangeSerializer,
-    PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, AdminActionLogSerializer
 )
-from .models import Role, Permission, ApplicationSetting
+from .models import Role, Permission, ApplicationSetting, AdminActionLog
 from .permissions import HasManageRolesPermission, HasManageUsersPermission, HasViewSystemSettingsPermission
 
 User = get_user_model()
@@ -579,3 +579,100 @@ class ApplicationSettingViewSet(viewsets.ModelViewSet):
             settings_obj[setting.setting_key] = setting.get_value()
 
         return Response(settings_obj)
+
+
+class AdminActionLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for viewing audit logs (security trail).
+    Read-only access for security monitoring and compliance.
+
+    SECURITY: Access controlled by RBAC permissions.
+    Users must have 'view_audit_logs' permission.
+    """
+    queryset = AdminActionLog.objects.all().select_related('user')
+    serializer_class = AdminActionLogSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Further restricted by RBAC in get_queryset
+
+    filterset_fields = ['action_type', 'entity_type', 'user']
+    search_fields = ['description', 'user__email', 'entity_type', 'entity_id', 'ip_address']
+    ordering_fields = ['created_at', 'action_type']
+    ordering = ['-created_at']  # Most recent first
+
+    def get_queryset(self):
+        """
+        SECURITY: Filter audit logs based on user permissions.
+        System administrators can see all logs.
+        Other users can only see their own actions.
+        """
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        # SECURITY: Admin users see all audit logs
+        if user.is_admin or user.is_superuser:
+            return queryset
+
+        # SECURITY: Check if user has explicit permission to view audit logs
+        # This should be controlled by RBAC permission 'view_audit_logs'
+        from .models import Permission as AppPermission
+        try:
+            view_audit_perm = AppPermission.objects.get(name='view_audit_logs')
+            user_permissions = []
+            if user.role:
+                user_permissions = user.role.permissions.all()
+
+            if view_audit_perm in user_permissions:
+                return queryset
+        except AppPermission.DoesNotExist:
+            pass
+
+        # Regular users can only see their own audit logs
+        return queryset.filter(user=user)
+
+    @action(detail=False, methods=['get'])
+    def my_logs(self, request):
+        """
+        Get audit logs for the current user only.
+        Allows users to see their own activity history.
+        """
+        queryset = self.get_queryset().filter(user=request.user)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def stats(self, request):
+        """
+        Get audit log statistics.
+        SECURITY: Only available to admin users.
+        """
+        if not request.user.is_admin and not request.user.is_superuser:
+            return Response(
+                {'error': 'Only administrators can view audit log statistics'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        from django.db.models import Count
+        queryset = self.get_queryset()
+
+        # Count by action type
+        action_stats = queryset.values('action_type').annotate(count=Count('id')).order_by('-count')
+
+        # Count by user
+        user_stats = queryset.values('user__email', 'user__name').annotate(count=Count('id')).order_by('-count')[:10]
+
+        # Recent activity (last 24 hours)
+        from datetime import timedelta
+        from django.utils import timezone
+        recent_cutoff = timezone.now() - timedelta(hours=24)
+        recent_count = queryset.filter(created_at__gte=recent_cutoff).count()
+
+        return Response({
+            'total_logs': queryset.count(),
+            'recent_activity_24h': recent_count,
+            'by_action_type': list(action_stats),
+            'top_users': list(user_stats),
+        })
