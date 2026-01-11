@@ -23,6 +23,9 @@ ALLOWED_HOSTS = ['*']
 # CORS - Allow all origins in development for easier testing
 CORS_ALLOW_ALL_ORIGINS = True
 
+# CSP - Allow connections to localhost for API calls in development
+CSP_CONNECT_SRC = ("'self'", "http://localhost:8000", "http://127.0.0.1:8000", "ws://localhost:8000", "ws://127.0.0.1:8000")
+
 # Email - Use console backend in development (prints emails to console)
 # Uncomment to print emails to console instead of sending them:
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
