@@ -35,17 +35,21 @@ def create_superuser():
     password = os.getenv('ADMIN_PASSWORD') or generate_password()
 
     print("Creating superuser...")
+    # SECURITY: Require password change if using generated password
+    require_password_change = not os.getenv('ADMIN_PASSWORD')
+
     User.objects.create_superuser(
         email=email,
         password=password,
         name='Admin User',
         role=admin_role,
         department='Administration',
-        is_admin=True
+        is_admin=True,
+        password_change_required=require_password_change
     )
 
     print(f"✅ Superuser created: {email}")
-    if not os.getenv('ADMIN_PASSWORD'):
+    if require_password_change:
         print(f"⚠️  Generated password: {password}")
         print("⚠️  SAVE THIS PASSWORD - Change it on first login!")
 
@@ -99,9 +103,10 @@ def create_test_users():
             name=user_data['name'],
             role=role,
             department=user_data['department'],
-            is_admin=False
+            is_admin=False,
+            password_change_required=True  # SECURITY: Force password change on first login
         )
-        print(f"  ✅ {email} | Password: {password}")
+        print(f"  ✅ {email} | Password: {password} (Change required)")
 
 if __name__ == "__main__":
     print("Initializing database...")

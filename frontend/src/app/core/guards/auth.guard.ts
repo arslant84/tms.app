@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router, UrlTree } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { UserRole } from '../models/user.model';
 import { map } from 'rxjs/operators';
 
 @Injectable({
@@ -26,18 +25,6 @@ export class AuthGuard implements CanActivate {
             return this.router.createUrlTree(['/auth/change-password']);
           }
 
-          // Check if route has required roles
-          const roleStrings = route.data['roles'] as Array<string>;
-          if (roleStrings) {
-            // Convert string[] to UserRole[]
-            const requiredRoles = roleStrings.map(role => role as UserRole);
-            // Check if user has required role
-            const hasRequiredRole = this.authService.hasRole(requiredRoles);
-            if (!hasRequiredRole) {
-              // Redirect to unauthorized page if user doesn't have required role
-              return this.router.createUrlTree(['/unauthorized']);
-            }
-          }
           return true;
         }
 

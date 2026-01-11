@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { AdminMenuGuard, PermissionGuard } from './core/guards/permission.guard';
-import { UserRole } from './core/models/user.model';
 import { Permission } from './core/models/permission.models';
 import { MainLayoutComponent } from './components/main-layout/main-layout.component';
 import { TravelRequestWizardComponent } from './features/requests/travel/travel-request-wizard.component';
