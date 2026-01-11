@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn, ActivatedRouteSnapshot } from '@angular/router';
 import { RbacService } from '../services/rbac.service';
+import { AuthService } from '../services/auth.service';
 import { Permission } from '../models/permission.models';
 
 /**
@@ -22,6 +23,7 @@ import { Permission } from '../models/permission.models';
 export const PermissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   const rbacService = inject(RbacService);
   const router = inject(Router);
+  const authService = inject(AuthService);
 
   // Get required permissions from route data
   const requiredPermissions = route.data['permissions'] as Permission[] | undefined;
@@ -32,15 +34,25 @@ export const PermissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
     return true;
   }
 
+  // SECURITY: Admin users have access to everything
+  const currentUser = authService.getCurrentUser();
+  if (currentUser?.is_admin) {
+    console.log('PermissionGuard: Admin access granted for', route.url);
+    return true;
+  }
+
   // Check permissions
   const hasPermission = requireAll
     ? rbacService.hasAllPermissions(requiredPermissions)
     : rbacService.hasAnyPermission(requiredPermissions);
 
   if (!hasPermission) {
-    console.warn('Access denied: User does not have required permissions', {
+    console.warn('PermissionGuard: Access denied', {
       requiredPermissions,
-      requireAll
+      requireAll,
+      userPermissions: currentUser?.permissions,
+      is_admin: currentUser?.is_admin,
+      role: currentUser?.role
     });
 
     // Redirect to dashboard if user doesn't have permission
@@ -48,6 +60,7 @@ export const PermissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
     return false;
   }
 
+  console.log('PermissionGuard: Access granted for', route.url);
   return true;
 };
 
