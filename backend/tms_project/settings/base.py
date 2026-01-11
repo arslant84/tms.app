@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',  # JWT authentication
     'rest_framework_simplejwt.token_blacklist',  # Token blacklist for logout
     'corsheaders',
+    'csp',  # Content Security Policy
 
     # Custom apps
     'accounts',
@@ -53,6 +54,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'csp.middleware.CSPMiddleware',  # Content Security Policy - add early for security
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -217,6 +219,29 @@ FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:4200')
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
+
+# Content Security Policy (CSP)
+# SECURITY: Prevents XSS attacks by controlling which resources can be loaded
+# Note: 'unsafe-inline' and 'unsafe-eval' are needed for Angular during development
+# In production, consider using nonces or hashes for stricter CSP
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")  # Angular requires inline scripts
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")  # Bootstrap and Angular Material use inline styles
+CSP_IMG_SRC = ("'self'", "data:", "https:")  # Allow images from same origin, data URIs, and HTTPS
+CSP_FONT_SRC = ("'self'", "data:")  # Bootstrap fonts
+CSP_CONNECT_SRC = ("'self'",)  # API calls - will be extended in development.py
+CSP_FRAME_ANCESTORS = ("'none'",)  # Don't allow this site to be framed
+CSP_BASE_URI = ("'self'",)  # Restrict base tag to prevent base tag injection
+CSP_FORM_ACTION = ("'self'",)  # Forms can only submit to same origin
+CSP_OBJECT_SRC = ("'none'",)  # Block plugins like Flash
+CSP_MEDIA_SRC = ("'self'",)  # Audio and video from same origin
+CSP_FRAME_SRC = ("'self'",)  # Allow iframes from same origin
+CSP_WORKER_SRC = ("'self'",)  # Web workers from same origin
+CSP_MANIFEST_SRC = ("'self'",)  # Web app manifest from same origin
+
+# CSP Reporting (optional - uncomment to enable violation reports)
+# CSP_REPORT_URI = '/csp-report/'  # Endpoint to receive CSP violation reports
+# CSP_REPORT_ONLY = False  # Set to True to test CSP without enforcing
 
 # CSRF Protection for cookie-based authentication
 # Allow CSRF cookie to be sent from frontend

@@ -16,6 +16,11 @@ SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
 SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
 CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
 
+# CSP - Restrict connections to production backend URL
+# Configure CSP_BACKEND_URL in environment variables to match your production backend
+CSP_BACKEND_URL = config('CSP_BACKEND_URL', default='https://api.yourdomain.com')
+CSP_CONNECT_SRC = ("'self'", CSP_BACKEND_URL, f"wss://{CSP_BACKEND_URL.replace('https://', '')}")
+
 # HSTS (HTTP Strict Transport Security) - Production only
 SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
