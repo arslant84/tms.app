@@ -80,6 +80,8 @@ class User(AbstractUser):
     gender = models.CharField(max_length=10, blank=True, null=True)
     last_login_at = models.DateTimeField(blank=True, null=True)
     password_change_required = models.BooleanField(default=False, help_text='User must change password on next login')
+    password_reset_token = models.CharField(max_length=64, blank=True, null=True, help_text='Token for password reset')
+    password_reset_token_expires = models.DateTimeField(blank=True, null=True, help_text='Expiry time for reset token')
 
     objects = UserManager()
     
