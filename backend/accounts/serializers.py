@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from .models import Role, Permission, ApplicationSetting
+from .models import Role, Permission, ApplicationSetting, AdminActionLog
 
 User = get_user_model()
 
@@ -312,4 +312,30 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if attrs['new_password'] != attrs['new_password_confirm']:
             raise serializers.ValidationError({"new_password": "Password fields didn't match."})
         return attrs
+
+
+class AdminActionLogSerializer(serializers.ModelSerializer):
+    """
+    Serializer for audit logs.
+    Read-only serializer for viewing security audit trail.
+    """
+    user_email = serializers.SerializerMethodField()
+    user_name = serializers.SerializerMethodField()
+    action_type_display = serializers.CharField(source='get_action_type_display', read_only=True)
+
+    class Meta:
+        model = AdminActionLog
+        fields = [
+            'id', 'user', 'user_email', 'user_name', 'action_type', 'action_type_display',
+            'entity_type', 'entity_id', 'description', 'ip_address', 'user_agent', 'created_at'
+        ]
+        read_only_fields = fields  # All fields are read-only
+
+    def get_user_email(self, obj):
+        """Return email of user who performed the action"""
+        return obj.user.email if obj.user else 'System/Unknown'
+
+    def get_user_name(self, obj):
+        """Return name of user who performed the action"""
+        return obj.user.name if obj.user else 'System/Unknown'
 

@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     UserViewSet, LoginView, LogoutView, TokenRefreshView, PasswordChangeView,
     PasswordResetRequestView, PasswordResetConfirmView,
-    RoleViewSet, PermissionViewSet, ApplicationSettingViewSet
+    RoleViewSet, PermissionViewSet, ApplicationSettingViewSet, AdminActionLogViewSet
 )
 
 router = DefaultRouter()
@@ -12,6 +12,7 @@ router.register(r'users', UserViewSet)
 router.register(r'roles', RoleViewSet)
 router.register(r'permissions', PermissionViewSet)
 router.register(r'settings', ApplicationSettingViewSet, basename='applicationsetting')
+router.register(r'audit-logs', AdminActionLogViewSet, basename='auditlog')
 
 urlpatterns = [
     path('', include(router.urls)),

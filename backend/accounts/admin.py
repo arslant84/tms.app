@@ -151,17 +151,17 @@ class ApplicationSettingAdmin(admin.ModelAdmin):
 
 @admin.register(AdminActionLog)
 class AdminActionLogAdmin(admin.ModelAdmin):
-    """Admin interface for Admin Action Logs (Security Audit Trail)"""
+    """Admin interface for Audit Logs (Security Audit Trail)"""
 
-    list_display = ('created_at', 'admin_email', 'action_type', 'entity_type', 'entity_id', 'ip_address')
-    list_filter = ('action_type', 'created_at', 'admin')
-    search_fields = ('admin__email', 'entity_type', 'entity_id', 'description', 'ip_address')
+    list_display = ('created_at', 'user_email', 'action_type', 'entity_type', 'entity_id', 'ip_address')
+    list_filter = ('action_type', 'created_at', 'user')
+    search_fields = ('user__email', 'entity_type', 'entity_id', 'description', 'ip_address')
     ordering = ('-created_at',)
     date_hierarchy = 'created_at'
 
     fieldsets = (
         ('Action Details', {
-            'fields': ('admin', 'action_type', 'entity_type', 'entity_id', 'description')
+            'fields': ('user', 'action_type', 'entity_type', 'entity_id', 'description')
         }),
         ('Request Details', {
             'fields': ('ip_address', 'user_agent')
@@ -171,13 +171,13 @@ class AdminActionLogAdmin(admin.ModelAdmin):
         }),
     )
 
-    readonly_fields = ('admin', 'action_type', 'entity_type', 'entity_id', 'description',
+    readonly_fields = ('user', 'action_type', 'entity_type', 'entity_id', 'description',
                        'ip_address', 'user_agent', 'created_at')
 
-    def admin_email(self, obj):
-        return obj.admin.email if obj.admin else 'Unknown'
-    admin_email.short_description = 'Admin User'
-    admin_email.admin_order_field = 'admin__email'
+    def user_email(self, obj):
+        return obj.user.email if obj.user else 'System/Unknown'
+    user_email.short_description = 'User'
+    user_email.admin_order_field = 'user__email'
 
     def has_add_permission(self, request):
         # Prevent manual creation of audit logs

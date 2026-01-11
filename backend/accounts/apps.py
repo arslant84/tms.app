@@ -10,5 +10,6 @@ class AccountsConfig(AppConfig):
         Called when Django starts up.
         Register signal handlers and perform app initialization.
         """
+        # Import signals to register handlers for audit logging
+        import accounts.signals  # noqa: F401
         # Email settings are now loaded from .env file (no database loading needed)
-        pass
