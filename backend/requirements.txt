@@ -1,11 +1,30 @@
-Django>=4.2.0
-djangorestframework>=3.14.0
-djangorestframework-simplejwt>=5.3.0
-django-cors-headers>=4.0.0
-psycopg2-binary>=2.9.6
-python-jose>=3.3.0
-passlib>=1.7.4
-python-multipart>=0.0.5
-python-decouple>=3.8
-django-ratelimit>=4.1.0
-pytz>=2024.1
+# Backend Dependencies - Pinned Versions for Security and Reproducibility
+# Last updated: 2026-01-11
+# SECURITY: All versions are pinned to prevent unexpected updates and vulnerabilities
+
+# Core Django Framework
+Django==5.0.2
+
+# Django REST Framework
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+
+# CORS Headers
+django-cors-headers==4.3.1
+
+# PostgreSQL Database Driver
+psycopg2-binary==2.9.9
+
+# JWT and Authentication
+python-jose==3.4.0
+passlib==1.7.4
+
+# Utilities
+python-multipart==0.0.20
+python-decouple==3.8
+
+# Security & Rate Limiting
+django-ratelimit==4.1.0
+
+# Timezone Support
+pytz==2025.2
