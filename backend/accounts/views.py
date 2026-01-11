@@ -9,10 +9,16 @@ from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils.crypto import get_random_string
+from django.utils import timezone
+from datetime import timedelta
 
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, UserAdminUpdateSerializer, RoleSerializer, PermissionSerializer,
-    ApplicationSettingSerializer, ApplicationSettingCreateSerializer, ApplicationSettingUpdateSerializer, PasswordChangeSerializer
+    ApplicationSettingSerializer, ApplicationSettingCreateSerializer, ApplicationSettingUpdateSerializer, PasswordChangeSerializer,
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 )
 from .models import Role, Permission, ApplicationSetting
 from .permissions import HasManageRolesPermission, HasManageUsersPermission, HasViewSystemSettingsPermission
@@ -221,6 +227,106 @@ class PasswordChangeView(APIView):
             'message': 'Password changed successfully',
             'password_change_required': False
         })
+
+
+class PasswordResetRequestView(APIView):
+    """
+    Request a password reset. Sends email with reset token.
+    SECURITY: Rate limited to prevent abuse.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    @method_decorator(ratelimit(key='ip', rate='3/h', method='POST'))
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data['email']
+
+        try:
+            user = User.objects.get(email=email, is_active=True)
+
+            # Generate reset token (64 characters, URL-safe)
+            reset_token = get_random_string(64)
+
+            # Store token and expiry in user model (expires in 1 hour)
+            user.password_reset_token = reset_token
+            user.password_reset_token_expires = timezone.now() + timedelta(hours=1)
+            user.save()
+
+            # Send email with reset link
+            reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={reset_token}"
+
+            send_mail(
+                subject='Password Reset Request - SynTra TMS',
+                message=f'''Hello {user.name},
+
+You have requested to reset your password for your SynTra Travel Management System account.
+
+Click the link below to reset your password:
+{reset_url}
+
+This link will expire in 1 hour.
+
+If you did not request this password reset, please ignore this email and your password will remain unchanged.
+
+Best regards,
+SynTra TMS Team''',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+
+        except User.DoesNotExist:
+            # SECURITY: Don't reveal if email exists or not
+            pass
+
+        # Always return success to prevent email enumeration
+        return Response({
+            'message': 'If an account exists with this email, a password reset link has been sent.'
+        })
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    Confirm password reset with token and set new password.
+    SECURITY: Token expires after 1 hour.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        token = serializer.validated_data['token']
+        new_password = serializer.validated_data['new_password']
+
+        try:
+            user = User.objects.get(
+                password_reset_token=token,
+                password_reset_token_expires__gt=timezone.now()
+            )
+
+            # Set new password
+            user.set_password(new_password)
+            # Clear reset token
+            user.password_reset_token = None
+            user.password_reset_token_expires = None
+            # Clear password change requirement if set
+            user.password_change_required = False
+            user.save()
+
+            return Response({
+                'message': 'Password reset successfully. You can now log in with your new password.'
+            })
+
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'Invalid or expired reset token'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class UserViewSet(viewsets.ModelViewSet):
