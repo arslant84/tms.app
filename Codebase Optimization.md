@@ -1153,6 +1153,40 @@ Closes #123"
 
 ## Change Log
 
+### 2026-01-11 - RBAC Cleanup & UX Improvements! 🧹
+**Completed (~1 hour):**
+
+**Code Cleanup & Refactoring:**
+- **Removed all redundant role-based code** (217 lines eliminated)
+  - Deleted unused mock user service (171 lines + spec file)
+  - Removed obsolete UserRole enum (replaced with backend Role objects)
+  - Cleaned up sidebar component (removed unused userRole property + 8 debug logs)
+  - Updated User model to use Role object or string from backend
+  - Fixed imports in header and sidebar components
+- **Impact**:
+  - Cleaner codebase with no duplicate services
+  - All components now use permission-based RBAC exclusively
+  - No hardcoded role enums - all roles come from backend
+  - Improved code maintainability
+
+**UX Improvements:**
+- **Fixed login page background** (login.component.scss)
+  - Removed blurry/ugly login-background.jpg image
+  - Replaced with modern gradient background (purple to violet)
+  - Professional and clean appearance
+  - Better readability of login card
+
+**Files Modified:** 5 files
+**Files Deleted:** 2 files (user.service.ts + spec)
+**Build Status:** ✅ Successful (18.5 seconds)
+
+**JWT Token Timeout Settings:**
+- Access Token: 1 hour (auto-logout after 1 hour of inactivity)
+- Refresh Token: 7 days (session expires completely after 7 days)
+- Token rotation enabled for security
+
+---
+
 ### 2026-01-10 - Security Roadmap Integration! 🔒
 **Completed (~30 minutes):**
 
