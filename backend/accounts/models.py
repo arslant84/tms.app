@@ -184,23 +184,38 @@ class ApplicationSetting(models.Model):
 
 class AdminActionLog(models.Model):
     """
-    Audit log for administrative override actions.
-    Tracks when admins bypass normal workflows or permissions.
+    Audit log for user actions and security-relevant events.
+    Tracks actions by all users for compliance, security monitoring, and incident response.
+    Note: Despite the name 'AdminActionLog', this tracks actions by all users, not just admins.
     """
     ACTION_TYPES = (
+        ('user_created', 'User Account Created'),
+        ('user_deleted', 'User Account Deleted'),
+        ('user_deactivated', 'User Account Deactivated'),
+        ('user_activated', 'User Account Activated'),
+        ('user_role_changed', 'User Role Changed'),
+        ('user_permissions_changed', 'User Permissions Changed'),
+        ('password_reset_admin', 'Password Reset by Admin'),
+        ('password_change_forced', 'Forced Password Change'),
+        ('password_changed', 'Password Changed'),
+        ('login_success', 'Successful Login'),
+        ('login_failed', 'Failed Login Attempt'),
+        ('logout', 'User Logout'),
+        ('role_created', 'Role Created'),
+        ('role_deleted', 'Role Deleted'),
+        ('role_permissions_modified', 'Role Permissions Modified'),
+        ('settings_change', 'Application Settings Changed'),
         ('approval_override', 'Approval Workflow Override'),
         ('permission_override', 'Permission Override'),
         ('data_modification', 'Direct Data Modification'),
-        ('settings_change', 'Settings Change'),
-        ('user_modification', 'User Account Modification'),
-        ('other', 'Other Administrative Action'),
+        ('other', 'Other Action'),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='admin_actions')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs', help_text='User who performed the action')
     action_type = models.CharField(max_length=50, choices=ACTION_TYPES)
-    entity_type = models.CharField(max_length=255, help_text='Type of entity affected (e.g., TransportRequest, TravelRequest)')
-    entity_id = models.CharField(max_length=255, help_text='ID of the affected entity')
+    entity_type = models.CharField(max_length=255, blank=True, help_text='Type of entity affected (e.g., User, Role, Permission)')
+    entity_id = models.CharField(max_length=255, blank=True, help_text='ID of the affected entity')
     description = models.TextField(help_text='Description of the action taken')
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True, null=True)
@@ -208,25 +223,40 @@ class AdminActionLog(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        verbose_name = 'Admin Action Log'
-        verbose_name_plural = 'Admin Action Logs'
+        verbose_name = 'Audit Log'
+        verbose_name_plural = 'Audit Logs'
         indexes = [
             models.Index(fields=['-created_at']),
-            models.Index(fields=['admin', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
             models.Index(fields=['action_type', '-created_at']),
+            models.Index(fields=['entity_type', 'entity_id']),
         ]
 
     def __str__(self):
-        return f"{self.admin.email if self.admin else 'Unknown'} - {self.action_type} - {self.created_at}"
+        user_email = self.user.email if self.user else 'System/Unknown'
+        return f"{user_email} - {self.get_action_type_display()} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 
     @staticmethod
-    def log_action(admin, action_type, entity_type, entity_id, description, request=None):
-        """Helper method to create an audit log entry"""
+    def log_action(user, action_type, description, entity_type='', entity_id='', request=None):
+        """
+        Helper method to create an audit log entry.
+
+        Args:
+            user: User object who performed the action (can be None for system actions)
+            action_type: Type of action from ACTION_TYPES choices
+            description: Human-readable description of the action
+            entity_type: Optional type of entity affected (e.g., 'User', 'Role')
+            entity_id: Optional ID of the affected entity
+            request: Optional HttpRequest object to extract IP and user agent
+
+        Returns:
+            AdminActionLog instance
+        """
         log_data = {
-            'admin': admin,
+            'user': user,
             'action_type': action_type,
             'entity_type': entity_type,
-            'entity_id': str(entity_id),
+            'entity_id': str(entity_id) if entity_id else '',
             'description': description,
         }
 
@@ -234,9 +264,9 @@ class AdminActionLog(models.Model):
         if request:
             x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
             if x_forwarded_for:
-                log_data['ip_address'] = x_forwarded_for.split(',')[0]
+                log_data['ip_address'] = x_forwarded_for.split(',')[0].strip()
             else:
                 log_data['ip_address'] = request.META.get('REMOTE_ADDR')
-            log_data['user_agent'] = request.META.get('HTTP_USER_AGENT', '')
+            log_data['user_agent'] = request.META.get('HTTP_USER_AGENT', '')[:500]  # Limit length
 
         return AdminActionLog.objects.create(**log_data)
