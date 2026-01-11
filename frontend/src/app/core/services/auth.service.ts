@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { map, tap, catchError, shareReplay } from 'rxjs/operators';
-import { User, UserRole, AuthResponse } from '../models/user.model';
+import { User, AuthResponse } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -177,13 +177,6 @@ export class AuthService {
   getCurrentUserId(): number | null {
     const user = this.currentUserSubject.value;
     return user?.id || null;
-  }
-
-  hasRole(allowedRoles: UserRole[]): boolean {
-    const user = this.currentUserSubject.value;
-    if (!user) return false;
-
-    return allowedRoles.includes(user.role);
   }
 
   isAdmin(): boolean {

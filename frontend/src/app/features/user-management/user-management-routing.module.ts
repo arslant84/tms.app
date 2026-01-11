@@ -2,8 +2,8 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { UserProfileComponent } from './components/user-profile/user-profile.component';
 import { UserAdminComponent } from './components/user-admin/user-admin.component';
-import { AuthGuard } from '../../core/guards/auth.guard';
-import { UserRole } from '../../core/models/user.model';
+import { PermissionGuard } from '../../core/guards/permission.guard';
+import { Permission } from '../../core/models/permission.models';
 
 const routes: Routes = [
   {
@@ -18,8 +18,11 @@ const routes: Routes = [
   {
     path: 'admin',
     component: UserAdminComponent,
-    canActivate: [AuthGuard],
-    data: { roles: ['admin'] }
+    canActivate: [PermissionGuard],
+    data: {
+      permissions: [Permission.MANAGE_USERS, Permission.SYSTEM_ADMIN],
+      requireAll: false
+    }
   }
 ];
 
