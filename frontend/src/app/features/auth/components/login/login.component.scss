@@ -7,15 +7,11 @@
   align-items: center;
   min-height: 100vh;
   width: 100%;
-  // Modern gradient background - professional and clean
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  position: relative;
+  background-color: vars.$white;
 }
 
 .login-card {
-  background-color: vars.$bg-primary;
   border-radius: vars.$radius-md;
-  box-shadow: vars.$shadow-xl;
   width: 100%;
   max-width: 450px;
   overflow: hidden;
@@ -55,6 +51,7 @@
 
 .login-body {
   padding: vars.$spacing-8;
+  background-color: vars.$white;
 
   .form-label {
     font-weight: vars.$font-weight-medium;
