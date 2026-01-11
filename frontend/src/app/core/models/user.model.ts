@@ -9,7 +9,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: Role | UserRole | any; // Can be Role object or simple string
+  role: Role | string | any; // Can be Role object or role name string from backend
   department: string;
   is_admin: boolean;
   is_active: boolean;
@@ -32,15 +32,6 @@ export interface User {
   last_login_at?: string;
   // SECURITY: Password change required flag
   password_change_required?: boolean;
-}
-
-export enum UserRole {
-  EMPLOYEE = 'employee',
-  FOCAL = 'focal',
-  HOD = 'hod',
-  TICKETING_CLERK = 'ticketing_clerk',
-  EXTERNAL = 'external',
-  ADMIN = 'admin'
 }
 
 export interface AuthResponse {

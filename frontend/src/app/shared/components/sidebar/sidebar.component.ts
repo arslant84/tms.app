@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { UserRole, User } from '../../../core/models/user.model';
+import { User } from '../../../core/models/user.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { RbacService } from '../../../core/services/rbac.service';
 import { Permission } from '../../../core/models/permission.models';
@@ -17,7 +17,6 @@ import { environment } from '../../../../environments/environment';
   styleUrl: './sidebar.component.scss'
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-  userRole: string = 'Employee'; // Default role, will be fetched from auth service
   pendingApprovals: number = 0;
   currentUser: User | null = null;
   private userSubscription: Subscription | null = null;
@@ -35,20 +34,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.userSubscription = this.authService.getCurrentUser$Obs().subscribe(user => {
       this.currentUser = user;
       if (user) {
-        // Handle the role properly
-        this.userRole = user.role || 'Employee';
-        console.log('Current user role:', this.userRole);
-        console.log('User is_admin flag:', user.is_admin);
-
-        // If user has is_admin flag set to true, ensure they have admin role
-        if (user.is_admin) {
-          console.log('User has admin flag, setting ADMIN role');
-          this.userRole = UserRole.ADMIN;
-        }
-
-        console.log('Final user role:', this.userRole);
-        console.log('Has approval permissions:', this.hasApprovalPermissions);
-        console.log('Has admin permissions:', this.hasAdminPermissions);
 
         // Fetch pending approvals only if user has approval permissions
         if (this.hasApprovalPermissions) {

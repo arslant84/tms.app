@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { Observable, map, Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
-import { User, UserRole } from '../../../core/models/user.model';
+import { User } from '../../../core/models/user.model';
 import { NotificationService, UserNotification } from '../../../features/notifications/services/notification.service';
 import { AppSettingsService } from '../../../core/services/app-settings.service';
 
