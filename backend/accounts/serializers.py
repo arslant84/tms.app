@@ -296,3 +296,20 @@ class ApplicationSettingUpdateSerializer(serializers.ModelSerializer):
                 attrs['setting_value'] = str(value)
         return attrs
 
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Serializer for requesting a password reset"""
+    email = serializers.EmailField(required=True)
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Serializer for confirming password reset with token"""
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, validators=[validate_password], style={'input_type': 'password'})
+    new_password_confirm = serializers.CharField(required=True, style={'input_type': 'password'})
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({"new_password": "Password fields didn't match."})
+        return attrs
+

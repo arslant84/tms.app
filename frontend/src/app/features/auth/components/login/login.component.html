@@ -53,7 +53,14 @@
             <div *ngIf="loginForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</div>
           </div>
         </div>
-        
+
+        <!-- Forgot Password Link -->
+        <div class="text-end mt-2 mb-3">
+          <a routerLink="/auth/forgot-password" class="text-decoration-none small">
+            Forgot Password?
+          </a>
+        </div>
+
         <!-- Submit button -->
         <div class="d-grid mt-5">
           <button 
