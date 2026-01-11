@@ -1009,18 +1009,18 @@ Closes #123"
 ---
 
 ### Phase 4: Security Hardening (Days 18-21) 🚀 IN PROGRESS
-**Progress**: 37.5% (3/8 tasks)
+**Progress**: 87.5% (7/8 tasks)
 
 **🔒 CRITICAL & HIGH PRIORITY (Days 18-19)**
 - [x] Migrate to HttpOnly cookie authentication (replaces localStorage - CRITICAL) ✅
 - [x] Implement JWT with token expiration (replaces Token auth - HIGH) ✅
 - [x] Fix hardcoded default passwords in init scripts (HIGH) ✅
-- [ ] Implement forced password change on first login (HIGH)
+- [x] Implement forced password change on first login (HIGH) ✅
 
 **🟡 MEDIUM PRIORITY (Days 20-21)**
-- [ ] Implement password reset functionality
-- [ ] Pin dependency versions (requirements.txt + package.json)
-- [ ] Add Content Security Policy (CSP) headers
+- [x] Implement password reset functionality ✅
+- [x] Pin dependency versions (requirements.txt + package.json) ✅
+- [x] Add Content Security Policy (CSP) headers ✅
 - [ ] Implement admin action audit logging
 
 **Dependencies**: Phase 1 basic security completed ✅
@@ -1077,13 +1077,13 @@ Closes #123"
 | ~~1~~ | ~~Token storage in localStorage (XSS risk)~~ | ~~CRITICAL~~ | ~~Account takeover via XSS~~ | ✅ **FIXED** |
 | ~~2~~ | ~~Legacy Token auth without expiration~~ | ~~HIGH~~ | ~~Indefinite session hijacking~~ | ✅ **FIXED** |
 | ~~3~~ | ~~Hardcoded default passwords in init scripts~~ | ~~HIGH~~ | ~~Unauthorized admin access~~ | ✅ **FIXED** |
-| 4 | Missing password reset functionality | MEDIUM | User account recovery issues | Phase 4 |
-| 5 | Loose dependency version constraints | MEDIUM | Future vulnerability exposure | Phase 4 |
-| 6 | Missing Content Security Policy | MEDIUM | XSS attack vulnerability | Phase 4 |
+| ~~4~~ | ~~Missing password reset functionality~~ | ~~MEDIUM~~ | ~~User account recovery issues~~ | ✅ **FIXED** |
+| ~~5~~ | ~~Loose dependency version constraints~~ | ~~MEDIUM~~ | ~~Future vulnerability exposure~~ | ✅ **FIXED** |
+| ~~6~~ | ~~Missing Content Security Policy~~ | ~~MEDIUM~~ | ~~XSS attack vulnerability~~ | ✅ **FIXED** |
 | 7 | Missing admin action audit logging | MEDIUM | No security incident tracking | Phase 4 |
 | 8 | Missing security.txt file | LOW | Security researcher contact | Phase 5 |
 
-**Total Remaining:** 5 vulnerabilities (0 Critical, 0 High, 4 Medium, 1 Low)
+**Total Remaining:** 2 vulnerabilities (0 Critical, 0 High, 1 Medium, 1 Low)
 
 ### Security Improvement Roadmap
 
@@ -1091,13 +1091,13 @@ Closes #123"
 1. ✅ **HttpOnly Cookie Migration** (8-12 hours) - Eliminate localStorage XSS risk **COMPLETED**
 2. ✅ **JWT Implementation** (6-10 hours) - Add token expiration **COMPLETED**
 3. ✅ **Password Security** (3-4 hours) - Fix hardcoded defaults **COMPLETED**
-4. **Forced Password Change** (2-3 hours) - First login password change
-5. **Password Reset** (8-10 hours) - Implement reset flow
-6. **Dependency Pinning** (2 hours) - Lock versions in requirements.txt
-7. **CSP Headers** (4 hours) - Configure Content Security Policy
+4. ✅ **Forced Password Change** (2-3 hours) - First login password change **COMPLETED**
+5. ✅ **Password Reset** (8-10 hours) - Implement reset flow **COMPLETED**
+6. ✅ **Dependency Pinning** (2 hours) - Lock versions in requirements.txt **COMPLETED**
+7. ✅ **CSP Headers** (4 hours) - Configure Content Security Policy **COMPLETED**
 8. **Audit Logging** (6-8 hours) - Track admin actions
 
-**Estimated Effort:** 22-25 hours remaining (3 days)
+**Estimated Effort:** 6-8 hours remaining (1 day)
 
 **Risk Reduction:**
 - Original Risk Score: 7.0/10 (MEDIUM-HIGH)
@@ -1152,6 +1152,142 @@ Closes #123"
 ---
 
 ## Change Log
+
+### 2026-01-11 - Phase 4: CSP Headers Implemented! 🔒
+**Completed (~1 hour):**
+
+**Security Enhancement: Content Security Policy (CSP)**
+- **Installed django-csp package** (version 3.7)
+  - Added to requirements.txt with exact version pinning
+  - Industry-standard package for CSP management in Django
+
+- **Configured CSP Middleware**:
+  - Added 'csp' to INSTALLED_APPS
+  - Added CSPMiddleware to MIDDLEWARE stack (positioned early for security)
+  - Middleware intercepts all responses to add CSP headers
+
+- **Comprehensive CSP Directives** (base.py):
+  - `default-src 'self'` - Only same origin by default
+  - `script-src 'self' 'unsafe-inline' 'unsafe-eval'` - Angular development requirements
+  - `style-src 'self' 'unsafe-inline'` - Bootstrap and Angular Material styles
+  - `img-src 'self' data: https:` - Images from multiple sources
+  - `font-src 'self' data:` - Bootstrap web fonts
+  - `connect-src 'self'` - API calls (extended per environment)
+  - `frame-ancestors 'none'` - Prevent clickjacking attacks
+  - `object-src 'none'` - Block Flash and other plugins
+  - `base-uri 'self'` - Prevent base tag injection
+  - `form-action 'self'` - Restrict form submissions
+  - Additional directives: media, frame, worker, manifest
+
+- **Environment-Specific Configuration**:
+  - **Development** (development.py):
+    - Extended connect-src to allow localhost:8000 API calls
+    - Supports WebSocket connections (ws://)
+    - Enables frontend (localhost:4200) to backend (localhost:8000) communication
+  - **Production** (production.py):
+    - Restricts connect-src to production backend URL only
+    - Configured via CSP_BACKEND_URL environment variable
+    - Supports secure WebSocket (wss://) for production
+    - Stricter security posture for production deployment
+
+- **Configuration & Documentation**:
+  - Added CSP_BACKEND_URL to .env.example
+  - Comprehensive inline comments explaining each directive
+  - CSP reporting endpoint template (optional, commented for future use)
+  - Clear notes about Angular requirements ('unsafe-inline', 'unsafe-eval')
+
+**Security Impact:**
+- **XSS Protection**: CSP prevents cross-site scripting attacks by controlling resource loading
+- **Injection Defense**: Mitigates code injection vulnerabilities
+- **Clickjacking Prevention**: frame-ancestors directive prevents UI redress attacks
+- **Attack Surface Reduction**: Restricts unauthorized resource loading
+- **Defense in Depth**: Adds additional security layer beyond input validation
+
+**Testing:**
+- ✅ Django configuration check passes with CSP enabled
+- ✅ No conflicts with existing middleware
+- ✅ Development settings load correctly with extended connect-src
+- ✅ Production settings configured for deployment
+
+**Files Modified:**
+- backend/requirements.txt (added django-csp==3.7)
+- backend/tms_project/settings/base.py (CSP directives)
+- backend/tms_project/settings/development.py (dev connect-src)
+- backend/tms_project/settings/production.py (prod connect-src)
+- backend/.env.example (CSP_BACKEND_URL variable)
+
+**Phase 4 Progress**: 75% → 87.5% complete (7/8 tasks done)
+
+**Remaining Task:**
+- Task 8: Implement admin action audit logging (6-8 hours)
+
+**Note on Angular CSP Compatibility:**
+- 'unsafe-inline' and 'unsafe-eval' are currently needed for Angular
+- Future optimization: Use nonces or hashes for stricter CSP
+- Consider Angular build optimizations to reduce CSP exceptions
+
+---
+
+### 2026-01-11 - Phase 4: Password Reset & Dependency Pinning Complete! 🔒
+**Completed (~2.5 hours):**
+
+**Security Enhancements:**
+- **Password Reset Functionality Implemented** (Task 5)
+  - Backend: Created password reset endpoints with email-based token system
+    - `PasswordResetRequestView` - Request password reset with email
+    - `PasswordResetConfirmView` - Confirm reset with token
+    - Rate limiting: 3 requests/hour to prevent abuse
+    - Token expiration: 1 hour for security
+    - Email enumeration prevention (always returns success message)
+  - Frontend: Created password reset components
+    - `ForgotPasswordComponent` - Request reset flow
+    - `ResetPasswordComponent` - Token validation and password update
+    - Added "Forgot Password?" link to login page
+  - Database: Added password_reset_token fields to User model
+  - Email integration: Uses existing Brevo SMTP system
+  - Security features: Token expiration, rate limiting, secure random token generation
+
+- **Dependency Pinning Implemented** (Task 6)
+  - Backend (requirements.txt): Pinned all Python packages with exact versions (== instead of >=)
+    - Django==5.0.2, djangorestframework==3.14.0, psycopg2-binary==2.9.9
+    - Added security comments explaining pinning purpose
+    - All 11 dependencies locked to prevent unexpected updates
+  - Frontend (package.json): Removed all ^ and ~ version prefixes
+    - Angular core: 19.2.11, Angular CDK/Material: 19.2.18
+    - Bootstrap: 5.3.8, RxJS: 7.8.2
+    - Regenerated package-lock.json with exact versions
+    - Used --legacy-peer-deps to handle Angular peer dependency conflicts
+  - Security benefits:
+    - Prevents unexpected package updates
+    - Protects against supply chain attacks
+    - Ensures reproducible builds across environments
+    - Eliminates dependency vulnerabilities from auto-updates
+
+**Files Modified:**
+- Backend: 3 files (accounts/models.py, accounts/serializers.py, accounts/views.py, accounts/urls.py, requirements.txt)
+- Frontend: 4 files (package.json, package-lock.json, login.component.html, auth-routing.module.ts)
+- Frontend: 2 new components (forgot-password, reset-password with HTML/SCSS/TS)
+
+**Testing:**
+- ✅ Backend dependencies install successfully
+- ✅ Frontend dependencies install with --legacy-peer-deps
+- ✅ Password reset flow tested end-to-end
+- ✅ Rate limiting verified (3/hour)
+- ✅ Token expiration working correctly
+
+**Phase 4 Progress**: 37.5% → 75% complete (6/8 tasks done)
+
+**Remaining Tasks:**
+- Task 7: Add Content Security Policy headers (4 hours)
+- Task 8: Implement admin action audit logging (6-8 hours)
+
+**Security Impact:**
+- Users can now recover forgotten passwords securely
+- All dependencies locked to known-good versions
+- Reduced risk of supply chain attacks
+- Reproducible builds across all environments
+
+---
 
 ### 2026-01-11 - RBAC Cleanup & UX Improvements! 🧹
 **Completed (~1 hour):**
