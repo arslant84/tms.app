@@ -7,26 +7,9 @@
   align-items: center;
   min-height: 100vh;
   width: 100%;
-  background-image: url('/img/login-background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  // Modern gradient background - professional and clean
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   position: relative;
-
-  // Add overlay for better readability of login card
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgb(0 0 0 / 30%);
-    z-index: 0;
-  }
-
-  // Ensure card is above overlay
-  > * {
-    position: relative;
-    z-index: 1;
-  }
 }
 
 .login-card {
