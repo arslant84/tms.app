@@ -32,14 +32,15 @@ export const AuthInterceptor: HttpInterceptorFn = (
     catchError((error: HttpErrorResponse) => {
       // Handle 401 Unauthorized errors (expired token or invalid session)
       if (error.status === 401) {
-        // Skip refresh for login, refresh, and /me endpoints to avoid infinite loops
+        // Skip refresh for login, refresh, /me, and password reset endpoints to avoid infinite loops
         const skipRefresh = request.url.includes('/api/login/') ||
                            request.url.includes('/api/token/refresh/') ||
-                           request.url.includes('/api/users/me/');
+                           request.url.includes('/api/users/me/') ||
+                           request.url.includes('/api/password/reset/');
 
         if (skipRefresh) {
-          // Just return error without redirecting for /me endpoint (initialization)
-          if (request.url.includes('/api/users/me/')) {
+          // Just return error without redirecting for /me and password reset endpoints
+          if (request.url.includes('/api/users/me/') || request.url.includes('/api/password/reset/')) {
             return throwError(() => error);
           }
           // For login/refresh failures, logout and redirect

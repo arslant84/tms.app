@@ -50,7 +50,7 @@ export class ForgotPasswordComponent {
       },
       error: (err) => {
         this.loading = false;
-        this.error = err.error?.error || 'Failed to send password reset email';
+        this.error = err.error?.message || err.error?.error || 'Failed to send password reset email';
       }
     });
   }
