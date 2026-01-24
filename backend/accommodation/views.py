@@ -148,10 +148,10 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     # Search across key fields
-    search_fields = ['requestor_name', 'staff_id', 'purpose', 'request_number']
+    search_fields = ['requestor_name', 'staff_id', 'department', 'request_number']
 
     # Allow ordering
-    ordering_fields = ['created_at', 'submitted_at', 'check_in_date', 'check_out_date', 'status']
+    ordering_fields = ['created_at', 'submitted_at', 'status']
     ordering = ['-created_at']  # Default: newest first
 
     def get_object(self):
@@ -238,11 +238,10 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
             # Regular users can view their own requests only
             print(f"✅ Retrieve action: User {user.username} - filtering by requestor")
-            # Filter by requestor_name OR created_by to handle different data entry methods
+            # Filter by requestor_name or staff_id to handle different data entry methods
             queryset = queryset.filter(
-                models.Q(requestor_name=user.get_full_name()) |
-                models.Q(created_by=user) |
-                models.Q(staff_id=user.staff_id)
+                Q(requestor_name=user.get_full_name()) |
+                Q(staff_id=user.staff_id)
             )
             return queryset
 
@@ -295,6 +294,18 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
         if requestor_name:
             queryset = queryset.filter(requestor_name__icontains=requestor_name)
+
+        # Apply search filter
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(requestor_name__icontains=search) |
+                Q(staff_id__icontains=search) |
+                Q(request_number__icontains=search) |
+                Q(department__icontains=search) |
+                Q(email__icontains=search)
+            )
+            print(f"🔍 Searching accommodation for: {search}")
 
         return queryset.order_by('-created_at')
 

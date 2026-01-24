@@ -20,11 +20,13 @@
           <label for="email" class="form-label">Email address</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-            <input 
-              type="email" 
-              class="form-control" 
-              id="email" 
-              formControlName="email" 
+            <input
+              type="email"
+              class="form-control"
+              id="email"
+              name="email"
+              autocomplete="email"
+              formControlName="email"
               placeholder="name@example.com"
               [ngClass]="{'is-invalid': loginForm.get('email')?.invalid && loginForm.get('email')?.touched}"
             >
@@ -40,10 +42,12 @@
           <label for="password" class="form-label">Password</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-lock"></i></span>
-            <input 
-              type="password" 
-              class="form-control" 
-              id="password" 
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              name="password"
+              autocomplete="current-password"
               formControlName="password"
               [ngClass]="{'is-invalid': loginForm.get('password')?.invalid && loginForm.get('password')?.touched}"
             >

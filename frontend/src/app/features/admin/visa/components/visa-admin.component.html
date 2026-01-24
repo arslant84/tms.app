@@ -77,7 +77,8 @@
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-6">
-          <input type="text" class="form-control" placeholder="Search by request number, staff name, destination..."
+          <input type="text" class="form-control" id="visaAdminSearch" name="visaAdminSearch"
+                 autocomplete="off" placeholder="Search by request number, staff name, destination..."
                  [(ngModel)]="filterCriteria.search" (keyup.enter)="applyFilters()">
         </div>
         <div class="col-md-2">

@@ -26,10 +26,10 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     # Search across key fields
-    search_fields = ['staff_name', 'destination', 'passport_number', 'request_number', 'user__email']
+    search_fields = ['requestor_name', 'destination', 'passport_number', 'request_number', 'user__email']
 
     # Allow ordering
-    ordering_fields = ['created_at', 'submitted_date', 'travel_date', 'destination', 'status']
+    ordering_fields = ['created_at', 'submitted_date', 'trip_start_date', 'destination', 'status']
     ordering = ['-created_at']  # Default: newest first
 
     def get_object(self):
@@ -115,6 +115,21 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         if status_filter:
             queryset = queryset.filter(status=status_filter)
             print(f"🔍 Filtering by status: {status_filter}")
+
+        # Apply search filter
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(requestor_name__icontains=search) |
+                Q(destination__icontains=search) |
+                Q(passport_number__icontains=search) |
+                Q(request_number__icontains=search) |
+                Q(department__icontains=search) |
+                Q(staff_id__icontains=search) |
+                Q(user__email__icontains=search) |
+                Q(user__name__icontains=search)
+            )
+            print(f"🔍 Searching for: {search}")
 
         return queryset
 
