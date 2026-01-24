@@ -86,6 +86,27 @@ export interface OverseasTravelRequestForm {
   updatedAt: string;
 }
 
+// Passport upload interface for all travel types
+export interface PassportUpload {
+  file: File | null;
+  fileName?: string;
+  fileUrl?: string;
+}
+
+// Passport detail with file support
+export interface PassportDetailWithFile {
+  id?: number;
+  fullName?: string;
+  passportNumber?: string;
+  nationality?: string;
+  dateOfBirth?: string;
+  placeOfBirth?: string;
+  passportIssueDate?: string;
+  passportExpiryDate?: string;
+  passportFile?: File | null;
+  passportFileUrl?: string;
+}
+
 // Union type for all travel request forms
 export type TravelRequestForm = DomesticTravelRequestForm | OverseasTravelRequestForm;
 

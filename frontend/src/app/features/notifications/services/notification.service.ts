@@ -193,12 +193,12 @@ export class NotificationService {
 
   // Get user preferences
   getPreferences(): Observable<NotificationPreference> {
-    return this.http.get<NotificationPreference>(`${this.apiUrl}/preferences/`);
+    return this.http.get<NotificationPreference>(`${this.apiUrl}/preferences/my_preferences/`);
   }
 
   // Update user preferences
   updatePreferences(data: Partial<NotificationPreference>): Observable<NotificationPreference> {
-    return this.http.put<NotificationPreference>(`${this.apiUrl}/preferences/`, data);
+    return this.http.put<NotificationPreference>(`${this.apiUrl}/preferences/update_my_preferences/`, data);
   }
 
   // Get event types
@@ -213,12 +213,12 @@ export class NotificationService {
 
   // Get user subscriptions
   getSubscriptions(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/subscriptions/`);
+    return this.http.get<any[]>(`${this.apiUrl}/subscriptions/my_subscriptions/`);
   }
 
-  // Update subscription
-  updateSubscription(eventTypeId: number, data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/subscriptions/${eventTypeId}/`, data);
+  // Update subscription for an event type
+  updateSubscription(eventTypeId: number | string, data: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/subscriptions/${eventTypeId}/update_subscription/`, data);
   }
 
   // Helper method to refresh notifications

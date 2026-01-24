@@ -21,6 +21,12 @@ export class VisaFormComponent implements OnInit {
   isLoading = false;
   isSubmitting = false;
 
+  // Passport file upload properties
+  passportFile: File | null = null;
+  passportFileName: string | null = null;
+  passportFileUrl: string | null = null;
+  passportFileError: string | null = null;
+
   visaTypes = ['Tourist', 'Business', 'Work', 'Student', 'Transit', 'Diplomatic', 'Official', 'Other'];
   entryTypes = ['Single Entry', 'Multiple Entry', 'Transit'];
   maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
@@ -154,8 +160,15 @@ export class VisaFormComponent implements OnInit {
 
     this.isLoading = true;
     this.visaService.getApplicationById(this.applicationId).subscribe({
-      next: (application) => {
+      next: (application: any) => {
         this.visaForm.patchValue(application);
+        // Load passport file info if exists
+        if (application.passport_file_url) {
+          this.passportFileUrl = application.passport_file_url;
+          // Extract filename from URL
+          const urlParts = application.passport_file_url.split('/');
+          this.passportFileName = urlParts[urlParts.length - 1];
+        }
         this.isLoading = false;
       },
       error: (error) => {
@@ -195,7 +208,12 @@ export class VisaFormComponent implements OnInit {
       : this.visaService.createApplication(formData);
 
     saveOperation.subscribe({
-      next: () => {
+      next: (response: any) => {
+        const savedId = response.id || this.applicationId;
+        // Upload passport file if one was selected
+        if (this.passportFile && savedId) {
+          this.uploadPassportFileToServer(savedId);
+        }
         this.toastService.success(`Visa application ${this.isEditMode ? 'updated' : 'submitted'} successfully`);
         this.router.navigate(['/visa']);
       },
@@ -248,7 +266,12 @@ export class VisaFormComponent implements OnInit {
       : this.visaService.createApplication(formData);
 
     saveOperation.subscribe({
-      next: () => {
+      next: (response: any) => {
+        const savedId = response.id || this.applicationId;
+        // Upload passport file if one was selected
+        if (this.passportFile && savedId) {
+          this.uploadPassportFileToServer(savedId);
+        }
         this.toastService.success('Visa application saved as draft successfully');
         this.router.navigate(['/visa']);
       },
@@ -346,5 +369,66 @@ export class VisaFormComponent implements OnInit {
   isFieldInvalid(fieldName: string): boolean {
     const field = this.visaForm.get(fieldName);
     return !!(field && field.invalid && field.touched);
+  }
+
+  // Passport file handling methods
+  onPassportFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    this.passportFileError = null;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      this.passportFileError = 'Invalid file type. Please upload PDF, JPG, or PNG.';
+      input.value = '';
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      this.passportFileError = 'File size must not exceed 10MB.';
+      input.value = '';
+      return;
+    }
+
+    this.passportFile = file;
+    this.passportFileName = file.name;
+    this.passportFileUrl = null; // Clear existing URL when new file is selected
+  }
+
+  removePassportFile(): void {
+    // If we have an existing file on server and in edit mode, delete it
+    if (this.passportFileUrl && this.applicationId) {
+      this.visaService.deletePassportFile(this.applicationId).subscribe({
+        next: () => {
+          this.toastService.success('Passport file removed');
+        },
+        error: (error) => {
+          this.toastService.error('Failed to remove passport file');
+        }
+      });
+    }
+
+    this.passportFile = null;
+    this.passportFileName = null;
+    this.passportFileUrl = null;
+    this.passportFileError = null;
+  }
+
+  private uploadPassportFileToServer(applicationId: number): void {
+    if (!this.passportFile) return;
+
+    this.visaService.uploadPassportFile(applicationId, this.passportFile).subscribe({
+      next: () => {
+        // File uploaded successfully - no additional toast needed as form save toast is shown
+      },
+      error: (error) => {
+        this.toastService.error('Failed to upload passport file');
+      }
+    });
   }
 }

@@ -28,10 +28,10 @@ class JWTCookieAuthentication(BaseAuthentication):
 
         Returns:
             tuple: (user, validated_token) if authentication successful
-            None: if no authentication attempted
+            None: if no authentication attempted or token is invalid
 
-        Raises:
-            AuthenticationFailed: if authentication fails
+        Note: Returns None instead of raising exception for invalid tokens
+        to allow unauthenticated access to public endpoints like login.
         """
         # Try to get access token from cookie
         access_token = request.COOKIES.get(self.access_cookie_name)
@@ -39,7 +39,12 @@ class JWTCookieAuthentication(BaseAuthentication):
         if not access_token:
             return None  # No authentication attempted
 
-        return self.authenticate_credentials(access_token)
+        try:
+            return self.authenticate_credentials(access_token)
+        except exceptions.AuthenticationFailed:
+            # Return None instead of raising exception - allows public endpoints to work
+            # even when there's an invalid/expired token in cookies
+            return None
 
     def authenticate_credentials(self, token_string):
         """

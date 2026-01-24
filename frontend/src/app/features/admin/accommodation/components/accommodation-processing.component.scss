@@ -466,31 +466,42 @@
   }
 }
 
+// Action buttons - circular icon buttons
 .action-buttons {
   display: flex;
   gap: vars.$spacing-2;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
 
-  button {
-    padding: vars.$spacing-2 vars.$spacing-3;
-    border-radius: vars.$radius-sm;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
+  // Circular icon buttons
+  .btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    display: inline-flex;
     align-items: center;
-    gap: vars.$spacing-2;
-    font-size: clamp(0.7rem, 0.85vw, 0.875rem);
+    justify-content: center;
+
+    i {
+      font-size: vars.$font-size-sm;
+    }
   }
 
-  .btn-select, .btn-view {
-    background: vars.$white;
-    border: 1px solid #cbd5e0;
-    &:hover { background-color: vars.$gray-50; }
+  // Use global button styles - just add responsive font sizing
+  .btn {
+    font-size: clamp(0.75rem, 0.85vw, 0.875rem);
   }
 
-  .btn-select.selected { background-color: vars.$primary-color; color: vars.$white; border-color: vars.$primary-color; }
-  .btn-view { width: clamp(1.75rem, 2vw, 2rem); height: clamp(1.75rem, 2vw, 2rem); padding: 0; justify-content: center; }
-  .btn-cancel { border: 1px solid #fc8181; color: #c53030; background: vars.$white; &:hover { background-color: #fff5f5; } }
+  // Selected state for select button
+  .btn-primary {
+    &:not(.btn-outline-primary) {
+      background-color: vars.$primary-color;
+      border-color: vars.$primary-color;
+      color: vars.$white;
+    }
+  }
 }
 
 // Booking Form

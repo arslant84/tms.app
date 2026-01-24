@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 // Accommodation Interfaces
@@ -250,5 +250,17 @@ export class AccommodationService {
 
   checkOut(bookingId: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/bookings/${bookingId}/checkout/`, {});
+  }
+
+  // Export accommodation request to PDF
+  exportToPdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/requests/${id}/export-pdf/`, {
+      responseType: 'blob'
+    }).pipe(
+      catchError(error => {
+        console.error('PDF export error:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

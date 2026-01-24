@@ -124,21 +124,21 @@
                 <i class="bi bi-dash-circle text-muted" *ngIf="!user.is_admin"></i>
               </td>
               <td class="text-end">
-                <div class="btn-group btn-group-sm">
+                <div class="action-buttons">
                   <button
-                    class="btn btn-outline-primary"
+                    class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="openEditModal(user)"
                     title="Edit">
                     <i class="bi bi-pencil"></i>
                   </button>
                   <button
-                    class="btn btn-outline-warning"
+                    class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="toggleUserStatus(user)"
                     [title]="user.is_active ? 'Deactivate' : 'Activate'">
                     <i class="bi" [ngClass]="user.is_active ? 'bi-pause-circle' : 'bi-play-circle'"></i>
                   </button>
                   <button
-                    class="btn btn-outline-danger"
+                    class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="deleteUser(user)"
                     title="Delete">
                     <i class="bi bi-trash"></i>

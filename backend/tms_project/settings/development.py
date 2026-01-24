@@ -24,7 +24,13 @@ ALLOWED_HOSTS = ['*']
 CORS_ALLOW_ALL_ORIGINS = True
 
 # CSP - Allow connections to localhost for API calls in development
-CSP_CONNECT_SRC = ("'self'", "http://localhost:8000", "http://127.0.0.1:8000", "ws://localhost:8000", "ws://127.0.0.1:8000")
+CONTENT_SECURITY_POLICY['DIRECTIVES']['connect-src'] = (
+    "'self'",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "ws://localhost:8000",
+    "ws://127.0.0.1:8000"
+)
 
 # Email - Use console backend in development (prints emails to console)
 # Uncomment to print emails to console instead of sending them:
@@ -43,25 +49,8 @@ if 'debug_toolbar' in INSTALLED_APPS:
     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
     INTERNAL_IPS = ['127.0.0.1', 'localhost']
 
-# More verbose logging in development
-LOGGING['root']['level'] = 'DEBUG'
-LOGGING['loggers']['django']['level'] = 'DEBUG'
-LOGGING['loggers']['workflows']['level'] = 'DEBUG'
-LOGGING['loggers']['notifications']['level'] = 'DEBUG'
-
-# Add file handler for development debugging
-LOGGING['handlers']['file'] = {
-    'class': 'logging.FileHandler',
-    'filename': BASE_DIR / 'logs' / 'debug.log',
-    'formatter': 'verbose',
-}
-LOGGING['root']['handlers'].append('file')
-
-# Create logs directory if it doesn't exist
-import os
-logs_dir = BASE_DIR / 'logs'
-if not os.path.exists(logs_dir):
-    os.makedirs(logs_dir)
+# Clean application logging (configured in base.py)
+# LOGGING configuration now in base.py - only shows application logs, not Django framework noise
 
 print("🔧 Development settings loaded")
 print(f"  - DEBUG: {DEBUG}")

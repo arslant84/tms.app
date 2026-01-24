@@ -28,11 +28,18 @@ export interface MealProvisionDetails {
   dailySelections: DailyMealSelection[];
 }
 
+export interface PassportUploadDetails {
+  file: File | null;
+  fileName: string;
+  fileUrl: string;
+}
+
 export interface DomesticTravelSpecificDetails {
   purposeOfTravel: string;
   tripType: 'One Way' | 'Round Trip';
   itinerary: ItinerarySegment[];
   mealProvisions: MealProvisionDetails;
+  passportUpload?: PassportUploadDetails;
 }
 
 @Component({
@@ -60,6 +67,14 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     refreshment: 0
   };
 
+  // Passport upload
+  passportFile: File | null = null;
+  passportFileName: string = '';
+  passportFileUrl: string = '';
+  passportFileError: string = '';
+  allowedFileTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  maxFileSize = 10 * 1024 * 1024; // 10MB
+
   constructor(
     private fb: FormBuilder,
     private formUtils: FormUtilsService,
@@ -74,6 +89,12 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     // When initialData changes (e.g., loaded from API in edit mode), rebuild the form
     if (changes['initialData'] && !changes['initialData'].firstChange && this.travelForm) {
       this.initForm();  // Rebuild form with new data
+    }
+
+    // Load existing passport file URL if available
+    if (changes['initialData'] && this.initialData?.passportUpload) {
+      this.passportFileName = this.initialData.passportUpload.fileName || '';
+      this.passportFileUrl = this.initialData.passportUpload.fileUrl || '';
     }
   }
 
@@ -122,6 +143,11 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
 
   get dailyMealSelectionsArray(): FormArray {
     return this.travelForm.get('mealProvisions.dailySelections') as FormArray;
+  }
+
+  // Check if trip type allows adding itinerary segments (only Round Trip)
+  get canAddItinerarySegment(): boolean {
+    return this.travelForm.get('tripType')?.value === 'Round Trip';
   }
 
   // Form group creators
@@ -279,9 +305,55 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     this.backClick.emit();
   }
 
+  // Passport file handling
+  onPassportFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+
+      // Validate file type
+      if (!this.allowedFileTypes.includes(file.type)) {
+        this.passportFileError = 'Please upload a PDF, JPG, or PNG file.';
+        this.passportFile = null;
+        this.passportFileName = '';
+        return;
+      }
+
+      // Validate file size
+      if (file.size > this.maxFileSize) {
+        this.passportFileError = 'File size must not exceed 10MB.';
+        this.passportFile = null;
+        this.passportFileName = '';
+        return;
+      }
+
+      this.passportFileError = '';
+      this.passportFile = file;
+      this.passportFileName = file.name;
+    }
+  }
+
+  removePassportFile(): void {
+    this.passportFile = null;
+    this.passportFileName = '';
+    this.passportFileUrl = '';
+    this.passportFileError = '';
+  }
+
   // Public methods for wizard integration
   getFormData(): DomesticTravelSpecificDetails {
-    return this.travelForm.value;
+    return {
+      ...this.travelForm.value,
+      passportUpload: {
+        file: this.passportFile,
+        fileName: this.passportFileName,
+        fileUrl: this.passportFileUrl
+      }
+    };
+  }
+
+  getPassportFile(): File | null {
+    return this.passportFile;
   }
 
   isValid(): boolean {

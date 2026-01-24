@@ -35,6 +35,8 @@ export interface User {
 }
 
 export interface AuthResponse {
-  token: string;
-  user: Partial<User>;
+  success: boolean;
+  message: string;
+  data: Partial<User>;
+  meta?: any;
 }

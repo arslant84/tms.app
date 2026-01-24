@@ -6,7 +6,7 @@
         <i class="bi bi-gear header-icon"></i>
         <h1 class="page-title">Notification Preferences</h1>
       </div>
-      <p class="page-subtitle">Manage how and when you receive notifications</p>
+      <p class="page-subtitle">Manage how you receive notifications for workflow events</p>
     </div>
     <button class="btn btn-outline-secondary" routerLink="/notifications">
       <i class="bi bi-arrow-left"></i>
@@ -25,12 +25,12 @@
   <!-- Preferences Form -->
   <div *ngIf="!isLoading" class="preferences-content">
     <form [formGroup]="preferencesForm" (ngSubmit)="onSubmit()">
-      <!-- General Settings Card -->
+      <!-- Notification Channels Card -->
       <div class="preferences-card">
         <div class="card-header">
           <h2 class="card-title">
-            <i class="bi bi-bell"></i>
-            General Settings
+            <i class="bi bi-broadcast"></i>
+            Notification Channels
           </h2>
           <p class="card-subtitle">Choose how you want to receive notifications</p>
         </div>
@@ -43,7 +43,7 @@
                 <i class="bi bi-envelope"></i>
                 Email Notifications
               </label>
-              <p class="check-description">Receive notifications via email</p>
+              <p class="check-description">Receive notifications via email when workflow events occur</p>
             </div>
             <div class="form-check form-switch">
               <input
@@ -61,7 +61,7 @@
                 <i class="bi bi-app-indicator"></i>
                 In-App Notifications
               </label>
-              <p class="check-description">Show notifications in the application</p>
+              <p class="check-description">Show notifications in the application notification center</p>
             </div>
             <div class="form-check form-switch">
               <input
@@ -71,132 +71,196 @@
                 formControlName="in_app_notifications_enabled" />
             </div>
           </div>
-
-          <!-- Push Notifications -->
-          <div class="form-check-item">
-            <div class="check-content">
-              <label class="form-check-label">
-                <i class="bi bi-phone"></i>
-                Push Notifications
-              </label>
-              <p class="check-description">Receive push notifications on your devices</p>
-            </div>
-            <div class="form-check form-switch">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="pushNotifications"
-                formControlName="push_notifications_enabled" />
-            </div>
-          </div>
-
-          <!-- Digest Frequency -->
-          <div class="form-group">
-            <label for="digestFrequency" class="form-label">
-              <i class="bi bi-clock-history"></i>
-              Notification Digest Frequency
-            </label>
-            <select
-              id="digestFrequency"
-              class="form-select"
-              formControlName="digest_frequency">
-              <option value="instant">Instant (Real-time)</option>
-              <option value="hourly">Hourly Summary</option>
-              <option value="daily">Daily Digest</option>
-              <option value="weekly">Weekly Digest</option>
-            </select>
-            <small class="form-text">Choose how often you want to receive notification summaries</small>
-          </div>
         </div>
       </div>
 
-      <!-- Quiet Hours Card -->
-      <div class="preferences-card">
+      <!-- Workflow Event Subscriptions Card -->
+      <div class="preferences-card" *ngIf="workflowEventTypes.length > 0">
         <div class="card-header">
           <h2 class="card-title">
-            <i class="bi bi-moon"></i>
-            Quiet Hours
+            <i class="bi bi-diagram-3"></i>
+            Workflow Event Subscriptions
           </h2>
-          <p class="card-subtitle">Set times when you don't want to be disturbed</p>
+          <p class="card-subtitle">Choose which workflow events you want to be notified about</p>
         </div>
 
         <div class="card-body">
-          <!-- Enable Quiet Hours -->
-          <div class="form-check-item">
-            <div class="check-content">
-              <label class="form-check-label">
-                Enable Quiet Hours
-              </label>
-              <p class="check-description">Mute notifications during specified hours</p>
-            </div>
-            <div class="form-check form-switch">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="quietHours"
-                formControlName="quiet_hours_enabled" />
-            </div>
-          </div>
-
-          <!-- Quiet Hours Time Range -->
-          <div class="time-range-group" *ngIf="preferencesForm.get('quiet_hours_enabled')?.value">
-            <div class="form-group">
-              <label for="quietHoursStart" class="form-label">Start Time</label>
-              <input
-                type="time"
-                id="quietHoursStart"
-                class="form-control"
-                formControlName="quiet_hours_start" />
-            </div>
-            <div class="time-separator">to</div>
-            <div class="form-group">
-              <label for="quietHoursEnd" class="form-label">End Time</label>
-              <input
-                type="time"
-                id="quietHoursEnd"
-                class="form-control"
-                formControlName="quiet_hours_end" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Event Subscriptions Card -->
-      <div class="preferences-card" *ngIf="eventTypes.length > 0">
-        <div class="card-header">
-          <h2 class="card-title">
-            <i class="bi bi-list-check"></i>
-            Event Subscriptions
-          </h2>
-          <p class="card-subtitle">Choose which events you want to be notified about</p>
-        </div>
-
-        <div class="card-body">
-          <div *ngFor="let category of uniqueCategories" class="category-section">
-            <h3 class="category-title">{{ category | titlecase }}</h3>
+          <!-- Approval Events -->
+          <div class="category-section" *ngIf="getEventTypesByCategory('approval').length > 0">
+            <h3 class="category-title">
+              <i class="bi bi-check-circle"></i>
+              Approval Events
+            </h3>
+            <p class="category-description">Notifications related to approval workflow actions</p>
 
             <div class="event-list">
               <div
-                *ngFor="let eventType of getEventTypesByCategory(category)"
+                *ngFor="let eventType of getEventTypesByCategory('approval')"
                 class="event-item">
                 <div class="event-content">
-                  <div class="event-name">{{ eventType.display_name }}</div>
+                  <div class="event-name">{{ formatEventName(eventType.name) }}</div>
                   <div class="event-description" *ngIf="eventType.description">
                     {{ eventType.description }}
                   </div>
                 </div>
-                <div class="form-check form-switch">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    [id]="'event-' + eventType.id"
-                    [checked]="isSubscribed(eventType.id)"
-                    (change)="toggleSubscription(eventType)"
-                    [disabled]="!eventType.is_active" />
+                <div class="subscription-toggles">
+                  <div class="toggle-group" title="Email notifications">
+                    <i class="bi bi-envelope"></i>
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [checked]="isSubscribedEmail(eventType.id)"
+                      (change)="toggleEmailSubscription(eventType)"
+                      [disabled]="!preferencesForm.get('email_notifications_enabled')?.value" />
+                  </div>
+                  <div class="toggle-group" title="In-app notifications">
+                    <i class="bi bi-app-indicator"></i>
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [checked]="isSubscribedInApp(eventType.id)"
+                      (change)="toggleInAppSubscription(eventType)"
+                      [disabled]="!preferencesForm.get('in_app_notifications_enabled')?.value" />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Status Update Events -->
+          <div class="category-section" *ngIf="getEventTypesByCategory('status_update').length > 0">
+            <h3 class="category-title">
+              <i class="bi bi-arrow-repeat"></i>
+              Status Updates
+            </h3>
+            <p class="category-description">Notifications when request status changes</p>
+
+            <div class="event-list">
+              <div
+                *ngFor="let eventType of getEventTypesByCategory('status_update')"
+                class="event-item">
+                <div class="event-content">
+                  <div class="event-name">{{ formatEventName(eventType.name) }}</div>
+                  <div class="event-description" *ngIf="eventType.description">
+                    {{ eventType.description }}
+                  </div>
+                </div>
+                <div class="subscription-toggles">
+                  <div class="toggle-group" title="Email notifications">
+                    <i class="bi bi-envelope"></i>
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [checked]="isSubscribedEmail(eventType.id)"
+                      (change)="toggleEmailSubscription(eventType)"
+                      [disabled]="!preferencesForm.get('email_notifications_enabled')?.value" />
+                  </div>
+                  <div class="toggle-group" title="In-app notifications">
+                    <i class="bi bi-app-indicator"></i>
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [checked]="isSubscribedInApp(eventType.id)"
+                      (change)="toggleInAppSubscription(eventType)"
+                      [disabled]="!preferencesForm.get('in_app_notifications_enabled')?.value" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Events -->
+          <div class="category-section" *ngIf="getEventTypesByCategory('system').length > 0">
+            <h3 class="category-title">
+              <i class="bi bi-gear"></i>
+              System Notifications
+            </h3>
+            <p class="category-description">General system and administrative notifications</p>
+
+            <div class="event-list">
+              <div
+                *ngFor="let eventType of getEventTypesByCategory('system')"
+                class="event-item">
+                <div class="event-content">
+                  <div class="event-name">{{ formatEventName(eventType.name) }}</div>
+                  <div class="event-description" *ngIf="eventType.description">
+                    {{ eventType.description }}
+                  </div>
+                </div>
+                <div class="subscription-toggles">
+                  <div class="toggle-group" title="Email notifications">
+                    <i class="bi bi-envelope"></i>
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [checked]="isSubscribedEmail(eventType.id)"
+                      (change)="toggleEmailSubscription(eventType)"
+                      [disabled]="!preferencesForm.get('email_notifications_enabled')?.value" />
+                  </div>
+                  <div class="toggle-group" title="In-app notifications">
+                    <i class="bi bi-app-indicator"></i>
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [checked]="isSubscribedInApp(eventType.id)"
+                      (change)="toggleInAppSubscription(eventType)"
+                      [disabled]="!preferencesForm.get('in_app_notifications_enabled')?.value" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reminder Events -->
+          <div class="category-section" *ngIf="getEventTypesByCategory('reminder').length > 0">
+            <h3 class="category-title">
+              <i class="bi bi-bell"></i>
+              Reminders
+            </h3>
+            <p class="category-description">SLA and deadline reminder notifications</p>
+
+            <div class="event-list">
+              <div
+                *ngFor="let eventType of getEventTypesByCategory('reminder')"
+                class="event-item">
+                <div class="event-content">
+                  <div class="event-name">{{ formatEventName(eventType.name) }}</div>
+                  <div class="event-description" *ngIf="eventType.description">
+                    {{ eventType.description }}
+                  </div>
+                </div>
+                <div class="subscription-toggles">
+                  <div class="toggle-group" title="Email notifications">
+                    <i class="bi bi-envelope"></i>
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [checked]="isSubscribedEmail(eventType.id)"
+                      (change)="toggleEmailSubscription(eventType)"
+                      [disabled]="!preferencesForm.get('email_notifications_enabled')?.value" />
+                  </div>
+                  <div class="toggle-group" title="In-app notifications">
+                    <i class="bi bi-app-indicator"></i>
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [checked]="isSubscribedInApp(eventType.id)"
+                      (change)="toggleInAppSubscription(eventType)"
+                      [disabled]="!preferencesForm.get('in_app_notifications_enabled')?.value" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Event Types Message -->
+      <div class="preferences-card" *ngIf="workflowEventTypes.length === 0 && !isLoading">
+        <div class="card-body empty-state">
+          <i class="bi bi-info-circle empty-icon"></i>
+          <h3>No Event Types Available</h3>
+          <p>Workflow event types have not been configured yet. Contact your administrator.</p>
         </div>
       </div>
 

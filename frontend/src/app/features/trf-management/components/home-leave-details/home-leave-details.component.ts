@@ -3,11 +3,18 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 
+export interface PassportUploadDetails {
+  file: File | null;
+  fileName: string;
+  fileUrl: string;
+}
+
 export interface HomeLeaveDetails {
   purpose: string;
   tripType: 'One Way' | 'Round Trip';
   itinerary: any[];
   advanceBankDetails?: any;
+  passportUpload?: PassportUploadDetails;
 }
 
 @Component({
@@ -24,6 +31,14 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   homeLeaveForm!: FormGroup;
   weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+  // Passport upload
+  passportFile: File | null = null;
+  passportFileName: string = '';
+  passportFileUrl: string = '';
+  passportFileError: string = '';
+  allowedFileTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  maxFileSize = 10 * 1024 * 1024; // 10MB
+
   constructor(private fb: FormBuilder, private formUtils: FormUtilsService) {}
 
   ngOnInit(): void {
@@ -34,6 +49,12 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     // When initialData changes (e.g., loaded from API in edit mode), rebuild the form
     if (changes['initialData'] && !changes['initialData'].firstChange && this.homeLeaveForm) {
       this.initForm();  // Rebuild form with new data
+    }
+
+    // Load existing passport file URL if available
+    if (changes['initialData'] && this.initialData?.passportUpload) {
+      this.passportFileName = this.initialData.passportUpload.fileName || '';
+      this.passportFileUrl = this.initialData.passportUpload.fileUrl || '';
     }
   }
 
@@ -120,9 +141,55 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     }
   }
 
+  // Passport file handling
+  onPassportFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+
+      // Validate file type
+      if (!this.allowedFileTypes.includes(file.type)) {
+        this.passportFileError = 'Please upload a PDF, JPG, or PNG file.';
+        this.passportFile = null;
+        this.passportFileName = '';
+        return;
+      }
+
+      // Validate file size
+      if (file.size > this.maxFileSize) {
+        this.passportFileError = 'File size must not exceed 10MB.';
+        this.passportFile = null;
+        this.passportFileName = '';
+        return;
+      }
+
+      this.passportFileError = '';
+      this.passportFile = file;
+      this.passportFileName = file.name;
+    }
+  }
+
+  removePassportFile(): void {
+    this.passportFile = null;
+    this.passportFileName = '';
+    this.passportFileUrl = '';
+    this.passportFileError = '';
+  }
+
   // Public methods for wizard integration
   getFormData(): HomeLeaveDetails {
-    return this.homeLeaveForm.getRawValue();
+    return {
+      ...this.homeLeaveForm.getRawValue(),
+      passportUpload: {
+        file: this.passportFile,
+        fileName: this.passportFileName,
+        fileUrl: this.passportFileUrl
+      }
+    };
+  }
+
+  getPassportFile(): File | null {
+    return this.passportFile;
   }
 
   isValid(): boolean {

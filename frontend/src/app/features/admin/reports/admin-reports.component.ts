@@ -197,4 +197,19 @@ export class AdminReportsComponent implements OnInit {
   printReport(): void {
     window.print();
   }
+
+  // Get max value from processing time chart for proper scaling
+  getProcessingTimeMax(): number {
+    const data = this.processingTimeChart.datasets[0]?.data || [];
+    if (data.length === 0) return 100;
+    const max = Math.max(...data);
+    // Add 20% padding to the max value for better visualization
+    return max > 0 ? max * 1.2 : 100;
+  }
+
+  // Calculate bar height percentage based on max value
+  getBarHeightPercent(value: number): number {
+    const max = this.getProcessingTimeMax();
+    return Math.min((value / max) * 100, 100);
+  }
 }

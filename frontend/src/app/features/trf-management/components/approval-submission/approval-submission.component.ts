@@ -15,9 +15,6 @@ export interface ApprovalStep {
 
 export interface ApprovalSubmissionData {
   additionalComments: string;
-  confirmPolicy: boolean;
-  confirmManagerApproval: boolean;
-  confirmTermsAndConditions?: boolean;
 }
 
 @Component({
@@ -48,7 +45,7 @@ export class ApprovalSubmissionComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Determine if international travel (requires T&C confirmation)
+    // Determine if international travel
     this.isInternationalTravel =
       this.travelType === 'Overseas' || this.travelType === 'Home Leave';
 
@@ -58,17 +55,8 @@ export class ApprovalSubmissionComponent implements OnInit {
 
   private initForm(): void {
     this.approvalForm = this.fb.group({
-      additionalComments: [this.initialData.additionalComments || ''],
-      confirmPolicy: [false, Validators.requiredTrue],
-      confirmManagerApproval: [false, Validators.requiredTrue],
-      confirmTermsAndConditions: [false]
+      additionalComments: [this.initialData.additionalComments || '']
     });
-
-    // Add T&C validation for international travel
-    if (this.isInternationalTravel) {
-      this.approvalForm.get('confirmTermsAndConditions')?.setValidators([Validators.requiredTrue]);
-      this.approvalForm.get('confirmTermsAndConditions')?.updateValueAndValidity();
-    }
   }
 
   private initializeApprovalWorkflow(): void {

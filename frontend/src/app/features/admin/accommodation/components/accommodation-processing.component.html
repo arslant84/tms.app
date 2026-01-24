@@ -206,15 +206,17 @@
                   <td>
                     <div class="action-buttons">
                       <button
-                        class="btn-select"
-                        [class.selected]="selectedRequest?.id === request.id"
-                        (click)="selectRequest(request)">
+                        class="btn btn-sm btn-icon"
+                        [class.btn-primary]="selectedRequest?.id === request.id"
+                        [class.btn-outline-primary]="selectedRequest?.id !== request.id"
+                        (click)="selectRequest(request)"
+                        title="{{ selectedRequest?.id === request.id ? 'Selected' : 'Select for processing' }}">
                         <i class="bi bi-check2-circle"></i>
-                        {{ selectedRequest?.id === request.id ? 'Selected' : 'Select' }}
                       </button>
                       <button
-                        class="btn-view"
-                        (click)="viewRequest(request.id)">
+                        class="btn btn-sm btn-outline-primary btn-icon"
+                        (click)="viewRequest(request.id)"
+                        title="View Details">
                         <i class="bi bi-eye"></i>
                       </button>
                     </div>
@@ -443,16 +445,17 @@
               <td>
                 <div class="action-buttons">
                   <button
-                    class="btn-cancel"
-                    (click)="cancelBooking(booking)"
-                    [disabled]="isProcessing || booking.status === 'Completed'">
-                    <i class="bi bi-x-circle"></i>
-                    Cancel
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="viewRequest(booking.id)"
+                    title="View Details">
+                    <i class="bi bi-eye"></i>
                   </button>
                   <button
-                    class="btn-view"
-                    (click)="viewRequest(booking.id)">
-                    <i class="bi bi-eye"></i>
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    (click)="cancelBooking(booking)"
+                    [disabled]="isProcessing || booking.status === 'Completed'"
+                    title="Cancel Booking">
+                    <i class="bi bi-x-circle"></i>
                   </button>
                 </div>
               </td>
