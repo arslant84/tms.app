@@ -56,58 +56,71 @@
   }
 }
 
-// Statistics Cards Grid
+// Statistics Cards Grid - Unified with other admin components
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: vars.$spacing-6;
+  gap: vars.$spacing-md;
+  grid-template-columns: repeat(1, 1fr);
   margin-bottom: vars.$spacing-6;
+
+  @media (width >= 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (width >= 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .stat-card {
   background: vars.$white;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
-  padding: vars.$spacing-5;
   box-shadow: vars.$shadow-sm;
-  transition: all 0.2s;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 
   &:hover {
     box-shadow: vars.$shadow-md;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
 
-  .stat-header {
+  .stat-card-header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: row;
     align-items: center;
-    margin-bottom: vars.$spacing-3;
+    justify-content: space-between;
+    padding: vars.$spacing-md vars.$spacing-5 vars.$spacing-2;
 
-    .stat-title {
+    .stat-card-title {
       font-size: vars.$font-size-sm;
       font-weight: vars.$font-weight-medium;
-      color: vars.$text-secondary;
+      color: vars.$gray-700;
     }
 
     .stat-icon {
-      width: 1.25rem;
-      height: 1.25rem;
-      color: vars.$text-secondary;
-      opacity: 0.7;
+      width: 1rem;
+      height: 1rem;
+      color: vars.$gray-500;
+      font-size: vars.$font-size-base;
     }
   }
 
-  .stat-value {
-    font-size: vars.$font-size-3xl;
-    font-weight: vars.$font-weight-bold;
-    color: vars.$text-primary;
-    margin-bottom: vars.$spacing-1;
-  }
+  .stat-card-content {
+    padding: 0 vars.$spacing-5 vars.$spacing-md;
 
-  .stat-description {
-    font-size: vars.$font-size-xs;
-    color: vars.$text-secondary;
-    margin: 0;
+    .stat-value {
+      font-size: vars.$font-size-xl;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$gray-900;
+      line-height: 1;
+      margin-bottom: vars.$spacing-1;
+    }
+
+    .stat-description {
+      font-size: vars.$font-size-xs;
+      color: vars.$gray-600;
+      margin: 0;
+    }
   }
 }
 
@@ -454,6 +467,27 @@
 
   &.show {
     opacity: 1;
+  }
+}
+
+// Action buttons - circular icon buttons
+.action-buttons {
+  display: flex;
+  gap: vars.$spacing-2;
+  justify-content: flex-end;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: vars.$font-size-sm;
   }
 }
 

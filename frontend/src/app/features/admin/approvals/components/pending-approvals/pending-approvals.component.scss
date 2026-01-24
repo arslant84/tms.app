@@ -309,12 +309,25 @@ $gray-900: #1F2937; // Darkest text
   }
 }
 
-// ========== ACTION BUTTONS ==========
+// Action buttons - circular icon buttons (override any component .btn border-radius)
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: vars.$spacing-2;
   justify-content: flex-end;
+}
 
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%; // Circular buttons
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: vars.$font-size-sm;
+  }
 }
 
 // ========== STATES ==========

@@ -19,7 +19,11 @@ CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
 # CSP - Restrict connections to production backend URL
 # Configure CSP_BACKEND_URL in environment variables to match your production backend
 CSP_BACKEND_URL = config('CSP_BACKEND_URL', default='https://api.yourdomain.com')
-CSP_CONNECT_SRC = ("'self'", CSP_BACKEND_URL, f"wss://{CSP_BACKEND_URL.replace('https://', '')}")
+CONTENT_SECURITY_POLICY['DIRECTIVES']['connect-src'] = (
+    "'self'",
+    CSP_BACKEND_URL,
+    f"wss://{CSP_BACKEND_URL.replace('https://', '')}"
+)
 
 # HSTS (HTTP Strict Transport Security) - Production only
 SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)  # 1 year
@@ -58,12 +62,31 @@ DATABASES['default']['OPTIONS'] = {
 
 # Static files - Use WhiteNoise for static file serving
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Django 5.x+ uses STORAGES instead of deprecated STATICFILES_STORAGE
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Production logging - Log to file with rotation
+# Add verbose formatter for production
+LOGGING['formatters']['verbose'] = {
+    'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+    'style': '{',
+}
+
+# Configure log directory (create via deployment script)
+import os
+LOG_DIR = config('LOG_DIR', default='/var/log/tms')
+
 LOGGING['handlers']['production_file'] = {
     'class': 'logging.handlers.RotatingFileHandler',
-    'filename': '/var/log/tms/django.log',  # Adjust path as needed
+    'filename': os.path.join(LOG_DIR, 'django.log'),
     'maxBytes': 1024 * 1024 * 10,  # 10 MB
     'backupCount': 10,
     'formatter': 'verbose',
@@ -71,7 +94,7 @@ LOGGING['handlers']['production_file'] = {
 
 LOGGING['handlers']['error_file'] = {
     'class': 'logging.handlers.RotatingFileHandler',
-    'filename': '/var/log/tms/django_errors.log',  # Adjust path as needed
+    'filename': os.path.join(LOG_DIR, 'django_errors.log'),
     'maxBytes': 1024 * 1024 * 10,  # 10 MB
     'backupCount': 10,
     'formatter': 'verbose',

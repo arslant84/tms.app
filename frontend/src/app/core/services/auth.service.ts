@@ -70,27 +70,27 @@ export class AuthService {
     return this.http.post<AuthResponse>(url, body, { headers, withCredentials: true }).pipe(
       map(response => {
         console.log('Login successful, response:', response);
-        console.log('Full user data from backend:', response.user);
+        console.log('Full user data from backend:', response.data);
 
         // SECURITY: No localStorage - token is in HttpOnly cookie
         // Backend sets the cookie, we just store user data in memory
 
         const user: User = {
-          id: response.user.id!,
-          name: response.user.name || email.split('@')[0],
-          email: response.user.email || email,
-          role: response.user.role || '' as any,
-          department: response.user.department || '',
-          is_admin: response.user.is_admin || false,
-          is_active: response.user.is_active !== undefined ? response.user.is_active : true,
+          id: response.data.id!,
+          name: response.data.name || email.split('@')[0],
+          email: response.data.email || email,
+          role: response.data.role || '' as any,
+          department: response.data.department || '',
+          is_admin: response.data.is_admin || false,
+          is_active: response.data.is_active !== undefined ? response.data.is_active : true,
           // Include permissions array from backend
-          permissions: response.user.permissions || [],
+          permissions: response.data.permissions || [],
           // Include all additional fields from backend
-          staff_id: response.user.staff_id,
-          phone: response.user.phone,
-          gender: response.user.gender,
-          profile_photo: response.user.profile_photo,
-          last_login_at: response.user.last_login_at
+          staff_id: response.data.staff_id,
+          phone: response.data.phone,
+          gender: response.data.gender,
+          profile_photo: response.data.profile_photo,
+          last_login_at: response.data.last_login_at
         };
 
         console.log('Stored user data:', user);
@@ -123,6 +123,14 @@ export class AuthService {
     );
   }
 
+  /**
+   * Clear user state without making API call (used by interceptor to avoid loops)
+   */
+  clearUserState(): void {
+    this.currentUserSubject.next(null);
+    this.initializationRequest$ = undefined;
+  }
+
   logout(): void {
     // Call the backend logout endpoint
     const url = `${this.apiUrl}/api/logout/`;
@@ -136,7 +144,7 @@ export class AuthService {
     ).subscribe(() => {
       // SECURITY: Cookie is cleared by backend
       // Just clear user data from memory
-      this.currentUserSubject.next(null);
+      this.clearUserState();
       this.router.navigate(['/auth/login']);
     });
   }

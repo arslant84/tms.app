@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface TmsApp_Roles_Permission {
@@ -47,7 +48,20 @@ export class TmsApp_Core_Services_RolesService {
 
   /** Get all roles with permissions */
   getRoles(): Observable<TmsApp_Roles_RoleWithPermissions[]> {
-    return this.http.get<TmsApp_Roles_RoleWithPermissions[]>(this.rolesUrl);
+    console.log('Fetching roles from:', this.rolesUrl);
+    return this.http.get<any>(this.rolesUrl).pipe(
+      map(response => {
+        console.log('Roles API raw response:', response);
+        // Handle wrapped response (data field) or direct array
+        const roles = Array.isArray(response) ? response : (response?.data || response?.results || []);
+        console.log('Parsed roles:', roles);
+        // Map permissions to permissionIds for each role
+        return roles.map((role: any) => ({
+          ...role,
+          permissionIds: role.permissionIds || (role.permissions || []).map((p: any) => p.id)
+        }));
+      })
+    );
   }
 
   /** Create role */
@@ -67,6 +81,15 @@ export class TmsApp_Core_Services_RolesService {
 
   /** Get all permissions */
   getPermissions(): Observable<TmsApp_Roles_Permission[]> {
-    return this.http.get<TmsApp_Roles_Permission[]>(this.permissionsUrl);
+    console.log('Fetching permissions from:', this.permissionsUrl);
+    return this.http.get<any>(this.permissionsUrl).pipe(
+      map(response => {
+        console.log('Permissions API raw response:', response);
+        // Handle wrapped response (data field) or direct array
+        const perms = Array.isArray(response) ? response : (response?.data || response?.results || []);
+        console.log('Parsed permissions:', perms);
+        return perms;
+      })
+    );
   }
 }

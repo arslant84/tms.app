@@ -112,10 +112,10 @@
             </td>
             <td>
               <div class="action-buttons">
-                <button class="btn btn-sm btn-outline-primary" (click)="navigateToEdit(booking.id, $event)">
+                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="navigateToEdit(booking.id, $event)" title="Edit">
                   <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger" (click)="deleteBooking(booking.id, $event)">
+                <button class="btn btn-sm btn-outline-danger btn-icon" (click)="deleteBooking(booking.id, $event)" title="Delete">
                   <i class="bi bi-trash"></i>
                 </button>
               </div>

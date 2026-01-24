@@ -1,5 +1,5 @@
 # Backend Dependencies - Pinned Versions for Security and Reproducibility
-# Last updated: 2026-01-11
+# Last updated: 2026-01-18
 # SECURITY: All versions are pinned to prevent unexpected updates and vulnerabilities
 
 # Core Django Framework
@@ -16,6 +16,10 @@ django-cors-headers==4.3.1
 psycopg2-binary==2.9.9
 
 # JWT and Authentication
+PyJWT==2.8.0
+cryptography==42.0.5
+cffi==1.16.0
+pycparser==2.21
 python-jose==3.4.0
 passlib==1.7.4
 
@@ -29,3 +33,44 @@ django-csp==3.7
 
 # Timezone Support
 pytz==2025.2
+
+# API Documentation
+drf-spectacular==0.29.0
+jsonschema==4.21.1
+jsonschema-specifications==2023.12.1
+referencing==0.33.0
+rpds-py==0.18.0
+attrs==23.2.0
+inflection==0.5.1
+PyYAML==6.0.1
+uritemplate==4.1.1
+
+# Excel Reports
+openpyxl==3.1.2
+et-xmlfile==1.1.0
+
+# PDF Reports
+reportlab==4.1.0
+
+# Production Dependencies
+whitenoise==6.6.0
+gunicorn==21.2.0
+
+# Security Scanning & Code Quality
+bandit==1.7.7
+pip-audit==2.7.0
+pre-commit==3.6.0
+
+# Testing
+pytest==8.0.0
+pytest-django==4.7.0
+pytest-cov==4.1.0
+
+# Common transitive dependencies
+asgiref==3.7.2
+sqlparse==0.4.4
+typing_extensions==4.10.0
+packaging==24.0
+pluggy==1.4.0
+iniconfig==2.0.0
+coverage==7.4.1

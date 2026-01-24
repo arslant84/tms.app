@@ -6,8 +6,10 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: vars.$spacing-md;
+  padding: vars.$spacing-6 vars.$spacing-8;
   box-sizing: border-box;
+  background-color: vars.$gray-50;
+  min-height: 100vh;
 }
 
 .page-header {
@@ -78,9 +80,11 @@
   align-items: center;
   gap: vars.$spacing-md;
   margin-bottom: vars.$spacing-6;
-  padding: vars.$spacing-md;
-  background: vars.$gray-50;
+  padding: vars.$spacing-md vars.$spacing-5;
+  background: vars.$white;
   border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-sm;
+  flex-wrap: wrap;
 
   .badge {
     padding: vars.$badge-padding-y vars.$badge-padding-x;

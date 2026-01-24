@@ -2,9 +2,14 @@
 @use '../../../../../styles/variables' as vars;
 
 .preferences-container {
-  padding: vars.$spacing-6;
-  max-width: 1000px;
-  margin: 0 auto;
+  /* Full-width adaptive layout */
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: vars.$spacing-6 vars.$spacing-8;
+  box-sizing: border-box;
+  background-color: vars.$gray-50;
+  min-height: 100vh;
 
   @media (width <= 768px) {
     padding: vars.$spacing-md;
@@ -48,24 +53,59 @@
     color: vars.$text-secondary;
     margin: 0;
   }
+}
 
-  .btn-outline-secondary {
-    display: flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    padding: vars.$spacing-2 vars.$spacing-5;
-    font-size: vars.$font-size-sm;
-    font-weight: vars.$font-weight-medium;
-    border-radius: vars.$radius-base;
-    background: vars.$white;
-    border: 1px solid vars.$gray-300;
-    color: vars.$gray-700;
-    transition: all 0.2s;
+// Buttons
+.btn-outline-secondary {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-2;
+  padding: vars.$spacing-2 vars.$spacing-md;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
+  border-radius: vars.$radius-base;
+  background: vars.$white;
+  border: 1px solid vars.$gray-300;
+  color: vars.$gray-700;
+  cursor: pointer;
+  transition: all 0.2s;
 
-    &:hover {
-      background: vars.$gray-50;
-      border-color: vars.$gray-400;
-    }
+  &:hover {
+    background: vars.$gray-50;
+    border-color: vars.$gray-400;
+  }
+
+  i {
+    font-size: vars.$font-size-base;
+  }
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-2;
+  padding: vars.$spacing-2 vars.$spacing-md;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
+  border-radius: vars.$radius-base;
+  background: vars.$primary-color;
+  border: 1px solid vars.$primary-color;
+  color: vars.$white;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: vars.$primary-hover;
+    border-color: vars.$primary-hover;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  i {
+    font-size: vars.$font-size-base;
   }
 }
 
@@ -77,16 +117,21 @@
   justify-content: center;
   padding: vars.$spacing-10 vars.$spacing-6;
   text-align: center;
+  background: vars.$white;
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-sm;
 
   .spinner-border {
     width: 3rem;
     height: 3rem;
     margin-bottom: vars.$spacing-md;
+    color: vars.$primary-color;
   }
 
   p {
     color: vars.$text-secondary;
     font-size: vars.$font-size-base;
+    margin: 0;
   }
 }
 
@@ -100,54 +145,50 @@
 // Preferences Card
 .preferences-card {
   background: vars.$white;
-  border: 1px solid vars.$border-light;
   border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-sm;
   overflow: hidden;
 
   .card-header {
-    padding: vars.$spacing-6;
-    border-bottom: 1px solid vars.$border-light;
-    background: vars.$gray-50;
+    padding: vars.$spacing-5;
+    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
+    color: vars.$white;
 
     .card-title {
       display: flex;
       align-items: center;
-      gap: vars.$spacing-3;
+      gap: vars.$spacing-2;
       font-size: vars.$font-size-lg;
       font-weight: vars.$font-weight-semibold;
-      color: vars.$text-primary;
-      margin: 0 0 vars.$spacing-2 0;
+      margin: 0 0 vars.$spacing-1 0;
 
       i {
         font-size: vars.$font-size-xl;
-        color: vars.$primary-color;
       }
     }
 
     .card-subtitle {
       font-size: vars.$font-size-sm;
-      color: vars.$text-secondary;
+      opacity: 0.9;
       margin: 0;
     }
   }
 
   .card-body {
-    padding: vars.$spacing-6;
+    padding: vars.$spacing-5;
   }
 }
 
-// Form Check Item
+// Form Check Item (Channel toggles)
 .form-check-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: vars.$spacing-5;
-  border-radius: vars.$radius-base;
-  background: vars.$gray-50;
-  margin-bottom: vars.$spacing-md;
+  padding: vars.$spacing-4;
+  border-bottom: 1px solid vars.$border-light;
 
   &:last-child {
-    margin-bottom: 0;
+    border-bottom: none;
   }
 
   .check-content {
@@ -161,11 +202,10 @@
       font-weight: vars.$font-weight-medium;
       color: vars.$text-primary;
       margin-bottom: vars.$spacing-1;
-      cursor: pointer;
 
       i {
-        font-size: vars.$font-size-lg;
         color: vars.$primary-color;
+        font-size: vars.$font-size-lg;
       }
     }
 
@@ -177,12 +217,14 @@
   }
 
   .form-check {
+    padding: 0;
     margin: 0;
 
     .form-check-input {
       width: 3rem;
       height: 1.5rem;
       cursor: pointer;
+      border-radius: 1rem;
 
       &:checked {
         background-color: vars.$primary-color;
@@ -190,79 +232,9 @@
       }
 
       &:focus {
-        box-shadow: vars.$input-focus-shadow;
-        border-color: vars.$primary-color;
+        box-shadow: 0 0 0 0.25rem rgba(vars.$primary-color, 0.25);
       }
     }
-  }
-}
-
-// Form Group
-.form-group {
-  margin-bottom: vars.$spacing-6;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  .form-label {
-    display: flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    font-size: vars.$font-size-sm;
-    font-weight: vars.$font-weight-medium;
-    color: vars.$gray-700;
-    margin-bottom: vars.$spacing-2;
-
-    i {
-      font-size: vars.$font-size-base;
-      color: vars.$primary-color;
-    }
-  }
-
-  .form-select,
-  .form-control {
-    padding: vars.$spacing-2 vars.$spacing-3;
-    font-size: vars.$font-size-sm;
-    border: 1px solid vars.$gray-300;
-    border-radius: vars.$radius-base;
-    background-color: vars.$white;
-
-    &:focus {
-      border-color: vars.$primary-color;
-      box-shadow: vars.$input-focus-shadow;
-      outline: none;
-    }
-  }
-
-  .form-text {
-    display: block;
-    margin-top: vars.$spacing-2;
-    font-size: vars.$font-size-xs;
-    color: vars.$text-secondary;
-  }
-}
-
-// Time Range Group
-.time-range-group {
-  display: flex;
-  align-items: flex-end;
-  gap: vars.$spacing-md;
-  margin-top: vars.$spacing-md;
-  padding: vars.$spacing-md;
-  background: vars.$gray-50;
-  border-radius: vars.$radius-base;
-
-  .form-group {
-    flex: 1;
-    margin-bottom: 0;
-  }
-
-  .time-separator {
-    padding-bottom: vars.$spacing-2;
-    font-size: vars.$font-size-sm;
-    color: vars.$text-secondary;
-    font-weight: vars.$font-weight-medium;
   }
 }
 
@@ -275,12 +247,23 @@
   }
 
   .category-title {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-2;
     font-size: vars.$font-size-base;
     font-weight: vars.$font-weight-semibold;
-    color: vars.$gray-700;
-    margin: 0 0 vars.$spacing-md 0;
-    padding-bottom: vars.$spacing-2;
-    border-bottom: 2px solid vars.$border-light;
+    color: vars.$text-primary;
+    margin: 0 0 vars.$spacing-1 0;
+
+    i {
+      color: vars.$primary-color;
+    }
+  }
+
+  .category-description {
+    font-size: vars.$font-size-sm;
+    color: vars.$text-secondary;
+    margin: 0 0 vars.$spacing-3 0;
   }
 }
 
@@ -288,61 +271,111 @@
 .event-list {
   display: flex;
   flex-direction: column;
-  gap: vars.$spacing-3;
+  gap: vars.$spacing-2;
 }
 
 .event-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: vars.$spacing-md;
-  border-radius: vars.$radius-base;
+  padding: vars.$spacing-3 vars.$spacing-4;
   background: vars.$gray-50;
+  border-radius: vars.$radius-base;
+  border: 1px solid vars.$border-light;
   transition: all 0.2s;
 
   &:hover {
-    background: vars.$gray-100;
+    background: vars.$white;
+    border-color: vars.$primary-color;
   }
 
   .event-content {
     flex: 1;
+    min-width: 0;
 
     .event-name {
       font-size: vars.$font-size-sm;
       font-weight: vars.$font-weight-medium;
       color: vars.$text-primary;
-      margin-bottom: vars.$spacing-1;
     }
 
     .event-description {
       font-size: vars.$font-size-xs;
       color: vars.$text-secondary;
+      margin-top: vars.$spacing-1;
     }
   }
 
-  .form-check {
-    margin: 0;
+  .subscription-toggles {
+    display: flex;
+    gap: vars.$spacing-4;
+    align-items: center;
 
-    .form-check-input {
-      width: 2.5rem;
-      height: 1.25rem;
-      cursor: pointer;
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      gap: vars.$spacing-2;
 
-      &:checked {
-        background-color: vars.$primary-color;
-        border-color: vars.$primary-color;
+      i {
+        color: vars.$gray-500;
+        font-size: vars.$font-size-sm;
       }
 
-      &:focus {
-        box-shadow: vars.$input-focus-shadow;
-        border-color: vars.$primary-color;
-      }
+      .form-check-input {
+        width: 2.5rem;
+        height: 1.25rem;
+        cursor: pointer;
+        margin: 0;
+        border-radius: 0.75rem;
 
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+        &:checked {
+          background-color: vars.$primary-color;
+          border-color: vars.$primary-color;
+
+          + i {
+            color: vars.$primary-color;
+          }
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        &:focus {
+          box-shadow: 0 0 0 0.2rem rgba(vars.$primary-color, 0.2);
+        }
       }
     }
+  }
+}
+
+// Empty State
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: vars.$spacing-10 vars.$spacing-6;
+  text-align: center;
+
+  .empty-icon {
+    font-size: 3rem;
+    color: vars.$gray-300;
+    margin-bottom: vars.$spacing-md;
+  }
+
+  h3 {
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-700;
+    margin-bottom: vars.$spacing-2;
+  }
+
+  p {
+    font-size: vars.$font-size-base;
+    color: vars.$text-secondary;
+    margin: 0;
   }
 }
 
@@ -350,62 +383,8 @@
 .action-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: vars.$spacing-md;
-  padding-top: vars.$spacing-6;
-  border-top: 1px solid vars.$border-light;
-
-  .btn {
-    display: flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    padding: vars.$spacing-3 vars.$spacing-6;
-    font-size: vars.$font-size-sm;
-    font-weight: vars.$font-weight-medium;
-    border-radius: vars.$radius-base;
-    transition: all 0.2s;
-
-    i {
-      font-size: vars.$font-size-base;
-    }
-  }
-
-  .btn-outline-secondary {
-    background: vars.$white;
-    border: 1px solid vars.$gray-300;
-    color: vars.$gray-700;
-
-    &:hover:not(:disabled) {
-      background: vars.$gray-50;
-      border-color: vars.$gray-400;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-
-  .btn-primary {
-    background: vars.$primary-color;
-    border: 1px solid vars.$primary-color;
-    color: vars.$white;
-
-    &:hover:not(:disabled) {
-      background: vars.$primary-hover;
-      border-color: vars.$primary-hover;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .spinner-border-sm {
-      width: 1rem;
-      height: 1rem;
-      border-width: 0.15em;
-    }
-  }
+  gap: vars.$spacing-3;
+  padding-top: vars.$spacing-4;
 }
 
 // Mobile Responsive
@@ -422,20 +401,10 @@
   .form-check-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: vars.$spacing-md;
+    gap: vars.$spacing-3;
 
     .form-check {
       align-self: flex-end;
-    }
-  }
-
-  .time-range-group {
-    flex-direction: column;
-    align-items: stretch;
-
-    .time-separator {
-      text-align: center;
-      padding-bottom: 0;
     }
   }
 
@@ -444,13 +413,14 @@
     align-items: flex-start;
     gap: vars.$spacing-3;
 
-    .form-check {
-      align-self: flex-end;
+    .subscription-toggles {
+      width: 100%;
+      justify-content: flex-end;
     }
   }
 
   .action-buttons {
-    flex-direction: column-reverse;
+    flex-direction: column;
 
     .btn {
       width: 100%;

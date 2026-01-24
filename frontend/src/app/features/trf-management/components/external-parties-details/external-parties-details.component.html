@@ -176,6 +176,65 @@
           <i class="bi bi-plus-circle"></i>
           Add Itinerary Segment
         </button>
+        <div *ngIf="externalForm.get('tripType')?.value === 'One Way'" class="mt-2">
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Additional itinerary segments are only available for Round Trip
+          </small>
+        </div>
+      </div>
+
+      <!-- Passport Details Section -->
+      <div class="mb-4">
+        <h3 class="h5 mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-file-earmark-text text-primary"></i>
+          Passport Details (Optional)
+        </h3>
+        <p class="text-muted small mb-3">
+          Upload a copy of the external party's passport for flight booking purposes.
+        </p>
+
+        <!-- File Input -->
+        <div>
+          <div *ngIf="!passportFileName && !passportFileUrl" class="border rounded p-4 text-center bg-light">
+            <label for="passportFileExternal" class="d-block mb-0" style="cursor: pointer;">
+              <i class="bi bi-cloud-arrow-up fs-1 text-primary"></i>
+              <span class="d-block mt-2">Click to upload or drag and drop</span>
+              <span class="d-block text-muted small">PDF, JPG, PNG (max 10MB)</span>
+            </label>
+            <input
+              type="file"
+              id="passportFileExternal"
+              class="d-none"
+              accept=".pdf,.jpg,.jpeg,.png"
+              (change)="onPassportFileSelected($event)">
+          </div>
+
+          <!-- File Preview -->
+          <div *ngIf="passportFileName || passportFileUrl" class="p-3 border rounded bg-light">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-file-earmark-pdf fs-3 text-danger me-3" *ngIf="passportFileName?.endsWith('.pdf')"></i>
+                <i class="bi bi-file-earmark-image fs-3 text-primary me-3" *ngIf="!passportFileName?.endsWith('.pdf')"></i>
+                <div>
+                  <div class="fw-medium">{{ passportFileName }}</div>
+                  <a *ngIf="passportFileUrl" [href]="passportFileUrl" target="_blank" class="small text-primary">
+                    <i class="bi bi-eye me-1"></i>View current file
+                  </a>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-danger btn-sm" (click)="removePassportFile()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <div *ngIf="passportFileError" class="alert alert-danger mt-2 py-2">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            {{ passportFileError }}
+          </div>
+        </div>
       </div>
 
       <!-- External Party Information -->

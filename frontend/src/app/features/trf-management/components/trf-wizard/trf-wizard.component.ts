@@ -139,10 +139,7 @@ export class TrfWizardComponent implements OnInit {
 
         // Pre-populate approval data (additional comments)
         this.approvalData = {
-          additionalComments: data.additional_comments || data.additionalComments || '',
-          confirmPolicy: false,
-          confirmManagerApproval: false,
-          confirmTermsAndConditions: false
+          additionalComments: data.additional_comments || data.additionalComments || ''
         };
 
         // Pre-populate travel-specific data based on type
@@ -167,6 +164,7 @@ export class TrfWizardComponent implements OnInit {
         const domesticDetails = data.domesticTravelDetails || {};
         const itineraryData = domesticDetails.itinerary || data.itinerary_segments || data.itinerary || [];
         const mealData = domesticDetails.mealProvision?.dailyMealSelections || data.daily_meals || data.daily_meal_selections || data.mealSelections || [];
+        const domesticPassport = this.extractPassportFileInfo(data.passport_details || data.passportDetails);
 
         this.domesticTravelData = {
           purposeOfTravel: domesticDetails.purpose || data.purpose || '',
@@ -174,7 +172,8 @@ export class TrfWizardComponent implements OnInit {
           itinerary: this.transformItineraryData(itineraryData),
           mealProvisions: {
             dailySelections: this.transformMealSelectionsData(mealData)
-          }
+          },
+          passportUpload: domesticPassport
         };
         break;
 
@@ -184,13 +183,15 @@ export class TrfWizardComponent implements OnInit {
         const overseasItinerary = overseasDetails.itinerary || data.itinerary_segments || data.itinerary || [];
         const bankDetails = overseasDetails.advanceBankDetails || data.bank_detail || data.advance_bank_details || data.bankDetails;
         const advanceAmounts = overseasDetails.advanceAmountRequested || data.advance_amounts || data.advance_amount_items || data.advanceAmounts || [];
+        const overseasPassport = this.extractPassportFileInfo(data.passport_details || data.passportDetails);
 
         this.overseasTravelData = {
           purpose: overseasDetails.purpose || data.purpose || '',
           tripType: data.trip_type || data.tripType || 'Round Trip',
           itinerary: this.transformItineraryData(overseasItinerary),
           advanceBankDetails: this.transformBankDetails(bankDetails),
-          advanceAmountRequested: this.transformAdvanceAmounts(advanceAmounts)
+          advanceAmountRequested: this.transformAdvanceAmounts(advanceAmounts),
+          passportUpload: overseasPassport
         };
         break;
 
@@ -200,13 +201,15 @@ export class TrfWizardComponent implements OnInit {
         const homeLeaveItinerary = homeLeaveDetails.itinerary || data.itinerary_segments || data.itinerary || [];
         const passportDetails = data.passport_details || data.passportDetails;
         const homeLeaveBank = homeLeaveDetails.advanceBankDetails || data.bank_detail || data.advance_bank_details || data.bankDetails;
+        const homeLeavePassport = this.extractPassportFileInfo(passportDetails);
 
         this.homeLeaveData = {
           purpose: homeLeaveDetails.purpose || data.purpose || '',
           tripType: data.trip_type || data.tripType || 'Round Trip',
           itinerary: this.transformItineraryData(homeLeaveItinerary),
           passportDetails: this.transformPassportDetails(passportDetails),
-          advanceBankDetails: this.transformBankDetails(homeLeaveBank)
+          advanceBankDetails: this.transformBankDetails(homeLeaveBank),
+          passportUpload: homeLeavePassport
         };
         break;
 
@@ -215,6 +218,7 @@ export class TrfWizardComponent implements OnInit {
         const externalDetails = data.externalPartiesTravelDetails || {};
         const externalRequestorInfo = data.externalPartyRequestorInfo || {};
         const externalItinerary = externalDetails.itinerary || data.itinerary_segments || data.itinerary || [];
+        const externalPassport = this.extractPassportFileInfo(data.passport_details || data.passportDetails);
 
         this.externalPartiesData = {
           purpose: externalDetails.purpose || data.purpose || '',
@@ -223,7 +227,8 @@ export class TrfWizardComponent implements OnInit {
           externalOrganization: externalRequestorInfo.externalOrganization || data.external_organization || data.externalOrganization || '',
           externalRefToAuthorityLetter: externalRequestorInfo.externalRefToAuthorityLetter || data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter || '',
           externalCostCenter: externalRequestorInfo.externalCostCenter || data.external_cost_center || data.externalCostCenter || '',
-          itinerary: this.transformExternalPartiesItineraryData(externalItinerary)
+          itinerary: this.transformExternalPartiesItineraryData(externalItinerary),
+          passportUpload: externalPassport
         };
         break;
     }
@@ -893,6 +898,14 @@ export class TrfWizardComponent implements OnInit {
         });
       }
 
+      // Upload passport file if provided
+      const passportFile = this.getPassportFileFromTravelForm();
+      if (passportFile) {
+        promises.push(
+          firstValueFrom(this.trfService.uploadPassportDocument(trfId, passportFile))
+        );
+      }
+
       // Wait for all nested resources to be created
 
       Promise.all(promises)
@@ -920,6 +933,24 @@ export class TrfWizardComponent implements OnInit {
         return this.homeLeaveData;
       case 'External Parties':
         return this.externalPartiesData;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Get passport file from the current travel form component
+   */
+  private getPassportFileFromTravelForm(): File | null {
+    switch (this.selectedTravelType) {
+      case 'Domestic':
+        return this.domesticTravelForm?.getPassportFile?.() || null;
+      case 'Overseas':
+        return this.overseasTravelForm?.getPassportFile?.() || null;
+      case 'Home Leave':
+        return this.homeLeaveForm?.getPassportFile?.() || null;
+      case 'External Parties':
+        return this.externalPartiesForm?.getPassportFile?.() || null;
       default:
         return null;
     }
@@ -1033,6 +1064,31 @@ export class TrfWizardComponent implements OnInit {
       usd: item.usd || 0,
       remarks: item.remarks || ''
     }));
+  }
+
+  /**
+   * Extract passport file info from passport details for upload component
+   */
+  private extractPassportFileInfo(passportDetails: any): any {
+    if (!passportDetails) {
+      return { file: null, fileName: '', fileUrl: '' };
+    }
+
+    // Handle array format from backend
+    const detail = Array.isArray(passportDetails) ? passportDetails[0] : passportDetails;
+
+    if (!detail) {
+      return { file: null, fileName: '', fileUrl: '' };
+    }
+
+    const fileUrl = detail.passport_file_url || detail.passportFileUrl || detail.passport_file || '';
+    const fileName = fileUrl ? fileUrl.split('/').pop() || '' : '';
+
+    return {
+      file: null, // File object is not available from backend, only URL
+      fileName: fileName,
+      fileUrl: fileUrl
+    };
   }
 
   /**

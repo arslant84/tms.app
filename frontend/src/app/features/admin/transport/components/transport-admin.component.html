@@ -134,7 +134,7 @@
               <th>PURPOSE</th>
               <th>STATUS</th>
               <th>SUBMITTED</th>
-              <th class="text-center">ACTIONS</th>
+              <th class="text-end">ACTIONS</th>
             </tr>
           </thead>
           <tbody>
@@ -153,10 +153,12 @@
                 </span>
               </td>
               <td>{{ dateUtils.formatDate(request.createdAt) }}</td>
-              <td class="text-center">
-                <button class="btn btn-sm btn-outline-primary" (click)="viewRequest(request)">
-                  <i class="bi bi-eye me-1"></i> View
-                </button>
+              <td class="text-end">
+                <div class="action-buttons">
+                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewRequest(request)" title="View Details">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>

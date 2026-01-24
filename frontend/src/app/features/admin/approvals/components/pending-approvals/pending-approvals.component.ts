@@ -150,12 +150,12 @@ export class PendingApprovalsComponent implements OnInit {
         console.log('=== PENDING APPROVALS PAGE DEBUG ===');
         console.log('API URL:', url);
         console.log('Full Response:', data);
-        console.log('Total Count from API:', data.totalCount);
-        console.log('Items Count:', data.items?.length);
+        console.log('Total Count from API:', data.meta?.pagination?.total_count);
+        console.log('Items Count:', data.data?.length);
         console.log('====================================');
-        this.pendingItems = data.items || [];
-        this.totalCount = data.totalCount || 0;
-        this.totalPages = data.totalPages || 1;
+        this.pendingItems = data.data || [];
+        this.totalCount = data.meta?.pagination?.total_count || 0;
+        this.totalPages = data.meta?.pagination?.total_pages || 1;
         // Update the count for current tab
         if (this.activeTab === 'all') {
           this.tabCounts.all = this.totalCount;
@@ -180,7 +180,7 @@ export class PendingApprovalsComponent implements OnInit {
       const url = `${this.apiUrl}/admin/approvals/?page=1&limit=1&type=${type}`;
       this.http.get<any>(url, { withCredentials: true }).subscribe({
         next: (data) => {
-          this.tabCounts[type] = data.totalCount || 0;
+          this.tabCounts[type] = data.meta?.pagination?.total_count || 0;
         },
         error: (err) => {
           console.error(`Error fetching count for ${type}:`, err);

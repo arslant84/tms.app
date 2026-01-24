@@ -216,8 +216,23 @@ export class AccommodationDetailComponent implements OnInit {
     });
   }
 
-  onPrint(): void {
-    window.print();
+  onExportPdf(): void {
+    if (!this.requestId) return;
+
+    this.accommodationService.exportToPdf(this.requestId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Accommodation-${this.request?.requestNumber || this.requestId}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.toastService.success('PDF exported successfully');
+      },
+      error: (err: any) => {
+        this.toastService.error('Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error'));
+      }
+    });
   }
 
   // ========== HELPER METHODS ==========

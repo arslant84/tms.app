@@ -14,6 +14,18 @@ from django.conf import settings
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from datetime import timedelta
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
+import logging
+
+# Import standardized response utilities
+from utils.api_response import (
+    success_response, error_response, validation_error_response,
+    paginated_response, created_response, unauthorized_response,
+    forbidden_response, not_found_response, get_pagination_params
+)
+
+logger = logging.getLogger(__name__)
 
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, UserAdminUpdateSerializer, RoleSerializer, PermissionSerializer,
@@ -27,30 +39,63 @@ User = get_user_model()
 
 
 class LoginView(APIView):
+    """User authentication endpoint."""
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(
+        tags=['Authentication'],
+        summary='User Login',
+        description='Authenticate user with email and password. Returns user data and sets HttpOnly JWT cookies.',
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'email': {'type': 'string', 'format': 'email'},
+                    'password': {'type': 'string', 'format': 'password'}
+                },
+                'required': ['email', 'password']
+            }
+        },
+        responses={
+            200: UserSerializer,
+            401: OpenApiTypes.OBJECT,
+            429: OpenApiTypes.OBJECT
+        }
+    )
     @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True))
     def post(self, request, *args, **kwargs):
         # Get username and password from request
         username = request.data.get('email')
         password = request.data.get('password')
 
-        print(f"Login attempt for user: {username}")
+        logger.info(f"Login attempt for user: {username}")
 
         # Authenticate user
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            # SECURITY: Log successful login for audit trail
+            AdminActionLog.log_action(
+                user=user,
+                action_type='login_success',
+                description=f"User logged in successfully: {user.email}",
+                entity_type='User',
+                entity_id=str(user.id),
+                request=request
+            )
+
             # SECURITY: Generate JWT tokens with expiration
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)
 
-            # Response with user data
-            response = Response({
-                'user': UserSerializer(user).data,
-                'message': 'Login successful'
-            })
+            # Create standardized response with user data
+            # Note: User data goes directly in 'data' field for frontend compatibility
+            response = success_response(
+                data=UserSerializer(user).data,
+                message='Login successful',
+                status_code=status.HTTP_200_OK
+            )
 
             # SECURITY: Set JWT tokens in HttpOnly cookies
             # Access token for authentication (short-lived)
@@ -58,7 +103,7 @@ class LoginView(APIView):
                 key='access_token',
                 value=access_token,
                 httponly=True,  # Prevents JavaScript access (XSS protection)
-                secure=True,    # Only send over HTTPS in production
+                secure=not settings.DEBUG,  # False in development (HTTP), True in production (HTTPS)
                 samesite='Lax', # CSRF protection
                 max_age=3600,   # 1 hour (matches ACCESS_TOKEN_LIFETIME)
                 path='/'
@@ -69,7 +114,7 @@ class LoginView(APIView):
                 key='refresh_token',
                 value=refresh_token,
                 httponly=True,  # Prevents JavaScript access (XSS protection)
-                secure=True,    # Only send over HTTPS in production
+                secure=not settings.DEBUG,  # False in development (HTTP), True in production (HTTPS)
                 samesite='Lax', # CSRF protection
                 max_age=86400 * 7,  # 7 days (matches REFRESH_TOKEN_LIFETIME)
                 path='/'
@@ -82,7 +127,7 @@ class LoginView(APIView):
                 key='auth_token',
                 value=token.key,
                 httponly=True,
-                secure=True,
+                secure=not settings.DEBUG,  # False in development (HTTP), True in production (HTTPS)
                 samesite='Lax',
                 max_age=86400 * 7,
                 path='/'
@@ -90,16 +135,45 @@ class LoginView(APIView):
 
             return response
         else:
-            print(f"Authentication failed for user: {username}")
+            logger.warning(f"Authentication failed for user: {username}")
+            # SECURITY: Log failed login attempt for audit trail
+            AdminActionLog.log_action(
+                user=None,  # User not authenticated
+                action_type='login_failed',
+                description=f"Failed login attempt for email: {username}",
+                entity_type='User',
+                entity_id='',
+                request=request
+            )
             # SECURITY: Generic error message to prevent user enumeration
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            return unauthorized_response(message='Invalid credentials')
 
 
 class LogoutView(APIView):
+    """User logout endpoint."""
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        tags=['Authentication'],
+        summary='User Logout',
+        description='Logout the current user. Blacklists refresh token and clears auth cookies.',
+        responses={
+            200: {'description': 'Successfully logged out'},
+            401: {'description': 'Not authenticated'}
+        }
+    )
     def post(self, request):
         try:
+            # SECURITY: Log logout for audit trail
+            AdminActionLog.log_action(
+                user=request.user,
+                action_type='logout',
+                description=f"User logged out: {request.user.email}",
+                entity_type='User',
+                entity_id=str(request.user.id),
+                request=request
+            )
+
             # SECURITY: Blacklist the refresh token to prevent reuse
             refresh_token = request.COOKIES.get('refresh_token')
             if refresh_token:
@@ -117,14 +191,22 @@ class LogoutView(APIView):
                 pass
 
             # SECURITY: Clear all auth cookies
-            response = Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
+            response = success_response(
+                message='Successfully logged out',
+                status_code=status.HTTP_200_OK
+            )
             response.delete_cookie('access_token', path='/')
             response.delete_cookie('refresh_token', path='/')
             response.delete_cookie('auth_token', path='/')  # Legacy token
 
             return response
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Logout error: {str(e)}")
+            return error_response(
+                message='Logout failed',
+                errors={'detail': str(e)},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class TokenRefreshView(APIView):
@@ -140,10 +222,7 @@ class TokenRefreshView(APIView):
         refresh_token_str = request.COOKIES.get('refresh_token')
 
         if not refresh_token_str:
-            return Response(
-                {'error': 'Refresh token not found'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+            return unauthorized_response(message='Refresh token not found')
 
         try:
             # Validate and refresh the token
@@ -158,17 +237,18 @@ class TokenRefreshView(APIView):
                 refresh.rotate()
             new_refresh_token = str(refresh)
 
-            # Response
-            response = Response({
-                'message': 'Token refreshed successfully'
-            })
+            # Create standardized response
+            response = success_response(
+                message='Token refreshed successfully',
+                status_code=status.HTTP_200_OK
+            )
 
             # Set new access token cookie
             response.set_cookie(
                 key='access_token',
                 value=new_access_token,
                 httponly=True,
-                secure=True,
+                secure=not settings.DEBUG,  # False in development (HTTP), True in production (HTTPS)
                 samesite='Lax',
                 max_age=3600,  # 1 hour
                 path='/'
@@ -179,7 +259,7 @@ class TokenRefreshView(APIView):
                 key='refresh_token',
                 value=new_refresh_token,
                 httponly=True,
-                secure=True,
+                secure=not settings.DEBUG,  # False in development (HTTP), True in production (HTTPS)
                 samesite='Lax',
                 max_age=86400 * 7,  # 7 days
                 path='/'
@@ -188,10 +268,8 @@ class TokenRefreshView(APIView):
             return response
 
         except TokenError as e:
-            return Response(
-                {'error': f'Invalid refresh token: {str(e)}'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+            logger.warning(f"Token refresh failed: {str(e)}")
+            return unauthorized_response(message=f'Invalid refresh token: {str(e)}')
 
 
 class PasswordChangeView(APIView):
@@ -204,7 +282,10 @@ class PasswordChangeView(APIView):
     def post(self, request):
         serializer = PasswordChangeSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Invalid password data'
+            )
 
         user = request.user
         old_password = serializer.validated_data['old_password']
@@ -212,9 +293,9 @@ class PasswordChangeView(APIView):
 
         # Verify old password
         if not user.check_password(old_password):
-            return Response(
-                {'error': 'Current password is incorrect'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message='Current password is incorrect',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         # Set new password
@@ -223,10 +304,11 @@ class PasswordChangeView(APIView):
         user.password_change_required = False
         user.save()
 
-        return Response({
-            'message': 'Password changed successfully',
-            'password_change_required': False
-        })
+        return success_response(
+            data={'password_change_required': False},
+            message='Password changed successfully',
+            status_code=status.HTTP_200_OK
+        )
 
 
 class PasswordResetRequestView(APIView):
@@ -236,11 +318,24 @@ class PasswordResetRequestView(APIView):
     """
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(
+        tags=['Authentication'],
+        summary='Request Password Reset',
+        description='Request a password reset email. Rate limited to 3 requests per hour.',
+        request=PasswordResetRequestSerializer,
+        responses={
+            200: {'description': 'If the email exists, a reset link will be sent'},
+            429: {'description': 'Rate limit exceeded'}
+        }
+    )
     @method_decorator(ratelimit(key='ip', rate='3/h', method='POST'))
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Invalid email data'
+            )
 
         email = serializer.validated_data['email']
 
@@ -282,10 +377,11 @@ SynTra TMS Team''',
             # SECURITY: Don't reveal if email exists or not
             pass
 
-        # Always return success to prevent email enumeration
-        return Response({
-            'message': 'If an account exists with this email, a password reset link has been sent.'
-        })
+        # SECURITY: Always return success to prevent email enumeration
+        return success_response(
+            message='If an account exists with this email, a password reset link has been sent.',
+            status_code=status.HTTP_200_OK
+        )
 
 
 class PasswordResetConfirmView(APIView):
@@ -295,10 +391,23 @@ class PasswordResetConfirmView(APIView):
     """
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(
+        tags=['Authentication'],
+        summary='Confirm Password Reset',
+        description='Reset password using the token from the reset email.',
+        request=PasswordResetConfirmSerializer,
+        responses={
+            200: {'description': 'Password reset successfully'},
+            400: {'description': 'Invalid or expired token'}
+        }
+    )
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Invalid reset data'
+            )
 
         token = serializer.validated_data['token']
         new_password = serializer.validated_data['new_password']
@@ -318,22 +427,40 @@ class PasswordResetConfirmView(APIView):
             user.password_change_required = False
             user.save()
 
-            return Response({
-                'message': 'Password reset successfully. You can now log in with your new password.'
-            })
+            logger.info(f"Password reset successful for user: {user.email}")
+            return success_response(
+                message='Password reset successfully. You can now log in with your new password.',
+                status_code=status.HTTP_200_OK
+            )
 
         except User.DoesNotExist:
-            return Response(
-                {'error': 'Invalid or expired reset token'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message='Invalid or expired reset token',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
 
+@extend_schema_view(
+    list=extend_schema(tags=['Users'], summary='List all users', description='Get paginated list of all users. Supports search and ordering.'),
+    retrieve=extend_schema(tags=['Users'], summary='Get user details', description='Get details of a specific user by ID.'),
+    create=extend_schema(tags=['Users'], summary='Create user', description='Create a new user. Admin only.'),
+    update=extend_schema(tags=['Users'], summary='Update user', description='Update user details. Users can update own profile, admins can update any.'),
+    partial_update=extend_schema(tags=['Users'], summary='Partial update user', description='Partially update user details.'),
+    destroy=extend_schema(tags=['Users'], summary='Delete user', description='Delete a user. Admin only.')
+)
 class UserViewSet(viewsets.ModelViewSet):
+    """User management viewset with role-based permissions."""
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
+    # Search across user fields
+    search_fields = ['email', 'name', 'staff_id', 'department', 'phone']
+
+    # Allow ordering
+    ordering_fields = ['email', 'name', 'date_joined', 'department', 'is_active']
+    ordering = ['-date_joined']  # Default: newest first
+
     def get_serializer_class(self):
         if self.action == 'create':
             return UserCreateSerializer
@@ -341,9 +468,9 @@ class UserViewSet(viewsets.ModelViewSet):
             # Check if user is updating their own profile
             user_id = self.kwargs.get('pk')
             if user_id and str(self.request.user.id) == str(user_id):
-                print(f"User {self.request.user.id} updating own profile, using UserProfileUpdateSerializer")
+                logger.info(f"User {self.request.user.id} updating own profile")
                 return UserProfileUpdateSerializer
-            print(f"Admin updating user {user_id}, using UserAdminUpdateSerializer")
+            logger.info(f"Admin updating user {user_id}")
             return UserAdminUpdateSerializer
         return UserSerializer
 
@@ -360,15 +487,18 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         """Override update to add logging"""
-        print(f"Update called by user {request.user.id} for user {kwargs.get('pk')}")
-        print(f"Request data: {request.data}")
+        logger.debug(f"Update called by user {request.user.id} for user {kwargs.get('pk')}")
+        logger.debug(f"Request data: {request.data}")
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
 
         if not serializer.is_valid():
-            print(f"Validation errors: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(f"Validation errors: {serializer.errors}")
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Invalid user data'
+            )
 
         self.perform_update(serializer)
 
@@ -398,44 +528,66 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.save()
             # Return full user data
             user_serializer = UserSerializer(request.user)
-            return Response(user_serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return success_response(
+                data=user_serializer.data,
+                message='Profile updated successfully',
+                status_code=status.HTTP_200_OK
+            )
+        return validation_error_response(
+            serializer_errors=serializer.errors,
+            message='Invalid profile data'
+        )
     
     @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAdminUser])
     def change_role(self, request, pk=None):
         user = self.get_object()
         role_id = request.data.get('role_id')
-        
+
         if not role_id:
-            return Response({'error': 'Role ID is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return error_response(
+                message='Role ID is required',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
             role = Role.objects.get(id=role_id)
             user.role = role
             user.save()
         except Role.DoesNotExist:
-            return Response({'error': 'Role not found'}, status=status.HTTP_404_NOT_FOUND)
-        
+            return not_found_response(message='Role not found')
+
         serializer = self.get_serializer(user)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='User role updated successfully',
+            status_code=status.HTTP_200_OK
+        )
     
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
     def activate(self, request, pk=None):
         user = self.get_object()
         user.is_active = True
         user.save()
-        
+
         serializer = self.get_serializer(user)
-        return Response(serializer.data)
-    
+        return success_response(
+            data=serializer.data,
+            message='User activated successfully',
+            status_code=status.HTTP_200_OK
+        )
+
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
     def deactivate(self, request, pk=None):
         user = self.get_object()
         user.is_active = False
         user.save()
-        
+
         serializer = self.get_serializer(user)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='User deactivated successfully',
+            status_code=status.HTTP_200_OK
+        )
 
 
 class RoleViewSet(viewsets.ModelViewSet):
@@ -444,12 +596,22 @@ class RoleViewSet(viewsets.ModelViewSet):
     permission_classes = [HasManageRolesPermission]
     pagination_class = None  # Disable pagination for roles
 
+    # Search and ordering
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']  # Default: alphabetical
+
 
 class PermissionViewSet(viewsets.ModelViewSet):
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
     permission_classes = [HasManageRolesPermission]  # Same permission as roles
     pagination_class = None  # Disable pagination for permissions
+
+    # Search and ordering
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']  # Default: alphabetical
 
 
 class ApplicationSettingViewSet(viewsets.ModelViewSet):
@@ -512,9 +674,9 @@ class ApplicationSettingViewSet(viewsets.ModelViewSet):
         settings_data = request.data.get('settings', [])
 
         if not isinstance(settings_data, list):
-            return Response(
-                {'error': 'settings must be a list'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message='settings must be a list',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         updated_settings = []
@@ -549,10 +711,16 @@ class ApplicationSettingViewSet(viewsets.ModelViewSet):
                 else:
                     errors.append({'setting_key': setting_key, 'errors': serializer.errors})
 
-        return Response({
-            'updated': updated_settings,
-            'errors': errors
-        })
+        message = f'Successfully updated {len(updated_settings)} settings'
+        if errors:
+            message += f', {len(errors)} failed'
+
+        return success_response(
+            data={'updated': updated_settings},
+            message=message,
+            status_code=status.HTTP_200_OK,
+            meta={'errors': errors} if errors else None
+        )
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def as_object(self, request):
@@ -650,9 +818,8 @@ class AdminActionLogViewSet(viewsets.ReadOnlyModelViewSet):
         SECURITY: Only available to admin users.
         """
         if not request.user.is_admin and not request.user.is_superuser:
-            return Response(
-                {'error': 'Only administrators can view audit log statistics'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='Only administrators can view audit log statistics'
             )
 
         from django.db.models import Count
@@ -670,9 +837,15 @@ class AdminActionLogViewSet(viewsets.ReadOnlyModelViewSet):
         recent_cutoff = timezone.now() - timedelta(hours=24)
         recent_count = queryset.filter(created_at__gte=recent_cutoff).count()
 
-        return Response({
+        stats_data = {
             'total_logs': queryset.count(),
             'recent_activity_24h': recent_count,
             'by_action_type': list(action_stats),
             'top_users': list(user_stats),
-        })
+        }
+
+        return success_response(
+            data=stats_data,
+            message='Audit log statistics retrieved successfully',
+            status_code=status.HTTP_200_OK
+        )
