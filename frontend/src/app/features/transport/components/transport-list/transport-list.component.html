@@ -27,6 +27,9 @@
         <div class="search-container">
           <input
             type="text"
+            id="transportSearch"
+            name="transportSearch"
+            autocomplete="off"
             class="search-input"
             placeholder="Search by requestor, purpose, or location..."
             [value]="(listState.searchTerm | async) || ''"
@@ -94,7 +97,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let request of requests">
+          <tr *ngFor="let request of requests" [routerLink]="['/transport', request.id]" class="clickable-row">
             <td class="id-cell">
               <span *ngIf="request.request_number" class="request-number">{{ request.request_number }}</span>
               <span *ngIf="!request.request_number" class="text-muted">TRN-{{ request.id }}</span>
@@ -117,14 +120,16 @@
               <div class="action-buttons">
                 <button
                   class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="navigateToView(request.id)"
+                  [routerLink]="['/transport', request.id]"
+                  (click)="$event.stopPropagation()"
                   title="View Details"
                 >
                   <i class="bi bi-eye"></i>
                 </button>
                 <button
                   class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="navigateToEdit(request.id)"
+                  [routerLink]="['/transport', request.id, 'edit']"
+                  (click)="$event.stopPropagation()"
                   title="Edit Request"
                 >
                   <i class="bi bi-pencil"></i>

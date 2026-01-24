@@ -26,6 +26,9 @@
       <div class="filters-grid">
         <input
           type="text"
+          id="visaSearch"
+          name="visaSearch"
+          autocomplete="off"
           class="form-control search-input"
           placeholder="Search by name, destination, passport number..."
           [value]="(listState.searchTerm | async) || ''"

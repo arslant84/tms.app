@@ -27,6 +27,9 @@
         <div class="search-container">
           <input
             type="text"
+            id="accommodationSearch"
+            name="accommodationSearch"
+            autocomplete="off"
             class="search-input"
             placeholder="Search by name, department, or location..."
             [value]="(listState.searchTerm | async) || ''"
@@ -92,7 +95,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let request of requests">
+          <tr *ngFor="let request of requests" [routerLink]="['/accommodation', request.id]" class="clickable-row">
             <td>
               <span class="request-number">{{ request.request_number || 'N/A' }}</span>
             </td>
@@ -119,14 +122,16 @@
               <div class="action-buttons">
                 <button
                   class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="navigateToView(request.id)"
+                  [routerLink]="['/accommodation', request.id]"
+                  (click)="$event.stopPropagation()"
                   title="View Details"
                 >
                   <i class="bi bi-eye"></i>
                 </button>
                 <button
                   class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="navigateToEdit(request.id)"
+                  [routerLink]="['/accommodation', request.id, 'edit']"
+                  (click)="$event.stopPropagation()"
                   title="Edit Request"
                 >
                   <i class="bi bi-pencil"></i>

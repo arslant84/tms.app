@@ -261,7 +261,8 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 Q(requestor_name__icontains=search) |
                 Q(department__icontains=search) |
                 Q(purpose__icontains=search) |
-                Q(staff_id__icontains=search)
+                Q(staff_id__icontains=search) |
+                Q(request_number__icontains=search)
             )
 
         result = queryset.order_by('-created_at')

@@ -46,6 +46,8 @@
           <input
             type="text"
             id="searchQuery"
+            name="searchQuery"
+            autocomplete="off"
             class="form-control"
             [(ngModel)]="searchQuery"
             (ngModelChange)="applyFilters()"

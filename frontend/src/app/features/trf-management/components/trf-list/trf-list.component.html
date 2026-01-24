@@ -26,6 +26,9 @@
       <div class="filters-grid">
         <input
           type="text"
+          id="trfSearch"
+          name="trfSearch"
+          autocomplete="off"
           class="form-control search-input"
           placeholder="Search by ID, Requestor, Purpose..."
           [value]="(listState.searchTerm | async) || ''"
@@ -97,47 +100,17 @@
           <table class="tsr-table">
             <thead>
               <tr>
-                <th class="sortable-header" (click)="handleSort('id')">
-                  <button class="btn btn-link sort">
-                    REQUEST NUMBER
-                    <i *ngIf="sortKey === 'id'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
-                  </button>
-                </th>
-                <th class="sortable-header" (click)="handleSort('requestor_name')">
-                  <button class="btn btn-link sort">
-                    STAFF NAME
-                    <i *ngIf="sortKey === 'requestor_name'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
-                  </button>
-                </th>
-                <th class="sortable-header" (click)="handleSort('travel_type')">
-                  <button class="btn btn-link sort">
-                    TYPE
-                    <i *ngIf="sortKey === 'travel_type'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
-                  </button>
-                </th>
-                <th class="sortable-header" (click)="handleSort('purpose')">
-                  <button class="btn btn-link sort">
-                    PURPOSE
-                    <i *ngIf="sortKey === 'purpose'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
-                  </button>
-                </th>
-                <th class="sortable-header" (click)="handleSort('status')">
-                  <button class="btn btn-link sort">
-                    STATUS
-                    <i *ngIf="sortKey === 'status'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
-                  </button>
-                </th>
-                <th class="sortable-header" (click)="handleSort('submitted_at')">
-                  <button class="btn btn-link sort">
-                    SUBMITTED
-                    <i *ngIf="sortKey === 'submitted_at'" class="bi bi-arrow-up-down" [class.rotate-180]="sortDirection === 'descending'"></i>
-                  </button>
-                </th>
+                <th>REQUEST NUMBER</th>
+                <th>STAFF NAME</th>
+                <th>TYPE</th>
+                <th>PURPOSE</th>
+                <th>STATUS</th>
+                <th>SUBMITTED</th>
                 <th class="text-end">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let trf of trfs" class="table-row">
+              <tr *ngFor="let trf of trfs" [routerLink]="['/trf', trf.id]" class="clickable-row">
                 <td class="font-medium">
                   <span *ngIf="trf.request_number" class="request-number">{{ trf.request_number }}</span>
                   <span *ngIf="!trf.request_number" class="text-muted">TSR-{{ trf.id }}</span>
@@ -158,14 +131,16 @@
                   <div class="action-buttons">
                     <button
                       class="btn btn-sm btn-outline-primary btn-icon"
-                      (click)="navigateToView(trf.id)"
+                      [routerLink]="['/trf', trf.id]"
+                      (click)="$event.stopPropagation()"
                       title="View Details"
                     >
                       <i class="bi bi-eye"></i>
                     </button>
                     <button
                       class="btn btn-sm btn-outline-primary btn-icon"
-                      (click)="navigateToEdit(trf.id)"
+                      [routerLink]="['/trf', trf.id, 'edit']"
+                      (click)="$event.stopPropagation()"
                       title="Edit Request"
                     >
                       <i class="bi bi-pencil"></i>

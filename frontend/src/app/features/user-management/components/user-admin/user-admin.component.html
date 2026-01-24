@@ -18,6 +18,9 @@
           <label class="form-label small">Search</label>
           <input
             type="text"
+            id="userSearch"
+            name="userSearch"
+            autocomplete="off"
             class="form-control"
             [(ngModel)]="searchTerm"
             (keyup.enter)="onSearch()"

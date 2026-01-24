@@ -57,7 +57,8 @@
         <div class="col-md-5">
           <label for="searchFilter" class="form-label">Search</label>
           <div class="input-group">
-            <input type="text" class="form-control" id="searchFilter" placeholder="Search requests..."
+            <input type="text" class="form-control" id="searchFilter" name="searchFilter"
+                   autocomplete="off" placeholder="Search requests..."
                    [(ngModel)]="filterCriteria.search" (keyup)="applyFilters()">
             <button class="btn btn-outline-secondary" type="button" (click)="filterCriteria.search = ''; applyFilters()">
               <i class="bi bi-x"></i>

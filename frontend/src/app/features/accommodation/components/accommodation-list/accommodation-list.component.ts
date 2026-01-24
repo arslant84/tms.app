@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AccommodationService, AccommodationRequest } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -22,7 +22,7 @@ export const ACCOMMODATION_STATUSES = [
 @Component({
   selector: 'app-accommodation-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './accommodation-list.component.html',
   styleUrls: ['./accommodation-list.component.scss']
 })
