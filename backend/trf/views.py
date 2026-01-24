@@ -7,6 +7,12 @@ from django.utils import timezone
 from datetime import datetime
 from workflows.router import WorkflowRouter
 from utils.request_id_generator import generate_request_id, extract_context_from_itinerary
+from utils.api_response import (
+    success_response, error_response, validation_error_response,
+    paginated_response, created_response, unauthorized_response,
+    forbidden_response, not_found_response, server_error_response,
+    get_pagination_params
+)
 
 from .models import (
     TravelRequest,
@@ -51,10 +57,25 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
     - POST /api/trf/travel-requests/{id_or_request_number}/approve/ - Approve TRF
     - POST /api/trf/travel-requests/{id_or_request_number}/reject/ - Reject TRF
     - POST /api/trf/travel-requests/{id_or_request_number}/cancel/ - Cancel TRF
+
+    Filtering & Search:
+    - ?search=query - Search across requestor_name, department, purpose, staff_id, request_number
+    - ?ordering=field - Order by: created_at, submitted_at, departure_date, requestor_name, status
+    - ?status=Draft - Filter by status (supports startswith matching)
+    - ?travel_type=type - Filter by travel type
+    - ?department=dept - Filter by department (contains)
+    - ?requestor_name=name - Filter by requestor name (contains)
     """
     queryset = TravelRequest.objects.all()
     serializer_class = TravelRequestSerializer
     permission_classes = [IsAuthenticated]
+
+    # Search across key fields
+    search_fields = ['requestor_name', 'department', 'purpose', 'staff_id', 'request_number']
+
+    # Allow ordering by these fields
+    ordering_fields = ['created_at', 'submitted_at', 'departure_date', 'requestor_name', 'status', 'request_number']
+    ordering = ['-created_at']  # Default ordering: newest first
 
     def get_object(self):
         """
@@ -257,9 +278,9 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         trf = self.get_object()
 
         if trf.status != 'Draft':
-            return Response(
-                {'error': 'Only draft TRFs can be submitted'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message='Only draft TRFs can be submitted',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         # Generate request number if it doesn't exist
@@ -333,7 +354,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         # Ensure we have the latest status before serializing
         trf.refresh_from_db()
         serializer = TravelRequestDetailSerializer(trf)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='Travel request submitted successfully',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
@@ -346,7 +371,10 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         serializer = ApprovalActionSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Invalid approval data'
+            )
 
         step_role = serializer.validated_data['step_role']
         comments = serializer.validated_data.get('comments', '')
@@ -402,11 +430,15 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     approval_step.save()
 
                     trf_serializer = TravelRequestDetailSerializer(trf)
-                    return Response(trf_serializer.data)
+                    return success_response(
+                        data=trf_serializer.data,
+                        message='Travel request approved successfully',
+                        status_code=status.HTTP_200_OK
+                    )
                 else:
-                    return Response(
-                        {'error': 'No pending approval step found for this role'},
-                        status=status.HTTP_400_BAD_REQUEST
+                    return error_response(
+                        message='No pending approval step found for this role',
+                        status_code=status.HTTP_400_BAD_REQUEST
                     )
             else:
                 # Fallback to legacy manual approval if no workflow found
@@ -453,22 +485,26 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                         )
 
                 trf_serializer = TravelRequestDetailSerializer(trf)
-                return Response(trf_serializer.data)
+                return success_response(
+                    data=trf_serializer.data,
+                    message='Travel request approved successfully',
+                    status_code=status.HTTP_200_OK
+                )
 
         except ValueError as e:
             # ValueError is raised by WorkflowEngine for authorization failures
             print(f"❌ ValueError in approve workflow: {str(e)}")
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message=str(e),
+                status_code=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
             print(f"❌ Error in approve workflow: {str(e)}")
             import traceback
             traceback.print_exc()
-            return Response(
-                {'error': f'Failed to process approval: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            return server_error_response(
+                message='Failed to process approval',
+                error_details=str(e)
             )
 
     @action(detail=True, methods=['post'])
@@ -482,7 +518,10 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         serializer = ApprovalActionSerializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Invalid rejection data'
+            )
 
         step_role = serializer.validated_data['step_role']
         comments = serializer.validated_data.get('comments', '')
@@ -529,11 +568,15 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     approval_step.save()
 
                     trf_serializer = TravelRequestDetailSerializer(trf)
-                    return Response(trf_serializer.data)
+                    return success_response(
+                        data=trf_serializer.data,
+                        message='Travel request rejected successfully',
+                        status_code=status.HTTP_200_OK
+                    )
                 else:
-                    return Response(
-                        {'error': 'No pending approval step found'},
-                        status=status.HTTP_400_BAD_REQUEST
+                    return error_response(
+                        message='No pending approval step found',
+                        status_code=status.HTTP_400_BAD_REQUEST
                     )
             else:
                 # Fallback to legacy manual rejection if no workflow found
@@ -560,15 +603,19 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 trf.save()
 
                 trf_serializer = TravelRequestDetailSerializer(trf)
-                return Response(trf_serializer.data)
+                return success_response(
+                    data=trf_serializer.data,
+                    message='Travel request rejected successfully',
+                    status_code=status.HTTP_200_OK
+                )
 
         except Exception as e:
             print(f"❌ Error in reject workflow: {str(e)}")
             import traceback
             traceback.print_exc()
-            return Response(
-                {'error': f'Failed to process rejection: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            return server_error_response(
+                message='Failed to process rejection',
+                error_details=str(e)
             )
 
     @action(detail=True, methods=['post'])
@@ -577,16 +624,20 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         trf = self.get_object()
 
         if trf.status in ['Approved', 'Completed']:
-            return Response(
-                {'error': 'Approved or completed TRFs cannot be cancelled'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message='Approved or completed TRFs cannot be cancelled',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         trf.status = 'Cancelled'
         trf.save()
 
         serializer = self.get_serializer(trf)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='Travel request cancelled successfully',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['get'], url_path='check-accommodation-availability')
     def check_accommodation_availability(self, request, pk=None):
@@ -632,42 +683,66 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 'requestor_name': existing_accommodation.requestor_name
             }
 
-        return Response(response_data)
+        return success_response(
+            data=response_data,
+            message='Accommodation availability checked',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['delete'], url_path='delete-itinerary')
     def delete_itinerary(self, request, pk=None):
         """Delete all itinerary segments for a TRF"""
         trf = self.get_object()
         count = TrfItinerarySegment.objects.filter(trf=trf).delete()[0]
-        return Response({'deleted': count}, status=status.HTTP_200_OK)
+        return success_response(
+            data={'deleted': count},
+            message=f'Deleted {count} itinerary segment(s)',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['delete'], url_path='delete-meals')
     def delete_meals(self, request, pk=None):
         """Delete all meal selections for a TRF"""
         trf = self.get_object()
         count = TrfDailyMealSelection.objects.filter(trf=trf).delete()[0]
-        return Response({'deleted': count}, status=status.HTTP_200_OK)
+        return success_response(
+            data={'deleted': count},
+            message=f'Deleted {count} meal selection(s)',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['delete'], url_path='delete-passport')
     def delete_passport(self, request, pk=None):
         """Delete all passport details for a TRF"""
         trf = self.get_object()
         count = TrfPassportDetail.objects.filter(trf=trf).delete()[0]
-        return Response({'deleted': count}, status=status.HTTP_200_OK)
+        return success_response(
+            data={'deleted': count},
+            message=f'Deleted {count} passport detail(s)',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['delete'], url_path='delete-bank')
     def delete_bank(self, request, pk=None):
         """Delete bank details for a TRF"""
         trf = self.get_object()
         count = TrfAdvanceBankDetail.objects.filter(trf=trf).delete()[0]
-        return Response({'deleted': count}, status=status.HTTP_200_OK)
+        return success_response(
+            data={'deleted': count},
+            message=f'Deleted {count} bank detail(s)',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['delete'], url_path='delete-advance-amounts')
     def delete_advance_amounts(self, request, pk=None):
         """Delete all advance amount items for a TRF"""
         trf = self.get_object()
         count = TrfAdvanceAmountRequestedItem.objects.filter(trf=trf).delete()[0]
-        return Response({'deleted': count}, status=status.HTTP_200_OK)
+        return success_response(
+            data={'deleted': count},
+            message=f'Deleted {count} advance amount(s)',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=False, methods=['get'], url_path='pending-approvals')
     def pending_approvals(self, request):
@@ -687,7 +762,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
         # Use detail serializer to include nested data (itinerary, accommodation, etc.)
         serializer = TravelRequestDetailSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message=f'Retrieved {queryset.count()} pending approval(s)',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['post'], url_path='admin/book-flight')
     def book_flight(self, request, pk=None):
@@ -724,9 +803,9 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         if trf.status != 'Approved':
             error_msg = f'Flights can only be booked for Approved TRFs. Current status: {trf.status}'
             print(f"❌ Status validation failed: {error_msg}")
-            return Response(
-                {'error': error_msg},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message=error_msg,
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         # Extract booking data from request
@@ -758,9 +837,10 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             if not arrival_airport: missing.append('arrivalAirport')
             error_msg = f'Missing required fields: {", ".join(missing)}'
             print(f"❌ Field validation failed: {error_msg}")
-            return Response(
-                {'error': error_msg},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message=error_msg,
+                errors={'missing_fields': missing},
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         # Parse datetime strings
@@ -789,9 +869,9 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             error_msg = f'Invalid datetime format: {str(e)}'
             print(f"❌ DateTime parsing failed: {error_msg}")
             traceback.print_exc()
-            return Response(
-                {'error': error_msg},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message=error_msg,
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         # Create FlightBooking
@@ -819,14 +899,224 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
         # Return updated TRF data
         serializer = TravelRequestDetailSerializer(trf)
-        return Response({
-            'trf': serializer.data,
-            'flight_booking': {
-                'id': flight_booking.id,
-                'booking_reference': flight_booking.booking_reference,
-                'status': flight_booking.status
-            }
-        }, status=status.HTTP_201_CREATED)
+        return created_response(
+            data={
+                'trf': serializer.data,
+                'flight_booking': {
+                    'id': flight_booking.id,
+                    'booking_reference': flight_booking.booking_reference,
+                    'status': flight_booking.status
+                }
+            },
+            message='Flight booking created successfully'
+        )
+
+    @action(detail=True, methods=['get'], url_path='export-pdf')
+    def export_pdf(self, request, pk=None):
+        """
+        Export Travel Request to PDF
+
+        Returns a PDF document containing all TRF details including:
+        - Requestor information
+        - Travel itinerary
+        - Meal provisions
+        - Passport details
+        - Bank details for advance payments
+        - Approval history
+        """
+        import io
+        from django.http import HttpResponse
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
+        try:
+            trf = TravelRequest.objects.get(pk=pk)
+        except TravelRequest.DoesNotExist:
+            return not_found_response(message='Travel Request not found')
+
+        # Create PDF buffer
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=letter,
+            rightMargin=0.5*inch,
+            leftMargin=0.5*inch,
+            topMargin=0.5*inch,
+            bottomMargin=0.5*inch
+        )
+
+        # Styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=20,
+            textColor=colors.HexColor('#0d9488')
+        )
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=12,
+            spaceBefore=15,
+            spaceAfter=10,
+            textColor=colors.HexColor('#0d9488')
+        )
+        normal_style = styles['Normal']
+
+        elements = []
+
+        # Title
+        title = f"Travel Service Request - {trf.request_number or f'TSR-{trf.id}'}"
+        elements.append(Paragraph(title, title_style))
+        elements.append(Spacer(1, 12))
+
+        # Status badge
+        status_text = f"<b>Status:</b> {trf.status}"
+        elements.append(Paragraph(status_text, normal_style))
+        elements.append(Spacer(1, 12))
+
+        # Table style
+        table_style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0d9488')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ])
+
+        # Requestor Information
+        elements.append(Paragraph("Requestor Information", heading_style))
+        requestor_data = [
+            ['Field', 'Value'],
+            ['Name', trf.requestor_name or '-'],
+            ['Staff ID', trf.staff_id or '-'],
+            ['Department', trf.department or '-'],
+            ['Position', trf.position or '-'],
+            ['Cost Center', trf.cost_center or '-'],
+            ['Email', trf.email or '-'],
+            ['Phone/Email', trf.tel_email or '-'],
+        ]
+        requestor_table = Table(requestor_data, colWidths=[2*inch, 5*inch])
+        requestor_table.setStyle(table_style)
+        elements.append(requestor_table)
+
+        # Travel Details
+        elements.append(Paragraph("Travel Details", heading_style))
+        travel_data = [
+            ['Field', 'Value'],
+            ['Travel Type', trf.travel_type or '-'],
+            ['Purpose', (trf.purpose or '-')[:100]],
+            ['Estimated Cost', f"${trf.estimated_cost:,.2f}" if trf.estimated_cost else '-'],
+            ['Submitted At', trf.submitted_at.strftime('%Y-%m-%d %H:%M') if trf.submitted_at else '-'],
+            ['Created At', trf.created_at.strftime('%Y-%m-%d %H:%M') if trf.created_at else '-'],
+        ]
+        travel_table = Table(travel_data, colWidths=[2*inch, 5*inch])
+        travel_table.setStyle(table_style)
+        elements.append(travel_table)
+
+        # Itinerary Segments
+        itinerary_segments = TrfItinerarySegment.objects.filter(trf=trf).order_by('segment_date')
+        if itinerary_segments.exists():
+            elements.append(Paragraph("Itinerary", heading_style))
+            itinerary_data = [['Date', 'From', 'To', 'Departure', 'Arrival', 'Purpose']]
+            for seg in itinerary_segments:
+                itinerary_data.append([
+                    seg.segment_date.strftime('%Y-%m-%d') if seg.segment_date else '-',
+                    seg.from_location or '-',
+                    seg.to_location or '-',
+                    seg.departure_time or '-',
+                    seg.arrival_time or '-',
+                    (seg.purpose or '-')[:30]
+                ])
+            itinerary_table = Table(itinerary_data, colWidths=[1*inch, 1.2*inch, 1.2*inch, 0.9*inch, 0.9*inch, 1.8*inch])
+            itinerary_table.setStyle(table_style)
+            elements.append(itinerary_table)
+
+        # Passport Details
+        passport_details = TrfPassportDetail.objects.filter(trf=trf)
+        if passport_details.exists():
+            elements.append(Paragraph("Passport Details", heading_style))
+            passport_data = [['Name', 'Passport No.', 'Nationality', 'Date of Birth', 'Expiry']]
+            for passport in passport_details:
+                passport_data.append([
+                    passport.full_name or '-',
+                    passport.passport_number or '-',
+                    passport.nationality or '-',
+                    passport.date_of_birth.strftime('%Y-%m-%d') if passport.date_of_birth else '-',
+                    passport.expiry_date.strftime('%Y-%m-%d') if hasattr(passport, 'expiry_date') and passport.expiry_date else '-'
+                ])
+            passport_table = Table(passport_data, colWidths=[1.5*inch, 1.3*inch, 1.2*inch, 1.2*inch, 1*inch])
+            passport_table.setStyle(table_style)
+            elements.append(passport_table)
+
+        # Bank Details
+        try:
+            bank_detail = TrfAdvanceBankDetail.objects.get(trf=trf)
+            elements.append(Paragraph("Bank Details for Advance", heading_style))
+            bank_data = [
+                ['Field', 'Value'],
+                ['Bank Name', bank_detail.bank_name or '-'],
+                ['Account Name', bank_detail.account_name or '-'],
+                ['Account Number', bank_detail.account_number or '-'],
+                ['SWIFT Code', bank_detail.swift_code or '-'],
+                ['IBAN', bank_detail.iban or '-'],
+                ['Currency', bank_detail.currency or '-'],
+                ['Amount', f"{bank_detail.amount:,.2f}" if bank_detail.amount else '-'],
+            ]
+            bank_table = Table(bank_data, colWidths=[2*inch, 5*inch])
+            bank_table.setStyle(table_style)
+            elements.append(bank_table)
+        except TrfAdvanceBankDetail.DoesNotExist:
+            pass
+
+        # Approval History
+        approval_steps = TrfApprovalStep.objects.filter(trf=trf).order_by('created_at')
+        if approval_steps.exists():
+            elements.append(Paragraph("Approval History", heading_style))
+            approval_data = [['Role', 'Status', 'Date', 'Comments']]
+            for step in approval_steps:
+                approval_data.append([
+                    step.step_role or '-',
+                    step.status or '-',
+                    step.step_date.strftime('%Y-%m-%d %H:%M') if step.step_date else '-',
+                    (step.comments or '-')[:50]
+                ])
+            approval_table = Table(approval_data, colWidths=[1.5*inch, 1.2*inch, 1.5*inch, 3*inch])
+            approval_table.setStyle(table_style)
+            elements.append(approval_table)
+
+        # Footer
+        elements.append(Spacer(1, 20))
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.grey
+        )
+        footer_text = f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M:%S')} | Travel Management System"
+        elements.append(Paragraph(footer_text, footer_style))
+
+        # Build PDF
+        doc.build(elements)
+        buffer.seek(0)
+
+        # Create response
+        filename = f"TSR-{trf.request_number or trf.id}.pdf"
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 
 # =============== NESTED RESOURCE VIEWSETS ===============
@@ -936,13 +1226,153 @@ class TrfMealProvisionViewSet(viewsets.ModelViewSet):
 
 
 class TrfPassportDetailViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Passport Details"""
+    """ViewSet for TRF Passport Details with file upload support"""
     queryset = TrfPassportDetail.objects.all()
     serializer_class = TrfPassportDetailSerializer
     permission_classes = [IsAuthenticated]
+    # Support both JSON and multipart for file uploads
+    parser_classes = None  # Will use default parsers including MultiPartParser
+
+    def get_serializer_context(self):
+        """Include request in serializer context for building absolute URLs"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
     def get_queryset(self):
         trf_id = self.request.query_params.get('trf', None)
         if trf_id:
             return self.queryset.filter(trf_id=trf_id)
         return self.queryset.order_by('-created_at')
+
+    @action(detail=True, methods=['post'], url_path='upload-passport')
+    def upload_passport(self, request, pk=None):
+        """
+        Upload or update passport file for an existing passport detail record.
+        Accepts multipart/form-data with 'passport_file' field.
+        """
+        passport_detail = self.get_object()
+
+        if 'passport_file' not in request.FILES:
+            return error_response(
+                message='No passport file provided',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        passport_file = request.FILES['passport_file']
+
+        # Validate file type
+        allowed_types = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+        if passport_file.content_type not in allowed_types:
+            return error_response(
+                message='Passport file must be PDF, JPG, or PNG format',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate file size (max 10MB)
+        max_size = 10 * 1024 * 1024
+        if passport_file.size > max_size:
+            return error_response(
+                message='Passport file size must not exceed 10MB',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Delete old file if exists
+        if passport_detail.passport_file:
+            passport_detail.passport_file.delete(save=False)
+
+        # Save new file
+        passport_detail.passport_file = passport_file
+        passport_detail.save()
+
+        serializer = self.get_serializer(passport_detail)
+        return success_response(
+            data=serializer.data,
+            message='Passport file uploaded successfully',
+            status_code=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=['delete'], url_path='delete-passport-file')
+    def delete_passport_file(self, request, pk=None):
+        """Delete the passport file from an existing passport detail record."""
+        passport_detail = self.get_object()
+
+        if not passport_detail.passport_file:
+            return error_response(
+                message='No passport file to delete',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Delete the file
+        passport_detail.passport_file.delete(save=True)
+
+        serializer = self.get_serializer(passport_detail)
+        return success_response(
+            data=serializer.data,
+            message='Passport file deleted successfully',
+            status_code=status.HTTP_200_OK
+        )
+
+    @action(detail=False, methods=['post'], url_path='upload-for-trf')
+    def upload_for_trf(self, request):
+        """
+        Upload passport file for a TRF. Creates passport detail if it doesn't exist.
+        Expects: trf (TRF ID) and passport_file in multipart/form-data
+        """
+        trf_id = request.data.get('trf')
+        if not trf_id:
+            return error_response(
+                message='TRF ID is required',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if 'passport_file' not in request.FILES:
+            return error_response(
+                message='No passport file provided',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        passport_file = request.FILES['passport_file']
+
+        # Validate file type
+        allowed_types = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+        if passport_file.content_type not in allowed_types:
+            return error_response(
+                message='Passport file must be PDF, JPG, or PNG format',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate file size (max 10MB)
+        max_size = 10 * 1024 * 1024
+        if passport_file.size > max_size:
+            return error_response(
+                message='Passport file size must not exceed 10MB',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Verify TRF exists
+        try:
+            trf = TravelRequest.objects.get(pk=trf_id)
+        except TravelRequest.DoesNotExist:
+            return not_found_response(message='TRF not found')
+
+        # Get or create passport detail for this TRF
+        passport_detail, created = TrfPassportDetail.objects.get_or_create(
+            trf=trf,
+            defaults={}
+        )
+
+        # Delete old file if exists
+        if passport_detail.passport_file:
+            passport_detail.passport_file.delete(save=False)
+
+        # Save new file
+        passport_detail.passport_file = passport_file
+        passport_detail.save()
+
+        serializer = self.get_serializer(passport_detail)
+        return success_response(
+            data=serializer.data,
+            message='Passport file uploaded successfully',
+            status_code=status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        )

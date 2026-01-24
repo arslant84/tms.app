@@ -27,10 +27,10 @@ class CookieTokenAuthentication(BaseAuthentication):
 
         Returns:
             tuple: (user, token) if authentication successful
-            None: if no authentication attempted
+            None: if no authentication attempted or token is invalid
 
-        Raises:
-            AuthenticationFailed: if authentication fails
+        Note: Returns None instead of raising exception for invalid tokens
+        to allow unauthenticated access to public endpoints like login.
         """
         # Try to get token from cookie first (new secure method)
         token_key = request.COOKIES.get(self.cookie_name)
@@ -45,7 +45,12 @@ class CookieTokenAuthentication(BaseAuthentication):
         if not token_key:
             return None  # No authentication attempted
 
-        return self.authenticate_credentials(token_key)
+        try:
+            return self.authenticate_credentials(token_key)
+        except exceptions.AuthenticationFailed:
+            # Return None instead of raising exception - allows public endpoints to work
+            # even when there's an invalid/expired token in cookies
+            return None
 
     def authenticate_credentials(self, key):
         """

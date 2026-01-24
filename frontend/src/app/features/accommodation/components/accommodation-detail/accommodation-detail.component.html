@@ -28,8 +28,8 @@
         </h1>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline" (click)="onPrint()">
-          <i class="bi bi-printer"></i> Print
+        <button class="btn btn-outline" (click)="onExportPdf()">
+          <i class="bi bi-file-earmark-pdf"></i> Export PDF
         </button>
         <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
           <i class="bi bi-pencil"></i> Edit
@@ -37,7 +37,7 @@
         <button class="btn btn-warning" (click)="onCancel()" *ngIf="canCancel()">
           <i class="bi bi-x-circle"></i> Cancel
         </button>
-        <button class="btn btn-danger" (click)="onDelete()" *ngIf="canDelete()">
+        <button class="btn btn-danger" (click)="onDelete()">
           <i class="bi bi-trash"></i> Delete
         </button>
       </div>

@@ -6,8 +6,10 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: vars.$spacing-6 vars.$spacing-6;
+  padding: vars.$spacing-6 vars.$spacing-8;
   box-sizing: border-box;
+  background-color: vars.$gray-50;
+  min-height: 100vh;
 
   @media (width <= 768px) {
     padding: vars.$spacing-md;

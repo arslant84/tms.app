@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface VisaApplicationDetail extends VisaApplication {
@@ -42,6 +43,8 @@ export interface VisaApplication {
   passport_expiry_date?: string;
   passport_place_of_issuance?: string;
   passport_date_of_issuance?: string;
+  passport_file?: string;
+  passport_file_url?: string;
 
   // Personal Demographics
   date_of_birth?: string;
@@ -229,5 +232,28 @@ export class VisaService {
 
   deleteDocument(id: number): Observable<void> {
     return this.http.delete<void>(`${this.documentsUrl}${id}/`);
+  }
+
+  // Passport File Upload
+  uploadPassportFile(applicationId: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('passport_file', file);
+    return this.http.post<any>(`${this.apiUrl}${applicationId}/upload-passport/`, formData);
+  }
+
+  deletePassportFile(applicationId: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}${applicationId}/delete-passport-file/`);
+  }
+
+  // Export visa application to PDF
+  exportToPdf(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}${id}/export-pdf/`, {
+      responseType: 'blob'
+    }).pipe(
+      catchError(error => {
+        console.error('PDF export error:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

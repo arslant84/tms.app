@@ -81,192 +81,207 @@
   </div>
 
   <!-- Content -->
-  <div *ngIf="!isLoading && !error">
-    <!-- Key Metrics -->
-    <div class="row metrics-row">
-    <div class="col-xl-3 col-md-6" *ngFor="let metric of keyMetrics">
-      <div class="metric-card">
-        <div class="metric-icon">
-          <i class="bi" [ngClass]="metric.icon"></i>
+  <div *ngIf="!isLoading && !error" class="reports-content">
+    <!-- Key Metrics - Using unified stat-card structure -->
+    <div class="stats-grid">
+      <div class="stat-card" *ngFor="let metric of keyMetrics">
+        <div class="stat-card-header">
+          <span class="stat-card-title">{{ metric.name }}</span>
+          <i class="bi stat-icon" [ngClass]="metric.icon"></i>
         </div>
-        <div class="metric-content">
-          <h3 class="metric-name">{{ metric.name }}</h3>
-          <div class="metric-value">{{ metric.value }}</div>
-          <div class="metric-change" [ngClass]="getTrendClass(metric.trend)">
-            <i class="bi" [ngClass]="getTrendIcon(metric.trend)"></i>
-            {{ formatPercentage(metric.change) }}
+        <div class="stat-card-content">
+          <div class="stat-value">{{ metric.value }}</div>
+          <p class="stat-description" [ngClass]="getTrendClass(metric.trend)">
+            <i class="bi me-1" [ngClass]="getTrendIcon(metric.trend)"></i>
+            {{ formatPercentage(metric.change) }} from last period
+          </p>
+        </div>
+      </div>
+    </div>
+  
+  <!-- Charts Section - CSS Grid Layout -->
+  <div class="charts-grid">
+    <!-- Request Trends Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-content">
+          <div class="card-title-group">
+            <i class="bi bi-graph-up me-2"></i>
+            <h3 class="card-title">Request Trends</h3>
+          </div>
+          <p class="card-description">Submitted vs completed requests over time</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chart-legend-inline">
+          <div class="legend-item">
+            <span class="legend-dot bg-primary"></span>
+            <span>Submitted</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot bg-success"></span>
+            <span>Completed</span>
+          </div>
+        </div>
+        <div class="chart-container">
+          <div class="area-chart-placeholder">
+            <div class="chart-area-fill primary-area"></div>
+            <div class="chart-area-fill success-area"></div>
+          </div>
+          <div class="chart-x-labels">
+            <span *ngFor="let label of requestTrendChart.labels">{{ label }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requests by Type Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-content">
+          <div class="card-title-group">
+            <i class="bi bi-pie-chart me-2"></i>
+            <h3 class="card-title">Requests by Type</h3>
+          </div>
+          <p class="card-description">Distribution of request types</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="donut-chart-container">
+          <div class="donut-chart-visual">
+            <svg viewBox="0 0 100 100" class="donut-svg">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#e74a3b" stroke-width="20" stroke-dasharray="80 251.2" stroke-dashoffset="0"></circle>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#f6c23e" stroke-width="20" stroke-dasharray="50 251.2" stroke-dashoffset="-80"></circle>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#36b9cc" stroke-width="20" stroke-dasharray="50 251.2" stroke-dashoffset="-130"></circle>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#1cc88a" stroke-width="20" stroke-dasharray="40 251.2" stroke-dashoffset="-180"></circle>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#4e73df" stroke-width="20" stroke-dasharray="31.2 251.2" stroke-dashoffset="-220"></circle>
+            </svg>
+          </div>
+        </div>
+        <div class="chart-legend-vertical">
+          <div class="legend-item" *ngFor="let label of requestsByTypeChart.labels; let i = index">
+            <span class="legend-dot" [style.background-color]="requestsByTypeChart.datasets[0].backgroundColor && requestsByTypeChart.datasets[0].backgroundColor[i] ? requestsByTypeChart.datasets[0].backgroundColor[i] : '#cccccc'"></span>
+            <span class="legend-label">{{ label }}</span>
+            <span class="legend-value">{{ requestsByTypeChart.datasets[0].data[i] }}</span>
           </div>
         </div>
       </div>
     </div>
   </div>
-  
-  <!-- Charts Row -->
-  <div class="row charts-row">
-    <div class="col-lg-8">
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>Request Trends</h3>
-          <div class="chart-legend">
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #4e73df;"></div>
-              <span>Submitted</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #1cc88a;"></div>
-              <span>Completed</span>
-            </div>
-          </div>
-        </div>
-        <div class="chart-body">
-          <!-- This would be a real chart in a production app -->
-          <div class="chart-placeholder">
-            <div class="chart-area">
-              <div class="chart-line" style="height: 70%; background-color: rgba(78, 115, 223, 0.1); border-bottom: 2px solid #4e73df;"></div>
-              <div class="chart-line" style="height: 60%; background-color: rgba(28, 200, 138, 0.1); border-bottom: 2px solid #1cc88a;"></div>
-            </div>
-            <div class="chart-labels">
-              <span *ngFor="let label of requestTrendChart.labels">{{ label }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="col-lg-4">
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>Requests by Type</h3>
-        </div>
-        <div class="chart-body">
-          <!-- This would be a real chart in a production app -->
-          <div class="chart-placeholder donut-chart">
-            <div class="donut-hole"></div>
-            <div class="donut-segment" style="transform: rotate(0deg); background-color: #4e73df; clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);"></div>
-            <div class="donut-segment" style="transform: rotate(130deg); background-color: #1cc88a; clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);"></div>
-            <div class="donut-segment" style="transform: rotate(210deg); background-color: #36b9cc; clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);"></div>
-            <div class="donut-segment" style="transform: rotate(260deg); background-color: #f6c23e; clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);"></div>
-            <div class="donut-segment" style="transform: rotate(300deg); background-color: #e74a3b; clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);"></div>
-          </div>
-          
-          <div class="chart-legend vertical">
-            <div class="legend-item" *ngFor="let label of requestsByTypeChart.labels; let i = index">
-              <div class="legend-color" [style.background-color]="requestsByTypeChart.datasets[0].backgroundColor && requestsByTypeChart.datasets[0].backgroundColor[i] ? requestsByTypeChart.datasets[0].backgroundColor[i] : '#cccccc'"></div>
-              <span>{{ label }}: {{ requestsByTypeChart.datasets[0].data[i] }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
+
   <!-- Processing Time Chart -->
-  <div class="row">
-    <div class="col-12">
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>Average Processing Time by Request Type</h3>
-          <div class="subtitle">Measured in hours from submission to completion</div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-bar-chart me-2"></i>
+          <h3 class="card-title">Average Processing Time by Request Type</h3>
         </div>
-        <div class="chart-body">
-          <!-- This would be a real chart in a production app -->
-          <div class="chart-placeholder bar-chart">
-            <div class="chart-bars">
-              <div class="chart-bar" *ngFor="let value of processingTimeChart.datasets[0].data; let i = index" 
-                   [style.height.%]="value / 72 * 100">
-                <div class="bar-value">{{ value }}h</div>
-              </div>
+        <p class="card-description">Measured in hours from submission to completion</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="bar-chart-container">
+        <div class="bar-chart-area">
+          <div class="bar-item" *ngFor="let value of processingTimeChart.datasets[0].data; let i = index">
+            <div class="bar-wrapper">
+              <span class="bar-value-label">{{ value }}h</span>
+              <div class="bar" [style.height.%]="getBarHeightPercent(value)"></div>
             </div>
-            <div class="chart-labels">
-              <span *ngFor="let label of processingTimeChart.labels">{{ label }}</span>
-            </div>
+            <span class="bar-label">{{ processingTimeChart.labels[i] }}</span>
           </div>
         </div>
       </div>
     </div>
   </div>
-  
+
   <!-- Department Statistics -->
-  <div class="row">
-    <div class="col-12">
-      <div class="table-card">
-        <div class="table-header">
-          <h3>Department Statistics</h3>
-          <div class="subtitle">Request processing metrics by department</div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-building me-2"></i>
+          <h3 class="card-title">Department Statistics</h3>
         </div>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Department</th>
-                <th>Total Requests</th>
-                <th>Pending</th>
-                <th>Completed</th>
-                <th>Completion Rate</th>
-                <th>Avg. Processing Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let dept of departmentStats">
-                <td>{{ dept.department }}</td>
-                <td>{{ dept.total }}</td>
-                <td>{{ dept.pending }}</td>
-                <td>{{ dept.completed }}</td>
-                <td>
-                  <div class="progress">
-                    <div class="progress-bar" 
-                         [style.width.%]="getCompletionPercentage(dept)"
-                         [ngClass]="{'bg-success': getCompletionPercentage(dept) > 80, 
-                                     'bg-warning': getCompletionPercentage(dept) <= 80 && getCompletionPercentage(dept) >= 60,
-                                     'bg-danger': getCompletionPercentage(dept) < 60}">
-                      {{ getCompletionPercentage(dept) }}%
-                    </div>
+        <p class="card-description">Request processing metrics by department</p>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Total Requests</th>
+              <th>Pending</th>
+              <th>Completed</th>
+              <th>Completion Rate</th>
+              <th>Avg. Processing Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let dept of departmentStats">
+              <td class="fw-medium">{{ dept.department }}</td>
+              <td>{{ dept.total }}</td>
+              <td>{{ dept.pending }}</td>
+              <td>{{ dept.completed }}</td>
+              <td>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill"
+                       [style.width.%]="getCompletionPercentage(dept)"
+                       [ngClass]="{'bg-success': getCompletionPercentage(dept) > 80,
+                                   'bg-warning': getCompletionPercentage(dept) <= 80 && getCompletionPercentage(dept) >= 60,
+                                   'bg-danger': getCompletionPercentage(dept) < 60}">
                   </div>
-                </td>
-                <td>{{ dept.avgProcessingTime.toFixed(1) }} hours</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                  <span class="progress-label">{{ getCompletionPercentage(dept) }}%</span>
+                </div>
+              </td>
+              <td>{{ dept.avgProcessingTime.toFixed(1) }} hours</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
-  
+
   <!-- Top Performers -->
-  <div class="row">
-    <div class="col-12">
-      <div class="table-card">
-        <div class="table-header">
-          <h3>Top Performing Clerks</h3>
-          <div class="subtitle">Based on number of requests processed and average processing time</div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-trophy me-2"></i>
+          <h3 class="card-title">Top Performing Clerks</h3>
         </div>
-        <div class="table-responsive">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Name</th>
-                <th>Requests Processed</th>
-                <th>Avg. Processing Time</th>
-                <th>Performance</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let clerk of topClerks; let i = index">
-                <td><span class="rank-badge">{{ i + 1 }}</span></td>
-                <td>{{ clerk.name }}</td>
-                <td>{{ clerk.processed }}</td>
-                <td>{{ clerk.avgTime.toFixed(1) }} hours</td>
-                <td>
-                  <div class="stars">
-                    <i class="bi bi-star-fill" *ngFor="let star of [1, 2, 3, 4, 5]; let s = index" 
-                       [class.active]="s < (5 - (clerk.avgTime / 10))"></i>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <p class="card-description">Based on number of requests processed and average processing time</p>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Name</th>
+              <th>Requests Processed</th>
+              <th>Avg. Processing Time</th>
+              <th>Performance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let clerk of topClerks; let i = index">
+              <td><span class="rank-badge">{{ i + 1 }}</span></td>
+              <td class="fw-medium">{{ clerk.name }}</td>
+              <td>{{ clerk.processed }}</td>
+              <td>{{ clerk.avgTime.toFixed(1) }} hours</td>
+              <td>
+                <div class="stars">
+                  <i class="bi bi-star-fill" *ngFor="let star of [1, 2, 3, 4, 5]; let s = index"
+                     [class.active]="s < (5 - (clerk.avgTime / 10))"></i>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

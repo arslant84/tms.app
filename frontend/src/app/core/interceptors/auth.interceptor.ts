@@ -32,19 +32,22 @@ export const AuthInterceptor: HttpInterceptorFn = (
     catchError((error: HttpErrorResponse) => {
       // Handle 401 Unauthorized errors (expired token or invalid session)
       if (error.status === 401) {
-        // Skip refresh for login, refresh, /me, and password reset endpoints to avoid infinite loops
+        // Skip refresh for login, logout, refresh, /me, and password reset endpoints to avoid infinite loops
         const skipRefresh = request.url.includes('/api/login/') ||
+                           request.url.includes('/api/logout/') ||
                            request.url.includes('/api/token/refresh/') ||
                            request.url.includes('/api/users/me/') ||
                            request.url.includes('/api/password/reset/');
 
         if (skipRefresh) {
-          // Just return error without redirecting for /me and password reset endpoints
-          if (request.url.includes('/api/users/me/') || request.url.includes('/api/password/reset/')) {
+          // Just return error without redirecting for /me, logout and password reset endpoints
+          if (request.url.includes('/api/users/me/') ||
+              request.url.includes('/api/password/reset/') ||
+              request.url.includes('/api/logout/')) {
             return throwError(() => error);
           }
-          // For login/refresh failures, logout and redirect
-          authService.logout();
+          // For login/refresh failures, clear state and redirect (don't call logout to avoid loop)
+          authService.clearUserState();
           router.navigate(['/auth/login']);
           return throwError(() => error);
         }
@@ -56,8 +59,8 @@ export const AuthInterceptor: HttpInterceptorFn = (
               // Refresh successful - retry the original request
               return next(authReq);
             } else {
-              // Refresh failed - logout and redirect
-              authService.logout();
+              // Refresh failed - clear state and redirect (don't call logout to avoid loop)
+              authService.clearUserState();
               router.navigate(['/auth/login']);
               return throwError(() => error);
             }

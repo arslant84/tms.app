@@ -21,9 +21,9 @@
         </h1>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline" (click)="onPrint()">
-          <i class="bi bi-printer"></i>
-          Print
+        <button class="btn btn-outline" (click)="onExportPdf()">
+          <i class="bi bi-file-earmark-pdf"></i>
+          Export PDF
         </button>
         <button class="btn btn-secondary" *ngIf="canEdit()" (click)="onEdit()">
           <i class="bi bi-pencil"></i>

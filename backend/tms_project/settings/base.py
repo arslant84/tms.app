@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',  # Token blacklist for logout
     'corsheaders',
     'csp',  # Content Security Policy
+    'drf_spectacular',  # OpenAPI schema generation
 
     # Custom apps
     'accounts',
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     'transport',
     'workflows',
     'notifications',
+    'reports',
 ]
 
 MIDDLEWARE = [
@@ -168,8 +170,76 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': 20,  # Increased from 10 to 20 for better UX
+    # OpenAPI schema generation with drf-spectacular
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# DRF Spectacular Settings (OpenAPI Documentation)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'TMS API',
+    'DESCRIPTION': '''
+## Travel Management System API
+
+A comprehensive API for managing travel requests, bookings, approvals, and more.
+
+### Features
+- **Travel Requests (TRF/TSR)**: Create, submit, approve, and track travel requests
+- **Bookings**: Flight and hotel booking management
+- **Approvals**: Unified approval workflow across all request types
+- **Visa Applications**: Manage visa application processes
+- **Transport**: Transport request management
+- **Accommodation**: Accommodation booking requests
+- **Reports**: Comprehensive reporting and analytics
+- **Notifications**: Real-time notification system
+
+### Authentication
+All endpoints require authentication via JWT tokens stored in HttpOnly cookies.
+Login via `/api/login/` to obtain authentication cookies.
+
+### Response Format
+All responses follow a standardized format:
+```json
+{
+    "success": true/false,
+    "message": "Human-readable message",
+    "data": {...},
+    "meta": {
+        "timestamp": "ISO datetime",
+        "pagination": {...}
+    }
+}
+```
+    ''',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': False,
+        'filter': True,
+    },
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SORT_OPERATIONS': False,
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'User authentication and session management'},
+        {'name': 'Users', 'description': 'User management operations'},
+        {'name': 'Travel Requests', 'description': 'TRF/TSR travel request management'},
+        {'name': 'Bookings', 'description': 'Flight and hotel booking operations'},
+        {'name': 'Approvals', 'description': 'Unified approval workflow'},
+        {'name': 'Visa', 'description': 'Visa application management'},
+        {'name': 'Transport', 'description': 'Transport request operations'},
+        {'name': 'Accommodation', 'description': 'Accommodation booking requests'},
+        {'name': 'Reports', 'description': 'Reporting and analytics'},
+        {'name': 'Notifications', 'description': 'Notification management'},
+        {'name': 'Insights', 'description': 'Dashboard and analytics data'},
+        {'name': 'Workflows', 'description': 'Workflow template management'},
+    ],
 }
 
 # Media files
@@ -220,28 +290,32 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Content Security Policy (CSP)
+# Content Security Policy (CSP) - django-csp 3.7+ format
 # SECURITY: Prevents XSS attacks by controlling which resources can be loaded
 # Note: 'unsafe-inline' and 'unsafe-eval' are needed for Angular during development
 # In production, consider using nonces or hashes for stricter CSP
-CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")  # Angular requires inline scripts
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")  # Bootstrap and Angular Material use inline styles
-CSP_IMG_SRC = ("'self'", "data:", "https:")  # Allow images from same origin, data URIs, and HTTPS
-CSP_FONT_SRC = ("'self'", "data:")  # Bootstrap fonts
-CSP_CONNECT_SRC = ("'self'",)  # API calls - will be extended in development.py
-CSP_FRAME_ANCESTORS = ("'none'",)  # Don't allow this site to be framed
-CSP_BASE_URI = ("'self'",)  # Restrict base tag to prevent base tag injection
-CSP_FORM_ACTION = ("'self'",)  # Forms can only submit to same origin
-CSP_OBJECT_SRC = ("'none'",)  # Block plugins like Flash
-CSP_MEDIA_SRC = ("'self'",)  # Audio and video from same origin
-CSP_FRAME_SRC = ("'self'",)  # Allow iframes from same origin
-CSP_WORKER_SRC = ("'self'",)  # Web workers from same origin
-CSP_MANIFEST_SRC = ("'self'",)  # Web app manifest from same origin
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'",),
+        'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'"),  # Angular requires inline scripts
+        'style-src': ("'self'", "'unsafe-inline'"),  # Bootstrap and Angular Material use inline styles
+        'img-src': ("'self'", "data:", "https:"),  # Allow images from same origin, data URIs, and HTTPS
+        'font-src': ("'self'", "data:"),  # Bootstrap fonts
+        'connect-src': ("'self'",),  # API calls - will be extended in development.py
+        'frame-ancestors': ("'none'",),  # Don't allow this site to be framed
+        'base-uri': ("'self'",),  # Restrict base tag to prevent base tag injection
+        'form-action': ("'self'",),  # Forms can only submit to same origin
+        'object-src': ("'none'",),  # Block plugins like Flash
+        'media-src': ("'self'",),  # Audio and video from same origin
+        'frame-src': ("'self'",),  # Allow iframes from same origin
+        'worker-src': ("'self'",),  # Web workers from same origin
+        'manifest-src': ("'self'",),  # Web app manifest from same origin
+    }
+}
 
 # CSP Reporting (optional - uncomment to enable violation reports)
-# CSP_REPORT_URI = '/csp-report/'  # Endpoint to receive CSP violation reports
-# CSP_REPORT_ONLY = False  # Set to True to test CSP without enforcing
+# CONTENT_SECURITY_POLICY['REPORT_URI'] = '/csp-report/'
+# CONTENT_SECURITY_POLICY['REPORT_ONLY'] = False  # Set to True to test CSP without enforcing
 
 # CSRF Protection for cookie-based authentication
 # Allow CSRF cookie to be sent from frontend
@@ -282,32 +356,63 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
-# Logging configuration
+# Logging Configuration
+# Clean, readable logs for development - ONLY application logs
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+        'app': {
+            'format': '\033[1m{levelname}\033[0m {asctime} \033[36m{name}\033[0m {message}',
             'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
+            'datefmt': '%H:%M:%S',
         },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'app',
+            'level': 'INFO',
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO',
+        'level': 'WARNING',  # Only show warnings and errors from unlisted loggers
     },
     'loggers': {
+        # Silence Django framework logs completely
         'django': {
+            'handlers': [],
+            'level': 'ERROR',  # Only show errors
+            'propagate': False,
+        },
+        'django.utils.autoreload': {
+            'handlers': [],
+            'level': 'ERROR',  # Completely suppress autoreload logs
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': [],
+            'level': 'ERROR',  # No SQL logs
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # Only show HTTP errors, not every request
+            'propagate': False,
+        },
+        'django.template': {
+            'handlers': [],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        # Application loggers - show all activity
+        'accounts': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'approvals': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
@@ -317,7 +422,37 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'trf': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'bookings': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'transport': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'insights': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'notifications': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'visa': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'accommodation': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,

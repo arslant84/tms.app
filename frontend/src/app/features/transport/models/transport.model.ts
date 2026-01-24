@@ -53,9 +53,6 @@ export interface TransportRequestData {
 
 export interface TransportApprovalSubmissionData {
   additionalComments: string;
-  confirmPolicy: boolean;
-  confirmManagerApproval: boolean;
-  confirmTermsAndConditions?: boolean;
 }
 
 export interface TransportRequestForm extends TransportRequestData, TransportApprovalSubmissionData {
@@ -132,9 +129,6 @@ export function toBackendFormat(frontendData: Partial<TransportRequestForm>): an
 
     // Submission data
     additional_comments: frontendData.additionalComments,
-    confirm_policy: frontendData.confirmPolicy ?? false,
-    confirm_manager_approval: frontendData.confirmManagerApproval ?? false,
-    confirm_terms_and_conditions: frontendData.confirmTermsAndConditions ?? false,
 
     // Booking details (for admin)
     booking_details: frontendData.bookingDetails ? {
@@ -181,9 +175,6 @@ export function toFrontendFormat(backendData: any): TransportRequestForm {
 
     // Submission data
     additionalComments: backendData.additional_comments || '',
-    confirmPolicy: backendData.confirm_policy ?? false,
-    confirmManagerApproval: backendData.confirm_manager_approval ?? false,
-    confirmTermsAndConditions: backendData.confirm_terms_and_conditions ?? false,
 
     // Approval workflow
     approvalWorkflow: backendData.approval_workflow?.map((step: any) => ({

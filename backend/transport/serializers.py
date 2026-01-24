@@ -63,7 +63,6 @@ class TransportRequestSerializer(serializers.ModelSerializer):
             'purpose', 'tsr_reference', 'status',
             'transport_details', 'detail_count',
             'additional_comments',
-            'confirm_policy', 'confirm_manager_approval', 'confirm_terms_and_conditions',
             'booking_details', 'vehicle_assignments',
             'submitted_at', 'created_at', 'updated_at'
         ]
@@ -162,8 +161,7 @@ class TransportRequestCreateSerializer(serializers.ModelSerializer):
             'requestor_name', 'staff_id', 'department', 'position',
             'purpose', 'tsr_reference', 'status',
             'transport_details',
-            'additional_comments',
-            'confirm_policy', 'confirm_manager_approval', 'confirm_terms_and_conditions'
+            'additional_comments'
         ]
 
     def validate(self, data):
@@ -213,7 +211,6 @@ class TransportRequestUpdateSerializer(serializers.ModelSerializer):
             'purpose', 'tsr_reference',
             'transport_details',
             'additional_comments',
-            'confirm_policy', 'confirm_manager_approval', 'confirm_terms_and_conditions',
             'booking_details'
         ]
 

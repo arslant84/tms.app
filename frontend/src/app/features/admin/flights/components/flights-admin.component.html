@@ -140,41 +140,32 @@
               </td>
               <td>
                 <div class="d-flex gap-2 justify-content-center">
-                  <button class="btn btn-sm btn-outline-secondary" (click)="viewBooking(booking)" title="View Details">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewBooking(booking)" title="View Details">
+                    <i class="bi bi-eye"></i>
                   </button>
 
-                  <button *ngIf="canConfirm(booking)" class="btn btn-sm btn-success"
+                  <button *ngIf="canConfirm(booking)" class="btn btn-sm btn-outline-primary btn-icon"
                           (click)="confirmBooking(booking)"
                           [disabled]="isProcessing(booking.id)"
                           title="Confirm Booking">
                     <span *ngIf="!isProcessing(booking.id)">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <i class="bi bi-check-circle"></i>
                     </span>
                     <span *ngIf="isProcessing(booking.id)" class="spinner-border spinner-border-sm"></span>
                   </button>
 
-                  <button *ngIf="canIssueTicket(booking)" class="btn btn-sm btn-primary-custom"
+                  <button *ngIf="canIssueTicket(booking)" class="btn btn-sm btn-outline-primary btn-icon"
                           (click)="openIssueTicketModal(booking)"
                           [disabled]="isProcessing(booking.id)"
                           title="Issue Ticket">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3v.75m-9-3h.375m-.375 3h.375m0-6h.375m-.375-3h.375M9 12.75h.375M3.75 12h.375m-.375-3h.375m-.375-3h.375M9 6.75h.375M6 18.75h.375m-.375-3h.375M9 15.75h.375m9 3h.375M9 9.75h.375M18.75 18.75h.375M18.75 15.75h.375M18.75 12.75h.375M18.75 9.75h.375M18.75 6.75h.375M6 3.75h12M6 20.25h12" />
-                    </svg>
+                    <i class="bi bi-ticket-perforated"></i>
                   </button>
 
-                  <button *ngIf="canCancel(booking)" class="btn btn-sm btn-outline-danger"
+                  <button *ngIf="canCancel(booking)" class="btn btn-sm btn-outline-danger btn-icon"
                           (click)="cancelBooking(booking)"
                           [disabled]="isProcessing(booking.id)"
                           title="Cancel Booking">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <i class="bi bi-x-circle"></i>
                   </button>
                 </div>
               </td>
@@ -251,12 +242,10 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeIssueTicketModal()">Cancel</button>
-        <button type="button" class="btn btn-primary-custom" (click)="issueTicket()"
+        <button type="button" class="btn btn-primary" (click)="issueTicket()"
                 [disabled]="processingId !== null || !ticketNumber">
           <span *ngIf="processingId === null">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm me-1">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3v.75m-9-3h.375m-.375 3h.375m0-6h.375m-.375-3h.375M9 12.75h.375M3.75 12h.375m-.375-3h.375m-.375-3h.375M9 6.75h.375M6 18.75h.375m-.375-3h.375M9 15.75h.375m9 3h.375M9 9.75h.375M18.75 18.75h.375M18.75 15.75h.375M18.75 12.75h.375M18.75 9.75h.375M18.75 6.75h.375M6 3.75h12M6 20.25h12" />
-            </svg>
+            <i class="bi bi-ticket-perforated me-1"></i>
             Issue Ticket
           </span>
           <span *ngIf="processingId !== null" class="spinner-border spinner-border-sm"></span>

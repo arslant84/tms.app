@@ -21,13 +21,19 @@ class UserSerializer(serializers.ModelSerializer):
 
 class NotificationEventTypeSerializer(serializers.ModelSerializer):
     """Serializer for notification event types"""
+    display_name = serializers.SerializerMethodField()
+
     class Meta:
         model = NotificationEventType
         fields = [
-            'id', 'name', 'description', 'category',
+            'id', 'name', 'display_name', 'description', 'category',
             'module', 'is_active', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_display_name(self, obj):
+        """Convert name like WORKFLOW_STARTED to 'Workflow Started'"""
+        return ' '.join(word.capitalize() for word in obj.name.split('_'))
 
 
 class NotificationTemplateSerializer(serializers.ModelSerializer):

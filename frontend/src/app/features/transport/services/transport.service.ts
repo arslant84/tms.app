@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   TransportRequestForm,
@@ -129,5 +130,17 @@ export class TransportService {
       ...data
     };
     return this.http.post(`${environment.apiUrl}/transport/vehicle-assignments/`, vehicleAssignmentData);
+  }
+
+  // Export transport request to PDF
+  exportToPdf(id: number | string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/export-pdf/`, {
+      responseType: 'blob'
+    }).pipe(
+      catchError(error => {
+        console.error('PDF export error:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

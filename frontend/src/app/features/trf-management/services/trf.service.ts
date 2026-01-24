@@ -119,12 +119,9 @@ export class TrfService {
 
   // Export TRF to PDF
   exportTrfToPdf(id: number, isOverseas: boolean = false): Observable<Blob> {
-    const headers = new HttpHeaders({
-      'Accept': 'application/pdf'
-    });
-
+    // Note: Don't set Accept header to avoid DRF content negotiation issues
+    // responseType: 'blob' handles binary content properly
     return this.http.get(`${environment.apiUrl}/trf/travel-requests/${id}/export-pdf/`, {
-      headers: headers,
       responseType: 'blob'
     }).pipe(
       catchError(this.handleError)
@@ -235,6 +232,62 @@ export class TrfService {
       .pipe(
         catchError(this.handleError)
       );
+  }
+
+  // =============== PASSPORT FILE UPLOAD METHODS ===============
+
+  /**
+   * Upload passport document for a TRF
+   * Creates passport detail record if it doesn't exist
+   */
+  uploadPassportDocument(trfId: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('trf', trfId.toString());
+    formData.append('passport_file', file);
+
+    return this.http.post<any>(
+      `${environment.apiUrl}/trf/passport-details/upload-for-trf/`,
+      formData
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Upload passport file to an existing passport detail record
+   */
+  uploadPassportFile(passportDetailId: number, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('passport_file', file);
+
+    return this.http.post<any>(
+      `${environment.apiUrl}/trf/passport-details/${passportDetailId}/upload-passport/`,
+      formData
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Delete passport file from a passport detail record
+   */
+  deletePassportFile(passportDetailId: number): Observable<any> {
+    return this.http.delete<any>(
+      `${environment.apiUrl}/trf/passport-details/${passportDetailId}/delete-passport-file/`
+    ).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Get passport details for a TRF
+   */
+  getPassportDetails(trfId: number): Observable<any> {
+    return this.http.get<any>(
+      `${environment.apiUrl}/trf/passport-details/?trf=${trfId}`
+    ).pipe(
+      catchError(this.handleError)
+    );
   }
 
   // Error handling

@@ -547,6 +547,27 @@
   }
 }
 
+// Action buttons - circular icon buttons
+.action-buttons {
+  display: flex;
+  gap: vars.$spacing-2;
+  justify-content: flex-end;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: vars.$font-size-sm;
+  }
+}
+
 // Primary Custom Button (Petronas Green)
 .btn-primary-custom {
   background-color: vars.$primary-color;

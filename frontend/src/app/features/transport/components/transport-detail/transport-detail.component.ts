@@ -174,7 +174,13 @@ export class TransportDetailComponent implements OnInit {
   }
 
   canCancel(): boolean {
-    return this.CANCELLABLE_STATUSES.includes(this.request?.status || '');
+    const status = this.request?.status || '';
+    // Allow cancel for any status that contains 'Pending' and is not approved
+    if (status.includes('Pending')) {
+      const isApproved = this.APPROVED_KEYWORDS.some(keyword => status.includes(keyword));
+      return !isApproved;
+    }
+    return false;
   }
 
   canDelete(): boolean {
@@ -254,8 +260,23 @@ export class TransportDetailComponent implements OnInit {
     });
   }
 
-  onPrint(): void {
-    window.print();
+  onExportPdf(): void {
+    if (!this.requestId) return;
+
+    this.transportService.exportToPdf(this.requestId).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Transport-${this.request?.request_number || this.requestId}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.toastService.success('PDF exported successfully');
+      },
+      error: (err: any) => {
+        this.toastService.error('Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error'));
+      }
+    });
   }
 
   formatCurrency(amount: number | null | undefined, currency?: string | null): string {

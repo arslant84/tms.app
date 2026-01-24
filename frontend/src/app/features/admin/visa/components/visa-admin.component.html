@@ -180,40 +180,42 @@
               </td>
               <td>{{ dateUtils.formatDate(app.submitted_date) }}</td>
               <td class="text-end">
-                <button class="btn btn-sm btn-icon btn-view" (click)="viewApplication(app)" title="View">
-                  <i class="bi bi-eye"></i>
-                </button>
+                <div class="action-buttons">
+                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewApplication(app)" title="View">
+                    <i class="bi bi-eye"></i>
+                  </button>
 
-                <button *ngIf="canApprove(app)" class="btn btn-sm btn-icon btn-approve"
-                        (click)="openProcessModal(app, 'approve')"
-                        [disabled]="isProcessing(app.id)"
-                        title="Approve">
-                  <span *ngIf="!isProcessing(app.id)">
-                    <i class="bi bi-check-circle"></i>
-                  </span>
-                  <span *ngIf="isProcessing(app.id)" class="spinner-border spinner-border-sm"></span>
-                </button>
+                  <button *ngIf="canApprove(app)" class="btn btn-sm btn-outline-primary btn-icon"
+                          (click)="openProcessModal(app, 'approve')"
+                          [disabled]="isProcessing(app.id)"
+                          title="Approve">
+                    <span *ngIf="!isProcessing(app.id)">
+                      <i class="bi bi-check-circle"></i>
+                    </span>
+                    <span *ngIf="isProcessing(app.id)" class="spinner-border spinner-border-sm"></span>
+                  </button>
 
-                <button *ngIf="canReject(app)" class="btn btn-sm btn-icon btn-reject"
-                        (click)="openProcessModal(app, 'reject')"
-                        [disabled]="isProcessing(app.id)"
-                        title="Reject">
-                  <i class="bi bi-x-circle"></i>
-                </button>
+                  <button *ngIf="canReject(app)" class="btn btn-sm btn-outline-danger btn-icon"
+                          (click)="openProcessModal(app, 'reject')"
+                          [disabled]="isProcessing(app.id)"
+                          title="Reject">
+                    <i class="bi bi-x-circle"></i>
+                  </button>
 
-                <button *ngIf="canStartProcessing(app)" class="btn btn-sm btn-icon btn-process"
-                        (click)="startProcessing(app)"
-                        [disabled]="isProcessing(app.id)"
-                        title="Start Processing">
-                  <i class="bi bi-play-circle"></i>
-                </button>
+                  <button *ngIf="canStartProcessing(app)" class="btn btn-sm btn-outline-primary btn-icon"
+                          (click)="startProcessing(app)"
+                          [disabled]="isProcessing(app.id)"
+                          title="Start Processing">
+                    <i class="bi bi-play-circle"></i>
+                  </button>
 
-                <button *ngIf="canComplete(app)" class="btn btn-sm btn-icon btn-complete"
-                        (click)="openProcessModal(app, 'complete')"
-                        [disabled]="isProcessing(app.id)"
-                        title="Mark as Completed">
-                  <i class="bi bi-check2-all"></i>
-                </button>
+                  <button *ngIf="canComplete(app)" class="btn btn-sm btn-outline-primary btn-icon"
+                          (click)="openProcessModal(app, 'complete')"
+                          [disabled]="isProcessing(app.id)"
+                          title="Mark as Completed">
+                    <i class="bi bi-check2-all"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>

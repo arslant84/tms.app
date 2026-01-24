@@ -30,6 +30,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/bootstrap-icons/font/fonts",
+                "output": "/fonts"
               }
             ],
             "styles": [
@@ -38,6 +43,10 @@
                 "inject": true,
                 "bundleName": "bootstrap"
               },
+              "node_modules/bootstrap-icons/font/bootstrap-icons.min.css",
+              "node_modules/@fontsource/raleway/300.css",
+              "node_modules/@fontsource/raleway/700.css",
+              "node_modules/@fontsource/raleway/900.css",
               "src/styles.scss"
             ],
             "scripts": [

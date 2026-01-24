@@ -1,0 +1,21 @@
+# Bandit Security Scanner Configuration
+# Run: bandit -r . -c bandit.yaml
+
+# Skip these test IDs
+skips:
+  # Skip assert usage warnings (used in tests)
+  - B101
+
+# Exclude directories
+exclude_dirs:
+  - venv
+  - .venv
+  - tests
+  - migrations
+  - __pycache__
+
+# Severity threshold
+severity: low
+
+# Confidence threshold
+confidence: medium

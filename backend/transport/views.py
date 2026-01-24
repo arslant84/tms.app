@@ -26,6 +26,13 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated]
 
+    # Search across key fields
+    search_fields = ['title', 'purpose', 'request_number', 'requestor__email', 'requestor__name']
+
+    # Allow ordering
+    ordering_fields = ['created_at', 'pickup_datetime', 'status', 'transport_type']
+    ordering = ['-created_at']  # Default: newest first
+
     def get_object(self):
         """
         Override to show proper request_number in error messages
@@ -642,6 +649,237 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='export-pdf')
+    def export_pdf(self, request, pk=None):
+        """
+        Export Transport Request to PDF
+
+        Returns a PDF document containing all transport request details including:
+        - Requestor information
+        - Transport details (pickup, dropoff, vehicle type)
+        - Journey segments
+        - Vehicle assignment details
+        - Approval history and workflow status
+        """
+        import io
+        from django.http import HttpResponse
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
+        transport_request = self.get_object()
+
+        # Create PDF buffer
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=letter,
+            rightMargin=0.5*inch,
+            leftMargin=0.5*inch,
+            topMargin=0.5*inch,
+            bottomMargin=0.5*inch
+        )
+
+        # Styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=20,
+            textColor=colors.HexColor('#0d9488')
+        )
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=12,
+            spaceBefore=15,
+            spaceAfter=10,
+            textColor=colors.HexColor('#0d9488')
+        )
+        normal_style = styles['Normal']
+
+        elements = []
+
+        # Title
+        title = f"Transport Request - {transport_request.request_number or f'TR-{transport_request.id}'}"
+        elements.append(Paragraph(title, title_style))
+        elements.append(Spacer(1, 12))
+
+        # Status badge
+        status_text = f"<b>Status:</b> {transport_request.status}"
+        elements.append(Paragraph(status_text, normal_style))
+        elements.append(Spacer(1, 12))
+
+        # Table style
+        table_style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0d9488')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ])
+
+        # Requestor Information
+        elements.append(Paragraph("Requestor Information", heading_style))
+        requestor_data = [
+            ['Field', 'Value'],
+            ['Name', transport_request.requestor_name or 'Not provided'],
+            ['Staff ID', transport_request.staff_id or 'Not provided'],
+            ['Department', transport_request.department or 'Not provided'],
+            ['Position', transport_request.position or 'Not provided'],
+            ['Email', transport_request.requestor.email if transport_request.requestor else 'Not provided'],
+        ]
+        requestor_table = Table(requestor_data, colWidths=[2*inch, 5*inch])
+        requestor_table.setStyle(table_style)
+        elements.append(requestor_table)
+
+        # Status & Tracking
+        elements.append(Paragraph("Status &amp; Tracking", heading_style))
+        tracking_data = [
+            ['Field', 'Value'],
+            ['Request Number', transport_request.request_number or f'TR-{transport_request.id}'],
+            ['Current Status', transport_request.status],
+            ['TSR Reference', transport_request.tsr_reference or 'Not linked'],
+            ['Created', transport_request.created_at.strftime('%Y-%m-%d %H:%M') if transport_request.created_at else 'Not available'],
+            ['Submitted', transport_request.submitted_at.strftime('%Y-%m-%d %H:%M') if transport_request.submitted_at else 'Not submitted'],
+            ['Last Updated', transport_request.updated_at.strftime('%Y-%m-%d %H:%M') if transport_request.updated_at else 'Not available'],
+        ]
+        tracking_table = Table(tracking_data, colWidths=[2*inch, 5*inch])
+        tracking_table.setStyle(table_style)
+        elements.append(tracking_table)
+
+        # Transport Details
+        elements.append(Paragraph("Transport Details", heading_style))
+        transport_data = [
+            ['Field', 'Value'],
+            ['Purpose', (transport_request.purpose or 'Not provided')[:100]],
+            ['Additional Comments', (transport_request.additional_comments or 'None')[:100]],
+        ]
+        transport_table = Table(transport_data, colWidths=[2*inch, 5*inch])
+        transport_table.setStyle(table_style)
+        elements.append(transport_table)
+
+        # Journey Details from transport_details JSON field
+        if transport_request.transport_details:
+            # transport_details is a list of journey objects
+            journeys = transport_request.transport_details if isinstance(transport_request.transport_details, list) else []
+            if journeys:
+                elements.append(Paragraph("Journey Details", heading_style))
+                journey_data = [['#', 'Date', 'From', 'To', 'Time', 'Type', 'Passengers']]
+                for i, journey in enumerate(journeys, 1):
+                    journey_data.append([
+                        str(i),
+                        str(journey.get('date', '-'))[:10],
+                        str(journey.get('from', journey.get('from_location', '-')))[:20],
+                        str(journey.get('to', journey.get('to_location', '-')))[:20],
+                        str(journey.get('departureTime', journey.get('departure_time', '-')))[:8],
+                        str(journey.get('transportType', journey.get('transport_type', '-')))[:15],
+                        str(journey.get('numberOfPassengers', journey.get('number_of_passengers', '-')))
+                    ])
+                journey_table = Table(journey_data, colWidths=[0.3*inch, 0.9*inch, 1.3*inch, 1.3*inch, 0.7*inch, 1*inch, 0.8*inch])
+                journey_table.setStyle(table_style)
+                elements.append(journey_table)
+
+        # Vehicle Assignment
+        vehicle_assignments = transport_request.vehicle_assignments.all()
+        if vehicle_assignments.exists():
+            elements.append(Paragraph("Vehicle Assignment", heading_style))
+            for assignment in vehicle_assignments:
+                assignment_data = [
+                    ['Field', 'Value'],
+                    ['Vehicle Number', assignment.vehicle_number or '-'],
+                    ['Vehicle Type', assignment.vehicle_type or '-'],
+                    ['Vehicle Capacity', str(assignment.vehicle_capacity) if assignment.vehicle_capacity else '-'],
+                    ['Driver Name', assignment.driver_name or '-'],
+                    ['Driver Contact', assignment.driver_contact or '-'],
+                    ['Driver License', assignment.driver_license or '-'],
+                    ['Assignment Status', assignment.status or '-'],
+                    ['Assigned Date', assignment.assignment_date.strftime('%Y-%m-%d %H:%M') if assignment.assignment_date else '-'],
+                ]
+                assignment_table = Table(assignment_data, colWidths=[2*inch, 5*inch])
+                assignment_table.setStyle(table_style)
+                elements.append(assignment_table)
+
+        # Approval History - try workflow first, then fall back to legacy approval steps
+        from django.contrib.contenttypes.models import ContentType
+        from workflows.models import WorkflowInstance
+
+        approval_found = False
+        try:
+            content_type = ContentType.objects.get_for_model(transport_request)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=transport_request.id
+            ).first()
+
+            if workflow_instance and workflow_instance.step_executions.exists():
+                elements.append(Paragraph("Approval History", heading_style))
+                approval_data = [['Step', 'Role', 'Status', 'Actioned By', 'Date', 'Comments']]
+                for step in workflow_instance.step_executions.all().order_by('step_order'):
+                    approval_data.append([
+                        str(step.step_order),
+                        step.step_name or step.role_required or '-',
+                        step.status or '-',
+                        step.actioned_by.name if step.actioned_by else '-',
+                        step.actioned_at.strftime('%Y-%m-%d %H:%M') if step.actioned_at else '-',
+                        (step.comments or '-')[:30]
+                    ])
+                approval_table = Table(approval_data, colWidths=[0.4*inch, 1.2*inch, 0.9*inch, 1.2*inch, 1.3*inch, 2*inch])
+                approval_table.setStyle(table_style)
+                elements.append(approval_table)
+                approval_found = True
+        except Exception:
+            pass
+
+        # Fall back to legacy approval steps if no workflow found
+        if not approval_found:
+            approval_steps = transport_request.approval_steps.all().order_by('created_at')
+            if approval_steps.exists():
+                elements.append(Paragraph("Approval History", heading_style))
+                approval_data = [['Role', 'Status', 'Date', 'Comments']]
+                for step in approval_steps:
+                    approval_data.append([
+                        step.step_role or '-',
+                        step.status or '-',
+                        step.step_date.strftime('%Y-%m-%d %H:%M') if step.step_date else '-',
+                        (step.comments or '-')[:50]
+                    ])
+                approval_table = Table(approval_data, colWidths=[1.5*inch, 1.2*inch, 1.5*inch, 3*inch])
+                approval_table.setStyle(table_style)
+                elements.append(approval_table)
+
+        # Footer
+        elements.append(Spacer(1, 20))
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.grey
+        )
+        footer_text = f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M:%S')} | Travel Management System"
+        elements.append(Paragraph(footer_text, footer_style))
+
+        # Build PDF
+        doc.build(elements)
+        buffer.seek(0)
+
+        # Create response
+        filename = f"Transport-{transport_request.request_number or transport_request.id}.pdf"
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
 
 # Deprecated - TransportSegment model replaced with JSON field transport_details

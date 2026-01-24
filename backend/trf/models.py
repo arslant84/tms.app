@@ -150,4 +150,10 @@ class TrfPassportDetail(models.Model):
     place_of_birth = models.CharField(max_length=255, blank=True, null=True)
     passport_issue_date = models.DateField(blank=True, null=True)
     passport_expiry_date = models.DateField(blank=True, null=True)
+    passport_file = models.FileField(
+        upload_to='trf/passports/',
+        blank=True,
+        null=True,
+        help_text="Uploaded passport scan/photo"
+    )
     created_at = models.DateTimeField(auto_now_add=True)

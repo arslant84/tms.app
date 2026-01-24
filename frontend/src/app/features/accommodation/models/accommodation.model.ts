@@ -570,7 +570,15 @@ export function isEditable(status: BookingStatus): boolean {
  * Check if accommodation request can be cancelled
  */
 export function isCancellable(status: BookingStatus): boolean {
-  return ['Pending', 'Confirmed'].includes(status);
+  // Allow cancel for any status that contains 'Pending' or is 'Confirmed'
+  // But not if it's already approved/completed
+  const statusStr = String(status);
+  if (statusStr.includes('Pending') || statusStr === 'Confirmed') {
+    const approvedKeywords = ['Approved', 'Completed', 'Assigned'];
+    const isApproved = approvedKeywords.some(keyword => statusStr.includes(keyword));
+    return !isApproved;
+  }
+  return false;
 }
 
 /**

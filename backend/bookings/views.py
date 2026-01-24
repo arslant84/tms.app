@@ -5,6 +5,10 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.db.models import Q, Sum, Count, Avg
 from django.utils import timezone
 from datetime import datetime, timedelta
+from utils.api_response import (
+    success_response, error_response, validation_error_response,
+    forbidden_response, not_found_response, get_pagination_params
+)
 
 from .models import FlightBooking, HotelBooking, BookingStatus
 from .serializers import (
@@ -84,45 +88,58 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
     def confirm(self, request, pk=None):
         """Confirm a flight booking (admin/travel desk only)"""
         if not request.user.is_staff:
-            return Response(
-                {'error': 'Only travel desk staff can confirm bookings'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='Only travel desk staff can confirm bookings'
             )
 
         booking = self.get_object()
 
         if booking.status != BookingStatus.REQUESTED:
-            return Response(
-                {'error': f'Cannot confirm booking with status {booking.status}'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message=f'Cannot confirm booking with status {booking.status}',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         booking.confirm_booking()
 
         serializer = self.get_serializer(booking)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='Flight booking confirmed successfully',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['post'])
     def issue_ticket(self, request, pk=None):
         """Issue ticket for a confirmed booking (admin/travel desk only)"""
         if not request.user.is_staff:
-            return Response(
-                {'error': 'Only travel desk staff can issue tickets'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='Only travel desk staff can issue tickets'
             )
 
         booking = self.get_object()
 
         serializer = FlightTicketSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Invalid ticket data'
+            )
 
         try:
             booking.issue_ticket(serializer.validated_data['ticket_number'])
         except ValueError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(
+                message=str(e),
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
         response_serializer = self.get_serializer(booking)
-        return Response(response_serializer.data)
+        return success_response(
+            data=response_serializer.data,
+            message='Ticket issued successfully',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -131,30 +148,32 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
 
         # Check permissions
         if booking.user != request.user and not request.user.is_staff:
-            return Response(
-                {'error': 'You can only cancel your own bookings'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='You can only cancel your own bookings'
             )
 
         if booking.status == BookingStatus.CANCELLED:
-            return Response(
-                {'error': 'Booking is already cancelled'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message='Booking is already cancelled',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         reason = request.data.get('reason', 'Cancelled by user')
         booking.cancel_booking(reason)
 
         serializer = self.get_serializer(booking)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='Flight booking cancelled successfully',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
         """Update booking status (admin/travel desk only)"""
         if not request.user.is_staff:
-            return Response(
-                {'error': 'Only travel desk staff can update booking status'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='Only travel desk staff can update booking status'
             )
 
         booking = self.get_object()
@@ -163,7 +182,11 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
             data=request.data,
             context={'instance': booking}
         )
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Invalid status data'
+            )
 
         booking.status = serializer.validated_data['status']
         if serializer.validated_data.get('reason'):
@@ -171,7 +194,11 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
         booking.save()
 
         response_serializer = self.get_serializer(booking)
-        return Response(response_serializer.data)
+        return success_response(
+            data=response_serializer.data,
+            message='Booking status updated successfully',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=False, methods=['get'])
     def my_bookings(self, request):
@@ -243,7 +270,11 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
             }
         }
 
-        return Response(stats)
+        return success_response(
+            data=stats,
+            message='Flight booking statistics retrieved successfully',
+            status_code=status.HTTP_200_OK
+        )
 
 
 class HotelBookingViewSet(viewsets.ModelViewSet):
@@ -310,23 +341,26 @@ class HotelBookingViewSet(viewsets.ModelViewSet):
     def confirm(self, request, pk=None):
         """Confirm a hotel booking (admin/travel desk only)"""
         if not request.user.is_staff:
-            return Response(
-                {'error': 'Only travel desk staff can confirm bookings'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='Only travel desk staff can confirm bookings'
             )
 
         booking = self.get_object()
 
         if booking.status != BookingStatus.REQUESTED:
-            return Response(
-                {'error': f'Cannot confirm booking with status {booking.status}'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message=f'Cannot confirm booking with status {booking.status}',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         booking.confirm_booking()
 
         serializer = self.get_serializer(booking)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='Hotel booking confirmed successfully',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -335,30 +369,32 @@ class HotelBookingViewSet(viewsets.ModelViewSet):
 
         # Check permissions
         if booking.user != request.user and not request.user.is_staff:
-            return Response(
-                {'error': 'You can only cancel your own bookings'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='You can only cancel your own bookings'
             )
 
         if booking.status == BookingStatus.CANCELLED:
-            return Response(
-                {'error': 'Booking is already cancelled'},
-                status=status.HTTP_400_BAD_REQUEST
+            return error_response(
+                message='Booking is already cancelled',
+                status_code=status.HTTP_400_BAD_REQUEST
             )
 
         reason = request.data.get('reason', 'Cancelled by user')
         booking.cancel_booking(reason)
 
         serializer = self.get_serializer(booking)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='Hotel booking cancelled successfully',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
         """Update booking status (admin/travel desk only)"""
         if not request.user.is_staff:
-            return Response(
-                {'error': 'Only travel desk staff can update booking status'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='Only travel desk staff can update booking status'
             )
 
         booking = self.get_object()
@@ -367,7 +403,11 @@ class HotelBookingViewSet(viewsets.ModelViewSet):
             data=request.data,
             context={'instance': booking}
         )
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Invalid status data'
+            )
 
         booking.status = serializer.validated_data['status']
         if serializer.validated_data.get('reason'):
@@ -375,7 +415,11 @@ class HotelBookingViewSet(viewsets.ModelViewSet):
         booking.save()
 
         response_serializer = self.get_serializer(booking)
-        return Response(response_serializer.data)
+        return success_response(
+            data=response_serializer.data,
+            message='Booking status updated successfully',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=False, methods=['get'])
     def my_bookings(self, request):
@@ -463,4 +507,8 @@ class HotelBookingViewSet(viewsets.ModelViewSet):
             }
         }
 
-        return Response(stats)
+        return success_response(
+            data=stats,
+            message='Hotel booking statistics retrieved successfully',
+            status_code=status.HTTP_200_OK
+        )

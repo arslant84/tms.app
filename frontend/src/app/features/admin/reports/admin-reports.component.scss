@@ -1,29 +1,79 @@
 // Admin Reports Component - Using Unified Design System
 @use '../../../../styles/variables' as vars;
 
+// Host element should fill content area
+:host {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+}
+
 .admin-reports-container {
-  /* Full-width adaptive layout */
+  /* Full-width adaptive layout - container grows with content */
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: vars.$spacing-6 vars.$spacing-8;
+  padding: vars.$spacing-6;
+  padding-bottom: vars.$spacing-8;
   box-sizing: border-box;
+  background-color: vars.$gray-50;
+
+  /* Remove fixed height constraints - let content determine height */
+  min-height: calc(100vh - 120px); // Fallback minimum
+  height: fit-content; // Grow with content
+
+  /* Ensure all children are contained */
+  display: flex;
+  flex-direction: column;
+  gap: 0; // Cards handle their own margin-bottom
 }
 
+/* Content wrapper - contains all report cards */
+.reports-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0; // Cards use margin-bottom for spacing
+  width: 100%;
+  flex: 1;
+
+  // Last card should not have margin-bottom
+  > .card:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Page Header - Unified with other admin components
 .reports-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: vars.$spacing-8;
+  align-items: flex-start;
+  margin-bottom: vars.$spacing-6;
+  gap: vars.$spacing-md;
+  flex-wrap: wrap;
+
+  @media (width <= 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
   h1 {
     font-size: vars.$font-size-2xl;
     font-weight: vars.$font-weight-bold;
-    margin-bottom: vars.$spacing-1;
+    color: vars.$gray-900;
+    letter-spacing: -0.025em;
+    margin: 0 0 vars.$spacing-2 0;
+    display: flex;
+    align-items: center;
+
+    i {
+      color: vars.$primary-color;
+    }
   }
 
   p {
-    margin-bottom: 0;
+    color: vars.$gray-600;
+    font-size: vars.$font-size-sm;
+    margin: 0;
   }
 }
 
@@ -56,124 +106,164 @@
   }
 }
 
-/* Metrics Row */
-.metrics-row {
+/* Stats Grid - Unified with other admin components */
+.stats-grid {
+  display: grid;
+  gap: vars.$spacing-md;
+  grid-template-columns: repeat(1, 1fr);
   margin-bottom: vars.$spacing-6;
+
+  @media (width >= 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (width >= 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
-.metric-card {
-  background-color: vars.$white;
+.stat-card {
+  background: vars.$white;
+  border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
-  padding: vars.$spacing-6;
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-4;
-  margin-bottom: vars.$spacing-6;
-  height: 100%;
-}
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 
-.metric-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: vars.$radius-base;
-  background-color: vars.$gray-50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  &:hover {
+    box-shadow: vars.$shadow-md;
+    transform: translateY(-1px);
+  }
 
-  i {
-    font-size: vars.$font-size-2xl;
-    color: vars.$info-color;
+  .stat-card-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: vars.$spacing-md vars.$spacing-5 vars.$spacing-2;
+
+    .stat-card-title {
+      font-size: vars.$font-size-sm;
+      font-weight: vars.$font-weight-medium;
+      color: vars.$gray-700;
+    }
+
+    .stat-icon {
+      width: 1rem;
+      height: 1rem;
+      color: vars.$gray-500;
+    }
+  }
+
+  .stat-card-content {
+    padding: 0 vars.$spacing-5 vars.$spacing-md;
+
+    .stat-value {
+      font-size: vars.$font-size-xl;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$gray-900;
+      line-height: 1;
+      margin-bottom: vars.$spacing-1;
+    }
+
+    .stat-description {
+      font-size: vars.$font-size-xs;
+      color: vars.$gray-600;
+      margin: 0;
+    }
   }
 }
 
-.metric-content {
-  flex: 1;
-}
-
-.metric-name {
-  font-size: vars.$font-size-sm;
-  font-weight: vars.$font-weight-semibold;
-  color: vars.$text-secondary;
-  margin-bottom: vars.$spacing-1;
-}
-
-.metric-value {
-  font-size: vars.$font-size-3xl;
-  font-weight: vars.$font-weight-bold;
-  color: vars.$gray-800;
-  margin-bottom: vars.$spacing-1;
-}
-
-.metric-change {
-  font-size: vars.$font-size-sm;
-  font-weight: vars.$font-weight-semibold;
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-1;
-
-  i {
-    font-size: vars.$font-size-xs;
-  }
-}
-
+/* Trend Colors */
 .trend-up {
-  color: vars.$success-color;
+  color: vars.$success-color !important;
 }
 
 .trend-down {
-  color: vars.$error-color;
+  color: vars.$error-color !important;
 }
 
 .trend-neutral {
-  color: vars.$text-secondary;
+  color: vars.$text-secondary !important;
 }
 
-/* Chart Cards */
-.charts-row {
+/* Charts Grid Layout */
+.charts-grid {
+  display: grid;
+  gap: vars.$spacing-6;
+  grid-template-columns: 1fr;
   margin-bottom: vars.$spacing-6;
+  align-items: start; // Prevent cards from stretching to fill row
+
+  @media (width >= 1024px) {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  // Override card margin-bottom inside grid
+  .card {
+    margin-bottom: 0;
+  }
 }
 
-.chart-card {
-  background-color: vars.$white;
+/* Card - Unified styling */
+.card {
+  background: vars.$white;
+  border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
   margin-bottom: vars.$spacing-6;
-  height: 100%;
-}
+  overflow: hidden;
 
-.chart-header {
-  padding: vars.$spacing-4 vars.$spacing-6;
-  border-bottom: 1px solid vars.$border-light;
-
-  h3 {
-    font-size: vars.$font-size-lg;
-    font-weight: vars.$font-weight-semibold;
-    margin-bottom: vars.$spacing-1;
+  .card-header {
+    padding: vars.$spacing-5;
+    border-bottom: 1px solid vars.$border-light;
+    background-color: vars.$white;
   }
 
-  .subtitle {
-    font-size: vars.$font-size-sm;
-    color: vars.$text-secondary;
+  .card-header-content {
+    .card-title-group {
+      display: flex;
+      align-items: center;
+
+      i {
+        color: vars.$gray-600;
+      }
+    }
+
+    .card-title {
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-900;
+      margin: 0;
+    }
+
+    .card-description {
+      font-size: vars.$font-size-sm;
+      color: vars.$gray-600;
+      margin: vars.$spacing-1 0 0 0;
+    }
+  }
+
+  .card-body {
+    padding: vars.$spacing-6;
+
+    &.p-0 {
+      padding: 0;
+    }
   }
 }
 
-.chart-body {
-  padding: vars.$spacing-6;
-  min-height: 300px;
-}
-
-.chart-legend {
+/* Chart Legend Styles */
+.chart-legend-inline {
   display: flex;
   gap: vars.$spacing-4;
-  margin-top: vars.$spacing-2;
+  margin-bottom: vars.$spacing-4;
+}
 
-  &.vertical {
-    flex-direction: column;
-    gap: vars.$spacing-2;
-    margin-top: vars.$spacing-6;
-  }
+.chart-legend-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$spacing-2;
+  margin-top: vars.$spacing-4;
 }
 
 .legend-item {
@@ -184,145 +274,276 @@
   color: vars.$gray-700;
 }
 
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: vars.$radius-sm;
-}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: vars.$radius-full;
+  flex-shrink: 0;
 
-/* Chart Placeholders (would be replaced by real charts in production) */
-.chart-placeholder {
-  width: 100%;
-  height: 300px;
-  position: relative;
-
-  &.donut-chart {
-    width: 200px;
-    height: 200px;
-    margin: 0 auto;
-    position: relative;
-    border-radius: vars.$radius-full;
-    overflow: hidden;
+  &.bg-primary {
+    background-color: vars.$primary-color;
   }
 
-  &.bar-chart {
-    height: 250px;
-    display: flex;
-    flex-direction: column;
+  &.bg-success {
+    background-color: vars.$success-color;
   }
 }
 
-.chart-area {
-  width: 100%;
-  height: 250px;
+.legend-label {
+  flex: 1;
+}
+
+.legend-value {
+  font-weight: vars.$font-weight-semibold;
+  color: vars.$gray-900;
+}
+
+/* Chart Container */
+.chart-container {
   position: relative;
-  display: flex;
-  align-items: flex-end;
-}
-
-.chart-line {
-  position: absolute;
   width: 100%;
-  bottom: 0;
+  min-height: 200px;
 }
 
-.chart-labels {
+/* Area Chart Placeholder */
+.area-chart-placeholder {
+  position: relative;
+  height: 180px;
+  background: linear-gradient(180deg, vars.$gray-50 0%, vars.$white 100%);
+  border-radius: vars.$radius-base;
+  overflow: hidden;
+
+  .chart-area-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: vars.$radius-base vars.$radius-base 0 0;
+
+    &.primary-area {
+      height: 60%;
+      background: linear-gradient(180deg, rgba(vars.$primary-color, 0.2) 0%, rgba(vars.$primary-color, 0.05) 100%);
+    }
+
+    &.success-area {
+      height: 40%;
+      background: linear-gradient(180deg, rgba(vars.$success-color, 0.2) 0%, rgba(vars.$success-color, 0.05) 100%);
+    }
+  }
+}
+
+.chart-x-labels {
   display: flex;
   justify-content: space-between;
   margin-top: vars.$spacing-2;
-
-  span {
-    font-size: vars.$font-size-xs;
-    color: vars.$text-secondary;
-  }
+  font-size: vars.$font-size-xs;
+  color: vars.$text-secondary;
 }
 
-.donut-hole {
-  width: 60%;
-  height: 60%;
-  border-radius: vars.$radius-full;
-  background: vars.$white;
-  position: absolute;
-  top: 20%;
-  left: 20%;
-  z-index: 5;
+/* Donut Chart */
+.donut-chart-container {
+  display: flex;
+  justify-content: center;
+  padding: vars.$spacing-4 0;
 }
 
-.donut-segment {
-  position: absolute;
+.donut-chart-visual {
+  width: 160px;
+  height: 160px;
+}
+
+.donut-svg {
   width: 100%;
   height: 100%;
-  border-radius: vars.$radius-full;
-  clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0);
+  transform: rotate(-90deg);
 }
 
-.chart-bars {
+/* Bar Chart */
+.bar-chart-container {
+  padding: vars.$spacing-4 0;
+}
+
+.bar-chart-area {
   display: flex;
   justify-content: space-around;
   align-items: flex-end;
-  height: 100%;
-  padding-bottom: vars.$spacing-8;
+  height: 200px;
+  padding: 0 vars.$spacing-4;
+  gap: vars.$spacing-4;
 }
 
-.chart-bar {
-  width: 40px;
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 80px;
+}
+
+.bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 160px;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.bar-value-label {
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-semibold;
+  color: vars.$gray-700;
+  margin-bottom: vars.$spacing-1;
+}
+
+.bar {
+  width: 100%;
+  max-width: 40px;
   background-color: vars.$info-color;
   border-radius: vars.$radius-sm vars.$radius-sm 0 0;
-  position: relative;
-  transition: height 0.3s ease;
+  min-height: 4px;
+}
 
-  .bar-value {
+.bar-label {
+  margin-top: vars.$spacing-2;
+  font-size: vars.$font-size-xs;
+  color: vars.$text-secondary;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Progress Bar in Tables */
+.progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-2;
+  width: 100%;
+}
+
+.progress-bar-fill {
+  height: 8px;
+  border-radius: vars.$radius-full;
+  flex: 1;
+  max-width: 100px;
+  background-color: vars.$gray-200;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
     position: absolute;
-    top: -25px;
     left: 0;
-    right: 0;
-    text-align: center;
-    font-size: vars.$font-size-xs;
-    font-weight: vars.$font-weight-semibold;
-    color: vars.$gray-700;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    border-radius: vars.$radius-full;
+  }
+
+  &.bg-success {
+    background-color: vars.$success-color;
+  }
+
+  &.bg-warning {
+    background-color: vars.$warning-color;
+  }
+
+  &.bg-danger {
+    background-color: vars.$error-color;
   }
 }
 
-/* Table Cards */
+.progress-label {
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-medium;
+  color: vars.$gray-700;
+  min-width: 36px;
+}
+
+
+/* Table Cards - Unified with other admin components */
 .table-card {
-  background-color: vars.$white;
+  background: vars.$white;
+  border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
   margin-bottom: vars.$spacing-6;
+  overflow: hidden;
 }
 
 .table-header {
-  padding: vars.$spacing-4 vars.$spacing-6;
+  padding: vars.$spacing-5;
   border-bottom: 1px solid vars.$border-light;
+  background-color: vars.$white;
 
   h3 {
     font-size: vars.$font-size-lg;
     font-weight: vars.$font-weight-semibold;
-    margin-bottom: vars.$spacing-1;
+    color: vars.$gray-900;
+    margin: 0 0 vars.$spacing-1 0;
   }
 
   .subtitle {
     font-size: vars.$font-size-sm;
-    color: vars.$text-secondary;
+    color: vars.$gray-600;
+    margin: 0;
   }
 }
 
-.table {
-  margin-bottom: 0;
+/* Table - Unified styling */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
-  th {
-    font-weight: vars.$font-weight-semibold;
-    color: vars.$gray-700;
-    border-bottom-width: 1px;
+.table {
+  margin: 0;
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background-color: vars.$gray-50;
+    border-bottom: 1px solid vars.$border-light;
+
+    th {
+      padding: vars.$spacing-3 vars.$spacing-md;
+      text-align: left;
+      font-size: vars.$font-size-sm;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-700;
+      border: none;
+      white-space: nowrap;
+    }
   }
 
-  td {
-    vertical-align: middle;
+  tbody {
+    tr {
+      border-bottom: 1px solid vars.$border-light;
+      transition: background-color 0.15s ease;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background-color: vars.$gray-50;
+      }
+
+      td {
+        padding: vars.$spacing-3 vars.$spacing-md;
+        font-size: vars.$font-size-sm;
+        color: vars.$gray-700;
+        border: none;
+        vertical-align: middle;
+      }
+    }
   }
 }
 
 .progress {
-  height: 0.75rem;
+  height: vars.$spacing-3;
   font-size: vars.$font-size-xs;
   font-weight: vars.$font-weight-semibold;
 }

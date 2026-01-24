@@ -31,7 +31,8 @@ class NotificationService:
         action_text='View',
         content_object=None,
         additional_data=None,
-        send_email=False
+        send_email=False,
+        bypass_subscription_check=False
     ):
         """
         Create a notification for a user
@@ -47,18 +48,38 @@ class NotificationService:
             content_object: Related model instance
             additional_data: Additional JSON data
             send_email: Whether to send email notification
+            bypass_subscription_check: Skip subscription check (for critical notifications)
 
         Returns:
             UserNotification instance
         """
-        # Check user preferences
+        # Get or create user preferences
         try:
             preferences = user.notification_preferences
-            if not preferences.in_app_notifications_enabled:
-                return None
         except UserNotificationPreference.DoesNotExist:
-            # Create default preferences
-            UserNotificationPreference.objects.create(user=user)
+            preferences = UserNotificationPreference.objects.create(user=user)
+
+        # Check global in-app notifications setting
+        if not preferences.in_app_notifications_enabled:
+            logger.info(f"In-app notifications disabled for user {user.email} - skipping")
+            return None
+
+        # Check event type subscription (if event_type provided and not bypassed)
+        if event_type and not bypass_subscription_check:
+            subscription = UserNotificationSubscription.objects.filter(
+                user=user,
+                event_type=event_type,
+                is_active=True
+            ).first()
+
+            if subscription and not subscription.receive_in_app:
+                logger.info(f"User {user.email} unsubscribed from in-app for event {event_type.name} - skipping in-app")
+                # Still might send email if subscribed to email
+                if send_email and subscription.receive_email and preferences.email_notifications_enabled:
+                    # Create notification just for email tracking, mark as read immediately
+                    pass
+                else:
+                    return None
 
         # Create content type reference if content_object provided
         content_type = None
@@ -84,10 +105,25 @@ class NotificationService:
         # Send email if requested and user has email notifications enabled
         if send_email:
             try:
-                preferences = user.notification_preferences
-                if preferences.email_notifications_enabled:
-                    # Send email asynchronously in background thread to avoid blocking HTTP request
-                    NotificationService.send_email_async(notification)
+                # Check global email preference
+                if not preferences.email_notifications_enabled:
+                    logger.info(f"Email notifications disabled for user {user.email} - skipping email")
+                else:
+                    # Check event-specific email subscription
+                    should_send_email = True
+                    if event_type and not bypass_subscription_check:
+                        subscription = UserNotificationSubscription.objects.filter(
+                            user=user,
+                            event_type=event_type,
+                            is_active=True
+                        ).first()
+                        if subscription and not subscription.receive_email:
+                            should_send_email = False
+                            logger.info(f"User {user.email} unsubscribed from email for event {event_type.name}")
+
+                    if should_send_email:
+                        # Send email asynchronously in background thread
+                        NotificationService.send_email_async(notification)
             except Exception as e:
                 notification.email_error = str(e)
                 notification.save()

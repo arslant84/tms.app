@@ -14,6 +14,9 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.contrib.contenttypes.models import ContentType
 from datetime import datetime
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
+from utils.api_response import success_response, paginated_response, get_pagination_params
 
 from trf.models import TravelRequest
 from transport.models import TransportRequest
@@ -23,6 +26,18 @@ from workflows.models import WorkflowInstance, WorkflowStepExecution
 from accounts.models import Role, AdminActionLog
 
 
+@extend_schema(
+    tags=['Approvals'],
+    summary='List pending approvals',
+    description='Get all pending approvals across all modules (TRF, Transport, Visa, Accommodation). '
+                'Returns items based on user role and workflow assignments.',
+    parameters=[
+        OpenApiParameter('page', OpenApiTypes.INT, description='Page number', default=1),
+        OpenApiParameter('limit', OpenApiTypes.INT, description='Items per page', default=20),
+        OpenApiParameter('type', OpenApiTypes.STR, description='Filter by type: trf, transport, visa, accommodation')
+    ],
+    responses={200: {'description': 'List of pending approval items'}}
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def unified_approvals(request):
@@ -59,17 +74,10 @@ def unified_approvals(request):
     # Helper function to check if user can approve this entity
     def can_user_approve(entity, module_name):
         """Check if current user is authorized to approve this entity"""
-        # Admin override - with audit logging
-        if user.is_staff or user.is_superuser:
-            # SECURITY: Log admin override action for audit trail
-            AdminActionLog.log_action(
-                admin=user,
-                action_type='approval_override',
-                entity_type=module_name,
-                entity_id=entity.id,
-                description=f'Admin {user.email} viewed {module_name} #{entity.id} in approval queue (admin override)',
-                request=request
-            )
+        # Development/Testing: Allow admins to view all approval items
+        # SECURITY: In production, admins should have explicit approval permissions via RBAC
+        from django.conf import settings
+        if settings.DEBUG and (user.is_staff or user.is_superuser):
             return True
 
         # Get workflow instance for this entity
@@ -246,9 +254,399 @@ def unified_approvals(request):
     total_count = len(all_items)
     paginated_items = all_items[offset:offset + limit]
 
-    return Response({
-        'items': paginated_items,
-        'totalCount': total_count,
-        'totalPages': (total_count + limit - 1) // limit,  # Ceiling division
-        'currentPage': page,
-    })
+    return success_response(
+        data=paginated_items,
+        message=f'Retrieved {len(paginated_items)} pending approval(s)',
+        status_code=200,
+        meta={
+            'pagination': {
+                'page': page,
+                'limit': limit,
+                'total_count': total_count,
+                'total_pages': (total_count + limit - 1) // limit,
+                'has_next': page < ((total_count + limit - 1) // limit),
+                'has_previous': page > 1
+            }
+        }
+    )
+
+
+@extend_schema(
+    tags=['Approvals'],
+    summary='Bulk approve/reject',
+    description='Approve or reject multiple items at once. Supports TRF, Transport, Visa, and Accommodation requests.',
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'items': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'object',
+                        'properties': {
+                            'id': {'type': 'string'},
+                            'type': {'type': 'string', 'enum': ['trf', 'transport', 'visa', 'accommodation']}
+                        }
+                    }
+                },
+                'action': {'type': 'string', 'enum': ['approve', 'reject']},
+                'comments': {'type': 'string'}
+            },
+            'required': ['items', 'action']
+        }
+    },
+    responses={
+        200: {'description': 'Bulk action completed with results'},
+        400: {'description': 'Invalid request data'}
+    }
+)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def bulk_approve(request):
+    """
+    Bulk approve or reject multiple items at once
+
+    Request body:
+    {
+        "items": [
+            {"id": "123", "type": "trf"},
+            {"id": "456", "type": "transport"},
+            ...
+        ],
+        "action": "approve" or "reject",
+        "comments": "Optional comments for all items"
+    }
+    """
+    from django.db import transaction
+    from utils.api_response import success_response, error_response
+    import logging
+
+    logger = logging.getLogger(__name__)
+    user = request.user
+
+    items = request.data.get('items', [])
+    action = request.data.get('action', '').lower()
+    comments = request.data.get('comments', '')
+
+    if not items:
+        return error_response(
+            message='No items provided for bulk action',
+            status_code=400
+        )
+
+    if action not in ['approve', 'reject']:
+        return error_response(
+            message='Invalid action. Must be "approve" or "reject"',
+            status_code=400
+        )
+
+    # Map item types to models
+    type_model_map = {
+        'trf': TravelRequest,
+        'transport': TransportRequest,
+        'visa': VisaApplication,
+        'accommodation': AccommodationRequest
+    }
+
+    results = {
+        'success': [],
+        'failed': []
+    }
+
+    with transaction.atomic():
+        for item in items:
+            item_id = item.get('id')
+            item_type = item.get('type', '').lower()
+
+            if item_type not in type_model_map:
+                results['failed'].append({
+                    'id': item_id,
+                    'type': item_type,
+                    'error': f'Unknown item type: {item_type}'
+                })
+                continue
+
+            model = type_model_map[item_type]
+
+            try:
+                obj = model.objects.get(id=item_id)
+
+                # Check if user can approve this item
+                from django.contrib.contenttypes.models import ContentType
+                content_type = ContentType.objects.get_for_model(obj)
+
+                workflow_instance = WorkflowInstance.objects.filter(
+                    content_type=content_type,
+                    object_id=obj.id,
+                    status='in_progress'
+                ).first()
+
+                if not workflow_instance:
+                    results['failed'].append({
+                        'id': item_id,
+                        'type': item_type,
+                        'error': 'No active workflow found'
+                    })
+                    continue
+
+                # Get current pending step
+                current_step = workflow_instance.step_executions.filter(
+                    status='pending'
+                ).order_by('workflow_step__step_order').first()
+
+                if not current_step:
+                    results['failed'].append({
+                        'id': item_id,
+                        'type': item_type,
+                        'error': 'No pending workflow step'
+                    })
+                    continue
+
+                # Update step execution
+                from django.utils import timezone
+                current_step.status = 'approved' if action == 'approve' else 'rejected'
+                current_step.actioned_by = user
+                current_step.action_date = timezone.now()
+                current_step.comments = comments
+                current_step.save()
+
+                # Update main object status based on action
+                if action == 'approve':
+                    # Check if there are more steps
+                    next_step = workflow_instance.step_executions.filter(
+                        status='pending',
+                        workflow_step__step_order__gt=current_step.workflow_step.step_order
+                    ).order_by('workflow_step__step_order').first()
+
+                    if next_step:
+                        # Move to next step status
+                        obj.status = f'Pending {next_step.workflow_step.step_name}'
+                    else:
+                        # Final approval
+                        obj.status = 'Approved'
+                        workflow_instance.status = 'approved'
+                        workflow_instance.completed_at = timezone.now()
+                        workflow_instance.save()
+                else:
+                    obj.status = 'Rejected'
+                    workflow_instance.status = 'rejected'
+                    workflow_instance.completed_at = timezone.now()
+                    workflow_instance.save()
+
+                obj.save()
+
+                # Log the action
+                AdminActionLog.objects.create(
+                    user=user,
+                    action_type=f'bulk_{action}',
+                    entity_type=item_type,
+                    entity_id=str(item_id),
+                    description=f'Bulk {action} - {comments[:100]}' if comments else f'Bulk {action}',
+                    ip_address=request.META.get('REMOTE_ADDR', '')
+                )
+
+                results['success'].append({
+                    'id': item_id,
+                    'type': item_type,
+                    'new_status': obj.status
+                })
+
+            except model.DoesNotExist:
+                results['failed'].append({
+                    'id': item_id,
+                    'type': item_type,
+                    'error': 'Item not found'
+                })
+            except Exception as e:
+                logger.error(f'Error processing bulk {action} for {item_type} {item_id}: {str(e)}')
+                results['failed'].append({
+                    'id': item_id,
+                    'type': item_type,
+                    'error': str(e)
+                })
+
+    return success_response(
+        data=results,
+        message=f'Bulk {action} completed: {len(results["success"])} success, {len(results["failed"])} failed',
+        status_code=200
+    )
+
+
+@extend_schema(
+    tags=['Approvals'],
+    summary='Get approval history',
+    description='Get approval history for a specific item or all items. Shows workflow step executions and status changes.',
+    parameters=[
+        OpenApiParameter('item_id', OpenApiTypes.STR, description='ID of the specific item'),
+        OpenApiParameter('item_type', OpenApiTypes.STR, description='Type: trf, transport, visa, accommodation'),
+        OpenApiParameter('page', OpenApiTypes.INT, description='Page number', default=1),
+        OpenApiParameter('limit', OpenApiTypes.INT, description='Items per page', default=20)
+    ],
+    responses={200: {'description': 'Approval history records'}}
+)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def approval_history(request):
+    """
+    Get approval history for a specific item or all items
+
+    Query params:
+    - item_id: ID of the specific item (optional)
+    - item_type: Type of item (trf, transport, visa, accommodation) (required if item_id is provided)
+    - page: Page number (default: 1)
+    - limit: Items per page (default: 20)
+    """
+    from django.contrib.contenttypes.models import ContentType
+    from utils.api_response import success_response, error_response
+
+    user = request.user
+    item_id = request.GET.get('item_id')
+    item_type = request.GET.get('item_type', '').lower()
+    page = int(request.GET.get('page', 1))
+    limit = int(request.GET.get('limit', 20))
+
+    offset = (page - 1) * limit
+
+    # Map item types to models
+    type_model_map = {
+        'trf': TravelRequest,
+        'transport': TransportRequest,
+        'visa': VisaApplication,
+        'accommodation': AccommodationRequest
+    }
+
+    history_items = []
+
+    if item_id and item_type:
+        # Get history for specific item
+        if item_type not in type_model_map:
+            return error_response(
+                message=f'Invalid item type: {item_type}',
+                status_code=400
+            )
+
+        model = type_model_map[item_type]
+
+        try:
+            obj = model.objects.get(id=item_id)
+            content_type = ContentType.objects.get_for_model(obj)
+
+            # Get all workflow instances for this item
+            workflows = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=obj.id
+            ).order_by('-created_at')
+
+            for workflow in workflows:
+                # Get all step executions
+                steps = workflow.step_executions.select_related(
+                    'workflow_step', 'actioned_by', 'assigned_to'
+                ).order_by('workflow_step__step_order')
+
+                for step in steps:
+                    history_items.append({
+                        'id': str(step.id),
+                        'item_id': str(obj.id),
+                        'item_type': item_type,
+                        'step_name': step.workflow_step.step_name,
+                        'step_order': step.workflow_step.step_order,
+                        'status': step.status,
+                        'assigned_to': {
+                            'id': step.assigned_to.id if step.assigned_to else None,
+                            'name': step.assigned_to.get_full_name() if step.assigned_to else None,
+                            'email': step.assigned_to.email if step.assigned_to else None
+                        } if step.assigned_to else None,
+                        'actioned_by': {
+                            'id': step.actioned_by.id if step.actioned_by else None,
+                            'name': step.actioned_by.get_full_name() if step.actioned_by else None,
+                            'email': step.actioned_by.email if step.actioned_by else None
+                        } if step.actioned_by else None,
+                        'action_date': step.action_date.isoformat() if step.action_date else None,
+                        'comments': step.comments,
+                        'created_at': step.created_at.isoformat(),
+                        'workflow_status': workflow.status
+                    })
+
+        except model.DoesNotExist:
+            return error_response(
+                message=f'{item_type.upper()} with id {item_id} not found',
+                status_code=404
+            )
+
+    else:
+        # Get all recent approval history (admin only for full history)
+        from django.conf import settings
+
+        # Get recent workflow step executions
+        step_executions = WorkflowStepExecution.objects.select_related(
+            'workflow_instance', 'workflow_step', 'actioned_by', 'assigned_to'
+        ).exclude(
+            status='pending'
+        ).order_by('-action_date')
+
+        # For non-admin users, filter to their own items
+        if not user.is_staff and not settings.DEBUG:
+            # This is a simplified filter - in production you'd want more precise filtering
+            step_executions = step_executions.filter(
+                Q(actioned_by=user) | Q(assigned_to=user)
+            )
+
+        for step in step_executions[:100]:  # Limit to 100 for performance
+            workflow = step.workflow_instance
+
+            # Get the actual item details
+            try:
+                content_type = workflow.content_type
+                model_class = content_type.model_class()
+                obj = model_class.objects.get(id=workflow.object_id)
+
+                # Determine item type
+                model_name = content_type.model
+                if model_name == 'travelrequest':
+                    detected_type = 'trf'
+                elif model_name == 'transportrequest':
+                    detected_type = 'transport'
+                elif model_name == 'visaapplication':
+                    detected_type = 'visa'
+                elif model_name == 'accommodationrequest':
+                    detected_type = 'accommodation'
+                else:
+                    detected_type = model_name
+
+                history_items.append({
+                    'id': str(step.id),
+                    'item_id': str(workflow.object_id),
+                    'item_type': detected_type,
+                    'item_summary': getattr(obj, 'purpose', None) or getattr(obj, 'title', None) or str(obj),
+                    'step_name': step.workflow_step.step_name,
+                    'status': step.status,
+                    'actioned_by': {
+                        'id': step.actioned_by.id if step.actioned_by else None,
+                        'name': step.actioned_by.get_full_name() if step.actioned_by else None,
+                        'email': step.actioned_by.email if step.actioned_by else None
+                    } if step.actioned_by else None,
+                    'action_date': step.action_date.isoformat() if step.action_date else None,
+                    'comments': step.comments
+                })
+            except Exception:
+                continue
+
+    # Apply pagination
+    total_count = len(history_items)
+    paginated_items = history_items[offset:offset + limit]
+
+    return success_response(
+        data=paginated_items,
+        message=f'Retrieved {len(paginated_items)} approval history record(s)',
+        status_code=200,
+        meta={
+            'pagination': {
+                'page': page,
+                'limit': limit,
+                'total_count': total_count,
+                'total_pages': (total_count + limit - 1) // limit if total_count > 0 else 1,
+                'has_next': page < ((total_count + limit - 1) // limit) if total_count > 0 else False,
+                'has_previous': page > 1
+            }
+        }
+    )

@@ -69,11 +69,8 @@ export class TransportCreateComponent implements OnInit {
       // Transport details array
       transportDetails: this.fb.array([], Validators.required),
 
-      // Submission data
-      additionalComments: [''],
-      confirmPolicy: [false, Validators.requiredTrue],
-      confirmManagerApproval: [false, Validators.requiredTrue],
-      confirmTermsAndConditions: [false]
+      // Additional information
+      additionalComments: ['']
     });
 
     // Add first transport detail by default
@@ -107,10 +104,7 @@ export class TransportCreateComponent implements OnInit {
           position: request.position || '',
           purpose: request.purpose,
           tsrReference: request.tsrReference || '',
-          additionalComments: request.additionalComments || '',
-          confirmPolicy: true,
-          confirmManagerApproval: true,
-          confirmTermsAndConditions: true
+          additionalComments: request.additionalComments || ''
         });
 
         // Clear default transport detail and load existing ones
@@ -183,7 +177,7 @@ export class TransportCreateComponent implements OnInit {
   onSubmit(): void {
     if (this.transportForm.invalid) {
       this.formUtils.markFormGroupTouched(this.transportForm);
-      this.toastService.warning('Please fill in all required fields and confirm all checkboxes');
+      this.toastService.warning('Please fill in all required fields');
       return;
     }
 

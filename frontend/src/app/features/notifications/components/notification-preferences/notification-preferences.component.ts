@@ -1,9 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NotificationService, NotificationPreference, NotificationEventType } from '../../services/notification.service';
 import { ToastService } from '../../../../core/services/toast.service';
+
+interface Subscription {
+  id?: number;
+  event_type: string | number;
+  event_type_detail?: any;
+  receive_email: boolean;
+  receive_in_app: boolean;
+  receive_push?: boolean;
+  is_active: boolean;
+}
 
 @Component({
   selector: 'app-notification-preferences',
@@ -14,8 +24,8 @@ import { ToastService } from '../../../../core/services/toast.service';
 })
 export class NotificationPreferencesComponent implements OnInit {
   preferencesForm!: FormGroup;
-  eventTypes: NotificationEventType[] = [];
-  subscriptions: any[] = [];
+  workflowEventTypes: NotificationEventType[] = [];
+  subscriptions: Subscription[] = [];
   isLoading = false;
   isSaving = false;
 
@@ -27,50 +37,46 @@ export class NotificationPreferencesComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    this.loadPreferences();
-    this.loadEventTypes();
-    this.loadSubscriptions();
+    this.loadData();
   }
 
   initForm(): void {
     this.preferencesForm = this.fb.group({
       email_notifications_enabled: [true],
-      in_app_notifications_enabled: [true],
-      push_notifications_enabled: [false],
-      digest_frequency: ['instant', Validators.required],
-      quiet_hours_enabled: [false],
-      quiet_hours_start: ['22:00'],
-      quiet_hours_end: ['08:00']
+      in_app_notifications_enabled: [true]
     });
   }
 
-  loadPreferences(): void {
+  loadData(): void {
     this.isLoading = true;
+
+    // Load preferences
     this.notificationService.getPreferences().subscribe({
       next: (preferences) => {
-        this.preferencesForm.patchValue(preferences);
-        this.isLoading = false;
+        this.preferencesForm.patchValue({
+          email_notifications_enabled: preferences.email_notifications_enabled,
+          in_app_notifications_enabled: preferences.in_app_notifications_enabled
+        });
       },
       error: (err) => {
         console.error('Error loading preferences:', err);
-        this.toastService.error('Failed to load notification preferences');
-        this.isLoading = false;
       }
     });
-  }
 
-  loadEventTypes(): void {
+    // Load event types
     this.notificationService.getEventTypes().subscribe({
       next: (eventTypes) => {
-        this.eventTypes = eventTypes;
+        // Filter to only show active workflow-related event types
+        this.workflowEventTypes = eventTypes.filter(et => et.is_active);
+        this.isLoading = false;
       },
       error: (err) => {
         console.error('Error loading event types:', err);
+        this.isLoading = false;
       }
     });
-  }
 
-  loadSubscriptions(): void {
+    // Load subscriptions
     this.notificationService.getSubscriptions().subscribe({
       next: (subscriptions) => {
         this.subscriptions = subscriptions;
@@ -87,8 +93,8 @@ export class NotificationPreferencesComponent implements OnInit {
       const preferences = this.preferencesForm.value;
 
       this.notificationService.updatePreferences(preferences).subscribe({
-        next: (response) => {
-          this.toastService.success('Notification preferences updated successfully');
+        next: () => {
+          this.toastService.success('Notification preferences saved successfully');
           this.isSaving = false;
         },
         error: (err) => {
@@ -100,35 +106,59 @@ export class NotificationPreferencesComponent implements OnInit {
     }
   }
 
-  getSubscriptionValue(eventTypeId: number): any {
-    return this.subscriptions.find(sub => sub.event_type === eventTypeId);
+  getEventTypesByCategory(category: string): NotificationEventType[] {
+    return this.workflowEventTypes.filter(et => et.category === category);
   }
 
-  isSubscribed(eventTypeId: number): boolean {
-    const subscription = this.getSubscriptionValue(eventTypeId);
-    return subscription ? subscription.is_subscribed : false;
+  getSubscriptionForEvent(eventTypeId: number | string): Subscription | undefined {
+    // Handle both UUID strings and numeric IDs
+    return this.subscriptions.find(sub =>
+      String(sub.event_type) === String(eventTypeId) ||
+      sub.event_type_detail?.id === eventTypeId
+    );
   }
 
-  toggleSubscription(eventType: NotificationEventType): void {
-    const subscription = this.getSubscriptionValue(eventType.id);
-    const newValue = subscription ? !subscription.is_subscribed : true;
+  isSubscribedEmail(eventTypeId: number): boolean {
+    const subscription = this.getSubscriptionForEvent(eventTypeId);
+    // Default to true if no subscription exists (opt-out model)
+    return subscription ? subscription.receive_email : true;
+  }
 
+  isSubscribedInApp(eventTypeId: number): boolean {
+    const subscription = this.getSubscriptionForEvent(eventTypeId);
+    // Default to true if no subscription exists (opt-out model)
+    return subscription ? subscription.receive_in_app : true;
+  }
+
+  toggleEmailSubscription(eventType: NotificationEventType): void {
+    const currentValue = this.isSubscribedEmail(eventType.id);
+    this.updateSubscription(eventType, !currentValue, this.isSubscribedInApp(eventType.id));
+  }
+
+  toggleInAppSubscription(eventType: NotificationEventType): void {
+    const currentValue = this.isSubscribedInApp(eventType.id);
+    this.updateSubscription(eventType, this.isSubscribedEmail(eventType.id), !currentValue);
+  }
+
+  private updateSubscription(eventType: NotificationEventType, receiveEmail: boolean, receiveInApp: boolean): void {
     const data = {
       event_type: eventType.id,
-      is_subscribed: newValue,
-      email_enabled: newValue,
-      in_app_enabled: newValue,
-      push_enabled: false
+      receive_email: receiveEmail,
+      receive_in_app: receiveInApp,
+      is_active: true
     };
 
     this.notificationService.updateSubscription(eventType.id, data).subscribe({
-      next: (response) => {
-        this.loadSubscriptions();
-        this.toastService.success(
-          newValue
-            ? `Subscribed to ${eventType.display_name}`
-            : `Unsubscribed from ${eventType.display_name}`
-        );
+      next: () => {
+        // Reload subscriptions to get updated state
+        this.notificationService.getSubscriptions().subscribe({
+          next: (subscriptions) => {
+            this.subscriptions = subscriptions;
+          }
+        });
+
+        const action = receiveEmail || receiveInApp ? 'Updated' : 'Disabled';
+        this.toastService.success(`${action} subscription for ${this.formatEventName(eventType.name)}`);
       },
       error: (err) => {
         console.error('Error updating subscription:', err);
@@ -137,15 +167,15 @@ export class NotificationPreferencesComponent implements OnInit {
     });
   }
 
-  getEventTypesByCategory(category: string): NotificationEventType[] {
-    return this.eventTypes.filter(et => et.category === category);
-  }
-
-  get uniqueCategories(): string[] {
-    return [...new Set(this.eventTypes.map(et => et.category))];
+  formatEventName(name: string): string {
+    // Convert WORKFLOW_STARTED to "Workflow Started"
+    return name
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
   }
 
   cancel(): void {
-    this.loadPreferences();
+    this.loadData();
   }
 }

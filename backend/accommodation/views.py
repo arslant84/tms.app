@@ -147,6 +147,13 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
     serializer_class = AccommodationRequestSerializer
     permission_classes = [IsAuthenticated]
 
+    # Search across key fields
+    search_fields = ['requestor_name', 'staff_id', 'purpose', 'request_number']
+
+    # Allow ordering
+    ordering_fields = ['created_at', 'submitted_at', 'check_in_date', 'check_out_date', 'status']
+    ordering = ['-created_at']  # Default: newest first
+
     def get_object(self):
         """
         Override to show proper request_number in error messages
@@ -618,6 +625,261 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='export-pdf')
+    def export_pdf(self, request, pk=None):
+        """
+        Export Accommodation Request to PDF
+
+        Returns a PDF document containing all accommodation request details including:
+        - Requestor information
+        - Status & Tracking
+        - Booking details
+        - Approval history and workflow status
+        """
+        import io
+        from django.http import HttpResponse
+        from django.contrib.contenttypes.models import ContentType
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from workflows.models import WorkflowInstance
+
+        accommodation_request = self.get_object()
+
+        # Create PDF buffer
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=letter,
+            rightMargin=0.5*inch,
+            leftMargin=0.5*inch,
+            topMargin=0.5*inch,
+            bottomMargin=0.5*inch
+        )
+
+        # Styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            spaceAfter=20,
+            textColor=colors.HexColor('#0d9488')
+        )
+        heading_style = ParagraphStyle(
+            'CustomHeading',
+            parent=styles['Heading2'],
+            fontSize=12,
+            spaceBefore=15,
+            spaceAfter=10,
+            textColor=colors.HexColor('#0d9488')
+        )
+        normal_style = styles['Normal']
+
+        elements = []
+
+        # Title
+        title = f"Accommodation Request - {accommodation_request.request_number or f'ACC-{accommodation_request.id}'}"
+        elements.append(Paragraph(title, title_style))
+        elements.append(Spacer(1, 12))
+
+        # Status badge - prominent display
+        status_text = f"<b>Current Status:</b> <font color='#0d9488'><b>{accommodation_request.status}</b></font>"
+        elements.append(Paragraph(status_text, normal_style))
+        elements.append(Spacer(1, 12))
+
+        # Table style
+        table_style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0d9488')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ])
+
+        # Requestor Information
+        elements.append(Paragraph("Requestor Information", heading_style))
+        requestor_data = [
+            ['Field', 'Value'],
+            ['Name', accommodation_request.requestor_name or 'Not provided'],
+            ['Staff ID', accommodation_request.staff_id or 'Not provided'],
+            ['Department', accommodation_request.department or 'Not provided'],
+            ['Position', accommodation_request.position or 'Not provided'],
+            ['Cost Center', accommodation_request.cost_center or 'Not provided'],
+            ['Tel/Email', accommodation_request.tel_email or 'Not provided'],
+            ['Email', accommodation_request.email or 'Not provided'],
+        ]
+        requestor_table = Table(requestor_data, colWidths=[2*inch, 5*inch])
+        requestor_table.setStyle(table_style)
+        elements.append(requestor_table)
+
+        # Status & Tracking
+        elements.append(Paragraph("Status &amp; Tracking", heading_style))
+        trf = accommodation_request.trf
+        tsr_reference = 'Not linked'
+        if trf:
+            tsr_reference = trf.request_number or f'TSR-{trf.id}'
+
+        tracking_data = [
+            ['Field', 'Value'],
+            ['Request Number', accommodation_request.request_number or f'ACC-{accommodation_request.id}'],
+            ['Current Status', accommodation_request.status],
+            ['TSR Reference', tsr_reference],
+            ['Created', accommodation_request.created_at.strftime('%Y-%m-%d %H:%M') if accommodation_request.created_at else 'Not available'],
+            ['Submitted', accommodation_request.submitted_at.strftime('%Y-%m-%d %H:%M') if accommodation_request.submitted_at else 'Not submitted'],
+            ['Last Updated', accommodation_request.updated_at.strftime('%Y-%m-%d %H:%M') if accommodation_request.updated_at else 'Not available'],
+        ]
+        tracking_table = Table(tracking_data, colWidths=[2*inch, 5*inch])
+        tracking_table.setStyle(table_style)
+        elements.append(tracking_table)
+
+        # Booking Details
+        bookings = accommodation_request.bookings.all().select_related('staff_house', 'room').order_by('date')
+        elements.append(Paragraph("Booking Details", heading_style))
+
+        if bookings.exists():
+            # Get unique staff house and room info
+            first_booking = bookings.first()
+            last_booking = bookings.last()
+
+            # Booking summary info
+            booking_summary = [
+                ['Field', 'Value'],
+                ['Staff House', first_booking.staff_house.name if first_booking.staff_house else 'Not assigned'],
+                ['Location', first_booking.staff_house.location if first_booking.staff_house else 'Not available'],
+                ['Room', first_booking.room.name if first_booking.room else 'Not assigned'],
+                ['Room Type', first_booking.room.room_type if first_booking.room and first_booking.room.room_type else 'Standard'],
+                ['Room Capacity', str(first_booking.room.capacity) if first_booking.room else 'Not available'],
+                ['Check-in Date', first_booking.date.strftime('%Y-%m-%d') if first_booking.date else 'Not set'],
+                ['Check-out Date', last_booking.date.strftime('%Y-%m-%d') if last_booking.date else 'Not set'],
+                ['Total Nights', str(bookings.count())],
+                ['Booking Status', first_booking.status or 'Pending'],
+            ]
+            booking_summary_table = Table(booking_summary, colWidths=[2*inch, 5*inch])
+            booking_summary_table.setStyle(table_style)
+            elements.append(booking_summary_table)
+
+            # Daily booking breakdown if multiple nights
+            if bookings.count() > 1:
+                elements.append(Spacer(1, 10))
+                elements.append(Paragraph("Daily Breakdown", heading_style))
+                daily_data = [['Date', 'Staff House', 'Room', 'Status']]
+                for booking in bookings:
+                    daily_data.append([
+                        booking.date.strftime('%Y-%m-%d') if booking.date else '-',
+                        booking.staff_house.name if booking.staff_house else '-',
+                        booking.room.name if booking.room else '-',
+                        booking.status or '-',
+                    ])
+                daily_table = Table(daily_data, colWidths=[1.5*inch, 2*inch, 2*inch, 1.5*inch])
+                daily_table.setStyle(table_style)
+                elements.append(daily_table)
+        else:
+            # No bookings yet
+            no_booking_data = [
+                ['Field', 'Value'],
+                ['Status', 'No accommodation assigned yet'],
+                ['Note', 'Booking will be assigned after approval'],
+            ]
+            no_booking_table = Table(no_booking_data, colWidths=[2*inch, 5*inch])
+            no_booking_table.setStyle(table_style)
+            elements.append(no_booking_table)
+
+        # Approval History from Workflow
+        try:
+            content_type = ContentType.objects.get_for_model(accommodation_request)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=accommodation_request.id
+            ).first()
+
+            if workflow_instance and workflow_instance.step_executions.exists():
+                # Build table first, then add heading only if we have data
+                approval_data = [['Step', 'Role', 'Status', 'Actioned By', 'Date', 'Comments']]
+                for step in workflow_instance.step_executions.all().order_by('step_order'):
+                    approval_data.append([
+                        str(step.step_order),
+                        step.step_name or step.role_required or '-',
+                        step.status or '-',
+                        step.actioned_by.name if step.actioned_by else '-',
+                        step.actioned_at.strftime('%Y-%m-%d %H:%M') if step.actioned_at else '-',
+                        (step.comments or '-')[:30]
+                    ])
+                # Only add if we have actual data rows (more than just header)
+                if len(approval_data) > 1:
+                    elements.append(Paragraph("Approval History", heading_style))
+                    approval_table = Table(approval_data, colWidths=[0.4*inch, 1.2*inch, 0.9*inch, 1.2*inch, 1.3*inch, 2*inch])
+                    approval_table.setStyle(table_style)
+                    elements.append(approval_table)
+        except Exception:
+            pass  # No workflow found, skip approval history
+
+        # Additional Comments
+        if accommodation_request.additional_comments:
+            elements.append(Paragraph("Additional Comments", heading_style))
+            elements.append(Paragraph(accommodation_request.additional_comments, normal_style))
+
+        # Additional Data (Request Details) - format as table if available
+        if accommodation_request.additional_data and isinstance(accommodation_request.additional_data, dict):
+            elements.append(Paragraph("Request Details", heading_style))
+            request_details_data = [['Field', 'Value']]
+            # Map field names to readable labels
+            field_labels = {
+                'location': 'Location',
+                'requestor_gender': 'Gender',
+                'special_requests': 'Special Requests',
+                'flight_arrival_time': 'Flight Arrival Time',
+                'flight_departure_time': 'Flight Departure Time',
+                'requested_room_type': 'Requested Room Type',
+                'requested_check_in_date': 'Requested Check-in',
+                'requested_check_out_date': 'Requested Check-out',
+                'number_of_guests': 'Number of Guests',
+                'purpose': 'Purpose',
+            }
+            for key, value in accommodation_request.additional_data.items():
+                label = field_labels.get(key, key.replace('_', ' ').title())
+                # Format boolean values
+                if isinstance(value, bool):
+                    value = 'Yes' if value else 'No'
+                if value:  # Only show non-empty values
+                    request_details_data.append([label, str(value)[:80]])
+            # Only add if we have data rows
+            if len(request_details_data) > 1:
+                request_details_table = Table(request_details_data, colWidths=[2*inch, 5*inch])
+                request_details_table.setStyle(table_style)
+                elements.append(request_details_table)
+
+        # Footer
+        elements.append(Spacer(1, 20))
+        footer_style = ParagraphStyle(
+            'Footer',
+            parent=styles['Normal'],
+            fontSize=8,
+            textColor=colors.grey
+        )
+        footer_text = f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M:%S')} | Travel Management System"
+        elements.append(Paragraph(footer_text, footer_style))
+
+        # Build PDF
+        doc.build(elements)
+        buffer.seek(0)
+
+        # Create response
+        filename = f"Accommodation-{accommodation_request.request_number or accommodation_request.id}.pdf"
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
 
     @action(detail=True, methods=['post'])
     def assign(self, request, pk=None):

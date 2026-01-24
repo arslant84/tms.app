@@ -245,12 +245,12 @@
       </div>
     </section>
 
-    <!-- Approval & Submission Confirmations -->
+    <!-- Additional Comments -->
     <section class="form-section">
       <h3 class="section-title">
         <span class="title-text">
-          <i class="bi bi-check-circle"></i>
-          Approval & Submission
+          <i class="bi bi-chat-text"></i>
+          Additional Information
         </span>
       </h3>
 
@@ -263,50 +263,6 @@
           rows="3"
           placeholder="Any other information relevant to this request"
         ></textarea>
-      </div>
-
-      <div class="confirmations">
-        <div class="form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="confirmPolicy"
-            formControlName="confirmPolicy"
-          >
-          <label class="form-check-label" for="confirmPolicy">
-            <span class="required">*</span> I confirm that this request is in accordance with company travel and transport policy
-          </label>
-          <div class="error-message" *ngIf="isFieldInvalid('confirmPolicy')">
-            You must confirm policy compliance
-          </div>
-        </div>
-
-        <div class="form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="confirmManagerApproval"
-            formControlName="confirmManagerApproval"
-          >
-          <label class="form-check-label" for="confirmManagerApproval">
-            <span class="required">*</span> I confirm that I have obtained necessary manager approval for this transport request
-          </label>
-          <div class="error-message" *ngIf="isFieldInvalid('confirmManagerApproval')">
-            You must confirm manager approval
-          </div>
-        </div>
-
-        <div class="form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="confirmTermsAndConditions"
-            formControlName="confirmTermsAndConditions"
-          >
-          <label class="form-check-label" for="confirmTermsAndConditions">
-            I agree to the terms and conditions for transport services
-          </label>
-        </div>
       </div>
     </section>
 

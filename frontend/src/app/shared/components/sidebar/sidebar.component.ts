@@ -60,12 +60,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
     this.approvalsSubscription = this.http.get<any>(url, { withCredentials: true }).subscribe({
       next: (response) => {
-        this.pendingApprovals = response.totalCount || 0;
+        this.pendingApprovals = response.meta?.pagination?.total_count || response.data?.length || 0;
         console.log('=== SIDEBAR APPROVALS DEBUG ===');
         console.log('API URL:', url);
         console.log('Full Response:', response);
-        console.log('Total Count from API:', response.totalCount);
-        console.log('Items Count:', response.items?.length);
+        console.log('Total Count from API:', response.meta?.pagination?.total_count);
+        console.log('Items Count:', response.data?.length);
         console.log('Setting badge count to:', this.pendingApprovals);
         console.log('===============================');
       },

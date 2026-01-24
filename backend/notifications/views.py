@@ -5,6 +5,10 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.utils import timezone
 from django.db.models import Q, Count
 from datetime import datetime, timedelta
+from utils.api_response import (
+    success_response, error_response, validation_error_response,
+    forbidden_response, created_response
+)
 
 from .models import (
     NotificationEventType, NotificationTemplate, UserNotificationPreference,
@@ -162,6 +166,44 @@ class UserNotificationSubscriptionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(subscriptions, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post', 'put', 'patch'])
+    def update_subscription(self, request, pk=None):
+        """
+        Create or update subscription for an event type.
+        The pk here is the event_type_id.
+        """
+        try:
+            event_type = NotificationEventType.objects.get(pk=pk, is_active=True)
+        except NotificationEventType.DoesNotExist:
+            return error_response(message='Event type not found or inactive', status_code=status.HTTP_404_NOT_FOUND)
+
+        # Get or create subscription for this user and event type
+        subscription, created = UserNotificationSubscription.objects.get_or_create(
+            user=request.user,
+            event_type=event_type,
+            defaults={
+                'receive_email': request.data.get('receive_email', True),
+                'receive_in_app': request.data.get('receive_in_app', True),
+                'receive_push': request.data.get('receive_push', False),
+                'is_active': True
+            }
+        )
+
+        if not created:
+            # Update existing subscription
+            subscription.receive_email = request.data.get('receive_email', subscription.receive_email)
+            subscription.receive_in_app = request.data.get('receive_in_app', subscription.receive_in_app)
+            subscription.receive_push = request.data.get('receive_push', subscription.receive_push)
+            subscription.is_active = request.data.get('is_active', subscription.is_active)
+            subscription.save()
+
+        serializer = self.get_serializer(subscription)
+        return success_response(
+            data=serializer.data,
+            message='Subscription updated successfully',
+            status_code=status.HTTP_200_OK
+        )
+
 
 class UserNotificationViewSet(viewsets.ModelViewSet):
     """
@@ -169,6 +211,13 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
     """
     serializer_class = UserNotificationSerializer
     permission_classes = [IsAuthenticated]
+
+    # Search across notification content
+    search_fields = ['title', 'message']
+
+    # Allow ordering
+    ordering_fields = ['created_at', 'priority', 'is_read']
+    ordering = ['-created_at']  # Default: newest first
 
     def get_queryset(self):
         """Users can only see their own notifications"""
@@ -213,13 +262,16 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         """Create notifications for multiple users (admin only)"""
         if not request.user.is_staff:
-            return Response(
-                {'error': 'Only admin can create notifications'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='Only admin can create notifications'
             )
 
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Invalid notification data'
+            )
 
         # Create notifications using service
         notifications = NotificationService.notify_users(
@@ -234,7 +286,10 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         )
 
         response_serializer = UserNotificationSerializer(notifications, many=True)
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        return created_response(
+            data=response_serializer.data,
+            message=f'Created {len(notifications)} notification(s)'
+        )
 
     @action(detail=True, methods=['post'])
     def mark_as_read(self, request, pk=None):
@@ -242,15 +297,18 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         notification = self.get_object()
 
         if notification.user != request.user and not request.user.is_staff:
-            return Response(
-                {'error': 'You can only mark your own notifications as read'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='You can only mark your own notifications as read'
             )
 
         notification.mark_as_read()
 
         serializer = self.get_serializer(notification)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='Notification marked as read',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=True, methods=['post'])
     def mark_as_unread(self, request, pk=None):
@@ -258,9 +316,8 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         notification = self.get_object()
 
         if notification.user != request.user and not request.user.is_staff:
-            return Response(
-                {'error': 'You can only mark your own notifications as unread'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message='You can only mark your own notifications as unread'
             )
 
         notification.is_read = False
@@ -268,13 +325,21 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         notification.save(update_fields=['is_read', 'read_at'])
 
         serializer = self.get_serializer(notification)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='Notification marked as unread',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=False, methods=['post'])
     def mark_all_as_read(self, request):
         """Mark all notifications as read for current user"""
         count = NotificationService.mark_all_as_read(request.user)
-        return Response({'count': count, 'message': f'{count} notifications marked as read'})
+        return success_response(
+            data={'count': count},
+            message=f'{count} notifications marked as read',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=False, methods=['get'])
     def unread_count(self, request):
@@ -284,7 +349,11 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
             is_read=False
         ).count()
 
-        return Response({'count': count})
+        return success_response(
+            data={'count': count},
+            message='Unread count retrieved',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
@@ -322,7 +391,11 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         }
 
         serializer = NotificationStatsSerializer(stats)
-        return Response(serializer.data)
+        return success_response(
+            data=serializer.data,
+            message='Notification statistics retrieved successfully',
+            status_code=status.HTTP_200_OK
+        )
 
     @action(detail=False, methods=['delete'])
     def clear_read(self, request):
@@ -332,10 +405,11 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
             is_read=True
         ).delete()
 
-        return Response({
-            'count': count,
-            'message': f'{count} read notifications deleted'
-        })
+        return success_response(
+            data={'count': count},
+            message=f'{count} read notification(s) deleted',
+            status_code=status.HTTP_200_OK
+        )
 
 
 class NotificationBatchViewSet(viewsets.ReadOnlyModelViewSet):

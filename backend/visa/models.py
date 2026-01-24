@@ -22,6 +22,12 @@ class VisaApplication(models.Model):
     trip_end_date = models.DateField(blank=True, null=True)
     passport_number = models.CharField(max_length=255, blank=True, null=True)
     passport_expiry_date = models.DateField(blank=True, null=True)
+    passport_file = models.FileField(
+        upload_to='visa/passports/',
+        blank=True,
+        null=True,
+        help_text="Uploaded passport scan/photo for visa application"
+    )
 
     # Note: STATUS_CHOICES removed to support dynamic workflow statuses
     # Status will be set by workflow engine based on configured approval roles

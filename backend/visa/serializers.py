@@ -21,14 +21,24 @@ class VisaApprovalStepSerializer(serializers.ModelSerializer):
 class VisaApplicationListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for listing visa applications"""
     applicant_name = serializers.CharField(source='requestor_name', read_only=True)
+    passport_file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = VisaApplication
         fields = [
             'id', 'request_number', 'applicant_name', 'requestor_name', 'staff_id', 'department', 'destination', 'visa_type', 'request_type',
-            'travel_purpose', 'passport_number', 'status', 'trip_start_date', 'trip_end_date', 'submitted_date',
+            'travel_purpose', 'passport_number', 'passport_file_url', 'status', 'trip_start_date', 'trip_end_date', 'submitted_date',
             'last_updated_date', 'processing_started_at', 'processing_completed_at', 'processing_details', 'additional_comments', 'created_at', 'updated_at'
         ]
+
+    def get_passport_file_url(self, obj):
+        """Return the full URL for the passport file if it exists"""
+        if obj.passport_file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.passport_file.url)
+            return obj.passport_file.url
+        return None
 
 
 class VisaApplicationDetailSerializer(serializers.ModelSerializer):
@@ -37,6 +47,8 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
     approval_workflow = VisaApprovalStepSerializer(source='visaapprovalstep_set', many=True, read_only=True)
     documents = VisaDocumentSerializer(source='visadocument_set', many=True, read_only=True)
     user_email = serializers.EmailField(source='user.email', read_only=True, allow_null=True)
+    passport_file = serializers.FileField(required=False, allow_null=True)
+    passport_file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = VisaApplication
@@ -48,7 +60,7 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
             # Section A: Personal Information
             'date_of_birth', 'place_of_birth', 'citizenship',
             'passport_number', 'passport_place_of_issuance', 'passport_date_of_issuance',
-            'passport_expiry_date', 'contact_telephone', 'home_address',
+            'passport_expiry_date', 'passport_file', 'passport_file_url', 'contact_telephone', 'home_address',
             'education_details', 'current_employer_name', 'current_employer_address',
             'marital_status', 'family_information',
 
@@ -72,11 +84,50 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
             # Nested
             'approval_workflow', 'documents'
         ]
-        read_only_fields = ['id', 'request_number', 'submitted_date', 'created_at', 'updated_at', 'last_updated_date']
+        read_only_fields = ['id', 'request_number', 'submitted_date', 'created_at', 'updated_at', 'last_updated_date', 'passport_file_url']
+
+    def get_passport_file_url(self, obj):
+        """Return the full URL for the passport file if it exists"""
+        if obj.passport_file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.passport_file.url)
+            return obj.passport_file.url
+        return None
+
+    def validate_passport_file(self, value):
+        """Validate passport file type and size"""
+        if value:
+            # Check file size (max 10MB)
+            max_size = 10 * 1024 * 1024  # 10MB in bytes
+            if value.size > max_size:
+                raise serializers.ValidationError(
+                    "Passport file size must not exceed 10MB."
+                )
+
+            # Check file type
+            allowed_types = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+            content_type = getattr(value, 'content_type', None)
+            if content_type and content_type not in allowed_types:
+                raise serializers.ValidationError(
+                    "Passport file must be PDF, JPG, or PNG format."
+                )
+
+            # Also check by extension as fallback
+            allowed_extensions = ['.pdf', '.jpg', '.jpeg', '.png']
+            file_name = value.name.lower()
+            if not any(file_name.endswith(ext) for ext in allowed_extensions):
+                raise serializers.ValidationError(
+                    "Passport file must be PDF, JPG, or PNG format."
+                )
+
+        return value
 
 
 class VisaApplicationCreateUpdateSerializer(serializers.ModelSerializer):
     """Serializer for creating and updating visa applications"""
+    passport_file = serializers.FileField(required=False, allow_null=True)
+    passport_file_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = VisaApplication
@@ -87,7 +138,7 @@ class VisaApplicationCreateUpdateSerializer(serializers.ModelSerializer):
             # Section A: Personal Information
             'date_of_birth', 'place_of_birth', 'citizenship',
             'passport_number', 'passport_place_of_issuance', 'passport_date_of_issuance',
-            'passport_expiry_date', 'contact_telephone', 'home_address',
+            'passport_expiry_date', 'passport_file', 'passport_file_url', 'contact_telephone', 'home_address',
             'education_details', 'current_employer_name', 'current_employer_address',
             'marital_status', 'family_information',
 
@@ -106,6 +157,43 @@ class VisaApplicationCreateUpdateSerializer(serializers.ModelSerializer):
             # Additional
             'additional_comments', 'supporting_documents_notes', 'trf_reference_number'
         ]
+
+    def get_passport_file_url(self, obj):
+        """Return the full URL for the passport file if it exists"""
+        if obj.passport_file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.passport_file.url)
+            return obj.passport_file.url
+        return None
+
+    def validate_passport_file(self, value):
+        """Validate passport file type and size"""
+        if value:
+            # Check file size (max 10MB)
+            max_size = 10 * 1024 * 1024  # 10MB in bytes
+            if value.size > max_size:
+                raise serializers.ValidationError(
+                    "Passport file size must not exceed 10MB."
+                )
+
+            # Check file type
+            allowed_types = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+            content_type = getattr(value, 'content_type', None)
+            if content_type and content_type not in allowed_types:
+                raise serializers.ValidationError(
+                    "Passport file must be PDF, JPG, or PNG format."
+                )
+
+            # Also check by extension as fallback
+            allowed_extensions = ['.pdf', '.jpg', '.jpeg', '.png']
+            file_name = value.name.lower()
+            if not any(file_name.endswith(ext) for ext in allowed_extensions):
+                raise serializers.ValidationError(
+                    "Passport file must be PDF, JPG, or PNG format."
+                )
+
+        return value
 
     def validate(self, data):
         """Validate visa application data"""

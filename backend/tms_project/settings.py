@@ -264,3 +264,107 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+# Logging Configuration
+# Clean, readable logs for development - ONLY application logs
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'app': {
+            'format': '\033[1m{levelname}\033[0m {asctime} \033[36m{name}\033[0m {message}',
+            'style': '{',
+            'datefmt': '%H:%M:%S',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'app',
+            'level': 'INFO',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',  # Only show warnings and errors from unlisted loggers
+    },
+    'loggers': {
+        # Silence Django framework logs completely
+        'django': {
+            'handlers': [],
+            'level': 'ERROR',  # Only show errors
+            'propagate': False,
+        },
+        'django.utils.autoreload': {
+            'handlers': [],
+            'level': 'ERROR',  # Completely suppress autoreload logs
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': [],
+            'level': 'ERROR',  # No SQL logs
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # Only show HTTP errors, not every request
+            'propagate': False,
+        },
+        'django.template': {
+            'handlers': [],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        # Application loggers - show all activity
+        'accounts': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'approvals': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'workflows': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'trf': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'bookings': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'transport': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'insights': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'notifications': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'visa': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'accommodation': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

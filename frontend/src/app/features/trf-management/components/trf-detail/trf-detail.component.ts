@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TrfService } from '../../services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
@@ -14,7 +14,7 @@ import { StatusUtilsService } from '../../../../core/utils/status-utils.service'
 @Component({
   selector: 'app-trf-detail',
   standalone: true,
-  imports: [CommonModule, WorkflowStatusComponent, ApprovalActionsComponent],
+  imports: [CommonModule, RouterModule, WorkflowStatusComponent, ApprovalActionsComponent],
   templateUrl: './trf-detail.component.html',
   styleUrls: ['./trf-detail.component.scss']
 })
@@ -202,7 +202,13 @@ export class TrfDetailComponent implements OnInit {
    * Check if TRF can be cancelled based on status
    */
   canCancel(): boolean {
-    return this.CANCELLABLE_STATUSES.includes(this.trfData?.status);
+    const status = this.trfData?.status || '';
+    // Allow cancel for any status that contains 'Pending' and is not approved
+    if (status.includes('Pending')) {
+      const isApproved = this.APPROVED_KEYWORDS.some(keyword => status.includes(keyword));
+      return !isApproved;
+    }
+    return false;
   }
 
   /**
@@ -337,13 +343,6 @@ export class TrfDetailComponent implements OnInit {
         });
       }
     });
-  }
-
-  /**
-   * Print TRF
-   */
-  onPrint(): void {
-    window.print();
   }
 
   /**
