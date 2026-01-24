@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TransportService, TransportRequest } from '../../services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -22,7 +22,7 @@ export const TRANSPORT_STATUSES = [
 @Component({
   selector: 'app-transport-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './transport-list.component.html',
   styleUrls: ['./transport-list.component.scss']
 })

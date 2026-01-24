@@ -27,10 +27,10 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     # Search across key fields
-    search_fields = ['title', 'purpose', 'request_number', 'requestor__email', 'requestor__name']
+    search_fields = ['purpose', 'request_number', 'requestor_name', 'staff_id', 'department', 'requestor__email', 'requestor__name']
 
     # Allow ordering
-    ordering_fields = ['created_at', 'pickup_datetime', 'status', 'transport_type']
+    ordering_fields = ['created_at', 'submitted_at', 'status']
     ordering = ['-created_at']  # Default: newest first
 
     def get_object(self):
@@ -134,11 +134,13 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
-                Q(title__icontains=search) |
                 Q(purpose__icontains=search) |
+                Q(request_number__icontains=search) |
+                Q(requestor_name__icontains=search) |
+                Q(staff_id__icontains=search) |
+                Q(department__icontains=search) |
                 Q(requestor__email__icontains=search) |
-                Q(requestor__first_name__icontains=search) |
-                Q(requestor__last_name__icontains=search)
+                Q(requestor__name__icontains=search)
             )
 
         return queryset.select_related('requestor', 'trf').prefetch_related(

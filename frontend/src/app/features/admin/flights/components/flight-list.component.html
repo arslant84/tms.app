@@ -28,6 +28,9 @@
         <div class="search-container">
           <input
             type="text"
+            id="flightSearch"
+            name="flightSearch"
+            autocomplete="off"
             class="search-input"
             placeholder="Search by booking reference, airline, or flight number..."
             [value]="(listState.searchTerm | async) || ''"
