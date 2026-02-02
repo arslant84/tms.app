@@ -71,11 +71,9 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
   fetchDashboardData(): void {
     // Prevent multiple concurrent requests
     if (this.isFetching) {
-      console.log('⏸️ Skipping fetch - already fetching');
       return;
     }
 
-    console.log('🚀 Starting fetchDashboardData...');
     this.isLoading = true;
     this.isFetching = true;
     this.error = '';
@@ -90,14 +88,9 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (data) => {
-          console.log('✅ Dashboard data loaded:', data);
           this.summary = data;
           this.activities = data.recent_activities || [];
           this.filteredActivities = this.activities;
-
-          if (this.activities.length === 0) {
-            console.log('📋 No recent activities found');
-          }
         },
         error: (err) => {
           console.error('❌ Error fetching dashboard data:', err);

@@ -2,7 +2,10 @@
 Workflow Router - Automatic workflow initiation and routing
 Handles starting workflows when requests are submitted
 """
+import logging
 from typing import Optional, List
+
+logger = logging.getLogger(__name__)
 from django.db import transaction
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
@@ -42,12 +45,12 @@ class WorkflowRouter:
         ).prefetch_related('steps').first()
 
         if not workflow_template:
-            print(f"No active workflow found for entity type: {entity_type}")
+            logger.info(f"No active workflow found for entity type: {entity_type}")
             return None
 
         # Check if workflow has steps
         if workflow_template.steps.count() == 0:
-            print(f"Workflow template {workflow_template.name} has no steps")
+            logger.warning(f"Workflow template {workflow_template.name} has no steps")
             return None
 
         # Use the WorkflowEngine to start the workflow
@@ -58,11 +61,11 @@ class WorkflowRouter:
                 module_name=entity_type
             )
 
-            print(f"Workflow started: {workflow_instance.id} for {entity_type} #{entity.id}")
+            logger.info(f"Workflow started: {workflow_instance.id} for {entity_type} #{entity.id}")
             return workflow_instance
 
         except Exception as e:
-            print(f"Error starting workflow: {str(e)}")
+            logger.error(f"Error starting workflow: {str(e)}")
             raise
 
     @staticmethod

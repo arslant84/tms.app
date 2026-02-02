@@ -177,12 +177,8 @@ export class UserProfileComponent implements OnInit {
     this.submitting = true;
     const formData = this.profileForm.value;
 
-    // Debug: Log the data being sent
-    console.log('Sending profile update:', formData);
-
     this.userService.updateUser(this.currentUser.id, formData).subscribe({
-      next: (response) => {
-        console.log('Profile updated successfully:', response);
+      next: () => {
         this.toastService.success('Profile updated successfully');
         this.isEditing = false;
         this.loadCurrentUser();

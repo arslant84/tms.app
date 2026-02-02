@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
 export interface Toast {
   message: string;
@@ -11,8 +12,13 @@ export interface Toast {
   providedIn: 'root'
 })
 export class ToastService {
-  toasts: (Toast & { id: number })[] = [];
+  private toastsSubject = new BehaviorSubject<(Toast & { id: number })[]>([]);
+  toasts$ = this.toastsSubject.asObservable();
   private idCounter = 0;
+
+  get toasts(): (Toast & { id: number })[] {
+    return this.toastsSubject.value;
+  }
 
   /**
    * Show a success toast notification
@@ -47,7 +53,8 @@ export class ToastService {
    */
   show(message: string, type: 'success' | 'error' | 'info' | 'warning', autohide = true, delay = 5000): void {
     const id = this.idCounter++;
-    this.toasts.push({ id, message, type, autohide, delay });
+    const currentToasts = this.toastsSubject.value;
+    this.toastsSubject.next([...currentToasts, { id, message, type, autohide, delay }]);
 
     if (autohide) {
       setTimeout(() => this.remove(id), delay);
@@ -58,13 +65,14 @@ export class ToastService {
    * Remove a toast notification
    */
   remove(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
+    const currentToasts = this.toastsSubject.value;
+    this.toastsSubject.next(currentToasts.filter(t => t.id !== id));
   }
 
   /**
    * Clear all toast notifications
    */
   clear(): void {
-    this.toasts = [];
+    this.toastsSubject.next([]);
   }
 }

@@ -54,8 +54,6 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
       .then(([templates, eventTypes]) => {
         this.templates = templates || [];
         this.eventTypes = eventTypes || [];
-        console.log('Loaded templates:', this.templates.length);
-        console.log('Loaded event types:', this.eventTypes.length);
       })
       .catch((error) => {
         console.error('Failed to load data:', error);

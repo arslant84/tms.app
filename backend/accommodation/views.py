@@ -1,3 +1,4 @@
+import logging
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 from .models import (
     AccommodationStaffHouse,
     AccommodationRoom,
@@ -221,7 +224,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
         # For approval actions, allow access to requests pending the user's approval
         if self.action in ['approve', 'reject']:
-            print(f"✅ Approval action: Allowing access to all accommodation requests (authorization checked in WorkflowEngine)")
+            logger.info(f" Approval action: Allowing access to all accommodation requests (authorization checked in WorkflowEngine)")
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
         # For retrieve action, check permissions first
@@ -233,11 +236,11 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 ).exists()
 
                 if can_view_all or user.is_admin:
-                    print(f"✅ Retrieve action: User {user.username} has admin permissions - allowing access to all requests")
+                    logger.info(f" Retrieve action: User {user.username} has admin permissions - allowing access to all requests")
                     return queryset  # No filtering for admins
 
             # Regular users can view their own requests only
-            print(f"✅ Retrieve action: User {user.username} - filtering by requestor")
+            logger.info(f" Retrieve action: User {user.username} - filtering by requestor")
             # Filter by requestor_name or staff_id to handle different data entry methods
             queryset = queryset.filter(
                 Q(requestor_name=user.get_full_name()) |
@@ -252,7 +255,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             ).exists()
 
             if can_view_all or user.is_admin:
-                print(f"✅ Assign action: User {user.username} has admin permissions - allowing access to all requests")
+                logger.info(f" Assign action: User {user.username} has admin permissions - allowing access to all requests")
                 return queryset  # No filtering for admins
 
         # Check if this is an admin view (Accommodation Admin module)
@@ -264,20 +267,20 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             can_view_all = user.role.permissions.filter(name='view_all_accommodation').exists()
 
             if can_view_all:
-                print(f"✅ Admin view: User {user.username} (role: {user.role.name}) has 'view_all_accommodation' permission - showing all accommodation requests")
+                logger.info(f" Admin view: User {user.username} (role: {user.role.name}) has 'view_all_accommodation' permission - showing all accommodation requests")
                 pass  # No filtering - show all
             elif user.role.permissions.filter(name__in=['approve_accommodation', 'view_pending_approvals']).exists():
                 # Department-level approvers - could be extended to filter by department if needed
                 queryset = queryset.filter(requestor_name=user.get_full_name())
-                print(f"✅ Admin view: Approver - showing own accommodation requests")
+                logger.info(f" Admin view: Approver - showing own accommodation requests")
             else:
                 # No admin permissions - show only own
                 queryset = queryset.filter(requestor_name=user.get_full_name())
-                print(f"⚠️ Admin view: User lacks permission - showing only own accommodation requests")
+                logger.warning(f" Admin view: User lacks permission - showing only own accommodation requests")
         else:
             # Personal requests view - always show only user's own requests
             queryset = queryset.filter(requestor_name=user.get_full_name())
-            print(f"✅ Personal view: User {user.username} - showing only own accommodation requests")
+            logger.info(f" Personal view: User {user.username} - showing only own accommodation requests")
 
         # Apply additional filters from query parameters
         status_filter = self.request.query_params.get('status', None)
@@ -305,7 +308,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 Q(department__icontains=search) |
                 Q(email__icontains=search)
             )
-            print(f"🔍 Searching accommodation for: {search}")
+            logger.debug(f"Searching accommodation for: {search}")
 
         return queryset.order_by('-created_at')
 
@@ -332,9 +335,9 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                     # Generate unique request number
                     request_number = generate_request_id('ACCOM', context)
                     extra_kwargs['request_number'] = request_number
-                    print(f"✅ Generated request number during creation: {request_number}")
+                    logger.info(f" Generated request number during creation: {request_number}")
                 except Exception as e:
-                    print(f"❌ Error generating request number: {str(e)}")
+                    logger.error(f" Error generating request number: {str(e)}")
                     # Will be generated later if needed
 
         # Save the accommodation request
@@ -352,12 +355,12 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 if workflow_instance:
                     # Reload the accommodation request to get the updated status from workflow
                     accommodation_request.refresh_from_db()
-                    print(f"✅ Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}")
-                    print(f"✅ Status updated to: {accommodation_request.status}")
+                    logger.info(f" Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}")
+                    logger.info(f" Status updated to: {accommodation_request.status}")
                 else:
-                    print(f"⚠️ No active workflow configured for accommodation - using legacy approval system")
+                    logger.warning(f" No active workflow configured for accommodation - using legacy approval system")
             except Exception as e:
-                print(f"❌ Error starting workflow for Accommodation Request #{accommodation_request.id}: {str(e)}")
+                logger.error(f" Error starting workflow for Accommodation Request #{accommodation_request.id}: {str(e)}")
                 # Don't fail the request creation if workflow fails
                 pass
 
@@ -385,9 +388,9 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                     # Generate unique request number
                     request_number = generate_request_id('ACCOM', context)
                     extra_kwargs['request_number'] = request_number
-                    print(f"✅ Generated request number during update: {request_number}")
+                    logger.info(f" Generated request number during update: {request_number}")
                 except Exception as e:
-                    print(f"❌ Error generating request number: {str(e)}")
+                    logger.error(f" Error generating request number: {str(e)}")
 
         # Save the accommodation request
         accommodation_request = serializer.save(**extra_kwargs)
@@ -404,12 +407,12 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 if workflow_instance:
                     # Reload the accommodation request to get the updated status from workflow
                     accommodation_request.refresh_from_db()
-                    print(f"✅ Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}")
-                    print(f"✅ Status updated to: {accommodation_request.status}")
+                    logger.info(f" Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}")
+                    logger.info(f" Status updated to: {accommodation_request.status}")
                 else:
-                    print(f"⚠️ No active workflow configured for accommodation - using legacy approval system")
+                    logger.warning(f" No active workflow configured for accommodation - using legacy approval system")
             except Exception as e:
-                print(f"❌ Error starting workflow for Accommodation Request #{accommodation_request.id}: {str(e)}")
+                logger.error(f" Error starting workflow for Accommodation Request #{accommodation_request.id}: {str(e)}")
                 # Don't fail the request update if workflow fails
                 pass
 
@@ -438,19 +441,19 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                     if location:
                         context = location  # Let generate_request_id handle validation and length
 
-                print(f"🔍 Extracted context for Accommodation Request #{accommodation_request.id}: {context}")
+                logger.debug(f" Extracted context for Accommodation Request #{accommodation_request.id}: {context}")
 
                 # Generate unique request number (will auto-validate and limit context to 5 chars)
                 request_number = generate_request_id('ACCOM', context)
                 accommodation_request.request_number = request_number
-                print(f"✅ Generated request number: {request_number}")
+                logger.info(f" Generated request number: {request_number}")
             except Exception as e:
-                print(f"❌ Error generating request number: {str(e)}")
+                logger.error(f" Error generating request number: {str(e)}")
                 import traceback
                 traceback.print_exc()
                 # Fallback to simple format
                 accommodation_request.request_number = f"ACCOM-{datetime.now().strftime('%Y%m%d-%H%M')}-ACCOM-{accommodation_request.id}"
-                print(f"⚠️ Using fallback request number: {accommodation_request.request_number}")
+                logger.warning(f" Using fallback request number: {accommodation_request.request_number}")
 
         # Update status and submitted_at
         accommodation_request.status = 'Pending'
@@ -468,13 +471,13 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             if workflow_instance:
                 # Reload the accommodation request to get the updated status from workflow
                 accommodation_request.refresh_from_db()
-                print(f"✅ Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}")
-                print(f"✅ Status updated to: {accommodation_request.status}")
+                logger.info(f" Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}")
+                logger.info(f" Status updated to: {accommodation_request.status}")
             else:
                 # Fallback to legacy approval system if no workflow configured
-                print(f"⚠️ No active workflow configured - keeping status as Pending")
+                logger.warning(f" No active workflow configured - keeping status as Pending")
         except Exception as e:
-            print(f"❌ Error starting workflow: {str(e)}")
+            logger.error(f" Error starting workflow: {str(e)}")
             # Fallback to legacy system on error - status remains 'Pending'
             pass
 
@@ -529,7 +532,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                     )
             else:
                 # Fallback to legacy approval logic
-                print(f"⚠️ No workflow instance found for Accommodation #{accommodation_request.id}, using legacy approval")
+                logger.warning(f" No workflow instance found for Accommodation #{accommodation_request.id}, using legacy approval")
 
                 if accommodation_request.status not in ['Pending', 'Pending Department Focal', 'Pending HOD']:
                     return Response(
@@ -544,7 +547,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data)
 
         except Exception as e:
-            print(f"❌ Error in approve workflow: {str(e)}")
+            logger.error(f" Error in approve workflow: {str(e)}")
             import traceback
             traceback.print_exc()
             return Response(
@@ -602,7 +605,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data)
 
         except Exception as e:
-            print(f"❌ Error in reject workflow: {str(e)}")
+            logger.error(f" Error in reject workflow: {str(e)}")
             import traceback
             traceback.print_exc()
             return Response(
@@ -1050,7 +1053,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                         workflow_instance.completed_at = timezone.now()
                         workflow_instance.save()
             except Exception as e:
-                print(f"⚠️ Could not add workflow step execution: {str(e)}")
+                logger.warning(f" Could not add workflow step execution: {str(e)}")
                 # Don't fail the assignment if workflow update fails
                 pass
 
@@ -1068,7 +1071,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             for booking in created_bookings:
                 booking.delete()
 
-            print(f"❌ Error creating booking records: {str(e)}")
+            logger.error(f" Error creating booking records: {str(e)}")
             import traceback
             traceback.print_exc()
 

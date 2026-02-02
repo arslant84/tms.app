@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { SettingsService, ApplicationSetting } from './settings.service';
+import { SettingsService, ApplicationSetting, SettingValue } from './settings.service';
 import { AuthService } from './auth.service';
 import { filter } from 'rxjs/operators';
 
@@ -86,14 +86,14 @@ export class AppSettingsService {
       const currentSettings = this.settingsSubject.value;
       const updatedSettings = settingsData.reduce((acc, setting: ApplicationSetting) => {
         if (Object.prototype.hasOwnProperty.call(currentSettings, setting.setting_key)) {
-          let typedValue: any;
+          let typedValue: SettingValue;
 
           if (setting.value !== undefined) {
             typedValue = setting.value;
           } else {
             const rawValue = setting.setting_value;
             if (setting.setting_type === 'boolean') {
-              typedValue = rawValue === 'true' || rawValue === true;
+              typedValue = rawValue === 'true';
             } else if (setting.setting_type === 'number') {
               typedValue = parseFloat(rawValue);
             } else if (setting.setting_type === 'json') {
@@ -115,7 +115,6 @@ export class AppSettingsService {
 
       // Merge with current settings and emit
       this.settingsSubject.next({ ...currentSettings, ...updatedSettings });
-      console.log('App settings loaded:', this.settingsSubject.value);
     }
   }
 

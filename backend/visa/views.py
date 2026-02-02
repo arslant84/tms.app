@@ -1,9 +1,12 @@
+import logging
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.db.models import Q
+
+logger = logging.getLogger(__name__)
 
 from utils import success_response, error_response, not_found_response
 
@@ -79,7 +82,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
 
         # For approval actions, allow access to applications pending the user's approval
         if self.action in ['approve', 'reject']:
-            print(f"✅ Approval action: Allowing access to all visa applications (authorization checked in WorkflowEngine)")
+            logger.info(f" Approval action: Allowing access to all visa applications (authorization checked in WorkflowEngine)")
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
         # Check if this is an admin view (Visa Admin module)
@@ -91,30 +94,30 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             can_view_all = user.role.permissions.filter(name='view_all_visa').exists()
 
             if can_view_all:
-                print(f"✅ Admin view: User {user.username} (role: {user.role.name}) has 'view_all_visa' permission - showing all visa applications")
+                logger.info(f" Admin view: User {user.username} (role: {user.role.name}) has 'view_all_visa' permission - showing all visa applications")
                 pass  # No filtering - show all
             elif user.role.permissions.filter(name__in=['approve_visa', 'view_pending_approvals']).exists():
                 # Department-level approvers
                 if user.department:
                     queryset = queryset.filter(user__department=user.department)
-                    print(f"✅ Admin view: Approver - showing department visa applications")
+                    logger.info(f" Admin view: Approver - showing department visa applications")
                 else:
                     queryset = queryset.filter(user=user)
-                    print(f"⚠️ Admin view: Approver but no department - showing only own")
+                    logger.warning(f" Admin view: Approver but no department - showing only own")
             else:
                 # No admin permissions - show only own
                 queryset = queryset.filter(user=user)
-                print(f"⚠️ Admin view: User lacks permission - showing only own visa applications")
+                logger.warning(f" Admin view: User lacks permission - showing only own visa applications")
         else:
             # Personal requests view - always show only user's own applications
             queryset = queryset.filter(user=user)
-            print(f"✅ Personal view: User {user.username} - showing only own visa applications")
+            logger.info(f" Personal view: User {user.username} - showing only own visa applications")
 
         # Apply status filter if provided
         status_filter = self.request.query_params.get('status', None)
         if status_filter:
             queryset = queryset.filter(status=status_filter)
-            print(f"🔍 Filtering by status: {status_filter}")
+            logger.debug(f" Filtering by status: {status_filter}")
 
         # Apply search filter
         search = self.request.query_params.get('search', None)
@@ -129,7 +132,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 Q(user__email__icontains=search) |
                 Q(user__name__icontains=search)
             )
-            print(f"🔍 Searching for: {search}")
+            logger.debug(f" Searching for: {search}")
 
         return queryset
 
@@ -160,14 +163,14 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 destination = serializer.validated_data.get('destination', '')
                 context = destination if destination else 'VIS'  # Let generate_request_id handle validation
 
-                print(f"🔍 Extracted context for Visa Application: {context}")
+                logger.debug(f" Extracted context for Visa Application: {context}")
 
                 # Generate unique request number (will auto-validate and limit context to 5 chars)
                 request_number = generate_request_id('VIS', context)
                 extra_kwargs['request_number'] = request_number
-                print(f"✅ Generated request number: {request_number}")
+                logger.info(f" Generated request number: {request_number}")
             except Exception as e:
-                print(f"❌ Error generating request number: {str(e)}")
+                logger.error(f" Error generating request number: {str(e)}")
                 import traceback
                 traceback.print_exc()
 
@@ -186,12 +189,12 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 if workflow_instance:
                     # Reload the visa application to get the updated status from workflow
                     visa_application.refresh_from_db()
-                    print(f"✅ Workflow started for Visa Application #{visa_application.id}: Workflow Instance #{workflow_instance.id}")
-                    print(f"✅ Status updated to: {visa_application.status}")
+                    logger.info(f" Workflow started for Visa Application #{visa_application.id}: Workflow Instance #{workflow_instance.id}")
+                    logger.info(f" Status updated to: {visa_application.status}")
                 else:
-                    print(f"⚠️ No active workflow configured for visaapplication - using legacy approval system")
+                    logger.warning(f" No active workflow configured for visaapplication - using legacy approval system")
             except Exception as e:
-                print(f"❌ Error starting workflow for Visa Application #{visa_application.id}: {str(e)}")
+                logger.error(f" Error starting workflow for Visa Application #{visa_application.id}: {str(e)}")
                 # Don't fail the request creation if workflow fails
                 pass
 
@@ -273,7 +276,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                     )
             else:
                 # Fallback to legacy approval logic
-                print(f"⚠️ No workflow instance found for Visa #{visa.id}, using legacy approval")
+                logger.warning(f" No workflow instance found for Visa #{visa.id}, using legacy approval")
 
                 approval_step, created = VisaApprovalStep.objects.get_or_create(
                     visa=visa,
@@ -301,7 +304,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data)
 
         except Exception as e:
-            print(f"❌ Error in approve workflow: {str(e)}")
+            logger.error(f" Error in approve workflow: {str(e)}")
             import traceback
             traceback.print_exc()
             return Response(
@@ -383,7 +386,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data)
 
         except Exception as e:
-            print(f"❌ Error in reject workflow: {str(e)}")
+            logger.error(f" Error in reject workflow: {str(e)}")
             import traceback
             traceback.print_exc()
             return Response(
@@ -437,11 +440,11 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             if workflow_instance:
                 workflow_instance.status = 'completed'
                 workflow_instance.save()
-                print(f"✅ Workflow instance #{workflow_instance.id} marked as completed for Visa #{visa.id}")
+                logger.info(f" Workflow instance #{workflow_instance.id} marked as completed for Visa #{visa.id}")
             else:
-                print(f"⚠️ No approved workflow instance found for Visa #{visa.id}")
+                logger.warning(f" No approved workflow instance found for Visa #{visa.id}")
         except Exception as e:
-            print(f"⚠️ Error updating workflow instance: {str(e)}")
+            logger.warning(f" Error updating workflow instance: {str(e)}")
             # Don't fail the completion if workflow update fails
 
         serializer = VisaApplicationDetailSerializer(visa)
@@ -535,19 +538,19 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 destination = serializer.validated_data.get('destination', instance.destination)
                 context = destination if destination else 'VIS'  # Let generate_request_id handle validation
 
-                print(f"🔍 Extracted context for Visa Application #{instance.id}: {context}")
+                logger.debug(f" Extracted context for Visa Application #{instance.id}: {context}")
 
                 # Generate unique request number (will auto-validate and limit context to 5 chars)
                 request_number = generate_request_id('VIS', context)
                 extra_kwargs['request_number'] = request_number
-                print(f"✅ Generated request number: {request_number}")
+                logger.info(f" Generated request number: {request_number}")
             except Exception as e:
-                print(f"❌ Error generating request number: {str(e)}")
+                logger.error(f" Error generating request number: {str(e)}")
                 import traceback
                 traceback.print_exc()
                 # Fallback to simple format
                 extra_kwargs['request_number'] = f"VIS-{datetime.now().strftime('%Y%m%d-%H%M')}-VIS-{instance.id}"
-                print(f"⚠️ Using fallback request number: {extra_kwargs['request_number']}")
+                logger.warning(f" Using fallback request number: {extra_kwargs['request_number']}")
 
         # Save the visa application
         visa_application = serializer.save(**extra_kwargs)
@@ -563,11 +566,11 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
 
                 if workflow_instance:
                     visa_application.refresh_from_db()
-                    print(f"✅ Workflow started for Visa Application #{visa_application.id}: Workflow Instance #{workflow_instance.id}")
+                    logger.info(f" Workflow started for Visa Application #{visa_application.id}: Workflow Instance #{workflow_instance.id}")
                 else:
-                    print(f"⚠️ No active workflow configured for visaapplication")
+                    logger.warning(f" No active workflow configured for visaapplication")
             except Exception as e:
-                print(f"❌ Error starting workflow for Visa Application #{visa_application.id}: {str(e)}")
+                logger.error(f" Error starting workflow for Visa Application #{visa_application.id}: {str(e)}")
                 pass
 
         # Handle status change to Completed
@@ -586,11 +589,11 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 if workflow_instance:
                     workflow_instance.status = 'completed'
                     workflow_instance.save()
-                    print(f"✅ Workflow instance #{workflow_instance.id} marked as completed for Visa #{visa_application.id}")
+                    logger.info(f" Workflow instance #{workflow_instance.id} marked as completed for Visa #{visa_application.id}")
                 else:
-                    print(f"⚠️ No approved workflow instance found for Visa #{visa_application.id}")
+                    logger.warning(f" No approved workflow instance found for Visa #{visa_application.id}")
             except Exception as e:
-                print(f"⚠️ Error updating workflow instance on completion: {str(e)}")
+                logger.warning(f" Error updating workflow instance on completion: {str(e)}")
                 # Don't fail the update if workflow update fails
 
     @action(detail=True, methods=['get'], url_path='export-pdf')

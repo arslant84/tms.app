@@ -3,11 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export type SettingValue = string | boolean | number | Record<string, unknown> | unknown[];
+
 export interface ApplicationSetting {
   id: string;
   setting_key: string;
-  setting_value: any; // Raw string value from database
-  value?: any; // Typed value (if returned by backend)
+  setting_value: string; // Raw string value from database
+  value?: SettingValue; // Typed value (if returned by backend)
   setting_type: 'string' | 'boolean' | 'number' | 'json';
   description?: string;
   is_public: boolean;
@@ -17,12 +19,17 @@ export interface ApplicationSetting {
 
 export interface SettingUpdate {
   setting_key: string;
-  value: any;
+  value: SettingValue;
+}
+
+export interface SettingUpdateError {
+  setting_key: string;
+  error: string;
 }
 
 export interface BulkUpdateResponse {
   updated: ApplicationSetting[];
-  errors: any[];
+  errors: SettingUpdateError[];
 }
 
 @Injectable({
@@ -62,7 +69,7 @@ export class SettingsService {
    */
   createSetting(setting: {
     setting_key: string;
-    value: any;
+    value: SettingValue;
     setting_type: 'string' | 'boolean' | 'number' | 'json';
     description?: string;
     is_public?: boolean;
@@ -74,7 +81,7 @@ export class SettingsService {
    * Update a single setting
    */
   updateSetting(key: string, data: {
-    value?: any;
+    value?: SettingValue;
     setting_type?: 'string' | 'boolean' | 'number' | 'json';
     description?: string;
     is_public?: boolean;
