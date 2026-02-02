@@ -1,15 +1,22 @@
+export interface Permission {
+  id: string;
+  name: string;
+  codename: string;
+  description?: string;
+}
+
 export interface Role {
   id: string;
   name: string;
   description?: string;
-  permissions?: any[];
+  permissions?: Permission[];
 }
 
 export interface User {
   id: number;
   name: string;
   email: string;
-  role: Role | string | any; // Can be Role object or role name string from backend
+  role: Role | string; // Can be Role object or role name string from backend
   department: string;
   is_admin: boolean;
   is_active: boolean;
@@ -34,9 +41,16 @@ export interface User {
   password_change_required?: boolean;
 }
 
+export interface AuthMeta {
+  token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  token_type?: string;
+}
+
 export interface AuthResponse {
   success: boolean;
   message: string;
   data: Partial<User>;
-  meta?: any;
+  meta?: AuthMeta;
 }

@@ -2,7 +2,10 @@
 Workflow Engine - Core business logic for workflow execution
 Handles workflow lifecycle: start, process actions, escalate, complete
 """
+import logging
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 from typing import Optional, Dict, Any
 from django.db import transaction
 from django.utils import timezone
@@ -334,7 +337,7 @@ class WorkflowEngine:
 
         # Fallback: try to find by role (for backward compatibility)
         if not assigned_user and step.approver_role:
-            print(f"⚠️ Using deprecated role-based assignment for step '{step.step_name}'. Consider using approver_permission instead.")
+            logger.warning(f" Using deprecated role-based assignment for step '{step.step_name}'. Consider using approver_permission instead.")
             assigned_user = WorkflowEngine._find_user_by_role(
                 step.approver_role,
                 workflow_instance.initiated_by.department if hasattr(workflow_instance.initiated_by, 'department') else None
@@ -527,7 +530,7 @@ class WorkflowEngine:
             roles_with_permission = permission.role_set.all()
 
             if not roles_with_permission.exists():
-                print(f"⚠️ No roles found with permission '{permission_name}'")
+                logger.warning(f" No roles found with permission '{permission_name}'")
                 return None
 
             # For department-specific permissions (approvals), filter by department
@@ -545,13 +548,13 @@ class WorkflowEngine:
                 ).first()
 
             if user:
-                print(f"✅ Found user {user.email} with permission '{permission_name}'")
+                logger.info(f" Found user {user.email} with permission '{permission_name}'")
             else:
-                print(f"⚠️ No active users found with permission '{permission_name}'")
+                logger.warning(f" No active users found with permission '{permission_name}'")
 
             return user
         except Permission.DoesNotExist:
-            print(f"❌ Permission '{permission_name}' not found")
+            logger.error(f" Permission '{permission_name}' not found")
             return None
 
     @staticmethod
@@ -590,13 +593,13 @@ class WorkflowEngine:
                 ).first()
 
             if user:
-                print(f"✅ Found user {user.email} with role '{role.name}' (ID: {role.id})")
+                logger.info(f" Found user {user.email} with role '{role.name}' (ID: {role.id})")
             else:
-                print(f"⚠️ No active users found with role '{role.name}'")
+                logger.warning(f" No active users found with role '{role.name}'")
 
             return user
         except Role.DoesNotExist:
-            print(f"❌ Role not found: {role_identifier}")
+            logger.error(f" Role not found: {role_identifier}")
             return None
 
     @staticmethod

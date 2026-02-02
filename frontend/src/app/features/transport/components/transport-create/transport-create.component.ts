@@ -96,6 +96,25 @@ export class TransportCreateComponent implements OnInit {
     this.loading = true;
     this.transportService.getRequestById(id).subscribe({
       next: (request) => {
+        // Check if request can be edited based on status
+        // Allow editing for Draft, Rejected, or any Pending status
+        const status = request.status || '';
+        const canEdit = status === 'Draft' ||
+                        status === 'Rejected' ||
+                        status.startsWith('Pending');
+
+        if (status && !canEdit) {
+          const errorMsg = `This transport request cannot be edited because its status is "${status}". Only Draft, Rejected, or Pending requests can be edited.`;
+          this.loading = false;
+
+          // Show error toast and redirect back to list
+          this.toastService.error(errorMsg);
+          setTimeout(() => {
+            this.router.navigate(['/transport']);
+          }, 3000);
+          return;
+        }
+
         // Patch basic form fields
         this.transportForm.patchValue({
           requestorName: request.requestorName,

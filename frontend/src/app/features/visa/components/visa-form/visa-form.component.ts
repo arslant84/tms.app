@@ -161,6 +161,26 @@ export class VisaFormComponent implements OnInit {
     this.isLoading = true;
     this.visaService.getApplicationById(this.applicationId).subscribe({
       next: (application: any) => {
+        // Check if application can be edited based on status
+        // Allow editing for Draft, Rejected, Submitted, or any Pending status
+        const status = application.status || '';
+        const canEdit = status === 'Draft' ||
+                        status === 'Rejected' ||
+                        status === 'Submitted' ||
+                        status.startsWith('Pending');
+
+        if (status && !canEdit) {
+          const errorMsg = `This visa application cannot be edited because its status is "${status}". Completed, Approved, Processing, and Cancelled applications cannot be modified.`;
+          this.isLoading = false;
+
+          // Show error toast and redirect back to list
+          this.toastService.error(errorMsg);
+          setTimeout(() => {
+            this.router.navigate(['/visa']);
+          }, 3000);
+          return;
+        }
+
         this.visaForm.patchValue(application);
         // Load passport file info if exists
         if (application.passport_file_url) {

@@ -1,3 +1,4 @@
+import logging
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.utils import timezone
 from django.db.models import Q, Count
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 from utils.api_response import (
     success_response, error_response, validation_error_response,
     forbidden_response, created_response
@@ -226,7 +229,7 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         # All users (including admins) only see notifications sent to them
         # Notifications are created for the appropriate users by the notification service
         queryset = UserNotification.objects.filter(user=user)
-        print(f"✅ User {user.username} - showing only notifications sent to them")
+        logger.info(f"User {user.username} - showing only notifications sent to them")
 
         # Filter by read status
         is_read = self.request.query_params.get('is_read', None)

@@ -45,7 +45,7 @@ export interface UserNotification {
   email_sent_at?: string;
   sent_via_push: boolean;
   push_sent_at?: string;
-  additional_data?: any;
+  additional_data?: Record<string, unknown>;
   expires_at?: string;
   created_at: string;
 }

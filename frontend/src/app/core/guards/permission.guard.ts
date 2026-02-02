@@ -37,7 +37,6 @@ export const PermissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
   // SECURITY: Admin users have access to everything
   const currentUser = authService.getCurrentUser();
   if (currentUser?.is_admin) {
-    console.log('PermissionGuard: Admin access granted for', route.url);
     return true;
   }
 
@@ -60,7 +59,6 @@ export const PermissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
     return false;
   }
 
-  console.log('PermissionGuard: Access granted for', route.url);
   return true;
 };
 

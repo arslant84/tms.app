@@ -35,21 +35,8 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
   ) {}
 
   ngOnInit(): void {
-    // Debug logging
-    const currentUser = this.rbacService['authService'].getCurrentUser();
-    console.log('=== Role Management Component Init ===');
-    console.log('Current user:', currentUser);
-    console.log('User role:', currentUser?.role);
-    console.log('Role name:', typeof currentUser?.role === 'object' ? currentUser?.role?.name : currentUser?.role);
-    console.log('User permissions:', currentUser?.permissions);
-    console.log('Has manage_roles permission:', currentUser?.permissions?.includes('manage_roles'));
-    console.log('Has system_admin permission:', currentUser?.permissions?.includes('system_admin'));
-    console.log('Is admin:', currentUser?.is_admin);
-    console.log('hasManageRolesPermission check result:', this.hasManageRolesPermission);
-
     // Check if user has permission to manage roles
     if (!this.hasManageRolesPermission) {
-      console.error('❌ Permission check failed! Redirecting to dashboard...');
       this.toast.error('You do not have permission to manage roles. This feature requires system administrator access.');
       this.isLoading = false;
       // Redirect to dashboard after showing error
@@ -59,7 +46,6 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
       return;
     }
 
-    console.log('✅ Permission check passed! Loading data...');
     this.loadData();
   }
 
@@ -79,8 +65,6 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
       .then(([roles, perms]) => {
         this.roles = roles || [];
         this.permissions = perms || [];
-        console.log('Loaded roles:', this.roles);
-        console.log('Loaded permissions:', this.permissions);
 
         if (this.permissions.length === 0) {
           this.toast.error('No permissions available in the system. Please contact your administrator.');

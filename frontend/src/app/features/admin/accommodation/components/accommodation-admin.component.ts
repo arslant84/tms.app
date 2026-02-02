@@ -110,7 +110,6 @@ export class AccommodationAdminComponent implements OnInit {
 
     this.accommodationService.getAllStaffHouses().subscribe({
       next: (data) => {
-        console.log('✅ Fetched locations from API:', data);
         this.locations = data;
         this.loadingLocations = false;
       },
@@ -274,10 +273,8 @@ export class AccommodationAdminComponent implements OnInit {
       });
     } else {
       // Create new location
-      console.log('🔄 Creating new location with payload:', payload);
       this.accommodationService.createStaffHouse(payload).subscribe({
-        next: (response) => {
-          console.log('✅ Location created successfully:', response);
+        next: () => {
           this.toastService.success('Location created successfully');
           this.fetchLocations();
           this.locationDialogOpen = false;

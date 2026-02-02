@@ -1,3 +1,4 @@
+import logging
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 from workflows.router import WorkflowRouter
 from utils.request_id_generator import generate_request_id, extract_context_from_itinerary
 from utils.api_response import (
@@ -124,12 +127,12 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create a new TRF with logging"""
-        print(f"\n=== TravelRequest CREATE ===")
-        print(f"Request data: {request.data}")
+        logger.debug(f"\n=== TravelRequest CREATE ===")
+        logger.debug(f"Request data: {request.data}")
         response = super().create(request, *args, **kwargs)
-        print(f"Response status: {response.status_code}")
-        print(f"Response data: {response.data}")
-        print(f"Response data keys: {list(response.data.keys()) if hasattr(response.data, 'keys') else 'N/A'}")
+        logger.debug(f"Response status: {response.status_code}")
+        logger.debug(f"Response data: {response.data}")
+        logger.debug(f"Response data keys: {list(response.data.keys()) if hasattr(response.data, 'keys') else 'N/A'}")
         return response
 
     def perform_create(self, serializer):
@@ -170,12 +173,12 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 if workflow_instance:
                     # Reload the TRF to get the updated status from workflow
                     trf.refresh_from_db()
-                    print(f"✅ Workflow started for TRF #{trf.id}: Workflow Instance #{workflow_instance.id}")
-                    print(f"✅ Status updated to: {trf.status}")
+                    logger.info(f" Workflow started for TRF #{trf.id}: Workflow Instance #{workflow_instance.id}")
+                    logger.info(f" Status updated to: {trf.status}")
                 else:
-                    print(f"⚠️ No active workflow configured for travelrequest - using legacy approval system")
+                    logger.warning(f" No active workflow configured for travelrequest - using legacy approval system")
             except Exception as e:
-                print(f"❌ Error starting workflow for TRF #{trf.id}: {str(e)}")
+                logger.error(f" Error starting workflow for TRF #{trf.id}: {str(e)}")
                 # Don't fail the request creation if workflow fails
                 pass
 
@@ -191,16 +194,16 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = self.queryset
 
-        print(f"\n=== TravelRequest GET_QUERYSET ===")
-        print(f"Total TRFs in database: {TravelRequest.objects.count()}")
-        print(f"Query params: {dict(self.request.query_params)}")
-        print(f"Action: {self.action}")
-        print(f"User: {user}")
-        print(f"User role: {user.role.name if user.role else 'No role'}")
+        logger.debug(f"\n=== TravelRequest GET_QUERYSET ===")
+        logger.debug(f"Total TRFs in database: {TravelRequest.objects.count()}")
+        logger.debug(f"Query params: {dict(self.request.query_params)}")
+        logger.debug(f"Action: {self.action}")
+        logger.debug(f"User: {user}")
+        logger.debug(f"User role: {user.role.name if user.role else 'No role'}")
 
         # For approval actions, allow access to TRFs pending the user's approval
         if self.action in ['approve', 'reject']:
-            print(f"✅ Approval action: Allowing access to all TRFs (authorization checked in WorkflowEngine)")
+            logger.info(f" Approval action: Allowing access to all TRFs (authorization checked in WorkflowEngine)")
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
         # Check if this is an admin view (Admin module for TRF/Ticketing)
@@ -212,25 +215,25 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             can_view_all = user.role.permissions.filter(name='view_all_trf').exists()
 
             if can_view_all:
-                print(f"✅ Admin view: User (role: {user.role.name}) has 'view_all_trf' permission - showing all TRFs")
+                logger.info(f" Admin view: User (role: {user.role.name}) has 'view_all_trf' permission - showing all TRFs")
                 pass  # No filtering - show all
 
             # Department-level approvers see TRFs from their department
             elif user.role.permissions.filter(name__in=['approve_trf', 'view_pending_approvals']).exists():
                 if user.department:
-                    print(f"✅ Admin view: Approver role ({user.role.name}) - showing TRFs from department: {user.department}")
+                    logger.info(f" Admin view: Approver role ({user.role.name}) - showing TRFs from department: {user.department}")
                     queryset = queryset.filter(department=user.department)
                 else:
-                    print(f"⚠️ Admin view: Approver role ({user.role.name}) but no department set - showing only own TRFs")
+                    logger.warning(f" Admin view: Approver role ({user.role.name}) but no department set - showing only own TRFs")
                     queryset = queryset.filter(created_by=user)
             else:
                 # No admin permissions - show only own
-                print(f"⚠️ Admin view: User lacks permission - showing only own TRFs")
+                logger.warning(f" Admin view: User lacks permission - showing only own TRFs")
                 queryset = queryset.filter(created_by=user)
         else:
             # Personal requests view - always show only user's own TRFs
             queryset = queryset.filter(created_by=user)
-            print(f"✅ Personal view: User {user.username} - showing only own TRFs (created_by={user.id})")
+            logger.info(f" Personal view: User {user.username} - showing only own TRFs (created_by={user.id})")
 
         # Filter by status
         status_filter = self.request.query_params.get('status', None)
@@ -266,8 +269,8 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             )
 
         result = queryset.order_by('-created_at')
-        print(f"Filtered queryset count: {result.count()}")
-        print(f"=== END GET_QUERYSET ===\n")
+        logger.debug(f"Filtered queryset count: {result.count()}")
+        logger.debug(f"=== END GET_QUERYSET ===\n")
         return result
 
     @action(detail=True, methods=['post'])
@@ -292,24 +295,24 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     'to_location', 'from_location', 'departure_time', 'arrival_time'
                 ))
 
-                print(f"🔍 Itinerary segments for TRF #{trf.id}: {itinerary_segments}")
+                logger.debug(f" Itinerary segments for TRF #{trf.id}: {itinerary_segments}")
 
                 # Extract context from itinerary (first destination)
                 context = extract_context_from_itinerary(itinerary_segments) if itinerary_segments else 'TRF'
-                print(f"🔍 Extracted context: {context}")
+                logger.debug(f" Extracted context: {context}")
 
                 # Generate unique request number
                 request_number = generate_request_id('TSR', context)
                 trf.request_number = request_number
-                print(f"✅ Generated request number: {request_number}")
+                logger.info(f" Generated request number: {request_number}")
             except Exception as e:
-                print(f"❌ Error generating request number: {str(e)}")
+                logger.error(f" Error generating request number: {str(e)}")
                 import traceback
                 traceback.print_exc()
                 # Fallback to simple format
                 from datetime import datetime
                 trf.request_number = f"TSR-{datetime.now().strftime('%Y%m%d-%H%M')}-TRF-{trf.id}"
-                print(f"⚠️ Using fallback request number: {trf.request_number}")
+                logger.warning(f" Using fallback request number: {trf.request_number}")
 
         # Update status and submitted_at
         trf.status = 'Pending'
@@ -327,11 +330,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             if workflow_instance:
                 # Reload the TRF to get the updated status from workflow
                 trf.refresh_from_db()
-                print(f"✅ Workflow started for TRF #{trf.id}: Workflow Instance #{workflow_instance.id}")
-                print(f"✅ Status updated to: {trf.status}")
+                logger.info(f" Workflow started for TRF #{trf.id}: Workflow Instance #{workflow_instance.id}")
+                logger.info(f" Status updated to: {trf.status}")
             else:
                 # Fallback to legacy approval system if no workflow configured
-                print(f"⚠️ No active workflow configured - creating legacy approval step")
+                logger.warning(f" No active workflow configured - creating legacy approval step")
                 TrfApprovalStep.objects.create(
                     trf=trf,
                     step_role='Department Focal',
@@ -341,7 +344,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 trf.status = 'Pending Department Focal'
                 trf.save()
         except Exception as e:
-            print(f"❌ Error starting workflow: {str(e)}")
+            logger.error(f" Error starting workflow: {str(e)}")
             # Fallback to legacy system on error
             TrfApprovalStep.objects.create(
                 trf=trf,
@@ -389,9 +392,9 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 status='in_progress'
             ).first()
 
-            print(f"[DEBUG] Approving TRF #{trf.id}")
-            print(f"[DEBUG] User: {request.user.email}, is_staff={request.user.is_staff}, is_superuser={request.user.is_superuser}")
-            print(f"[DEBUG] Workflow instance found: {workflow_instance is not None}")
+            logger.debug(f" Approving TRF #{trf.id}")
+            logger.debug(f" User: {request.user.email}, is_staff={request.user.is_staff}, is_superuser={request.user.is_superuser}")
+            logger.debug(f" Workflow instance found: {workflow_instance is not None}")
 
             if workflow_instance:
                 # Find the current pending step (by order)
@@ -400,9 +403,9 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     status='pending'
                 ).order_by('workflow_step__step_order').first()
 
-                print(f"[DEBUG] Pending step found: {current_step is not None}")
+                logger.debug(f" Pending step found: {current_step is not None}")
                 if current_step:
-                    print(f"[DEBUG] Step: {current_step.workflow_step.step_name}, assigned_to: {current_step.assigned_to}")
+                    logger.debug(f" Step: {current_step.workflow_step.step_name}, assigned_to: {current_step.assigned_to}")
 
                 if current_step:
                     # Use workflow engine to process approval
@@ -443,7 +446,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     )
             else:
                 # Fallback to legacy manual approval if no workflow found
-                print(f"⚠️ No workflow instance found for TRF #{trf.id}, using legacy approval")
+                logger.warning(f" No workflow instance found for TRF #{trf.id}, using legacy approval")
 
                 # Find or create approval step for this role
                 approval_step, created = TrfApprovalStep.objects.get_or_create(
@@ -494,13 +497,13 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
         except ValueError as e:
             # ValueError is raised by WorkflowEngine for authorization failures
-            print(f"❌ ValueError in approve workflow: {str(e)}")
+            logger.error(f" ValueError in approve workflow: {str(e)}")
             return error_response(
                 message=str(e),
                 status_code=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
-            print(f"❌ Error in approve workflow: {str(e)}")
+            logger.error(f" Error in approve workflow: {str(e)}")
             import traceback
             traceback.print_exc()
             return server_error_response(
@@ -581,7 +584,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     )
             else:
                 # Fallback to legacy manual rejection if no workflow found
-                print(f"⚠️ No workflow instance found for TRF #{trf.id}, using legacy rejection")
+                logger.warning(f" No workflow instance found for TRF #{trf.id}, using legacy rejection")
 
                 # Find or create approval step for this role
                 approval_step, created = TrfApprovalStep.objects.get_or_create(
@@ -611,7 +614,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 )
 
         except Exception as e:
-            print(f"❌ Error in reject workflow: {str(e)}")
+            logger.error(f" Error in reject workflow: {str(e)}")
             import traceback
             traceback.print_exc()
             return server_error_response(
@@ -793,17 +796,17 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
         trf = self.get_object()
 
-        print(f"\n=== BOOK FLIGHT DEBUG ===")
-        print(f"TRF ID: {trf.id}")
-        print(f"TRF Status: [{trf.status}]")
-        print(f"TRF Travel Type: {trf.travel_type}")
-        print(f"Request Data: {request.data}")
-        print(f"========================\n")
+        logger.debug(f"\n=== BOOK FLIGHT DEBUG ===")
+        logger.debug(f"TRF ID: {trf.id}")
+        logger.debug(f"TRF Status: [{trf.status}]")
+        logger.debug(f"TRF Travel Type: {trf.travel_type}")
+        logger.debug(f"Request Data: {request.data}")
+        logger.debug(f"========================\n")
 
         # Validate TRF status
         if trf.status != 'Approved':
             error_msg = f'Flights can only be booked for Approved TRFs. Current status: {trf.status}'
-            print(f"❌ Status validation failed: {error_msg}")
+            logger.error(f" Status validation failed: {error_msg}")
             return error_response(
                 message=error_msg,
                 status_code=status.HTTP_400_BAD_REQUEST
@@ -819,14 +822,14 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         arrival_datetime_str = request.data.get('arrivalDateTime')
         flight_notes = request.data.get('flightNotes', '')
 
-        print(f"Extracted data:")
-        print(f"  PNR: {pnr}")
-        print(f"  Airline: {airline}")
-        print(f"  Flight Number: {flight_number}")
-        print(f"  Departure Airport: {departure_airport}")
-        print(f"  Arrival Airport: {arrival_airport}")
-        print(f"  Departure DateTime: {departure_datetime_str}")
-        print(f"  Arrival DateTime: {arrival_datetime_str}")
+        logger.debug(f"Extracted data:")
+        logger.debug(f"  PNR: {pnr}")
+        logger.debug(f"  Airline: {airline}")
+        logger.debug(f"  Flight Number: {flight_number}")
+        logger.debug(f"  Departure Airport: {departure_airport}")
+        logger.debug(f"  Arrival Airport: {arrival_airport}")
+        logger.debug(f"  Departure DateTime: {departure_datetime_str}")
+        logger.debug(f"  Arrival DateTime: {arrival_datetime_str}")
 
         # Validate required fields
         if not all([pnr, airline, flight_number, departure_airport, arrival_airport]):
@@ -837,7 +840,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             if not departure_airport: missing.append('departureAirport')
             if not arrival_airport: missing.append('arrivalAirport')
             error_msg = f'Missing required fields: {", ".join(missing)}'
-            print(f"❌ Field validation failed: {error_msg}")
+            logger.error(f" Field validation failed: {error_msg}")
             return error_response(
                 message=error_msg,
                 errors={'missing_fields': missing},
@@ -863,12 +866,12 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             else:
                 arrival_time = timezone.now()
 
-            print(f"Parsed datetimes:")
-            print(f"  Departure: {departure_time}")
-            print(f"  Arrival: {arrival_time}")
+            logger.debug(f"Parsed datetimes:")
+            logger.debug(f"  Departure: {departure_time}")
+            logger.debug(f"  Arrival: {arrival_time}")
         except (ValueError, TypeError) as e:
             error_msg = f'Invalid datetime format: {str(e)}'
-            print(f"❌ DateTime parsing failed: {error_msg}")
+            logger.error(f" DateTime parsing failed: {error_msg}")
             traceback.print_exc()
             return error_response(
                 message=error_msg,
@@ -1168,10 +1171,10 @@ class TrfDailyMealSelectionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        print(f"\n=== TrfDailyMealSelection CREATE ===")
-        print(f"Request data: {request.data}")
-        print(f"TRF field value: {request.data.get('trf')}")
-        print(f"Meal date value: {request.data.get('meal_date')}")
+        logger.debug(f"\n=== TrfDailyMealSelection CREATE ===")
+        logger.debug(f"Request data: {request.data}")
+        logger.debug(f"TRF field value: {request.data.get('trf')}")
+        logger.debug(f"Meal date value: {request.data.get('meal_date')}")
         return super().create(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -1201,9 +1204,9 @@ class TrfItinerarySegmentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        print(f"\n=== TrfItinerarySegment CREATE ===")
-        print(f"Request data: {request.data}")
-        print(f"TRF field value: {request.data.get('trf')}")
+        logger.debug(f"\n=== TrfItinerarySegment CREATE ===")
+        logger.debug(f"Request data: {request.data}")
+        logger.debug(f"TRF field value: {request.data.get('trf')}")
         return super().create(request, *args, **kwargs)
 
     def get_queryset(self):

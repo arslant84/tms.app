@@ -30,15 +30,26 @@
       <div class="step-content" *ngIf="currentStep === 1">
         <h3>Accommodation Selection</h3>
         
+        <!-- Loading indicator -->
+        <div *ngIf="isLoading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Loading accommodation options...</p>
+        </div>
+
         <!-- Location Type Selection -->
-        <div class="mb-4">
-          <label class="form-label">Accommodation Type *</label>
+        <div class="mb-4" *ngIf="!isLoading">
+          <label class="form-label">Location *</label>
           <div class="btn-group w-100" role="group">
-            <input type="radio" class="btn-check" formControlName="accommodationType" id="ashgabat" value="ashgabat">
-            <label class="btn btn-outline-primary" for="ashgabat">Ashgabat staff houses</label>
-            
-            <input type="radio" class="btn-check" formControlName="accommodationType" id="kiyanly" value="kiyanly">
-            <label class="btn btn-outline-primary" for="kiyanly">Kiyanly camps</label>
+            <input type="radio" class="btn-check" formControlName="accommodationType" id="ashgabat" value="Ashgabat">
+            <label class="btn btn-outline-primary" for="ashgabat">Ashgabat Staff Houses</label>
+
+            <input type="radio" class="btn-check" formControlName="accommodationType" id="kiyanly" value="Kiyanly">
+            <label class="btn btn-outline-primary" for="kiyanly">Kiyanly Camps</label>
+
+            <input type="radio" class="btn-check" formControlName="accommodationType" id="turkmenbashy" value="Turkmenbashy">
+            <label class="btn btn-outline-primary" for="turkmenbashy">Turkmenbashy</label>
           </div>
         </div>
         
@@ -77,126 +88,51 @@
         
         <!-- Accommodation Selection -->
         <div class="mb-4" *ngIf="accommodations.length > 0">
-          <label for="selectedAccommodation" class="form-label">Select {{ accommodationForm.get('accommodationType')?.value === 'ashgabat' ? 'Staff House' : 'Camp' }} *</label>
+          <label for="selectedAccommodation" class="form-label">Select Staff House/Camp *</label>
           <select class="form-select" id="selectedAccommodation" formControlName="selectedAccommodation">
             <option value="">-- Select --</option>
             <option *ngFor="let acc of accommodations" [value]="acc.id">
-              {{ acc.name }} ({{ acc.rooms }} rooms)
+              {{ acc.name }} - {{ acc.location }}
             </option>
           </select>
           <div class="invalid-feedback" *ngIf="accommodationForm.get('selectedAccommodation')?.invalid && accommodationForm.get('selectedAccommodation')?.touched">
             Please select an accommodation
           </div>
         </div>
-        
+
+        <div class="mb-4" *ngIf="!isLoading && accommodations.length === 0 && accommodationForm.get('accommodationType')?.value">
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            No staff houses available for the selected location.
+          </div>
+        </div>
+
         <!-- Room Selection -->
         <div class="mb-4" *ngIf="rooms.length > 0">
           <label for="selectedRoom" class="form-label">Select Room *</label>
           <select class="form-select" id="selectedRoom" formControlName="selectedRoom">
             <option value="">-- Select --</option>
             <option *ngFor="let room of rooms" [value]="room.id">
-              {{ room.name }} ({{ room.gender === 'male' ? 'Male' : 'Female' }} only)
+              {{ room.name }} (Capacity: {{ room.capacity }})
             </option>
           </select>
           <div class="invalid-feedback" *ngIf="accommodationForm.get('selectedRoom')?.invalid && accommodationForm.get('selectedRoom')?.touched">
             Please select a room
           </div>
         </div>
+
+        <div class="mb-4" *ngIf="accommodationForm.get('selectedAccommodation')?.value && rooms.length === 0">
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            No available rooms in the selected staff house.
+          </div>
+        </div>
         
-        <!-- Calendar View Toggle -->
-        <div class="mb-4" *ngIf="accommodationForm.get('selectedAccommodation')?.value">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h4 class="mb-0">Room Availability</h4>
-            <div class="btn-group" role="group">
-              <button type="button" class="btn btn-sm" [class.btn-primary]="calendarView === 'option1'" [class.btn-outline-primary]="calendarView !== 'option1'" (click)="calendarView = 'option1'">Option 1</button>
-              <button type="button" class="btn btn-sm" [class.btn-primary]="calendarView === 'option2'" [class.btn-outline-primary]="calendarView !== 'option2'" (click)="calendarView = 'option2'">Option 2</button>
-            </div>
-          </div>
-          
-          <!-- Calendar Option 1 (Grid View) -->
-          <div *ngIf="calendarView === 'option1'" class="calendar-option-1">
-            <div class="table-responsive">
-              <table class="table table-bordered calendar-table">
-                <thead class="table-dark">
-                  <tr>
-                    <th>May 2024</th>
-                    <th *ngFor="let day of calendarDays">{{ day }}</th>
-                  </tr>
-                  <tr>
-                    <th></th>
-                    <th *ngFor="let day of calendarDays; let i = index" class="text-center">
-                      {{ ['We', 'Th', 'Fr', 'Sa', 'Su', 'Mo', 'Tu'][i % 7] }}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let room of rooms">
-                    <td>Room #{{ room.id.replace('room', '') }}</td>
-                    <td *ngFor="let day of calendarDays" 
-                        [ngClass]="getRoomAvailabilityClass(room.id, accommodationForm.get('selectedAccommodation')?.value, day)">
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="legend d-flex gap-3 mt-2">
-              <div class="d-flex align-items-center">
-                <div class="legend-box available"></div>
-                <span class="ms-2">Available</span>
-              </div>
-              <div class="d-flex align-items-center">
-                <div class="legend-box booked"></div>
-                <span class="ms-2">Busy or booked</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Calendar Option 2 (Monthly View) -->
-          <div *ngIf="calendarView === 'option2'" class="calendar-option-2">
-            <div class="table-responsive">
-              <table class="table table-bordered calendar-table">
-                <thead class="table-success">
-                  <tr>
-                    <th colspan="7" class="text-center">May 2024</th>
-                  </tr>
-                  <tr>
-                    <th>Monday</th>
-                    <th>Tuesday</th>
-                    <th>Wednesday</th>
-                    <th>Thursday</th>
-                    <th>Friday</th>
-                    <th>Saturday</th>
-                    <th>Sunday</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Week 1 -->
-                  <tr>
-                    <td></td>
-                    <td></td>
-                    <td class="day-cell">1<div class="rooms-count">2 rooms</div></td>
-                    <td class="day-cell">2<div class="rooms-count">1 room</div></td>
-                    <td class="day-cell">3<div class="rooms-count">2 rooms</div></td>
-                    <td class="day-cell">4<div class="rooms-count">4 rooms</div></td>
-                    <td class="day-cell">5<div class="rooms-count">2 rooms</div></td>
-                  </tr>
-                  <!-- Week 2 -->
-                  <tr>
-                    <td class="day-cell">6<div class="rooms-count">3 rooms</div></td>
-                    <td class="day-cell">7<div class="rooms-count">3 rooms</div></td>
-                    <td class="day-cell">8<div class="rooms-count">1 room</div></td>
-                    <td class="day-cell">9<div class="rooms-count">3 rooms</div></td>
-                    <td class="day-cell">10<div class="rooms-count">2 rooms</div></td>
-                    <td class="day-cell">11<div class="rooms-count">3 rooms</div></td>
-                    <td class="day-cell">12<div class="rooms-count">3 rooms</div></td>
-                  </tr>
-                  <!-- Additional weeks would follow the same pattern -->
-                </tbody>
-              </table>
-            </div>
-            <div class="mt-2">
-              <p><strong>Option 2:</strong> It is easy to check how many rooms are available.</p>
-            </div>
+        <!-- Room Selection Info -->
+        <div class="mb-4" *ngIf="accommodationForm.get('selectedRoom')?.value">
+          <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>
+            Room selected. Please proceed to the next step to complete your booking request.
           </div>
         </div>
       </div>
@@ -212,11 +148,9 @@
           <div class="card-body">
             <div class="row mb-3">
               <div class="col-md-6">
-                <p><strong>Accommodation Type:</strong> {{ accommodationForm.get('accommodationType')?.value === 'ashgabat' ? 'Ashgabat Staff House' : 'Kiyanly Camp' }}</p>
-                <p><strong>Location:</strong> {{ accommodationForm.get('accommodationType')?.value === 'ashgabat' ? 'Ashgabat' : 'Kiyanly' }}</p>
+                <p><strong>Location:</strong> {{ accommodationForm.get('accommodationType')?.value }}</p>
                 <p *ngIf="accommodationForm.get('selectedAccommodation')?.value">
-                  <strong>{{ accommodationForm.get('accommodationType')?.value === 'ashgabat' ? 'Staff House' : 'Camp' }}:</strong> 
-                  {{ getAccommodationName() }}
+                  <strong>Staff House/Camp:</strong> {{ getAccommodationName() }}
                 </p>
                 <p *ngIf="accommodationForm.get('selectedRoom')?.value">
                   <strong>Room:</strong> {{ getRoomNumber() }}

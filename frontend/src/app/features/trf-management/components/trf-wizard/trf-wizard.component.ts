@@ -115,7 +115,6 @@ export class TrfWizardComponent implements OnInit {
 
         if (data.status && !canEdit) {
           const errorMsg = `This TRF cannot be edited because its status is "${data.status}". Only Draft, Rejected, or Pending TRFs can be edited.`;
-          this.submitError = errorMsg;
           this.isLoadingTrf = false;
 
           // Show error toast and redirect back to list

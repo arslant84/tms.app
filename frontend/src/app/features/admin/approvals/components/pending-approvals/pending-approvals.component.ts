@@ -147,12 +147,6 @@ export class PendingApprovalsComponent implements OnInit {
 
     this.http.get<any>(url, { withCredentials: true }).subscribe({
       next: (data) => {
-        console.log('=== PENDING APPROVALS PAGE DEBUG ===');
-        console.log('API URL:', url);
-        console.log('Full Response:', data);
-        console.log('Total Count from API:', data.meta?.pagination?.total_count);
-        console.log('Items Count:', data.data?.length);
-        console.log('====================================');
         this.pendingItems = data.data || [];
         this.totalCount = data.meta?.pagination?.total_count || 0;
         this.totalPages = data.meta?.pagination?.total_pages || 1;
@@ -309,7 +303,6 @@ export class PendingApprovalsComponent implements OnInit {
       comments: this.approvalComments
     }).subscribe({
       next: () => {
-        console.log('Item approved successfully');
         this.closeDialogs();
         this.fetchPendingItems(true);
         // Refresh notifications to remove the actioned notification
@@ -359,7 +352,6 @@ export class PendingApprovalsComponent implements OnInit {
       comments: this.rejectionComments
     }).subscribe({
       next: () => {
-        console.log('Item rejected successfully');
         this.closeDialogs();
         this.fetchPendingItems(true);
         // Refresh notifications to remove the actioned notification

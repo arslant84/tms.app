@@ -1,3 +1,4 @@
+import logging
 from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,6 +6,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     TransportRequest, TransportSegment, TransportApprovalStep, VehicleAssignment
@@ -80,7 +83,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
 
         # For approval actions, allow access to requests pending the user's approval
         if self.action in ['approve', 'reject']:
-            print(f"✅ Approval action: Allowing access to all transport requests (authorization checked in WorkflowEngine)")
+            logger.info(f" Approval action: Allowing access to all transport requests (authorization checked in WorkflowEngine)")
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
         # Check if this is an admin view (Transport Admin module)
@@ -92,16 +95,16 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             can_view_all = user.role.permissions.filter(name='view_all_transport').exists()
 
             if can_view_all:
-                print(f"✅ Admin view: User {user.username} (role: {user.role.name}) has 'view_all_transport' permission - showing all transport requests")
+                logger.info(f" Admin view: User {user.username} (role: {user.role.name}) has 'view_all_transport' permission - showing all transport requests")
                 pass  # No filtering - show all transport requests
             else:
                 # User doesn't have permission - show only their own
                 queryset = queryset.filter(requestor=user)
-                print(f"⚠️ Admin view: User {user.username} lacks permission - showing only own transport requests")
+                logger.warning(f" Admin view: User {user.username} lacks permission - showing only own transport requests")
         else:
             # Personal requests view - always show only user's own requests
             queryset = queryset.filter(requestor=user)
-            print(f"✅ Personal view: User {user.username} - showing only own transport requests")
+            logger.info(f" Personal view: User {user.username} - showing only own transport requests")
 
         # Query parameter filters
         status_filter = self.request.query_params.get('status', None)
@@ -192,9 +195,9 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                     # Generate unique request number
                     request_number = generate_request_id('TRN', context)
                     extra_kwargs['request_number'] = request_number
-                    print(f"✅ Generated request number during creation: {request_number}")
+                    logger.info(f" Generated request number during creation: {request_number}")
                 except Exception as e:
-                    print(f"❌ Error generating request number: {str(e)}")
+                    logger.error(f" Error generating request number: {str(e)}")
                     # Will be generated later if needed
 
         # Save the transport request
@@ -212,12 +215,12 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 if workflow_instance:
                     # Reload the transport request to get the updated status from workflow
                     transport_request.refresh_from_db()
-                    print(f"✅ Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}")
-                    print(f"✅ Status updated to: {transport_request.status}")
+                    logger.info(f" Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}")
+                    logger.info(f" Status updated to: {transport_request.status}")
                 else:
-                    print(f"⚠️ No active workflow configured for transportrequest - using legacy approval system")
+                    logger.warning(f" No active workflow configured for transportrequest - using legacy approval system")
             except Exception as e:
-                print(f"❌ Error starting workflow for Transport Request #{transport_request.id}: {str(e)}")
+                logger.error(f" Error starting workflow for Transport Request #{transport_request.id}: {str(e)}")
                 # Don't fail the request creation if workflow fails
                 pass
 
@@ -259,23 +262,23 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 # transport_details is a JSON array, convert to list format for extraction
                 transport_details = transport_request.transport_details or []
 
-                print(f"🔍 Transport details for TRN #{transport_request.id}: {transport_details}")
+                logger.debug(f" Transport details for TRN #{transport_request.id}: {transport_details}")
 
                 # Extract context (first destination from transport_details)
                 context = extract_context_from_transport(transport_details) if transport_details else 'TRN'
-                print(f"🔍 Extracted context: {context}")
+                logger.debug(f" Extracted context: {context}")
 
                 # Generate unique request number
                 request_number = generate_request_id('TRN', context)
                 transport_request.request_number = request_number
-                print(f"✅ Generated request number: {request_number}")
+                logger.info(f" Generated request number: {request_number}")
             except Exception as e:
-                print(f"❌ Error generating request number: {str(e)}")
+                logger.error(f" Error generating request number: {str(e)}")
                 import traceback
                 traceback.print_exc()
                 # Fallback to simple format
                 transport_request.request_number = f"TRN-{datetime.now().strftime('%Y%m%d-%H%M')}-TRN-{transport_request.id}"
-                print(f"⚠️ Using fallback request number: {transport_request.request_number}")
+                logger.warning(f" Using fallback request number: {transport_request.request_number}")
 
         # Update status and submitted_at
         transport_request.status = 'Pending'
@@ -293,11 +296,11 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             if workflow_instance:
                 # Reload the transport request to get the updated status from workflow
                 transport_request.refresh_from_db()
-                print(f"✅ Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}")
-                print(f"✅ Status updated to: {transport_request.status}")
+                logger.info(f" Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}")
+                logger.info(f" Status updated to: {transport_request.status}")
             else:
                 # Fallback to legacy approval system if no workflow configured
-                print(f"⚠️ No active workflow configured - creating legacy approval step")
+                logger.warning(f" No active workflow configured - creating legacy approval step")
                 TransportApprovalStep.objects.create(
                     transport_request=transport_request,
                     step_role='HOD',
@@ -307,7 +310,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 transport_request.status = 'Pending Department Focal'
                 transport_request.save()
         except Exception as e:
-            print(f"❌ Error starting workflow: {str(e)}")
+            logger.error(f" Error starting workflow: {str(e)}")
             # Fallback to legacy system on error
             TransportApprovalStep.objects.create(
                 transport_request=transport_request,
@@ -386,7 +389,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                     )
             else:
                 # Fallback to legacy approval logic
-                print(f"⚠️ No workflow instance found for Transport #{transport_request.id}, using legacy approval")
+                logger.warning(f" No workflow instance found for Transport #{transport_request.id}, using legacy approval")
 
                 current_step = transport_request.approval_steps.filter(status='Pending').first()
                 if not current_step:
@@ -416,7 +419,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data)
 
         except Exception as e:
-            print(f"❌ Error in approve workflow: {str(e)}")
+            logger.error(f" Error in approve workflow: {str(e)}")
             import traceback
             traceback.print_exc()
             return Response(
@@ -488,7 +491,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data)
 
         except Exception as e:
-            print(f"❌ Error in reject workflow: {str(e)}")
+            logger.error(f" Error in reject workflow: {str(e)}")
             import traceback
             traceback.print_exc()
             return Response(

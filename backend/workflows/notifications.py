@@ -2,8 +2,10 @@
 Notification triggers for workflow events.
 Sends notifications when workflow instances change state.
 """
-
+import logging
 from notifications.services import NotificationService
+
+logger = logging.getLogger(__name__)
 from notifications.models import NotificationEventType, NotificationTemplate
 
 
@@ -83,11 +85,11 @@ class WorkflowNotifications:
                         send_email=True
                     )
                 else:
-                    print(f"⚠️ First step has no assigned user - notifications may not be sent")
+                    logger.warning(f" First step has no assigned user - notifications may not be sent")
 
-            print(f"✅ Notifications sent for workflow start: {workflow_instance.id}")
+            logger.info(f" Notifications sent for workflow start: {workflow_instance.id}")
         except Exception as e:
-            print(f"❌ Failed to send workflow start notifications: {str(e)}")
+            logger.error(f" Failed to send workflow start notifications: {str(e)}")
 
     @staticmethod
     def notify_step_approved(step_execution):
@@ -146,9 +148,9 @@ class WorkflowNotifications:
                     send_email=True
                 )
 
-            print(f"✅ Notifications sent for step approval: {step_execution.id}")
+            logger.info(f" Notifications sent for step approval: {step_execution.id}")
         except Exception as e:
-            print(f"❌ Failed to send step approval notifications: {str(e)}")
+            logger.error(f" Failed to send step approval notifications: {str(e)}")
 
     @staticmethod
     def notify_step_rejected(step_execution):
@@ -180,9 +182,9 @@ class WorkflowNotifications:
                 send_email=True
             )
 
-            print(f"✅ Notification sent for step rejection: {step_execution.id}")
+            logger.info(f" Notification sent for step rejection: {step_execution.id}")
         except Exception as e:
-            print(f"❌ Failed to send step rejection notification: {str(e)}")
+            logger.error(f" Failed to send step rejection notification: {str(e)}")
 
     @staticmethod
     def notify_step_delegated(step_execution, new_assignee):
@@ -235,9 +237,9 @@ class WorkflowNotifications:
                 send_email=True
             )
 
-            print(f"✅ Notifications sent for step delegation: {step_execution.id}")
+            logger.info(f" Notifications sent for step delegation: {step_execution.id}")
         except Exception as e:
-            print(f"❌ Failed to send step delegation notifications: {str(e)}")
+            logger.error(f" Failed to send step delegation notifications: {str(e)}")
 
     @staticmethod
     def notify_workflow_completed(workflow_instance):
@@ -260,7 +262,7 @@ class WorkflowNotifications:
             )
 
             if configs.exists():
-                print(f"[OK] Found {configs.count()} workflow_completed notification config(s)")
+                logger.info(f" Found {configs.count()} workflow_completed notification config(s)")
 
                 # Use last step execution for context
                 last_step_execution = workflow_instance.step_executions.order_by('-workflow_step__step_order').first()
@@ -271,10 +273,10 @@ class WorkflowNotifications:
                         last_step_execution, 'workflow_completed'
                     )
                 else:
-                    print(f"[WARNING] No step executions found for workflow {workflow_instance.id}")
+                    logger.warning(f" No step executions found for workflow {workflow_instance.id}")
             else:
                 # Fall back to default notification (only to requestor)
-                print(f"[INFO] No workflow_completed configs found, using default notification")
+                logger.info(f" No workflow_completed configs found, using default notification")
 
                 # Get last approver for completion context
                 last_step_execution = workflow_instance.step_executions.order_by('-workflow_step__step_order').first()
@@ -302,9 +304,9 @@ class WorkflowNotifications:
                     send_email=True
                 )
 
-            print(f"[OK] Workflow completion notifications sent for: {workflow_instance.id}")
+            logger.info(f" Workflow completion notifications sent for: {workflow_instance.id}")
         except Exception as e:
-            print(f"[ERROR] Failed to send workflow completion notification: {str(e)}")
+            logger.error(f" Failed to send workflow completion notification: {str(e)}")
 
     @staticmethod
     def notify_workflow_cancelled(workflow_instance, cancelled_by, reason=None):
@@ -329,7 +331,7 @@ class WorkflowNotifications:
             )
 
             if configs.exists():
-                print(f"[OK] Found {configs.count()} workflow_cancelled notification config(s)")
+                logger.info(f" Found {configs.count()} workflow_cancelled notification config(s)")
 
                 # Use current step execution for context
                 current_step = workflow_instance.step_executions.filter(status='pending').first()
@@ -343,7 +345,7 @@ class WorkflowNotifications:
                     )
             else:
                 # Fall back to default notification
-                print(f"[INFO] No workflow_cancelled configs found, using default notification")
+                logger.info(f" No workflow_cancelled configs found, using default notification")
                 if workflow_instance.initiated_by != cancelled_by:
                     NotificationService.create_notification(
                         user=workflow_instance.initiated_by,
@@ -355,9 +357,9 @@ class WorkflowNotifications:
                         send_email=True
                     )
 
-            print(f"[OK] Workflow cancellation notifications sent for: {workflow_instance.id}")
+            logger.info(f" Workflow cancellation notifications sent for: {workflow_instance.id}")
         except Exception as e:
-            print(f"[ERROR] Failed to send workflow cancellation notification: {str(e)}")
+            logger.error(f" Failed to send workflow cancellation notification: {str(e)}")
 
     @staticmethod
     def trigger_configured_notifications(step_execution, event_type):
@@ -381,10 +383,10 @@ class WorkflowNotifications:
             ).select_related('notification_template')
 
             if not configs.exists():
-                print(f"ℹ️ No notification configs found for step '{step_execution.workflow_step.step_name}' event '{event_type}'")
+                logger.debug(f" No notification configs found for step '{step_execution.workflow_step.step_name}' event '{event_type}'")
                 return
 
-            print(f"📧 Found {configs.count()} notification config(s) for event '{event_type}'")
+            logger.debug(f" Found {configs.count()} notification config(s) for event '{event_type}'")
 
             for config in configs:
                 try:
@@ -396,7 +398,7 @@ class WorkflowNotifications:
                     )
 
                     if not recipients:
-                        print(f"⚠️ No recipients resolved for notification config #{config.id}")
+                        logger.warning(f" No recipients resolved for notification config #{config.id}")
                         continue
 
                     # Get notification template
@@ -429,15 +431,15 @@ class WorkflowNotifications:
                                 additional_data=context  # Pass context for email template rendering
                             )
                         else:
-                            print(f"[WARNING] Notification config #{config.id} has both email and in-app disabled - skipping")
+                            logger.warning(f" Notification config #{config.id} has both email and in-app disabled - skipping")
 
-                    print(f"✅ Sent notification to {len(recipients)} recipient(s) using template '{template.name}'")
+                    logger.info(f" Sent notification to {len(recipients)} recipient(s) using template '{template.name}'")
 
                 except Exception as e:
-                    print(f"❌ Failed to send notification for config #{config.id}: {str(e)}")
+                    logger.error(f" Failed to send notification for config #{config.id}: {str(e)}")
 
         except Exception as e:
-            print(f"❌ Failed to trigger configured notifications: {str(e)}")
+            logger.error(f" Failed to trigger configured notifications: {str(e)}")
 
     @staticmethod
     def _resolve_recipients(recipient_types, custom_recipients, step_execution):
@@ -496,7 +498,7 @@ class WorkflowNotifications:
                     users = User.objects.filter(role=role, status='Active')
                     recipients.update(users)
                 except Exception as e:
-                    print(f"⚠️ Failed to resolve role {role_id}: {str(e)}")
+                    logger.warning(f" Failed to resolve role {role_id}: {str(e)}")
 
         # Handle custom email addresses
         if custom_recipients:
@@ -506,7 +508,7 @@ class WorkflowNotifications:
                     if user:
                         recipients.add(user)
                 except Exception as e:
-                    print(f"⚠️ Failed to resolve custom recipient {email}: {str(e)}")
+                    logger.warning(f" Failed to resolve custom recipient {email}: {str(e)}")
 
         return list(recipients)
 

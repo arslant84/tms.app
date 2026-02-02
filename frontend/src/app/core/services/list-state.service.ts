@@ -16,7 +16,7 @@ export interface ListFilters {
   search?: string;
   page?: number;
   page_size?: number;
-  [key: string]: any; // Allow additional filter fields
+  [key: string]: string | number | boolean | undefined; // Allow additional filter fields
 }
 
 /**
@@ -76,7 +76,7 @@ export class ListStateService {
   private searchSubject = new Subject<string>();
 
   // Filters
-  private filters$ = new BehaviorSubject<{ [key: string]: any }>({});
+  private filters$ = new BehaviorSubject<Record<string, string | number | boolean | undefined>>({});
 
   // Observables for components
   readonly currentPage: Observable<number> = this.currentPage$.asObservable();
@@ -85,7 +85,7 @@ export class ListStateService {
   readonly error: Observable<string> = this.error$.asObservable();
   readonly searchTerm: Observable<string> = this.searchTerm$.asObservable();
   readonly search$: Observable<string>;
-  readonly filters: Observable<{ [key: string]: any }> = this.filters$.asObservable();
+  readonly filters: Observable<Record<string, string | number | boolean | undefined>> = this.filters$.asObservable();
 
   constructor(config: ListStateConfig = {}) {
     this.config = {
@@ -130,7 +130,7 @@ export class ListStateService {
   /**
    * Set a filter value
    */
-  setFilter(key: string, value: any): void {
+  setFilter(key: string, value: string | number | boolean | undefined): void {
     const currentFilters = this.filters$.value;
     this.filters$.next({ ...currentFilters, [key]: value });
     this.resetToFirstPage();
@@ -139,7 +139,7 @@ export class ListStateService {
   /**
    * Set multiple filters at once
    */
-  setFilters(filters: { [key: string]: any }): void {
+  setFilters(filters: Record<string, string | number | boolean | undefined>): void {
     this.filters$.next({ ...filters });
     this.resetToFirstPage();
   }
@@ -147,14 +147,14 @@ export class ListStateService {
   /**
    * Get current filter value
    */
-  getFilter(key: string): any {
+  getFilter(key: string): string | number | boolean | undefined {
     return this.filters$.value[key];
   }
 
   /**
    * Get all current filters
    */
-  getAllFilters(): { [key: string]: any } {
+  getAllFilters(): Record<string, string | number | boolean | undefined> {
     return this.filters$.value;
   }
 
