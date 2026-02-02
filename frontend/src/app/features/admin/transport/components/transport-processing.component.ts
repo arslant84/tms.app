@@ -94,9 +94,6 @@ export class TransportProcessingComponent implements OnInit {
             !statusLower.includes('rejected') &&
             !hasVehicleAssignment  // Not yet processed
           );
-          if (isApproved) {
-            console.log('✅ Approved Request:', req.request_number || req.id, 'Status:', status, 'Has Vehicle:', hasVehicleAssignment);
-          }
           return isApproved;
         });
 
@@ -114,10 +111,6 @@ export class TransportProcessingComponent implements OnInit {
           // 2. Request has vehicle assignment (vehicle assigned = being processed)
           // BUT NOT if status is "Completed"
           const isProcessing = !isCompleted && (statusLower.includes('processing') || hasVehicleAssignment);
-
-          if (isProcessing) {
-            console.log('🔄 Processing Request:', req.request_number || req.id, 'Status:', status, 'Has Vehicle:', hasVehicleAssignment);
-          }
           return isProcessing;
         });
 
@@ -125,19 +118,7 @@ export class TransportProcessingComponent implements OnInit {
         this.completedRequests = allRequests.filter((req: TransportRequest) => {
           const status = req.status || '';
           const statusLower = status.toLowerCase();
-          const isCompleted = statusLower === 'completed';
-          if (isCompleted) {
-            console.log('✔️ Completed Request:', req.request_number || req.id, 'Status:', status);
-          }
-          return isCompleted;
-        });
-
-        console.log('🚀 Transport Processing Stats:', {
-          approved: this.approvedRequests.length,
-          processing: this.processingRequests.length,
-          completed: this.completedRequests.length,
-          total: allRequests.length,
-          allStatuses: allRequests.map((req: any) => ({ id: req.request_number || req.id, status: req.status }))
+          return statusLower === 'completed';
         });
 
         this.isLoading = false;
@@ -202,15 +183,12 @@ export class TransportProcessingComponent implements OnInit {
 
     // First, assign vehicle (creates VehicleAssignment entry)
     this.transportService.assignVehicle(this.selectedRequest.id, vehicleData).subscribe({
-      next: (vehicleAssignment) => {
-        console.log('✅ Vehicle assigned successfully:', vehicleAssignment);
-
+      next: () => {
         // Then, update transport request with booking details
         this.transportService.updateRequest(this.selectedRequest!.id, {
           booking_details: bookingDetails
         }).subscribe({
           next: () => {
-            console.log('✅ Booking details saved successfully');
             this.toastService.success(`Vehicle assigned and booking details saved! Request moved to processing.`);
             this.showCompletingDialog = false;
             this.selectedRequest = null;
@@ -218,7 +196,6 @@ export class TransportProcessingComponent implements OnInit {
 
             // Refresh to show the request in the Processing tab
             setTimeout(() => {
-              console.log('🔄 Refreshing transport requests after vehicle assignment...');
               this.fetchTransportRequests();
               this.isLoading = false;
             }, 500);

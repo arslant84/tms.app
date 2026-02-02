@@ -117,7 +117,7 @@ export class WorkflowService {
     workflow_template_id: number;
     entity_type: string;
     entity_id: number;
-    additional_data?: any;
+    additional_data?: Record<string, unknown>;
   }): Observable<WorkflowInstance> {
     return this.http.post<WorkflowInstance>(`${this.apiUrl}/instances/`, data);
   }

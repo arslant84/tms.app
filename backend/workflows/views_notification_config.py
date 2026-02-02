@@ -2,7 +2,10 @@
 API views for workflow step notification configuration.
 Provides CRUD operations and helper endpoints.
 """
+import logging
 from rest_framework import viewsets, status
+
+logger = logging.getLogger(__name__)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -84,18 +87,18 @@ class WorkflowStepNotificationConfigViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Set created_by to current user"""
-        print(f"[DEBUG] Creating notification config")
-        print(f"[DEBUG] Request data: {self.request.data}")
-        print(f"[DEBUG] User: {self.request.user}")
+        logger.debug(f" Creating notification config")
+        logger.debug(f" Request data: {self.request.data}")
+        logger.debug(f" User: {self.request.user}")
         serializer.save(created_by=self.request.user)
 
     def create(self, request, *args, **kwargs):
         """Override create to add better error logging"""
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
-            print(f"[ERROR] Validation failed")
-            print(f"[ERROR] Request data: {request.data}")
-            print(f"[ERROR] Errors: {serializer.errors}")
+            logger.error(f" Validation failed")
+            logger.error(f" Request data: {request.data}")
+            logger.error(f" Errors: {serializer.errors}")
         return super().create(request, *args, **kwargs)
 
     @action(detail=False, methods=['get'], url_path='by_step/(?P<step_id>[^/.]+)')

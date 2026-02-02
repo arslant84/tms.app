@@ -150,7 +150,6 @@ export class TransportRequestComponent implements OnInit {
       // Here you would call your API service to submit the request
       // For now, we'll simulate an API call with a timeout
       setTimeout(() => {
-        console.log('Transport request submitted:', this.transportForm.value);
         this.clearDraft();
         this.isSubmitting = false;
         this.router.navigate(['/requests/success'], { 

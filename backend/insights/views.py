@@ -1,3 +1,4 @@
+import logging
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -6,6 +7,8 @@ from django.db.models import Q, Sum, Avg, Count, F, Max
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     TravelInsight, DestinationStat, CategorySpend,
@@ -210,7 +213,7 @@ def dashboard_summary(request):
                 'updated_at': trf.updated_at
             })
         except Exception as e:
-            print(f"Error processing TSR {trf.id}: {e}")
+            logger.error(f"Error processing TSR {trf.id}: {e}")
 
     # Collect Visa activities
     recent_visas = visas.order_by('-updated_at')[:10]
@@ -229,7 +232,7 @@ def dashboard_summary(request):
                 'updated_at': visa.updated_at
             })
         except Exception as e:
-            print(f"Error processing Visa {visa.id}: {e}")
+            logger.error(f"Error processing Visa {visa.id}: {e}")
 
     # Collect Accommodation activities
     from accommodation.models import AccommodationBooking
@@ -255,9 +258,9 @@ def dashboard_summary(request):
                     'updated_at': accommodation.updated_at
                 })
             except Exception as e:
-                print(f"Error processing Accommodation {accommodation.id}: {e}")
+                logger.error(f"Error processing Accommodation {accommodation.id}: {e}")
     except Exception as e:
-        print(f"Error fetching accommodation bookings: {e}")
+        logger.error(f"Error fetching accommodation bookings: {e}")
 
     # Collect Transport activities
     recent_transports = transports.order_by('-updated_at')[:10]
@@ -277,7 +280,7 @@ def dashboard_summary(request):
                 'updated_at': transport_date
             })
         except Exception as e:
-            print(f"Error processing Transport {transport.id}: {e}")
+            logger.error(f"Error processing Transport {transport.id}: {e}")
 
     # Sort all activities by updated_at (most recent first)
     recent_activities.sort(key=lambda x: x['updated_at'], reverse=True)

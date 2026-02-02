@@ -3,6 +3,18 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 // Define interfaces for the accommodation request data
+export interface AccommodationFormData {
+  accommodationType: string;
+  selectedAccommodation: string;
+  selectedRoom: string;
+  checkInDate: string;
+  checkOutDate: string;
+  gender: string;
+  reason: string;
+  specialRequirements?: string;
+  relatedTravelRequest?: string;
+}
+
 export interface AccommodationRequest {
   id: number;
   requestId: string; // BT reference number
@@ -55,7 +67,7 @@ export class AccommodationService {
   }
 
   // Submit a new accommodation request
-  submitAccommodationRequest(formData: any): Observable<{success: boolean, reference: string}> {
+  submitAccommodationRequest(formData: AccommodationFormData): Observable<{success: boolean, reference: string}> {
     // Generate a BT (Business Trip) Reference Number
     const btReference = `BT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     

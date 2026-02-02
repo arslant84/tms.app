@@ -133,19 +133,6 @@ export class FlightsAdminOverviewComponent implements OnInit {
       next: (response: any) => {
         const trfs = response.results || response.trfs || [];
 
-        console.log('=== FLIGHTS ADMIN DEBUG ===');
-        console.log('Total TRFs fetched:', trfs.length);
-        console.log('TRFs:', trfs);
-
-        trfs.forEach((trf: any, index: number) => {
-          console.log(`TRF ${index + 1}:`, {
-            id: trf.id,
-            travel_type: trf.travel_type,
-            status: trf.status,
-            requestor: trf.requestor_name
-          });
-        });
-
         // Filter for TRFs requiring flights (any approved TRF with travel)
         // Include: Overseas, Home Leave Passage, and Domestic trips with flight segments
         const flightTrfs = trfs.filter((trf: any) => {
@@ -162,10 +149,6 @@ export class FlightsAdminOverviewComponent implements OnInit {
 
           return false;
         });
-
-        console.log('Filtered flight TRFs:', flightTrfs.length);
-        console.log('Flight TRFs:', flightTrfs);
-        console.log('===========================');
 
         // Format TRF data for display
         this.applications = flightTrfs.map((trf: any) => {

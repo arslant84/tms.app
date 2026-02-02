@@ -104,24 +104,14 @@ export class UserAdminComponent implements OnInit, OnDestroy {
   loadRoles(): void {
     this.userService.getAllRoles().subscribe({
       next: (response) => {
-        console.log('Roles API response:', response);
-        console.log('Response type:', typeof response);
-        console.log('Is array:', Array.isArray(response));
-
         // Handle both array response and paginated response
         if (Array.isArray(response)) {
           this.roles = response;
-          console.log('Set roles from array:', this.roles);
         } else if (response && typeof response === 'object' && 'results' in response) {
           this.roles = Array.isArray(response.results) ? response.results : [];
-          console.log('Set roles from paginated response:', this.roles);
         } else {
-          console.warn('Unexpected roles response format:', response);
           this.roles = [];
         }
-
-        console.log('Final roles value:', this.roles);
-        console.log('Final roles is array:', Array.isArray(this.roles));
       },
       error: (error) => {
         console.error('Error loading roles:', error);

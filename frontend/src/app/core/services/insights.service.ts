@@ -48,11 +48,19 @@ export interface TopSpender {
 }
 
 // Travel Pattern Analytics Interface
+export interface Destination {
+  name: string;
+  city?: string;
+  country?: string;
+  trip_count: number;
+  total_spend?: number;
+}
+
 export interface TravelPatternAnalytics {
   total_trips: number;
   domestic_trips: number;
   international_trips: number;
-  top_destinations: any[];
+  top_destinations: Destination[];
   average_trip_duration: number;
   most_frequent_travelers: FrequentTraveler[];
   travel_by_purpose: { [key: string]: number };
@@ -76,6 +84,13 @@ export interface BookingAnalytics {
   booking_class_distribution: { [key: string]: number };
 }
 
+export interface ExpenseCategory {
+  name: string;
+  amount: number;
+  count: number;
+  percentage?: number;
+}
+
 // Expense Analytics Interface
 export interface ExpenseAnalytics {
   total_claims: number;
@@ -85,7 +100,7 @@ export interface ExpenseAnalytics {
   by_category: { [key: string]: number };
   by_status: { [key: string]: number };
   average_claim_amount: number;
-  top_expense_categories: any[];
+  top_expense_categories: ExpenseCategory[];
 }
 
 // Department Analytics Interface
@@ -125,6 +140,19 @@ export interface TravelInsight {
   created_at: string;
 }
 
+export interface SpendCategory {
+  category: string;
+  amount: number;
+  percentage?: number;
+}
+
+export interface MonthlyTrend {
+  month: string;
+  year?: number;
+  trips: number;
+  spend: number;
+}
+
 // Travel Analytics Interface
 export interface TravelAnalytics {
   id: number;
@@ -134,9 +162,9 @@ export interface TravelAnalytics {
   total_spend: number;
   average_trip_cost: number;
   savings_opportunities: number;
-  top_destinations: any[];
-  spend_by_category: any[];
-  monthly_trend: any[];
+  top_destinations: Destination[];
+  spend_by_category: SpendCategory[];
+  monthly_trend: MonthlyTrend[];
   created_at: string;
   updated_at: string;
 }

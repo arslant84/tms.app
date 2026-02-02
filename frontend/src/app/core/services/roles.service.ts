@@ -48,13 +48,10 @@ export class TmsApp_Core_Services_RolesService {
 
   /** Get all roles with permissions */
   getRoles(): Observable<TmsApp_Roles_RoleWithPermissions[]> {
-    console.log('Fetching roles from:', this.rolesUrl);
     return this.http.get<any>(this.rolesUrl).pipe(
       map(response => {
-        console.log('Roles API raw response:', response);
         // Handle wrapped response (data field) or direct array
         const roles = Array.isArray(response) ? response : (response?.data || response?.results || []);
-        console.log('Parsed roles:', roles);
         // Map permissions to permissionIds for each role
         return roles.map((role: any) => ({
           ...role,
@@ -81,13 +78,10 @@ export class TmsApp_Core_Services_RolesService {
 
   /** Get all permissions */
   getPermissions(): Observable<TmsApp_Roles_Permission[]> {
-    console.log('Fetching permissions from:', this.permissionsUrl);
     return this.http.get<any>(this.permissionsUrl).pipe(
       map(response => {
-        console.log('Permissions API raw response:', response);
         // Handle wrapped response (data field) or direct array
         const perms = Array.isArray(response) ? response : (response?.data || response?.results || []);
-        console.log('Parsed permissions:', perms);
         return perms;
       })
     );

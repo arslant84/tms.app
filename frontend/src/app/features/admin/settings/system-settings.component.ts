@@ -108,7 +108,6 @@ export class SystemSettingsComponent implements OnInit, DoCheck {
 
           this.formData = { ...this.formData, ...formDataFromSettings };
           this.originalData = { ...this.formData };
-          console.log('Loaded application settings:', this.formData);
         } else {
           console.error('Error: settingsData is not an array', response);
           this.toastService.error('Failed to load application settings: Invalid data format');

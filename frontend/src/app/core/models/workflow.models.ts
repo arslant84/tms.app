@@ -142,7 +142,7 @@ export interface WorkflowAuditLog {
   action_description: string;
   performed_by?: string;
   performed_by_user?: WorkflowUser;
-  workflow_state_snapshot?: any;
+  workflow_state_snapshot?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   created_at: string;
@@ -173,7 +173,7 @@ export interface WorkflowInstance {
   initiated_by_user?: WorkflowUser;
   started_at: string;
   completed_at?: string;
-  additional_data?: any;
+  additional_data?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

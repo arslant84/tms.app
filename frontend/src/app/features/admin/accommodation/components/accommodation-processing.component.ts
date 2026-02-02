@@ -163,16 +163,6 @@ export class AccommodationProcessingComponent implements OnInit {
                               req.requested_check_out_date ||
                               'N/A';
 
-          // Debug logging
-          console.log('Processing accommodation request:', {
-            id: req.id,
-            request_number: req.request_number,
-            additionalData: additionalData,
-            firstAccom: firstAccom,
-            checkInDate: checkInDate,
-            checkOutDate: checkOutDate
-          });
-
           return {
             id: req.id,
             request_number: req.request_number || `ACC-${req.id}`,
@@ -364,15 +354,6 @@ export class AccommodationProcessingComponent implements OnInit {
       this.selectedRequest = request;
       this.resetFormFields();
 
-      // Debug: Log the request data
-      console.log('=== SELECT REQUEST DEBUG ===');
-      console.log('Request ID:', request.id);
-      console.log('Check-in Date (raw):', request.checkInDate);
-      console.log('Check-out Date (raw):', request.checkOutDate);
-      console.log('TSR Departure Date:', request.tsrDepartureDate);
-      console.log('TSR Return Date:', request.tsrReturnDate);
-      console.log('Has TRF ID:', request.trfId);
-
       // Check if accommodation has TSR reference
       this.hasTsrReference = !!request.trfId;
 
@@ -461,15 +442,6 @@ export class AccommodationProcessingComponent implements OnInit {
           }
         });
       }
-
-      // Debug: Log final state
-      console.log('=== FINAL STATE AFTER SELECTION ===');
-      console.log('Check-in Date (formatted):', this.checkInDate);
-      console.log('Check-out Date (formatted):', this.checkOutDate);
-      console.log('TSR Min Date:', this.tsrMinDate);
-      console.log('TSR Max Date:', this.tsrMaxDate);
-      console.log('Has TSR Reference:', this.hasTsrReference);
-      console.log('===================================');
     }, 0);
   }
 

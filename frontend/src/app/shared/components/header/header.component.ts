@@ -222,9 +222,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.notificationService.markAllAsRead()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => {
-          console.log('All notifications marked as read');
-        },
         error: (err) => {
           console.error('Error marking all as read:', err);
         }

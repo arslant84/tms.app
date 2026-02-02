@@ -63,15 +63,9 @@ export class AuthService {
       'Content-Type': 'application/json'
     });
 
-    console.log('Attempting login to:', url);
-    console.log('With credentials:', { email });
-
     // SECURITY: withCredentials: true allows cookies to be sent/received
     return this.http.post<AuthResponse>(url, body, { headers, withCredentials: true }).pipe(
       map(response => {
-        console.log('Login successful, response:', response);
-        console.log('Full user data from backend:', response.data);
-
         // SECURITY: No localStorage - token is in HttpOnly cookie
         // Backend sets the cookie, we just store user data in memory
 
@@ -92,9 +86,6 @@ export class AuthService {
           profile_photo: response.data.profile_photo,
           last_login_at: response.data.last_login_at
         };
-
-        console.log('Stored user data:', user);
-        console.log('User permissions:', user.permissions);
 
         // Store user data in memory (not localStorage)
         this.currentUserSubject.next(user);
