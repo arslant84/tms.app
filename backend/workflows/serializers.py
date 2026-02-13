@@ -110,7 +110,7 @@ class WorkflowStepSerializer(serializers.ModelSerializer):
         model = WorkflowStep
         fields = [
             'id', 'workflow_template', 'step_order', 'step_name', 'step_description',
-            'approver_role', 'approver_user', 'approver_user_detail',
+            'approver_role', 'approver_permission', 'approver_user', 'approver_user_detail',
             'is_required', 'can_skip', 'requires_comments',
             'sla_hours', 'escalation_hours', 'conditions', 'notification_configs',
             'created_at', 'updated_at'
@@ -212,6 +212,7 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                 step_name=step_data.get('step_name'),
                 step_description=step_data.get('step_description', ''),
                 approver_role=step_data.get('approver_role'),
+                approver_permission=step_data.get('approver_permission'),
                 approver_user_id=step_data.get('approver_user') if step_data.get('approver_user') else None,
                 is_required=step_data.get('is_required', True),
                 can_skip=step_data.get('can_skip', False),
@@ -238,51 +239,59 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Update workflow template and steps"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         steps_data = validated_data.pop('steps', None)
 
-        # Update template fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+        try:
+            # Update template fields
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
 
-        # Update steps if provided
-        if steps_data is not None:
-            # Delete existing steps (and their notification configs due to CASCADE)
-            instance.steps.all().delete()
+            # Update steps if provided
+            if steps_data is not None:
+                # Delete existing steps (and their notification configs due to CASCADE)
+                instance.steps.all().delete()
 
-            # Create new steps
-            for step_data in steps_data:
-                notification_configs_data = step_data.pop('notification_configs', [])
+                # Create new steps
+                for step_data in steps_data:
+                    notification_configs_data = step_data.pop('notification_configs', [])
 
-                step = WorkflowStep.objects.create(
-                    workflow_template=instance,
-                    step_order=step_data.get('step_order'),
-                    step_name=step_data.get('step_name'),
-                    step_description=step_data.get('step_description', ''),
-                    approver_role=step_data.get('approver_role'),
-                    approver_user_id=step_data.get('approver_user') if step_data.get('approver_user') else None,
-                    is_required=step_data.get('is_required', True),
-                    can_skip=step_data.get('can_skip', False),
-                    requires_comments=step_data.get('requires_comments', False),
-                    sla_hours=step_data.get('sla_hours'),
-                    escalation_hours=step_data.get('escalation_hours')
-                )
-
-                # Create notification configs for this step
-                for config_data in notification_configs_data:
-                    WorkflowStepNotificationConfig.objects.create(
-                        workflow_step=step,
-                        event_type=config_data.get('event_type'),
-                        notification_template_id=config_data.get('notification_template'),
-                        recipient_types=config_data.get('recipient_types', []),
-                        custom_recipients=config_data.get('custom_recipients', []),
-                        is_active=config_data.get('is_active', True),
-                        send_email=config_data.get('send_email', True),
-                        send_system_notification=config_data.get('send_system_notification', True),
-                        priority=config_data.get('priority', 'normal')
+                    step = WorkflowStep.objects.create(
+                        workflow_template=instance,
+                        step_order=step_data.get('step_order'),
+                        step_name=step_data.get('step_name'),
+                        step_description=step_data.get('step_description', ''),
+                        approver_role=step_data.get('approver_role'),
+                        approver_permission=step_data.get('approver_permission'),
+                        approver_user_id=step_data.get('approver_user') if step_data.get('approver_user') else None,
+                        is_required=step_data.get('is_required', True),
+                        can_skip=step_data.get('can_skip', False),
+                        requires_comments=step_data.get('requires_comments', False),
+                        sla_hours=step_data.get('sla_hours'),
+                        escalation_hours=step_data.get('escalation_hours')
                     )
 
-        return instance
+                    # Create notification configs for this step
+                    for config_data in notification_configs_data:
+                        WorkflowStepNotificationConfig.objects.create(
+                            workflow_step=step,
+                            event_type=config_data.get('event_type'),
+                            notification_template_id=config_data.get('notification_template'),
+                            recipient_types=config_data.get('recipient_types', []),
+                            custom_recipients=config_data.get('custom_recipients', []),
+                            is_active=config_data.get('is_active', True),
+                            send_email=config_data.get('send_email', True),
+                            send_system_notification=config_data.get('send_system_notification', True),
+                            priority=config_data.get('priority', 'normal')
+                        )
+
+            return instance
+        except Exception as e:
+            logger.error(f"Error updating workflow template {instance.id}: {str(e)}", exc_info=True)
+            raise
 
 
 class WorkflowStepExecutionSerializer(serializers.ModelSerializer):
