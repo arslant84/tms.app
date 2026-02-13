@@ -298,9 +298,10 @@ CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'",),
         'script-src': ("'self'", "'unsafe-inline'", "'unsafe-eval'"),  # Angular requires inline scripts
-        'style-src': ("'self'", "'unsafe-inline'"),  # Bootstrap and Angular Material use inline styles
+        'style-src': ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com"),  # Allow Google Fonts CSS
+        'style-src-elem': ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com"),  # Allow external stylesheets
         'img-src': ("'self'", "data:", "https:"),  # Allow images from same origin, data URIs, and HTTPS
-        'font-src': ("'self'", "data:"),  # Bootstrap fonts
+        'font-src': ("'self'", "data:", "https://fonts.gstatic.com"),  # Allow Google Fonts
         'connect-src': ("'self'",),  # API calls - will be extended in development.py
         'frame-ancestors': ("'none'",),  # Don't allow this site to be framed
         'base-uri': ("'self'",),  # Restrict base tag to prevent base tag injection

@@ -7,8 +7,10 @@ from rest_framework import exceptions
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+import logging
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class JWTCookieAuthentication(BaseAuthentication):
@@ -37,13 +39,17 @@ class JWTCookieAuthentication(BaseAuthentication):
         access_token = request.COOKIES.get(self.access_cookie_name)
 
         if not access_token:
+            logger.debug(f"No access token cookie found for {request.path}")
             return None  # No authentication attempted
 
         try:
-            return self.authenticate_credentials(access_token)
-        except exceptions.AuthenticationFailed:
+            user, token = self.authenticate_credentials(access_token)
+            logger.info(f"JWT auth successful for user {user.id} ({user.email}), is_staff={user.is_staff}, is_superuser={user.is_superuser}")
+            return (user, token)
+        except exceptions.AuthenticationFailed as e:
             # Return None instead of raising exception - allows public endpoints to work
             # even when there's an invalid/expired token in cookies
+            logger.warning(f"JWT authentication failed for {request.path}: {str(e)}")
             return None
 
     def authenticate_credentials(self, token_string):

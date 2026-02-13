@@ -123,6 +123,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Rate limiting (if django-ratelimit is installed)
 RATELIMIT_ENABLE = True
 RATELIMIT_USE_CACHE = 'default'
+RATELIMIT_IP_META_KEY = config('RATELIMIT_IP_META_KEY', default='HTTP_X_FORWARDED_FOR')
 
 print("🚀 Production settings loaded")
 print(f"  - DEBUG: {DEBUG}")

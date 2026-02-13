@@ -34,7 +34,17 @@
               {
                 "glob": "**/*",
                 "input": "node_modules/bootstrap-icons/font/fonts",
-                "output": "/fonts"
+                "output": "/media"
+              },
+              {
+                "glob": "**/*.woff",
+                "input": "node_modules/@fontsource/raleway/files",
+                "output": "/media"
+              },
+              {
+                "glob": "**/*.woff2",
+                "input": "node_modules/@fontsource/raleway/files",
+                "output": "/media"
               }
             ],
             "styles": [
@@ -127,5 +137,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "00330b97-1644-4c4a-be55-95aaffbfe55c"
   }
 }

@@ -19,10 +19,17 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
 from approvals.views import unified_approvals, bulk_approve, approval_history
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 import os
+
+
+@ensure_csrf_cookie
+def csrf_token_view(request):
+    """Return CSRF token for Angular SPA"""
+    return JsonResponse({'detail': 'CSRF cookie set'})
 
 
 def security_txt(request):
@@ -38,6 +45,7 @@ def security_txt(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/csrf/', csrf_token_view, name='csrf-token'),
     path('api/', include('accounts.urls')),
     path('api/trf/', include('trf.urls')),
     path('api/bookings/', include('bookings.urls')),

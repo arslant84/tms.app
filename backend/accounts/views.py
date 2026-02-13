@@ -475,7 +475,12 @@ class UserViewSet(viewsets.ModelViewSet):
         return UserSerializer
 
     def get_permissions(self):
+        logger.info(f"UserViewSet.get_permissions called for action: {self.action}")
+        logger.info(f"Request user: {self.request.user}, is_authenticated: {self.request.user.is_authenticated if hasattr(self.request.user, 'is_authenticated') else 'N/A'}")
+        logger.info(f"User is_staff: {getattr(self.request.user, 'is_staff', 'N/A')}, is_superuser: {getattr(self.request.user, 'is_superuser', 'N/A')}")
+        
         if self.action == 'create':
+            logger.info("Returning IsAdminUser permission for create action")
             return [permissions.IsAdminUser()]
         elif self.action in ['update', 'partial_update']:
             # Users can update their own profile, admins can update any profile
