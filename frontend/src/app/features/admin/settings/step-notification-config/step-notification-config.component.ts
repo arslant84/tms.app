@@ -133,6 +133,45 @@ export class StepNotificationConfigComponent implements OnInit {
     }
   }
 
+  restoreDefaults(): void {
+    if (!confirm('This will replace all current notification configurations with defaults. Continue?')) {
+      return;
+    }
+
+    type EventType = 'assignment' | 'approval' | 'rejection' | 'escalation' | 'reminder' | 'delegation';
+    type Priority = 'low' | 'normal' | 'high' | 'urgent';
+
+    // Default notification configs matching backend defaults
+    const defaultConfigs: { event_type: EventType; template_name: string; recipient_types: RecipientType[]; priority: Priority }[] = [
+      { event_type: 'assignment', template_name: 'approval_required', recipient_types: ['current_approver'], priority: 'high' },
+      { event_type: 'approval', template_name: 'workflow_completed', recipient_types: ['requester'], priority: 'normal' },
+      { event_type: 'rejection', template_name: 'workflow_rejected', recipient_types: ['requester'], priority: 'urgent' },
+      { event_type: 'delegation', template_name: 'delegation_confirmed', recipient_types: ['current_approver'], priority: 'high' },
+    ];
+
+    // Find template IDs by name
+    const newConfigs: WorkflowStepNotificationConfig[] = [];
+    for (const defaultConfig of defaultConfigs) {
+      const template = this.availableTemplates.find(t => t.name === defaultConfig.template_name);
+      if (template) {
+        newConfigs.push({
+          event_type: defaultConfig.event_type,
+          notification_template: template.id,
+          recipient_types: defaultConfig.recipient_types,
+          custom_recipients: [],
+          is_active: true,
+          send_email: true,
+          send_system_notification: true,
+          priority: defaultConfig.priority
+        });
+      }
+    }
+
+    this.notificationConfigs.length = 0;
+    this.notificationConfigs.push(...newConfigs);
+    this.emitChanges();
+  }
+
   cancelEdit(): void {
     this.isAddingNew = false;
     this.editingIndex = -1;

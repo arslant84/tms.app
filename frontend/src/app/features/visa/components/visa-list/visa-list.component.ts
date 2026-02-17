@@ -152,7 +152,13 @@ export class VisaListComponent implements OnInit, OnDestroy {
   getDisplayStatus(app: VisaApplication): string {
     const workflow = this.getWorkflowForApplication(app.id!);
     if (workflow) {
-      return this.workflowService.getWorkflowStatus(workflow);
+      // For terminal states (approved, rejected, cancelled), use workflow status
+      // For in_progress, use app.status which contains the detailed step name
+      if (['approved', 'rejected', 'cancelled'].includes(workflow.status)) {
+        return this.workflowService.getWorkflowStatus(workflow);
+      }
+      // Use application status for in-progress workflows (contains step details)
+      return app.status || this.workflowService.getWorkflowStatus(workflow);
     }
     return app.status || 'Draft';
   }

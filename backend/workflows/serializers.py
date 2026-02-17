@@ -194,6 +194,55 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
         """Use WorkflowTemplateDetailSerializer for output"""
         return WorkflowTemplateDetailSerializer(instance, context=self.context).data
 
+    # Default notification configs to create for new workflow steps
+    DEFAULT_NOTIFICATION_CONFIGS = [
+        {
+            'event_type': 'assignment',
+            'template_name': 'approval_required',
+            'recipient_types': ['current_approver'],
+            'priority': 'high',
+        },
+        {
+            'event_type': 'approval',
+            'template_name': 'workflow_completed',
+            'recipient_types': ['requester'],
+            'priority': 'normal',
+        },
+        {
+            'event_type': 'rejection',
+            'template_name': 'workflow_rejected',
+            'recipient_types': ['requester'],
+            'priority': 'urgent',
+        },
+        {
+            'event_type': 'delegation',
+            'template_name': 'delegation_confirmed',
+            'recipient_types': ['current_approver'],
+            'priority': 'high',
+        },
+    ]
+
+    def _create_default_notification_configs(self, step):
+        """Create default notification configs for a workflow step"""
+        from notifications.models import NotificationTemplate
+
+        for config in self.DEFAULT_NOTIFICATION_CONFIGS:
+            try:
+                template = NotificationTemplate.objects.get(name=config['template_name'])
+                WorkflowStepNotificationConfig.objects.create(
+                    workflow_step=step,
+                    event_type=config['event_type'],
+                    notification_template=template,
+                    recipient_types=config['recipient_types'],
+                    custom_recipients=[],
+                    is_active=True,
+                    send_email=True,
+                    send_system_notification=True,
+                    priority=config['priority']
+                )
+            except NotificationTemplate.DoesNotExist:
+                pass  # Skip if template doesn't exist
+
     def create(self, validated_data):
         """Create workflow template with steps"""
         steps_data = validated_data.pop('steps', [])
@@ -225,19 +274,24 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                 escalation_hours=step_data.get('escalation_hours')
             )
 
-            # Create notification configs for this step
-            for config_data in notification_configs_data:
-                WorkflowStepNotificationConfig.objects.create(
-                    workflow_step=step,
-                    event_type=config_data.get('event_type'),
-                    notification_template_id=config_data.get('notification_template'),
-                    recipient_types=config_data.get('recipient_types', []),
-                    custom_recipients=config_data.get('custom_recipients', []),
-                    is_active=config_data.get('is_active', True),
-                    send_email=config_data.get('send_email', True),
-                    send_system_notification=config_data.get('send_system_notification', True),
-                    priority=config_data.get('priority', 'normal')
-                )
+            # Create notification configs for this step (CREATE always gets defaults if none provided)
+            if notification_configs_data:
+                # Use provided configs
+                for config_data in notification_configs_data:
+                    WorkflowStepNotificationConfig.objects.create(
+                        workflow_step=step,
+                        event_type=config_data.get('event_type'),
+                        notification_template_id=config_data.get('notification_template'),
+                        recipient_types=config_data.get('recipient_types', []),
+                        custom_recipients=config_data.get('custom_recipients', []),
+                        is_active=config_data.get('is_active', True),
+                        send_email=config_data.get('send_email', True),
+                        send_system_notification=config_data.get('send_system_notification', True),
+                        priority=config_data.get('priority', 'normal')
+                    )
+            else:
+                # Create default notification configs for new workflows
+                self._create_default_notification_configs(step)
 
         return workflow_template
 
@@ -245,7 +299,7 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
         """Update workflow template and steps"""
         import logging
         logger = logging.getLogger(__name__)
-        
+
         steps_data = validated_data.pop('steps', None)
 
         try:
@@ -278,7 +332,8 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                         escalation_hours=step_data.get('escalation_hours')
                     )
 
-                    # Create notification configs for this step
+                    # On UPDATE: Use exactly what frontend sends (respect user's changes)
+                    # If user deleted all configs, they get none. If user added/modified, those are used.
                     for config_data in notification_configs_data:
                         WorkflowStepNotificationConfig.objects.create(
                             workflow_step=step,
