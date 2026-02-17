@@ -151,17 +151,14 @@ class WorkflowEngine:
             performed_by=actioned_by
         )
 
-        # Process based on action
+        # Process based on action - notifications are handled via configuration
+        # If no config exists, default notification behavior is used
         if action == 'approve' or action == 'skip':
-            # Send step approved notification (legacy hardcoded)
-            WorkflowNotifications.notify_step_approved(step_execution)
-            # Trigger configured notifications for approval
+            # Trigger notifications for approval (uses config or falls back to defaults)
             WorkflowNotifications.trigger_configured_notifications(step_execution, 'approval')
             return WorkflowEngine._handle_step_approval(workflow_instance, step_execution, actioned_by)
         elif action == 'reject':
-            # Send step rejected notification (legacy hardcoded)
-            WorkflowNotifications.notify_step_rejected(step_execution)
-            # Trigger configured notifications for rejection
+            # Trigger notifications for rejection (uses config or falls back to defaults)
             WorkflowNotifications.trigger_configured_notifications(step_execution, 'rejection')
             return WorkflowEngine._handle_step_rejection(workflow_instance, step_execution, actioned_by, comments)
 
@@ -228,8 +225,8 @@ class WorkflowEngine:
             performed_by=delegated_from
         )
 
-        # Send delegation notification
-        WorkflowNotifications.notify_step_delegated(step_execution, delegated_to, delegated_from)
+        # Send delegation notification (uses config or falls back to defaults)
+        WorkflowNotifications.trigger_configured_notifications(step_execution, 'delegation')
 
         return {
             'success': True,
