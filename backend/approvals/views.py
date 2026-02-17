@@ -74,10 +74,9 @@ def unified_approvals(request):
     # Helper function to check if user can approve this entity
     def can_user_approve(entity, module_name):
         """Check if current user is authorized to approve this entity"""
-        # Development/Testing: Allow admins to view all approval items
-        # SECURITY: In production, admins should have explicit approval permissions via RBAC
-        from django.conf import settings
-        if settings.DEBUG and (user.is_staff or user.is_superuser):
+        # Allow staff/superuser to view all approval items
+        # This allows admins to see and manage all pending approvals
+        if user.is_staff or user.is_superuser:
             return True
 
         # Get workflow instance for this entity
@@ -89,7 +88,7 @@ def unified_approvals(request):
         ).first()
 
         if not workflow_instance:
-            # No workflow - fallback to showing to admins only
+            # No workflow - only show to admins (already handled above)
             return False
 
         # Get current pending step execution

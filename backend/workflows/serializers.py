@@ -33,9 +33,7 @@ class WorkflowConditionSerializer(serializers.ModelSerializer):
 
 class WorkflowStepNotificationConfigSerializer(serializers.ModelSerializer):
     """Serializer for workflow step notification configurations"""
-    notification_template_name = serializers.CharField(
-        source='notification_template.name', read_only=True
-    )
+    notification_template_name = serializers.SerializerMethodField()
     event_type_display = serializers.CharField(
         source='get_event_type_display', read_only=True
     )
@@ -53,6 +51,12 @@ class WorkflowStepNotificationConfigSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_notification_template_name(self, obj):
+        """Safely get notification template name, handling null case"""
+        if obj.notification_template:
+            return obj.notification_template.name
+        return None
 
     def validate_recipient_types(self, value):
         """Validate recipient types"""
