@@ -1,0 +1,194 @@
+// Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
+// Card styling matching React shadcn/ui design
+.card {
+  border: 1px solid rgb(0 0 0 / 12.5%);
+  transition: box-shadow 0.3s ease;
+
+  &.shadow-lg {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 5%);
+  }
+}
+
+.card-header {
+  padding: vars.$spacing-5 1.5rem;
+  border-bottom: none;
+
+  &.gradient-header {
+    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
+
+    .card-title {
+      color: vars.$white;
+      display: flex;
+      align-items: center;
+
+      i {
+        font-size: vars.$font-size-lg;
+      }
+    }
+
+    .card-description {
+      font-size: vars.$font-size-sm;
+      color: rgb(255 255 255 / 95%);
+    }
+  }
+}
+
+.card-title {
+  font-weight: vars.$font-weight-semibold;
+  font-size: vars.$font-size-lg;
+  color: vars.$gray-900;
+}
+
+.card-body {
+  padding: vars.$spacing-6;
+}
+
+// Scroll areas matching React ScrollArea component
+.departments-scroll-area {
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: vars.$gray-50;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: vars.$gray-100;
+    border-radius: vars.$radius-base;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: vars.$gray-300;
+    border-radius: vars.$radius-base;
+
+    &:hover {
+      background: vars.$gray-400;
+    }
+  }
+}
+
+// Department item styling
+.department-item {
+  background-color: vars.$white;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: vars.$gray-50;
+  }
+
+  &:last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+// Form styling
+.department-form {
+  background-color: vars.$gray-50;
+  border-color: vars.$gray-200;
+}
+
+// Form elements
+.form-label {
+  font-weight: vars.$font-weight-medium;
+  font-size: vars.$font-size-sm;
+  color: vars.$gray-700;
+}
+
+.form-control,
+.form-select {
+  border-color: vars.$gray-300;
+  font-size: vars.$font-size-sm;
+
+  &:focus {
+    border-color: vars.$primary-color;
+    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 15%);
+  }
+}
+
+.form-check-label {
+  cursor: pointer;
+  font-weight: vars.$font-weight-normal;
+}
+
+.form-check-input {
+  cursor: pointer;
+
+  &:checked {
+    background-color: vars.$primary-color;
+    border-color: vars.$primary-color;
+  }
+
+  &:focus {
+    border-color: vars.$primary-color;
+    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 15%);
+  }
+}
+
+// Button styling enhancements
+.btn {
+  transition: all 0.2s ease;
+  font-weight: vars.$font-weight-medium;
+
+  &:focus {
+    box-shadow: 0 0 0 0.2rem rgb(var(--bs-primary-rgb), 0.25);
+  }
+
+  &.btn-primary {
+    background-color: vars.$primary-color;
+    border-color: vars.$primary-color;
+
+    &:hover:not(:disabled) {
+      background-color: vars.$primary-hover;
+      border-color: vars.$primary-hover;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 6%);
+    }
+  }
+
+  &.btn-outline-secondary,
+  &.btn-outline-danger {
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+  }
+
+  &.btn-outline-danger {
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Badge styling
+.badge {
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-medium;
+  padding: vars.$spacing-1 vars.$spacing-2;
+}
+
+// Text utilities
+.text-muted {
+  color: vars.$gray-500 !important;
+}
+
+.fw-semibold {
+  font-weight: vars.$font-weight-semibold;
+}
+
+.fw-medium {
+  font-weight: vars.$font-weight-medium;
+}
+
+// Modal-specific styles
+// Global modal styles are in frontend/src/styles/modal.scss
+
+// Responsive improvements
+@media (width <= 768px) {
+  .departments-scroll-area {
+    max-height: 250px;
+  }
+}

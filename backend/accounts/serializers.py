@@ -1,9 +1,31 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from .models import Role, Permission, ApplicationSetting, AdminActionLog
+from .models import Role, Permission, ApplicationSetting, AdminActionLog, Department
 
 User = get_user_model()
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    """Serializer for Department model with user count"""
+    user_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Department
+        fields = ['id', 'name', 'code', 'description', 'is_active', 'user_count', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_user_count(self, obj):
+        """Return the number of users in this department"""
+        return obj.users.count()
+
+
+class DepartmentListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for Department listings (dropdowns, etc.)"""
+
+    class Meta:
+        model = Department
+        fields = ['id', 'name', 'code', 'is_active']
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -60,13 +82,14 @@ class RoleSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     role = RoleSerializer(read_only=True)  # Make role read_only to prevent validation errors
+    department = DepartmentListSerializer(read_only=True)  # Include department details
     permissions = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password_change_required']
         # SECURITY: Prevent privilege escalation - these fields can only be modified by admins
-        read_only_fields = ['id', 'email', 'is_admin', 'is_active', 'role', 'last_login_at', 'permissions', 'password_change_required']
+        read_only_fields = ['id', 'email', 'is_admin', 'is_active', 'role', 'department', 'last_login_at', 'permissions', 'password_change_required']
 
     def get_permissions(self, obj):
         """Get list of permission names for this user"""
@@ -130,14 +153,15 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 class UserAdminUpdateSerializer(serializers.ModelSerializer):
     """Serializer for admin user updates - allows updating all fields"""
     role = RoleSerializer(read_only=True)
+    department_data = DepartmentListSerializer(source='department', read_only=True)
     permissions = serializers.SerializerMethodField()
     password = serializers.CharField(write_only=True, required=False, validators=[validate_password], allow_blank=True)
     password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password', 'password_confirm', 'password_change_required']
-        read_only_fields = ['id', 'last_login_at', 'permissions']
+        fields = ['id', 'email', 'name', 'role', 'department', 'department_data', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password', 'password_confirm', 'password_change_required']
+        read_only_fields = ['id', 'last_login_at', 'permissions', 'department_data']
 
     def get_permissions(self, obj):
         """Get list of permission names for this user"""
@@ -182,6 +206,19 @@ class UserAdminUpdateSerializer(serializers.ModelSerializer):
             except Role.DoesNotExist:
                 pass
 
+        # Handle department update (comes as UUID string from frontend)
+        department_id = validated_data.pop('department', None)
+        if department_id:
+            try:
+                department = Department.objects.get(id=department_id)
+                instance.department = department
+            except Department.DoesNotExist:
+                pass
+        elif department_id == '' or department_id is None:
+            # Allow clearing department
+            if 'department' in self.initial_data:
+                instance.department = None
+
         # Update all other fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -197,16 +234,26 @@ class UserAdminUpdateSerializer(serializers.ModelSerializer):
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True, required=True)
+    department_data = DepartmentListSerializer(source='department', read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'password', 'password_confirm']
-        read_only_fields = ['id']
+        fields = ['id', 'email', 'name', 'role', 'department', 'department_data', 'is_admin', 'is_active', 'password', 'password_confirm']
+        read_only_fields = ['id', 'department_data']
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
         return attrs
+
+    def validate_department(self, value):
+        """Validate that department exists if provided"""
+        if value and isinstance(value, str):
+            try:
+                return Department.objects.get(id=value)
+            except Department.DoesNotExist:
+                raise serializers.ValidationError("Department not found.")
+        return value
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { UserService, User, Role } from '../../services/user.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { DepartmentService } from '../../../../core/services/department.service';
+import { DepartmentListItem } from '../../../../core/models/user.model';
 
 @Component({
   selector: 'app-user-admin',
@@ -14,6 +16,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 export class UserAdminComponent implements OnInit, OnDestroy {
   users: User[] = [];
   roles: Role[] = [];
+  departments: DepartmentListItem[] = [];
   loading = false;
   showModal = false;
   isEditMode = false;
@@ -31,7 +34,6 @@ export class UserAdminComponent implements OnInit, OnDestroy {
   totalCount = 0;
 
   // Dropdown options
-  departments = ['IT', 'HR', 'Finance', 'Operations', 'Sales', 'Marketing', 'Admin'];
   genders = [
     { value: 'Male', label: 'Male' },
     { value: 'Female', label: 'Female' },
@@ -41,13 +43,15 @@ export class UserAdminComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private departmentService: DepartmentService
   ) {}
 
   ngOnInit(): void {
     this.initializeForm();
     this.loadUsers();
     this.loadRoles();
+    this.loadDepartments();
   }
 
   initializeForm(): void {
@@ -120,6 +124,18 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     });
   }
 
+  loadDepartments(): void {
+    this.departmentService.getActiveDepartments().subscribe({
+      next: (departments) => {
+        this.departments = departments;
+      },
+      error: (error) => {
+        console.error('Error loading departments:', error);
+        this.departments = [];
+      }
+    });
+  }
+
   openCreateModal(): void {
     this.isEditMode = false;
     this.selectedUserId = null;
@@ -137,11 +153,15 @@ export class UserAdminComponent implements OnInit, OnDestroy {
   openEditModal(user: User): void {
     this.isEditMode = true;
     this.selectedUserId = user.id;
+
+    // Extract department ID from department object or string
+    const departmentId = this.extractDepartmentId(user.department);
+
     this.userForm.patchValue({
       email: user.email,
       name: user.name,
       role: user.role?.id,
-      department: user.department,
+      department: departmentId,
       is_admin: user.is_admin,
       is_active: user.is_active,
       staff_id: user.staff_id,
@@ -153,6 +173,19 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     this.showModal = true;
     // Lock body scroll
     document.body.classList.add('modal-open');
+  }
+
+  private extractDepartmentId(department: any): string {
+    if (!department) {
+      return '';
+    }
+    if (typeof department === 'string') {
+      return department;
+    }
+    if (typeof department === 'object' && department.id) {
+      return department.id;
+    }
+    return '';
   }
 
   closeModal(): void {
@@ -288,6 +321,20 @@ export class UserAdminComponent implements OnInit, OnDestroy {
 
   getRoleName(user: User): string {
     return user.role?.name || 'No Role';
+  }
+
+  getDepartmentName(user: User): string {
+    const dept = user.department;
+    if (!dept) {
+      return 'N/A';
+    }
+    if (typeof dept === 'string') {
+      return dept;
+    }
+    if (typeof dept === 'object' && dept !== null && 'name' in dept) {
+      return (dept as any).name || 'N/A';
+    }
+    return 'N/A';
   }
 
   getStatusBadgeClass(user: User): string {

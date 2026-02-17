@@ -38,6 +38,27 @@ class RolePermission(models.Model):
         unique_together = ('role', 'permission')
 
 
+class Department(models.Model):
+    """
+    Department model for organizing users into departments.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255, unique=True)
+    code = models.CharField(max_length=50, unique=True, blank=True, null=True, help_text="Short code for the department (e.g., IT, HR)")
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Department'
+        verbose_name_plural = 'Departments'
+
+    def __str__(self):
+        return self.name
+
+
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -70,7 +91,7 @@ class User(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
     name = models.CharField(max_length=255)
     role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
-    department = models.CharField(max_length=100, blank=True)
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     status = models.CharField(max_length=50, default='Active')  # Matches syntra schema

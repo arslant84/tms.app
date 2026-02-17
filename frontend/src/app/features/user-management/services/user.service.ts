@@ -20,12 +20,19 @@ export interface Permission {
   updated_at: string;
 }
 
+export interface UserDepartment {
+  id: string;
+  name: string;
+  code?: string;
+  is_active?: boolean;
+}
+
 export interface User {
   id: number;
   email: string;
   name: string;
   role?: Role;
-  department: string;
+  department?: UserDepartment | string | null;
   is_admin: boolean;
   is_active: boolean;
   staff_id?: string;

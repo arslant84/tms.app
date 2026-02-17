@@ -34,11 +34,24 @@ export class UserFormHelperService {
     return {
       fullName: currentUser?.name || '',
       staffId: currentUser?.staff_id || '',
-      department: currentUser?.department || '',
+      department: this.extractDepartmentName(currentUser?.department),
       position: position || '',
       email: currentUser?.email || '',
       phone: currentUser?.phone || ''
     };
+  }
+
+  /**
+   * Extract department name from department field (handles both string and object types)
+   */
+  private extractDepartmentName(department: any): string {
+    if (!department) {
+      return '';
+    }
+    if (typeof department === 'string') {
+      return department;
+    }
+    return department.name || '';
   }
 
   /**
@@ -59,10 +72,10 @@ export class UserFormHelperService {
 
   /**
    * Get user department
-   * @returns Current user's department or empty string
+   * @returns Current user's department name or empty string
    */
   getUserDepartment(): string {
-    return this.authService.getCurrentUser()?.department || '';
+    return this.extractDepartmentName(this.authService.getCurrentUser()?.department);
   }
 
   /**
