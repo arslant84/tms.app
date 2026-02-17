@@ -6,13 +6,23 @@
       <span class="section-title">Notifications</span>
       <span class="badge bg-info ms-2">{{ getConfigCount() }} configured</span>
     </div>
-    <button
-      type="button"
-      class="btn btn-sm btn-outline-primary"
-      (click)="startAddNew(); $event.stopPropagation()"
-      *ngIf="!isAddingNew">
-      <i class="bi bi-plus-circle"></i> Add Notification
-    </button>
+    <div class="header-actions" (click)="$event.stopPropagation()">
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary me-2"
+        (click)="restoreDefaults()"
+        *ngIf="!isAddingNew"
+        title="Restore default notification settings">
+        <i class="bi bi-arrow-counterclockwise"></i> Restore Defaults
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-primary"
+        (click)="startAddNew()"
+        *ngIf="!isAddingNew">
+        <i class="bi bi-plus-circle"></i> Add Notification
+      </button>
+    </div>
   </div>
 
   <!-- Expanded Content -->

@@ -434,6 +434,16 @@ def bulk_approve(request):
 
                 obj.save()
 
+                # Send notifications based on workflow step configuration
+                from workflows.notifications import WorkflowNotifications
+                if action == 'approve':
+                    WorkflowNotifications.trigger_configured_notifications(current_step, 'approval')
+                    # If workflow completed, also send workflow_completed notifications
+                    if workflow_instance.status == 'approved':
+                        WorkflowNotifications.notify_workflow_completed(workflow_instance)
+                else:
+                    WorkflowNotifications.trigger_configured_notifications(current_step, 'rejection')
+
                 # Log the action
                 AdminActionLog.objects.create(
                     user=user,
