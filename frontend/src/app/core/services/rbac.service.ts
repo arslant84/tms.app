@@ -312,11 +312,18 @@ export class RbacService {
   }
 
   /**
-   * Get user's department for department-specific filtering
+   * Get user's department name for department-specific filtering
    */
   getCurrentUserDepartment(): string | null {
     const user = this.authService.getCurrentUser();
-    return user?.department || null;
+    if (!user?.department) {
+      return null;
+    }
+    // Handle both string and object department types
+    if (typeof user.department === 'string') {
+      return user.department;
+    }
+    return user.department.name || null;
   }
 
   /**

@@ -12,12 +12,30 @@ export interface Role {
   permissions?: Permission[];
 }
 
+export interface Department {
+  id: string;
+  name: string;
+  code?: string;
+  description?: string;
+  is_active: boolean;
+  user_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface DepartmentListItem {
+  id: string;
+  name: string;
+  code?: string;
+  is_active: boolean;
+}
+
 export interface User {
   id: number;
   name: string;
   email: string;
   role: Role | string; // Can be Role object or role name string from backend
-  department: string;
+  department: Department | DepartmentListItem | string | null; // Can be Department object, list item, or ID string
   is_admin: boolean;
   is_active: boolean;
   // Permissions array for RBAC

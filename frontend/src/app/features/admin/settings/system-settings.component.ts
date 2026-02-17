@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TmsApp_Admin_SystemSettings_RoleManagementComponent } from './role-management/role-management.component';
+import { DepartmentManagementComponent } from './department-management/department-management.component';
 import { EnhancedWorkflowConfigComponent } from './enhanced-workflow-config/enhanced-workflow-config.component';
 import { ToastService } from '../../../core/services/toast.service';
 import { SettingsService, ApplicationSetting, SettingUpdate } from '../../../core/services/settings.service';
@@ -21,7 +22,7 @@ interface SettingsForm {
 @Component({
   selector: 'app-system-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TmsApp_Admin_SystemSettings_RoleManagementComponent, EnhancedWorkflowConfigComponent],
+  imports: [CommonModule, FormsModule, RouterModule, TmsApp_Admin_SystemSettings_RoleManagementComponent, DepartmentManagementComponent, EnhancedWorkflowConfigComponent],
   templateUrl: './system-settings.component.html',
   styleUrls: ['./system-settings.component.scss']
 })
