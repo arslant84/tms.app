@@ -30,9 +30,10 @@ logger = logging.getLogger(__name__)
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, UserAdminUpdateSerializer, RoleSerializer, PermissionSerializer,
     ApplicationSettingSerializer, ApplicationSettingCreateSerializer, ApplicationSettingUpdateSerializer, PasswordChangeSerializer,
-    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, AdminActionLogSerializer
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, AdminActionLogSerializer,
+    DepartmentSerializer, DepartmentListSerializer
 )
-from .models import Role, Permission, ApplicationSetting, AdminActionLog
+from .models import Role, Permission, ApplicationSetting, AdminActionLog, Department
 from .permissions import HasManageRolesPermission, HasManageUsersPermission, HasViewSystemSettingsPermission
 
 User = get_user_model()
@@ -617,6 +618,72 @@ class PermissionViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     ordering_fields = ['name', 'created_at']
     ordering = ['name']  # Default: alphabetical
+
+
+@extend_schema_view(
+    list=extend_schema(tags=['Departments'], summary='List all departments', description='Get list of all departments. Supports search and filtering.'),
+    retrieve=extend_schema(tags=['Departments'], summary='Get department details', description='Get details of a specific department by ID.'),
+    create=extend_schema(tags=['Departments'], summary='Create department', description='Create a new department. Admin only.'),
+    update=extend_schema(tags=['Departments'], summary='Update department', description='Update department details. Admin only.'),
+    partial_update=extend_schema(tags=['Departments'], summary='Partial update department', description='Partially update department details. Admin only.'),
+    destroy=extend_schema(tags=['Departments'], summary='Delete department', description='Delete a department. Admin only.')
+)
+class DepartmentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing departments.
+    Provides CRUD operations for department management.
+    """
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    pagination_class = None  # Disable pagination for departments
+
+    # Search and ordering
+    search_fields = ['name', 'code', 'description']
+    ordering_fields = ['name', 'code', 'created_at', 'is_active']
+    ordering = ['name']  # Default: alphabetical
+
+    def get_permissions(self):
+        """Allow listing departments for all authenticated users, but restrict modifications to admins"""
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAdminUser()]
+
+    def get_queryset(self):
+        """Filter queryset based on query parameters"""
+        queryset = super().get_queryset()
+
+        # Filter by active status
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+
+        return queryset
+
+    def get_serializer_class(self):
+        """Use lightweight serializer for list operations"""
+        if self.action == 'list' and self.request.query_params.get('simple') == 'true':
+            return DepartmentListSerializer
+        return DepartmentSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        """Prevent deletion of departments with users"""
+        instance = self.get_object()
+        user_count = instance.users.count()
+
+        if user_count > 0:
+            return error_response(
+                message=f'Cannot delete department with {user_count} assigned user(s). Reassign users first.',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        return super().destroy(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def active(self, request):
+        """Get only active departments (for dropdowns)"""
+        queryset = self.get_queryset().filter(is_active=True)
+        serializer = DepartmentListSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class ApplicationSettingViewSet(viewsets.ModelViewSet):

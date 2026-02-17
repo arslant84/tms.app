@@ -45,7 +45,7 @@
             [(ngModel)]="filterDepartment"
             (change)="onFilterChange()">
             <option value="">All Departments</option>
-            <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
+            <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
           </select>
         </div>
 
@@ -115,7 +115,7 @@
               <td>
                 <span class="badge bg-primary">{{ getRoleName(user) }}</span>
               </td>
-              <td>{{ user.department || 'N/A' }}</td>
+              <td>{{ getDepartmentName(user) }}</td>
               <td>{{ user.staff_id || 'N/A' }}</td>
               <td>
                 <span class="badge {{ getStatusBadgeClass(user) }}">
@@ -276,7 +276,7 @@
                 class="form-select"
                 formControlName="department">
                 <option value="">Select Department</option>
-                <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
+                <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
               </select>
             </div>
 
