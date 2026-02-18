@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { VisaService, VisaApplication, VisaApprovalStep, VisaDocument } from '../../services/visa.service';
 import { WorkflowService } from '../../../../core/services/workflow.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { RbacService } from '../../../../core/services/rbac.service';
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
@@ -41,6 +42,7 @@ export class VisaDetailComponent implements OnInit {
     private visaService: VisaService,
     public workflowService: WorkflowService,
     private toastService: ToastService,
+    private rbacService: RbacService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService
   ) {}
@@ -57,7 +59,10 @@ export class VisaDetailComponent implements OnInit {
 
   loadApplicationDetails(): void {
     this.isLoading = true;
-    this.visaService.getApplicationById(this.applicationId).subscribe({
+    // Check if user has admin view permissions for visa module
+    const hasAdminView = this.rbacService.hasPermission('view_all_visa') ||
+                         this.rbacService.hasPermission('approve_visa');
+    this.visaService.getApplicationById(this.applicationId, hasAdminView).subscribe({
       next: (application) => {
         this.application = application;
         this.isLoading = false;

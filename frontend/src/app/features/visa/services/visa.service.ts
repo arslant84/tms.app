@@ -139,8 +139,12 @@ export class VisaService {
     return this.http.get<any>(this.apiUrl, { params });
   }
 
-  getApplicationById(id: number): Observable<VisaApplication> {
-    return this.http.get<VisaApplication>(`${this.apiUrl}${id}/`);
+  getApplicationById(id: number, adminView: boolean = false): Observable<VisaApplication> {
+    let params = new HttpParams();
+    if (adminView) {
+      params = params.set('admin_view', 'true');
+    }
+    return this.http.get<VisaApplication>(`${this.apiUrl}${id}/`, { params });
   }
 
   createApplication(data: Partial<VisaApplication>): Observable<VisaApplication> {

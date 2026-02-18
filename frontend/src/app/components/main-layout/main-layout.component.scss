@@ -1,43 +1,45 @@
 // Main Layout Component - Using Unified Design System
 @use '../../../styles/variables' as vars;
 
-// Component-specific layout variables
-$sidebar-width: 250px;
-$sidebar-collapsed-width: 70px;
-$header-height: 60px;
-$footer-height: 50px;
-
-// Ensure component fills its container
+// Host element fills parent container completely (no gaps)
 :host {
-  display: block;
-  width: 100vw;
-  max-width: 100%;
+  display: flex;
+  flex: 1;
+  width: 100%;
   height: 100vh;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
+  min-height: 100vh;
+  overflow: hidden;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
-// Main Container
-.app-container {
+// Layout Container - horizontal flex for sidebar + content
+.layout-container {
   display: flex;
-  height: 100%;
-  width: 100vw;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
+  flex: 1;
+  width: 100%;
+  height: 100vh;
+  margin: 0 !important;
+  padding: 0 !important;
   overflow: hidden;
   background-color: transparent;
-  position: relative;
-  gap: 0;
-  align-items: stretch;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 
   &.sidebar-collapsed {
     .sidebar-wrapper {
-      width: $sidebar-collapsed-width;
+      width: vars.$sidebar-collapsed-width;
 
       .sidebar {
-        width: $sidebar-collapsed-width;
+        width: vars.$sidebar-collapsed-width;
 
         .sidebar-header {
           justify-content: center;
@@ -54,7 +56,6 @@ $footer-height: 50px;
           }
         }
 
-        // Ensure icons are centered and visible in collapsed state
         app-sidebar ::ng-deep {
           .nav-item {
             padding: vars.$spacing-3 vars.$spacing-2;
@@ -90,35 +91,32 @@ $footer-height: 50px;
         }
       }
     }
-
-    .main-content {
-      margin-left: 0;
-    }
   }
 }
 
-// Sidebar Styles
+// Sidebar Wrapper
 .sidebar-wrapper {
-  width: $sidebar-width;
+  width: vars.$sidebar-width;
   height: 100%;
-  transition: width vars.$transition-base;
-  z-index: 1000;
-  box-shadow: vars.$shadow-sm;
   flex-shrink: 0;
-  border-right: 1px solid vars.$border-light;
-  position: relative;
+  transition: width vars.$transition-base;
+  z-index: vars.$z-fixed;
+  margin: 0;
+  padding: 0;
 }
 
+// Sidebar
 .sidebar {
-  width: $sidebar-width;
+  width: vars.$sidebar-width;
   height: 100%;
   background: vars.$bg-dark;
-  color: rgb(255 255 255 / 90%);
-  transition: width vars.$transition-base;
+  color: vars.$text-inverse;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
+  transition: width vars.$transition-base;
+  margin: 0;
+  padding: 0;
 
   app-sidebar {
     flex: 1;
@@ -128,29 +126,16 @@ $footer-height: 50px;
     overflow: hidden;
   }
 
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: vars.$gray-400;
-    border-radius: vars.$radius-md;
-  }
-
   .sidebar-header {
-    height: $header-height;
+    height: vars.$navbar-height;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: 0 vars.$spacing-md;
     border-bottom: 1px solid rgb(255 255 255 / 10%);
-    position: relative;
-    z-index: 1005;
     background-color: vars.$bg-dark;
+    flex-shrink: 0;
+    margin: 0;
 
     .logo-container {
       display: flex;
@@ -161,9 +146,6 @@ $footer-height: 50px;
         width: 40px;
         height: 40px;
         object-fit: contain;
-        display: block;
-        position: relative;
-        z-index: 1010;
       }
 
       .logo-text {
@@ -175,98 +157,46 @@ $footer-height: 50px;
         transition: opacity vars.$transition-base, width vars.$transition-base;
       }
     }
-
-    .sidebar-toggle-btn {
-      background: rgb(0 0 0 / 5%);
-      border: 1px solid rgb(0 0 0 / 10%);
-      color: vars.$text-primary;
-      font-size: vars.$font-size-md;
-      cursor: pointer;
-      padding: vars.$spacing-2;
-      border-radius: vars.$radius-base;
-      transition: vars.$transition-base;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: vars.$spacing-8;
-      height: vars.$spacing-8;
-
-      &:hover {
-        background: rgb(0 0 0 / 10%);
-      }
-
-      @media (max-width: vars.$breakpoint-lg) {
-        display: flex;
-      }
-    }
   }
 }
 
-// Main Content Styles
+// Main Content Area - fills remaining space
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: 0;
-  transition: margin-left vars.$transition-base;
+  min-width: 0;
   overflow: hidden;
-  position: relative;
-  border-left: none;
+  margin: 0;
+  padding: 0;
 }
 
-// Header Styles
+// Header
 .header-wrapper {
-  height: $header-height;
+  height: vars.$navbar-height;
+  flex-shrink: 0;
   background-color: vars.$bg-primary;
   box-shadow: vars.$shadow-md;
-  z-index: 990;
-  width: 100%;
+  z-index: vars.$z-sticky;
+  margin: 0;
+  padding: 0;
 }
 
-// Content Area Styles
+// Content Area - fills available space with proper scrolling
 .content-area {
   flex: 1;
   padding: vars.$spacing-4;
   overflow-y: auto;
   background-color: rgb(248 249 250 / 50%);
   backdrop-filter: blur(8px);
-  position: relative;
-
-  // Middle Links Styles
-  .middle-links-container {
-    display: flex;
-    justify-content: center;
-    margin-top: vars.$spacing-8;
-    padding: vars.$spacing-md 0;
-
-    .middle-links {
-      display: flex;
-      gap: vars.$spacing-2;
-      align-items: center;
-
-      a {
-        color: vars.$text-primary;
-        text-decoration: none;
-        font-size: vars.$font-size-sm;
-
-        &:hover {
-          text-decoration: underline;
-          color: vars.$primary-color;
-        }
-      }
-
-      .separator {
-        color: rgb(0 0 0 / 30%);
-      }
-    }
-  }
+  margin: 0;
 
   &::-webkit-scrollbar {
     width: 8px;
   }
 
   &::-webkit-scrollbar-track {
-    background: rgb(248 249 250 / 50%);
+    background: transparent;
   }
 
   &::-webkit-scrollbar-thumb {
@@ -275,14 +205,14 @@ $footer-height: 50px;
   }
 }
 
-// Footer Styles
+// Footer
 .footer-wrapper {
-  width: 100%;
-  margin-top: auto;
   flex-shrink: 0;
+  margin: 0;
+  padding: 0;
 }
 
-// Right Panel Styles
+// Right Panel (if needed)
 .right-panel {
   position: fixed;
   top: 0;
@@ -290,23 +220,10 @@ $footer-height: 50px;
   width: 350px;
   height: 100%;
   background-color: vars.$bg-primary;
-  box-shadow: vars.$shadow-md;
-  z-index: 1001;
+  box-shadow: vars.$shadow-lg;
+  z-index: vars.$z-modal;
   overflow-y: auto;
   transition: transform vars.$transition-base;
-
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: vars.$bg-primary;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: vars.$gray-300;
-    border-radius: vars.$radius-md;
-  }
 }
 
 // Mobile Sidebar Overlay
@@ -314,20 +231,17 @@ $footer-height: 50px;
   display: none;
 }
 
-/* Responsive styles */
+// Responsive styles
 @media (max-width: vars.$breakpoint-lg) {
   .sidebar-wrapper {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 1050;
+    z-index: vars.$z-modal;
+    height: 100vh;
   }
 
-  .main-content {
-    margin-left: 0 !important;
-  }
-
-  .app-container {
+  .layout-container {
     &.sidebar-collapsed {
       .sidebar-wrapper {
         transform: translateX(-100%);
@@ -342,7 +256,7 @@ $footer-height: 50px;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgb(0 0 0 / 50%);
-    z-index: 1040;
+    background-color: vars.$bg-overlay;
+    z-index: vars.$z-modal-backdrop;
   }
 }

@@ -1,29 +1,35 @@
-@use '../styles/typography' as typography;
-@use '../styles/colors' as colors;
+// App Root Component - Using Unified Design System
 @use '../styles/variables' as vars;
 
-// Root component fills entire viewport
+// Root component - fills entire viewport with no gaps
 :host {
-  display: block;
-  width: 100%;
-  min-height: 100vh;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  font-family: typography.$font-family-primary;
-  color: colors.$primary-dark-gray;
-}
-
-// App container spans full viewport - renamed to avoid conflict with main-layout
-.app-container {
-  width: 100%;
-  max-width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden;
+  font-family: vars.$font-primary;
+  color: vars.$text-primary;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+// App container - fills the host and provides background
+.app-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  margin: 0 !important;
+  padding: 0 !important;
   overflow-x: hidden;
   background-image: url('/img/background.jpg');
   background-size: cover;
@@ -32,89 +38,14 @@
   background-attachment: fixed;
 }
 
-// Clean login container styles
+// Login container styles - centered content for unauthenticated users
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  flex: 1;
   width: 100%;
   background: linear-gradient(135deg, vars.$bg-dark 0%, vars.$info-color 100%);
   padding: vars.$spacing-md;
-}
-
-.flex-grow-1 {
-  flex: 1 0 auto;
-}
-
-// Removed max-width constraint to allow full-width responsive layout
-// If you need a max-width container, use Bootstrap's .container class instead
-.container-fluid {
-  width: 100%;
-  padding-right: var(--bs-gutter-x, 0.75rem);
-  padding-left: var(--bs-gutter-x, 0.75rem);
-  margin-right: auto;
-  margin-left: auto;
-}
-
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: vars.$spacing-md vars.$spacing-8;
-  background-color: colors.$primary-teal;
-  color: vars.$text-inverse;
-  box-shadow: vars.$shadow-sm;
-
-  .logo {
-    @include typography.title;
-    color: vars.$text-inverse;
-    font-size: vars.$font-size-xl;
-    font-weight: typography.$font-weight-900;
-  }
-
-  .main-nav {
-    ul {
-      display: flex;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-
-      li {
-        margin-left: vars.$spacing-6;
-
-        a {
-          color: vars.$text-inverse;
-          text-decoration: none;
-          font-weight: typography.$font-weight-700;
-          padding: vars.$spacing-2 vars.$spacing-md;
-          border-radius: vars.$radius-base;
-          transition: background-color vars.$transition-base;
-
-          &:hover {
-            background-color: rgb(255 255 255 / 20%);
-          }
-
-          &.active {
-            background-color: rgb(255 255 255 / 30%);
-          }
-        }
-      }
-    }
-  }
-}
-
-.app-content {
-  flex: 1;
-  padding: vars.$spacing-8;
-  background-color: rgb(248 249 250 / 85%);
-  backdrop-filter: blur(5px);
-}
-
-.app-footer {
-  padding: vars.$spacing-md vars.$spacing-8;
-  background-color: colors.$primary-dark-gray;
-  color: vars.$text-inverse;
-  text-align: center;
-  font-size: vars.$font-size-sm;
+  margin: 0;
 }
