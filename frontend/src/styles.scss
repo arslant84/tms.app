@@ -9,14 +9,29 @@
 // We're using Google Fonts for Raleway instead of local font files
 // The font is loaded in index.html
 
-// Global styles - Full viewport coverage
+// Global styles - Full viewport coverage with no gaps
 html, body {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
   max-width: 100%;
   min-height: 100vh;
   overflow-x: hidden;
+  box-sizing: border-box;
+  position: relative;
+  top: 0;
+  left: 0;
+}
+
+// Apply box-sizing globally and remove any default margins
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+// Ensure no gaps from any container
+html, body, app-root, app-main-layout {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 body {
@@ -29,15 +44,38 @@ body {
   background-attachment: fixed;
 }
 
-// Ensure app-root fills viewport
+// Ensure app-root fills viewport completely
 app-root {
-  display: block;
-  width: 100vw;
-  max-width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
   overflow-x: hidden;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
+// Ensure main-layout fills its container
+app-main-layout {
+  display: flex;
+  flex: 1;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
 }
 
 h1 {
@@ -236,8 +274,9 @@ tmsapp-admin-systemsettings-workflow-configuration,
     display: none !important;
   }
 
-  // App container should have no constraints
-  .app-container {
+  // App and layout containers should have no constraints
+  .app-container,
+  .layout-container {
     display: block !important;
     max-width: 100% !important;
     width: 100% !important;

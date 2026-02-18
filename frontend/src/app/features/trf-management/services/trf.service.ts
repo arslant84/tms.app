@@ -54,8 +54,9 @@ export class TrfService {
   }
 
   // Get TRF by ID and type
-  getTrfById(id: number, isOverseas: boolean = false): Observable<TravelRequestForm> {
-    return this.http.get<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/`)
+  getTrfById(id: number, isOverseas: boolean = false, adminView: boolean = false): Observable<TravelRequestForm> {
+    const params = adminView ? '?admin_view=true' : '';
+    return this.http.get<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/${params}`)
       .pipe(
         catchError(this.handleError)
       );

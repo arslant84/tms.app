@@ -67,7 +67,8 @@ export class FlightsAdminOverviewComponent implements OnInit {
   travelTypeOptions = [
     { value: 'all', label: 'All Types' },
     { value: 'Overseas', label: 'Overseas' },
-    { value: 'Home Leave Passage', label: 'Home Leave Passage' }
+    { value: 'Home Leave Passage', label: 'Home Leave Passage' },
+    { value: 'Home Leave', label: 'Home Leave' }
   ];
 
   constructor(
@@ -93,7 +94,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
 
         // Filter for TRFs requiring flights (Overseas, Home Leave, Domestic with itinerary)
         const flightTrfs = trfs.filter((trf: any) => {
-          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage') {
+          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage' || trf.travel_type === 'Home Leave') {
             return true;
           }
           if (trf.travel_type === 'Domestic' && trf.domestic_travel_details?.itinerary?.length > 0) {
@@ -137,7 +138,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
         // Include: Overseas, Home Leave Passage, and Domestic trips with flight segments
         const flightTrfs = trfs.filter((trf: any) => {
           // Include Overseas and Home Leave (always require flights)
-          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage') {
+          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage' || trf.travel_type === 'Home Leave') {
             return true;
           }
 
@@ -287,7 +288,8 @@ export class FlightsAdminOverviewComponent implements OnInit {
   getTravelTypeBadge(travelType: string): string {
     switch (travelType) {
       case 'Overseas': return 'badge-blue';
-      case 'Home Leave Passage': return 'badge-purple';
+      case 'Home Leave Passage':
+      case 'Home Leave': return 'badge-purple';
       case 'Domestic': return 'badge-green';
       default: return 'badge-gray';
     }

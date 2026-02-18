@@ -12,6 +12,7 @@ import { ApprovalSubmissionComponent } from '../approval-submission/approval-sub
 import { TrfService } from '../../services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { RbacService } from '../../../../core/services/rbac.service';
 
 @Component({
   selector: 'app-trf-wizard',
@@ -67,7 +68,8 @@ export class TrfWizardComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private toastService: ToastService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private rbacService: RbacService
   ) {}
 
   ngOnInit(): void {
@@ -99,7 +101,11 @@ export class TrfWizardComponent implements OnInit {
   private loadExistingTrf(id: number): void {
     this.isLoadingTrf = true;
 
-    this.trfService.getTrfById(id).subscribe({
+    // Check if user has admin permissions for TRF module
+    const hasAdminView = this.rbacService.hasPermission('view_all_trf') ||
+                         this.rbacService.hasPermission('manage_trf');
+
+    this.trfService.getTrfById(id, false, hasAdminView).subscribe({
       next: (response: any) => {
         // The backend returns { trf: { ...data } }, so we need to extract the trf object
         const data = response.trf || response;
