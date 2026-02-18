@@ -5,6 +5,7 @@ import { TrfService } from '../../services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { WorkflowService } from '../../../../core/services/workflow.service';
+import { RbacService } from '../../../../core/services/rbac.service';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
@@ -44,6 +45,7 @@ export class TrfDetailComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
+    private rbacService: RbacService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService
   ) {}
@@ -63,8 +65,13 @@ export class TrfDetailComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
+    // Check if user has admin view permissions for TRF module
+    const hasAdminView = this.rbacService.hasPermission('view_all_trf') ||
+                         this.rbacService.hasPermission('approve_trf') ||
+                         this.rbacService.hasPermission('manage_trf');
+
     // Fetch TRF details from the backend using TrfService
-    this.trfService.getTrfById(this.trfId).subscribe({
+    this.trfService.getTrfById(this.trfId, false, hasAdminView).subscribe({
       next: (response: any) => {
         // Backend returns { trf: { ...data } }, so extract the trf object
         const data = response.trf || response;

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
@@ -11,7 +11,8 @@ import { RightPanelComponent } from '../../shared/components/right-panel/right-p
   standalone: true,
   imports: [CommonModule, RouterModule, SidebarComponent, HeaderComponent, FooterComponent, RightPanelComponent],
   templateUrl: './main-layout.component.html',
-  styleUrl: './main-layout.component.scss'
+  styleUrl: './main-layout.component.scss',
+  encapsulation: ViewEncapsulation.Emulated  // Ensure consistent style scoping
 })
 export class MainLayoutComponent {
   isSidebarCollapsed: boolean = false;

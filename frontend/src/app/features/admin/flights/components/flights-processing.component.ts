@@ -109,7 +109,7 @@ export class FlightsProcessingComponent implements OnInit {
     this.isLoadingPending = true;
     this.errorPending = null;
 
-    this.trfService.getAllTrfs().subscribe({
+    this.trfService.getAllTrfs({ adminView: true }).subscribe({
       next: (response: any) => {
         const trfs = response.results || response.trfs || [];
 
@@ -117,7 +117,7 @@ export class FlightsProcessingComponent implements OnInit {
         const approvedTrfs = trfs.filter((trf: any) => {
           if (trf.status !== 'Approved') return false;
 
-          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage') {
+          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage' || trf.travel_type === 'Home Leave') {
             return true;
           }
 
@@ -201,7 +201,7 @@ export class FlightsProcessingComponent implements OnInit {
   fetchBookedFlights(): void {
     this.isLoadingBooked = true;
 
-    this.trfService.getAllTrfs().subscribe({
+    this.trfService.getAllTrfs({ adminView: true }).subscribe({
       next: (response: any) => {
         const trfs = response.results || response.trfs || [];
 
@@ -453,7 +453,8 @@ export class FlightsProcessingComponent implements OnInit {
   getTravelTypeBadgeClass(travelType: string): string {
     switch (travelType) {
       case 'Overseas': return 'badge-blue';
-      case 'Home Leave Passage': return 'badge-purple';
+      case 'Home Leave Passage':
+      case 'Home Leave': return 'badge-purple';
       case 'Domestic': return 'badge-green';
       default: return 'badge-gray';
     }
