@@ -8,6 +8,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { Permission } from '../../../../core/models/permission.models';
 import { ModalService } from '../../../../core/services/modal.service';
+import { ConfirmDeleteModalComponent } from '../../../../core/components/confirm-delete-modal/confirm-delete-modal.component';
 
 @Component({
   selector: 'tmsapp-admin-systemsettings-role-management',
@@ -22,9 +23,7 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
   roles: TmsApp_Roles_RoleWithPermissions[] = [];
   permissions: TmsApp_Roles_Permission[] = [];
 
-
-  showDeleteConfirm = false;
-  roleToDelete: TmsApp_Roles_RoleWithPermissions | null = null;
+  private roleToDelete: TmsApp_Roles_RoleWithPermissions | null = null;
 
   constructor(
     private rolesService: TmsApp_Core_Services_RolesService,
@@ -113,46 +112,52 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
 
   confirmDelete(role: TmsApp_Roles_RoleWithPermissions): void {
     this.roleToDelete = role;
-    this.showDeleteConfirm = true;
-    // Lock body scroll
-    document.body.classList.add('modal-open');
-  }
 
-  cancelDelete(): void {
-    this.roleToDelete = null;
-    this.showDeleteConfirm = false;
-    // Unlock body scroll
-    document.body.classList.remove('modal-open');
+    this.modalService.open(ConfirmDeleteModalComponent, {
+      title: 'Confirm Delete',
+      message: 'Are you sure you want to delete this role?',
+      warningMessage: `This action cannot be undone. Role "${role.name}" will be permanently removed. Ensure no users are currently assigned this role before deleting.`,
+      confirmButtonText: 'Delete Role'
+    });
+
+    // Get reference to the modal component
+    const modalRef = (this.modalService as any).componentRef;
+    if (modalRef) {
+      // Subscribe to confirm event
+      modalRef.instance.confirm.subscribe(() => {
+        this.executeDelete();
+      });
+    }
   }
 
   executeDelete(): void {
     if (!this.roleToDelete) return;
 
-    this.isSaving = true;
+    // Update the modal's isDeleting state
+    const modalRef = (this.modalService as any).componentRef;
+    if (modalRef) {
+      modalRef.instance.isDeleting = true;
+    }
+
     this.rolesService.deleteRole(this.roleToDelete.id).subscribe({
       next: () => {
         this.toast.success('Role deleted successfully');
-        this.showDeleteConfirm = false;
+        this.modalService.close();
         this.roleToDelete = null;
-        // Unlock body scroll
-        document.body.classList.remove('modal-open');
         this.loadData();
       },
       error: (err) => {
         this.toast.error('Failed to delete role');
         console.error(err);
-      },
-      complete: () => {
-        this.isSaving = false;
+        if (modalRef) {
+          modalRef.instance.isDeleting = false;
+        }
       }
     });
   }
 
   ngOnDestroy(): void {
-    // Close any open modals when the component is destroyed
-    if (this.showDeleteConfirm) {
-      document.body.classList.remove('modal-open');
-    }
+    // Component cleanup
   }
 
   getPermissionNames(permissionIds: string[]): string {

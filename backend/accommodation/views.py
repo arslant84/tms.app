@@ -632,10 +632,38 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='pending-approvals')
     def pending_approvals(self, request):
-        """Get accommodation requests pending approval"""
-        queryset = AccommodationRequest.objects.filter(
-            status='Pending'
-        ).prefetch_related('trf__trfitinerarysegment_set').order_by('-submitted_at')
+        """Get accommodation requests pending approval for the current user's role"""
+        from accounts.utils import is_module_admin
+        from workflows.models import WorkflowInstance, WorkflowStepExecution
+        from django.contrib.contenttypes.models import ContentType
+
+        user = request.user
+        user_role = user.role if hasattr(user, 'role') and user.role else None
+
+        # Admins and superusers see all pending requests
+        if user.is_superuser or is_module_admin(user, 'accommodation'):
+            queryset = AccommodationRequest.objects.filter(
+                status='Pending'
+            ).prefetch_related('trf__trfitinerarysegment_set').order_by('-submitted_at')
+        elif user_role:
+            # Get accommodation requests where the user's role is the approver for a pending step
+            content_type = ContentType.objects.get_for_model(AccommodationRequest)
+
+            # Find workflow instances with pending steps for this user's role
+            # approver_role stores the role UUID as string
+            pending_step_instance_ids = WorkflowStepExecution.objects.filter(
+                status='pending',
+                workflow_instance__content_type=content_type,
+                workflow_step__approver_role=str(user_role.id)
+            ).values_list('workflow_instance__object_id', flat=True)
+
+            queryset = AccommodationRequest.objects.filter(
+                id__in=pending_step_instance_ids,
+                status='Pending'
+            ).prefetch_related('trf__trfitinerarysegment_set').order_by('-submitted_at')
+        else:
+            # User has no role - return empty
+            queryset = AccommodationRequest.objects.none()
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

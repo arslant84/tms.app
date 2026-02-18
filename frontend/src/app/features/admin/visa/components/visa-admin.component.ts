@@ -103,7 +103,7 @@ export class VisaAdminComponent implements OnInit {
    * Fetch visa application statistics
    */
   fetchStats(): void {
-    this.visaService.getAllApplications({}).subscribe({
+    this.visaService.getAllApplications({ adminView: true }).subscribe({
       next: (response: any) => {
         const applications = response.results || response || [];
 
@@ -146,7 +146,8 @@ export class VisaAdminComponent implements OnInit {
 
     const filters: any = {
       page: this.currentPage,
-      page_size: this.pageSize
+      page_size: this.pageSize,
+      adminView: true  // Show all visa applications for admin processing
     };
 
     if (this.filterCriteria.status !== 'all') {

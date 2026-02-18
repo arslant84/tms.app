@@ -9,6 +9,7 @@ from utils.api_response import (
     success_response, error_response, validation_error_response,
     forbidden_response, not_found_response, get_pagination_params
 )
+from accounts.utils import can_view_all, is_module_admin
 
 from .models import FlightBooking, HotelBooking, BookingStatus
 from .serializers import (
@@ -40,12 +41,12 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        """Filter queryset based on user role"""
+        """Filter queryset based on user permissions"""
         user = self.request.user
         queryset = super().get_queryset()
 
-        # Admin and travel desk staff can see all bookings
-        if user.is_staff:
+        # Users with view_all_bookings or view_all_trf permission can see all bookings
+        if user.is_superuser or can_view_all(user, 'booking') or can_view_all(user, 'trf'):
             pass
         else:
             # Regular users can only see their own bookings
@@ -86,8 +87,8 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def confirm(self, request, pk=None):
-        """Confirm a flight booking (admin/travel desk only)"""
-        if not request.user.is_staff:
+        """Confirm a flight booking (requires booking management permission)"""
+        if not request.user.is_superuser and not is_module_admin(request.user, 'booking') and not is_module_admin(request.user, 'trf'):
             return forbidden_response(
                 message='Only travel desk staff can confirm bookings'
             )
@@ -111,8 +112,8 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def issue_ticket(self, request, pk=None):
-        """Issue ticket for a confirmed booking (admin/travel desk only)"""
-        if not request.user.is_staff:
+        """Issue ticket for a confirmed booking (requires booking management permission)"""
+        if not request.user.is_superuser and not is_module_admin(request.user, 'booking') and not is_module_admin(request.user, 'trf'):
             return forbidden_response(
                 message='Only travel desk staff can issue tickets'
             )
@@ -146,8 +147,9 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
         """Cancel a flight booking"""
         booking = self.get_object()
 
-        # Check permissions
-        if booking.user != request.user and not request.user.is_staff:
+        # Check permissions - user can cancel own bookings, admins can cancel any
+        is_admin = request.user.is_superuser or is_module_admin(request.user, 'booking') or is_module_admin(request.user, 'trf')
+        if booking.user != request.user and not is_admin:
             return forbidden_response(
                 message='You can only cancel your own bookings'
             )
@@ -170,8 +172,8 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
-        """Update booking status (admin/travel desk only)"""
-        if not request.user.is_staff:
+        """Update booking status (requires booking management permission)"""
+        if not request.user.is_superuser and not is_module_admin(request.user, 'booking') and not is_module_admin(request.user, 'trf'):
             return forbidden_response(
                 message='Only travel desk staff can update booking status'
             )
@@ -222,10 +224,11 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def stats(self, request):
         """Get flight booking statistics"""
-        if not request.user.is_staff:
-            queryset = self.get_queryset().filter(user=request.user)
-        else:
+        user = request.user
+        if user.is_superuser or can_view_all(user, 'booking') or can_view_all(user, 'trf'):
             queryset = self.get_queryset()
+        else:
+            queryset = self.get_queryset().filter(user=user)
 
         total = queryset.count()
         pending = queryset.filter(status=BookingStatus.PENDING).count()
@@ -293,12 +296,12 @@ class HotelBookingViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        """Filter queryset based on user role"""
+        """Filter queryset based on user permissions"""
         user = self.request.user
         queryset = super().get_queryset()
 
-        # Admin and travel desk staff can see all bookings
-        if user.is_staff:
+        # Users with view_all_bookings or view_all_accommodation permission can see all bookings
+        if user.is_superuser or can_view_all(user, 'booking') or can_view_all(user, 'accommodation'):
             pass
         else:
             # Regular users can only see their own bookings
@@ -339,8 +342,8 @@ class HotelBookingViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def confirm(self, request, pk=None):
-        """Confirm a hotel booking (admin/travel desk only)"""
-        if not request.user.is_staff:
+        """Confirm a hotel booking (requires booking management permission)"""
+        if not request.user.is_superuser and not is_module_admin(request.user, 'booking') and not is_module_admin(request.user, 'accommodation'):
             return forbidden_response(
                 message='Only travel desk staff can confirm bookings'
             )
@@ -367,8 +370,9 @@ class HotelBookingViewSet(viewsets.ModelViewSet):
         """Cancel a hotel booking"""
         booking = self.get_object()
 
-        # Check permissions
-        if booking.user != request.user and not request.user.is_staff:
+        # Check permissions - user can cancel own bookings, admins can cancel any
+        is_admin = request.user.is_superuser or is_module_admin(request.user, 'booking') or is_module_admin(request.user, 'accommodation')
+        if booking.user != request.user and not is_admin:
             return forbidden_response(
                 message='You can only cancel your own bookings'
             )
@@ -391,8 +395,8 @@ class HotelBookingViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
-        """Update booking status (admin/travel desk only)"""
-        if not request.user.is_staff:
+        """Update booking status (requires booking management permission)"""
+        if not request.user.is_superuser and not is_module_admin(request.user, 'booking') and not is_module_admin(request.user, 'accommodation'):
             return forbidden_response(
                 message='Only travel desk staff can update booking status'
             )
@@ -456,10 +460,11 @@ class HotelBookingViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def stats(self, request):
         """Get hotel booking statistics"""
-        if not request.user.is_staff:
-            queryset = self.get_queryset().filter(user=request.user)
-        else:
+        user = request.user
+        if user.is_superuser or can_view_all(user, 'booking') or can_view_all(user, 'accommodation'):
             queryset = self.get_queryset()
+        else:
+            queryset = self.get_queryset().filter(user=user)
 
         total = queryset.count()
         pending = queryset.filter(status=BookingStatus.PENDING).count()

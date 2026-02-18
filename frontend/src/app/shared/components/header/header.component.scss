@@ -391,7 +391,7 @@
       display: block;
 
       &.unread {
-        background-color: #f0fdfa;
+        background-color: vars.$primary-lightest;
         border-left: 3px solid vars.$primary-color;
         padding-left: calc(vars.$spacing-3 - 3px);
       }
@@ -521,7 +521,7 @@
 
         &:hover {
           color: vars.$primary-hover;
-          background-color: #f0fdfa;
+          background-color: vars.$primary-lightest;
         }
       }
 

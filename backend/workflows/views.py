@@ -6,6 +6,8 @@ from django.utils import timezone
 from django.db.models import Q, Max
 from datetime import timedelta
 
+from accounts.utils import can_manage, has_any_permission
+
 from .models import (
     WorkflowTemplate, WorkflowStep, WorkflowCondition, WorkflowInstance,
     WorkflowStepExecution, WorkflowDelegation, WorkflowAuditLog
@@ -155,8 +157,9 @@ class WorkflowInstanceViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = WorkflowInstance.objects.all()
 
-        # Admin sees all
-        if not user.is_staff:
+        # Users with workflow management permission see all
+        is_workflow_admin = user.is_superuser or can_manage(user, 'workflow')
+        if not is_workflow_admin:
             # Regular users see instances they initiated or have pending approvals
             queryset = queryset.filter(
                 Q(initiated_by=user) |
@@ -233,8 +236,9 @@ class WorkflowInstanceViewSet(viewsets.ModelViewSet):
         """
         instance = self.get_object()
 
-        # Check permissions
-        if instance.initiated_by != request.user and not request.user.is_staff:
+        # Check permissions - initiator or workflow admin can cancel
+        is_workflow_admin = request.user.is_superuser or can_manage(request.user, 'workflow')
+        if instance.initiated_by != request.user and not is_workflow_admin:
             return Response(
                 {'error': 'Only the initiator or admin can cancel this workflow'},
                 status=status.HTTP_403_FORBIDDEN
@@ -327,6 +331,7 @@ class WorkflowStepExecutionViewSet(viewsets.ModelViewSet):
         user_role = user.role if hasattr(user, 'role') and user.role else None
 
         # Build query for user's pending approvals
+        # approver_role stores role UUID as string (e.g., "f9bce96c-9bc2-41b1-aa60-cf8febda571a")
         queryset = WorkflowStepExecution.objects.filter(
             status='pending'
         ).filter(
@@ -360,11 +365,12 @@ class WorkflowStepExecutionViewSet(viewsets.ModelViewSet):
         # Check if user has permission to act on this step
         user_role = user.role.name if hasattr(user, 'role') and user.role else None
         workflow_step = step_execution.workflow_step
+        is_workflow_admin = user.is_superuser or can_manage(user, 'workflow')
 
         can_action = (
             step_execution.assigned_to == user or
             (workflow_step.approver_role == user_role and not step_execution.assigned_to) or
-            user.is_staff
+            is_workflow_admin
         )
 
         if not can_action:
@@ -577,7 +583,9 @@ class WorkflowDelegationViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
 
-        if not user.is_staff:
+        # Workflow admins see all delegations
+        is_workflow_admin = user.is_superuser or can_manage(user, 'workflow')
+        if not is_workflow_admin:
             queryset = queryset.filter(
                 Q(delegated_from=user) | Q(delegated_to=user)
             )

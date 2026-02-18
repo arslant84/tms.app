@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { map, tap, catchError, shareReplay } from 'rxjs/operators';
+import { map, tap, catchError, shareReplay, filter, take, switchMap } from 'rxjs/operators';
 import { User, AuthResponse } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 
@@ -14,6 +14,10 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
   private apiUrl = environment.apiUrl.replace('/api', ''); // Remove /api suffix for backward compatibility
   private initializationRequest$?: Observable<User>;
+
+  // Track whether initialization has completed
+  private initializedSubject = new BehaviorSubject<boolean>(false);
+  public initialized$ = this.initializedSubject.asObservable();
 
   constructor(private http: HttpClient, private router: Router) {
     // SECURITY: Token now stored in HttpOnly cookie (not accessible to JavaScript)
@@ -36,10 +40,12 @@ export class AuthService {
     this.initializationRequest$ = this.http.get<User>(`${this.apiUrl}/api/users/me/`, { withCredentials: true }).pipe(
       tap((user) => {
         this.currentUserSubject.next(user);
+        this.initializedSubject.next(true);
       }),
       catchError(() => {
         // No valid session, user not logged in
         this.currentUserSubject.next(null);
+        this.initializedSubject.next(true);
         return of(null as any);
       }),
       shareReplay(1) // Share the result with all subscribers
@@ -47,6 +53,18 @@ export class AuthService {
 
     // Subscribe to trigger the request
     this.initializationRequest$.subscribe();
+  }
+
+  /**
+   * Wait for initialization to complete before returning user
+   * This should be used by guards to ensure user data is loaded
+   */
+  waitForInit(): Observable<User | null> {
+    return this.initialized$.pipe(
+      filter(initialized => initialized),
+      take(1),
+      switchMap(() => of(this.currentUserSubject.value))
+    );
   }
 
   login(email: string, password: string): Observable<User> {
@@ -89,6 +107,7 @@ export class AuthService {
 
         // Store user data in memory (not localStorage)
         this.currentUserSubject.next(user);
+        this.initializedSubject.next(true);
         return user;
       }),
       catchError(error => {
@@ -156,7 +175,12 @@ export class AuthService {
   }
 
   isAuthenticated(): Observable<boolean> {
-    return this.currentUser$.pipe(
+    // Wait for initialization before checking authentication
+    return this.initialized$.pipe(
+      filter(initialized => initialized),
+      take(1),
+      switchMap(() => this.currentUser$),
+      take(1),
       map(user => {
         // SECURITY: Check if user exists
         // Token validation is handled by backend

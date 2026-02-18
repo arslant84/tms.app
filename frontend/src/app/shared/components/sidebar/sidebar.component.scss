@@ -85,7 +85,7 @@
 
     &.active {
       background-color: rgb(78 115 223 / 20%);
-      color: #6C9EFF;
+      color: vars.$info-color;
       font-weight: vars.$font-weight-semibold;
     }
   }
@@ -124,7 +124,7 @@
 
   &.active {
     background-color: rgb(78 115 223 / 20%);
-    color: #6C9EFF;
+    color: vars.$info-color;
     font-weight: vars.$font-weight-semibold;
   }
 

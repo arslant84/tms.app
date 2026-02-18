@@ -7,6 +7,8 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { Permission } from '../../../../core/models/permission.models';
 import { Department } from '../../../../core/models/user.model';
+import { ModalService } from '../../../../core/services/modal.service';
+import { ConfirmDeleteModalComponent } from '../../../../core/components/confirm-delete-modal/confirm-delete-modal.component';
 
 @Component({
   selector: 'app-department-management',
@@ -31,14 +33,14 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
   };
 
   // Delete confirmation
-  showDeleteConfirm = false;
-  departmentToDelete: Department | null = null;
+  private departmentToDelete: Department | null = null;
 
   constructor(
     private departmentService: DepartmentService,
     private toast: ToastService,
     private rbacService: RbacService,
-    private router: Router
+    private router: Router,
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {
@@ -189,26 +191,38 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
 
   confirmDelete(department: Department): void {
     this.departmentToDelete = department;
-    this.showDeleteConfirm = true;
-    document.body.classList.add('modal-open');
-  }
 
-  cancelDelete(): void {
-    this.departmentToDelete = null;
-    this.showDeleteConfirm = false;
-    document.body.classList.remove('modal-open');
+    this.modalService.open(ConfirmDeleteModalComponent, {
+      title: 'Confirm Delete',
+      message: 'Are you sure you want to delete this department?',
+      warningMessage: `This action cannot be undone. Department "${department.name}" will be permanently removed.`,
+      confirmButtonText: 'Delete Department'
+    });
+
+    // Get reference to the modal component
+    const modalRef = (this.modalService as any).componentRef;
+    if (modalRef) {
+      // Subscribe to confirm event
+      modalRef.instance.confirm.subscribe(() => {
+        this.executeDelete();
+      });
+    }
   }
 
   executeDelete(): void {
     if (!this.departmentToDelete) return;
 
-    this.isSaving = true;
+    // Update the modal's isDeleting state
+    const modalRef = (this.modalService as any).componentRef;
+    if (modalRef) {
+      modalRef.instance.isDeleting = true;
+    }
+
     this.departmentService.deleteDepartment(this.departmentToDelete.id).subscribe({
       next: () => {
         this.toast.success('Department deleted successfully');
-        this.showDeleteConfirm = false;
+        this.modalService.close();
         this.departmentToDelete = null;
-        document.body.classList.remove('modal-open');
         this.loadDepartments();
       },
       error: (err) => {
@@ -218,16 +232,14 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
         } else {
           this.toast.error('Failed to delete department. It may have users assigned.');
         }
-      },
-      complete: () => {
-        this.isSaving = false;
+        if (modalRef) {
+          modalRef.instance.isDeleting = false;
+        }
       }
     });
   }
 
   ngOnDestroy(): void {
-    if (this.showDeleteConfirm) {
-      document.body.classList.remove('modal-open');
-    }
+    // Component cleanup
   }
 }

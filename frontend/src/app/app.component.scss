@@ -2,15 +2,29 @@
 @use '../styles/colors' as colors;
 @use '../styles/variables' as vars;
 
+// Root component fills entire viewport
 :host {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
   font-family: typography.$font-family-primary;
   color: colors.$primary-dark-gray;
 }
 
+// App container spans full viewport - renamed to avoid conflict with main-layout
 .app-container {
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
   background-image: url('/img/background.jpg');
   background-size: cover;
   background-position: center;
@@ -33,9 +47,14 @@
   flex: 1 0 auto;
 }
 
+// Removed max-width constraint to allow full-width responsive layout
+// If you need a max-width container, use Bootstrap's .container class instead
 .container-fluid {
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+  padding-right: var(--bs-gutter-x, 0.75rem);
+  padding-left: var(--bs-gutter-x, 0.75rem);
+  margin-right: auto;
+  margin-left: auto;
 }
 
 .app-header {

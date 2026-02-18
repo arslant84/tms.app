@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import FlightBooking, HotelBooking, BookingStatus, FlightType, BookingClass
 from trf.models import TravelRequest
+from accounts.utils import is_module_admin
 
 User = get_user_model()
 
@@ -83,9 +84,9 @@ class FlightBookingCreateSerializer(serializers.ModelSerializer):
         """Create flight booking with current user"""
         user = self.context['request'].user
 
-        # If user is admin/travel desk, they can book for TRF owner
+        # If user has booking admin permissions, they can book for TRF owner
         trf = validated_data['trf']
-        if user.is_staff:
+        if user.is_superuser or is_module_admin(user, 'booking') or is_module_admin(user, 'trf'):
             validated_data['user'] = trf.user
             validated_data['booked_by'] = user
         else:
@@ -204,9 +205,9 @@ class HotelBookingCreateSerializer(serializers.ModelSerializer):
         """Create hotel booking with current user"""
         user = self.context['request'].user
 
-        # If user is admin/travel desk, they can book for TRF owner
+        # If user has booking admin permissions, they can book for TRF owner
         trf = validated_data['trf']
-        if user.is_staff:
+        if user.is_superuser or is_module_admin(user, 'booking') or is_module_admin(user, 'accommodation'):
             validated_data['user'] = trf.user
             validated_data['booked_by'] = user
         else:

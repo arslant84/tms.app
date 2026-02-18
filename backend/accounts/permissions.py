@@ -1,21 +1,22 @@
 from rest_framework import permissions
+from .utils import has_permission
 
 
 class HasManageRolesPermission(permissions.BasePermission):
     """
     Custom permission to check if user has manage_roles permission.
-    Allows superusers and staff, or users with the specific permission.
+    Allows superusers or users with the specific permission.
     """
     def has_permission(self, request, view):
-        # Allow superusers and staff
-        if request.user and (request.user.is_superuser or request.user.is_staff):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # Allow superusers
+        if request.user.is_superuser:
             return True
 
         # Check if user has the manage_roles permission
-        if request.user and hasattr(request.user, 'role') and request.user.role:
-            return request.user.role.permissions.filter(name='manage_roles').exists()
-
-        return False
+        return has_permission(request.user, 'manage_roles')
 
 
 class HasManageUsersPermission(permissions.BasePermission):
@@ -23,15 +24,15 @@ class HasManageUsersPermission(permissions.BasePermission):
     Custom permission to check if user has manage_users permission.
     """
     def has_permission(self, request, view):
-        # Allow superusers and staff
-        if request.user and (request.user.is_superuser or request.user.is_staff):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # Allow superusers
+        if request.user.is_superuser:
             return True
 
         # Check if user has the manage_users permission
-        if request.user and hasattr(request.user, 'role') and request.user.role:
-            return request.user.role.permissions.filter(name='manage_users').exists()
-
-        return False
+        return has_permission(request.user, 'manage_users')
 
 
 class HasViewSystemSettingsPermission(permissions.BasePermission):
@@ -39,17 +40,16 @@ class HasViewSystemSettingsPermission(permissions.BasePermission):
     Custom permission to check if user has view_system_settings permission.
     """
     def has_permission(self, request, view):
-        # Allow superusers and staff
-        if request.user and (request.user.is_superuser or request.user.is_staff):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # Allow superusers
+        if request.user.is_superuser:
             return True
 
         # For read-only operations, check view permission
         if request.method in permissions.SAFE_METHODS:
-            if request.user and hasattr(request.user, 'role') and request.user.role:
-                return request.user.role.permissions.filter(name='view_system_settings').exists()
+            return has_permission(request.user, 'view_system_settings')
 
         # For write operations, check manage permission
-        if request.user and hasattr(request.user, 'role') and request.user.role:
-            return request.user.role.permissions.filter(name='manage_application_settings').exists()
-
-        return False
+        return has_permission(request.user, 'manage_application_settings')

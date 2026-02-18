@@ -17,6 +17,7 @@ from datetime import datetime
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from utils.api_response import success_response, paginated_response, get_pagination_params
+from accounts.utils import has_permission, can_approve
 
 from trf.models import TravelRequest
 from transport.models import TransportRequest
@@ -73,10 +74,9 @@ def unified_approvals(request):
 
     # Helper function to check if user can approve this entity
     def can_user_approve(entity, module_name):
-        """Check if current user is authorized to approve this entity"""
-        # Allow staff/superuser to view all approval items
-        # This allows admins to see and manage all pending approvals
-        if user.is_staff or user.is_superuser:
+        """Check if current user is authorized to approve this entity based on workflow step"""
+        # Only superusers see ALL approvals without workflow check
+        if user.is_superuser:
             return True
 
         # Get workflow instance for this entity
@@ -88,7 +88,7 @@ def unified_approvals(request):
         ).first()
 
         if not workflow_instance:
-            # No workflow - only show to admins (already handled above)
+            # No workflow - only show to superusers (handled above)
             return False
 
         # Get current pending step execution
@@ -99,24 +99,27 @@ def unified_approvals(request):
         if not current_step_execution:
             return False
 
-        # Check if user is directly assigned
+        # Check if user is directly assigned to this step
         if current_step_execution.assigned_to == user:
             return True
 
-        # Check if user has the required role
+        # Check if user's role matches the step's approver_role
+        # approver_role stores the role UUID as a string
         if hasattr(user, 'role') and user.role and current_step_execution.workflow_step.approver_role:
-            # Handle both UUID and string role names
-            try:
-                # Try as role name string
-                if user.role.name == current_step_execution.workflow_step.approver_role:
-                    return True
-            except:
-                pass
+            approver_role_value = current_step_execution.workflow_step.approver_role
 
+            # Compare user's role UUID with step's approver_role
+            if str(user.role.id) == approver_role_value:
+                return True
+
+            # Also try role name comparison for legacy data
+            if user.role.name == approver_role_value:
+                return True
+
+            # Try looking up the role by UUID to compare names
             try:
-                # Try as role UUID
-                role = Role.objects.get(id=current_step_execution.workflow_step.approver_role)
-                if user.role.name == role.name:
+                step_role = Role.objects.get(id=approver_role_value)
+                if user.role.id == step_role.id:
                     return True
             except (Role.DoesNotExist, ValueError):
                 pass
@@ -594,7 +597,8 @@ def approval_history(request):
         ).order_by('-action_date')
 
         # For non-admin users, filter to their own items
-        if not user.is_staff and not settings.DEBUG:
+        has_approval_access = user.is_superuser or has_permission(user, 'view_pending_approvals') or can_approve(user)
+        if not has_approval_access and not settings.DEBUG:
             # This is a simplified filter - in production you'd want more precise filtering
             step_executions = step_executions.filter(
                 Q(actioned_by=user) | Q(assigned_to=user)

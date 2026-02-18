@@ -750,19 +750,42 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='pending-approvals')
     def pending_approvals(self, request):
-        """Get TRFs pending approval for the current user"""
-        user = request.user
+        """Get TRFs pending approval for the current user's role"""
+        from accounts.utils import is_module_admin
 
-        # Filter based on user role/permissions
-        # For now, return all pending TRFs (can be refined based on user role)
-        queryset = TravelRequest.objects.filter(
-            status__in=[
-                'Pending Department Focal',
-                'Pending HOD',
-                'Pending Travel Desk',
-                'Pending Finance'
-            ]
-        ).order_by('-submitted_at')
+        user = request.user
+        user_role = user.role.name if hasattr(user, 'role') and user.role else None
+
+        # Map role names to TRF status values
+        # This maps each approval role to the status they should see
+        ROLE_TO_STATUS = {
+            'Department Focal': 'Pending Department Focal',
+            'Line Manager': 'Pending Line Manager',
+            'HOD': 'Pending HOD',
+            'Ticketing Admin': 'Pending Travel Desk',
+            'Ticketing Clerk': 'Pending Travel Desk',
+            'Finance': 'Pending Finance',
+        }
+
+        # Admins and superusers see all pending requests
+        if user.is_superuser or is_module_admin(user, 'trf'):
+            queryset = TravelRequest.objects.filter(
+                status__in=[
+                    'Pending Department Focal',
+                    'Pending Line Manager',
+                    'Pending HOD',
+                    'Pending Travel Desk',
+                    'Pending Finance'
+                ]
+            ).order_by('-submitted_at')
+        elif user_role and user_role in ROLE_TO_STATUS:
+            # Filter by the status that matches the user's role
+            queryset = TravelRequest.objects.filter(
+                status=ROLE_TO_STATUS[user_role]
+            ).order_by('-submitted_at')
+        else:
+            # User has no approver role - return empty
+            queryset = TravelRequest.objects.none()
 
         # Use detail serializer to include nested data (itinerary, accommodation, etc.)
         serializer = TravelRequestDetailSerializer(queryset, many=True)
