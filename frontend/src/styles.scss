@@ -9,7 +9,16 @@
 // We're using Google Fonts for Raleway instead of local font files
 // The font is loaded in index.html
 
-// Global styles
+// Global styles - Full viewport coverage
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  max-width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
 body {
   @include typography.body-text;
   color: colors.$text-primary;
@@ -18,8 +27,17 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
+}
+
+// Ensure app-root fills viewport
+app-root {
+  display: block;
+  width: 100vw;
+  max-width: 100%;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
 }
 
 h1 {

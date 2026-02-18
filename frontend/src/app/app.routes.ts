@@ -92,8 +92,32 @@ export const routes: Routes = [
         children: [
           { path: '', redirectTo: 'clerk-panel', pathMatch: 'full' },
           { path: 'clerk-panel', component: ClerkPanelComponent },
-          { path: 'reports', component: AdminReportsComponent },
-          { path: 'approvals', component: UnifiedApprovalsComponent },
+          {
+            path: 'reports',
+            component: AdminReportsComponent,
+            canActivate: [PermissionGuard],
+            data: {
+              permissions: [
+                Permission.GENERATE_ADMIN_REPORTS,
+                Permission.EXPORT_DATA,
+                Permission.SYSTEM_ADMIN
+              ]
+            }
+          },
+          {
+            path: 'approvals',
+            component: UnifiedApprovalsComponent,
+            canActivate: [PermissionGuard],
+            data: {
+              permissions: [
+                Permission.VIEW_PENDING_APPROVALS,
+                Permission.APPROVE_TRF,
+                Permission.APPROVE_TRANSPORT,
+                Permission.APPROVE_VISA,
+                Permission.APPROVE_ACCOMMODATION
+              ]
+            }
+          },
           {
             path: 'transport',
             canActivate: [AdminMenuGuard],
@@ -143,7 +167,7 @@ export const routes: Routes = [
             data: { permissions: [Permission.MANAGE_NOTIFICATIONS, Permission.SYSTEM_ADMIN] }
           }
         ],
-        // Admin routes require ANY admin module permission or system admin
+        // Admin routes require ANY admin module permission, system admin, reporting, or approval permission
         canActivate: [PermissionGuard],
         data: {
           permissions: [
@@ -152,7 +176,14 @@ export const routes: Routes = [
             Permission.VIEW_ADMIN_ACCOMMODATION,
             Permission.VIEW_ADMIN_VISA,
             Permission.VIEW_ADMIN_TRANSPORT,
-            Permission.MANAGE_USERS
+            Permission.MANAGE_USERS,
+            Permission.GENERATE_ADMIN_REPORTS,
+            Permission.EXPORT_DATA,
+            Permission.VIEW_PENDING_APPROVALS,
+            Permission.APPROVE_TRF,
+            Permission.APPROVE_TRANSPORT,
+            Permission.APPROVE_VISA,
+            Permission.APPROVE_ACCOMMODATION
           ]
         }
       },

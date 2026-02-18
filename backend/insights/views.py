@@ -8,6 +8,8 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from accounts.utils import can_view_all, has_any_permission, is_module_admin
+
 logger = logging.getLogger(__name__)
 
 from .models import (
@@ -44,8 +46,8 @@ class TravelInsightViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        # Admin can see all insights
-        if user.is_staff:
+        # Users with view_all permissions can see all insights
+        if can_view_all(user, 'trf') or user.is_superuser:
             queryset = TravelInsight.objects.all()
         else:
             # Regular users can only see their own insights
@@ -77,8 +79,8 @@ class TravelAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        # Admin can see all analytics
-        if user.is_staff:
+        # Users with view_all permissions can see all analytics
+        if can_view_all(user, 'trf') or user.is_superuser:
             return TravelAnalytics.objects.all()
 
         # Regular users can only see their own analytics
@@ -106,8 +108,16 @@ class TravelAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'])
     def company_analytics(self, request):
-        """Get company-wide analytics (admin only)"""
-        if not request.user.is_staff:
+        """Get company-wide analytics (requires view_all permission for any module)"""
+        user = request.user
+        has_analytics_access = (
+            user.is_superuser or
+            can_view_all(user, 'trf') or
+            can_view_all(user, 'accommodation') or
+            can_view_all(user, 'transport') or
+            can_view_all(user, 'visa')
+        )
+        if not has_analytics_access:
             return Response(
                 {'error': 'You do not have permission to view company-wide analytics'},
                 status=status.HTTP_403_FORBIDDEN
@@ -138,18 +148,35 @@ def dashboard_summary(request):
     """
     user = request.user
 
-    # Filter data based on user role
-    if user.is_staff:
+    # Filter data based on user permissions (per-module)
+    # TRF data - check view_all_trf permission
+    if user.is_superuser or can_view_all(user, 'trf'):
         trfs = TravelRequest.objects.all()
-        flights = FlightBooking.objects.all()
-        hotels = HotelBooking.objects.all()
-        transports = TransportRequest.objects.all()
-        visas = VisaApplication.objects.all()
     else:
         trfs = TravelRequest.objects.filter(created_by=user)
+
+    # Flight bookings - tied to TRF admin permission
+    if user.is_superuser or can_view_all(user, 'trf'):
+        flights = FlightBooking.objects.all()
+    else:
         flights = FlightBooking.objects.filter(user=user)
+
+    # Hotel/Accommodation bookings - check view_all_accommodation permission
+    if user.is_superuser or can_view_all(user, 'accommodation'):
+        hotels = HotelBooking.objects.all()
+    else:
         hotels = HotelBooking.objects.filter(user=user)
+
+    # Transport requests - check view_all_transport permission
+    if user.is_superuser or can_view_all(user, 'transport'):
+        transports = TransportRequest.objects.all()
+    else:
         transports = TransportRequest.objects.filter(requestor=user)
+
+    # Visa applications - check view_all_visa permission
+    if user.is_superuser or can_view_all(user, 'visa'):
+        visas = VisaApplication.objects.all()
+    else:
         visas = VisaApplication.objects.filter(user=user)
 
     # Calculate statistics
@@ -237,10 +264,10 @@ def dashboard_summary(request):
     # Collect Accommodation activities
     from accommodation.models import AccommodationBooking
     try:
-        if user.is_staff:
+        if user.is_superuser or can_view_all(user, 'accommodation'):
             accommodation_bookings = AccommodationBooking.objects.all()
         else:
-            accommodation_bookings = AccommodationBooking.objects.filter(requestor=user)
+            accommodation_bookings = AccommodationBooking.objects.filter(staff=user)
 
         recent_accommodations = accommodation_bookings.order_by('-updated_at')[:10]
         for accommodation in recent_accommodations:
@@ -321,8 +348,8 @@ def travel_spend_analytics(request):
     date_from = request.query_params.get('date_from', None)
     date_to = request.query_params.get('date_to', None)
 
-    # Base queryset
-    if user.is_staff:
+    # Base queryset - check view_all_trf permission
+    if user.is_superuser or can_view_all(user, 'trf'):
         trfs = TravelRequest.objects.all()
     else:
         trfs = TravelRequest.objects.filter(user=user)
@@ -343,9 +370,9 @@ def travel_spend_analytics(request):
         .values_list('travel_type', 'total')
     )
 
-    # By department (from user's department)
+    # By department (from user's department) - requires view_all_trf permission
     by_department = {}
-    if user.is_staff:
+    if user.is_superuser or can_view_all(user, 'trf'):
         dept_data = trfs.values('user__department__name').annotate(
             total=Sum('estimated_cost')
         )
@@ -370,9 +397,9 @@ def travel_spend_analytics(request):
 
     by_month.reverse()
 
-    # Top spenders (admin only)
+    # Top spenders (requires view_all_trf permission)
     top_spenders = []
-    if user.is_staff:
+    if user.is_superuser or can_view_all(user, 'trf'):
         top_users = trfs.values('user__id', 'user__first_name', 'user__last_name').annotate(
             total=Sum('estimated_cost')
         ).order_by('-total')[:10]
@@ -405,8 +432,8 @@ def travel_pattern_analytics(request):
     """
     user = request.user
 
-    # Base queryset
-    if user.is_staff:
+    # Base queryset - check view_all_trf permission
+    if user.is_superuser or can_view_all(user, 'trf'):
         trfs = TravelRequest.objects.all()
     else:
         trfs = TravelRequest.objects.filter(user=user)
@@ -422,9 +449,9 @@ def travel_pattern_analytics(request):
     # Average trip duration (would need start/end dates from TRF)
     average_trip_duration = 5.0  # Default
 
-    # Most frequent travelers (admin only)
+    # Most frequent travelers (requires view_all_trf permission)
     most_frequent_travelers = []
-    if user.is_staff:
+    if user.is_superuser or can_view_all(user, 'trf'):
         freq_travelers = User.objects.annotate(
             trip_count=Count('travel_requests')
         ).order_by('-trip_count')[:10]
@@ -466,12 +493,17 @@ def booking_analytics(request):
     """
     user = request.user
 
-    # Base queryset
-    if user.is_staff:
+    # Base queryset - per-module permission checks
+    # Flights are tied to TRF admin
+    if user.is_superuser or can_view_all(user, 'trf'):
         flights = FlightBooking.objects.all()
-        hotels = HotelBooking.objects.all()
     else:
         flights = FlightBooking.objects.filter(user=user)
+
+    # Hotels are tied to accommodation admin
+    if user.is_superuser or can_view_all(user, 'accommodation'):
+        hotels = HotelBooking.objects.all()
+    else:
         hotels = HotelBooking.objects.filter(user=user)
 
     # Counts

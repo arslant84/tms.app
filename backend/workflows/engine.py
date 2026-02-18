@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from accounts.models import User
+from accounts.utils import can_manage
 from .models import (
     WorkflowTemplate,
     WorkflowStep,
@@ -471,8 +472,8 @@ class WorkflowEngine:
     @staticmethod
     def _is_user_authorized(step_execution: WorkflowStepExecution, user: User) -> bool:
         """Check if user is authorized to action this step"""
-        # Admin override - admins can approve any step
-        if user.is_staff or user.is_superuser:
+        # Admin override - workflow managers can approve any step
+        if user.is_superuser or can_manage(user, 'workflow'):
             return True
 
         # Check if user is directly assigned

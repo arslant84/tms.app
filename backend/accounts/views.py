@@ -33,6 +33,7 @@ from .serializers import (
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer, AdminActionLogSerializer,
     DepartmentSerializer, DepartmentListSerializer
 )
+from .utils import has_permission
 from .models import Role, Permission, ApplicationSetting, AdminActionLog, Department
 from .permissions import HasManageRolesPermission, HasManageUsersPermission, HasViewSystemSettingsPermission
 
@@ -702,9 +703,16 @@ class ApplicationSettingViewSet(viewsets.ModelViewSet):
     pagination_class = None  # Disable pagination for settings
 
     def get_permissions(self):
-        """Allow public access for public settings"""
+        """
+        Permission rules:
+        - Public settings (?public=true): Anyone can access
+        - List/retrieve: Any authenticated user can read
+        - Create/update/delete: Admin only
+        """
         if self.action == 'list' and self.request.query_params.get('public') == 'true':
             return [permissions.AllowAny()]
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
         return [permissions.IsAdminUser()]
 
     def get_queryset(self):
@@ -810,7 +818,8 @@ class ApplicationSettingViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
 
         # SECURITY: Non-admin users only get public settings
-        if not request.user.is_staff and not request.user.is_superuser:
+        has_settings_access = request.user.is_superuser or has_permission(request.user, 'view_system_settings')
+        if not has_settings_access:
             queryset = queryset.filter(is_public=True)
 
         settings_obj = {}

@@ -7,11 +7,25 @@ $sidebar-collapsed-width: 70px;
 $header-height: 60px;
 $footer-height: 50px;
 
+// Ensure component fills its container
+:host {
+  display: block;
+  width: 100vw;
+  max-width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
 // Main Container
 .app-container {
   display: flex;
-  height: 100vh;
-  width: 100%;
+  height: 100%;
+  width: 100vw;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
   background-color: transparent;
   position: relative;
@@ -212,10 +226,10 @@ $footer-height: 50px;
 // Content Area Styles
 .content-area {
   flex: 1;
-  padding: vars.$spacing-6;
+  padding: vars.$spacing-4;
   overflow-y: auto;
-  background-color: rgb(248 249 250 / 30%);
-  backdrop-filter: blur(5px);
+  background-color: rgb(248 249 250 / 50%);
+  backdrop-filter: blur(8px);
   position: relative;
 
   // Middle Links Styles
