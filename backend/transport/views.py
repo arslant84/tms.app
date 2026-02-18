@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
 
+from accounts.utils import is_module_admin, can_approve
+
 logger = logging.getLogger(__name__)
 
 from .models import (
@@ -527,7 +529,8 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             )
 
         # Validate user has permission for this step
-        if not user.is_staff and user_role != current_step.step_role:
+        is_admin = user.is_superuser or is_module_admin(user, 'transport')
+        if not is_admin and user_role != current_step.step_role:
             return Response(
                 {'error': f'You do not have permission to reject at step {current_step.step_role}'},
                 status=status.HTTP_403_FORBIDDEN
@@ -557,12 +560,13 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
         """
-        Cancel a transport request (by requestor only)
+        Cancel a transport request (by requestor or admin)
         """
         transport_request = self.get_object()
 
-        # Validate requestor
-        if transport_request.requestor != request.user and not request.user.is_staff:
+        # Validate requestor or admin
+        is_admin = request.user.is_superuser or is_module_admin(request.user, 'transport')
+        if transport_request.requestor != request.user and not is_admin:
             return Response(
                 {'error': 'Only the requestor or admin can cancel this transport request'},
                 status=status.HTTP_403_FORBIDDEN
@@ -589,8 +593,8 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         """
         transport_request = self.get_object()
 
-        # Validate user is admin/staff
-        if not request.user.is_staff:
+        # Validate user has transport admin permission
+        if not request.user.is_superuser and not is_module_admin(request.user, 'transport'):
             return Response(
                 {'error': 'Only transport admin can mark requests as completed'},
                 status=status.HTTP_403_FORBIDDEN
@@ -640,7 +644,9 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         user = request.user
         user_role = user.role.name if hasattr(user, 'role') and user.role else None
 
-        if not user_role and not user.is_staff:
+        # User must have a role or be a transport admin
+        is_admin = user.is_superuser or is_module_admin(user, 'transport')
+        if not user_role and not is_admin:
             return Response(
                 {'error': 'User does not have an assigned role'},
                 status=status.HTTP_403_FORBIDDEN
@@ -966,13 +972,14 @@ class VehicleAssignmentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """
         Create vehicle assignment
-        Only admin/staff can assign vehicles
+        Only transport admin can assign vehicles
         """
-        if not self.request.user.is_staff:
+        user = self.request.user
+        if not user.is_superuser and not is_module_admin(user, 'transport'):
             from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied('Only admin can assign vehicles')
+            raise PermissionDenied('Only transport admin can assign vehicles')
 
-        serializer.save(assigned_by=self.request.user)
+        serializer.save(assigned_by=user)
 
     @action(detail=True, methods=['post'])
     def start_journey(self, request, pk=None):

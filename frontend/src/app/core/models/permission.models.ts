@@ -29,9 +29,9 @@ export enum Permission {
   // REQUEST CREATION
   // ============================================================================
   CREATE_TRF = 'create_trf',
-  CREATE_TRANSPORT_REQUESTS = 'create_transport_requests',
-  CREATE_VISA_REQUESTS = 'create_visa_requests',
-  CREATE_ACCOMMODATION_REQUESTS = 'create_accommodation_requests',
+  CREATE_TRANSPORT = 'create_transport',
+  CREATE_VISA = 'create_visa',
+  CREATE_ACCOMMODATION = 'create_accommodation',
 
   // ============================================================================
   // APPROVAL CAPABILITIES (Workflow-based)
@@ -40,11 +40,6 @@ export enum Permission {
   APPROVE_TRANSPORT = 'approve_transport',
   APPROVE_VISA = 'approve_visa',
   APPROVE_TRF = 'approve_trf',
-
-  // Legacy generic approval permissions (still in use)
-  APPROVE_ACCOMMODATION_REQUESTS = 'approve_accommodation_requests',
-  APPROVE_TRANSPORT_REQUESTS = 'approve_transport_requests',
-  APPROVE_VISA_REQUESTS = 'approve_visa_requests',
 
   // ============================================================================
   // SYSTEM ADMINISTRATION
@@ -128,18 +123,15 @@ export const PERMISSION_CATEGORIES: Record<Permission, PermissionCategory> = {
 
   // Request Creation
   [Permission.CREATE_TRF]: PermissionCategory.REQUEST_CREATION,
-  [Permission.CREATE_TRANSPORT_REQUESTS]: PermissionCategory.REQUEST_CREATION,
-  [Permission.CREATE_VISA_REQUESTS]: PermissionCategory.REQUEST_CREATION,
-  [Permission.CREATE_ACCOMMODATION_REQUESTS]: PermissionCategory.REQUEST_CREATION,
+  [Permission.CREATE_TRANSPORT]: PermissionCategory.REQUEST_CREATION,
+  [Permission.CREATE_VISA]: PermissionCategory.REQUEST_CREATION,
+  [Permission.CREATE_ACCOMMODATION]: PermissionCategory.REQUEST_CREATION,
 
   // Approvals
   [Permission.APPROVE_ACCOMMODATION]: PermissionCategory.APPROVALS,
   [Permission.APPROVE_TRANSPORT]: PermissionCategory.APPROVALS,
   [Permission.APPROVE_VISA]: PermissionCategory.APPROVALS,
   [Permission.APPROVE_TRF]: PermissionCategory.APPROVALS,
-  [Permission.APPROVE_ACCOMMODATION_REQUESTS]: PermissionCategory.APPROVALS,
-  [Permission.APPROVE_TRANSPORT_REQUESTS]: PermissionCategory.APPROVALS,
-  [Permission.APPROVE_VISA_REQUESTS]: PermissionCategory.APPROVALS,
 
   // System Admin
   [Permission.SYSTEM_ADMIN]: PermissionCategory.SYSTEM_ADMIN,
@@ -209,9 +201,9 @@ export const PermissionGroups = {
    */
   BASIC_USER: [
     Permission.CREATE_TRF,
-    Permission.CREATE_TRANSPORT_REQUESTS,
-    Permission.CREATE_VISA_REQUESTS,
-    Permission.CREATE_ACCOMMODATION_REQUESTS,
+    Permission.CREATE_TRANSPORT,
+    Permission.CREATE_VISA,
+    Permission.CREATE_ACCOMMODATION,
     Permission.VIEW_OWN_REQUESTS,
     Permission.MANAGE_OWN_PROFILE,
     Permission.UPLOAD_DOCUMENTS,

@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.db.models import Q, Count
 from datetime import datetime, timedelta
 
+from accounts.utils import has_permission, can_manage
+
 logger = logging.getLogger(__name__)
 from utils.api_response import (
     success_response, error_response, validation_error_response,
@@ -263,8 +265,8 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         return UserNotificationSerializer
 
     def create(self, request, *args, **kwargs):
-        """Create notifications for multiple users (admin only)"""
-        if not request.user.is_staff:
+        """Create notifications for multiple users (requires notification permission)"""
+        if not request.user.is_superuser and not can_manage(request.user, 'notification'):
             return forbidden_response(
                 message='Only admin can create notifications'
             )
@@ -299,7 +301,8 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         """Mark a notification as read"""
         notification = self.get_object()
 
-        if notification.user != request.user and not request.user.is_staff:
+        is_admin = request.user.is_superuser or can_manage(request.user, 'notification')
+        if notification.user != request.user and not is_admin:
             return forbidden_response(
                 message='You can only mark your own notifications as read'
             )
@@ -318,7 +321,8 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         """Mark a notification as unread"""
         notification = self.get_object()
 
-        if notification.user != request.user and not request.user.is_staff:
+        is_admin = request.user.is_superuser or can_manage(request.user, 'notification')
+        if notification.user != request.user and not is_admin:
             return forbidden_response(
                 message='You can only mark your own notifications as unread'
             )

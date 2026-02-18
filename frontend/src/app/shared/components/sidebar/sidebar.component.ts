@@ -114,11 +114,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   get hasReportPermissions(): boolean {
-    // Reports accessible to users with export or generate reports permissions
-    return this.rbacService.hasAnyPermission([
-      Permission.GENERATE_ADMIN_REPORTS,
-      Permission.EXPORT_DATA
-    ]) || this.hasApprovalPermissions;
+    // Reports accessible to users with report permissions
+    return this.rbacService.hasReportPermissions();
   }
 
   // Get user name safely

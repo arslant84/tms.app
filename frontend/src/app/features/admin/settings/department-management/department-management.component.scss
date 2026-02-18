@@ -183,8 +183,7 @@
   font-weight: vars.$font-weight-medium;
 }
 
-// Modal-specific styles
-// Global modal styles are in frontend/src/styles/modal.scss
+// Modal styles handled by global modal.scss
 
 // Responsive improvements
 @media (width <= 768px) {

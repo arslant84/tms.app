@@ -5,6 +5,7 @@
   padding: 0;
   max-width: 100%;
   width: 100%;
+  margin: 0;
 
   > * + * {
     margin-top: vars.$spacing-8; // 32px
@@ -14,10 +15,13 @@
 // Hero Section
 .hero-section {
   text-align: center;
-  padding: vars.$spacing-8 0 vars.$spacing-12;
+  padding: vars.$spacing-8 vars.$spacing-4 vars.$spacing-12;
+  background: linear-gradient(180deg, rgb(255 255 255 / 60%) 0%, rgb(255 255 255 / 30%) 100%);
+  border-radius: vars.$radius-lg;
+  margin-bottom: vars.$spacing-4;
 
   @include vars.media-md {
-    padding: vars.$spacing-12 0;
+    padding: vars.$spacing-12 vars.$spacing-6;
   }
 }
 
@@ -25,7 +29,7 @@
   font-size: vars.$font-size-2xl;
   font-weight: vars.$font-weight-bold;
   letter-spacing: -0.025em;
-  color: vars.$text-primary;
+  color: vars.$gray-800;  // Darker for better contrast
   margin-bottom: vars.$spacing-md;
 
   @include vars.media-md {
@@ -39,7 +43,8 @@
 
 .hero-subtitle {
   font-size: vars.$font-size-md;
-  color: vars.$text-secondary;
+  color: vars.$gray-700;  // Darker for better visibility on background
+  font-weight: vars.$font-weight-medium;
   margin-top: vars.$spacing-md;
 
   @include vars.media-md {

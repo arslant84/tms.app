@@ -83,6 +83,9 @@ export class UserAdminComponent implements OnInit, OnDestroy {
 
     this.userService.getAllUsers(filters).subscribe({
       next: (response) => {
+        // DEBUG: Log raw API response
+        console.log('DEBUG loadUsers - raw response:', response);
+
         // Handle both paginated response and direct array response
         if (Array.isArray(response)) {
           this.users = response;
@@ -94,6 +97,15 @@ export class UserAdminComponent implements OnInit, OnDestroy {
           this.users = [];
           this.totalCount = 0;
         }
+
+        // DEBUG: Log first user's staff_id, phone, gender
+        if (this.users.length > 0) {
+          console.log('DEBUG loadUsers - first user:', this.users[0]);
+          console.log('DEBUG loadUsers - first user staff_id:', this.users[0].staff_id);
+          console.log('DEBUG loadUsers - first user phone:', this.users[0].phone);
+          console.log('DEBUG loadUsers - first user gender:', this.users[0].gender);
+        }
+
         this.loading = false;
       },
       error: (error) => {
@@ -154,22 +166,46 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     this.isEditMode = true;
     this.selectedUserId = user.id;
 
+    // DEBUG: Log the user object to verify data
+    console.log('DEBUG openEditModal - user object:', user);
+    console.log('DEBUG openEditModal - staff_id:', user.staff_id);
+    console.log('DEBUG openEditModal - phone:', user.phone);
+    console.log('DEBUG openEditModal - gender:', user.gender);
+
     // Extract department ID from department object or string
     const departmentId = this.extractDepartmentId(user.department);
 
-    this.userForm.patchValue({
-      email: user.email,
-      name: user.name,
-      role: user.role?.id,
-      department: departmentId,
-      is_admin: user.is_admin,
-      is_active: user.is_active,
-      staff_id: user.staff_id,
-      phone: user.phone,
-      gender: user.gender
-    });
+    // Clear password validators for edit mode
     this.userForm.get('password')?.clearValidators();
     this.userForm.get('password_confirm')?.clearValidators();
+    this.userForm.get('password')?.updateValueAndValidity();
+    this.userForm.get('password_confirm')?.updateValueAndValidity();
+
+    // Patch form values - ensure values are properly assigned (use empty string for null/undefined)
+    const formValues = {
+      email: user.email || '',
+      name: user.name || '',
+      role: user.role?.id || null,
+      department: departmentId || '',
+      is_admin: user.is_admin ?? false,
+      is_active: user.is_active ?? true,
+      staff_id: user.staff_id || '',
+      phone: user.phone || '',
+      gender: user.gender || ''
+    };
+
+    // DEBUG: Log the values being patched
+    console.log('DEBUG openEditModal - values to patch:', formValues);
+
+    this.userForm.patchValue(formValues);
+
+    // Force form update
+    this.userForm.markAsPristine();
+    this.userForm.updateValueAndValidity();
+
+    // DEBUG: Log the form value after patch
+    console.log('DEBUG openEditModal - form value after patch:', this.userForm.value);
+
     this.showModal = true;
     // Lock body scroll
     document.body.classList.add('modal-open');

@@ -107,6 +107,7 @@ export interface VisaFilters {
   search?: string;
   page?: number;
   page_size?: number;
+  adminView?: boolean;  // Set to true when viewing from Visa Admin module
 }
 
 @Injectable({
@@ -130,6 +131,8 @@ export class VisaService {
       if (filters.search) params = params.set('search', filters.search);
       if (filters.page) params = params.set('page', filters.page.toString());
       if (filters.page_size) params = params.set('page_size', filters.page_size.toString());
+      // Add admin_view parameter for admin modules (side navbar)
+      if (filters.adminView) params = params.set('admin_view', 'true');
     }
     // Add cache-busting parameter to prevent stale data
     params = params.set('_t', Date.now().toString());
