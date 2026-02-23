@@ -3,8 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { UserService, User, Role } from '../../services/user.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DepartmentService } from '../../../../core/services/department.service';
 import { DepartmentListItem } from '../../../../core/models/user.model';
+import { ModalService } from '../../../../core/services/modal.service';
+import { ConfirmDeleteModalComponent } from '../../../../core/components/confirm-delete-modal/confirm-delete-modal.component';
 
 @Component({
   selector: 'app-user-admin',
@@ -23,6 +26,9 @@ export class UserAdminComponent implements OnInit, OnDestroy {
   selectedUserId: number | null = null;
   userForm!: FormGroup;
   submitting = false;
+
+  // Delete confirmation
+  private userToDelete: User | null = null;
 
   // Filters
   searchTerm = '';
@@ -44,7 +50,9 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private userService: UserService,
     private toastService: ToastService,
-    private departmentService: DepartmentService
+    private confirmationService: ConfirmationService,
+    private departmentService: DepartmentService,
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {
@@ -83,9 +91,6 @@ export class UserAdminComponent implements OnInit, OnDestroy {
 
     this.userService.getAllUsers(filters).subscribe({
       next: (response) => {
-        // DEBUG: Log raw API response
-        console.log('DEBUG loadUsers - raw response:', response);
-
         // Handle both paginated response and direct array response
         if (Array.isArray(response)) {
           this.users = response;
@@ -97,15 +102,6 @@ export class UserAdminComponent implements OnInit, OnDestroy {
           this.users = [];
           this.totalCount = 0;
         }
-
-        // DEBUG: Log first user's staff_id, phone, gender
-        if (this.users.length > 0) {
-          console.log('DEBUG loadUsers - first user:', this.users[0]);
-          console.log('DEBUG loadUsers - first user staff_id:', this.users[0].staff_id);
-          console.log('DEBUG loadUsers - first user phone:', this.users[0].phone);
-          console.log('DEBUG loadUsers - first user gender:', this.users[0].gender);
-        }
-
         this.loading = false;
       },
       error: (error) => {
@@ -166,12 +162,6 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     this.isEditMode = true;
     this.selectedUserId = user.id;
 
-    // DEBUG: Log the user object to verify data
-    console.log('DEBUG openEditModal - user object:', user);
-    console.log('DEBUG openEditModal - staff_id:', user.staff_id);
-    console.log('DEBUG openEditModal - phone:', user.phone);
-    console.log('DEBUG openEditModal - gender:', user.gender);
-
     // Extract department ID from department object or string
     const departmentId = this.extractDepartmentId(user.department);
 
@@ -181,8 +171,8 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     this.userForm.get('password')?.updateValueAndValidity();
     this.userForm.get('password_confirm')?.updateValueAndValidity();
 
-    // Patch form values - ensure values are properly assigned (use empty string for null/undefined)
-    const formValues = {
+    // Patch form values
+    this.userForm.patchValue({
       email: user.email || '',
       name: user.name || '',
       role: user.role?.id || null,
@@ -192,22 +182,9 @@ export class UserAdminComponent implements OnInit, OnDestroy {
       staff_id: user.staff_id || '',
       phone: user.phone || '',
       gender: user.gender || ''
-    };
-
-    // DEBUG: Log the values being patched
-    console.log('DEBUG openEditModal - values to patch:', formValues);
-
-    this.userForm.patchValue(formValues);
-
-    // Force form update
-    this.userForm.markAsPristine();
-    this.userForm.updateValueAndValidity();
-
-    // DEBUG: Log the form value after patch
-    console.log('DEBUG openEditModal - form value after patch:', this.userForm.value);
+    });
 
     this.showModal = true;
-    // Lock body scroll
     document.body.classList.add('modal-open');
   }
 
@@ -291,25 +268,66 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteUser(user: User): void {
-    if (!confirm(`Are you sure you want to delete user "${user.name}"?`)) return;
+  confirmDeleteUser(user: User): void {
+    this.userToDelete = user;
 
-    this.userService.deleteUser(user.id).subscribe({
+    this.modalService.open(ConfirmDeleteModalComponent, {
+      title: 'Confirm Delete User',
+      message: `Are you sure you want to delete user "${user.name}"?`,
+      warningMessage: `This action cannot be undone. User "${user.email}" will be permanently removed from the system.`,
+      confirmButtonText: 'Delete User'
+    });
+
+    // Get reference to the modal component
+    const modalRef = (this.modalService as any).componentRef;
+    if (modalRef) {
+      // Subscribe to confirm event
+      modalRef.instance.confirm.subscribe(() => {
+        this.executeDeleteUser();
+      });
+    }
+  }
+
+  private executeDeleteUser(): void {
+    if (!this.userToDelete) return;
+
+    // Update the modal's isDeleting state
+    const modalRef = (this.modalService as any).componentRef;
+    if (modalRef) {
+      modalRef.instance.isDeleting = true;
+    }
+
+    this.userService.deleteUser(this.userToDelete.id).subscribe({
       next: () => {
         this.toastService.success('User deleted successfully');
+        this.modalService.close();
+        this.userToDelete = null;
         this.loadUsers();
       },
       error: (error) => {
         console.error('Error deleting user:', error);
         this.toastService.error('Failed to delete user');
+        if (modalRef) {
+          modalRef.instance.isDeleting = false;
+        }
       }
     });
   }
 
   toggleUserStatus(user: User): void {
     const action = user.is_active ? 'deactivate' : 'activate';
-    if (!confirm(`Are you sure you want to ${action} user "${user.name}"?`)) return;
+    this.confirmationService.confirm({
+      title: `${action.charAt(0).toUpperCase() + action.slice(1)} User`,
+      message: `Are you sure you want to ${action} user "${user.name}"?`,
+      confirmText: action.charAt(0).toUpperCase() + action.slice(1),
+      type: user.is_active ? 'warning' : 'success'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeToggleUserStatus(user, action);
+    });
+  }
 
+  private executeToggleUserStatus(user: User, action: string): void {
     this.userService.updateUser(user.id, { is_active: !user.is_active }).subscribe({
       next: () => {
         this.toastService.success(`User ${action}d successfully`);

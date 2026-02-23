@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { BookingsService, FlightBooking } from '../../../bookings/services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 
 @Component({
@@ -50,6 +51,7 @@ export class FlightCreateComponent implements OnInit {
     private router: Router,
     private bookingsService: BookingsService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private appSettingsService: AppSettingsService
   ) {}
 
@@ -163,9 +165,11 @@ export class FlightCreateComponent implements OnInit {
   }
 
   cancel(): void {
-    if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      this.router.navigate(['/bookings/flights']);
-    }
+    this.confirmationService.confirmCancel().subscribe(confirmed => {
+      if (confirmed) {
+        this.router.navigate(['/bookings/flights']);
+      }
+    });
   }
 
   // Validation helpers

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { VisaService, VisaApplication, VisaApprovalStep, VisaDocument } from '../../services/visa.service';
 import { WorkflowService } from '../../../../core/services/workflow.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
@@ -42,6 +43,7 @@ export class VisaDetailComponent implements OnInit {
     private visaService: VisaService,
     public workflowService: WorkflowService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private rbacService: RbacService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService
@@ -213,17 +215,24 @@ export class VisaDetailComponent implements OnInit {
   }
 
   onCancel(): void {
-    if (confirm('Are you sure you want to cancel this visa application?')) {
-      this.visaService.cancelApplication(this.applicationId).subscribe({
-        next: () => {
-          this.toastService.success('Visa application cancelled successfully');
-          this.loadApplicationDetails();
-        },
-        error: (error) => {
-          this.toastService.error('Failed to cancel visa application');
-        }
-      });
-    }
+    this.confirmationService.confirm({
+      title: 'Cancel Application',
+      message: 'Are you sure you want to cancel this visa application?',
+      confirmText: 'Cancel Application',
+      type: 'warning'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.visaService.cancelApplication(this.applicationId).subscribe({
+          next: () => {
+            this.toastService.success('Visa application cancelled successfully');
+            this.loadApplicationDetails();
+          },
+          error: (error) => {
+            this.toastService.error('Failed to cancel visa application');
+          }
+        });
+      }
+    });
   }
 
   onExportPdf(): void {
@@ -246,17 +255,19 @@ export class VisaDetailComponent implements OnInit {
   }
 
   onDelete(): void {
-    if (confirm('Are you sure you want to delete this visa application? This action cannot be undone.')) {
-      this.visaService.deleteApplication(this.applicationId).subscribe({
-        next: () => {
-          this.toastService.success('Visa application deleted successfully');
-          this.router.navigate(['/visa']);
-        },
-        error: (error) => {
-          this.toastService.error('Failed to delete visa application');
-        }
-      });
-    }
+    this.confirmationService.confirmDelete('this visa application').subscribe(confirmed => {
+      if (confirmed) {
+        this.visaService.deleteApplication(this.applicationId).subscribe({
+          next: () => {
+            this.toastService.success('Visa application deleted successfully');
+            this.router.navigate(['/visa']);
+          },
+          error: (error) => {
+            this.toastService.error('Failed to delete visa application');
+          }
+        });
+      }
+    });
   }
 
 

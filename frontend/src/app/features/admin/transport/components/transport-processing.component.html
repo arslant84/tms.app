@@ -220,7 +220,7 @@
         <p class="mb-3">You are about to start processing this transport request. Please provide vehicle and booking details.</p>
         <div class="info-panel">
           <div class="mb-2"><strong>Staff Name:</strong> {{ selectedRequest.requestorName }}</div>
-          <div class="mb-2"><strong>Department:</strong> {{ selectedRequest.department }}</div>
+          <div class="mb-2"><strong>Department:</strong> {{ selectedRequest.department | departmentName }}</div>
           <div class="mb-2"><strong>Request ID:</strong> {{ selectedRequest.request_number || selectedRequest.id }}</div>
           <div class="mb-0"><strong>Purpose:</strong> {{ selectedRequest.purpose }}</div>
         </div>

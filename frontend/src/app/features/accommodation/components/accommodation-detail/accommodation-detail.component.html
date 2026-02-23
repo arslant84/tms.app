@@ -93,7 +93,7 @@
           </div>
           <div class="detail-item">
             <label>Department</label>
-            <span class="value">{{ request.department }}</span>
+            <span class="value">{{ request.department | departmentName }}</span>
           </div>
           <div class="detail-item">
             <label><i [class]="getLocationIcon()"></i> Location</label>

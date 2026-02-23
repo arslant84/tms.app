@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TrfService } from '../../../trf-management/services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
 
 interface ItinerarySegment {
   from_location?: string;
@@ -53,7 +55,7 @@ interface BookedFlight {
 @Component({
   selector: 'app-flights-processing',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DepartmentNamePipe],
   templateUrl: './flights-processing.component.html',
   styleUrl: './flights-processing.component.scss'
 })
@@ -93,6 +95,7 @@ export class FlightsProcessingComponent implements OnInit {
   constructor(
     private trfService: TrfService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private router: Router,
     public dateUtils: DateUtilsService
   ) {}
@@ -345,10 +348,19 @@ export class FlightsProcessingComponent implements OnInit {
     }
 
     const trfDisplay = this.selectedTrf.request_number || this.selectedTrf.id;
-    if (!confirm(`Cancel TRF ${trfDisplay} due to no available flights?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Cancel TRF',
+      message: `Cancel TRF ${trfDisplay} due to no available flights?`,
+      confirmText: 'Cancel TRF',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeNoFlightsAvailable(trfDisplay);
+    });
+  }
 
+  private executeNoFlightsAvailable(trfDisplay: string): void {
+    if (!this.selectedTrf) return;
     this.isProcessing = true;
 
     this.trfService.rejectTrf(this.selectedTrf.id, 'No flights available for requested travel dates and destinations. Request cancelled by Flight Admin.').subscribe({
@@ -371,10 +383,18 @@ export class FlightsProcessingComponent implements OnInit {
    */
   cancelBooking(flight: BookedFlight): void {
     const trfDisplay = flight.trfRequestNumber || flight.trfId;
-    if (!confirm(`Cancel flight booking for TRF ${trfDisplay}?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Cancel Booking',
+      message: `Cancel flight booking for TRF ${trfDisplay}?`,
+      confirmText: 'Cancel Booking',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeCancelBooking(flight, trfDisplay);
+    });
+  }
 
+  private executeCancelBooking(flight: BookedFlight, trfDisplay: string): void {
     this.isProcessing = true;
 
     this.trfService.cancelFlightBooking(flight.id).subscribe({

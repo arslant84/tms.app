@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { VisaService, VisaApplication } from '../../../visa/services/visa.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
@@ -89,6 +90,7 @@ export class VisaAdminComponent implements OnInit {
   constructor(
     private visaService: VisaService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     public router: Router,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService
@@ -318,10 +320,18 @@ export class VisaAdminComponent implements OnInit {
    * Start processing
    */
   startProcessing(application: VisaApplication): void {
-    if (!confirm(`Start processing application #${application.id}?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Start Processing',
+      message: `Start processing application #${application.id}?`,
+      confirmText: 'Start',
+      type: 'info'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeStartProcessing(application);
+    });
+  }
 
+  private executeStartProcessing(application: VisaApplication): void {
     this.processingId = application.id;
 
     this.visaService.updateApplication(application.id, {

@@ -7,6 +7,8 @@ import { environment } from '../../../../../../environments/environment';
 import { NotificationService } from '../../../../notifications/services/notification.service';
 import { AppSettingsService } from '../../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../../core/utils/date-utils.service';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { DepartmentNamePipe } from '../../../../../core/pipes/department-name.pipe';
 
 interface ApprovableItem {
   id: string;
@@ -31,7 +33,7 @@ interface ApprovableItem {
 @Component({
   selector: 'app-pending-approvals',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DepartmentNamePipe],
   templateUrl: './pending-approvals.component.html',
   styleUrls: ['./pending-approvals.component.scss']
 })
@@ -77,7 +79,8 @@ export class PendingApprovalsComponent implements OnInit {
     private route: ActivatedRoute,
     private notificationService: NotificationService,
     private appSettingsService: AppSettingsService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -315,13 +318,13 @@ export class PendingApprovalsComponent implements OnInit {
 
         // Handle specific error cases
         if (errorMsg.includes('No pending approval step')) {
-          alert('This item has already been processed or is not awaiting your approval.');
+          this.toastService.warning('This item has already been processed or is not awaiting your approval.');
           this.closeDialogs();
           this.fetchPendingItems(true); // Refresh to remove it from the list
           // Refresh notifications
           this.notificationService.refreshNotifications();
         } else {
-          alert('Failed to approve: ' + errorMsg);
+          this.toastService.error('Failed to approve: ' + errorMsg);
         }
         this.isActionPending = false;
       }
@@ -330,7 +333,7 @@ export class PendingApprovalsComponent implements OnInit {
 
   rejectItem(): void {
     if (!this.selectedItem || !this.rejectionComments) {
-      alert('Rejection comments are required');
+      this.toastService.warning('Rejection comments are required');
       return;
     }
 
@@ -360,7 +363,7 @@ export class PendingApprovalsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error rejecting item:', err);
-        alert('Failed to reject: ' + (err.error?.error || 'Unknown error'));
+        this.toastService.error('Failed to reject: ' + (err.error?.error || 'Unknown error'));
         this.isActionPending = false;
       }
     });

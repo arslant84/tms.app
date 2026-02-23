@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { BookingsService, FlightBooking } from '../../../bookings/services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
@@ -25,6 +26,7 @@ export class FlightDetailComponent implements OnInit {
     private router: Router,
     private bookingsService: BookingsService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private appSettingsService: AppSettingsService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService
@@ -96,8 +98,18 @@ export class FlightDetailComponent implements OnInit {
   }
 
   confirmBooking(): void {
-    if (!confirm('Are you sure you want to confirm this booking?')) return;
+    this.confirmationService.confirm({
+      title: 'Confirm Booking',
+      message: 'Are you sure you want to confirm this booking?',
+      confirmText: 'Confirm',
+      type: 'success'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeConfirmBooking();
+    });
+  }
 
+  private executeConfirmBooking(): void {
     this.bookingsService.confirmFlightBooking(this.bookingId).subscribe({
       next: () => {
         this.toastService.success('Booking confirmed successfully');
@@ -127,8 +139,13 @@ export class FlightDetailComponent implements OnInit {
   }
 
   deleteBooking(): void {
-    if (!confirm('Are you sure you want to delete this booking? This action cannot be undone.')) return;
+    this.confirmationService.confirmDelete('this booking').subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeDeleteBooking();
+    });
+  }
 
+  private executeDeleteBooking(): void {
     this.bookingsService.deleteFlightBooking(this.bookingId).subscribe({
       next: () => {
         this.toastService.success('Booking deleted successfully');

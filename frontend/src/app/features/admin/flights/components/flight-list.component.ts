@@ -4,6 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BookingsService, FlightBooking } from '../../../bookings/services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
@@ -52,6 +53,7 @@ export class FlightListComponent implements OnInit, OnDestroy {
     private bookingsService: BookingsService,
     private router: Router,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private appSettingsService: AppSettingsService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService
@@ -119,18 +121,20 @@ export class FlightListComponent implements OnInit, OnDestroy {
 
   deleteBooking(id: number, event: Event): void {
     event.stopPropagation();
-    if (confirm('Are you sure you want to delete this flight booking?')) {
-      this.bookingsService.deleteFlightBooking(id).subscribe({
-        next: () => {
-          this.toastService.success('Flight booking deleted successfully');
-          this.fetchBookings();
-        },
-        error: (err) => {
-          console.error('Error deleting booking:', err);
-          this.toastService.error('Failed to delete flight booking');
-        }
-      });
-    }
+    this.confirmationService.confirmDelete('this flight booking').subscribe(confirmed => {
+      if (confirmed) {
+        this.bookingsService.deleteFlightBooking(id).subscribe({
+          next: () => {
+            this.toastService.success('Flight booking deleted successfully');
+            this.fetchBookings();
+          },
+          error: (err) => {
+            console.error('Error deleting booking:', err);
+            this.toastService.error('Failed to delete flight booking');
+          }
+        });
+      }
+    });
   }
 
   getStatusBadgeClass(status: string): string {

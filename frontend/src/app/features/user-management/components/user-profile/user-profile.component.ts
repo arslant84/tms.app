@@ -270,4 +270,18 @@ export class UserProfileComponent implements OnInit {
   getStatusText(): string {
     return this.currentUser?.is_active ? 'Active' : 'Inactive';
   }
+
+  getDepartmentName(): string {
+    const dept = this.currentUser?.department;
+    if (!dept) {
+      return 'N/A';
+    }
+    if (typeof dept === 'string') {
+      return dept;
+    }
+    if (typeof dept === 'object' && 'name' in dept) {
+      return dept.name || 'N/A';
+    }
+    return 'N/A';
+  }
 }

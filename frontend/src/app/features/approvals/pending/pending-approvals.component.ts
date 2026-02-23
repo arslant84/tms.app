@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApprovalsService, ApprovalRequest } from '../services/approvals.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { CurrencyFormatPipe } from '../../../core/pipes/currency-format.pipe';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
@@ -38,6 +39,7 @@ export class PendingApprovalsComponent implements OnInit {
   constructor(
     private approvalsService: ApprovalsService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private router: Router,
     public dateUtils: DateUtilsService
   ) {}
@@ -168,10 +170,19 @@ export class PendingApprovalsComponent implements OnInit {
   approveRequest(): void {
     if (!this.selectedRequest) return;
 
-    if (!confirm('Are you sure you want to approve this request?')) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Confirm Approval',
+      message: 'Are you sure you want to approve this request?',
+      confirmText: 'Approve',
+      type: 'success'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeApproveRequest();
+    });
+  }
 
+  private executeApproveRequest(): void {
+    if (!this.selectedRequest) return;
     this.isProcessing = true;
 
     // Extract step role from current approval step or use default
@@ -213,10 +224,19 @@ export class PendingApprovalsComponent implements OnInit {
       return;
     }
 
-    if (!confirm('Are you sure you want to reject this request?')) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Confirm Rejection',
+      message: 'Are you sure you want to reject this request?',
+      confirmText: 'Reject',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeRejectRequest();
+    });
+  }
 
+  private executeRejectRequest(): void {
+    if (!this.selectedRequest) return;
     this.isProcessing = true;
 
     // Extract step role from current approval step or use default

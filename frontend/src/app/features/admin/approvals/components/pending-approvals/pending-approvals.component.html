@@ -155,7 +155,7 @@
               <div class="purpose-details text-muted small">
                 <span *ngIf="item.destination">{{ item.destination }}</span>
                 <span *ngIf="item.location">{{ item.location }}</span>
-                <span *ngIf="item.department">{{ item.department }}</span>
+                <span *ngIf="item.department">{{ item.department | departmentName }}</span>
                 <span *ngIf="item.amount"> | {{ formatCurrency(item.amount) }}</span>
               </div>
             </td>

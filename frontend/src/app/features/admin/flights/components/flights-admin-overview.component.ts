@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { TrfService } from '../../../trf-management/services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
 
 interface FlightApplication {
   id: string;
@@ -30,7 +31,7 @@ interface FlightStats {
 @Component({
   selector: 'app-flights-admin-overview',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DepartmentNamePipe],
   templateUrl: './flights-admin-overview.component.html',
   styleUrl: './flights-admin-overview.component.scss'
 })

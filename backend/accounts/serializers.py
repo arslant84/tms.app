@@ -1,3 +1,5 @@
+import uuid
+
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -157,6 +159,8 @@ class UserAdminUpdateSerializer(serializers.ModelSerializer):
     permissions = serializers.SerializerMethodField()
     password = serializers.CharField(write_only=True, required=False, validators=[validate_password], allow_blank=True)
     password_confirm = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    # Accept department as string (UUID, code, or name) - handle conversion in update()
+    department = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = User
@@ -201,20 +205,45 @@ class UserAdminUpdateSerializer(serializers.ModelSerializer):
         role_id = validated_data.pop('role', None)
         if role_id:
             try:
-                role = Role.objects.get(id=role_id)
-                instance.role = role
+                # Handle both Role object and UUID string
+                if isinstance(role_id, Role):
+                    instance.role = role_id
+                else:
+                    role = Role.objects.get(id=role_id)
+                    instance.role = role
             except Role.DoesNotExist:
                 pass
 
-        # Handle department update (comes as UUID string from frontend)
-        department_id = validated_data.pop('department', None)
-        if department_id:
+        # Handle department update (can be UUID, code, or name)
+        department_value = validated_data.pop('department', None)
+        if department_value and department_value.strip():
+            department_value = department_value.strip()
+            department = None
+
+            # Try to find department by UUID first
             try:
-                department = Department.objects.get(id=department_id)
-                instance.department = department
-            except Department.DoesNotExist:
+                uuid.UUID(department_value)  # Validate it's a UUID
+                department = Department.objects.get(id=department_value)
+            except (ValueError, Department.DoesNotExist):
                 pass
-        elif department_id == '' or department_id is None:
+
+            # If not found by UUID, try by code
+            if not department:
+                try:
+                    department = Department.objects.get(code__iexact=department_value)
+                except Department.DoesNotExist:
+                    pass
+
+            # If still not found, try by name
+            if not department:
+                try:
+                    department = Department.objects.get(name__iexact=department_value)
+                except Department.DoesNotExist:
+                    pass
+
+            if department:
+                instance.department = department
+        elif department_value == '' or department_value is None:
             # Allow clearing department
             if 'department' in self.initial_data:
                 instance.department = None
@@ -235,10 +264,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True, required=True)
     department_data = DepartmentListSerializer(source='department', read_only=True)
+    # Accept department as string (UUID, code, or name)
+    department = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'department', 'department_data', 'is_admin', 'is_active', 'password', 'password_confirm']
+        fields = ['id', 'email', 'name', 'role', 'department', 'department_data', 'is_admin', 'is_active', 'staff_id', 'phone', 'gender', 'password', 'password_confirm']
         read_only_fields = ['id', 'department_data']
 
     def validate(self, attrs):
@@ -247,13 +278,38 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_department(self, value):
-        """Validate that department exists if provided"""
-        if value and isinstance(value, str):
+        """Validate and convert department (UUID, code, or name) to Department object"""
+        if not value or not value.strip():
+            return None
+
+        value = value.strip()
+        department = None
+
+        # Try to find department by UUID first
+        try:
+            uuid.UUID(value)  # Validate it's a UUID
+            department = Department.objects.get(id=value)
+        except (ValueError, Department.DoesNotExist):
+            pass
+
+        # If not found by UUID, try by code
+        if not department:
             try:
-                return Department.objects.get(id=value)
+                department = Department.objects.get(code__iexact=value)
             except Department.DoesNotExist:
-                raise serializers.ValidationError("Department not found.")
-        return value
+                pass
+
+        # If still not found, try by name
+        if not department:
+            try:
+                department = Department.objects.get(name__iexact=value)
+            except Department.DoesNotExist:
+                pass
+
+        if not department:
+            raise serializers.ValidationError("Department not found.")
+
+        return department
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')

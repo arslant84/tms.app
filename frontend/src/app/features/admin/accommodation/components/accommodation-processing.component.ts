@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AccommodationService, AccommodationRequest, AccommodationRoom, AccommodationStaffHouse, AccommodationBooking } from '../../../accommodation/services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
 
 interface PendingAccommodation {
   id: number;
@@ -54,7 +56,7 @@ interface BookingData {
 @Component({
   selector: 'app-accommodation-processing',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DepartmentNamePipe],
   templateUrl: './accommodation-processing.component.html',
   styleUrl: './accommodation-processing.component.scss'
 })
@@ -111,6 +113,7 @@ export class AccommodationProcessingComponent implements OnInit {
   constructor(
     private accommodationService: AccommodationService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private router: Router,
     public dateUtils: DateUtilsService
   ) {}
@@ -625,10 +628,19 @@ export class AccommodationProcessingComponent implements OnInit {
       return;
     }
 
-    if (!confirm(`Reject accommodation request ${this.selectedRequest.request_number} due to no available rooms?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Reject Request',
+      message: `Reject accommodation request ${this.selectedRequest.request_number} due to no available rooms?`,
+      confirmText: 'Reject',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeNoRoomsAvailable();
+    });
+  }
 
+  private executeNoRoomsAvailable(): void {
+    if (!this.selectedRequest) return;
     this.isProcessing = true;
 
     this.accommodationService.rejectRequest(
@@ -653,10 +665,18 @@ export class AccommodationProcessingComponent implements OnInit {
    * Cancel booking
    */
   cancelBooking(booking: BookedAccommodation): void {
-    if (!confirm(`Cancel room booking for ${booking.requestorName}?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Cancel Booking',
+      message: `Cancel room booking for ${booking.requestorName}?`,
+      confirmText: 'Cancel Booking',
+      type: 'warning'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeCancelBooking(booking);
+    });
+  }
 
+  private executeCancelBooking(booking: BookedAccommodation): void {
     this.isProcessing = true;
 
     // Find and delete all booking records for this accommodation

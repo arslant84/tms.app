@@ -4,6 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { NotificationService, UserNotification } from '../../services/notification.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
 
 @Component({
@@ -31,6 +32,7 @@ export class NotificationListComponent implements OnInit, OnDestroy {
 
   constructor(
     private notificationService: NotificationService,
+    private confirmationService: ConfirmationService,
     private router: Router
   ) {}
 
@@ -242,18 +244,20 @@ export class NotificationListComponent implements OnInit, OnDestroy {
 
   deleteNotification(id: number, event: Event): void {
     event.stopPropagation();
-    if (confirm('Are you sure you want to delete this notification?')) {
-      this.notificationService.deleteNotification(id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.loadNotifications();
-          },
-          error: (err) => {
-            console.error('Error deleting notification:', err);
-          }
-        });
-    }
+    this.confirmationService.confirmDelete('this notification').subscribe(confirmed => {
+      if (confirmed) {
+        this.notificationService.deleteNotification(id)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.loadNotifications();
+            },
+            error: (err) => {
+              console.error('Error deleting notification:', err);
+            }
+          });
+      }
+    });
   }
 
   getNotificationIcon(priority: string): string {

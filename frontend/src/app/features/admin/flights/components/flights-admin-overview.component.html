@@ -154,7 +154,7 @@
             <tr *ngFor="let application of filteredApplications">
               <td class="fw-medium">{{ application.requestNumber }}</td>
               <td>{{ application.requestorName }}</td>
-              <td>{{ application.department }}</td>
+              <td>{{ application.department | departmentName }}</td>
               <td>
                 <span class="badge" [ngClass]="getTravelTypeBadge(application.travelType)">
                   {{ application.travelType }}
