@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TransportService, TransportRequest, VehicleAssignment } from '../../../transport/services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
@@ -76,6 +77,7 @@ export class TransportAdminComponent implements OnInit {
   constructor(
     private transportService: TransportService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     public router: Router,
     private appSettingsService: AppSettingsService,
     public dateUtils: DateUtilsService
@@ -234,10 +236,18 @@ export class TransportAdminComponent implements OnInit {
    * Approve request
    */
   approveRequest(request: TransportRequest): void {
-    if (!confirm(`Are you sure you want to approve request #${request.id}?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Approve Request',
+      message: `Are you sure you want to approve request #${request.id}?`,
+      confirmText: 'Approve',
+      type: 'success'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeApproveRequest(request);
+    });
+  }
 
+  private executeApproveRequest(request: TransportRequest): void {
     this.processingId = request.id;
 
     this.transportService.approveRequest(request.id, 'Approved by Admin').subscribe({
@@ -285,10 +295,18 @@ export class TransportAdminComponent implements OnInit {
    * Complete request
    */
   completeRequest(request: TransportRequest): void {
-    if (!confirm(`Mark request #${request.id} as completed?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Complete Request',
+      message: `Mark request #${request.id} as completed?`,
+      confirmText: 'Complete',
+      type: 'success'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeCompleteRequest(request);
+    });
+  }
 
+  private executeCompleteRequest(request: TransportRequest): void {
     this.processingId = request.id;
 
     this.transportService.completeRequest(request.id).subscribe({

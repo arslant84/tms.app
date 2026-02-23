@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { VisaService, VisaApplication } from '../../../visa/services/visa.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 interface PendingVisa {
@@ -69,6 +70,7 @@ export class VisaProcessingComponent implements OnInit {
   constructor(
     private visaService: VisaService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private router: Router,
     public dateUtils: DateUtilsService
   ) {}
@@ -204,10 +206,19 @@ export class VisaProcessingComponent implements OnInit {
       return;
     }
 
-    if (!confirm(`Mark visa application ${this.selectedApplication.request_number} as completed?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Complete Processing',
+      message: `Mark visa application ${this.selectedApplication.request_number} as completed?`,
+      confirmText: 'Complete',
+      type: 'success'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeCompleteProcessing();
+    });
+  }
 
+  private executeCompleteProcessing(): void {
+    if (!this.selectedApplication) return;
     this.isProcessing = true;
 
     const completionData: any = {};
@@ -321,10 +332,19 @@ export class VisaProcessingComponent implements OnInit {
       return;
     }
 
-    if (!confirm(`Mark visa application ${this.selectedApplication.request_number} as completed?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Complete Processing',
+      message: `Mark visa application ${this.selectedApplication.request_number} as completed?`,
+      confirmText: 'Complete',
+      type: 'success'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeCompleteProcessingFromDialog();
+    });
+  }
 
+  private executeCompleteProcessingFromDialog(): void {
+    if (!this.selectedApplication) return;
     this.isProcessing = true;
 
     const completionData: any = {};

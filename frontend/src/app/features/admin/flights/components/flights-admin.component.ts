@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BookingsService, FlightBooking } from '../../../bookings/services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
@@ -66,6 +67,7 @@ export class FlightsAdminComponent implements OnInit {
   constructor(
     private bookingsService: BookingsService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private router: Router,
     private appSettingsService: AppSettingsService,
     public dateUtils: DateUtilsService
@@ -234,10 +236,18 @@ export class FlightsAdminComponent implements OnInit {
    * Confirm booking
    */
   confirmBooking(booking: FlightBooking): void {
-    if (!confirm(`Are you sure you want to confirm booking #${booking.booking_reference}?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Confirm Booking',
+      message: `Are you sure you want to confirm booking #${booking.booking_reference}?`,
+      confirmText: 'Confirm',
+      type: 'success'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeConfirmBooking(booking);
+    });
+  }
 
+  private executeConfirmBooking(booking: FlightBooking): void {
     this.processingId = booking.id;
 
     this.bookingsService.confirmFlightBooking(booking.id).subscribe({

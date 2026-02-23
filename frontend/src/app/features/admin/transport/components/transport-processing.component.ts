@@ -4,7 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TransportService, TransportRequest } from '../../../transport/services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
 
 interface BookingDetails {
   vehicleType: string;
@@ -21,7 +23,7 @@ interface BookingDetails {
 @Component({
   selector: 'app-transport-processing',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DepartmentNamePipe],
   templateUrl: './transport-processing.component.html',
   styleUrl: './transport-processing.component.scss'
 })
@@ -60,6 +62,7 @@ export class TransportProcessingComponent implements OnInit {
   constructor(
     private transportService: TransportService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private router: Router,
     public dateUtils: DateUtilsService
   ) {}
@@ -324,10 +327,18 @@ export class TransportProcessingComponent implements OnInit {
    * Updates status to "Completed"
    */
   completeTransport(transport: any): void {
-    if (!confirm(`Mark transport request ${transport.request_number || transport.id} as completed?`)) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Complete Request',
+      message: `Mark transport request ${transport.request_number || transport.id} as completed?`,
+      confirmText: 'Complete',
+      type: 'success'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeCompleteTransport(transport);
+    });
+  }
 
+  private executeCompleteTransport(transport: any): void {
     this.isProcessing = true;
 
     // Use the proper workflow action to complete the request
