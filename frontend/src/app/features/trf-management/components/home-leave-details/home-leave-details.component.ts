@@ -65,7 +65,12 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
       itinerary: this.fb.array([]),
       advanceBankDetails: this.fb.group({
         bankName: [''],
-        accountNumber: ['']
+        accountNumber: [''],
+        accountName: [''],
+        swiftCode: [''],
+        iban: [''],
+        branchAddress: [''],
+        currency: ['USD']
       })
     });
 
@@ -91,7 +96,12 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     if (this.initialData.advanceBankDetails) {
       this.homeLeaveForm.get('advanceBankDetails')?.patchValue({
         bankName: this.initialData.advanceBankDetails.bankName || '',
-        accountNumber: this.initialData.advanceBankDetails.accountNumber || ''
+        accountNumber: this.initialData.advanceBankDetails.accountNumber || '',
+        accountName: this.initialData.advanceBankDetails.accountName || '',
+        swiftCode: this.initialData.advanceBankDetails.swiftCode || '',
+        iban: this.initialData.advanceBankDetails.iban || '',
+        branchAddress: this.initialData.advanceBankDetails.branchAddress || '',
+        currency: this.initialData.advanceBankDetails.currency || 'USD'
       });
     }
   }
