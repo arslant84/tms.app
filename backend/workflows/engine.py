@@ -238,7 +238,12 @@ class WorkflowEngine:
     @staticmethod
     def get_pending_approvals(user: User) -> list:
         """
-        Get list of pending approvals for a user
+        Get list of pending approvals for a user based on workflow step assignments.
+
+        Checks:
+        1. Direct assignment to the user
+        2. User's role UUID matching the step's approver_role
+        3. Active delegations to the user
 
         Args:
             user: User to get pending approvals for
@@ -246,10 +251,13 @@ class WorkflowEngine:
         Returns:
             list: List of pending step executions
         """
+        from django.db.models import Q
+
         # Get by direct assignment
         direct_assignments = WorkflowStepExecution.objects.filter(
             assigned_to=user,
-            status='pending'
+            status='pending',
+            workflow_instance__status='in_progress'
         ).select_related(
             'workflow_instance',
             'workflow_step',
@@ -258,11 +266,16 @@ class WorkflowEngine:
             'workflow_instance__content_object'
         )
 
-        # Get by role (if user has matching role)
+        # Get by role (matching by UUID or name)
+        role_q = Q()
+        if hasattr(user, 'role') and user.role:
+            # Match by role UUID (primary) or role name (legacy)
+            role_q = Q(workflow_step__approver_role=str(user.role.id)) | Q(workflow_step__approver_role=user.role.name)
+
         role_assignments = WorkflowStepExecution.objects.filter(
-            assigned_to__isnull=True,
-            workflow_step__approver_role=user.role.name if hasattr(user, 'role') else None,
-            status='pending'
+            role_q,
+            status='pending',
+            workflow_instance__status='in_progress'
         ).select_related(
             'workflow_instance',
             'workflow_step',
@@ -271,8 +284,32 @@ class WorkflowEngine:
             'workflow_instance__content_object'
         )
 
-        # Combine and return
-        return list(direct_assignments) + list(role_assignments)
+        # Get by active delegation
+        delegated_assignments = WorkflowStepExecution.objects.filter(
+            status='pending',
+            workflow_instance__status='in_progress',
+            delegations__delegated_to=user,
+            delegations__is_active=True
+        ).filter(
+            Q(delegations__expires_at__isnull=True) | Q(delegations__expires_at__gt=timezone.now())
+        ).select_related(
+            'workflow_instance',
+            'workflow_step',
+            'workflow_instance__content_type'
+        ).prefetch_related(
+            'workflow_instance__content_object'
+        )
+
+        # Combine, deduplicate and return
+        all_steps = list(direct_assignments) + list(role_assignments) + list(delegated_assignments)
+        seen_ids = set()
+        unique_steps = []
+        for step in all_steps:
+            if step.id not in seen_ids:
+                seen_ids.add(step.id)
+                unique_steps.append(step)
+
+        return unique_steps
 
     @staticmethod
     @transaction.atomic

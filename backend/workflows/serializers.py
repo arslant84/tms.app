@@ -478,15 +478,16 @@ class WorkflowInstanceCreateSerializer(serializers.Serializer):
         )
 
         # Create step executions for all steps
-        for step in workflow_template.steps.all():
+        for step in workflow_template.steps.all().order_by('step_order'):
             # Determine who to assign the step to
             assigned_to = step.approver_user if step.approver_user else None
 
+            # First step is 'pending', subsequent steps are 'waiting'
             WorkflowStepExecution.objects.create(
                 workflow_instance=workflow_instance,
                 workflow_step=step,
                 assigned_to=assigned_to,
-                status='pending' if step.step_order == 1 else 'pending'
+                status='pending' if step.step_order == 1 else 'waiting'
             )
 
         # Create audit log
