@@ -252,10 +252,10 @@ export class PendingApprovalsComponent implements OnInit {
 
   viewItem(item: ApprovableItem): void {
     const routes: { [key: string]: string } = {
-      'TSR': `/trf/details/${item.id}`,
-      'Transport': `/transport/details/${item.id}`,
-      'Visa': `/visa/details/${item.id}`,
-      'Accommodation': `/accommodation/details/${item.id}`
+      'TSR': `/trf/${item.id}`,
+      'Transport': `/transport/${item.id}`,
+      'Visa': `/visa/${item.id}`,
+      'Accommodation': `/accommodation/${item.id}`
     };
 
     const route = routes[item.itemType];

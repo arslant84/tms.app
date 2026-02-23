@@ -73,10 +73,13 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         Filter visa applications based on user permissions
 
         Context-aware filtering:
-        - Approval actions (approve/reject): Allow access to all applications (authorization checked in WorkflowEngine)
+        - Approval actions (approve/reject/retrieve): Allow access to applications pending user's approval
         - admin_view=true: Show all/department visas if user has appropriate permissions (Admin Module)
         - Otherwise: Show only user's own visa applications (Personal Requests view)
         """
+        from workflows.services import WorkflowApprovalHelper
+        from django.db.models import Q
+
         user = self.request.user
         queryset = self.queryset
 
@@ -84,6 +87,14 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         if self.action in ['approve', 'reject']:
             logger.info(f" Approval action: Allowing access to all visa applications (authorization checked in WorkflowEngine)")
             return queryset  # No filtering - authorization handled by WorkflowEngine
+
+        # For retrieve (viewing details), include applications pending user's approval via workflow
+        if self.action == 'retrieve':
+            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, VisaApplication)
+            if pending_approval_ids:
+                queryset = queryset.filter(Q(user=user) | Q(id__in=pending_approval_ids))
+                logger.info(f" Retrieve action: Including user's applications and {len(pending_approval_ids)} pending approval")
+                return queryset
 
         # Check if this is an admin view (Visa Admin module)
         admin_view = self.request.query_params.get('admin_view', 'false').lower() == 'true'
@@ -105,13 +116,23 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                     queryset = queryset.filter(user=user)
                     logger.warning(f" Admin view: Approver but no department - showing only own")
             else:
-                # No admin permissions - show only own
-                queryset = queryset.filter(user=user)
-                logger.warning(f" Admin view: User lacks permission - showing only own visa applications")
+                # No admin permissions - show only own plus pending approval
+                pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, VisaApplication)
+                if pending_approval_ids:
+                    queryset = queryset.filter(Q(user=user) | Q(id__in=pending_approval_ids))
+                    logger.info(f" Admin view: User - showing own applications plus {len(pending_approval_ids)} pending approval")
+                else:
+                    queryset = queryset.filter(user=user)
+                    logger.warning(f" Admin view: User lacks permission - showing only own visa applications")
         else:
-            # Personal requests view - always show only user's own applications
-            queryset = queryset.filter(user=user)
-            logger.info(f" Personal view: User {user.username} - showing only own visa applications")
+            # Personal requests view - show user's own applications plus those pending their approval
+            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, VisaApplication)
+            if pending_approval_ids:
+                queryset = queryset.filter(Q(user=user) | Q(id__in=pending_approval_ids))
+                logger.info(f" Personal view: User {user.username} - showing own applications plus {len(pending_approval_ids)} pending approval")
+            else:
+                queryset = queryset.filter(user=user)
+                logger.info(f" Personal view: User {user.username} - showing only own visa applications")
 
         # Apply status filter if provided
         status_filter = self.request.query_params.get('status', None)

@@ -227,8 +227,10 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             logger.info(f" Approval action: Allowing access to all accommodation requests (authorization checked in WorkflowEngine)")
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
-        # For retrieve action, check permissions first
+        # For retrieve action, check permissions and workflow assignment
         if self.action == 'retrieve':
+            from workflows.services import WorkflowApprovalHelper
+
             # Check if user has admin permissions to view all
             if user.role:
                 can_view_all = user.role.permissions.filter(
@@ -239,13 +241,23 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                     logger.info(f" Retrieve action: User {user.username} has admin permissions - allowing access to all requests")
                     return queryset  # No filtering for admins
 
-            # Regular users can view their own requests only
-            logger.info(f" Retrieve action: User {user.username} - filtering by requestor")
-            # Filter by requestor_name or staff_id to handle different data entry methods
-            queryset = queryset.filter(
-                Q(requestor_name=user.get_full_name()) |
-                Q(staff_id=user.staff_id)
-            )
+            # Include requests pending user's approval via workflow
+            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, AccommodationRequest)
+            if pending_approval_ids:
+                queryset = queryset.filter(
+                    Q(requestor_name=user.get_full_name()) |
+                    Q(staff_id=user.staff_id) |
+                    Q(id__in=pending_approval_ids)
+                )
+                logger.info(f" Retrieve action: User {user.username} - showing own requests plus {len(pending_approval_ids)} pending approval")
+            else:
+                # Regular users can view their own requests only
+                logger.info(f" Retrieve action: User {user.username} - filtering by requestor")
+                # Filter by requestor_name or staff_id to handle different data entry methods
+                queryset = queryset.filter(
+                    Q(requestor_name=user.get_full_name()) |
+                    Q(staff_id=user.staff_id)
+                )
             return queryset
 
         # For assign action, check if user has admin permissions

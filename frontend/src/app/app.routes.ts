@@ -86,6 +86,21 @@ export const routes: Routes = [
           ]
         }
       },
+      // Admin approvals - separate route with its own guard (bypasses parent /admin guard)
+      {
+        path: 'admin/approvals',
+        component: UnifiedApprovalsComponent,
+        canActivate: [PermissionGuard],
+        data: {
+          permissions: [
+            Permission.VIEW_PENDING_APPROVALS,
+            Permission.APPROVE_TRF,
+            Permission.APPROVE_TRANSPORT,
+            Permission.APPROVE_VISA,
+            Permission.APPROVE_ACCOMMODATION
+          ]
+        }
+      },
       // Admin routes
       {
         path: 'admin',
@@ -104,20 +119,7 @@ export const routes: Routes = [
               ]
             }
           },
-          {
-            path: 'approvals',
-            component: UnifiedApprovalsComponent,
-            canActivate: [PermissionGuard],
-            data: {
-              permissions: [
-                Permission.VIEW_PENDING_APPROVALS,
-                Permission.APPROVE_TRF,
-                Permission.APPROVE_TRANSPORT,
-                Permission.APPROVE_VISA,
-                Permission.APPROVE_ACCOMMODATION
-              ]
-            }
-          },
+          // Note: /admin/approvals is handled by a separate route above to bypass parent guard
           {
             path: 'transport',
             canActivate: [AdminMenuGuard],
