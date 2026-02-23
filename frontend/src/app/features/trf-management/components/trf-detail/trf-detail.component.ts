@@ -166,7 +166,9 @@ export class TrfDetailComponent implements OnInit {
    * Check if TRF is overseas or home leave
    */
   get isOverseas(): boolean {
-    return this.trfData?.travelType === 'Overseas' || this.trfData?.travelType === 'Home Leave';
+    return this.trfData?.travelType === 'Overseas' ||
+           this.trfData?.travelType === 'Home Leave' ||
+           this.trfData?.travelType === 'Home Leave Passage';
   }
 
   /**

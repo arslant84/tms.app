@@ -873,7 +873,12 @@ export class TrfWizardComponent implements OnInit {
         const bankData = {
           trf: trfId,
           bank_name: data.bankDetails.bankName || '',
-          account_number: data.bankDetails.accountNumber || ''
+          account_number: data.bankDetails.accountNumber || '',
+          account_name: data.bankDetails.accountName || '',
+          swift_code: data.bankDetails.swiftCode || '',
+          iban: data.bankDetails.iban || '',
+          branch_address: data.bankDetails.branchAddress || '',
+          currency: data.bankDetails.currency || 'USD'
         };
 
         promises.push(
@@ -1040,13 +1045,23 @@ export class TrfWizardComponent implements OnInit {
     if (!bankDetail || Object.keys(bankDetail).length === 0) {
       return {
         bankName: '',
-        accountNumber: ''
+        accountNumber: '',
+        accountName: '',
+        swiftCode: '',
+        iban: '',
+        branchAddress: '',
+        currency: 'USD'
       };
     }
 
     return {
       bankName: bankDetail.bank_name || bankDetail.bankName || '',
-      accountNumber: bankDetail.account_number || bankDetail.accountNumber || ''
+      accountNumber: bankDetail.account_number || bankDetail.accountNumber || '',
+      accountName: bankDetail.account_name || bankDetail.accountName || '',
+      swiftCode: bankDetail.swift_code || bankDetail.swiftCode || '',
+      iban: bankDetail.iban || '',
+      branchAddress: bankDetail.branch_address || bankDetail.branchAddress || '',
+      currency: bankDetail.currency || 'USD'
     };
   }
 

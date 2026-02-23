@@ -2,8 +2,15 @@
 @use 'sass:color';
 @use '../../../../../styles/variables' as vars;
 
+// Host element styling
+:host {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+}
+
 .trf-detail-container {
-  /* Full-width adaptive layout */
+  /* Full-width adaptive layout - matching transport-detail */
   width: 100%;
   max-width: none;
   margin: 0;
@@ -11,6 +18,20 @@
   box-sizing: border-box;
   background-color: vars.$gray-50;
   min-height: 100vh;
+}
+
+// Content wrapper - ensures all cards are properly contained
+.trf-detail-content {
+  display: block;
+  width: 100%;
+  max-width: none;
+
+  // Ensure all direct child cards fill the container
+  > .detail-card,
+  > .card {
+    display: block;
+    width: 100%;
+  }
 }
 
 // Loading & Error States
@@ -151,49 +172,84 @@
   font-size: vars.$font-size-sm;
 }
 
-// Main Card
+// Detail Card - Consistent card styling for all sections
 .detail-card {
-  background: vars.$bg-primary;
-  border-radius: vars.$radius-lg;
-  box-shadow: vars.$shadow-base;
-  overflow: hidden;
-}
-
-// Card Styling
-.card {
-  border: 1px solid vars.$gray-300;
-  border-radius: vars.$radius-lg;
-  box-shadow: vars.$shadow-base;
-  overflow: hidden;
+  background: vars.$white;
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-sm;
   margin-bottom: vars.$spacing-6;
-  background: vars.$bg-primary;
-}
+  overflow: hidden;
 
-.card-header {
-  background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%) !important;
-  border-bottom: 2px solid vars.$primary-color;
-  padding: vars.$spacing-5 vars.$spacing-6 !important;
-  color: vars.$text-inverse;
+  &:last-child {
+    margin-bottom: 0;
+  }
 
-  h5 {
-    margin: 0 !important;
-    font-size: vars.$font-size-lg !important;
-    font-weight: vars.$font-weight-semibold !important;
-    color: vars.$text-inverse !important;
+  .card-header {
+    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
+    color: vars.$white;
+    padding: vars.$spacing-5 vars.$spacing-6;
     display: flex;
     align-items: center;
+    gap: vars.$spacing-3;
 
     i {
-      margin-right: vars.$spacing-3;
       font-size: vars.$font-size-xl;
-      color: vars.$text-inverse !important;
     }
+
+    h3 {
+      margin: 0;
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+    }
+  }
+
+  .card-body {
+    padding: vars.$spacing-6;
+    background-color: vars.$white;
   }
 }
 
-.card-body {
-  padding: vars.$spacing-6;
-  background-color: vars.$bg-primary;
+// Legacy Card Styling (for workflow sections that still use .card)
+.card {
+  background: vars.$white;
+  border-radius: vars.$radius-md;
+  box-shadow: vars.$shadow-sm;
+  margin-bottom: vars.$spacing-6;
+  overflow: hidden;
+
+  &.mb-4 {
+    margin-bottom: vars.$spacing-6;
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
+    color: vars.$white;
+    padding: vars.$spacing-5 vars.$spacing-6;
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-3;
+
+    i {
+      font-size: vars.$font-size-xl;
+    }
+
+    h5 {
+      margin: 0;
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      display: flex;
+      align-items: center;
+
+      i {
+        margin-right: vars.$spacing-3;
+      }
+    }
+  }
+
+  .card-body {
+    padding: vars.$spacing-6;
+    background-color: vars.$white;
+  }
 }
 
 // Detail Section

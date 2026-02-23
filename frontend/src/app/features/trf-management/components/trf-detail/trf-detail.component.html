@@ -67,50 +67,51 @@
     </div>
 
     <!-- Employee/External Party Details -->
-    <div class="card mb-4">
+    <div class="detail-card">
       <div class="card-header">
-        <h5><i class="bi bi-person"></i> {{ isExternal ? 'External Party Details' : 'Employee Details' }}</h5>
+        <i class="bi bi-person"></i>
+        <h3>{{ isExternal ? 'External Party Details' : 'Employee Details' }}</h3>
       </div>
       <div class="card-body">
         <div class="detail-grid">
           <ng-container *ngIf="isExternal">
             <div class="detail-item">
               <label>Full Name</label>
-              <p>{{ trfData.externalPartyName || 'N/A' }}</p>
+              <span class="value">{{ trfData.externalPartyName || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>Organization</label>
-              <p>{{ trfData.externalPartyOrganization || 'N/A' }}</p>
+              <span class="value">{{ trfData.externalPartyOrganization || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>Authority Letter Ref.</label>
-              <p>{{ trfData.externalRefToAuthorityLetter || 'N/A' }}</p>
+              <span class="value">{{ trfData.externalRefToAuthorityLetter || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>Cost Center</label>
-              <p>{{ trfData.externalCostCenter || 'N/A' }}</p>
+              <span class="value">{{ trfData.externalCostCenter || 'N/A' }}</span>
             </div>
           </ng-container>
           <ng-container *ngIf="!isExternal">
             <div class="detail-item">
               <label>Requestor Name</label>
-              <p>{{ trfData.requestorName || 'N/A' }}</p>
+              <span class="value">{{ trfData.requestorName || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>Staff ID</label>
-              <p>{{ trfData.staffId || 'N/A' }}</p>
+              <span class="value">{{ trfData.staffId || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>Department & Position</label>
-              <p>{{ trfData.department || 'N/A' }}{{ trfData.position ? ' / ' + trfData.position : '' }}</p>
+              <span class="value">{{ trfData.department || 'N/A' }}{{ trfData.position ? ' / ' + trfData.position : '' }}</span>
             </div>
             <div class="detail-item">
               <label>Cost Center</label>
-              <p>{{ trfData.costCenter || 'N/A' }}</p>
+              <span class="value">{{ trfData.costCenter || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>Tel/Email</label>
-              <p>{{ trfData.telEmail || 'N/A' }}</p>
+              <span class="value">{{ trfData.telEmail || 'N/A' }}</span>
             </div>
           </ng-container>
         </div>
@@ -118,9 +119,10 @@
     </div>
 
     <!-- Purpose of Travel -->
-    <div class="card mb-4" *ngIf="trfData.purpose">
+    <div class="detail-card" *ngIf="trfData.purpose">
       <div class="card-header">
-        <h5><i class="bi bi-file-text"></i> Purpose of Travel</h5>
+        <i class="bi bi-file-text"></i>
+        <h3>Purpose of Travel</h3>
       </div>
       <div class="card-body">
         <div class="purpose-text">
@@ -130,9 +132,10 @@
     </div>
 
     <!-- Itinerary -->
-    <div class="card mb-4" *ngIf="trfData.itinerary && trfData.itinerary.length > 0">
+    <div class="detail-card" *ngIf="trfData.itinerary && trfData.itinerary.length > 0">
       <div class="card-header">
-        <h5><i class="bi bi-calendar-event"></i> Itinerary</h5>
+        <i class="bi bi-calendar-event"></i>
+        <h3>Itinerary</h3>
       </div>
       <div class="card-body">
         <div class="table-container">
@@ -167,9 +170,10 @@
     </div>
 
     <!-- Meal Provision (Domestic) -->
-    <div class="card mb-4" *ngIf="isDomestic && trfData.mealSelections && trfData.mealSelections.length > 0">
+    <div class="detail-card" *ngIf="isDomestic && trfData.mealSelections && trfData.mealSelections.length > 0">
       <div class="card-header">
-        <h5><i class="bi bi-cup-straw"></i> Meal Provision (Kiyanly)</h5>
+        <i class="bi bi-cup-straw"></i>
+        <h3>Meal Provision (Kiyanly)</h3>
       </div>
       <div class="card-body">
         <div class="table-container">
@@ -225,81 +229,82 @@
     </div>
 
     <!-- Passport Details (Overseas/Home Leave) -->
-    <div class="card mb-4" *ngIf="isOverseas && trfData.passportDetails && trfData.passportDetails.length > 0">
+    <div class="detail-card" *ngIf="isOverseas && trfData.passportDetails && trfData.passportDetails.length > 0">
       <div class="card-header">
-        <h5><i class="bi bi-passport"></i> Passport Details</h5>
+        <i class="bi bi-passport"></i>
+        <h3>Passport Details</h3>
       </div>
       <div class="card-body">
         <div class="detail-grid">
           <div class="detail-item">
             <label>Full Name</label>
-            <p>{{ trfData.passportDetails[0]?.full_name || trfData.passportDetails[0]?.fullName || 'N/A' }}</p>
+            <span class="value">{{ trfData.passportDetails[0]?.full_name || trfData.passportDetails[0]?.fullName || 'N/A' }}</span>
           </div>
           <div class="detail-item">
             <label>Passport Number</label>
-            <p>{{ trfData.passportDetails[0]?.passport_number || trfData.passportDetails[0]?.passportNumber || 'N/A' }}</p>
+            <span class="value">{{ trfData.passportDetails[0]?.passport_number || trfData.passportDetails[0]?.passportNumber || 'N/A' }}</span>
           </div>
           <div class="detail-item">
             <label>Nationality</label>
-            <p>{{ trfData.passportDetails[0]?.nationality || 'N/A' }}</p>
+            <span class="value">{{ trfData.passportDetails[0]?.nationality || 'N/A' }}</span>
           </div>
           <div class="detail-item">
             <label>Date of Birth</label>
-            <p>{{ dateUtils.formatDate(trfData.passportDetails[0]?.date_of_birth || trfData.passportDetails[0]?.dateOfBirth) }}</p>
+            <span class="value">{{ dateUtils.formatDate(trfData.passportDetails[0]?.date_of_birth || trfData.passportDetails[0]?.dateOfBirth) }}</span>
           </div>
           <div class="detail-item">
             <label>Place of Birth</label>
-            <p>{{ trfData.passportDetails[0]?.place_of_birth || trfData.passportDetails[0]?.placeOfBirth || 'N/A' }}</p>
+            <span class="value">{{ trfData.passportDetails[0]?.place_of_birth || trfData.passportDetails[0]?.placeOfBirth || 'N/A' }}</span>
           </div>
           <div class="detail-item">
             <label>Passport Issue Date</label>
-            <p>{{ dateUtils.formatDate(trfData.passportDetails[0]?.passport_issue_date || trfData.passportDetails[0]?.passportIssueDate) }}</p>
+            <span class="value">{{ dateUtils.formatDate(trfData.passportDetails[0]?.passport_issue_date || trfData.passportDetails[0]?.passportIssueDate) }}</span>
           </div>
           <div class="detail-item">
             <label>Passport Expiry Date</label>
-            <p>{{ dateUtils.formatDate(trfData.passportDetails[0]?.passport_expiry_date || trfData.passportDetails[0]?.passportExpiryDate) }}</p>
+            <span class="value">{{ dateUtils.formatDate(trfData.passportDetails[0]?.passport_expiry_date || trfData.passportDetails[0]?.passportExpiryDate) }}</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Advance Request (Overseas/Home Leave) -->
-    <div class="card mb-4" *ngIf="isOverseas && (trfData.bankDetails || trfData.advanceAmounts?.length > 0)">
+    <div class="detail-card" *ngIf="isOverseas && (trfData.bankDetails || trfData.advanceAmounts?.length > 0)">
       <div class="card-header">
-        <h5><i class="bi bi-currency-dollar"></i> Advance Request</h5>
+        <i class="bi bi-currency-dollar"></i>
+        <h3>Advance Request</h3>
       </div>
       <div class="card-body">
-
         <div class="sub-section" *ngIf="trfData.bankDetails">
           <h4 class="sub-title">Bank Details</h4>
           <div class="detail-grid">
             <div class="detail-item">
               <label>Account Name</label>
-              <p>{{ trfData.bankDetails.account_name || trfData.bankDetails.accountName || 'N/A' }}</p>
+              <span class="value">{{ trfData.bankDetails.account_name || trfData.bankDetails.accountName || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>Bank Name</label>
-              <p>{{ trfData.bankDetails.bank_name || trfData.bankDetails.bankName || 'N/A' }}</p>
+              <span class="value">{{ trfData.bankDetails.bank_name || trfData.bankDetails.bankName || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>Account Number</label>
-              <p>{{ trfData.bankDetails.account_number || trfData.bankDetails.accountNumber || 'N/A' }}</p>
+              <span class="value">{{ trfData.bankDetails.account_number || trfData.bankDetails.accountNumber || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>SWIFT Code</label>
-              <p>{{ trfData.bankDetails.swift_code || trfData.bankDetails.swiftCode || 'N/A' }}</p>
+              <span class="value">{{ trfData.bankDetails.swift_code || trfData.bankDetails.swiftCode || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>IBAN</label>
-              <p>{{ trfData.bankDetails.iban || 'N/A' }}</p>
+              <span class="value">{{ trfData.bankDetails.iban || 'N/A' }}</span>
             </div>
             <div class="detail-item">
               <label>Currency</label>
-              <p>{{ trfData.bankDetails.currency || 'N/A' }}</p>
+              <span class="value">{{ trfData.bankDetails.currency || 'N/A' }}</span>
             </div>
             <div class="detail-item full-width" *ngIf="trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress">
               <label>Branch Address</label>
-              <p>{{ trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress }}</p>
+              <span class="value">{{ trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress }}</span>
             </div>
           </div>
         </div>
@@ -342,9 +347,10 @@
     </div>
 
     <!-- Additional Comments -->
-    <div class="card mb-4" *ngIf="trfData.additionalComments">
+    <div class="detail-card" *ngIf="trfData.additionalComments">
       <div class="card-header">
-        <h5><i class="bi bi-chat-left-text"></i> Additional Comments</h5>
+        <i class="bi bi-chat-left-text"></i>
+        <h3>Additional Comments</h3>
       </div>
       <div class="card-body">
         <div class="purpose-text">
@@ -354,32 +360,33 @@
     </div>
 
     <!-- Request Metadata -->
-    <div class="card mb-4">
+    <div class="detail-card">
       <div class="card-header">
-        <h5><i class="bi bi-info-circle"></i> Request Information</h5>
+        <i class="bi bi-info-circle"></i>
+        <h3>Request Information</h3>
       </div>
       <div class="card-body">
         <div class="detail-grid">
           <div class="detail-item">
             <label>Request Number</label>
-            <p *ngIf="trfData.requestNumber">{{ trfData.requestNumber }}</p>
-            <p *ngIf="!trfData.requestNumber" class="text-muted">#{{ trfData.id }} (Not submitted)</p>
+            <span class="value" *ngIf="trfData.requestNumber">{{ trfData.requestNumber }}</span>
+            <span class="value text-muted" *ngIf="!trfData.requestNumber">#{{ trfData.id }} (Not submitted)</span>
           </div>
           <div class="detail-item">
             <label>Travel Type</label>
-            <p>{{ trfData.travelType }}</p>
+            <span class="value">{{ trfData.travelType }}</span>
           </div>
           <div class="detail-item">
             <label>Current Status</label>
-            <p><span class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span></p>
+            <span class="value"><span class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span></span>
           </div>
           <div class="detail-item">
             <label>Created At</label>
-            <p>{{ dateUtils.formatDate(trfData.createdAt) }}</p>
+            <span class="value">{{ dateUtils.formatDate(trfData.createdAt) }}</span>
           </div>
           <div class="detail-item">
             <label>Last Updated</label>
-            <p>{{ dateUtils.formatDate(trfData.updatedAt) }}</p>
+            <span class="value">{{ dateUtils.formatDate(trfData.updatedAt) }}</span>
           </div>
         </div>
       </div>
@@ -439,35 +446,6 @@
           <div class="detail-item full-width" *ngIf="trfData.flightDetails.remarks">
             <label>Remarks</label>
             <p>{{ trfData.flightDetails.remarks }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Status & Tracking -->
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5><i class="bi bi-clock-history"></i> Status & Tracking</h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-6">
-            <div class="info-group">
-              <label>Current Status</label>
-              <p><span class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span></p>
-            </div>
-          </div>
-          <div class="col-md-6" *ngIf="trfData.createdAt">
-            <div class="info-group">
-              <label>Created At</label>
-              <p>{{ dateUtils.formatDate(trfData.createdAt) }}</p>
-            </div>
-          </div>
-          <div class="col-md-6" *ngIf="trfData.updatedAt">
-            <div class="info-group">
-              <label>Last Updated</label>
-              <p>{{ dateUtils.formatDate(trfData.updatedAt) }}</p>
-            </div>
           </div>
         </div>
       </div>

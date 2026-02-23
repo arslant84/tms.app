@@ -17,6 +17,11 @@ export interface ItinerarySegment {
 export interface AdvanceBankDetails {
   bankName: string;
   accountNumber: string;
+  accountName?: string;
+  swiftCode?: string;
+  iban?: string;
+  branchAddress?: string;
+  currency?: string;
 }
 
 export interface AdvanceAmountItem {
@@ -94,7 +99,12 @@ export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
       itinerary: this.fb.array([]),
       advanceBankDetails: this.fb.group({
         bankName: ['', Validators.required],
-        accountNumber: ['', Validators.required]
+        accountNumber: ['', Validators.required],
+        accountName: [''],
+        swiftCode: [''],
+        iban: [''],
+        branchAddress: [''],
+        currency: ['USD']
       }),
       advanceAmountRequested: this.fb.array([])
     });
@@ -117,7 +127,12 @@ export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
     if (this.initialData.advanceBankDetails) {
       this.overseasForm.get('advanceBankDetails')?.patchValue({
         bankName: this.initialData.advanceBankDetails.bankName || '',
-        accountNumber: this.initialData.advanceBankDetails.accountNumber || ''
+        accountNumber: this.initialData.advanceBankDetails.accountNumber || '',
+        accountName: this.initialData.advanceBankDetails.accountName || '',
+        swiftCode: this.initialData.advanceBankDetails.swiftCode || '',
+        iban: this.initialData.advanceBankDetails.iban || '',
+        branchAddress: this.initialData.advanceBankDetails.branchAddress || '',
+        currency: this.initialData.advanceBankDetails.currency || 'USD'
       });
     }
 

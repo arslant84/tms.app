@@ -175,7 +175,16 @@
         </h3>
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label fw-medium">Bank Name</label>
+            <label class="form-label fw-medium">Account Name / Имя владельца счета</label>
+            <input
+              type="text"
+              formControlName="accountName"
+              placeholder="Enter account holder name"
+              class="form-control"
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Bank Name / Название банка</label>
             <input
               type="text"
               formControlName="bankName"
@@ -184,13 +193,50 @@
             />
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-medium">Account Number</label>
+            <label class="form-label fw-medium">Account Number / Номер счета</label>
             <input
               type="text"
               formControlName="accountNumber"
               placeholder="Enter account number"
               class="form-control"
             />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">SWIFT Code / SWIFT код</label>
+            <input
+              type="text"
+              formControlName="swiftCode"
+              placeholder="Enter SWIFT/BIC code"
+              class="form-control"
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">IBAN</label>
+            <input
+              type="text"
+              formControlName="iban"
+              placeholder="Enter IBAN"
+              class="form-control"
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-medium">Currency / Валюта</label>
+            <select formControlName="currency" class="form-select">
+              <option value="USD">USD - US Dollar</option>
+              <option value="EUR">EUR - Euro</option>
+              <option value="GBP">GBP - British Pound</option>
+              <option value="TMT">TMT - Turkmen Manat</option>
+              <option value="RUB">RUB - Russian Ruble</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-medium">Branch Address / Адрес отделения</label>
+            <textarea
+              formControlName="branchAddress"
+              rows="2"
+              placeholder="Enter bank branch address"
+              class="form-control"
+            ></textarea>
           </div>
         </div>
       </div>
