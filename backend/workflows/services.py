@@ -4,8 +4,146 @@ ADDITIVE - Provides new functionality without modifying existing code
 """
 from typing import List, Dict, Set
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 
 User = get_user_model()
+
+
+class WorkflowApprovalHelper:
+    """
+    Helper class for filtering entities that a user can approve based on workflow steps.
+    Uses workflow-based filtering instead of hardcoded role-to-status mappings.
+    """
+
+    @staticmethod
+    def get_pending_entity_ids_for_user(user, model_class) -> List:
+        """
+        Get IDs of entities pending approval for a specific user based on workflow step assignments.
+
+        This checks:
+        1. Direct assignment to the user
+        2. User's role UUID matching the step's approver_role
+        3. Active delegations to the user
+
+        Args:
+            user: The user to check approvals for
+            model_class: The Django model class (e.g., TravelRequest, VisaApplication)
+
+        Returns:
+            List of entity IDs that the user can approve
+        """
+        from workflows.models import WorkflowInstance, WorkflowStepExecution
+        from django.utils import timezone
+
+        content_type = ContentType.objects.get_for_model(model_class)
+
+        # Build query for pending step executions
+        # 1. Direct assignment to user
+        direct_assignment_q = Q(assigned_to=user)
+
+        # 2. User's role matches step's approver_role (by UUID)
+        role_match_q = Q()
+        if hasattr(user, 'role') and user.role:
+            # approver_role stores role UUID as string
+            role_match_q = Q(workflow_step__approver_role=str(user.role.id))
+            # Also try role name for legacy data
+            role_match_q |= Q(workflow_step__approver_role=user.role.name)
+
+        # Get pending step executions that match user
+        pending_steps = WorkflowStepExecution.objects.filter(
+            status='pending',
+            workflow_instance__content_type=content_type,
+            workflow_instance__status='in_progress'
+        ).filter(
+            direct_assignment_q | role_match_q
+        )
+
+        # Get entity IDs from workflow instances
+        entity_ids = list(pending_steps.values_list('workflow_instance__object_id', flat=True))
+
+        # 3. Also check for active delegations
+        delegated_steps = WorkflowStepExecution.objects.filter(
+            status='pending',
+            workflow_instance__content_type=content_type,
+            workflow_instance__status='in_progress',
+            delegations__delegated_to=user,
+            delegations__is_active=True
+        ).filter(
+            Q(delegations__expires_at__isnull=True) | Q(delegations__expires_at__gt=timezone.now())
+        )
+
+        delegated_ids = list(delegated_steps.values_list('workflow_instance__object_id', flat=True))
+
+        # Combine and deduplicate
+        all_ids = list(set(entity_ids + delegated_ids))
+
+        return all_ids
+
+    @staticmethod
+    def can_user_approve_entity(user, entity) -> bool:
+        """
+        Check if a specific user can approve a specific entity based on workflow step.
+
+        Args:
+            user: The user to check
+            entity: The entity instance (e.g., TravelRequest object)
+
+        Returns:
+            bool: True if user can approve this entity
+        """
+        from workflows.models import WorkflowInstance, WorkflowStepExecution
+        from django.utils import timezone
+
+        # Superusers can approve everything
+        if user.is_superuser:
+            return True
+
+        content_type = ContentType.objects.get_for_model(entity)
+
+        # Get active workflow instance for this entity
+        workflow_instance = WorkflowInstance.objects.filter(
+            content_type=content_type,
+            object_id=entity.id,
+            status='in_progress'
+        ).first()
+
+        if not workflow_instance:
+            return False
+
+        # Get current pending step execution
+        current_step = workflow_instance.step_executions.filter(
+            status='pending'
+        ).order_by('workflow_step__step_order').first()
+
+        if not current_step:
+            return False
+
+        # Check direct assignment
+        if current_step.assigned_to == user:
+            return True
+
+        # Check role match
+        if hasattr(user, 'role') and user.role and current_step.workflow_step.approver_role:
+            approver_role_value = current_step.workflow_step.approver_role
+
+            # Compare by UUID
+            if str(user.role.id) == approver_role_value:
+                return True
+
+            # Compare by name (legacy)
+            if user.role.name == approver_role_value:
+                return True
+
+        # Check active delegation
+        active_delegation = current_step.delegations.filter(
+            delegated_to=user,
+            is_active=True
+        ).filter(
+            Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
+        ).exists()
+
+        return active_delegation
 
 
 class WorkflowNotificationRecipientResolver:

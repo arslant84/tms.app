@@ -200,50 +200,30 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='pending-approvals')
     def pending_approvals(self, request):
-        """Get visa applications pending approval for the current user's role"""
+        """Get visa applications pending approval for the current user based on workflow step assignments"""
         from accounts.utils import is_module_admin
-        from workflows.models import WorkflowInstance, WorkflowStepExecution
-        from django.contrib.contenttypes.models import ContentType
+        from workflows.services import WorkflowApprovalHelper
 
         user = request.user
-        user_role = user.role if hasattr(user, 'role') and user.role else None
-
-        # Map role names to visa status values for legacy status-based filtering
-        ROLE_TO_STATUS = {
-            'Department Focal': 'Pending Department Focal',
-            'Line Manager': 'Pending Manager',
-            'HOD': 'Pending HOD',
-            'Visa Clerk': 'Pending Visa Clerk',
-        }
 
         # Admins and superusers see all pending requests
         if user.is_superuser or is_module_admin(user, 'visa'):
             queryset = self.queryset.filter(
-                status__in=['Pending Department Focal', 'Pending Manager', 'Pending HOD', 'Pending Visa Clerk']
-            )
-        elif user_role:
-            # Try workflow-based filtering first
-            content_type = ContentType.objects.get_for_model(VisaApplication)
-
-            # Find workflow instances with pending steps for this user's role
-            pending_step_instance_ids = WorkflowStepExecution.objects.filter(
-                status='pending',
-                workflow_instance__content_type=content_type,
-                workflow_step__approver_role=str(user_role.id)
-            ).values_list('workflow_instance__object_id', flat=True)
-
-            # Get visa applications from workflow
-            queryset = self.queryset.filter(id__in=pending_step_instance_ids)
-
-            # Also include legacy status-based filtering as fallback
-            if user_role.name in ROLE_TO_STATUS:
-                legacy_queryset = self.queryset.filter(status=ROLE_TO_STATUS[user_role.name])
-                # Combine both querysets
-                queryset = queryset | legacy_queryset
-                queryset = queryset.distinct()
+                status__in=[
+                    'Pending',
+                    'Pending Department Focal',
+                    'Pending Manager',
+                    'Pending Line Manager',
+                    'Pending HOD',
+                    'Pending Visa Clerk',
+                    'Submitted',
+                    'Under Review'
+                ]
+            ).order_by('-submitted_date')
         else:
-            # User has no role - return empty
-            queryset = self.queryset.none()
+            # Use workflow-based filtering: get entities where user's role matches current step
+            pending_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, VisaApplication)
+            queryset = self.queryset.filter(id__in=pending_ids).order_by('-submitted_date')
 
         serializer = VisaApplicationListSerializer(queryset, many=True)
         return Response(serializer.data)

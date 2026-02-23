@@ -295,15 +295,25 @@ class AdminReportsView(APIView):
 
     def _get_department_stats(self, start_date):
         """Get statistics by department"""
-        departments = User.objects.values_list('department', flat=True).distinct()
+        from accounts.models import Department
+
+        # Get distinct department IDs from users
+        department_ids = User.objects.values_list('department', flat=True).distinct()
         stats = []
 
-        for dept in departments:
-            if not dept:
+        for dept_id in department_ids:
+            if not dept_id:
                 continue
 
+            # Look up department name
+            try:
+                department = Department.objects.get(id=dept_id)
+                dept_name = department.name
+            except Department.DoesNotExist:
+                dept_name = str(dept_id)  # Fallback to ID if not found
+
             # Get all requests from users in this department
-            dept_users = User.objects.filter(department=dept)
+            dept_users = User.objects.filter(department=dept_id)
 
             total = (
                 TravelRequest.objects.filter(created_by__in=dept_users, created_at__gte=start_date).count() +
@@ -375,7 +385,7 @@ class AdminReportsView(APIView):
                     avg_time = sum(times) / len(times)
 
             stats.append({
-                'department': dept,
+                'department': dept_name,
                 'total': total,
                 'pending': pending,
                 'completed': completed,
@@ -454,16 +464,25 @@ class DepartmentalReportsView(APIView):
             start_date = now - timedelta(days=30)
 
         # Get departments
-        departments = User.objects.values_list('department', flat=True).distinct()
+        from accounts.models import Department
+
+        department_ids = User.objects.values_list('department', flat=True).distinct()
         if department_filter:
-            departments = [department_filter]
+            department_ids = [department_filter]
 
         reports = []
-        for dept in departments:
-            if not dept:
+        for dept_id in department_ids:
+            if not dept_id:
                 continue
 
-            dept_users = User.objects.filter(department=dept)
+            # Look up department name
+            try:
+                department = Department.objects.get(id=dept_id)
+                dept_name = department.name
+            except Department.DoesNotExist:
+                dept_name = str(dept_id)  # Fallback to ID if not found
+
+            dept_users = User.objects.filter(department=dept_id)
 
             # Get all request counts by type
             trf_count = TravelRequest.objects.filter(
@@ -546,7 +565,7 @@ class DepartmentalReportsView(APIView):
             top_requestors = top_requestors[:5]  # Keep top 5
 
             reports.append({
-                'department': dept,
+                'department': dept_name,
                 'totalRequests': total_requests,
                 'breakdown': {
                     'travel': trf_count,
@@ -623,11 +642,14 @@ class UserActivityReportsView(APIView):
 
         user_activities = []
         for user in users:
+            # Get department name
+            dept_name = user.department.name if user.department else None
+
             activity = {
                 'userId': user.id,
                 'name': user.get_full_name() or user.email,
                 'email': user.email,
-                'department': user.department,
+                'department': dept_name,
             }
 
             # Requests submitted
@@ -812,14 +834,23 @@ class FinancialSummaryReportsView(APIView):
         )
 
         # Get breakdown by department
-        department_breakdown = []
-        departments = User.objects.values_list('department', flat=True).distinct()
+        from accounts.models import Department
 
-        for dept in departments:
-            if not dept:
+        department_breakdown = []
+        department_ids = User.objects.values_list('department', flat=True).distinct()
+
+        for dept_id in department_ids:
+            if not dept_id:
                 continue
 
-            dept_users = User.objects.filter(department=dept)
+            # Look up department name
+            try:
+                department = Department.objects.get(id=dept_id)
+                dept_name = department.name
+            except Department.DoesNotExist:
+                dept_name = str(dept_id)  # Fallback to ID if not found
+
+            dept_users = User.objects.filter(department=dept_id)
             dept_trfs = TravelRequest.objects.filter(created_by__in=dept_users)
 
             dept_flights = FlightBooking.objects.filter(
@@ -851,7 +882,7 @@ class FinancialSummaryReportsView(APIView):
 
             if dept_total > 0:
                 department_breakdown.append({
-                    'department': dept,
+                    'department': dept_name,
                     'totalCost': round(dept_total, 2),
                     'breakdown': {
                         'flights': round(dept_flights, 2),

@@ -639,24 +639,28 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='pending-approvals')
     def pending_approvals(self, request):
         """
-        Get all transport requests pending approval by current user's role
+        Get all transport requests pending approval for the current user based on workflow step assignments
         """
+        from workflows.services import WorkflowApprovalHelper
+
         user = request.user
-        user_role = user.role.name if hasattr(user, 'role') and user.role else None
 
-        # User must have a role or be a transport admin
-        is_admin = user.is_superuser or is_module_admin(user, 'transport')
-        if not user_role and not is_admin:
-            return Response(
-                {'error': 'User does not have an assigned role'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        # Get transport requests with pending approval steps for user's role
-        queryset = self.get_queryset().filter(
-            approval_steps__step_role=user_role,
-            approval_steps__status='Pending'
-        ).distinct()
+        # Admins and superusers see all pending requests
+        if user.is_superuser or is_module_admin(user, 'transport'):
+            queryset = self.get_queryset().filter(
+                status__in=[
+                    'Pending',
+                    'Pending Department Focal',
+                    'Pending Line Manager',
+                    'Pending HOD',
+                    'Submitted',
+                    'Under Review'
+                ]
+            ).order_by('-submitted_at')
+        else:
+            # Use workflow-based filtering: get entities where user's role matches current step
+            pending_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, TransportRequest)
+            queryset = self.get_queryset().filter(id__in=pending_ids).order_by('-submitted_at')
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
