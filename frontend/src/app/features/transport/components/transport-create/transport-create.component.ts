@@ -9,6 +9,7 @@ import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } fr
 import { Router, ActivatedRoute } from '@angular/router';
 import { TransportService } from '../../services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { TransportRequestForm, TransportDetail, TransportType, toBackendFormat } from '../../models/transport.model';
@@ -35,6 +36,7 @@ export class TransportCreateComponent implements OnInit {
     private route: ActivatedRoute,
     private transportService: TransportService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private authService: AuthService,
     private formUtils: FormUtilsService
   ) {}
@@ -263,9 +265,11 @@ export class TransportCreateComponent implements OnInit {
   }
 
   onCancel(): void {
-    if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
-      this.router.navigate(['/transport']);
-    }
+    this.confirmationService.confirmCancel('Are you sure you want to cancel? All unsaved changes will be lost.').subscribe(confirmed => {
+      if (confirmed) {
+        this.router.navigate(['/transport']);
+      }
+    });
   }
 
   // Helper methods for template

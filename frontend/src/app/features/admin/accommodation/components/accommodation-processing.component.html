@@ -198,7 +198,7 @@
                   [class.selected]="selectedRequest?.id === request.id">
                   <td class="request-id">{{ request.request_number }}</td>
                   <td>{{ request.requestorName }}</td>
-                  <td>{{ request.department }}</td>
+                  <td>{{ request.department | departmentName }}</td>
                   <td>
                     <span class="badge" [class]="getStatusClass(request.status)">{{ request.status }}</span>
                   </td>
@@ -254,7 +254,7 @@
               </div>
               <div class="info-row">
                 <span class="info-label">Department:</span>
-                <span class="info-value">{{ selectedRequest.department }}</span>
+                <span class="info-value">{{ selectedRequest.department | departmentName }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Status:</span>

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TmsApp_Core_Services_WorkflowsService, TmsApp_Workflows_WorkflowModuleWithSteps, TmsApp_Workflows_WorkflowStepFormValues, TmsApp_Workflows_WorkflowStep } from '../../../../core/services/workflows.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 
 @Component({
   selector: 'tmsapp-admin-systemsettings-workflow-configuration',
@@ -30,7 +31,8 @@ export class TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent implemen
 
   constructor(
     private workflowsService: TmsApp_Core_Services_WorkflowsService,
-    private toast: ToastService
+    private toast: ToastService,
+    private confirmationService: ConfirmationService
   ) {}
 
   ngOnInit(): void {
@@ -102,13 +104,15 @@ export class TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent implemen
   }
 
   deleteStep(step: TmsApp_Workflows_WorkflowStep): void {
-    if (!confirm('Delete this step')) return;
-    this.workflowsService.deleteStep(step.id).subscribe({
-      next: () => {
-        this.toast.success('Workflow step deleted');
-        this.loadModules();
-      },
-      error: () => this.toast.error('Failed to delete workflow step')
+    this.confirmationService.confirmDelete('this workflow step').subscribe(confirmed => {
+      if (!confirmed) return;
+      this.workflowsService.deleteStep(step.id).subscribe({
+        next: () => {
+          this.toast.success('Workflow step deleted');
+          this.loadModules();
+        },
+        error: () => this.toast.error('Failed to delete workflow step')
+      });
     });
   }
 }

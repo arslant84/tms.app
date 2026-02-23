@@ -22,11 +22,12 @@ import {
 } from '../../models/accommodation.model';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
 
 @Component({
   selector: 'app-accommodation-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, WorkflowStatusComponent, ApprovalActionsComponent],
+  imports: [CommonModule, RouterModule, WorkflowStatusComponent, ApprovalActionsComponent, DepartmentNamePipe],
   templateUrl: './accommodation-detail.component.html',
   styleUrls: ['./accommodation-detail.component.scss']
 })

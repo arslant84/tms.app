@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { VisaService, VisaApplication } from '../../services/visa.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 
@@ -67,6 +68,7 @@ export class VisaFormComponent implements OnInit {
     private router: Router,
     private visaService: VisaService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     private formUtils: FormUtilsService,
     private userFormHelper: UserFormHelperService
   ) {}
@@ -335,9 +337,11 @@ export class VisaFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
-      this.router.navigate(['/visa']);
-    }
+    this.confirmationService.confirmCancel('Are you sure you want to cancel? All unsaved changes will be lost.').subscribe(confirmed => {
+      if (confirmed) {
+        this.router.navigate(['/visa']);
+      }
+    });
   }
 
   prepareFormData(): Partial<VisaApplication> {

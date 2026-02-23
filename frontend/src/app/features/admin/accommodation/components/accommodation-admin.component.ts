@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AccommodationService, AccommodationStaffHouse, AccommodationRoom } from '../../../accommodation/services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { LocationDialogComponent, LocationDialogData } from './location-dialog.component';
 import { RoomDialogComponent, RoomDialogData } from './room-dialog.component';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
@@ -53,6 +54,7 @@ export class AccommodationAdminComponent implements OnInit {
   constructor(
     private accommodationService: AccommodationService,
     private toastService: ToastService,
+    private confirmationService: ConfirmationService,
     public router: Router,
     public statusUtils: StatusUtilsService
   ) {}
@@ -296,9 +298,11 @@ export class AccommodationAdminComponent implements OnInit {
   }
 
   confirmDeleteLocation(location: AccommodationStaffHouse): void {
-    if (confirm(`Are you sure you want to delete "${location.name}"? This will also delete all rooms in this location.`)) {
-      this.deleteLocation(location);
-    }
+    this.confirmationService.confirmDestructive('delete', `"${location.name}" (including all rooms)`).subscribe(confirmed => {
+      if (confirmed) {
+        this.deleteLocation(location);
+      }
+    });
   }
 
   deleteLocation(location: AccommodationStaffHouse): void {
@@ -393,9 +397,11 @@ export class AccommodationAdminComponent implements OnInit {
   }
 
   confirmDeleteRoom(room: AccommodationRoom): void {
-    if (confirm(`Are you sure you want to delete "${room.name}"?`)) {
-      this.deleteRoom(room);
-    }
+    this.confirmationService.confirmDelete(`"${room.name}"`).subscribe(confirmed => {
+      if (confirmed) {
+        this.deleteRoom(room);
+      }
+    });
   }
 
   deleteRoom(room: AccommodationRoom): void {

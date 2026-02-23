@@ -9,6 +9,8 @@ import {
 import { NotificationTemplate } from '../../../../core/models/notification.models';
 import { NotificationService } from '../../../notifications/services/notification.service';
 import { TmsApp_Core_Services_RolesService, TmsApp_Roles_RoleWithPermissions } from '../../../../core/services/roles.service';
+import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 
 @Component({
   selector: 'app-step-notification-config',
@@ -38,7 +40,9 @@ export class StepNotificationConfigComponent implements OnInit {
 
   constructor(
     private notificationService: NotificationService,
-    private rolesService: TmsApp_Core_Services_RolesService
+    private rolesService: TmsApp_Core_Services_RolesService,
+    private toastService: ToastService,
+    private confirmationService: ConfirmationService
   ) {}
 
   ngOnInit(): void {
@@ -127,16 +131,27 @@ export class StepNotificationConfigComponent implements OnInit {
   }
 
   deleteConfig(index: number): void {
-    if (confirm('Are you sure you want to delete this notification configuration?')) {
-      this.notificationConfigs.splice(index, 1);
-      this.emitChanges();
-    }
+    this.confirmationService.confirmDelete('this notification configuration').subscribe(confirmed => {
+      if (confirmed) {
+        this.notificationConfigs.splice(index, 1);
+        this.emitChanges();
+      }
+    });
   }
 
   restoreDefaults(): void {
-    if (!confirm('This will replace all current notification configurations with defaults. Continue?')) {
-      return;
-    }
+    this.confirmationService.confirm({
+      title: 'Restore Defaults',
+      message: 'This will replace all current notification configurations with defaults. Continue?',
+      confirmText: 'Restore',
+      type: 'warning'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
+      this.doRestoreDefaults();
+    });
+  }
+
+  private doRestoreDefaults(): void {
 
     type EventType = 'assignment' | 'approval' | 'rejection' | 'escalation' | 'reminder' | 'delegation';
     type Priority = 'low' | 'normal' | 'high' | 'urgent';
@@ -181,13 +196,13 @@ export class StepNotificationConfigComponent implements OnInit {
   saveConfig(): void {
     // Validate form
     if (!this.form.notification_template || this.form.recipient_types?.length === 0) {
-      alert('Please select a notification template and at least one recipient type.');
+      this.toastService.warning('Please select a notification template and at least one recipient type.');
       return;
     }
 
     // Check if custom emails is selected but no emails provided
     if (this.form.recipient_types?.includes('custom_emails') && this.form.custom_recipients?.length === 0) {
-      alert('Please provide at least one custom email address.');
+      this.toastService.warning('Please provide at least one custom email address.');
       return;
     }
 
@@ -239,7 +254,7 @@ export class StepNotificationConfigComponent implements OnInit {
       }
       this.form.custom_recipients.push(email);
     } else if (email) {
-      alert('Invalid email address');
+      this.toastService.error('Invalid email address');
     }
   }
 

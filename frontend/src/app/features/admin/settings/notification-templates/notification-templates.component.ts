@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { TmsApp_Core_Services_NotificationsService, TmsApp_Notifications_NotificationTemplate, TmsApp_Notifications_NotificationEventType, TmsApp_Notifications_NotificationTemplateFormValues } from '../../../../core/services/notifications.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 @Component({
@@ -38,6 +39,7 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
   constructor(
     private notificationsService: TmsApp_Core_Services_NotificationsService,
     private toast: ToastService,
+    private confirmationService: ConfirmationService,
     public dateUtils: DateUtilsService
   ) {}
 
@@ -150,8 +152,13 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
   }
 
   deleteTemplate(template: TmsApp_Notifications_NotificationTemplate): void {
-    if (!confirm('Are you sure you want to delete this template?')) return;
+    this.confirmationService.confirmDelete('this template').subscribe(confirmed => {
+      if (!confirmed) return;
+      this.executeDeleteTemplate(template);
+    });
+  }
 
+  private executeDeleteTemplate(template: TmsApp_Notifications_NotificationTemplate): void {
     this.notificationsService.deleteTemplate(template.id).subscribe({
       next: () => {
         this.toast.success('Template deleted successfully');
