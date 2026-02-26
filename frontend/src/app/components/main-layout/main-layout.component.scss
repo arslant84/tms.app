@@ -187,7 +187,7 @@
   flex: 1;
   padding: vars.$spacing-4;
   overflow-y: auto;
-  background-color: #f8f9fa;
+  background-color: rgba(248, 249, 250, 0.85);
   // Note: backdrop-filter removed because it creates a new containing block
   // which breaks position:fixed for modals inside this container
   margin: 0;
