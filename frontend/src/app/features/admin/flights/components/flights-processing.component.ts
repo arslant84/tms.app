@@ -332,7 +332,8 @@ export class FlightsProcessingComponent implements OnInit {
         this.isProcessing = false;
       },
       error: (err) => {
-        this.toastService.error('Failed to book flight: ' + (err.error?.error || err.message || 'Unknown error'));
+        const errorMessage = this.extractErrorMessage(err);
+        this.toastService.error(errorMessage);
         this.isProcessing = false;
       }
     });
@@ -502,6 +503,45 @@ export class FlightsProcessingComponent implements OnInit {
    */
   clearForm(): void {
     this.resetFormFields();
+  }
+
+  /**
+   * Extract error message from HTTP error response
+   */
+  private extractErrorMessage(err: any): string {
+    // Handle various Django REST framework error response formats
+    if (err.error) {
+      // Direct error message
+      if (typeof err.error === 'string') {
+        return err.error;
+      }
+      // { error: "message" } format
+      if (err.error.error) {
+        return err.error.error;
+      }
+      // { detail: "message" } format (DRF default)
+      if (err.error.detail) {
+        return err.error.detail;
+      }
+      // { message: "message" } format
+      if (err.error.message) {
+        return err.error.message;
+      }
+      // { non_field_errors: ["message"] } format
+      if (err.error.non_field_errors && Array.isArray(err.error.non_field_errors)) {
+        return err.error.non_field_errors.join(', ');
+      }
+      // { field: ["error1", "error2"] } format - extract first field error
+      const keys = Object.keys(err.error);
+      if (keys.length > 0 && Array.isArray(err.error[keys[0]])) {
+        return `${keys[0]}: ${err.error[keys[0]].join(', ')}`;
+      }
+    }
+    // Fallback to HTTP status message
+    if (err.message) {
+      return err.message;
+    }
+    return 'An unexpected error occurred. Please try again.';
   }
 
   /**
