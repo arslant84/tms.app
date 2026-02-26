@@ -208,6 +208,25 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             logger.info(f" Approval action: Allowing access to all TRFs (authorization checked in WorkflowEngine)")
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
+        # For admin booking actions (book_flight, book_hotel), allow access if user has booking permissions
+        if self.action in ['book_flight', 'book_hotel']:
+            logger.info(f" Booking action detected: {self.action} by user {user.email}")
+            # Statuses that allow booking operations
+            bookable_statuses = ['Approved', 'Flight Booked', 'Hotel Booked', 'Processing', 'Ready for Booking']
+
+            # Check if user has ticketing/booking permissions
+            if user.role and user.role.permissions.filter(name__in=['book_flights', 'manage_bookings', 'view_all_trf']).exists():
+                logger.info(f" Booking action: User has booking permissions - allowing access to bookable TRFs")
+                return queryset.filter(status__in=bookable_statuses)
+            # Also allow staff users
+            if user.is_staff:
+                logger.info(f" Booking action: Staff user - allowing access to bookable TRFs")
+                return queryset.filter(status__in=bookable_statuses)
+            # Allow users with ticketing-related roles (Travel Desk, Ticketing, etc.)
+            if user.role and any(keyword in user.role.name.lower() for keyword in ['ticket', 'travel desk', 'booking', 'admin']):
+                logger.info(f" Booking action: User role '{user.role.name}' indicates booking capability - allowing access")
+                return queryset.filter(status__in=bookable_statuses)
+
         # For retrieve (viewing details), include TRFs pending user's approval via workflow
         if self.action == 'retrieve':
             # Get IDs of TRFs pending this user's approval
@@ -839,9 +858,10 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         logger.debug(f"Request Data: {request.data}")
         logger.debug(f"========================\n")
 
-        # Validate TRF status
-        if trf.status != 'Approved':
-            error_msg = f'Flights can only be booked for Approved TRFs. Current status: {trf.status}'
+        # Validate TRF status - allow booking for approved TRFs or updating existing bookings
+        allowed_statuses = ['Approved', 'Flight Booked', 'Hotel Booked', 'Processing', 'Ready for Booking']
+        if trf.status not in allowed_statuses:
+            error_msg = f'Flights can only be booked for approved TRFs. Current status: {trf.status}'
             logger.error(f" Status validation failed: {error_msg}")
             return error_response(
                 message=error_msg,
@@ -914,24 +934,58 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
-        # Create FlightBooking
-        flight_booking = FlightBooking.objects.create(
-            trf=trf,
-            user=trf.created_by if trf.created_by else request.user,
-            airline=airline,
-            flight_number=flight_number,
-            departure_airport=departure_airport,
-            arrival_airport=arrival_airport,
-            departure_time=departure_time,
-            arrival_time=arrival_time,
-            booking_reference=pnr,
-            status='CONFIRMED',
-            cost=0,  # Can be added later
-            booked_by=request.user,
-            booking_date=timezone.now(),
-            confirmation_date=timezone.now(),
-            notes=flight_notes
-        )
+        # Check if a flight booking already exists for this TRF
+        existing_booking = FlightBooking.objects.filter(trf=trf).first()
+        if existing_booking:
+            # Check if the new PNR is used by a different booking
+            if existing_booking.booking_reference != pnr:
+                if FlightBooking.objects.filter(booking_reference=pnr).exclude(id=existing_booking.id).exists():
+                    return error_response(
+                        message=f'Booking reference "{pnr}" is already in use by another booking. Please use a unique PNR.',
+                        status_code=status.HTTP_400_BAD_REQUEST
+                    )
+            # Update existing booking instead of creating a new one
+            existing_booking.airline = airline
+            existing_booking.flight_number = flight_number
+            existing_booking.departure_airport = departure_airport
+            existing_booking.arrival_airport = arrival_airport
+            existing_booking.departure_time = departure_time
+            existing_booking.arrival_time = arrival_time
+            existing_booking.booking_reference = pnr
+            existing_booking.status = 'CONFIRMED'
+            existing_booking.booked_by = request.user
+            existing_booking.confirmation_date = timezone.now()
+            existing_booking.notes = flight_notes
+            existing_booking.save()
+            flight_booking = existing_booking
+            logger.info(f" Updated existing flight booking {flight_booking.id} for TRF {trf.id}")
+        else:
+            # Check if PNR is already used by another booking
+            if FlightBooking.objects.filter(booking_reference=pnr).exists():
+                return error_response(
+                    message=f'Booking reference "{pnr}" is already in use. Please use a unique PNR.',
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create FlightBooking
+            flight_booking = FlightBooking.objects.create(
+                trf=trf,
+                user=trf.created_by if trf.created_by else request.user,
+                airline=airline,
+                flight_number=flight_number,
+                departure_airport=departure_airport,
+                arrival_airport=arrival_airport,
+                departure_time=departure_time,
+                arrival_time=arrival_time,
+                booking_reference=pnr,
+                status='CONFIRMED',
+                cost=0,  # Can be added later
+                booked_by=request.user,
+                booking_date=timezone.now(),
+                confirmation_date=timezone.now(),
+                notes=flight_notes
+            )
+            logger.info(f" Created new flight booking {flight_booking.id} for TRF {trf.id}")
 
         # Update TRF status to indicate flight is booked
         trf.status = 'Flight Booked'

@@ -511,10 +511,10 @@
               <span *ngIf="!step.status">{{ i + 1 }}</span>
             </div>
             <div class="step-content">
-              <h4>{{ step.role || 'Unknown Role' }}</h4>
+              <h4>{{ step.step_name || step.step_role || 'Unknown Role' }}</h4>
               <p class="step-status">{{ step.status || 'Pending' }}</p>
-              <p class="step-date" *ngIf="step.approvedAt || step.rejectedAt">
-                {{ dateUtils.formatDate(step.approvedAt || step.rejectedAt) }}
+              <p class="step-date" *ngIf="step.step_date">
+                {{ dateUtils.formatDate(step.step_date) }}
               </p>
               <p class="step-comments" *ngIf="step.comments">{{ step.comments }}</p>
             </div>

@@ -121,7 +121,16 @@ class WorkflowEngine:
             'workflow_instance',
             'workflow_step',
             'workflow_instance__workflow_template'
-        ).get(id=step_execution_id)
+        ).select_for_update().get(id=step_execution_id)
+
+        # Check if step has already been processed (handles rapid duplicate submissions)
+        if step_execution.status != 'pending':
+            logger.warning(f" Step execution {step_execution_id} already processed with status '{step_execution.status}'. Ignoring duplicate request.")
+            return {
+                'success': True,
+                'workflow_status': step_execution.workflow_instance.status,
+                'message': f'Step already {step_execution.status}'
+            }
 
         # Validate user is authorized
         if not WorkflowEngine._is_user_authorized(step_execution, actioned_by):
@@ -360,6 +369,12 @@ class WorkflowEngine:
     @staticmethod
     def _start_step(workflow_instance: WorkflowInstance, step: WorkflowStep, initiator: User):
         """Create and start a workflow step execution"""
+        # Check if a step execution already exists for this step
+        existing_execution = WorkflowStepExecution.objects.filter(
+            workflow_instance=workflow_instance,
+            workflow_step=step
+        ).first()
+
         # Determine assigned user (priority order: user > permission > role)
         assigned_user = step.approver_user if step.approver_user else None
 
@@ -388,15 +403,46 @@ class WorkflowEngine:
         if step.escalation_hours:
             escalation_date = timezone.now() + timedelta(hours=step.escalation_hours)
 
-        # Create step execution
-        step_execution = WorkflowStepExecution.objects.create(
-            workflow_instance=workflow_instance,
-            workflow_step=step,
-            assigned_to=assigned_user,
-            status='pending',
-            sla_due_date=sla_due_date,
-            escalation_date=escalation_date
-        )
+        if existing_execution:
+            # If step already exists and is pending, it's a race condition - skip
+            if existing_execution.status == 'pending':
+                logger.warning(f" Step execution already pending for workflow {workflow_instance.id}, step {step.step_name}. Skipping.")
+                return existing_execution
+
+            # If step exists but is in 'waiting' state (pre-created by serializer), activate it
+            if existing_execution.status == 'waiting':
+                logger.info(f" Activating pre-created step execution for workflow {workflow_instance.id}, step {step.step_name}.")
+                existing_execution.status = 'pending'
+                existing_execution.assigned_to = assigned_user
+                existing_execution.sla_due_date = sla_due_date
+                existing_execution.escalation_date = escalation_date
+                existing_execution.save()
+                step_execution = existing_execution
+                created = True  # Treat as newly created for logging/notifications
+            else:
+                # Step already processed (approved/rejected/skipped) - don't re-create
+                logger.warning(f" Step execution already processed ({existing_execution.status}) for workflow {workflow_instance.id}, step {step.step_name}. Skipping.")
+                return existing_execution
+        else:
+            # Create step execution using get_or_create to handle race conditions
+            step_execution, created = WorkflowStepExecution.objects.get_or_create(
+                workflow_instance=workflow_instance,
+                workflow_step=step,
+                defaults={
+                    'assigned_to': assigned_user,
+                    'status': 'pending',
+                    'sla_due_date': sla_due_date,
+                    'escalation_date': escalation_date
+                }
+            )
+
+            if not created:
+                logger.warning(f" Step execution created by concurrent request for workflow {workflow_instance.id}, step {step.step_name}.")
+                return step_execution
+
+        # Only log and notify for newly activated steps
+        if not created:
+            return step_execution
 
         # Log step start
         WorkflowAuditLog.objects.create(
@@ -517,22 +563,27 @@ class WorkflowEngine:
         if step_execution.assigned_to == user:
             return True
 
-        # Check if user has the required role (if no specific user assigned)
-        if not step_execution.assigned_to:
-            if hasattr(user, 'role') and step_execution.workflow_step.approver_role:
-                # Get the role name from the approver_role UUID
-                from accounts.models import Role
-                try:
-                    role = Role.objects.get(id=step_execution.workflow_step.approver_role)
-                    if user.role.name == role.name:
-                        return True
-                except Role.DoesNotExist:
-                    pass
+        # Check if user has the required role (allows any user with matching role to approve)
+        if hasattr(user, 'role') and user.role and step_execution.workflow_step.approver_role:
+            from accounts.models import Role
+            approver_role = step_execution.workflow_step.approver_role
 
-                # Also check if approver_role is already a string name (legacy support)
-                if isinstance(step_execution.workflow_step.approver_role, str):
-                    if user.role.name == step_execution.workflow_step.approver_role:
-                        return True
+            # Try to match by UUID first
+            try:
+                role = Role.objects.get(id=approver_role)
+                if user.role.id == role.id:
+                    return True
+            except (Role.DoesNotExist, ValueError):
+                pass
+
+            # Also check if approver_role is a string name (legacy support)
+            if isinstance(approver_role, str):
+                # Check by role name
+                if user.role.name == approver_role:
+                    return True
+                # Check if user's role UUID matches the string
+                if str(user.role.id) == approver_role:
+                    return True
 
         # Check for active delegation
         active_delegations = step_execution.delegations.filter(

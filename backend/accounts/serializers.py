@@ -155,6 +155,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 class UserAdminUpdateSerializer(serializers.ModelSerializer):
     """Serializer for admin user updates - allows updating all fields"""
     role = RoleSerializer(read_only=True)
+    role_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)  # Accept role UUID for updates
     department_data = DepartmentListSerializer(source='department', read_only=True)
     permissions = serializers.SerializerMethodField()
     password = serializers.CharField(write_only=True, required=False, validators=[validate_password], allow_blank=True)
@@ -164,7 +165,7 @@ class UserAdminUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'department', 'department_data', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password', 'password_confirm', 'password_change_required']
+        fields = ['id', 'email', 'name', 'role', 'role_id', 'department', 'department_data', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password', 'password_confirm', 'password_change_required']
         read_only_fields = ['id', 'last_login_at', 'permissions', 'department_data']
 
     def get_permissions(self, obj):
@@ -201,16 +202,12 @@ class UserAdminUpdateSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password', '').strip()
         validated_data.pop('password_confirm', None)
 
-        # Handle role update (comes as UUID string from frontend)
-        role_id = validated_data.pop('role', None)
+        # Handle role update (comes as UUID from frontend via role_id field)
+        role_id = validated_data.pop('role_id', None)
         if role_id:
             try:
-                # Handle both Role object and UUID string
-                if isinstance(role_id, Role):
-                    instance.role = role_id
-                else:
-                    role = Role.objects.get(id=role_id)
-                    instance.role = role
+                role = Role.objects.get(id=role_id)
+                instance.role = role
             except Role.DoesNotExist:
                 pass
 

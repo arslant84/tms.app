@@ -369,7 +369,8 @@ class WorkflowStepExecution(models.Model):
     status = models.CharField(
         max_length=50,
         choices=[
-            ('pending', 'Pending'),
+            ('waiting', 'Waiting'),  # Pre-created step, not yet active
+            ('pending', 'Pending'),  # Active step awaiting action
             ('approved', 'Approved'),
             ('rejected', 'Rejected'),
             ('skipped', 'Skipped'),
