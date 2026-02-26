@@ -75,7 +75,16 @@
       </div>
     </div>
     <div class="card-body">
-      <div class="approval-timeline">
+      <!-- Loading State -->
+      <div *ngIf="isLoadingWorkflow" class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading workflow...</span>
+        </div>
+        <p class="text-muted mt-2">Loading approval workflow...</p>
+      </div>
+
+      <!-- Workflow Timeline -->
+      <div class="approval-timeline" *ngIf="!isLoadingWorkflow">
         <div
           *ngFor="let step of approvalWorkflow; let i = index; let isLast = last"
           class="timeline-step"
