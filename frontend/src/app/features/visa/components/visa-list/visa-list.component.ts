@@ -30,9 +30,8 @@ export class VisaListComponent implements OnInit, OnDestroy {
 
   Math = Math; // Expose Math to template
 
-  // Filter options
-  statuses = [
-    'Pending Department Focal',
+  // Filter options - workflow statuses loaded dynamically
+  statuses: string[] = [
     'Submitted',
     'Under Review',
     'Approved',
@@ -64,6 +63,9 @@ export class VisaListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Load workflow statuses dynamically
+    this.loadWorkflowStatuses();
+
     // Subscribe to debounced search changes
     this.listState.search$
       .pipe(takeUntil(this.destroy$))
@@ -73,6 +75,43 @@ export class VisaListComponent implements OnInit, OnDestroy {
 
     // Initial load
     this.fetchApplications();
+  }
+
+  /**
+   * Load workflow statuses dynamically from workflow templates
+   */
+  private loadWorkflowStatuses(): void {
+    this.workflowService.getTemplates({ entity_type: 'visa', is_active: true })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (templates) => {
+          if (templates && templates.length > 0) {
+            const template = templates[0];
+            if (template.steps && template.steps.length > 0) {
+              // Build statuses from workflow steps
+              const workflowStatuses = template.steps
+                .sort((a, b) => a.step_order - b.step_order)
+                .map(step => `Pending ${step.step_name}`);
+
+              // Combine workflow statuses with base statuses
+              this.statuses = [
+                ...workflowStatuses,
+                'Submitted',
+                'Under Review',
+                'Approved',
+                'Rejected',
+                'Cancelled',
+                'Processing',
+                'Completed'
+              ];
+            }
+          }
+        },
+        error: (err) => {
+          console.error('Error loading workflow statuses for visa:', err);
+          // Keep default statuses on error
+        }
+      });
   }
 
   ngOnDestroy(): void {

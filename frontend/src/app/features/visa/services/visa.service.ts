@@ -183,10 +183,10 @@ export class VisaService {
   }
 
   // Legacy status update methods (kept for compatibility)
+  // Note: The backend WorkflowRouter will determine the actual first approval step
+  // based on the configured workflow template
   submitApplication(id: number): Observable<VisaApplication> {
-    return this.http.patch<VisaApplication>(`${this.apiUrl}${id}/`, {
-      status: 'Pending Department Focal'
-    });
+    return this.http.post<VisaApplication>(`${this.apiUrl}${id}/submit/`, {});
   }
 
   approveApplication(id: number, comments?: string): Observable<VisaApplication> {

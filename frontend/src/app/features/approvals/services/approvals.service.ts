@@ -143,33 +143,41 @@ export class ApprovalsService {
 
   /**
    * Approve a request
+   * @param type - The request type (trf, accommodation, transport, visa, expense)
+   * @param id - The request ID
+   * @param comments - Optional approval comments
+   * @param stepRole - The current workflow step role (required - should come from workflow instance)
    */
   approveRequest(type: string, id: number, comments?: string, stepRole?: string): Observable<any> {
     const url = this.getApprovalUrl(type, id, 'approve');
-    // Backend requires step_role field
     const payload: any = { comments: comments || '' };
+
     if (stepRole) {
       payload.step_role = stepRole;
-    } else {
-      // Default to current approval step if not provided
-      payload.step_role = 'Department Focal';
     }
+    // Note: step_role should be provided by the caller based on the actual workflow step.
+    // The backend WorkflowEngine will determine the correct step if not provided.
+
     return this.http.post(url, payload, { withCredentials: true });
   }
 
   /**
    * Reject a request
+   * @param type - The request type (trf, accommodation, transport, visa, expense)
+   * @param id - The request ID
+   * @param comments - Optional rejection comments
+   * @param stepRole - The current workflow step role (required - should come from workflow instance)
    */
   rejectRequest(type: string, id: number, comments?: string, stepRole?: string): Observable<any> {
     const url = this.getApprovalUrl(type, id, 'reject');
-    // Backend requires step_role field
     const payload: any = { comments: comments || '' };
+
     if (stepRole) {
       payload.step_role = stepRole;
-    } else {
-      // Default to current approval step if not provided
-      payload.step_role = 'Department Focal';
     }
+    // Note: step_role should be provided by the caller based on the actual workflow step.
+    // The backend WorkflowEngine will determine the correct step if not provided.
+
     return this.http.post(url, payload, { withCredentials: true });
   }
 

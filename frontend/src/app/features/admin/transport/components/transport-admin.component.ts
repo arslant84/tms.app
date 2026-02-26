@@ -6,6 +6,7 @@ import { TransportService, TransportRequest, VehicleAssignment } from '../../../
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { WorkflowService } from '../../../../core/services/workflow.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 @Component({
@@ -56,8 +57,8 @@ export class TransportAdminComponent implements OnInit {
     assignment_date: new Date().toISOString().split('T')[0]
   };
 
-  // Status options for filter
-  statusOptions = [
+  // Status options for filter - workflow statuses loaded dynamically
+  statusOptions: { value: string; label: string }[] = [
     { value: 'all', label: 'All Statuses' },
     { value: 'Pending Approval', label: 'Pending Approval' },
     { value: 'Approved', label: 'Approved' },
@@ -78,13 +79,54 @@ export class TransportAdminComponent implements OnInit {
     private transportService: TransportService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
+    private workflowService: WorkflowService,
     public router: Router,
     private appSettingsService: AppSettingsService,
     public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
+    this.loadWorkflowStatuses();
     this.loadRequests();
+  }
+
+  /**
+   * Load workflow statuses dynamically from workflow templates
+   */
+  private loadWorkflowStatuses(): void {
+    this.workflowService.getTemplates({ entity_type: 'transport', is_active: true })
+      .subscribe({
+        next: (templates) => {
+          if (templates && templates.length > 0) {
+            const template = templates[0];
+            if (template.steps && template.steps.length > 0) {
+              // Build status options from workflow steps
+              const workflowStatuses = template.steps
+                .sort((a, b) => a.step_order - b.step_order)
+                .map(step => ({
+                  value: `Pending ${step.step_name}`,
+                  label: `Pending ${step.step_name}`
+                }));
+
+              // Build complete status options list
+              this.statusOptions = [
+                { value: 'all', label: 'All Statuses' },
+                ...workflowStatuses,
+                { value: 'Pending Approval', label: 'Pending Approval' },
+                { value: 'Approved', label: 'Approved' },
+                { value: 'In Progress', label: 'In Progress' },
+                { value: 'Completed', label: 'Completed' },
+                { value: 'Rejected', label: 'Rejected' },
+                { value: 'Cancelled', label: 'Cancelled' }
+              ];
+            }
+          }
+        },
+        error: (err) => {
+          console.error('Error loading workflow statuses for transport:', err);
+          // Keep default options on error
+        }
+      });
   }
 
   /**
@@ -362,11 +404,11 @@ export class TransportAdminComponent implements OnInit {
 
   /**
    * Check if request can be approved
+   * Dynamically checks if status starts with "Pending" (approval workflow step)
    */
   canApprove(request: TransportRequest): boolean {
-    return request.status === 'Pending Department Focal' || 
-           request.status === 'Pending Line Manager' || 
-           request.status === 'Pending HOD';
+    // Any status starting with "Pending" indicates it's awaiting approval
+    return request.status?.startsWith('Pending') || false;
   }
 
   /**
