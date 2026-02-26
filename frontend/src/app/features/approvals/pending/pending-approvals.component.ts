@@ -269,20 +269,22 @@ export class PendingApprovalsComponent implements OnInit {
   
   /**
    * Extract step role from current approval step string
+   * Dynamically extracts role name from status like "Pending Department Focal" -> "Department Focal"
    */
-  private extractStepRole(currentStep?: string): string {
-    if (!currentStep) return 'Department Focal';
+  private extractStepRole(currentStep?: string): string | undefined {
+    if (!currentStep) {
+      // Don't default to a hardcoded role - let the backend determine the current step
+      return undefined;
+    }
 
-    // Extract role from strings like "Pending Department Focal"
-    if (currentStep.includes('Department Focal')) return 'Department Focal';
-    if (currentStep.includes('HOD')) return 'HOD';
-    if (currentStep.includes('Travel Desk')) return 'Travel Desk';
-    if (currentStep.includes('Finance')) return 'Finance';
-    if (currentStep.includes('Director')) return 'Director';
-    if (currentStep.includes('Country Director')) return 'Country Director';
+    // Extract role from status strings like "Pending {RoleName}"
+    if (currentStep.startsWith('Pending ')) {
+      return currentStep.substring(8); // Remove "Pending " prefix
+    }
 
-    // Default fallback
-    return 'Department Focal';
+    // If status doesn't follow "Pending X" pattern, return as-is
+    // The backend will handle validation
+    return currentStep;
   }
 
   /**

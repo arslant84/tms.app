@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { VisaService, VisaApplication } from '../../../visa/services/visa.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { WorkflowService } from '../../../../core/services/workflow.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
@@ -62,10 +63,9 @@ export class VisaAdminComponent implements OnInit {
   visaValidFrom: string = '';
   visaValidTo: string = '';
 
-  // Status options for filter
-  statusOptions = [
+  // Status options for filter - base options, workflow statuses loaded dynamically
+  statusOptions: { value: string; label: string }[] = [
     { value: 'all', label: 'All Statuses' },
-    { value: 'Pending Department Focal', label: 'Pending Department Focal' },
     { value: 'Submitted', label: 'Submitted' },
     { value: 'Under Review', label: 'Under Review' },
     { value: 'Approved', label: 'Approved' },
@@ -91,14 +91,56 @@ export class VisaAdminComponent implements OnInit {
     private visaService: VisaService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
+    private workflowService: WorkflowService,
     public router: Router,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
+    this.loadWorkflowStatuses();
     this.fetchStats();
     this.loadApplications();
+  }
+
+  /**
+   * Load workflow statuses dynamically from workflow templates
+   */
+  private loadWorkflowStatuses(): void {
+    this.workflowService.getTemplates({ entity_type: 'visa', is_active: true })
+      .subscribe({
+        next: (templates) => {
+          if (templates && templates.length > 0) {
+            const template = templates[0];
+            if (template.steps && template.steps.length > 0) {
+              // Build status options from workflow steps
+              const workflowStatuses = template.steps
+                .sort((a, b) => a.step_order - b.step_order)
+                .map(step => ({
+                  value: `Pending ${step.step_name}`,
+                  label: `Pending ${step.step_name}`
+                }));
+
+              // Insert workflow statuses after 'All Statuses' option
+              this.statusOptions = [
+                { value: 'all', label: 'All Statuses' },
+                ...workflowStatuses,
+                { value: 'Submitted', label: 'Submitted' },
+                { value: 'Under Review', label: 'Under Review' },
+                { value: 'Approved', label: 'Approved' },
+                { value: 'Rejected', label: 'Rejected' },
+                { value: 'Cancelled', label: 'Cancelled' },
+                { value: 'Processing', label: 'Processing' },
+                { value: 'Completed', label: 'Completed' }
+              ];
+            }
+          }
+        },
+        error: (err) => {
+          console.error('Error loading workflow statuses for visa:', err);
+          // Keep default options on error
+        }
+      });
   }
 
   /**

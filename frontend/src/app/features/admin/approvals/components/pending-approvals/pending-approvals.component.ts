@@ -9,6 +9,7 @@ import { AppSettingsService } from '../../../../../core/services/app-settings.se
 import { DateUtilsService } from '../../../../../core/utils/date-utils.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { DepartmentNamePipe } from '../../../../../core/pipes/department-name.pipe';
+import { WorkflowService } from '../../../../../core/services/workflow.service';
 
 interface ApprovableItem {
   id: string;
@@ -73,6 +74,9 @@ export class PendingApprovalsComponent implements OnInit {
 
   private apiUrl = environment.apiUrl;
 
+  // Dynamic status options loaded from workflow templates
+  statusOptions: string[] = ['Pending', 'Under Review'];
+
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -80,7 +84,8 @@ export class PendingApprovalsComponent implements OnInit {
     private notificationService: NotificationService,
     private appSettingsService: AppSettingsService,
     public dateUtils: DateUtilsService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private workflowService: WorkflowService
   ) {}
 
   ngOnInit(): void {
@@ -112,6 +117,39 @@ export class PendingApprovalsComponent implements OnInit {
         this.fetchPendingItems();
         this.fetchTabCounts();
       }
+    });
+
+    // Load dynamic status options from workflow templates
+    this.loadWorkflowStatuses();
+  }
+
+  /**
+   * Load workflow statuses dynamically from workflow templates
+   */
+  private loadWorkflowStatuses(): void {
+    // Load statuses from all entity types used in approvals
+    const entityTypes = ['travelrequest', 'transport', 'visa', 'accommodation'];
+    const statusSet = new Set<string>(['Pending', 'Under Review']);
+
+    entityTypes.forEach(entityType => {
+      this.workflowService.getTemplates({ entity_type: entityType, is_active: true })
+        .subscribe({
+          next: (templates) => {
+            if (templates && templates.length > 0) {
+              const template = templates[0];
+              if (template.steps) {
+                template.steps.forEach(step => {
+                  statusSet.add(`Pending ${step.step_name}`);
+                });
+              }
+            }
+            // Update status options
+            this.statusOptions = Array.from(statusSet).sort();
+          },
+          error: (err) => {
+            console.error(`Error loading workflow statuses for ${entityType}:`, err);
+          }
+        });
     });
   }
 
@@ -369,13 +407,13 @@ export class PendingApprovalsComponent implements OnInit {
     });
   }
 
-  private extractRoleFromStatus(status: string): string {
+  private extractRoleFromStatus(status: string): string | undefined {
     // Extract the role from status like "Pending Department Focal" -> "Department Focal"
     if (status.startsWith('Pending ')) {
       return status.substring(8); // Remove "Pending "
     }
-    // Default roles for non-specific statuses
-    return 'Department Focal';
+    // Don't default to a hardcoded role - let the backend determine the current step
+    return undefined;
   }
 
   formatCurrency(amount: number | null | undefined, currency?: string | null): string {

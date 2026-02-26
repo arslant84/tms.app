@@ -31,8 +31,8 @@ export class TrfDetailComponent implements OnInit {
   currentStepExecution: WorkflowStepExecution | null = null;
 
   // Status-based visibility constants
+  // Note: Cancellable statuses are determined dynamically - any status starting with "Pending"
   private readonly EDITABLE_STATUSES = ['Draft', 'Rejected'];
-  private readonly CANCELLABLE_STATUSES = ['Pending Department Focal', 'Pending HOD', 'Pending Travel Desk'];
   private readonly DELETABLE_STATUSES = ['Draft', 'Rejected'];
 
   // Statuses that indicate the request has been approved and should not be editable

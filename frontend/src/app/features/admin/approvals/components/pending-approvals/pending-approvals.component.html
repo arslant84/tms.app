@@ -79,12 +79,9 @@
             [(ngModel)]="statusFilter"
             (change)="onStatusFilterChange()">
             <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Pending Department Focal">Pending Department Focal</option>
-            <option value="Pending HOD">Pending HOD</option>
-            <option value="Pending Travel Desk">Pending Travel Desk</option>
-            <option value="Pending Finance">Pending Finance</option>
-            <option value="Under Review">Under Review</option>
+            <option *ngFor="let status of statusOptions" [value]="status">
+              {{ status }}
+            </option>
           </select>
         </div>
       </div>
