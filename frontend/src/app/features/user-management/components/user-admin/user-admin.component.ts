@@ -246,6 +246,11 @@ export class UserAdminComponent implements OnInit, OnDestroy {
         delete formData.password;
         delete formData.password_confirm;
       }
+      // Transform role to role_id for UserAdminUpdateSerializer
+      if (formData.role) {
+        formData.role_id = formData.role;
+        delete formData.role;
+      }
     }
 
     const request = this.isEditMode && this.selectedUserId
