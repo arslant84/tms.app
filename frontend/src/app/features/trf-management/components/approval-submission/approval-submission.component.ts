@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { WorkflowService } from '../../../../core/services/workflow.service';
+import { WorkflowTemplate, WorkflowStep } from '../../../../core/models/workflow.models';
 
 export interface ApprovalStep {
   role: string;
@@ -36,12 +38,14 @@ export class ApprovalSubmissionComponent implements OnInit {
 
   approvalForm!: FormGroup;
   isInternationalTravel: boolean = false;
+  isLoadingWorkflow: boolean = false;
 
   constructor(
     private fb: FormBuilder,
     private formUtils: FormUtilsService,
     public dateUtils: DateUtilsService,
-    public statusUtils: StatusUtilsService
+    public statusUtils: StatusUtilsService,
+    private workflowService: WorkflowService
   ) {}
 
   ngOnInit(): void {
@@ -60,16 +64,63 @@ export class ApprovalSubmissionComponent implements OnInit {
   }
 
   private initializeApprovalWorkflow(): void {
-    // If no workflow provided, create initial workflow
-    if (!this.approvalWorkflow || this.approvalWorkflow.length === 0) {
-      const requestorName = this.requestorData?.fullName || 'Requestor';
-      this.approvalWorkflow = [
-        { role: 'Requestor', name: requestorName, status: 'Current', date: new Date() },
-        { role: 'Department Focal', name: 'Pending Department Focal', status: 'Pending' },
-        { role: 'Line Manager', name: 'Pending Line Manager', status: 'Pending' },
-        { role: 'HOD', name: 'Pending HOD', status: 'Pending' }
-      ];
+    // If workflow already provided (e.g., from existing TRF), use it
+    if (this.approvalWorkflow && this.approvalWorkflow.length > 0) {
+      return;
     }
+
+    // Fetch the active workflow template for travelrequest
+    this.isLoadingWorkflow = true;
+    this.workflowService.getTemplates({ entity_type: 'travelrequest', is_active: true }).subscribe({
+      next: (templates: WorkflowTemplate[]) => {
+        this.isLoadingWorkflow = false;
+        if (templates && templates.length > 0) {
+          const template = templates[0];
+          // Convert workflow template steps to approval steps for display
+          this.approvalWorkflow = this.convertTemplateToApprovalSteps(template);
+        } else {
+          // Fallback: No workflow template configured - show generic message
+          this.approvalWorkflow = this.createFallbackWorkflow();
+        }
+      },
+      error: (error) => {
+        this.isLoadingWorkflow = false;
+        console.error('Error fetching workflow template:', error);
+        // Fallback on error
+        this.approvalWorkflow = this.createFallbackWorkflow();
+      }
+    });
+  }
+
+  private convertTemplateToApprovalSteps(template: WorkflowTemplate): ApprovalStep[] {
+    const requestorName = this.requestorData?.fullName || 'Requestor';
+    const steps: ApprovalStep[] = [
+      { role: 'Requestor', name: requestorName, status: 'Current', date: new Date() }
+    ];
+
+    // Add steps from workflow template
+    if (template.steps && template.steps.length > 0) {
+      // Sort steps by step_order
+      const sortedSteps = [...template.steps].sort((a, b) => a.step_order - b.step_order);
+
+      for (const step of sortedSteps) {
+        steps.push({
+          role: step.step_name,
+          name: `Pending ${step.step_name}`,
+          status: 'Pending'
+        });
+      }
+    }
+
+    return steps;
+  }
+
+  private createFallbackWorkflow(): ApprovalStep[] {
+    const requestorName = this.requestorData?.fullName || 'Requestor';
+    return [
+      { role: 'Requestor', name: requestorName, status: 'Current', date: new Date() },
+      { role: 'Approval', name: 'Pending Approval', status: 'Pending' }
+    ];
   }
 
   getStatusBadgeClass(status: string): string {
