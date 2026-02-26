@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TrfService } from '../../services/trf.service';
 import { TravelRequestForm } from '../../../../core/models/trf.model';
 import { ToastService } from '../../../../core/services/toast.service';
+import { WorkflowService } from '../../../../core/services/workflow.service';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -12,18 +13,8 @@ import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
 
-// Status and type constants matching backend
-export const TRF_STATUSES = [
-  'Draft',
-  'Pending Department Focal',
-  'Pending HOD',
-  'Pending Travel Desk',
-  'Pending Finance',
-  'Approved',
-  'Rejected',
-  'Cancelled',
-  'Completed'
-];
+// Base statuses that don't come from workflow (Draft, Approved, Rejected, etc.)
+const BASE_STATUSES = ['Draft', 'Approved', 'Rejected', 'Cancelled', 'Completed'];
 
 export const TRAVEL_TYPES = [
   'Domestic',
@@ -66,8 +57,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
   sortKey: string | null = 'submitted_at';
   sortDirection: 'ascending' | 'descending' = 'descending';
 
-  // Constants for template
-  readonly TRF_STATUSES = TRF_STATUSES;
+  // Dynamic statuses loaded from workflow template
+  trfStatuses: string[] = [...BASE_STATUSES];
   readonly TRAVEL_TYPES = TRAVEL_TYPES;
 
   // Create list state service manually (not via DI)
@@ -77,11 +68,15 @@ export class TrfListComponent implements OnInit, OnDestroy {
     private router: Router,
     private trfService: TrfService,
     private toastService: ToastService,
+    private workflowService: WorkflowService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
+    // Load workflow statuses dynamically
+    this.loadWorkflowStatuses();
+
     // Subscribe to debounced search changes
     this.listState.search$
       .pipe(takeUntil(this.destroy$))
@@ -102,6 +97,39 @@ export class TrfListComponent implements OnInit, OnDestroy {
 
     // Load initial data
     this.fetchTrfs();
+  }
+
+  /**
+   * Load workflow statuses dynamically from workflow template
+   */
+  private loadWorkflowStatuses(): void {
+    this.workflowService.getTemplates({ entity_type: 'travelrequest', is_active: true })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (templates) => {
+          if (templates && templates.length > 0) {
+            const template = templates[0];
+            // Build statuses from workflow steps
+            const workflowStatuses: string[] = ['Draft'];
+
+            if (template.steps && template.steps.length > 0) {
+              // Sort steps by order and create "Pending {step_name}" statuses
+              const sortedSteps = [...template.steps].sort((a, b) => a.step_order - b.step_order);
+              for (const step of sortedSteps) {
+                workflowStatuses.push(`Pending ${step.step_name}`);
+              }
+            }
+
+            // Add terminal statuses
+            workflowStatuses.push('Approved', 'Rejected', 'Cancelled', 'Completed');
+            this.trfStatuses = workflowStatuses;
+          }
+        },
+        error: (err) => {
+          console.error('Error loading workflow statuses:', err);
+          // Keep default statuses on error
+        }
+      });
   }
 
   ngOnDestroy(): void {

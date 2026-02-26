@@ -39,7 +39,7 @@
           [(ngModel)]="statusFilter"
           (change)="onStatusFilterChange()">
           <option value="">All Statuses</option>
-          <option *ngFor="let status of TRF_STATUSES" [value]="status">
+          <option *ngFor="let status of trfStatuses" [value]="status">
             {{ formatStatusDisplay(status) }}
           </option>
         </select>
