@@ -559,3 +559,131 @@ tmsapp-admin-systemsettings-workflow-configuration,
   border: 1px solid #a855f7; // purple-500
   font-weight: 600;
 }
+
+// ==================== Global Form Theme Overrides ====================
+// Override Bootstrap's default blue form focus colors with teal theme
+// This ensures all forms across the application use the unified teal color scheme
+
+// Form control focus states - teal theme
+.form-control:focus,
+.form-select:focus {
+  border-color: vars.$primary-color !important;
+  box-shadow: 0 0 0 3px rgb(13 148 136 / 10%) !important;
+  outline: none !important;
+}
+
+// Invalid state focus
+.form-control.is-invalid:focus,
+.form-select.is-invalid:focus {
+  border-color: vars.$error-color !important;
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 10%) !important;
+}
+
+// Checkbox and radio inputs - teal theme
+.form-check-input:checked {
+  background-color: vars.$primary-color !important;
+  border-color: vars.$primary-color !important;
+}
+
+.form-check-input:focus {
+  border-color: vars.$primary-color !important;
+  box-shadow: 0 0 0 3px rgb(13 148 136 / 10%) !important;
+}
+
+// Primary buttons - teal theme
+.btn-primary {
+  background-color: vars.$primary-color !important;
+  border-color: vars.$primary-color !important;
+
+  &:hover, &:focus, &:active {
+    background-color: vars.$primary-hover !important;
+    border-color: vars.$primary-hover !important;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgb(13 148 136 / 25%) !important;
+  }
+}
+
+// Outline primary buttons - teal theme
+.btn-outline-primary {
+  color: vars.$primary-color !important;
+  border-color: vars.$primary-color !important;
+
+  &:hover, &:focus, &:active {
+    background-color: vars.$primary-color !important;
+    border-color: vars.$primary-color !important;
+    color: #ffffff !important;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgb(13 148 136 / 25%) !important;
+  }
+}
+
+// Primary text color utility
+.text-primary {
+  color: vars.$primary-color !important;
+}
+
+// Primary icon colors in form headers
+.card-header i.bi,
+.card-header .bi {
+  color: vars.$primary-color !important;
+}
+
+// File upload area styling - teal theme
+.border.rounded.p-4.text-center.bg-light,
+.file-upload-area {
+  background-color: #f0fdfa !important;
+  border: 2px dashed #99f6e4 !important;
+  border-radius: 0.5rem !important;
+  transition: border-color 0.15s, background-color 0.15s;
+
+  &:hover {
+    border-color: vars.$primary-color !important;
+    background-color: #ccfbf1 !important;
+  }
+
+  i.bi-cloud-arrow-up {
+    color: vars.$primary-color !important;
+  }
+}
+
+// File preview styling - teal theme
+.p-3.border.rounded.bg-light {
+  background-color: #f0fdfa !important;
+  border: 1px solid #99f6e4 !important;
+  border-radius: 0.5rem !important;
+}
+
+// Read-only field styling - teal theme
+input[readonly].form-control,
+input.form-control[readonly] {
+  background-color: #f0fdfa !important;
+  border: 1px solid #99f6e4 !important;
+  color: vars.$primary-hover !important;
+  font-weight: 500;
+  cursor: default;
+
+  &:focus {
+    border-color: #99f6e4 !important;
+    box-shadow: none !important;
+  }
+}
+
+// Links - teal theme
+a {
+  color: vars.$primary-color;
+
+  &:hover {
+    color: vars.$primary-hover;
+  }
+}
+
+// Travel form itinerary segment styling
+.itinerary-segment {
+  background-color: vars.$gray-50 !important;
+  border: 1px solid vars.$border-light !important;
+  border-radius: 0.5rem !important;
+}

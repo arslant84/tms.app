@@ -875,8 +875,6 @@ export class TrfWizardComponent implements OnInit {
           bank_name: data.bankDetails.bankName || '',
           account_number: data.bankDetails.accountNumber || '',
           account_name: data.bankDetails.accountName || '',
-          swift_code: data.bankDetails.swiftCode || '',
-          iban: data.bankDetails.iban || '',
           branch_address: data.bankDetails.branchAddress || '',
           currency: data.bankDetails.currency || 'USD'
         };
@@ -1047,8 +1045,6 @@ export class TrfWizardComponent implements OnInit {
         bankName: '',
         accountNumber: '',
         accountName: '',
-        swiftCode: '',
-        iban: '',
         branchAddress: '',
         currency: 'USD'
       };
@@ -1058,8 +1054,6 @@ export class TrfWizardComponent implements OnInit {
       bankName: bankDetail.bank_name || bankDetail.bankName || '',
       accountNumber: bankDetail.account_number || bankDetail.accountNumber || '',
       accountName: bankDetail.account_name || bankDetail.accountName || '',
-      swiftCode: bankDetail.swift_code || bankDetail.swiftCode || '',
-      iban: bankDetail.iban || '',
       branchAddress: bankDetail.branch_address || bankDetail.branchAddress || '',
       currency: bankDetail.currency || 'USD'
     };

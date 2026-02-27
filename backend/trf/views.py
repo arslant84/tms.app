@@ -1164,8 +1164,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 ['Bank Name', bank_detail.bank_name or '-'],
                 ['Account Name', bank_detail.account_name or '-'],
                 ['Account Number', bank_detail.account_number or '-'],
-                ['SWIFT Code', bank_detail.swift_code or '-'],
-                ['IBAN', bank_detail.iban or '-'],
                 ['Currency', bank_detail.currency or '-'],
                 ['Amount', f"{bank_detail.amount:,.2f}" if bank_detail.amount else '-'],
             ]

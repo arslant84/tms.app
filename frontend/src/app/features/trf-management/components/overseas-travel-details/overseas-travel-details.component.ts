@@ -18,8 +18,6 @@ export interface AdvanceBankDetails {
   bankName: string;
   accountNumber: string;
   accountName?: string;
-  swiftCode?: string;
-  iban?: string;
   branchAddress?: string;
   currency?: string;
 }
@@ -61,6 +59,7 @@ export interface OverseasTravelDetails {
 export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
   @Input() initialData: Partial<OverseasTravelDetails> = {};
   @Output() formSubmit = new EventEmitter<OverseasTravelDetails>();
+  @Output() backClick = new EventEmitter<void>();
 
   overseasForm!: FormGroup;
   weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -101,8 +100,6 @@ export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
         bankName: ['', Validators.required],
         accountNumber: ['', Validators.required],
         accountName: [''],
-        swiftCode: [''],
-        iban: [''],
         branchAddress: [''],
         currency: ['USD']
       }),
@@ -129,8 +126,6 @@ export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
         bankName: this.initialData.advanceBankDetails.bankName || '',
         accountNumber: this.initialData.advanceBankDetails.accountNumber || '',
         accountName: this.initialData.advanceBankDetails.accountName || '',
-        swiftCode: this.initialData.advanceBankDetails.swiftCode || '',
-        iban: this.initialData.advanceBankDetails.iban || '',
         branchAddress: this.initialData.advanceBankDetails.branchAddress || '',
         currency: this.initialData.advanceBankDetails.currency || 'USD'
       });
@@ -299,5 +294,9 @@ export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
 
   markAllAsTouched(): void {
     this.formUtils.markFormGroupTouched(this.overseasForm);
+  }
+
+  onBack(): void {
+    this.backClick.emit();
   }
 }

@@ -184,19 +184,22 @@ class HotelBookingCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Cross-field validation"""
-        if data['check_in_date'] >= data['check_out_date']:
+        # Allow same-day checkout (check_in_date == check_out_date is valid)
+        if data['check_in_date'] > data['check_out_date']:
             raise serializers.ValidationError({
-                'check_out_date': 'Check-out date must be after check-in date.'
+                'check_out_date': 'Check-out date cannot be before check-in date.'
             })
 
         # Validate that total cost makes sense
         nights = (data['check_out_date'] - data['check_in_date']).days
-        expected_cost = data['cost_per_night'] * nights * data.get('number_of_rooms', 1)
+        # For same-day checkout, treat as 1 day for cost calculation
+        billable_nights = max(nights, 1)
+        expected_cost = data['cost_per_night'] * billable_nights * data.get('number_of_rooms', 1)
 
         if abs(data['total_cost'] - expected_cost) > 1:  # Allow small rounding differences
             raise serializers.ValidationError({
                 'total_cost': f'Total cost should be approximately {expected_cost} '
-                             f'({data["cost_per_night"]} x {nights} nights x {data.get("number_of_rooms", 1)} rooms)'
+                             f'({data["cost_per_night"]} x {billable_nights} night(s) x {data.get("number_of_rooms", 1)} rooms)'
             })
 
         return data
@@ -235,9 +238,10 @@ class HotelBookingUpdateSerializer(serializers.ModelSerializer):
         check_in = data.get('check_in_date', self.instance.check_in_date)
         check_out = data.get('check_out_date', self.instance.check_out_date)
 
-        if check_in >= check_out:
+        # Allow same-day checkout (check_in == check_out is valid)
+        if check_in > check_out:
             raise serializers.ValidationError({
-                'check_out_date': 'Check-out date must be after check-in date.'
+                'check_out_date': 'Check-out date cannot be before check-in date.'
             })
 
         return data

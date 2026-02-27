@@ -145,6 +145,16 @@ export function toBackendFormat(frontendData: Partial<TransportRequestForm>): an
   };
 }
 
+function extractDepartmentName(department: any): string {
+  if (!department) {
+    return '';
+  }
+  if (typeof department === 'string') {
+    return department;
+  }
+  return department.name || '';
+}
+
 export function toFrontendFormat(backendData: any): TransportRequestForm {
   return {
     id: backendData.id?.toString() || '',
@@ -153,7 +163,7 @@ export function toFrontendFormat(backendData: any): TransportRequestForm {
     // Requestor info
     requestorName: backendData.requestor_name || backendData.requestor?.get_full_name || '',
     staffId: backendData.staff_id || '',
-    department: backendData.department || backendData.requestor?.department || '',
+    department: extractDepartmentName(backendData.department || backendData.requestor?.department),
     position: backendData.position || '',
 
     // Request data

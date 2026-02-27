@@ -553,8 +553,9 @@ export class AccommodationProcessingComponent implements OnInit {
     const checkIn = new Date(this.checkInDate);
     const checkOut = new Date(this.checkOutDate);
 
-    if (checkOut <= checkIn) {
-      this.toastService.error('Check-out date must be after check-in date');
+    // Allow same-day checkout (checkOut == checkIn is valid)
+    if (checkOut < checkIn) {
+      this.toastService.error('Check-out date cannot be before check-in date');
       return;
     }
 

@@ -1,67 +1,63 @@
-<form [formGroup]="externalForm" (ngSubmit)="onSubmit()">
-  <!-- Main Card -->
-  <div class="card shadow">
-    <!-- Card Header -->
-    <div class="card-header bg-light border-bottom">
-      <h2 class="d-flex align-items-center gap-2 mb-2 fw-semibold">
-        <i class="bi bi-people text-primary" style="font-size: 1.25rem;"></i>
-        External Parties Details
-      </h2>
-      <p class="text-muted small mb-0">Please provide details for external party travel arrangements.</p>
+<div class="travel-form-container">
+  <form [formGroup]="externalForm" (ngSubmit)="onSubmit()">
+    <!-- Purpose of Travel Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-file-text me-2"></i>
+          <h5 class="mb-0">Purpose of Visit</h5>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-group mb-3">
+          <label for="purpose" class="form-label">Please describe the purpose of the visit <span class="text-danger">*</span></label>
+          <textarea
+            class="form-control"
+            id="purpose"
+            formControlName="purpose"
+            rows="3"
+            placeholder="Describe the purpose of visit"
+            [ngClass]="{'is-invalid': externalForm.get('purpose')?.invalid && externalForm.get('purpose')?.touched}"></textarea>
+          <div class="invalid-feedback" *ngIf="externalForm.get('purpose')?.errors?.['required'] && externalForm.get('purpose')?.touched">
+            Purpose is required
+          </div>
+          <div class="invalid-feedback" *ngIf="externalForm.get('purpose')?.errors?.['minlength'] && externalForm.get('purpose')?.touched">
+            Purpose must be at least 10 characters
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="tripType" class="form-label d-flex align-items-center gap-2">
+            <i class="bi bi-card-checklist"></i>
+            Trip Type <span class="text-danger">*</span>
+          </label>
+          <select
+            id="tripType"
+            formControlName="tripType"
+            class="form-select"
+          >
+            <option value="One Way">One Way</option>
+            <option value="Round Trip">Round Trip</option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <!-- Card Body -->
-    <div class="card-body">
-      <!-- Purpose -->
-      <div class="mb-4">
-        <label class="form-label fw-medium">
-          Purpose <span class="text-danger">*</span>
-        </label>
-        <textarea
-          formControlName="purpose"
-          rows="3"
-          class="form-control"
-          placeholder="Describe the purpose of visit"
-          [ngClass]="{'is-invalid': externalForm.get('purpose')?.invalid && externalForm.get('purpose')?.touched}"
-        ></textarea>
-        <div class="invalid-feedback" *ngIf="externalForm.get('purpose')?.errors?.['required'] && externalForm.get('purpose')?.touched">
-          Purpose is required
-        </div>
-        <div class="invalid-feedback" *ngIf="externalForm.get('purpose')?.errors?.['minlength'] && externalForm.get('purpose')?.touched">
-          Purpose must be at least 10 characters
+    <!-- Itinerary Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-map me-2"></i>
+          <h5 class="mb-0">Travel Itinerary</h5>
         </div>
       </div>
-
-      <!-- Trip Type -->
-      <div class="mb-4">
-        <label class="form-label fw-medium d-flex align-items-center gap-2">
-          <i class="bi bi-card-checklist"></i>
-          Trip Type <span class="text-danger">*</span>
-        </label>
-        <select
-          formControlName="tripType"
-          class="form-select"
-        >
-          <option value="One Way">One Way</option>
-          <option value="Round Trip">Round Trip</option>
-        </select>
-      </div>
-
-      <!-- Itinerary Section -->
-      <div class="mb-4">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <h3 class="h5 mb-0 d-flex align-items-center gap-2">
-            <i class="bi bi-map text-primary"></i>
-            Travel Itinerary
-          </h3>
-        </div>
-
+      <div class="card-body">
         <div formArrayName="itinerary">
-          <div *ngFor="let segment of itinerary.controls; let i = index" [formGroupName]="i" class="position-relative border rounded bg-light p-3 mb-3">
+          <div *ngFor="let segment of itinerary.controls; let i = index" [formGroupName]="i" class="itinerary-segment position-relative border rounded bg-light p-3 mb-3">
             <!-- Date and Day -->
             <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <label class="form-label fw-medium">Date <span class="text-danger">*</span></label>
+                <label class="form-label">Date <span class="text-danger">*</span></label>
                 <input
                   type="date"
                   formControlName="departureDate"
@@ -74,17 +70,15 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-medium">Day</label>
-                <div class="form-control day-display">
-                  {{ segment.get('day')?.value || '—' }}
-                </div>
+                <label class="form-label">Day</label>
+                <input type="text" class="form-control" formControlName="day" readonly>
               </div>
             </div>
 
             <!-- From and To -->
             <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <label class="form-label fw-medium">From <span class="text-danger">*</span></label>
+                <label class="form-label">From <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   formControlName="departureLocation"
@@ -97,7 +91,7 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-medium">To <span class="text-danger">*</span></label>
+                <label class="form-label">To <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   formControlName="arrivalLocation"
@@ -114,23 +108,15 @@
             <!-- Times and Transport Mode -->
             <div class="row g-3 mb-3">
               <div class="col-md-4">
-                <label class="form-label fw-medium">Departure Time</label>
-                <input
-                  type="time"
-                  formControlName="departureTime"
-                  class="form-control"
-                />
+                <label class="form-label">Departure Time</label>
+                <input type="time" formControlName="departureTime" class="form-control" />
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-medium">Arrival Time</label>
-                <input
-                  type="time"
-                  formControlName="arrivalTime"
-                  class="form-control"
-                />
+                <label class="form-label">Arrival Time</label>
+                <input type="time" formControlName="arrivalTime" class="form-control" />
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-medium">Mode of Transport <span class="text-danger">*</span></label>
+                <label class="form-label">Mode of Transport <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   formControlName="modeOfTransport"
@@ -145,14 +131,9 @@
             </div>
 
             <!-- Remarks -->
-            <div class="mb-3">
-              <label class="form-label fw-medium">Remarks</label>
-              <textarea
-                formControlName="remarks"
-                rows="2"
-                placeholder="Any additional information"
-                class="form-control"
-              ></textarea>
+            <div class="form-group">
+              <label class="form-label">Remarks</label>
+              <input type="text" formControlName="remarks" placeholder="Any additional information" class="form-control" />
             </div>
 
             <!-- Remove Button -->
@@ -167,29 +148,94 @@
           </div>
         </div>
 
-        <button
-          *ngIf="externalForm.get('tripType')?.value === 'Round Trip'"
-          type="button"
-          (click)="addItinerarySegment()"
-          class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
-        >
-          <i class="bi bi-plus-circle"></i>
-          Add Itinerary Segment
-        </button>
-        <div *ngIf="externalForm.get('tripType')?.value === 'One Way'" class="mt-2">
+        <div class="mt-3" *ngIf="externalForm.get('tripType')?.value === 'Round Trip'">
+          <button type="button" class="btn btn-outline-primary" (click)="addItinerarySegment()">
+            <i class="bi bi-plus-circle me-1"></i> Add Itinerary Segment
+          </button>
+        </div>
+        <div class="mt-3" *ngIf="externalForm.get('tripType')?.value === 'One Way'">
           <small class="text-muted">
             <i class="bi bi-info-circle me-1"></i>
             Additional itinerary segments are only available for Round Trip
           </small>
         </div>
       </div>
+    </div>
 
-      <!-- Passport Details Section -->
-      <div class="mb-4">
-        <h3 class="h5 mb-3 d-flex align-items-center gap-2">
-          <i class="bi bi-file-earmark-text text-primary"></i>
-          Passport Details (Optional)
-        </h3>
+    <!-- External Party Information Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-person me-2"></i>
+          <h5 class="mb-0">External Party Information</h5>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              formControlName="externalFullName"
+              placeholder="Enter full name"
+              class="form-control"
+              [ngClass]="{'is-invalid': externalForm.get('externalFullName')?.invalid && externalForm.get('externalFullName')?.touched}"
+            />
+            <div class="invalid-feedback" *ngIf="externalForm.get('externalFullName')?.errors?.['required'] && externalForm.get('externalFullName')?.touched">
+              Full name is required
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Organization <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              formControlName="externalOrganization"
+              placeholder="Organization name"
+              class="form-control"
+              [ngClass]="{'is-invalid': externalForm.get('externalOrganization')?.invalid && externalForm.get('externalOrganization')?.touched}"
+            />
+            <div class="invalid-feedback" *ngIf="externalForm.get('externalOrganization')?.errors?.['required'] && externalForm.get('externalOrganization')?.touched">
+              Organization is required
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Reference to Authority Letter</label>
+            <input
+              type="text"
+              formControlName="externalRefToAuthorityLetter"
+              placeholder="Letter reference number"
+              class="form-control"
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Cost Center <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              formControlName="externalCostCenter"
+              placeholder="Cost center code"
+              class="form-control"
+              [ngClass]="{'is-invalid': externalForm.get('externalCostCenter')?.invalid && externalForm.get('externalCostCenter')?.touched}"
+            />
+            <div class="invalid-feedback" *ngIf="externalForm.get('externalCostCenter')?.errors?.['required'] && externalForm.get('externalCostCenter')?.touched">
+              Cost center is required
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passport Details Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-file-earmark-text me-2"></i>
+          <h5 class="mb-0">Passport Details (Optional)</h5>
+        </div>
+      </div>
+      <div class="card-body">
         <p class="text-muted small mb-3">
           Upload a copy of the external party's passport for flight booking purposes.
         </p>
@@ -236,87 +282,18 @@
           </div>
         </div>
       </div>
-
-      <!-- External Party Information -->
-      <div class="mb-4">
-        <h3 class="h5 mb-3 d-flex align-items-center gap-2">
-          <i class="bi bi-person text-primary"></i>
-          External Party Information
-        </h3>
-
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Full Name <span class="text-danger">*</span></label>
-            <input
-              type="text"
-              formControlName="externalFullName"
-              placeholder="Enter full name"
-              class="form-control"
-              [ngClass]="{'is-invalid': externalForm.get('externalFullName')?.invalid && externalForm.get('externalFullName')?.touched}"
-            />
-            <div class="invalid-feedback" *ngIf="externalForm.get('externalFullName')?.errors?.['required'] && externalForm.get('externalFullName')?.touched">
-              Full name is required
-            </div>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Organization <span class="text-danger">*</span></label>
-            <input
-              type="text"
-              formControlName="externalOrganization"
-              placeholder="Organization name"
-              class="form-control"
-              [ngClass]="{'is-invalid': externalForm.get('externalOrganization')?.invalid && externalForm.get('externalOrganization')?.touched}"
-            />
-            <div class="invalid-feedback" *ngIf="externalForm.get('externalOrganization')?.errors?.['required'] && externalForm.get('externalOrganization')?.touched">
-              Organization is required
-            </div>
-          </div>
-        </div>
-
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Reference to Authority Letter</label>
-            <input
-              type="text"
-              formControlName="externalRefToAuthorityLetter"
-              placeholder="Letter reference number"
-              class="form-control"
-            />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Cost Center <span class="text-danger">*</span></label>
-            <input
-              type="text"
-              formControlName="externalCostCenter"
-              placeholder="Cost center code"
-              class="form-control"
-              [ngClass]="{'is-invalid': externalForm.get('externalCostCenter')?.invalid && externalForm.get('externalCostCenter')?.touched}"
-            />
-            <div class="invalid-feedback" *ngIf="externalForm.get('externalCostCenter')?.errors?.['required'] && externalForm.get('externalCostCenter')?.touched">
-              Cost center is required
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
 
-    <!-- Card Footer -->
-    <div class="card-footer bg-light border-top d-flex justify-content-between">
-      <button
-        type="button"
-        class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
-      >
-        <i class="bi bi-arrow-left"></i>
+    <!-- Navigation Buttons -->
+    <div class="d-flex justify-content-between pt-4 mt-4 border-top">
+      <button type="button" class="btn btn-outline-secondary" (click)="onBack()">
+        <i class="bi bi-chevron-left me-1"></i>
         Back: Requestor Info
       </button>
-      <button
-        type="submit"
-        class="btn btn-primary d-inline-flex align-items-center gap-2"
-      >
-        Next: Approval & Submission
-        <i class="bi bi-arrow-right"></i>
+      <button type="submit" class="btn btn-primary">
+        Next: Approval &amp; Submission
+        <i class="bi bi-chevron-right ms-1"></i>
       </button>
     </div>
-  </div>
-</form>
+  </form>
+</div>

@@ -69,16 +69,29 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
 
   private patchFormWithInitialData(): void {
     if (this.initialData) {
+      // Extract department name if it's an object
+      const department = this.extractDepartmentName(this.initialData.department);
+
       this.requestorForm.patchValue({
         fullName: this.initialData.fullName || '',
         staffId: this.initialData.staffId || '',
-        department: this.initialData.department || '',
+        department: department,
         position: this.initialData.position || '',
         costCenter: this.initialData.costCenter || '',
         contactNo: this.initialData.contactNo || '',
         email: this.initialData.email || ''
       });
     }
+  }
+
+  private extractDepartmentName(department: any): string {
+    if (!department) {
+      return '';
+    }
+    if (typeof department === 'string') {
+      return department;
+    }
+    return department.name || '';
   }
 
   onSubmit(): void {

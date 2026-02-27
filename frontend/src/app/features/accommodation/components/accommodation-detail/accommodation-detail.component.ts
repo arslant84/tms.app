@@ -284,9 +284,44 @@ export class AccommodationDetailComponent implements OnInit {
     if (!this.hasAssignment) return 'N/A';
     const staffHouse = this.request?.assignedStaffHouseName || 'N/A';
     const room = this.request?.assignedRoomName || 'N/A';
-    const checkIn = this.dateUtils.formatDate(this.request?.requestedCheckInDate);
-    const checkOut = this.dateUtils.formatDate(this.request?.requestedCheckOutDate);
+    // Use actual booking dates instead of requested dates
+    const actualDates = this.getActualBookingDates();
+    const checkIn = this.dateUtils.formatDate(actualDates.checkIn);
+    const checkOut = this.dateUtils.formatDate(actualDates.checkOut);
     return `${staffHouse} - ${room} (${checkIn} - ${checkOut})`;
+  }
+
+  /**
+   * Get actual booking dates from daily bookings (not user requested dates)
+   * Each daily booking represents a night stay, so:
+   * - Check-in = first booking date
+   * - Check-out = day AFTER the last booking date
+   */
+  getActualBookingDates(): { checkIn: Date | string | null; checkOut: Date | string | null } {
+    if (!this.request?.dailyBookings || this.request.dailyBookings.length === 0) {
+      // Fall back to requested dates if no bookings exist yet
+      return {
+        checkIn: this.request?.requestedCheckInDate || null,
+        checkOut: this.request?.requestedCheckOutDate || null
+      };
+    }
+
+    // Sort bookings by date to get first and last
+    const sortedBookings = [...this.request.dailyBookings].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return dateA - dateB;
+    });
+
+    // Check-out is the day AFTER the last booking (each booking = 1 night stay)
+    const lastBookingDate = new Date(sortedBookings[sortedBookings.length - 1].date);
+    const checkOutDate = new Date(lastBookingDate);
+    checkOutDate.setDate(checkOutDate.getDate() + 1);
+
+    return {
+      checkIn: sortedBookings[0].date,
+      checkOut: checkOutDate
+    };
   }
 
   getRoomInfo(): { name: string; type: string; capacity: number; location: string; gender: string } | null {

@@ -1,71 +1,67 @@
-<form [formGroup]="overseasForm" (ngSubmit)="onSubmit()">
-  <!-- Main Card -->
-  <div class="card shadow">
-    <!-- Card Header -->
-    <div class="card-header bg-light border-bottom">
-      <h2 class="d-flex align-items-center gap-2 mb-2 fw-semibold">
-        <i class="bi bi-globe text-primary" style="font-size: 1.25rem;"></i>
-        Overseas Travel Details
-      </h2>
-      <p class="text-muted small mb-0">Please provide details specific to your overseas travel.</p>
+<div class="travel-form-container">
+  <form [formGroup]="overseasForm" (ngSubmit)="onSubmit()">
+    <!-- Purpose of Travel Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-file-text me-2"></i>
+          <h5 class="mb-0">Purpose of Travel / Цель поездки</h5>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-group mb-3">
+          <label for="purpose" class="form-label">Please describe the purpose of your travel <span class="text-danger">*</span></label>
+          <textarea
+            class="form-control"
+            id="purpose"
+            formControlName="purpose"
+            rows="3"
+            placeholder="Describe the purpose of your travel"
+            [ngClass]="{'is-invalid': overseasForm.get('purpose')?.invalid && overseasForm.get('purpose')?.touched}"></textarea>
+          <div class="invalid-feedback" *ngIf="overseasForm.get('purpose')?.errors?.['required'] && overseasForm.get('purpose')?.touched">
+            Purpose of travel is required
+          </div>
+          <div class="invalid-feedback" *ngIf="overseasForm.get('purpose')?.errors?.['minlength'] && overseasForm.get('purpose')?.touched">
+            Purpose must be at least 10 characters
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="tripType" class="form-label d-flex align-items-center gap-2">
+            <i class="bi bi-card-checklist"></i>
+            Trip Type / Тип поездки <span class="text-danger">*</span>
+          </label>
+          <select
+            id="tripType"
+            formControlName="tripType"
+            class="form-select"
+            [ngClass]="{'is-invalid': overseasForm.get('tripType')?.invalid && overseasForm.get('tripType')?.touched}"
+          >
+            <option value="One Way">One Way</option>
+            <option value="Round Trip">Round Trip</option>
+          </select>
+          <div class="invalid-feedback" *ngIf="overseasForm.get('tripType')?.errors?.['required'] && overseasForm.get('tripType')?.touched">
+            Trip type is required
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Card Body -->
-    <div class="card-body">
-      <!-- Purpose of Travel -->
-      <div class="mb-4">
-        <label class="form-label fw-medium">
-          Purpose of Travel / Цель поездки <span class="text-danger">*</span>
-        </label>
-        <textarea
-          formControlName="purpose"
-          rows="4"
-          class="form-control"
-          placeholder="Describe the purpose of your travel"
-          [ngClass]="{'is-invalid': overseasForm.get('purpose')?.invalid && overseasForm.get('purpose')?.touched}"
-        ></textarea>
-        <div class="invalid-feedback" *ngIf="overseasForm.get('purpose')?.errors?.['required'] && overseasForm.get('purpose')?.touched">
-          Purpose of travel is required
-        </div>
-        <div class="invalid-feedback" *ngIf="overseasForm.get('purpose')?.errors?.['minlength'] && overseasForm.get('purpose')?.touched">
-          Purpose must be at least 10 characters
+    <!-- Itinerary Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-map me-2"></i>
+          <h5 class="mb-0">Itinerary / Маршрут</h5>
         </div>
       </div>
-
-      <!-- Trip Type -->
-      <div class="mb-4">
-        <label class="form-label fw-medium d-flex align-items-center gap-2">
-          <i class="bi bi-card-checklist"></i>
-          Trip Type / Тип поездки <span class="text-danger">*</span>
-        </label>
-        <select
-          formControlName="tripType"
-          class="form-select"
-          [ngClass]="{'is-invalid': overseasForm.get('tripType')?.invalid && overseasForm.get('tripType')?.touched}"
-        >
-          <option value="One Way">One Way</option>
-          <option value="Round Trip">Round Trip</option>
-        </select>
-        <div class="invalid-feedback" *ngIf="overseasForm.get('tripType')?.errors?.['required'] && overseasForm.get('tripType')?.touched">
-          Trip type is required
-        </div>
-      </div>
-
-      <!-- Itinerary Section -->
-      <div class="mb-4">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <h3 class="h5 mb-0 d-flex align-items-center gap-2">
-            <i class="bi bi-map text-primary"></i>
-            Itinerary / Маршрут
-          </h3>
-        </div>
-
+      <div class="card-body">
         <div formArrayName="itinerary">
-          <div *ngFor="let segment of itinerary.controls; let i = index" [formGroupName]="i" class="position-relative border rounded bg-light p-3 mb-3">
+          <div *ngFor="let segment of itinerary.controls; let i = index" [formGroupName]="i" class="itinerary-segment position-relative border rounded bg-light p-3 mb-3">
             <!-- Date and Day -->
             <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <label class="form-label fw-medium">Date / Дата <span class="text-danger">*</span></label>
+                <label class="form-label">Date / Дата <span class="text-danger">*</span></label>
                 <input
                   type="date"
                   formControlName="date"
@@ -78,17 +74,15 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-medium">Day / День</label>
-                <div class="form-control bg-secondary bg-opacity-10">
-                  {{ segment.get('day')?.value || '—' }}
-                </div>
+                <label class="form-label">Day / День</label>
+                <input type="text" class="form-control" formControlName="day" readonly>
               </div>
             </div>
 
             <!-- From and To -->
             <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <label class="form-label fw-medium">From / Откуда <span class="text-danger">*</span></label>
+                <label class="form-label">From / Откуда <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   formControlName="from"
@@ -101,7 +95,7 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-medium">To / Куда <span class="text-danger">*</span></label>
+                <label class="form-label">To / Куда <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   formControlName="to"
@@ -117,32 +111,20 @@
 
             <!-- ETD and ETA -->
             <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-medium">ETD / Вылет</label>
-                <input
-                  type="time"
-                  formControlName="etd"
-                  class="form-control"
-                />
+              <div class="col-md-4">
+                <label class="form-label">ETD / Вылет</label>
+                <input type="time" formControlName="etd" class="form-control" />
               </div>
-              <div class="col-md-6">
-                <label class="form-label fw-medium">ETA / Прилет</label>
-                <input
-                  type="time"
-                  formControlName="eta"
-                  class="form-control"
-                />
+              <div class="col-md-4">
+                <label class="form-label">ETA / Прилет</label>
+                <input type="time" formControlName="eta" class="form-control" />
               </div>
-            </div>
-
-            <!-- Flight Number -->
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-medium">Flight<span class="text-danger">*</span></label>
+              <div class="col-md-4">
+                <label class="form-label">Flight <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   formControlName="flightNumber"
-                  placeholder="e.g., LH1234, Economy"
+                  placeholder="e.g., LH1234"
                   class="form-control"
                   [ngClass]="{'is-invalid': segment.get('flightNumber')?.invalid && segment.get('flightNumber')?.touched}"
                 />
@@ -153,14 +135,9 @@
             </div>
 
             <!-- Remarks -->
-            <div class="mb-3">
-              <label class="form-label fw-medium">Remarks / Примечания</label>
-              <textarea
-                formControlName="remarks"
-                rows="2"
-                placeholder="Any additional information about this segment"
-                class="form-control"
-              ></textarea>
+            <div class="form-group">
+              <label class="form-label">Remarks / Примечания</label>
+              <input type="text" formControlName="remarks" placeholder="Any additional information" class="form-control" />
             </div>
 
             <!-- Remove Button -->
@@ -175,42 +152,36 @@
           </div>
         </div>
 
-        <!-- Add Itinerary Button -->
-        <button
-          *ngIf="overseasForm.get('tripType')?.value === 'Round Trip'"
-          type="button"
-          (click)="addItinerarySegment()"
-          class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
-        >
-          <i class="bi bi-plus-circle"></i>
-          Add Itinerary Segment
-        </button>
-        <div *ngIf="overseasForm.get('tripType')?.value === 'One Way'" class="mt-2">
+        <div class="mt-3" *ngIf="overseasForm.get('tripType')?.value === 'Round Trip'">
+          <button type="button" class="btn btn-outline-primary" (click)="addItinerarySegment()">
+            <i class="bi bi-plus-circle me-1"></i> Add Itinerary Segment
+          </button>
+        </div>
+        <div class="mt-3" *ngIf="overseasForm.get('tripType')?.value === 'One Way'">
           <small class="text-muted">
             <i class="bi bi-info-circle me-1"></i>
             Additional itinerary segments are only available for Round Trip
           </small>
         </div>
       </div>
+    </div>
 
-      <!-- Advance Bank Details -->
-      <div class="mb-4" formGroupName="advanceBankDetails">
-        <h3 class="h5 mb-3 d-flex align-items-center gap-2">
-          <i class="bi bi-bank text-primary"></i>
-          Advance Bank Details / Банковские реквизиты для аванса
-        </h3>
+    <!-- Advance Bank Details Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-bank me-2"></i>
+          <h5 class="mb-0">Advance Bank Details / Банковские реквизиты для аванса</h5>
+        </div>
+      </div>
+      <div class="card-body" formGroupName="advanceBankDetails">
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label fw-medium">Account Name / Имя владельца счета</label>
-            <input
-              type="text"
-              formControlName="accountName"
-              placeholder="Enter account holder name"
-              class="form-control"
-            />
+            <label class="form-label">Account Name / Имя владельца счета</label>
+            <input type="text" formControlName="accountName" placeholder="Enter account holder name" class="form-control" />
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-medium">Bank Name / Название банка <span class="text-danger">*</span></label>
+            <label class="form-label">Bank Name / Название банка <span class="text-danger">*</span></label>
             <input
               type="text"
               formControlName="bankName"
@@ -223,7 +194,7 @@
             </div>
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-medium">Account Number / Номер счета <span class="text-danger">*</span></label>
+            <label class="form-label">Account Number / Номер счета <span class="text-danger">*</span></label>
             <input
               type="text"
               formControlName="accountNumber"
@@ -236,25 +207,7 @@
             </div>
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-medium">SWIFT Code / SWIFT код</label>
-            <input
-              type="text"
-              formControlName="swiftCode"
-              placeholder="Enter SWIFT/BIC code"
-              class="form-control"
-            />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-medium">IBAN</label>
-            <input
-              type="text"
-              formControlName="iban"
-              placeholder="Enter IBAN"
-              class="form-control"
-            />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-medium">Currency / Валюта</label>
+            <label class="form-label">Currency / Валюта</label>
             <select formControlName="currency" class="form-select">
               <option value="USD">USD - US Dollar</option>
               <option value="EUR">EUR - Euro</option>
@@ -264,32 +217,28 @@
             </select>
           </div>
           <div class="col-12">
-            <label class="form-label fw-medium">Branch Address / Адрес отделения</label>
-            <textarea
-              formControlName="branchAddress"
-              rows="2"
-              placeholder="Enter bank branch address"
-              class="form-control"
-            ></textarea>
+            <label class="form-label">Remarks / Примечания</label>
+            <textarea formControlName="branchAddress" rows="2" placeholder="Enter any additional remarks" class="form-control"></textarea>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Advance Amount Requested -->
-      <div class="mb-4">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <h3 class="h5 mb-0 d-flex align-items-center gap-2">
-            <i class="bi bi-cash-stack text-primary"></i>
-            Details for the Amount Requested / Детали по запрашиваемой сумме
-          </h3>
+    <!-- Advance Amount Requested Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-cash-stack me-2"></i>
+          <h5 class="mb-0">Details for the Amount Requested / Детали по запрашиваемой сумме</h5>
         </div>
-
+      </div>
+      <div class="card-body">
         <div formArrayName="advanceAmountRequested">
           <div *ngFor="let item of advanceAmountRequested.controls; let i = index" [formGroupName]="i" class="position-relative border rounded bg-light p-3 mb-3">
             <!-- Date From and Date To -->
             <div class="row g-3 mb-3">
               <div class="col-md-6">
-                <label class="form-label fw-medium">Date From / Дата с <span class="text-danger">*</span></label>
+                <label class="form-label">Date From / Дата с <span class="text-danger">*</span></label>
                 <input
                   type="date"
                   formControlName="dateFrom"
@@ -301,7 +250,7 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-medium">Date To / Дата по <span class="text-danger">*</span></label>
+                <label class="form-label">Date To / Дата по <span class="text-danger">*</span></label>
                 <input
                   type="date"
                   formControlName="dateTo"
@@ -317,71 +266,35 @@
             <!-- Amount Fields -->
             <div class="row g-3 mb-3">
               <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label fw-medium">LH</label>
-                <input
-                  type="number"
-                  formControlName="lh"
-                  min="0"
-                  class="form-control"
-                />
+                <label class="form-label">LH</label>
+                <input type="number" formControlName="lh" min="0" class="form-control" />
               </div>
               <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label fw-medium">MA</label>
-                <input
-                  type="number"
-                  formControlName="ma"
-                  min="0"
-                  class="form-control"
-                />
+                <label class="form-label">MA</label>
+                <input type="number" formControlName="ma" min="0" class="form-control" />
               </div>
               <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label fw-medium">OA</label>
-                <input
-                  type="number"
-                  formControlName="oa"
-                  min="0"
-                  class="form-control"
-                />
+                <label class="form-label">OA</label>
+                <input type="number" formControlName="oa" min="0" class="form-control" />
               </div>
               <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label fw-medium">TR</label>
-                <input
-                  type="number"
-                  formControlName="tr"
-                  min="0"
-                  class="form-control"
-                />
+                <label class="form-label">TR</label>
+                <input type="number" formControlName="tr" min="0" class="form-control" />
               </div>
               <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label fw-medium">OE</label>
-                <input
-                  type="number"
-                  formControlName="oe"
-                  min="0"
-                  class="form-control"
-                />
+                <label class="form-label">OE</label>
+                <input type="number" formControlName="oe" min="0" class="form-control" />
               </div>
               <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label fw-medium">USD</label>
-                <input
-                  type="number"
-                  formControlName="usd"
-                  step="0.01"
-                  readonly
-                  class="form-control bg-secondary bg-opacity-10"
-                />
+                <label class="form-label">USD</label>
+                <input type="number" formControlName="usd" step="0.01" readonly class="form-control bg-light" />
               </div>
             </div>
 
             <!-- Remarks -->
-            <div class="mb-3">
-              <label class="form-label fw-medium">Remarks / Примечания</label>
-              <textarea
-                formControlName="remarks"
-                rows="2"
-                placeholder="Remarks for this advance item"
-                class="form-control"
-              ></textarea>
+            <div class="form-group">
+              <label class="form-label">Remarks / Примечания</label>
+              <input type="text" formControlName="remarks" placeholder="Remarks for this advance item" class="form-control" />
             </div>
 
             <!-- Remove Button -->
@@ -396,26 +309,26 @@
           </div>
         </div>
 
-        <!-- Add Advance Amount Button -->
-        <button
-          type="button"
-          (click)="addAdvanceAmountItem()"
-          class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
-        >
-          <i class="bi bi-plus-circle"></i>
-          Add Advance Item
-        </button>
+        <div class="mt-3">
+          <button type="button" class="btn btn-outline-primary" (click)="addAdvanceAmountItem()">
+            <i class="bi bi-plus-circle me-1"></i> Add Advance Item
+          </button>
+        </div>
         <p class="mt-2 text-muted small">
           LH: Lodging/Hotel. MA: Meal Allowance. OA: Other Allowances. TR: Transportation. OE: Other Expenses.
         </p>
       </div>
+    </div>
 
-      <!-- Passport Details Section -->
-      <div class="mb-4">
-        <h3 class="h5 mb-3 d-flex align-items-center gap-2">
-          <i class="bi bi-file-earmark-text text-primary"></i>
-          Passport Details (Optional)
-        </h3>
+    <!-- Passport Details Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-file-earmark-text me-2"></i>
+          <h5 class="mb-0">Passport Details (Optional)</h5>
+        </div>
+      </div>
+      <div class="card-body">
         <p class="text-muted small mb-3">
           Upload a copy of your passport for flight booking purposes. This helps the flight admin process your booking faster.
         </p>
@@ -464,22 +377,16 @@
       </div>
     </div>
 
-    <!-- Card Footer -->
-    <div class="card-footer bg-light border-top d-flex justify-content-between">
-      <button
-        type="button"
-        class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
-      >
-        <i class="bi bi-arrow-left"></i>
+    <!-- Navigation Buttons -->
+    <div class="d-flex justify-content-between pt-4 mt-4 border-top">
+      <button type="button" class="btn btn-outline-secondary" (click)="onBack()">
+        <i class="bi bi-chevron-left me-1"></i>
         Back: Requestor Info
       </button>
-      <button
-        type="submit"
-        class="btn btn-primary d-inline-flex align-items-center gap-2"
-      >
-        Next: Approval & Submission
-        <i class="bi bi-arrow-right"></i>
+      <button type="submit" class="btn btn-primary">
+        Next: Approval &amp; Submission
+        <i class="bi bi-chevron-right ms-1"></i>
       </button>
     </div>
-  </div>
-</form>
+  </form>
+</div>

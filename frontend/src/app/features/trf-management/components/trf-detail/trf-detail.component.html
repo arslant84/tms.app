@@ -291,19 +291,11 @@
               <span class="value">{{ trfData.bankDetails.account_number || trfData.bankDetails.accountNumber || 'N/A' }}</span>
             </div>
             <div class="detail-item">
-              <label>SWIFT Code</label>
-              <span class="value">{{ trfData.bankDetails.swift_code || trfData.bankDetails.swiftCode || 'N/A' }}</span>
-            </div>
-            <div class="detail-item">
-              <label>IBAN</label>
-              <span class="value">{{ trfData.bankDetails.iban || 'N/A' }}</span>
-            </div>
-            <div class="detail-item">
               <label>Currency</label>
               <span class="value">{{ trfData.bankDetails.currency || 'N/A' }}</span>
             </div>
             <div class="detail-item full-width" *ngIf="trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress">
-              <label>Branch Address</label>
+              <label>Remarks</label>
               <span class="value">{{ trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress }}</span>
             </div>
           </div>

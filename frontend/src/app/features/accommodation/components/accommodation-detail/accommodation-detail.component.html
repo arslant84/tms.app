@@ -103,20 +103,20 @@
       </div>
     </div>
 
-    <!-- CARD 2: Booking Details -->
+    <!-- CARD 2: Requested Details (User's original request) -->
     <div class="detail-card">
       <div class="card-header">
         <i class="bi bi-calendar-check"></i>
-        <h3>Booking Details</h3>
+        <h3>Requested Details</h3>
       </div>
       <div class="card-body">
         <div class="detail-grid">
           <div class="detail-item">
-            <label>Check-In Date</label>
+            <label>Requested Check-In</label>
             <span class="value">{{ dateUtils.formatDate(request.requestedCheckInDate) }}</span>
           </div>
           <div class="detail-item">
-            <label>Check-Out Date</label>
+            <label>Requested Check-Out</label>
             <span class="value">{{ dateUtils.formatDate(request.requestedCheckOutDate) }}</span>
           </div>
           <div class="detail-item">
@@ -162,13 +162,13 @@
             <span class="value">{{ request.assignedRoomName }}</span>
           </div>
           <div class="assignment-item">
-            <label>ASSIGNMENT DATE</label>
-            <span class="value">{{ formatDateWithOrdinal(getAssignmentDate()) }}</span>
+            <label>ACTUAL CHECK-IN DATE</label>
+            <span class="value">{{ dateUtils.formatDate(getActualBookingDates().checkIn) }}</span>
           </div>
-        </div>
-        <div class="assignment-details-section">
-          <label>ASSIGNMENT DETAILS</label>
-          <p class="assignment-details-text">{{ getAssignmentDetails() }}</p>
+          <div class="assignment-item">
+            <label>ACTUAL CHECK-OUT DATE</label>
+            <span class="value">{{ dateUtils.formatDate(getActualBookingDates().checkOut) }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -187,7 +187,7 @@
         <div class="booking-summary-section">
           <div class="summary-header">
             <h4>Booking Summary</h4>
-            <span class="days-badge">{{ getTotalNightsFromBookings() }} day(s) booked</span>
+            <span class="days-badge">{{ getTotalNightsFromBookings() }} night(s)</span>
           </div>
           <div class="summary-grid">
             <div class="summary-item">
@@ -201,6 +201,14 @@
             <div class="summary-item">
               <label>Staff House:</label>
               <span class="value">{{ request.assignedStaffHouseName || 'N/A' }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Check-In:</label>
+              <span class="value">{{ dateUtils.formatDate(getActualBookingDates().checkIn) }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Check-Out:</label>
+              <span class="value">{{ dateUtils.formatDate(getActualBookingDates().checkOut) }}</span>
             </div>
           </div>
         </div>
