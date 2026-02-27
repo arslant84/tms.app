@@ -31,7 +31,7 @@ class TrfAdvanceAmountRequestedItemAdmin(admin.ModelAdmin):
 @admin.register(TrfAdvanceBankDetail)
 class TrfAdvanceBankDetailAdmin(admin.ModelAdmin):
     list_display = ['id', 'trf', 'bank_name', 'account_number', 'currency', 'amount']
-    search_fields = ['bank_name', 'account_number', 'account_name', 'swift_code', 'iban']
+    search_fields = ['bank_name', 'account_number', 'account_name']
     list_filter = ['currency']
     ordering = ['-created_at']
 

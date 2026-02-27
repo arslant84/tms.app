@@ -288,7 +288,7 @@ export class ApprovalsService {
       requester: {
         id: trf.requestor_id || trf.requestor?.id,
         name: trf.requestor_name || trf.requestor?.name || 'Unknown',
-        department: trf.department || trf.requestor?.department || 'Unknown',
+        department: this.extractDepartmentName(trf.department || trf.requestor?.department),
         email: trf.tel_email || trf.requestor?.email || ''
       },
       dateSubmitted: trf.created_at || trf.submission_date,
@@ -315,7 +315,7 @@ export class ApprovalsService {
       requester: {
         id: acc.requestor_id || acc.requestor?.id,
         name: acc.requestor_name || acc.requestor?.name || 'Unknown',
-        department: acc.department || acc.requestor?.department || 'Unknown',
+        department: this.extractDepartmentName(acc.department || acc.requestor?.department),
         email: acc.email || acc.requestor?.email || ''
       },
       dateSubmitted: acc.created_at || acc.submission_date,
@@ -341,7 +341,7 @@ export class ApprovalsService {
       requester: {
         id: transport.requestor_id || transport.requestor?.id,
         name: transport.requestor_name || transport.requestor?.name || 'Unknown',
-        department: transport.department || transport.requestor?.department || 'Unknown',
+        department: this.extractDepartmentName(transport.department || transport.requestor?.department),
         email: transport.email || transport.requestor?.email || ''
       },
       dateSubmitted: transport.created_at || transport.submission_date,
@@ -368,7 +368,7 @@ export class ApprovalsService {
       requester: {
         id: visa.applicant_id || visa.applicant?.id,
         name: visa.applicant_name || visa.applicant?.name || 'Unknown',
-        department: visa.department || visa.applicant?.department || 'Unknown',
+        department: this.extractDepartmentName(visa.department || visa.applicant?.department),
         email: visa.email || visa.applicant?.email || ''
       },
       dateSubmitted: visa.created_at || visa.submission_date,
@@ -395,7 +395,7 @@ export class ApprovalsService {
       requester: {
         id: expense.claimant_id || expense.claimant?.id,
         name: expense.claimant_name || expense.claimant?.name || 'Unknown',
-        department: expense.department || expense.claimant?.department || 'Unknown',
+        department: this.extractDepartmentName(expense.department || expense.claimant?.department),
         email: expense.email || expense.claimant?.email || ''
       },
       dateSubmitted: expense.created_at || expense.submission_date,
@@ -414,6 +414,16 @@ export class ApprovalsService {
   }
 
   // Helper methods
+
+  private extractDepartmentName(department: any): string {
+    if (!department) {
+      return 'Unknown';
+    }
+    if (typeof department === 'string') {
+      return department;
+    }
+    return department.name || 'Unknown';
+  }
 
   private determinePriority(type: string, dateField?: string): 'low' | 'medium' | 'high' {
     if (!dateField) return 'medium';

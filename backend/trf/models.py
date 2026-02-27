@@ -68,8 +68,6 @@ class TrfAdvanceBankDetail(models.Model):
     bank_name = models.CharField(max_length=255, blank=True, null=True)
     account_number = models.CharField(max_length=255, blank=True, null=True)
     account_name = models.CharField(max_length=255, blank=True, null=True)
-    swift_code = models.CharField(max_length=255, blank=True, null=True)
-    iban = models.CharField(max_length=255, blank=True, null=True)
     branch_address = models.TextField(blank=True, null=True)
     currency = models.CharField(max_length=255, blank=True, null=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)

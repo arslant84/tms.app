@@ -36,8 +36,7 @@ class TrfAdvanceBankDetailSerializer(serializers.ModelSerializer):
         model = TrfAdvanceBankDetail
         fields = [
             'id', 'trf', 'bank_name', 'account_number', 'account_name',
-            'swift_code', 'iban', 'branch_address', 'currency', 'amount',
-            'created_at'
+            'branch_address', 'currency', 'amount', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
 
@@ -427,8 +426,6 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
                     'bankName': bank_detail.bank_name,
                     'accountNumber': bank_detail.account_number,
                     'accountName': bank_detail.account_name,
-                    'swiftCode': bank_detail.swift_code,
-                    'iban': bank_detail.iban,
                     'branchAddress': bank_detail.branch_address,
                     'currency': bank_detail.currency,
                     'amount': str(bank_detail.amount) if bank_detail.amount else None

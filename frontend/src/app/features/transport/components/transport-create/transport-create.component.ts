@@ -83,15 +83,25 @@ export class TransportCreateComponent implements OnInit {
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
       const position = this.authService.getUserPosition(currentUser);
-
+      const department = this.extractDepartmentName(currentUser.department);
 
       this.transportForm.patchValue({
         requestorName: currentUser.name || currentUser.email || '',
         staffId: currentUser.staff_id || '',
-        department: currentUser.department || '',
+        department: department,
         position: position || ''
       });
     }
+  }
+
+  private extractDepartmentName(department: any): string {
+    if (!department) {
+      return '';
+    }
+    if (typeof department === 'string') {
+      return department;
+    }
+    return department.name || '';
   }
 
   loadRequestData(id: number): void {

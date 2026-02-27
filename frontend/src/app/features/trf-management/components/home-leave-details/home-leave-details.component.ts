@@ -27,6 +27,7 @@ export interface HomeLeaveDetails {
 export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   @Input() initialData: Partial<HomeLeaveDetails> = {};
   @Output() formSubmit = new EventEmitter<HomeLeaveDetails>();
+  @Output() backClick = new EventEmitter<void>();
 
   homeLeaveForm!: FormGroup;
   weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -67,8 +68,6 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
         bankName: [''],
         accountNumber: [''],
         accountName: [''],
-        swiftCode: [''],
-        iban: [''],
         branchAddress: [''],
         currency: ['USD']
       })
@@ -98,8 +97,6 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
         bankName: this.initialData.advanceBankDetails.bankName || '',
         accountNumber: this.initialData.advanceBankDetails.accountNumber || '',
         accountName: this.initialData.advanceBankDetails.accountName || '',
-        swiftCode: this.initialData.advanceBankDetails.swiftCode || '',
-        iban: this.initialData.advanceBankDetails.iban || '',
         branchAddress: this.initialData.advanceBankDetails.branchAddress || '',
         currency: this.initialData.advanceBankDetails.currency || 'USD'
       });
@@ -208,5 +205,9 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
 
   markAllAsTouched(): void {
     this.formUtils.markFormGroupTouched(this.homeLeaveForm);
+  }
+
+  onBack(): void {
+    this.backClick.emit();
   }
 }
