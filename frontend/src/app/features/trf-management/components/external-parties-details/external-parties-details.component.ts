@@ -30,6 +30,7 @@ export interface ExternalPartiesDetails {
 export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   @Input() initialData: Partial<ExternalPartiesDetails> = {};
   @Output() formSubmit = new EventEmitter<ExternalPartiesDetails>();
+  @Output() backClick = new EventEmitter<void>();
 
   externalForm!: FormGroup;
   weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -227,5 +228,9 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
 
   markAllAsTouched(): void {
     this.formUtils.markFormGroupTouched(this.externalForm);
+  }
+
+  onBack(): void {
+    this.backClick.emit();
   }
 }

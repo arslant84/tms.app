@@ -190,10 +190,10 @@ export class AccommodationRequestComponent implements OnInit {
       return false;
     }
 
-    // Check that checkout is after checkin
+    // Check that checkout is on or after checkin (same-day checkout allowed)
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
-    return checkOut > checkIn;
+    return checkOut >= checkIn;
   }
   
   // Draft saving and loading
@@ -240,10 +240,12 @@ export class AccommodationRequestComponent implements OnInit {
       const formValue = this.accommodationForm.value;
 
       // Build the request payload for the API
+      // Extract department name if it's an object
+      const department = this.extractDepartmentName(currentUser?.department);
       const requestData = {
         requestor_name: currentUser?.name || '',
         staff_id: currentUser?.staff_id || '',
-        department: currentUser?.department || '',
+        department: department,
         email: currentUser?.email || '',
         additional_comments: formValue.specialRequirements || '',
         additional_data: {
@@ -334,5 +336,15 @@ export class AccommodationRequestComponent implements OnInit {
   getGenderDisplay(): string {
     const gender = this.accommodationForm.get('gender')?.value;
     return gender === 'male' ? 'Male' : 'Female';
+  }
+
+  private extractDepartmentName(department: any): string {
+    if (!department) {
+      return '';
+    }
+    if (typeof department === 'string') {
+      return department;
+    }
+    return department.name || '';
   }
 }

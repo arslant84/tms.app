@@ -112,10 +112,13 @@ export class UserFormHelperService {
   mergeWithUserDefaults(initialData: Partial<UserFormDefaults>): UserFormDefaults {
     const userDefaults = this.getUserFormDefaults();
 
+    // Extract department name if initialData.department is an object
+    const initialDepartment = this.extractDepartmentName(initialData.department);
+
     return {
       fullName: initialData.fullName || userDefaults.fullName,
       staffId: initialData.staffId || userDefaults.staffId,
-      department: initialData.department || userDefaults.department,
+      department: initialDepartment || userDefaults.department,
       position: initialData.position || userDefaults.position,
       email: initialData.email || userDefaults.email,
       phone: initialData.phone || userDefaults.phone
