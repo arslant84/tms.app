@@ -25,15 +25,23 @@ $primary-lightest: #ccfbf1;           // Lightest variant for backgrounds
 $success-color: #10b981;              // Success states
 $success-hover: #059669;
 $success-light: #d1fae5;
+$success-lightest: #ecfdf5;           // Very light success background
+$success-dark: #065f46;               // Dark success text
 $warning-color: #f59e0b;              // Warning states
 $warning-hover: #d97706;
 $warning-light: #fef3c7;
+$warning-lightest: #fffbeb;           // Very light warning background
+$warning-dark: #92400e;               // Dark warning text
 $error-color: #ef4444;                // Error states
 $error-hover: #dc2626;
 $error-light: #fee2e2;
+$error-lightest: #fef2f2;             // Very light error background
+$error-dark: #991b1b;                 // Dark error text
 $info-color: #3b82f6;                 // Info states
 $info-hover: #2563eb;
 $info-light: #dbeafe;
+$info-lightest: #eff6ff;              // Very light info background
+$info-dark: #1e40af;                  // Dark info text
 
 // Neutral/Gray Scale
 $gray-50: #f9fafb;
@@ -182,6 +190,12 @@ $transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
 $transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 $transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
+// Animation durations (for keyframe animations)
+$animation-spinner: 0.75s;
+$animation-slide: 0.3s;
+$animation-fade: 0.2s;
+$animation-bounce: 0.5s;
+
 // ============================================================================
 // BREAKPOINTS (Bootstrap compatible)
 // ============================================================================
@@ -260,6 +274,26 @@ $badge-font-weight: $font-weight-medium;
 $alert-padding: $spacing-4;
 $alert-border-radius: $radius-md;
 $alert-border-width: 1px;
+
+// Scrollbar
+$scrollbar-width: 8px;
+$scrollbar-track: $gray-100;
+$scrollbar-thumb: $gray-400;
+$scrollbar-thumb-hover: $gray-500;
+
+// Charts & Data Visualization
+$chart-color-1: $error-color;         // Red
+$chart-color-2: $warning-color;       // Amber
+$chart-color-3: #06b6d4;              // Cyan
+$chart-color-4: $success-color;       // Green
+$chart-color-5: $primary-color;       // Teal (primary)
+$chart-color-6: $info-color;          // Blue
+
+// Focus States
+$focus-ring-color: $primary-color;
+$focus-ring-width: 2px;
+$focus-ring-offset: 2px;
+$focus-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
 
 // ============================================================================
 // MIXINS
@@ -375,4 +409,84 @@ $alert-border-width: 1px;
   @media (min-width: $breakpoint-xl) {
     @content;
   }
+}
+
+@mixin media-xxl {
+  @media (min-width: $breakpoint-xxl) {
+    @content;
+  }
+}
+
+// Card Container Mixin (for consistent card styling)
+@mixin card-container {
+  background: $bg-primary;
+  border-radius: $card-border-radius;
+  border: $card-border;
+  box-shadow: $card-shadow;
+}
+
+// Button Focus Mixin (for consistent focus rings)
+@mixin button-focus($color: $primary-color) {
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgb($color / 25%);
+  }
+}
+
+// Status Badge Mixin
+@mixin status-badge($bg-color, $text-color: $white) {
+  background-color: $bg-color;
+  color: $text-color;
+  padding: $badge-padding-y $badge-padding-x;
+  border-radius: $radius-full;
+  font-size: $badge-font-size;
+  font-weight: $badge-font-weight;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+// Scrollbar Mixin
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: $scrollbar-width;
+    height: $scrollbar-width;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $scrollbar-track;
+    border-radius: $radius-full;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $scrollbar-thumb;
+    border-radius: $radius-full;
+
+    &:hover {
+      background: $scrollbar-thumb-hover;
+    }
+  }
+}
+
+// Truncate Text Mixin
+@mixin truncate($max-width: 100%) {
+  max-width: $max-width;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Flex Center Mixin
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Flex Between Mixin
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }

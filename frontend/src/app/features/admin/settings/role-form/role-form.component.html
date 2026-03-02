@@ -1,4 +1,4 @@
-<div class="modal fade show" style="display: flex;" tabindex="-1" role="dialog">
+<div class="modal fade show modal-show" tabindex="-1" role="dialog">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -32,7 +32,7 @@
                 <input class="form-check-input" type="checkbox" [id]="'perm-' + p.id" [checked]="form.permissionIds?.includes(p.id)" (change)="togglePermission(p.id)" />
                 <label class="form-check-label small" [for]="'perm-' + p.id">
                   {{ p.name }}
-                  <span class="d-block text-muted" style="font-size: 0.75rem;" *ngIf="p.description">{{ p.description }}</span>
+                  <span class="d-block text-muted text-xs" *ngIf="p.description">{{ p.description }}</span>
                 </label>
               </div>
             </div>

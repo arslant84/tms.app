@@ -5,8 +5,12 @@ from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
+from django.core.cache import cache
 from datetime import timedelta
 import json
+
+# Cache timeout for settings (5 minutes)
+SETTINGS_CACHE_TIMEOUT = 300
 
 
 class MaintenanceModeMiddleware:
@@ -19,11 +23,13 @@ class MaintenanceModeMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Import here to avoid circular imports
-        from accounts.models import ApplicationSetting
-
-        # Check if maintenance mode is enabled
-        maintenance_mode = ApplicationSetting.get_setting('maintenance_mode', False)
+        # Check cache first, then database
+        maintenance_mode = cache.get('setting_maintenance_mode')
+        if maintenance_mode is None:
+            # Import here to avoid circular imports
+            from accounts.models import ApplicationSetting
+            maintenance_mode = ApplicationSetting.get_setting('maintenance_mode', False)
+            cache.set('setting_maintenance_mode', maintenance_mode, SETTINGS_CACHE_TIMEOUT)
 
         if maintenance_mode:
             # Allow superusers and staff to access
@@ -72,12 +78,14 @@ class SessionTimeoutMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Import here to avoid circular imports
-        from accounts.models import ApplicationSetting
-
         if request.user.is_authenticated:
-            # Get configured session timeout (in minutes)
-            timeout_minutes = ApplicationSetting.get_setting('session_timeout_minutes', 480)  # Default: 8 hours
+            # Check cache first, then database
+            timeout_minutes = cache.get('setting_session_timeout_minutes')
+            if timeout_minutes is None:
+                # Import here to avoid circular imports
+                from accounts.models import ApplicationSetting
+                timeout_minutes = ApplicationSetting.get_setting('session_timeout_minutes', 480)  # Default: 8 hours
+                cache.set('setting_session_timeout_minutes', timeout_minutes, SETTINGS_CACHE_TIMEOUT)
 
             # Get last activity time from session
             last_activity = request.session.get('last_activity')
@@ -126,11 +134,13 @@ class FileSizeValidationMiddleware:
             content_length = request.META.get('CONTENT_LENGTH')
 
             if content_length:
-                # Import here to avoid circular imports
-                from accounts.models import ApplicationSetting
-
-                # Get configured max file size (in bytes)
-                max_size = ApplicationSetting.get_setting('max_file_upload_size', 10485760)  # Default: 10MB
+                # Check cache first, then database
+                max_size = cache.get('setting_max_file_upload_size')
+                if max_size is None:
+                    # Import here to avoid circular imports
+                    from accounts.models import ApplicationSetting
+                    max_size = ApplicationSetting.get_setting('max_file_upload_size', 10485760)  # Default: 10MB
+                    cache.set('setting_max_file_upload_size', max_size, SETTINGS_CACHE_TIMEOUT)
 
                 # Check if request size exceeds limit
                 if int(content_length) > max_size:
@@ -164,24 +174,29 @@ class DynamicSettingsMiddleware:
     """
     Middleware to load and apply dynamic settings from ApplicationSetting model.
     This ensures settings like timezone are applied for each request.
+    Uses caching to minimize database queries.
     """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # Import here to avoid circular imports
-        from accounts.models import ApplicationSetting
         from django.utils import timezone as tz
         import pytz
 
-        # Apply timezone setting dynamically
+        # Apply timezone setting dynamically with caching
         try:
-            timezone_str = ApplicationSetting.get_setting('timezone', 'UTC')
+            timezone_str = cache.get('setting_timezone')
+            if timezone_str is None:
+                # Import here to avoid circular imports
+                from accounts.models import ApplicationSetting
+                timezone_str = ApplicationSetting.get_setting('timezone', 'UTC')
+                cache.set('setting_timezone', timezone_str, SETTINGS_CACHE_TIMEOUT)
+
             # Activate timezone for this request
             request_timezone = pytz.timezone(timezone_str)
             tz.activate(request_timezone)
-        except Exception as e:
+        except Exception:
             # Fall back to default timezone
             tz.deactivate()
 
@@ -191,3 +206,22 @@ class DynamicSettingsMiddleware:
         tz.deactivate()
 
         return response
+
+
+def clear_settings_cache():
+    """
+    Utility function to clear all cached settings.
+    Call this when ApplicationSettings are updated.
+
+    Usage:
+        from tms_project.middleware import clear_settings_cache
+        clear_settings_cache()
+    """
+    cache_keys = [
+        'setting_maintenance_mode',
+        'setting_session_timeout_minutes',
+        'setting_max_file_upload_size',
+        'setting_timezone',
+    ]
+    for key in cache_keys:
+        cache.delete(key)

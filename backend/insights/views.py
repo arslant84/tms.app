@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from accounts.utils import can_view_all, has_any_permission, is_module_admin
+from utils.api_response import success_response, error_response, forbidden_response
 
 logger = logging.getLogger(__name__)
 
@@ -93,18 +94,21 @@ class TravelAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):
         analytics = TravelAnalytics.objects.filter(user=user).first()
 
         if not analytics:
-            return Response({
-                'total_trips': 0,
-                'total_spend': 0,
-                'average_trip_cost': 0,
-                'savings_opportunities': 0,
-                'top_destinations': [],
-                'spend_by_category': [],
-                'monthly_trend': []
-            })
+            return success_response(
+                data={
+                    'total_trips': 0,
+                    'total_spend': 0,
+                    'average_trip_cost': 0,
+                    'savings_opportunities': 0,
+                    'top_destinations': [],
+                    'spend_by_category': [],
+                    'monthly_trend': []
+                },
+                message="No analytics data available"
+            )
 
         serializer = self.get_serializer(analytics)
-        return Response(serializer.data)
+        return success_response(data=serializer.data, message="User analytics retrieved successfully")
 
     @action(detail=False, methods=['get'])
     def company_analytics(self, request):
@@ -118,26 +122,28 @@ class TravelAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):
             can_view_all(user, 'visa')
         )
         if not has_analytics_access:
-            return Response(
-                {'error': 'You do not have permission to view company-wide analytics'},
-                status=status.HTTP_403_FORBIDDEN
+            return forbidden_response(
+                message="You do not have permission to view company-wide analytics"
             )
 
         analytics = TravelAnalytics.objects.filter(user=None).first()
 
         if not analytics:
-            return Response({
-                'total_trips': 0,
-                'total_spend': 0,
-                'average_trip_cost': 0,
-                'savings_opportunities': 0,
-                'top_destinations': [],
-                'spend_by_category': [],
-                'monthly_trend': []
-            })
+            return success_response(
+                data={
+                    'total_trips': 0,
+                    'total_spend': 0,
+                    'average_trip_cost': 0,
+                    'savings_opportunities': 0,
+                    'top_destinations': [],
+                    'spend_by_category': [],
+                    'monthly_trend': []
+                },
+                message="No company analytics data available"
+            )
 
         serializer = self.get_serializer(analytics)
-        return Response(serializer.data)
+        return success_response(data=serializer.data, message="Company analytics retrieved successfully")
 
 
 @api_view(['GET'])
@@ -333,7 +339,7 @@ def dashboard_summary(request):
     }
 
     serializer = DashboardSummarySerializer(data)
-    return Response(serializer.data)
+    return success_response(data=serializer.data, message="Dashboard summary retrieved successfully")
 
 
 @api_view(['GET'])
@@ -421,7 +427,7 @@ def travel_spend_analytics(request):
     }
 
     serializer = TravelSpendAnalyticsSerializer(data)
-    return Response(serializer.data)
+    return success_response(data=serializer.data, message="Travel spend analytics retrieved successfully")
 
 
 @api_view(['GET'])
@@ -482,7 +488,7 @@ def travel_pattern_analytics(request):
     }
 
     serializer = TravelPatternAnalyticsSerializer(data)
-    return Response(serializer.data)
+    return success_response(data=serializer.data, message="Travel pattern analytics retrieved successfully")
 
 
 @api_view(['GET'])
@@ -552,7 +558,7 @@ def booking_analytics(request):
     }
 
     serializer = BookingAnalyticsSerializer(data)
-    return Response(serializer.data)
+    return success_response(data=serializer.data, message="Booking analytics retrieved successfully")
 
 
 @api_view(['GET'])
@@ -589,7 +595,7 @@ def department_analytics(request):
         })
 
     serializer = DepartmentAnalyticsSerializer(departments, many=True)
-    return Response(serializer.data)
+    return success_response(data=serializer.data, message="Department analytics retrieved successfully")
 
 
 @api_view(['GET'])
@@ -626,4 +632,4 @@ def user_activity_report(request):
             })
 
     serializer = UserActivitySerializer(user_activities, many=True)
-    return Response(serializer.data)
+    return success_response(data=serializer.data, message="User activity report retrieved successfully")

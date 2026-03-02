@@ -79,7 +79,7 @@
     &.step-completed {
       color: vars.$success-color;
       border-color: vars.$success-color;
-      background: #d4edda;
+      background: vars.$success-lightest;
     }
 
     &.step-current {
@@ -98,7 +98,7 @@
     &.step-rejected {
       color: vars.$error-color;
       border-color: vars.$error-color;
-      background: #f8d7da;
+      background: vars.$error-lightest;
     }
 
     &.step-skipped {
@@ -174,7 +174,7 @@
     background: vars.$warning-light;
     border: 1px solid vars.$warning-color;
     border-radius: vars.$radius-md;
-    color: #856404;
+    color: vars.$warning-dark;
     font-weight: vars.$font-weight-semibold;
     font-size: vars.$font-size-xs;
     margin-top: vars.$spacing-2;

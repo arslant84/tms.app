@@ -112,6 +112,111 @@ h2 {
 
 // Add your custom global styles below
 
+// ========== UTILITY CLASSES ==========
+// Replace common inline styles with reusable classes
+
+// Spinner sizes
+.spinner-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.spinner-md {
+  width: 2rem;
+  height: 2rem;
+}
+
+.spinner-lg {
+  width: 3rem;
+  height: 3rem;
+}
+
+// Icon sizes (use instead of inline font-size on icons)
+.icon-xs {
+  font-size: vars.$font-size-xs !important; // 12px / 0.75rem
+}
+
+.icon-sm {
+  font-size: vars.$font-size-sm !important; // 14px / 0.875rem
+}
+
+.icon-md {
+  font-size: vars.$font-size-base !important; // 16px / 1rem
+}
+
+.icon-lg {
+  font-size: vars.$font-size-lg !important; // 20px / 1.25rem
+}
+
+.icon-xl {
+  font-size: vars.$font-size-xl !important; // 24px / 1.5rem
+}
+
+.icon-2xl {
+  font-size: vars.$font-size-2xl !important; // 30px / 1.875rem
+}
+
+.icon-3xl {
+  font-size: vars.$font-size-3xl !important; // 36px / 2.25rem
+}
+
+.icon-jumbo {
+  font-size: 4rem !important; // 64px - for empty states
+}
+
+// Light muted text (for empty state icons)
+.text-light-muted {
+  color: vars.$gray-300 !important;
+}
+
+// Text sizes (use instead of inline font-size)
+.text-xxs {
+  font-size: 0.625rem !important; // 10px
+}
+
+.text-xs {
+  font-size: vars.$font-size-xs !important; // 12px
+}
+
+.text-sm {
+  font-size: vars.$font-size-sm !important; // 14px
+}
+
+// Truncation utilities (use instead of inline max-width + text-truncate)
+.truncate-sm {
+  @include vars.truncate(100px);
+}
+
+.truncate-md {
+  @include vars.truncate(150px);
+}
+
+.truncate-lg {
+  @include vars.truncate(200px);
+}
+
+.truncate-xl {
+  @include vars.truncate(300px);
+}
+
+// Modal display helper (for show state)
+.modal-show {
+  display: flex !important;
+}
+
+// Cursor utilities
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.cursor-default {
+  cursor: default !important;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed !important;
+}
+
 // ========== PAGE CONTAINER HEIGHT FIX ==========
 // Ensure all page containers fill the full height of the content area
 // This prevents pages from displaying with empty space below content
@@ -516,45 +621,45 @@ tmsapp-admin-systemsettings-workflow-configuration,
 // Status badge colors - unified across all modules
 .badge-pending,
 .badge-warning {
-  background-color: #fef3c7; // amber-100
-  color: #92400e; // amber-900
-  border: 1px solid #fbbf24; // amber-400
+  background-color: vars.$warning-lightest;
+  color: vars.$warning-dark;
+  border: 1px solid vars.$warning-color;
 }
 
 .badge-info {
-  background-color: #dbeafe; // blue-100
-  color: #1e3a8a; // blue-900
-  border: 1px solid vars.$info-color; // blue-500
+  background-color: vars.$info-lightest;
+  color: vars.$info-dark;
+  border: 1px solid vars.$info-color;
 }
 
 .badge-success {
-  background-color: vars.$success-light; // green-100
-  color: #065f46; // green-900
-  border: 1px solid vars.$success-color; // green-500
+  background-color: vars.$success-lightest;
+  color: vars.$success-dark;
+  border: 1px solid vars.$success-color;
 }
 
 .badge-danger {
-  background-color: vars.$error-light; // red-100
-  color: #991b1b; // red-900
-  border: 1px solid vars.$error-color; // red-500
+  background-color: vars.$error-lightest;
+  color: vars.$error-dark;
+  border: 1px solid vars.$error-color;
 }
 
 .badge-secondary,
 .badge-draft {
-  background-color: vars.$gray-100; // gray-100
-  color: vars.$gray-500; // gray-500
-  border: 1px solid vars.$gray-300; // gray-300
+  background-color: vars.$gray-100;
+  color: vars.$gray-500;
+  border: 1px solid vars.$gray-300;
 }
 
 .badge-processing {
-  background-color: #e0e7ff; // indigo-100
+  background-color: #e0e7ff; // indigo-100 - specific to processing state
   color: #3730a3; // indigo-800
   border: 1px solid #6366f1; // indigo-500
 }
 
 // Special badge for visa types
 .badge-visa-type {
-  background-color: #f3e8ff; // purple-100
+  background-color: #f3e8ff; // purple-100 - specific to visa type
   color: #6b21a8; // purple-800
   border: 1px solid #a855f7; // purple-500
   font-weight: 600;

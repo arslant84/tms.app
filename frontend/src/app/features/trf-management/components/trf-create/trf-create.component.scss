@@ -37,7 +37,7 @@
         font-weight: vars.$font-weight-medium;
 
         &:hover {
-          background: #f0fdfa;
+          background: vars.$primary-lightest;
         }
       }
     }
@@ -93,7 +93,7 @@
     border-radius: vars.$radius-md;
 
     &:focus {
-      border-color: #80bdff;
+      border-color: vars.$primary-light;
       outline: 0;
       box-shadow: vars.$input-focus-shadow;
     }
@@ -152,15 +152,15 @@
     border-radius: vars.$radius-md;
 
     &.alert-success {
-      color: #155724;
-      background-color: #d4edda;
-      border-color: #c3e6cb;
+      color: vars.$success-dark;
+      background-color: vars.$success-lightest;
+      border-color: vars.$success-light;
     }
 
     &.alert-danger {
-      color: #721c24;
-      background-color: #f8d7da;
-      border-color: #f5c6cb;
+      color: vars.$error-dark;
+      background-color: vars.$error-lightest;
+      border-color: vars.$error-light;
     }
   }
 
