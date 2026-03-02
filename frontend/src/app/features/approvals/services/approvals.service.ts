@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
+import { extractData } from '../../../core/utils/api-response.handler';
 
 export interface ApprovalRequest {
   id: number;
@@ -197,9 +198,10 @@ export class ApprovalsService {
   // Private helper methods
 
   private getPendingTrfs(): Observable<ApprovalRequest[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/trf/travel-requests/pending-approvals/`, {
+    return this.http.get<any>(`${this.baseUrl}/trf/travel-requests/pending-approvals/`, {
       withCredentials: true
     }).pipe(
+      map(response => extractData<any[]>(response) || []),
       map(trfs => trfs.map(trf => this.transformTrfToApproval(trf))),
       catchError(error => {
         console.error('Error fetching pending TRFs:', error);
@@ -209,9 +211,10 @@ export class ApprovalsService {
   }
 
   private getPendingAccommodations(): Observable<ApprovalRequest[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/accommodation/requests/pending-approvals/`, {
+    return this.http.get<any>(`${this.baseUrl}/accommodation/requests/pending-approvals/`, {
       withCredentials: true
     }).pipe(
+      map(response => extractData<any[]>(response) || []),
       map(accs => accs.map(acc => this.transformAccommodationToApproval(acc))),
       catchError(error => {
         console.error('Error fetching pending accommodations:', error);
@@ -221,9 +224,10 @@ export class ApprovalsService {
   }
 
   private getPendingTransports(): Observable<ApprovalRequest[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/transport/requests/pending-approvals/`, {
+    return this.http.get<any>(`${this.baseUrl}/transport/requests/pending-approvals/`, {
       withCredentials: true
     }).pipe(
+      map(response => extractData<any[]>(response) || []),
       map(transports => transports.map(transport => this.transformTransportToApproval(transport))),
       catchError(error => {
         console.error('Error fetching pending transports:', error);
@@ -233,9 +237,10 @@ export class ApprovalsService {
   }
 
   private getPendingVisas(): Observable<ApprovalRequest[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/visa/applications/pending-approvals/`, {
+    return this.http.get<any>(`${this.baseUrl}/visa/applications/pending-approvals/`, {
       withCredentials: true
     }).pipe(
+      map(response => extractData<any[]>(response) || []),
       map(visas => visas.map(visa => this.transformVisaToApproval(visa))),
       catchError(error => {
         console.error('Error fetching pending visas:', error);
@@ -245,9 +250,10 @@ export class ApprovalsService {
   }
 
   private getPendingExpenses(): Observable<ApprovalRequest[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/expenses/claims/pending-approvals/`, {
+    return this.http.get<any>(`${this.baseUrl}/expenses/claims/pending-approvals/`, {
       withCredentials: true
     }).pipe(
+      map(response => extractData<any[]>(response) || []),
       map(expenses => expenses.map(expense => this.transformExpenseToApproval(expense))),
       catchError(error => {
         console.error('Error fetching pending expenses:', error);
