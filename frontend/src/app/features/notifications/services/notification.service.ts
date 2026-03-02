@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, interval, Subscription } from 'rxjs';
-import { tap, catchError, filter } from 'rxjs/operators';
+import { tap, catchError, filter, map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
+import { extractData } from '../../../core/utils/api-response.handler';
 
 // Notification Interfaces
 export interface UserNotification {
@@ -136,9 +137,10 @@ export class NotificationService {
 
   // Get unread count
   getUnreadCount(): Observable<{ count: number }> {
-    return this.http.get<{ count: number }>(`${this.apiUrl}/unread_count/`).pipe(
-      tap((response) => {
-        this.unreadCountSubject.next(response.count);
+    return this.http.get<any>(`${this.apiUrl}/unread_count/`).pipe(
+      map(response => extractData<{ count: number }>(response) || { count: 0 }),
+      tap((data) => {
+        this.unreadCountSubject.next(data.count);
       }),
       catchError((error) => {
         // Silently handle errors to avoid console spam from polling
@@ -163,7 +165,8 @@ export class NotificationService {
 
   // Mark notification as read
   markAsRead(id: number): Observable<UserNotification> {
-    return this.http.post<UserNotification>(`${this.apiUrl}/${id}/mark_as_read/`, {}).pipe(
+    return this.http.post<any>(`${this.apiUrl}/${id}/mark_as_read/`, {}).pipe(
+      map(response => extractData<UserNotification>(response) as UserNotification),
       tap(() => {
         this.refreshUnreadCount();
         this.refreshNotifications();
@@ -174,6 +177,7 @@ export class NotificationService {
   // Mark all as read
   markAllAsRead(): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/mark_all_as_read/`, {}).pipe(
+      map(response => extractData<any>(response)),
       tap(() => {
         this.refreshUnreadCount();
         this.refreshNotifications();
