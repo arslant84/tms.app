@@ -1,4 +1,5 @@
 /* Global Modal Styles - Fixed Positioning & Scroll Management */
+@use './variables' as vars;
 
 /* Prevent body scroll when modal is open */
 body.modal-open {
@@ -94,12 +95,12 @@ body.modal-open {
     max-height: 90vh; /* Ensure content doesn't exceed viewport height */
     overflow-y: auto; /* Make content scrollable if too tall */
     pointer-events: auto;
-    background-color: #ffffff;
+    background-color: vars.$bg-primary;
     background-clip: padding-box;
     border: 1px solid rgb(0 0 0 / 20%);
-    border-radius: 0.5rem;
+    border-radius: vars.$radius-lg;
     outline: 0; /* Add shadow for better visibility */
-    box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
+    box-shadow: vars.$modal-shadow;
     /* Removed max-height - let modal-body handle scrolling */
     /* Removed overflow - not needed with flex layout */
   }
@@ -110,11 +111,11 @@ body.modal-open {
     flex-shrink: 0; /* Don't shrink */
     align-items: center;
     justify-content: space-between;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #dee2e6;
-    border-top-left-radius: calc(0.5rem - 1px);
-    border-top-right-radius: calc(0.5rem - 1px);
-    background-color: #ffffff;
+    padding: vars.$spacing-5 vars.$spacing-6;
+    border-bottom: 1px solid vars.$border-light;
+    border-top-left-radius: calc(vars.$radius-lg - 1px);
+    border-top-right-radius: calc(vars.$radius-lg - 1px);
+    background-color: vars.$bg-primary;
     position: relative; /* Changed from sticky - not needed with proper flex layout */
     z-index: 1;
 
@@ -151,30 +152,30 @@ body.modal-open {
   .modal-body {
     position: relative;
     flex: 1 1 auto;
-    padding: 1.5rem;
+    padding: vars.$spacing-6;
     overflow: hidden auto; /* Allow body content to scroll */
     max-height: calc(100vh - 14rem); /* Leave space for header, footer, and padding */
 
     /* Scrollbar styling for Firefox */
     scrollbar-width: thin;
-    scrollbar-color: #888888 #f1f1f1;
+    scrollbar-color: vars.$scrollbar-thumb vars.$scrollbar-track;
 
     /* Custom scrollbar for better UX - Webkit browsers */
     &::-webkit-scrollbar {
-      width: 8px;
+      width: vars.$scrollbar-width;
     }
 
     &::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
+      background: vars.$scrollbar-track;
+      border-radius: vars.$radius-base;
     }
 
     &::-webkit-scrollbar-thumb {
-      background: #888888;
-      border-radius: 4px;
+      background: vars.$scrollbar-thumb;
+      border-radius: vars.$radius-base;
 
       &:hover {
-        background: #555555;
+        background: vars.$scrollbar-thumb-hover;
       }
     }
   }
@@ -186,16 +187,16 @@ body.modal-open {
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    padding: 1rem 1.5rem;
-    border-top: 1px solid #dee2e6;
-    border-bottom-right-radius: calc(0.5rem - 1px);
-    border-bottom-left-radius: calc(0.5rem - 1px);
-    background-color: #ffffff;
+    padding: vars.$spacing-4 vars.$spacing-6;
+    border-top: 1px solid vars.$border-light;
+    border-bottom-right-radius: calc(vars.$radius-lg - 1px);
+    border-bottom-left-radius: calc(vars.$radius-lg - 1px);
+    background-color: vars.$bg-primary;
     position: relative; /* Changed from sticky - not needed with proper flex layout */
     z-index: 1;
 
     > * {
-      margin: 0.25rem;
+      margin: vars.$spacing-1;
     }
   }
 }

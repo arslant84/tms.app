@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of, BehaviorSubject } from 'rxjs';
+import { map, tap, shareReplay, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   WorkflowTemplate,
@@ -371,5 +372,90 @@ export class WorkflowService {
   getWorkflowStatusClass(workflow: WorkflowInstance | WorkflowInstanceList | null): string {
     if (!workflow) return 'badge-secondary';
     return this.getStatusClass(workflow.status);
+  }
+
+  // ==================== Workflow Status Loading ====================
+
+  // Cache for workflow statuses by entity type
+  private statusCache = new Map<string, Observable<string[]>>();
+
+  // Base statuses that don't come from workflow
+  private readonly BASE_STATUSES = ['Draft', 'Approved', 'Rejected', 'Cancelled', 'Completed'];
+
+  /**
+   * Load workflow statuses for an entity type.
+   * Results are cached and shared across subscribers.
+   *
+   * @param entityType The workflow entity type (e.g., 'travelrequest', 'visaapplication')
+   * @returns Observable of status strings
+   *
+   * Usage:
+   * ```typescript
+   * this.workflowService.loadWorkflowStatuses('travelrequest')
+   *   .subscribe(statuses => this.trfStatuses = statuses);
+   * ```
+   */
+  loadWorkflowStatuses(entityType: string): Observable<string[]> {
+    // Return cached observable if available
+    if (this.statusCache.has(entityType)) {
+      return this.statusCache.get(entityType)!;
+    }
+
+    // Create and cache the observable
+    const statusObservable = this.getTemplates({ entity_type: entityType, is_active: true }).pipe(
+      map(templates => this.extractStatusesFromTemplates(templates)),
+      catchError(err => {
+        console.error(`Error loading workflow statuses for ${entityType}:`, err);
+        return of([...this.BASE_STATUSES]);
+      }),
+      shareReplay(1)
+    );
+
+    this.statusCache.set(entityType, statusObservable);
+    return statusObservable;
+  }
+
+  /**
+   * Extract statuses from workflow templates.
+   * Builds "Pending {step_name}" statuses from workflow steps.
+   */
+  private extractStatusesFromTemplates(templates: WorkflowTemplate[]): string[] {
+    if (!templates || templates.length === 0) {
+      return [...this.BASE_STATUSES];
+    }
+
+    const template = templates[0];
+    const statuses: string[] = ['Draft'];
+
+    if (template.steps && template.steps.length > 0) {
+      // Sort steps by order and create "Pending {step_name}" statuses
+      const sortedSteps = [...template.steps].sort((a, b) => a.step_order - b.step_order);
+      for (const step of sortedSteps) {
+        statuses.push(`Pending ${step.step_name}`);
+      }
+    }
+
+    // Add terminal statuses
+    statuses.push('Approved', 'Rejected', 'Cancelled', 'Completed');
+    return statuses;
+  }
+
+  /**
+   * Clear the status cache for a specific entity type or all.
+   * Call this when workflow templates are modified.
+   */
+  clearStatusCache(entityType?: string): void {
+    if (entityType) {
+      this.statusCache.delete(entityType);
+    } else {
+      this.statusCache.clear();
+    }
+  }
+
+  /**
+   * Get base statuses (statuses that don't come from workflow).
+   */
+  getBaseStatuses(): string[] {
+    return [...this.BASE_STATUSES];
   }
 }

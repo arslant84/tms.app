@@ -5,6 +5,11 @@ import { HttpErrorResponse } from '@angular/common/http';
  * HTTP Error Handler Utility Service
  * Provides centralized error message extraction and formatting
  *
+ * Supports multiple backend response formats:
+ * - Standardized: { success: false, message: "...", errors: {...} }
+ * - DRF default: { error: "...", detail: "..." }
+ * - Field errors: { field_name: ["error1", "error2"] }
+ *
  * Usage:
  * ```typescript
  * error: (err) => {
@@ -21,6 +26,7 @@ export class HttpErrorHandlerService {
   /**
    * Extract user-friendly error message from HTTP error response
    * Handles multiple backend error formats:
+   * - Standardized: { success: false, message: "...", errors: {...} }
    * - { error: "message" }
    * - { detail: "message" }
    * - { field_name: ["error1", "error2"] }
@@ -41,6 +47,16 @@ export class HttpErrorHandlerService {
       // Django REST Framework standard error format: { error: "message" }
       if (typeof error.error === 'string') {
         return error.error;
+      }
+
+      // Standardized response format: { success: false, message: "...", errors: {...} }
+      if (error.error.success === false && error.error.message) {
+        // If there are also field-level errors, append them
+        if (error.error.errors && this.hasFieldErrors(error.error.errors)) {
+          const fieldErrors = this.extractFieldErrors(error.error.errors);
+          return `${error.error.message}: ${fieldErrors}`;
+        }
+        return error.error.message;
       }
 
       // Object with error property
@@ -196,5 +212,93 @@ export class HttpErrorHandlerService {
    */
   isNetworkError(error: HttpErrorResponse | any): boolean {
     return error.status === 0;
+  }
+
+  /**
+   * Get all field errors as an object
+   * Useful for applying errors to form controls
+   *
+   * @param error - HTTP error response
+   * @returns Object mapping field names to error messages
+   *
+   * Example:
+   * ```typescript
+   * const fieldErrors = this.errorHandler.getFieldErrors(err);
+   * // { email: 'This field is required', password: 'Password too short' }
+   *
+   * Object.entries(fieldErrors).forEach(([field, message]) => {
+   *   this.form.get(field)?.setErrors({ serverError: message });
+   * });
+   * ```
+   */
+  getFieldErrors(error: HttpErrorResponse | any): Record<string, string> {
+    const result: Record<string, string> = {};
+
+    if (!error?.error) {
+      return result;
+    }
+
+    // Handle standardized response format
+    const errorObj = error.error.errors || error.error;
+    const nonFieldKeys = ['error', 'detail', 'non_field_errors', 'status', 'statusText', 'success', 'message', 'meta'];
+
+    for (const [field, messages] of Object.entries(errorObj)) {
+      if (nonFieldKeys.includes(field)) {
+        continue;
+      }
+
+      if (Array.isArray(messages)) {
+        result[field] = (messages as string[]).join(', ');
+      } else if (typeof messages === 'string') {
+        result[field] = messages;
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Apply server errors to a reactive form
+   * Sets server errors on matching form controls
+   *
+   * @param error - HTTP error response
+   * @param form - Angular FormGroup to apply errors to
+   *
+   * Example:
+   * ```typescript
+   * this.http.post('/api/users', data).subscribe({
+   *   error: (err) => {
+   *     this.errorHandler.applyServerErrors(err, this.userForm);
+   *   }
+   * });
+   * ```
+   */
+  applyServerErrors(error: HttpErrorResponse | any, form: any): void {
+    const fieldErrors = this.getFieldErrors(error);
+
+    Object.entries(fieldErrors).forEach(([field, message]) => {
+      const control = form.get(field);
+      if (control) {
+        control.setErrors({ serverError: message });
+        control.markAsTouched();
+      }
+    });
+  }
+
+  /**
+   * Check if response is a standardized error response
+   */
+  isStandardizedError(error: HttpErrorResponse | any): boolean {
+    return error?.error?.success === false;
+  }
+
+  /**
+   * Get the message from a standardized error response
+   */
+  getStandardizedMessage(error: HttpErrorResponse | any): string | null {
+    if (this.isStandardizedError(error)) {
+      return error.error.message || null;
+    }
+    return null;
   }
 }

@@ -120,22 +120,22 @@
 
   &.badge-primary {
     background-color: vars.$info-light;
-    color: #1e40af;
+    color: vars.$info-dark;
   }
 
   &.badge-success {
     background-color: vars.$success-light;
-    color: #065f46;
+    color: vars.$success-dark;
   }
 
   &.badge-warning {
     background-color: vars.$warning-light;
-    color: #92400e;
+    color: vars.$warning-dark;
   }
 
   &.badge-danger {
     background-color: vars.$error-light;
-    color: #991b1b;
+    color: vars.$error-dark;
   }
 
   &.badge-secondary {
@@ -150,8 +150,8 @@
   }
 
   &.badge-info {
-    background-color: #e0f2fe;
-    color: #075985;
+    background-color: vars.$info-lightest;
+    color: vars.$info-dark;
   }
 }
 
@@ -169,7 +169,7 @@
   position: relative;
 
   &.current .timeline-content {
-    background-color: #f0fdfa;
+    background-color: vars.$primary-lightest;
     border-left: 3px solid vars.$primary-color;
   }
 
@@ -339,7 +339,7 @@ textarea.form-control {
   margin-bottom: vars.$spacing-6;
   padding: vars.$spacing-6;
   background-color: vars.$warning-light;
-  border: 1px solid #fbbf24;
+  border: 1px solid vars.$warning-color;
   border-radius: vars.$radius-lg;
 }
 
@@ -349,7 +349,7 @@ textarea.form-control {
   gap: vars.$spacing-2;
   font-size: vars.$font-size-base;
   font-weight: vars.$font-weight-semibold;
-  color: #92400e;
+  color: vars.$warning-dark;
   margin-bottom: vars.$spacing-md;
 
   i {
@@ -430,8 +430,8 @@ textarea.form-control {
 
   &.alert-info {
     background-color: vars.$info-light;
-    border-color: #93c5fd;
-    color: #1e40af;
+    border-color: vars.$info-color;
+    color: vars.$info-dark;
 
     i {
       color: vars.$info-color;
