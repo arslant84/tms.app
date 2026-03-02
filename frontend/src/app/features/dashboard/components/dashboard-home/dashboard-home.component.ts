@@ -7,6 +7,7 @@ import { AppSettingsService } from '../../../../core/services/app-settings.servi
 import { Observable, map, Subject, takeUntil } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { extractData } from '../../../../core/utils/api-response.handler';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -81,6 +82,7 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     this.insightsService.getDashboardSummary()
       .pipe(
         takeUntil(this.destroy$),
+        map(response => extractData<DashboardSummary>(response)),
         finalize(() => {
           this.isLoading = false;
           this.isFetching = false;
@@ -88,9 +90,11 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (data) => {
-          this.summary = data;
-          this.activities = data.recent_activities || [];
-          this.filteredActivities = this.activities;
+          if (data) {
+            this.summary = data;
+            this.activities = data.recent_activities || [];
+            this.filteredActivities = this.activities;
+          }
         },
         error: (err) => {
           console.error('❌ Error fetching dashboard data:', err);
