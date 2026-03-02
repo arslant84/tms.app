@@ -101,27 +101,27 @@
   }
 }
 
-// Secondary Button - Light teal outline
+// Secondary Button - Light gray
 .btn-secondary {
-  background-color: #f8f9fa;
-  border-color: #dee2e6;
-  color: #212529;
+  background-color: vars.$gray-100;
+  border-color: vars.$gray-300;
+  color: vars.$gray-800;
 
   &:hover:not(:disabled) {
-    background-color: #e9ecef;
-    border-color: #adb5bd;
+    background-color: vars.$gray-200;
+    border-color: vars.$gray-400;
     transform: translateY(-1px);
   }
 
   &:active,
   &.active {
-    background-color: #dee2e6;
-    border-color: #adb5bd;
+    background-color: vars.$gray-300;
+    border-color: vars.$gray-400;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(108 117 125 / 25%);
+    box-shadow: 0 0 0 0.2rem rgb(107 114 128 / 25%); // gray-500 with opacity
   }
 }
 
@@ -155,202 +155,202 @@
 // Outline Secondary - Gray outline
 .btn-outline-secondary {
   background-color: transparent;
-  border-color: #6c757d;
-  color: #6c757d;
+  border-color: vars.$gray-500;
+  color: vars.$gray-500;
 
   &:hover:not(:disabled) {
-    background-color: #6c757d;
-    border-color: #6c757d;
+    background-color: vars.$gray-500;
+    border-color: vars.$gray-500;
     color: vars.$white;
     transform: translateY(-1px);
   }
 
   &:active,
   &.active {
-    background-color: #5a6268;
-    border-color: #545b62;
+    background-color: vars.$gray-600;
+    border-color: vars.$gray-600;
     color: vars.$white;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(108 117 125 / 25%);
+    box-shadow: 0 0 0 0.2rem rgb(107 114 128 / 25%); // gray-500 with opacity
   }
 }
 
 // Success Button - Green with teal undertones
 .btn-success {
-  background-color: #14b8a6;  // Teal-green
-  border-color: #14b8a6;
+  background-color: vars.$success-color;
+  border-color: vars.$success-color;
   color: vars.$white;
 
   &:hover:not(:disabled) {
-    background-color: #0f9785;
-    border-color: #0f9785;
+    background-color: vars.$success-hover;
+    border-color: vars.$success-hover;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(20 184 166 / 20%);
+    box-shadow: 0 2px 4px rgb(16 185 129 / 20%); // success-color with opacity
   }
 
   &:active,
   &.active {
-    background-color: #0d7f6f;
-    border-color: #0d7f6f;
+    background-color: vars.$success-dark;
+    border-color: vars.$success-dark;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(20 184 166 / 50%);
+    box-shadow: 0 0 0 0.2rem rgb(16 185 129 / 50%); // success-color with opacity
   }
 }
 
-// Danger Button - Red (keeping standard red for danger)
+// Danger Button - Red
 .btn-danger {
-  background-color: #dc2626;
-  border-color: #dc2626;
+  background-color: vars.$error-color;
+  border-color: vars.$error-color;
   color: vars.$white;
 
   &:hover:not(:disabled) {
-    background-color: #c82333;
-    border-color: #bd2130;
+    background-color: vars.$error-hover;
+    border-color: vars.$error-hover;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(220 53 69 / 20%);
+    box-shadow: 0 2px 4px rgb(239 68 68 / 20%); // error-color with opacity
   }
 
   &:active,
   &.active {
-    background-color: #bd2130;
-    border-color: #b21f2d;
+    background-color: vars.$error-dark;
+    border-color: vars.$error-dark;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(220 53 69 / 50%);
+    box-shadow: 0 0 0 0.2rem rgb(239 68 68 / 50%); // error-color with opacity
   }
 }
 
 // Outline Danger
 .btn-outline-danger {
   background-color: transparent;
-  border-color: #dc2626;
-  color: #dc2626;
+  border-color: vars.$error-color;
+  color: vars.$error-color;
 
   &:hover:not(:disabled) {
-    background-color: #dc2626;
-    border-color: #dc2626;
+    background-color: vars.$error-color;
+    border-color: vars.$error-color;
     color: vars.$white;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(220 53 69 / 20%);
+    box-shadow: 0 2px 4px rgb(239 68 68 / 20%); // error-color with opacity
   }
 
   &:active,
   &.active {
-    background-color: #c82333;
-    border-color: #bd2130;
+    background-color: vars.$error-hover;
+    border-color: vars.$error-hover;
     color: vars.$white;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(220 53 69 / 25%);
+    box-shadow: 0 0 0 0.2rem rgb(239 68 68 / 25%); // error-color with opacity
   }
 }
 
-// Warning Button - Amber/yellow with teal compatibility
+// Warning Button - Amber/yellow
 .btn-warning {
-  background-color: #f59e0b;
-  border-color: #f59e0b;
+  background-color: vars.$warning-color;
+  border-color: vars.$warning-color;
   color: vars.$white;
 
   &:hover:not(:disabled) {
-    background-color: #d97706;
-    border-color: #d97706;
+    background-color: vars.$warning-hover;
+    border-color: vars.$warning-hover;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(245 158 11 / 20%);
+    box-shadow: 0 2px 4px rgb(245 158 11 / 20%); // warning-color with opacity
   }
 
   &:active,
   &.active {
-    background-color: #b45309;
-    border-color: #b45309;
+    background-color: vars.$warning-dark;
+    border-color: vars.$warning-dark;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(245 158 11 / 50%);
+    box-shadow: 0 0 0 0.2rem rgb(245 158 11 / 50%); // warning-color with opacity
   }
 }
 
-// Info Button - Light blue
+// Info Button - Blue
 .btn-info {
-  background-color: #06b6d4;
-  border-color: #06b6d4;
+  background-color: vars.$info-color;
+  border-color: vars.$info-color;
   color: vars.$white;
 
   &:hover:not(:disabled) {
-    background-color: #0891b2;
-    border-color: #0891b2;
+    background-color: vars.$info-hover;
+    border-color: vars.$info-hover;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(6 182 212 / 20%);
+    box-shadow: 0 2px 4px rgb(59 130 246 / 20%); // info-color with opacity
   }
 
   &:active,
   &.active {
-    background-color: #0e7490;
-    border-color: #0e7490;
+    background-color: vars.$info-dark;
+    border-color: vars.$info-dark;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(6 182 212 / 50%);
+    box-shadow: 0 0 0 0.2rem rgb(59 130 246 / 50%); // info-color with opacity
   }
 }
 
 // Light Button
 .btn-light {
-  background-color: #f9fafb;
-  border-color: #f9fafb;
-  color: #212529;
+  background-color: vars.$gray-50;
+  border-color: vars.$gray-50;
+  color: vars.$gray-800;
 
   &:hover:not(:disabled) {
-    background-color: #e9ecef;
-    border-color: #e9ecef;
+    background-color: vars.$gray-200;
+    border-color: vars.$gray-200;
     transform: translateY(-1px);
   }
 
   &:active,
   &.active {
-    background-color: #dee2e6;
-    border-color: #dee2e6;
+    background-color: vars.$gray-300;
+    border-color: vars.$gray-300;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(248 249 250 / 50%);
+    box-shadow: 0 0 0 0.2rem rgb(249 250 251 / 50%); // gray-50 with opacity
   }
 }
 
-// Dark Button - Using darker teal
+// Dark Button - Using primary dark variant
 .btn-dark {
-  background-color: #134e4a;  // Dark teal
-  border-color: #134e4a;
+  background-color: vars.$primary-active;
+  border-color: vars.$primary-active;
   color: vars.$white;
 
   &:hover:not(:disabled) {
-    background-color: #0f3a38;
-    border-color: #0f3a38;
+    background-color: vars.$gray-800;
+    border-color: vars.$gray-800;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(19 78 74 / 20%);
+    box-shadow: 0 2px 4px rgb(31 41 55 / 20%); // gray-800 with opacity
   }
 
   &:active,
   &.active {
-    background-color: #0a2928;
-    border-color: #0a2928;
+    background-color: vars.$gray-900;
+    border-color: vars.$gray-900;
     transform: translateY(0);
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(19 78 74 / 50%);
+    box-shadow: 0 0 0 0.2rem rgb(31 41 55 / 50%); // gray-800 with opacity
   }
 }
 

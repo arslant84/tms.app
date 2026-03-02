@@ -9,7 +9,7 @@
   </div>
   <div class="card-body">
     <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
-      <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;">
+      <div class="spinner-border text-primary spinner-md" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
@@ -33,7 +33,7 @@
                     </span>
                   </div>
                   <p class="mb-1 text-muted small" *ngIf="dept.description">{{ dept.description }}</p>
-                  <p class="mb-0 text-muted" style="font-size: 0.75rem;">
+                  <p class="mb-0 text-muted text-xs">
                     Users: {{ dept.user_count || 0 }} assigned
                   </p>
                 </div>
@@ -43,14 +43,14 @@
                     (click)="openEdit(dept)"
                     [disabled]="isSaving || showForm"
                     title="Edit">
-                    <i class="bi bi-pencil" style="font-size: 0.875rem;"></i>
+                    <i class="bi bi-pencil icon-sm"></i>
                   </button>
                   <button
                     class="btn btn-outline-danger btn-sm"
                     (click)="confirmDelete(dept)"
                     [disabled]="isSaving || showForm || (dept.user_count && dept.user_count > 0)"
                     [title]="(dept.user_count && dept.user_count > 0) ? 'Cannot delete department with assigned users' : 'Delete'">
-                    <i class="bi bi-trash" style="font-size: 0.875rem;"></i>
+                    <i class="bi bi-trash icon-sm"></i>
                   </button>
                 </div>
               </div>

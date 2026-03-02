@@ -9,7 +9,7 @@
   </div>
   <div class="card-body">
     <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
-      <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;">
+      <div class="spinner-border text-primary spinner-md" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
@@ -24,16 +24,16 @@
                 <div class="flex-grow-1">
                   <p class="mb-1 fw-medium">{{ role.name }}</p>
                   <p class="mb-1 text-muted small">{{ role.description || 'No description' }}</p>
-                  <p class="mb-0 text-muted" style="font-size: 0.75rem;">
+                  <p class="mb-0 text-muted text-xs">
                     Permissions: {{ getPermissionNames(role.permissionIds) }}
                   </p>
                 </div>
                 <div class="d-flex gap-2">
                   <button class="btn btn-outline-secondary btn-sm" (click)="openEdit(role)" [disabled]="isSaving">
-                    <i class="bi bi-pencil" style="font-size: 0.875rem;"></i>
+                    <i class="bi bi-pencil icon-sm"></i>
                   </button>
                   <button class="btn btn-outline-danger btn-sm" (click)="confirmDelete(role)" [disabled]="isSaving">
-                    <i class="bi bi-trash" style="font-size: 0.875rem;"></i>
+                    <i class="bi bi-trash icon-sm"></i>
                   </button>
                 </div>
               </div>
@@ -63,7 +63,7 @@
             <div class="col-md-6" *ngFor="let p of permissions">
               <div class="border rounded p-2 bg-light small">
                 <p class="mb-0 fw-medium">{{ p.name }}</p>
-                <p class="mb-0 text-muted" style="font-size: 0.75rem;" *ngIf="p.description">{{ p.description }}</p>
+                <p class="mb-0 text-muted text-xs" *ngIf="p.description">{{ p.description }}</p>
               </div>
             </div>
           </div>
