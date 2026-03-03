@@ -1,0 +1,96 @@
+<div class="approver-selection">
+  <h5 *ngIf="showTitle" class="section-title">Select Approvers</h5>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner-border spinner-border-sm text-primary"></div>
+    <span class="ms-2">Loading approvers...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    {{ error }}
+    <button type="button" class="btn btn-link btn-sm p-0 ms-2" (click)="loadEligibleApprovers()">
+      Retry
+    </button>
+  </div>
+
+  <!-- Steps List -->
+  <div *ngIf="!isLoading && !error && steps.length > 0" class="steps-container">
+    <div *ngFor="let step of steps; let i = index" class="step-item">
+      <div class="step-header">
+        <span class="step-number">{{ step.step_order }}</span>
+        <div class="step-info">
+          <h6 class="step-name">
+            {{ step.step_name }}
+            <span *ngIf="step.is_required" class="required-indicator">*</span>
+          </h6>
+          <p *ngIf="step.step_description" class="step-description">
+            {{ step.step_description }}
+          </p>
+        </div>
+      </div>
+
+      <div class="step-content">
+        <!-- Search input for steps with many approvers -->
+        <input
+          *ngIf="step.eligible_approvers.length > 5"
+          type="text"
+          class="form-control form-control-sm search-input"
+          placeholder="Search by name, email, department..."
+          [(ngModel)]="searchTerms[step.step_order]"
+        />
+
+        <!-- Approver selection dropdown -->
+        <div *ngIf="!hasNoApprovers(step); else noApprovers" class="approver-dropdown">
+          <select
+            class="form-select"
+            [ngModel]="selections[step.step_order]"
+            (ngModelChange)="onApproverSelect(step.step_order, $event)"
+            [required]="step.is_required && required"
+            [class.is-invalid]="required && step.is_required && !selections[step.step_order]"
+          >
+            <option [ngValue]="null">-- Select Approver --</option>
+            <option
+              *ngFor="let approver of filterApprovers(step)"
+              [ngValue]="approver.id"
+            >
+              {{ approver.full_name }} ({{ approver.email }})
+              <ng-container *ngIf="approver.department"> - {{ approver.department }}</ng-container>
+            </option>
+          </select>
+
+          <!-- Selected approver preview -->
+          <div *ngIf="getSelectedApprover(step)" class="selected-approver">
+            <i class="bi bi-check-circle-fill text-success me-1"></i>
+            <span class="approver-name">{{ getSelectedApprover(step)?.full_name }}</span>
+            <span *ngIf="getSelectedApprover(step)?.role" class="approver-role">
+              {{ getSelectedApprover(step)?.role }}
+            </span>
+          </div>
+        </div>
+
+        <!-- No approvers available -->
+        <ng-template #noApprovers>
+          <div class="no-approvers-warning">
+            <i class="bi bi-exclamation-circle me-1"></i>
+            <small>No eligible approvers found for this step.</small>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <!-- No workflow configured -->
+  <div *ngIf="!isLoading && !error && steps.length === 0" class="no-workflow">
+    <i class="bi bi-info-circle me-2"></i>
+    <span>No approval workflow configured for this request type.</span>
+  </div>
+
+  <!-- Validation message -->
+  <div *ngIf="!isValid() && required && steps.length > 0" class="validation-message">
+    <i class="bi bi-exclamation-triangle me-1"></i>
+    Please select an approver for all required steps.
+  </div>
+</div>

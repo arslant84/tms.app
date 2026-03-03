@@ -95,8 +95,12 @@ export class TrfService {
   }
 
   // Submit TRF for approval
-  submitTrf(id: number, isOverseas: boolean = false): Observable<TravelRequestForm> {
-    return this.http.post<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/submit/`, {})
+  submitTrf(id: number, isOverseas: boolean = false, selectedApprovers?: { [stepOrder: number]: number }): Observable<TravelRequestForm> {
+    const payload: any = {};
+    if (selectedApprovers && Object.keys(selectedApprovers).length > 0) {
+      payload.selected_approvers = selectedApprovers;
+    }
+    return this.http.post<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/submit/`, payload)
       .pipe(
         catchError(this.handleError)
       );
@@ -131,9 +135,13 @@ export class TrfService {
 
   // =============== NEW METHODS FOR WIZARD INTEGRATION ===============
 
-  // Create main Travel Request
-  createTravelRequest(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/travel-requests/`, data)
+  // Create main Travel Request (supports selected_approvers for direct submission)
+  createTravelRequest(data: any, selectedApprovers?: { [stepOrder: number]: number }): Observable<any> {
+    const payload = { ...data };
+    if (selectedApprovers && Object.keys(selectedApprovers).length > 0) {
+      payload.selected_approvers = selectedApprovers;
+    }
+    return this.http.post<any>(`${environment.apiUrl}/trf/travel-requests/`, payload)
       .pipe(
         catchError(this.handleError)
       );

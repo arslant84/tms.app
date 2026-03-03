@@ -32,7 +32,12 @@ class WorkflowEngine:
 
     @staticmethod
     @transaction.atomic
-    def start_workflow(entity, initiated_by: User, module_name: str) -> WorkflowInstance:
+    def start_workflow(
+        entity,
+        initiated_by: User,
+        module_name: str,
+        selected_approvers: Optional[Dict[int, int]] = None
+    ) -> WorkflowInstance:
         """
         Start a new workflow for an entity (TRF, Visa, etc.)
 
@@ -40,6 +45,7 @@ class WorkflowEngine:
             entity: The entity object (TravelRequest, etc.)
             initiated_by: User who initiated the workflow
             module_name: Module identifier ('trf', 'visa', etc.)
+            selected_approvers: Optional dict mapping step_order to selected user_id
 
         Returns:
             WorkflowInstance: The created workflow instance
@@ -59,14 +65,22 @@ class WorkflowEngine:
         # Get content type for the entity
         content_type = ContentType.objects.get_for_model(entity)
 
-        # Create workflow instance
+        # Create workflow instance with optional selected approvers
+        additional_data = {}
+        if selected_approvers:
+            # Store with string keys for JSON compatibility
+            additional_data['selected_approvers'] = {
+                str(k): v for k, v in selected_approvers.items()
+            }
+
         workflow_instance = WorkflowInstance.objects.create(
             workflow_template=workflow_template,
             content_type=content_type,
             object_id=entity.id,
             initiated_by=initiated_by,
             status='in_progress',
-            current_step_order=1
+            current_step_order=1,
+            additional_data=additional_data if additional_data else None
         )
 
         # Log workflow creation
@@ -375,8 +389,21 @@ class WorkflowEngine:
             workflow_step=step
         ).first()
 
-        # Determine assigned user (priority order: user > permission > role)
-        assigned_user = step.approver_user if step.approver_user else None
+        # Check for user-selected approver first (highest priority)
+        assigned_user = None
+        selected_approvers = (workflow_instance.additional_data or {}).get('selected_approvers', {})
+
+        if str(step.step_order) in selected_approvers or step.step_order in selected_approvers:
+            selected_user_id = selected_approvers.get(str(step.step_order)) or selected_approvers.get(step.step_order)
+            if selected_user_id:
+                assigned_user = User.objects.filter(id=selected_user_id, status='Active').first()
+                if assigned_user:
+                    logger.info(f"Using user-selected approver {assigned_user.email} for step '{step.step_name}'")
+
+        # Fall back to existing logic if no user-selected approver
+        # Priority: approver_user > approver_permission > approver_role
+        if not assigned_user:
+            assigned_user = step.approver_user if step.approver_user else None
 
         # If no specific user, try to find by permission (PREFERRED)
         if not assigned_user and step.approver_permission:
@@ -387,7 +414,7 @@ class WorkflowEngine:
 
         # Fallback: try to find by role (for backward compatibility)
         if not assigned_user and step.approver_role:
-            logger.warning(f" Using deprecated role-based assignment for step '{step.step_name}'. Consider using approver_permission instead.")
+            logger.warning(f"Using deprecated role-based assignment for step '{step.step_name}'. Consider using approver_permission instead.")
             assigned_user = WorkflowEngine._find_user_by_role(
                 step.approver_role,
                 workflow_instance.initiated_by.department if hasattr(workflow_instance.initiated_by, 'department') else None

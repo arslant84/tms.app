@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, tap, shareReplay, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { extractData } from '../utils/api-response.handler';
 import {
   WorkflowTemplate,
   WorkflowStep,
@@ -17,6 +18,36 @@ import {
   WorkflowActionRequest,
   WorkflowUser
 } from '../models/workflow.models';
+
+// Eligible Approvers Interfaces
+export interface EligibleApprover {
+  id: number;
+  email: string;
+  full_name: string;
+  department: string | null;
+  role: string | null;
+}
+
+export interface WorkflowStepWithApprovers {
+  step_order: number;
+  step_name: string;
+  step_description: string | null;
+  is_required: boolean;
+  approver_role: string | null;
+  approver_permission: string | null;
+  eligible_approvers: EligibleApprover[];
+}
+
+export interface EligibleApproversResponse {
+  template_id: string;
+  template_name: string;
+  entity_type: string;
+  steps: WorkflowStepWithApprovers[];
+}
+
+export interface ApproverSelection {
+  [stepOrder: number]: number;  // step_order -> user_id
+}
 
 @Injectable({
   providedIn: 'root'
@@ -260,6 +291,34 @@ export class WorkflowService {
    */
   getAuditLog(id: string): Observable<WorkflowAuditLog> {
     return this.http.get<WorkflowAuditLog>(`${this.apiUrl}/audit-logs/${id}/`);
+  }
+
+  // ==================== Approver Selection ====================
+
+  /**
+   * Get eligible approvers for all steps in a workflow template.
+   * Use this to allow users to select specific approvers before submitting a request.
+   *
+   * @param entityType The entity type (e.g., 'travelrequest', 'visaapplication')
+   * @returns Observable of eligible approvers for each workflow step
+   *
+   * Usage:
+   * ```typescript
+   * this.workflowService.getEligibleApprovers('travelrequest').subscribe({
+   *   next: (response) => {
+   *     this.workflowSteps = response.steps;
+   *   }
+   * });
+   * ```
+   */
+  getEligibleApprovers(entityType: string): Observable<EligibleApproversResponse | null> {
+    return this.http.get<any>(`${this.apiUrl}/eligible-approvers/${entityType}/`).pipe(
+      map(response => extractData<EligibleApproversResponse>(response)),
+      catchError(error => {
+        console.error('Error fetching eligible approvers:', error);
+        return of(null);
+      })
+    );
   }
 
   // ==================== Helper Methods ====================
