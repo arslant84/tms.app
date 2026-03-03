@@ -3,7 +3,7 @@
  * Redesigned to match React source (pctsb.syntra) exactly
  * NO cost fields - matches new backend structure
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -13,20 +13,30 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { AuthService } from '../../../../core/services/auth.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { TransportRequestForm, TransportDetail, TransportType, toBackendFormat } from '../../models/transport.model';
+import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
+import { ApproverSelection } from '../../../../core/services/workflow.service';
 
 @Component({
   selector: 'app-transport-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent],
   templateUrl: './transport-create.component.html',
   styleUrls: ['./transport-create.component.scss']
 })
 export class TransportCreateComponent implements OnInit {
+  @ViewChild(ApproverSelectionComponent) approverSelectionComponent?: ApproverSelectionComponent;
+
   transportForm!: FormGroup;
   loading = false;
   submitting = false;
   isEditMode = false;
   requestId: number | null = null;
+
+  // Approver selection properties
+  selectedApprovers: ApproverSelection = {};
+  approverSelectionValid: boolean = true;
+  showApproverSelection: boolean = true;
+  initialApproverSelections: ApproverSelection = {};
 
   transportTypes: TransportType[] = ['Local', 'Intercity', 'Airport Transfer', 'Charter', 'Other'];
 
@@ -158,6 +168,12 @@ export class TransportCreateComponent implements OnInit {
           this.addTransportDetail();
         }
 
+        // Load saved approver selections for edit mode
+        if (request.selected_approvers && Object.keys(request.selected_approvers).length > 0) {
+          this.initialApproverSelections = request.selected_approvers;
+          this.selectedApprovers = request.selected_approvers;
+        }
+
         this.loading = false;
       },
       error: (error) => {
@@ -205,6 +221,15 @@ export class TransportCreateComponent implements OnInit {
     }
   }
 
+  // Approver selection event handlers
+  onApproverSelectionChange(selection: ApproverSelection): void {
+    this.selectedApprovers = selection;
+  }
+
+  onApproverValidityChange(isValid: boolean): void {
+    this.approverSelectionValid = isValid;
+  }
+
   onSubmit(): void {
     if (this.transportForm.invalid) {
       this.formUtils.markFormGroupTouched(this.transportForm);
@@ -219,6 +244,11 @@ export class TransportCreateComponent implements OnInit {
     };
 
     const backendData = toBackendFormat(formData);
+
+    // Include selected approvers if any were selected
+    if (Object.keys(this.selectedApprovers).length > 0) {
+      (backendData as any).selected_approvers = this.selectedApprovers;
+    }
 
     const saveOperation = this.isEditMode && this.requestId
       ? this.transportService.updateRequest(this.requestId, backendData)

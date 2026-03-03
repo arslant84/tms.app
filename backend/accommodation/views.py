@@ -357,11 +357,17 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
         # Start workflow if status is submitted (not Draft)
         if status_value in ['Pending', 'Submitted']:
+            # Extract selected approvers from request data (optional)
+            selected_approvers = self.request.data.get('selected_approvers', None)
+            if selected_approvers:
+                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
             try:
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=accommodation_request,
                     entity_type='accommodation',
-                    initiated_by=self.request.user
+                    initiated_by=self.request.user,
+                    selected_approvers=selected_approvers
                 )
 
                 if workflow_instance:
@@ -409,11 +415,17 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
         # Start workflow if status changed from Draft to Pending/Submitted
         if new_status in ['Pending', 'Submitted'] and old_status == 'Draft':
+            # Extract selected approvers from request data (optional)
+            selected_approvers = self.request.data.get('selected_approvers', None)
+            if selected_approvers:
+                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
             try:
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=accommodation_request,
                     entity_type='accommodation',
-                    initiated_by=self.request.user
+                    initiated_by=self.request.user,
+                    selected_approvers=selected_approvers
                 )
 
                 if workflow_instance:
@@ -472,12 +484,18 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
         accommodation_request.submitted_at = timezone.now()
         accommodation_request.save()
 
+        # Extract selected approvers from request data (optional)
+        selected_approvers = request.data.get('selected_approvers', None)
+        if selected_approvers:
+            selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
         # Start workflow using WorkflowRouter
         try:
             workflow_instance = WorkflowRouter.start_workflow_for_request(
                 entity=accommodation_request,
                 entity_type='accommodation',
-                initiated_by=request.user
+                initiated_by=request.user,
+                selected_approvers=selected_approvers
             )
 
             if workflow_instance:
@@ -651,16 +669,13 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
         user = request.user
 
         # Admins and superusers see all pending requests
+        # Use startswith to match any workflow-generated 'Pending *' status
         if user.is_superuser or is_module_admin(user, 'accommodation'):
+            from django.db.models import Q
             queryset = AccommodationRequest.objects.filter(
-                status__in=[
-                    'Pending',
-                    'Pending Department Focal',
-                    'Pending Line Manager',
-                    'Pending HOD',
-                    'Submitted',
-                    'Under Review'
-                ]
+                Q(status__startswith='Pending') |
+                Q(status='Submitted') |
+                Q(status='Under Review')
             ).prefetch_related('trf__trfitinerarysegment_set').order_by('-submitted_at')
         else:
             # Use workflow-based filtering: get entities where user's role matches current step

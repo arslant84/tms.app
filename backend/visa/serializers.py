@@ -49,6 +49,7 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source='user.email', read_only=True, allow_null=True)
     passport_file = serializers.FileField(required=False, allow_null=True)
     passport_file_url = serializers.SerializerMethodField()
+    selected_approvers = serializers.SerializerMethodField()
 
     class Meta:
         model = VisaApplication
@@ -82,9 +83,30 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at',
 
             # Nested
-            'approval_workflow', 'documents'
+            'approval_workflow', 'documents',
+
+            # Approver selections
+            'selected_approvers'
         ]
-        read_only_fields = ['id', 'request_number', 'submitted_date', 'created_at', 'updated_at', 'last_updated_date', 'passport_file_url']
+        read_only_fields = ['id', 'request_number', 'submitted_date', 'created_at', 'updated_at', 'last_updated_date', 'passport_file_url', 'selected_approvers']
+
+    def get_selected_approvers(self, obj):
+        """Get selected approvers from workflow instance additional_data"""
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            content_type = ContentType.objects.get_for_model(obj)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=obj.id
+            ).order_by('-created_at').first()
+            if workflow_instance and workflow_instance.additional_data:
+                stored_approvers = workflow_instance.additional_data.get('selected_approvers', {})
+                # Convert string keys to integers for frontend compatibility
+                return {int(k): v for k, v in stored_approvers.items()}
+        except Exception:
+            pass
+        return {}
 
     def get_passport_file_url(self, obj):
         """Return the full URL for the passport file if it exists"""

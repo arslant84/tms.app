@@ -266,6 +266,24 @@
       </div>
     </section>
 
+    <!-- Approver Selection -->
+    <section class="form-section" *ngIf="showApproverSelection">
+      <h3 class="section-title">
+        <span class="title-text">
+          <i class="bi bi-people"></i>
+          Approval Workflow
+        </span>
+      </h3>
+      <app-approver-selection
+        entityType="transportrequest"
+        [required]="false"
+        [showTitle]="false"
+        [initialSelections]="initialApproverSelections"
+        (selectionChange)="onApproverSelectionChange($event)"
+        (validityChange)="onApproverValidityChange($event)"
+      ></app-approver-selection>
+    </section>
+
     <!-- Form Actions -->
     <div class="form-actions">
       <button type="button" class="btn btn-cancel" (click)="onCancel()" [disabled]="submitting">
