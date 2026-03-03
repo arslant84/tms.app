@@ -142,9 +142,10 @@ export class TrfWizardComponent implements OnInit {
           email: data.email
         };
 
-        // Pre-populate approval data (additional comments)
+        // Pre-populate approval data (additional comments and selected approvers)
         this.approvalData = {
-          additionalComments: data.additional_comments || data.additionalComments || ''
+          additionalComments: data.additional_comments || data.additionalComments || '',
+          selected_approvers: data.selected_approvers || {}
         };
 
         // Pre-populate travel-specific data based on type
@@ -488,7 +489,9 @@ export class TrfWizardComponent implements OnInit {
             next: () => {
               // If not saving as draft, submit the TRF to workflow
               if (!isDraft) {
-                this.trfService.submitTrf(this.trfId!).subscribe({
+                // Get selected approvers from approval form
+                const selectedApprovers = this.approvalSubmissionData?.selected_approvers || {};
+                this.trfService.submitTrf(this.trfId!, false, selectedApprovers).subscribe({
                   next: (submittedTrf: any) => {
                     this.isSubmitting = false;
                     this.toastService.success('TRF updated and submitted successfully!');
@@ -573,7 +576,9 @@ export class TrfWizardComponent implements OnInit {
             next: () => {
               // If not saving as draft, submit the TRF to generate request number and start workflow
               if (!isDraft) {
-                this.trfService.submitTrf(createdTrf.id).subscribe({
+                // Get selected approvers from approval form
+                const selectedApprovers = this.approvalSubmissionData?.selected_approvers || {};
+                this.trfService.submitTrf(createdTrf.id, false, selectedApprovers).subscribe({
                   next: (submittedTrf: any) => {
                     this.isSubmitting = false;
                     this.toastService.success('TRF submitted successfully!');

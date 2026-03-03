@@ -359,6 +359,9 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
     externalPartyRequestorInfo = serializers.SerializerMethodField()
     flight_details = serializers.SerializerMethodField()
 
+    # Add selected approvers from workflow instance for edit mode
+    selected_approvers = serializers.SerializerMethodField()
+
     class Meta:
         model = TravelRequest
         fields = [
@@ -373,7 +376,8 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             'flight_bookings', 'flight_details', 'itinerary_segments', 'meal_provisions',
             'passport_details',
             'domesticTravelDetails', 'overseasTravelDetails',
-            'externalPartiesTravelDetails', 'externalPartyRequestorInfo'
+            'externalPartiesTravelDetails', 'externalPartyRequestorInfo',
+            'selected_approvers'
         ]
         read_only_fields = ['id', 'request_number', 'submitted_at', 'created_at', 'updated_at']
 
@@ -531,6 +535,32 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
                 'processedDate': flight_booking.created_at.isoformat() if flight_booking.created_at else None
             }
         return None
+
+    def get_selected_approvers(self, obj):
+        """
+        Get the selected approvers from the workflow instance's additional_data.
+        This is used to pre-populate the approver selection in edit mode.
+        Returns dict with integer keys for frontend compatibility.
+        """
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
+        try:
+            content_type = ContentType.objects.get_for_model(obj)
+            # Get the most recent workflow instance for this TRF
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=obj.id
+            ).order_by('-created_at').first()
+
+            if workflow_instance and workflow_instance.additional_data:
+                stored_approvers = workflow_instance.additional_data.get('selected_approvers', {})
+                # Convert string keys to integers for frontend compatibility
+                return {int(k): v for k, v in stored_approvers.items()}
+        except Exception:
+            pass
+
+        return {}
 
     def to_representation(self, instance):
         """Exclude passport_details for Home Leave Passage"""

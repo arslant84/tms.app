@@ -19,4 +19,4 @@ else:
     # Default to development
     from .development import *
 
-print(f"🔧 Loaded {ENVIRONMENT} settings")
+print(f"[SETTINGS] Loaded {ENVIRONMENT} settings")

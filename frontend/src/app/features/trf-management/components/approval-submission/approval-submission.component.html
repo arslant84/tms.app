@@ -122,6 +122,29 @@
     </div>
   </div>
 
+  <!-- Approver Selection -->
+  <div class="card" *ngIf="enableApproverSelection">
+    <div class="card-header">
+      <div class="d-flex">
+        <i class="bi bi-person-check"></i>
+        <h5>Select Approvers</h5>
+      </div>
+    </div>
+    <div class="card-body">
+      <p class="text-muted mb-3">
+        Choose specific approvers for each step of the workflow. If not selected, approvers will be assigned automatically.
+      </p>
+      <app-approver-selection
+        [entityType]="entityType"
+        [required]="false"
+        [showTitle]="false"
+        [initialSelections]="initialData.selected_approvers || {}"
+        (selectionChange)="onApproverSelectionChange($event)"
+        (validityChange)="onApproverValidityChange($event)"
+      ></app-approver-selection>
+    </div>
+  </div>
+
   <!-- Approval Form -->
   <div class="card">
     <div class="card-header">
@@ -164,7 +187,7 @@
           <button
             type="submit"
             class="btn btn-primary"
-            [disabled]="!approvalForm.valid"
+            [disabled]="!approvalForm.valid || !approverSelectionValid"
           >
             <i class="bi bi-send"></i>
             Submit Travel Request

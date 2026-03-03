@@ -3,7 +3,7 @@ Workflow Router - Automatic workflow initiation and routing
 Handles starting workflows when requests are submitted
 """
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 logger = logging.getLogger(__name__)
 from django.db import transaction
@@ -26,7 +26,12 @@ class WorkflowRouter:
 
     @staticmethod
     @transaction.atomic
-    def start_workflow_for_request(entity: any, entity_type: str, initiated_by: User) -> Optional[WorkflowInstance]:
+    def start_workflow_for_request(
+        entity: any,
+        entity_type: str,
+        initiated_by: User,
+        selected_approvers: Optional[Dict[int, int]] = None
+    ) -> Optional[WorkflowInstance]:
         """
         Start a workflow for a newly created request
 
@@ -34,6 +39,7 @@ class WorkflowRouter:
             entity: The request object (TravelRequest, etc.)
             entity_type: Type identifier (travelrequest, etc.)
             initiated_by: User who created the request
+            selected_approvers: Optional dict mapping step_order to selected user_id
 
         Returns:
             WorkflowInstance if workflow started, None if no workflow configured
@@ -58,7 +64,8 @@ class WorkflowRouter:
             workflow_instance = WorkflowEngine.start_workflow(
                 entity=entity,
                 initiated_by=initiated_by,
-                module_name=entity_type
+                module_name=entity_type,
+                selected_approvers=selected_approvers
             )
 
             logger.info(f"Workflow started: {workflow_instance.id} for {entity_type} #{entity.id}")

@@ -7,7 +7,8 @@ from .views import (
     WorkflowInstanceViewSet,
     WorkflowStepExecutionViewSet,
     WorkflowDelegationViewSet,
-    WorkflowAuditLogViewSet
+    WorkflowAuditLogViewSet,
+    get_eligible_approvers
 )
 
 router = DefaultRouter()
@@ -21,4 +22,5 @@ router.register(r'audit-logs', WorkflowAuditLogViewSet, basename='workflow-audit
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('eligible-approvers/<str:entity_type>/', get_eligible_approvers, name='eligible-approvers'),
 ]

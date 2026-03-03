@@ -1,11 +1,12 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
-import { WorkflowService } from '../../../../core/services/workflow.service';
+import { WorkflowService, ApproverSelection } from '../../../../core/services/workflow.service';
 import { WorkflowTemplate, WorkflowStep } from '../../../../core/models/workflow.models';
+import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
 
 export interface ApprovalStep {
   role: string;
@@ -17,21 +18,26 @@ export interface ApprovalStep {
 
 export interface ApprovalSubmissionData {
   additionalComments: string;
+  selected_approvers?: ApproverSelection;
 }
 
 @Component({
   selector: 'app-approval-submission',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent],
   templateUrl: './approval-submission.component.html',
   styleUrls: ['./approval-submission.component.scss']
 })
 export class ApprovalSubmissionComponent implements OnInit {
+  @ViewChild(ApproverSelectionComponent) approverSelectionComponent?: ApproverSelectionComponent;
+
   @Input() travelType: 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties' | null = null;
   @Input() requestorData: any = null;
   @Input() travelDetails: any = null;
   @Input() initialData: Partial<ApprovalSubmissionData> = {};
   @Input() approvalWorkflow: ApprovalStep[] = [];
+  @Input() entityType: string = 'travelrequest';
+  @Input() enableApproverSelection: boolean = true;
 
   @Output() formSubmit = new EventEmitter<ApprovalSubmissionData>();
   @Output() backClick = new EventEmitter<void>();
@@ -39,6 +45,8 @@ export class ApprovalSubmissionComponent implements OnInit {
   approvalForm!: FormGroup;
   isInternationalTravel: boolean = false;
   isLoadingWorkflow: boolean = false;
+  selectedApprovers: ApproverSelection = {};
+  approverSelectionValid: boolean = true;
 
   constructor(
     private fb: FormBuilder,
@@ -52,6 +60,11 @@ export class ApprovalSubmissionComponent implements OnInit {
     // Determine if international travel
     this.isInternationalTravel =
       this.travelType === 'Overseas' || this.travelType === 'Home Leave';
+
+    // Initialize selectedApprovers from initialData if available (edit mode)
+    if (this.initialData?.selected_approvers) {
+      this.selectedApprovers = this.initialData.selected_approvers;
+    }
 
     this.initForm();
     this.initializeApprovalWorkflow();
@@ -138,9 +151,21 @@ export class ApprovalSubmissionComponent implements OnInit {
   }
 
 
+  onApproverSelectionChange(selection: ApproverSelection): void {
+    this.selectedApprovers = selection;
+  }
+
+  onApproverValidityChange(isValid: boolean): void {
+    this.approverSelectionValid = isValid;
+  }
+
   onSubmit(): void {
-    if (this.approvalForm.valid) {
-      this.formSubmit.emit(this.approvalForm.value);
+    if (this.approvalForm.valid && this.approverSelectionValid) {
+      const submissionData: ApprovalSubmissionData = {
+        ...this.approvalForm.value,
+        selected_approvers: this.selectedApprovers
+      };
+      this.formSubmit.emit(submissionData);
     } else {
       this.formUtils.markFormGroupTouched(this.approvalForm);
     }
@@ -152,11 +177,14 @@ export class ApprovalSubmissionComponent implements OnInit {
 
   // Public methods for wizard integration
   getFormData(): ApprovalSubmissionData {
-    return this.approvalForm.value;
+    return {
+      ...this.approvalForm.value,
+      selected_approvers: this.selectedApprovers
+    };
   }
 
   isValid(): boolean {
-    return this.approvalForm.valid;
+    return this.approvalForm.valid && this.approverSelectionValid;
   }
 
   markAllAsTouched(): void {

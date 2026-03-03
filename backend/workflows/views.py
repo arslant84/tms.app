@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.utils import timezone
@@ -7,6 +7,7 @@ from django.db.models import Q, Max
 from datetime import timedelta
 
 from accounts.utils import can_manage, has_any_permission
+from utils import success_response, error_response
 
 from .models import (
     WorkflowTemplate, WorkflowStep, WorkflowCondition, WorkflowInstance,
@@ -616,3 +617,80 @@ class WorkflowAuditLogViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(action_type=action_type)
 
         return queryset.select_related('workflow_instance', 'performed_by')
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_eligible_approvers(request, entity_type: str):
+    """
+    Get eligible approvers for all steps in a workflow template.
+
+    Args:
+        entity_type: Type of entity (travelrequest, visaapplication, etc.)
+
+    Returns:
+        Standardized response with template info and eligible approvers per step
+    """
+    from django.db.models import Q
+    from .services import WorkflowApprovalHelper
+    from .models import WorkflowTemplate
+
+    # Build flexible query to handle common entity_type aliases
+    # Maps frontend values to possible database values
+    entity_type_aliases = {
+        'travelrequest': ['travelrequest', 'trf', 'travel_request', 'travel-request'],
+        'visaapplication': ['visaapplication', 'visa', 'visa_application', 'visa-application'],
+        'transportrequest': ['transportrequest', 'transport', 'transport_request', 'transport-request'],
+        'accommodation': ['accommodation', 'accommodationrequest', 'accommodation_request'],
+    }
+
+    # Get all possible aliases for this entity_type
+    search_values = entity_type_aliases.get(entity_type.lower(), [entity_type])
+
+    # Build OR query for all possible values (case-insensitive)
+    query = Q()
+    for value in search_values:
+        query |= Q(entity_type__iexact=value)
+
+    template = WorkflowTemplate.objects.filter(
+        query,
+        is_active=True
+    ).prefetch_related('steps').first()
+
+    if not template:
+        return error_response(
+            message=f"No active workflow template found for {entity_type}",
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    steps_data = []
+    for step in template.steps.all().order_by('step_order'):
+        approvers = WorkflowApprovalHelper.get_eligible_approvers_for_step(step, request.user)
+        steps_data.append({
+            'step_order': step.step_order,
+            'step_name': step.step_name,
+            'step_description': step.step_description,
+            'is_required': step.is_required,
+            'approver_role': step.approver_role,
+            'approver_permission': step.approver_permission,
+            'eligible_approvers': [
+                {
+                    'id': user.id,
+                    'email': user.email,
+                    'full_name': user.get_full_name(),
+                    'department': user.department.name if user.department else None,
+                    'role': user.role.name if user.role else None,
+                }
+                for user in approvers
+            ]
+        })
+
+    return success_response(
+        data={
+            'template_id': str(template.id),
+            'template_name': template.name,
+            'entity_type': entity_type,
+            'steps': steps_data
+        },
+        message='Eligible approvers retrieved successfully'
+    )

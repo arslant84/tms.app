@@ -285,7 +285,7 @@ class RequestorPopulationMixin:
 
         return extra_kwargs
 
-    def start_workflow_if_needed(self, instance, user, status_value):
+    def start_workflow_if_needed(self, instance, user, status_value, selected_approvers=None):
         """
         Start workflow if status indicates submission.
 
@@ -293,6 +293,7 @@ class RequestorPopulationMixin:
             instance: Created/updated model instance
             user: Authenticated user
             status_value: Current status value
+            selected_approvers: Optional dict mapping step_order to selected user_id
 
         Returns:
             WorkflowInstance or None
@@ -307,7 +308,8 @@ class RequestorPopulationMixin:
             workflow_instance = WorkflowRouter.start_workflow_for_request(
                 entity=instance,
                 entity_type=self.entity_type,
-                initiated_by=user
+                initiated_by=user,
+                selected_approvers=selected_approvers
             )
 
             if workflow_instance:
