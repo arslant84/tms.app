@@ -52,7 +52,7 @@ if 'debug_toolbar' in INSTALLED_APPS:
 # Clean application logging (configured in base.py)
 # LOGGING configuration now in base.py - only shows application logs, not Django framework noise
 
-print("🔧 Development settings loaded")
+print("[DEV] Development settings loaded")
 print(f"  - DEBUG: {DEBUG}")
 print(f"  - DATABASE: {DATABASES['default']['ENGINE']} - {DATABASES['default']['NAME']}")
 print(f"  - EMAIL_BACKEND: {EMAIL_BACKEND}")

@@ -1,0 +1,196 @@
+@use '../../../../styles/variables' as vars;
+
+.approver-selection {
+  .section-title {
+    font-size: vars.$font-size-base;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-primary;
+    margin-bottom: vars.$spacing-4;
+    padding-bottom: vars.$spacing-2;
+    border-bottom: 1px solid vars.$border-light;
+  }
+
+  .loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: vars.$spacing-6;
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-sm;
+  }
+
+  .steps-container {
+    display: flex;
+    flex-direction: column;
+    gap: vars.$spacing-4;
+  }
+
+  .step-item {
+    background: vars.$bg-primary;
+    border: 1px solid vars.$border-light;
+    border-left: 3px solid vars.$primary-color;
+    border-radius: vars.$radius-md;
+    padding: vars.$spacing-4;
+    transition: border-color vars.$transition-fast, box-shadow vars.$transition-fast;
+
+    &:hover {
+      border-left-color: vars.$primary-hover;
+      box-shadow: vars.$shadow-sm;
+    }
+  }
+
+  .step-header {
+    display: flex;
+    align-items: flex-start;
+    gap: vars.$spacing-3;
+    margin-bottom: vars.$spacing-3;
+  }
+
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    border-radius: vars.$radius-full;
+    background-color: vars.$primary-color;
+    color: vars.$white;
+    font-size: vars.$font-size-xs;
+    font-weight: vars.$font-weight-semibold;
+  }
+
+  .step-info {
+    flex: 1;
+  }
+
+  .step-name {
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-medium;
+    color: vars.$text-primary;
+    margin: 0;
+    line-height: 24px;
+
+    .required-indicator {
+      color: vars.$error-color;
+      margin-left: vars.$spacing-1;
+    }
+  }
+
+  .step-description {
+    font-size: vars.$font-size-xs;
+    color: vars.$text-secondary;
+    margin: vars.$spacing-1 0 0;
+    line-height: vars.$line-height-normal;
+  }
+
+  .step-content {
+    margin-left: 36px; // Align with step name (24px number + 12px gap)
+  }
+
+  .search-input {
+    margin-bottom: vars.$spacing-2;
+    font-size: vars.$font-size-sm;
+    border-color: vars.$border-light;
+
+    &:focus {
+      border-color: vars.$primary-color;
+      box-shadow: vars.$input-focus-shadow;
+    }
+
+    &::placeholder {
+      color: vars.$text-muted;
+    }
+  }
+
+  .approver-dropdown {
+    .form-select {
+      font-size: vars.$font-size-sm;
+      border-color: vars.$border-light;
+      transition: border-color vars.$transition-fast, box-shadow vars.$transition-fast;
+
+      &:focus {
+        border-color: vars.$primary-color;
+        box-shadow: vars.$input-focus-shadow;
+      }
+
+      &.is-invalid {
+        border-color: vars.$error-color;
+
+        &:focus {
+          box-shadow: 0 0 0 0.2rem rgb(239 68 68 / 25%);
+        }
+      }
+    }
+  }
+
+  .selected-approver {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-2;
+    margin-top: vars.$spacing-2;
+    padding: vars.$spacing-2 vars.$spacing-3;
+    background-color: vars.$success-lightest;
+    border-radius: vars.$radius-sm;
+    font-size: vars.$font-size-xs;
+
+    .approver-name {
+      color: vars.$success-dark;
+      font-weight: vars.$font-weight-medium;
+    }
+
+    .approver-role {
+      background-color: vars.$gray-200;
+      color: vars.$text-secondary;
+      padding: vars.$spacing-1 vars.$spacing-2;
+      border-radius: vars.$radius-sm;
+      font-size: vars.$font-size-xs;
+    }
+  }
+
+  .no-approvers-warning {
+    display: flex;
+    align-items: center;
+    padding: vars.$spacing-2 vars.$spacing-3;
+    background-color: vars.$warning-lightest;
+    border: 1px solid vars.$warning-light;
+    border-radius: vars.$radius-sm;
+    color: vars.$warning-dark;
+    font-size: vars.$font-size-xs;
+
+    i {
+      color: vars.$warning-color;
+    }
+  }
+
+  .no-workflow {
+    display: flex;
+    align-items: center;
+    padding: vars.$spacing-4;
+    background-color: vars.$info-lightest;
+    border: 1px solid vars.$info-light;
+    border-radius: vars.$radius-md;
+    color: vars.$info-dark;
+    font-size: vars.$font-size-sm;
+
+    i {
+      color: vars.$info-color;
+    }
+  }
+
+  .validation-message {
+    display: flex;
+    align-items: center;
+    margin-top: vars.$spacing-3;
+    padding: vars.$spacing-2 vars.$spacing-3;
+    background-color: vars.$error-lightest;
+    border: 1px solid vars.$error-light;
+    border-radius: vars.$radius-sm;
+    color: vars.$error-dark;
+    font-size: vars.$font-size-xs;
+
+    i {
+      color: vars.$error-color;
+    }
+  }
+}

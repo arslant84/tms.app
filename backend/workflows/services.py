@@ -2,12 +2,14 @@
 Workflow Services - Helper classes for workflow operations
 ADDITIVE - Provides new functionality without modifying existing code
 """
-from typing import List, Dict, Set
+import logging
+from typing import List, Dict, Set, Optional
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class WorkflowApprovalHelper:
@@ -144,6 +146,117 @@ class WorkflowApprovalHelper:
         ).exists()
 
         return active_delegation
+
+    @staticmethod
+    def get_eligible_approvers_for_step(
+        workflow_step,
+        requester: User
+    ) -> QuerySet:
+        """
+        Get all users eligible to approve a specific workflow step.
+
+        Args:
+            workflow_step: The workflow step to find approvers for
+            requester: The user submitting the request (for department filtering)
+
+        Returns:
+            QuerySet of eligible User objects
+        """
+        from accounts.models import Permission, Role
+
+        # If step has specific user assigned, return only that user
+        if workflow_step.approver_user:
+            return User.objects.filter(
+                id=workflow_step.approver_user_id,
+                status='Active'
+            )
+
+        department = getattr(requester, 'department', None)
+
+        # Try permission-based lookup (preferred)
+        if workflow_step.approver_permission:
+            try:
+                permission = Permission.objects.get(name=workflow_step.approver_permission)
+                roles_with_permission = permission.role_set.all()
+
+                queryset = User.objects.filter(
+                    role__in=roles_with_permission,
+                    status='Active'
+                )
+
+                # Filter by department for approval permissions
+                if department and workflow_step.approver_permission.startswith('approve_'):
+                    queryset = queryset.filter(department=department)
+
+                return queryset.select_related('role', 'department').order_by('name')
+
+            except Permission.DoesNotExist:
+                logger.warning(f"Permission '{workflow_step.approver_permission}' not found")
+
+        # Fallback to role-based lookup
+        if workflow_step.approver_role:
+            try:
+                # Try to get role by UUID first
+                try:
+                    role = Role.objects.get(id=workflow_step.approver_role)
+                except (Role.DoesNotExist, ValueError):
+                    # Fallback: try by name (legacy)
+                    role = Role.objects.get(name=workflow_step.approver_role)
+
+                queryset = User.objects.filter(role=role, status='Active')
+
+                # Filter by department for department-specific roles
+                if department and role.name in ['Department Focal', 'Line Manager']:
+                    queryset = queryset.filter(department=department)
+
+                return queryset.select_related('role', 'department').order_by('name')
+
+            except Role.DoesNotExist:
+                logger.warning(f"Role '{workflow_step.approver_role}' not found")
+
+        return User.objects.none()
+
+    @staticmethod
+    def get_eligible_approvers_for_template(
+        entity_type: str,
+        requester: User
+    ) -> Dict[int, List[Dict]]:
+        """
+        Get eligible approvers for all steps in a workflow template.
+
+        Args:
+            entity_type: The entity type (e.g., 'travelrequest', 'visaapplication')
+            requester: The user submitting the request
+
+        Returns:
+            Dict mapping step_order to list of eligible approvers with their details
+        """
+        from workflows.models import WorkflowTemplate
+
+        # Use case-insensitive matching for entity_type
+        template = WorkflowTemplate.objects.filter(
+            entity_type__iexact=entity_type,
+            is_active=True
+        ).prefetch_related('steps').first()
+
+        if not template:
+            return {}
+
+        result = {}
+        for step in template.steps.all().order_by('step_order'):
+            approvers = WorkflowApprovalHelper.get_eligible_approvers_for_step(step, requester)
+            result[step.step_order] = [
+                {
+                    'id': user.id,
+                    'email': user.email,
+                    'full_name': user.get_full_name(),
+                    'department': user.department.name if user.department else None,
+                    'role': user.role.name if user.role else None,
+                }
+                for user in approvers
+            ]
+
+        return result
 
 
 class WorkflowNotificationRecipientResolver:
