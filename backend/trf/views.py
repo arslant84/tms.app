@@ -163,11 +163,17 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
         # Start workflow if status is submitted (not Draft)
         if status_value not in ['Draft']:
+            # Extract selected approvers from request data (optional)
+            selected_approvers = self.request.data.get('selected_approvers', None)
+            if selected_approvers:
+                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
             try:
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=trf,
                     entity_type='travelrequest',
-                    initiated_by=user
+                    initiated_by=user,
+                    selected_approvers=selected_approvers
                 )
 
                 if workflow_instance:
@@ -363,12 +369,19 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         trf.submitted_at = timezone.now()
         trf.save()
 
+        # Extract selected approvers from request data (optional)
+        selected_approvers = request.data.get('selected_approvers', None)
+        if selected_approvers:
+            # Convert string keys to integers for consistency
+            selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
         # Start workflow using WorkflowRouter
         try:
             workflow_instance = WorkflowRouter.start_workflow_for_request(
                 entity=trf,
                 entity_type='travelrequest',
-                initiated_by=request.user
+                initiated_by=request.user,
+                selected_approvers=selected_approvers
             )
 
             if workflow_instance:
@@ -801,18 +814,12 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         user = request.user
 
         # Admins and superusers see all pending requests
+        # Use startswith to match any workflow-generated 'Pending *' status
         if user.is_superuser or is_module_admin(user, 'trf'):
             queryset = TravelRequest.objects.filter(
-                status__in=[
-                    'Pending',
-                    'Pending Department Focal',
-                    'Pending Line Manager',
-                    'Pending HOD',
-                    'Pending Travel Desk',
-                    'Pending Finance',
-                    'Submitted',
-                    'Under Review'
-                ]
+                Q(status__startswith='Pending') |
+                Q(status='Submitted') |
+                Q(status='Under Review')
             ).order_by('-submitted_at')
         else:
             # Use workflow-based filtering: get entities where user's role matches current step

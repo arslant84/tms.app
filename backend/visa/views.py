@@ -199,12 +199,20 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         visa_application = serializer.save(user=self.request.user, **extra_kwargs)
 
         # Start workflow if status is submitted (not Draft)
-        if status_value in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
+        # Only check for 'Pending' or 'Submitted' since those are what frontend sends
+        # Workflow will update status to dynamic values like 'Pending HOD' etc.
+        if status_value in ['Pending', 'Submitted']:
+            # Extract selected approvers from request data (optional)
+            selected_approvers = self.request.data.get('selected_approvers', None)
+            if selected_approvers:
+                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
             try:
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=visa_application,
                     entity_type='visaapplication',
-                    initiated_by=self.request.user
+                    initiated_by=self.request.user,
+                    selected_approvers=selected_approvers
                 )
 
                 if workflow_instance:
@@ -228,18 +236,13 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         user = request.user
 
         # Admins and superusers see all pending requests
+        # Use startswith to match any workflow-generated 'Pending *' status
         if user.is_superuser or is_module_admin(user, 'visa'):
+            from django.db.models import Q
             queryset = self.queryset.filter(
-                status__in=[
-                    'Pending',
-                    'Pending Department Focal',
-                    'Pending Manager',
-                    'Pending Line Manager',
-                    'Pending HOD',
-                    'Pending Visa Clerk',
-                    'Submitted',
-                    'Under Review'
-                ]
+                Q(status__startswith='Pending') |
+                Q(status='Submitted') |
+                Q(status='Under Review')
             ).order_by('-submitted_date')
         else:
             # Use workflow-based filtering: get entities where user's role matches current step
@@ -598,12 +601,19 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         visa_application = serializer.save(**extra_kwargs)
 
         # Start workflow if transitioning from Draft to submitted status
-        if old_status == 'Draft' and new_status in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
+        # Only check for 'Pending' or 'Submitted' since those are what frontend sends
+        if old_status == 'Draft' and new_status in ['Pending', 'Submitted']:
+            # Extract selected approvers from request data (optional)
+            selected_approvers = self.request.data.get('selected_approvers', None)
+            if selected_approvers:
+                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
             try:
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=visa_application,
                     entity_type='visaapplication',
-                    initiated_by=self.request.user
+                    initiated_by=self.request.user,
+                    selected_approvers=selected_approvers
                 )
 
                 if workflow_instance:

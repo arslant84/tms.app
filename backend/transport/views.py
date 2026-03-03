@@ -202,8 +202,10 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         status_value = validated_data.get('status', 'Draft')
 
         # Set submitted_at timestamp if status is being submitted (not Draft)
+        # Only check for 'Pending' or 'Submitted' since those are what frontend sends
+        # Workflow will update status to dynamic values like 'Pending HOD' etc.
         extra_kwargs = {}
-        if status_value in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
+        if status_value in ['Pending', 'Submitted']:
             extra_kwargs['submitted_at'] = timezone.now()
 
             # Generate request number if submitting directly (not Draft)
@@ -227,12 +229,18 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         transport_request = serializer.save(requestor=user, **extra_kwargs)
 
         # Start workflow if status is submitted (not Draft)
-        if status_value in ['Pending', 'Pending Department Focal', 'Pending Line Manager', 'Pending HOD', 'Submitted']:
+        if status_value in ['Pending', 'Submitted']:
+            # Extract selected approvers from request data (optional)
+            selected_approvers = self.request.data.get('selected_approvers', None)
+            if selected_approvers:
+                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
             try:
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=transport_request,
                     entity_type='transportrequest',
-                    initiated_by=user
+                    initiated_by=user,
+                    selected_approvers=selected_approvers
                 )
 
                 if workflow_instance:
@@ -246,6 +254,85 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 logger.error(f" Error starting workflow for Transport Request #{transport_request.id}: {str(e)}")
                 # Don't fail the request creation if workflow fails
                 pass
+
+    def perform_update(self, serializer):
+        """Handle transport request update, including workflow restart when re-submitting"""
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
+        instance = serializer.instance
+        old_status = instance.status
+        new_status = serializer.validated_data.get('status', old_status)
+
+        # Save the transport request
+        transport_request = serializer.save()
+
+        # Check if this is a re-submission (status changing to Pending from a non-Draft status)
+        is_resubmission = (
+            new_status == 'Pending' and
+            old_status not in ['Draft', 'Pending'] and
+            (old_status == 'Rejected' or old_status.startswith('Pending'))
+        )
+
+        # Check if this is a first submission (Draft -> Pending)
+        is_first_submission = old_status == 'Draft' and new_status == 'Pending'
+
+        if is_first_submission or is_resubmission:
+            # Update submitted_at timestamp
+            transport_request.submitted_at = timezone.now()
+
+            # Generate request number if doesn't exist
+            if not transport_request.request_number:
+                try:
+                    from utils.request_id_generator import generate_request_id, extract_context_from_transport
+                    transport_details = transport_request.transport_details or []
+                    context = extract_context_from_transport(transport_details) if transport_details else 'TRN'
+                    transport_request.request_number = generate_request_id('TRN', context)
+                    logger.info(f" Generated request number: {transport_request.request_number}")
+                except Exception as e:
+                    logger.error(f" Error generating request number: {str(e)}")
+
+            transport_request.save()
+
+            # Cancel any existing in-progress workflow
+            if is_resubmission:
+                try:
+                    content_type = ContentType.objects.get_for_model(transport_request)
+                    existing_workflow = WorkflowInstance.objects.filter(
+                        content_type=content_type,
+                        object_id=transport_request.id,
+                        status='in_progress'
+                    ).first()
+                    if existing_workflow:
+                        existing_workflow.status = 'cancelled'
+                        existing_workflow.completed_at = timezone.now()
+                        existing_workflow.save()
+                        logger.info(f" Cancelled existing workflow {existing_workflow.id} for re-submission")
+                except Exception as e:
+                    logger.warning(f" Error cancelling existing workflow: {str(e)}")
+
+            # Extract selected approvers from request data
+            selected_approvers = self.request.data.get('selected_approvers', None)
+            if selected_approvers:
+                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
+            # Start new workflow
+            try:
+                workflow_instance = WorkflowRouter.start_workflow_for_request(
+                    entity=transport_request,
+                    entity_type='transportrequest',
+                    initiated_by=self.request.user,
+                    selected_approvers=selected_approvers
+                )
+
+                if workflow_instance:
+                    transport_request.refresh_from_db()
+                    logger.info(f" Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}")
+                    logger.info(f" Status updated to: {transport_request.status}")
+                else:
+                    logger.warning(f" No active workflow configured for transportrequest")
+            except Exception as e:
+                logger.error(f" Error starting workflow: {str(e)}")
 
     @action(detail=True, methods=['post'])
     def submit(self, request, pk=None):
@@ -308,12 +395,18 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         transport_request.submitted_at = timezone.now()
         transport_request.save()
 
+        # Extract selected approvers from request data (optional)
+        selected_approvers = request.data.get('selected_approvers', None)
+        if selected_approvers:
+            selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
         # Start workflow using WorkflowRouter
         try:
             workflow_instance = WorkflowRouter.start_workflow_for_request(
                 entity=transport_request,
                 entity_type='transportrequest',
-                initiated_by=request.user
+                initiated_by=request.user,
+                selected_approvers=selected_approvers
             )
 
             if workflow_instance:
@@ -667,16 +760,12 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         user = request.user
 
         # Admins and superusers see all pending requests
+        # Use startswith to match any workflow-generated 'Pending *' status
         if user.is_superuser or is_module_admin(user, 'transport'):
             queryset = self.get_queryset().filter(
-                status__in=[
-                    'Pending',
-                    'Pending Department Focal',
-                    'Pending Line Manager',
-                    'Pending HOD',
-                    'Submitted',
-                    'Under Review'
-                ]
+                Q(status__startswith='Pending') |
+                Q(status='Submitted') |
+                Q(status='Under Review')
             ).order_by('-submitted_at')
         else:
             # Use workflow-based filtering: get entities where user's role matches current step
