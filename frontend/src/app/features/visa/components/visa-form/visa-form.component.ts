@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -7,20 +7,30 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
+import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
+import { ApproverSelection } from '../../../../core/services/workflow.service';
 
 @Component({
   selector: 'app-visa-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ApproverSelectionComponent],
   templateUrl: './visa-form.component.html',
   styleUrl: './visa-form.component.scss'
 })
 export class VisaFormComponent implements OnInit {
+  @ViewChild(ApproverSelectionComponent) approverSelectionComponent?: ApproverSelectionComponent;
+
   visaForm!: FormGroup;
   isEditMode = false;
   applicationId: number | null = null;
   isLoading = false;
   isSubmitting = false;
+
+  // Approver selection properties
+  selectedApprovers: ApproverSelection = {};
+  approverSelectionValid: boolean = true;
+  showApproverSelection: boolean = true;
+  initialApproverSelections: ApproverSelection = {};
 
   // Passport file upload properties
   passportFile: File | null = null;
@@ -191,6 +201,11 @@ export class VisaFormComponent implements OnInit {
           const urlParts = application.passport_file_url.split('/');
           this.passportFileName = urlParts[urlParts.length - 1];
         }
+        // Load saved approver selections for edit mode
+        if (application.selected_approvers) {
+          this.initialApproverSelections = application.selected_approvers;
+          this.selectedApprovers = application.selected_approvers;
+        }
         this.isLoading = false;
       },
       error: (error) => {
@@ -344,7 +359,16 @@ export class VisaFormComponent implements OnInit {
     });
   }
 
-  prepareFormData(): Partial<VisaApplication> {
+  // Approver selection event handlers
+  onApproverSelectionChange(selection: ApproverSelection): void {
+    this.selectedApprovers = selection;
+  }
+
+  onApproverValidityChange(isValid: boolean): void {
+    this.approverSelectionValid = isValid;
+  }
+
+  prepareFormData(): Partial<VisaApplication> & { selected_approvers?: ApproverSelection } {
     const formValue = this.visaForm.value;
 
     // List of date fields that should be null instead of empty strings
@@ -366,6 +390,11 @@ export class VisaFormComponent implements OnInit {
         formValue[key] = null;
       }
     });
+
+    // Include selected approvers if any were selected
+    if (Object.keys(this.selectedApprovers).length > 0) {
+      formValue.selected_approvers = this.selectedApprovers;
+    }
 
     return formValue;
   }

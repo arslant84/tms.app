@@ -204,6 +204,21 @@
             <small class="form-text">E.g., dietary restrictions, accessibility needs, etc.</small>
           </div>
 
+          <!-- Approver Selection (Full Width) -->
+          <div class="form-group full-width" *ngIf="showApproverSelection">
+            <div class="approval-section">
+              <h5 class="section-title"><i class="bi bi-people"></i> Approval Workflow</h5>
+              <app-approver-selection
+                entityType="accommodation"
+                [required]="false"
+                [showTitle]="false"
+                [initialSelections]="initialApproverSelections"
+                (selectionChange)="onApproverSelectionChange($event)"
+                (validityChange)="onApproverValidityChange($event)"
+              ></app-approver-selection>
+            </div>
+          </div>
+
           <!-- Form Actions -->
           <div class="form-actions">
             <button

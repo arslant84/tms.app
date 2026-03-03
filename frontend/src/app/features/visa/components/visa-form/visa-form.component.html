@@ -299,6 +299,23 @@
       </div>
     </div>
 
+    <!-- Approver Selection -->
+    <div class="card section-card mb-4" *ngIf="showApproverSelection">
+      <div class="card-header section-header">
+        <h4><i class="bi bi-people"></i> Approval Workflow</h4>
+      </div>
+      <div class="card-body">
+        <app-approver-selection
+          entityType="visaapplication"
+          [required]="false"
+          [showTitle]="false"
+          [initialSelections]="initialApproverSelections"
+          (selectionChange)="onApproverSelectionChange($event)"
+          (validityChange)="onApproverValidityChange($event)"
+        ></app-approver-selection>
+      </div>
+    </div>
+
     <!-- Form Actions -->
     <div class="form-actions">
       <button type="button" class="btn btn-outline-secondary" (click)="onCancel()" [disabled]="isSubmitting">

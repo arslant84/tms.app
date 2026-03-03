@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,20 +8,30 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { TrfService } from '../../../trf-management/services/trf.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
+import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
+import { ApproverSelection } from '../../../../core/services/workflow.service';
 
 @Component({
   selector: 'app-accommodation-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent],
   templateUrl: './accommodation-create.component.html',
   styleUrls: ['./accommodation-create.component.scss']
 })
 export class AccommodationCreateComponent implements OnInit {
+  @ViewChild(ApproverSelectionComponent) approverSelectionComponent?: ApproverSelectionComponent;
+
   accommodationForm!: FormGroup;
   isEditMode = false;
   requestId: number | null = null;
   loading = false;
   submitting = false;
+
+  // Approver selection properties
+  selectedApprovers: ApproverSelection = {};
+  approverSelectionValid: boolean = true;
+  showApproverSelection: boolean = true;
+  initialApproverSelections: ApproverSelection = {};
 
   // TRF/TSR selection
   availableTrfs: any[] = [];
@@ -119,18 +129,23 @@ export class AccommodationCreateComponent implements OnInit {
           const existingAccom = response.existing_accommodation;
 
           // Check if this is the current request being edited (in edit mode)
-          const isCurrentRequest = this.isEditMode && this.requestId === existingAccom.id;
+          const isCurrentRequest = this.isEditMode && existingAccom && this.requestId === existingAccom.id;
 
-          if (!isCurrentRequest) {
+          if (!isCurrentRequest && existingAccom) {
             // Show warning only if it's linked to a DIFFERENT accommodation request
             this.toastService.warning(
-              `This TSR (${response.tsr_request_number}) is already linked to accommodation request ${existingAccom.request_number} by ${existingAccom.requestor_name}. Please select a different TSR.`
+              `This TSR (${response.tsr_request_number || 'Unknown'}) is already linked to accommodation request ${existingAccom.request_number || existingAccom.id} by ${existingAccom.requestor_name || 'Unknown'}. Please select a different TSR.`
             );
 
             // Clear the TSR selection
             this.accommodationForm.patchValue({
               trfId: ''
             });
+            this.selectedTrfDetails = null;
+          } else if (!isCurrentRequest && !existingAccom) {
+            // TSR is not available but no existing accommodation info provided
+            this.toastService.warning('This TSR is already linked to another accommodation request.');
+            this.accommodationForm.patchValue({ trfId: '' });
             this.selectedTrfDetails = null;
           } else {
             // In edit mode, auto-populate dates from TSR even if it's already linked to this request
@@ -233,6 +248,12 @@ export class AccommodationCreateComponent implements OnInit {
           this.selectedTrfDetails = this.availableTrfs.find(trf => trf.id === +trfValue);
         }
 
+        // Load saved approver selections for edit mode
+        if (request.selected_approvers) {
+          this.initialApproverSelections = request.selected_approvers;
+          this.selectedApprovers = request.selected_approvers;
+        }
+
         this.loading = false;
       },
       error: (err) => {
@@ -241,6 +262,15 @@ export class AccommodationCreateComponent implements OnInit {
         this.router.navigate(['/accommodation']);
       }
     });
+  }
+
+  // Approver selection event handlers
+  onApproverSelectionChange(selection: ApproverSelection): void {
+    this.selectedApprovers = selection;
+  }
+
+  onApproverValidityChange(isValid: boolean): void {
+    this.approverSelectionValid = isValid;
   }
 
   onSubmit(): void {
@@ -323,7 +353,7 @@ export class AccommodationCreateComponent implements OnInit {
   prepareFormData(): any {
     const formValue = this.accommodationForm.value;
 
-    return {
+    const data: any = {
       requestor_name: formValue.requestorName,
       staff_id: formValue.requestorId,
       department: formValue.department,
@@ -339,5 +369,12 @@ export class AccommodationCreateComponent implements OnInit {
         special_requests: formValue.specialRequests
       }
     };
+
+    // Include selected approvers if any were selected
+    if (Object.keys(this.selectedApprovers).length > 0) {
+      data.selected_approvers = this.selectedApprovers;
+    }
+
+    return data;
   }
 }
