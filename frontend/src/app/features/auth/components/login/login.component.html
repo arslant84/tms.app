@@ -67,14 +67,22 @@
 
         <!-- Submit button -->
         <div class="d-grid mt-5">
-          <button 
-            type="submit" 
-            class="btn btn-primary btn-lg" 
+          <button
+            type="submit"
+            class="btn btn-primary btn-lg"
             [disabled]="loginForm.invalid || isSubmitting"
           >
             <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
             {{ isSubmitting ? 'Signing in...' : 'Sign In' }}
           </button>
+        </div>
+
+        <!-- Registration Link -->
+        <div class="text-center mt-3">
+          <span class="text-muted">Don't have an account?</span>
+          <a routerLink="/auth/register" class="text-decoration-none ms-2">
+            Create Account
+          </a>
         </div>
       </form>
     </div>
