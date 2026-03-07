@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     UserViewSet, LoginView, LogoutView, TokenRefreshView, PasswordChangeView,
-    PasswordResetRequestView, PasswordResetConfirmView,
+    PasswordResetRequestView, PasswordResetConfirmView, RegisterView,
     RoleViewSet, PermissionViewSet, DepartmentViewSet, ApplicationSettingViewSet, AdminActionLogViewSet
 )
 
@@ -19,6 +19,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('register/', RegisterView.as_view(), name='register'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('password/change/', PasswordChangeView.as_view(), name='password_change'),
     path('password/reset/request/', PasswordResetRequestView.as_view(), name='password_reset_request'),

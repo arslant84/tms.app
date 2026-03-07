@@ -31,7 +31,7 @@ from .serializers import (
     UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, UserAdminUpdateSerializer, RoleSerializer, PermissionSerializer,
     ApplicationSettingSerializer, ApplicationSettingCreateSerializer, ApplicationSettingUpdateSerializer, PasswordChangeSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer, AdminActionLogSerializer,
-    DepartmentSerializer, DepartmentListSerializer
+    DepartmentSerializer, DepartmentListSerializer, UserRegistrationSerializer
 )
 from .utils import has_permission
 from .models import Role, Permission, ApplicationSetting, AdminActionLog, Department
@@ -447,6 +447,135 @@ class PasswordResetConfirmView(APIView):
             )
 
 
+class RegisterView(APIView):
+    """
+    Public endpoint for user self-registration.
+
+    Security Features:
+    - Rate limited (3 per hour per IP)
+    - Users cannot select their own role
+    - Automatically assigned to "Registered User" role
+    - All registrations are audit logged
+    - No auto-login (prevents bot abuse)
+    """
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        tags=['Authentication'],
+        summary='User Self-Registration',
+        description='Register a new user account. Users cannot select roles - admin assigns roles later.',
+        request=UserRegistrationSerializer,
+        responses={
+            201: {
+                'type': 'object',
+                'properties': {
+                    'success': {'type': 'boolean'},
+                    'message': {'type': 'string'},
+                    'data': {'type': 'object'}
+                }
+            },
+            400: {'description': 'Validation error'},
+            429: {'description': 'Rate limit exceeded'},
+        },
+        examples=[
+            OpenApiExample(
+                'Registration Request',
+                value={
+                    'email': 'user@example.com',
+                    'name': 'John Doe',
+                    'password': 'SecurePass123!',
+                    'password_confirm': 'SecurePass123!',
+                    'staff_id': 'EMP-12345',
+                    'phone': '+1234567890',
+                    'department': 'IT Department',
+                    'gender': 'Male'
+                }
+            )
+        ]
+    )
+    @method_decorator(ratelimit(key='ip', rate='3/h', method='POST'))
+    def post(self, request):
+        # Check if rate limited
+        was_limited = getattr(request, 'limited', False)
+        if was_limited:
+            return error_response(
+                message='Too many registration attempts. Please try again later.',
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+
+        serializer = UserRegistrationSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return validation_error_response(
+                serializer_errors=serializer.errors,
+                message='Registration failed. Please correct the errors below.'
+            )
+
+        try:
+            user = serializer.save()
+
+            # Get IP address from request
+            ip_address = self.get_client_ip(request)
+
+            # Log registration action
+            AdminActionLog.objects.create(
+                user=user,
+                action_type='user_created',
+                entity_type='User',
+                entity_id=str(user.id),
+                description=f'User self-registered: {user.email}',
+                ip_address=ip_address,
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+
+            logger.info(
+                f"New user registration: {user.email} (ID: {user.id})",
+                extra={
+                    'user_id': str(user.id),
+                    'email': user.email,
+                    'ip_address': ip_address
+                }
+            )
+
+            return created_response(
+                data={
+                    'id': str(user.id),
+                    'email': user.email,
+                    'name': user.name,
+                    'staff_id': user.staff_id,
+                    'role': {
+                        'id': str(user.role.id),
+                        'name': user.role.name
+                    } if user.role else None,
+                    'department': {
+                        'id': str(user.department.id),
+                        'name': user.department.name
+                    } if user.department else None
+                },
+                message='Registration successful! You can now login with your credentials.'
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Registration failed: {str(e)}",
+                extra={'error': str(e)},
+                exc_info=True
+            )
+            return error_response(
+                message='Registration failed. Please try again later.',
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def get_client_ip(self, request):
+        """Extract client IP address from request"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+
 @extend_schema_view(
     list=extend_schema(tags=['Users'], summary='List all users', description='Get paginated list of all users. Supports search and ordering.'),
     retrieve=extend_schema(tags=['Users'], summary='Get user details', description='Get details of a specific user by ID.'),
@@ -649,7 +778,12 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     ordering = ['name']  # Default: alphabetical
 
     def get_permissions(self):
-        """Allow listing departments for all authenticated users, but restrict modifications to admins"""
+        """
+        Allow listing departments for all authenticated users, but restrict modifications to admins.
+        The 'active' action is public (used for registration).
+        """
+        if self.action == 'active':
+            return [permissions.AllowAny()]
         if self.action in ['list', 'retrieve']:
             return [permissions.IsAuthenticated()]
         return [permissions.IsAdminUser()]
@@ -684,9 +818,12 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
         return super().destroy(request, *args, **kwargs)
 
-    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
     def active(self, request):
-        """Get only active departments (for dropdowns)"""
+        """
+        Get only active departments (for dropdowns)
+        Public endpoint - used for user registration
+        """
         queryset = self.get_queryset().filter(is_active=True)
         serializer = DepartmentListSerializer(queryset, many=True)
         return Response(serializer.data)
