@@ -1,1 +1,286 @@
-// Register component styles - currently using global styles
+// Register Component - Using Unified Design System
+@use '../../../../../styles/variables' as vars;
+
+// Reuse login styles
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-image: url('/img/login-background.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.login-card {
+  border-radius: vars.$radius-md;
+  width: 100%;
+  max-width: 550px; // Slightly wider for register form
+  overflow: hidden;
+  margin: vars.$spacing-md;
+  box-shadow: vars.$shadow-xl;
+  max-height: 90vh; // Limit height for scrolling
+  display: flex;
+  flex-direction: column;
+}
+
+.login-header {
+  background-color: vars.$bg-dark;
+  color: vars.$text-inverse;
+  padding: vars.$spacing-6 vars.$spacing-8;
+  text-align: center;
+  flex-shrink: 0; // Don't shrink header
+
+  .logo-container {
+    margin-bottom: vars.$spacing-4;
+  }
+
+  .app-logo {
+    font-size: vars.$font-size-2xl;
+    font-weight: vars.$font-weight-bold;
+    margin: 0;
+    letter-spacing: -1px;
+  }
+
+  h2 {
+    font-size: vars.$font-size-xl;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-inverse;
+    margin-bottom: vars.$spacing-2;
+  }
+
+  p {
+    font-size: vars.$font-size-base;
+    opacity: 0.8;
+    margin: 0;
+  }
+}
+
+.login-body {
+  padding: vars.$spacing-6 vars.$spacing-8;
+  background-color: vars.$white;
+  overflow-y: auto; // Allow scrolling if content is too tall
+  flex: 1;
+
+  .form-label {
+    font-weight: vars.$font-weight-medium;
+    margin-bottom: vars.$spacing-2;
+  }
+
+  .input-group {
+    .input-group-text {
+      background-color: vars.$gray-50;
+      color: vars.$gray-600;
+
+      i {
+        font-size: vars.$font-size-base;
+      }
+    }
+
+    .form-control,
+    .form-select {
+      &:focus {
+        box-shadow: none;
+        border-color: vars.$primary-color;
+      }
+    }
+
+    .btn-outline-secondary {
+      border-left: 0;
+      background-color: vars.$gray-50;
+      color: vars.$gray-600;
+
+      &:hover {
+        background-color: vars.$gray-100;
+        color: vars.$gray-700;
+      }
+
+      i {
+        font-size: vars.$font-size-base;
+      }
+    }
+  }
+
+  .btn-primary {
+    background-color: vars.$info-color;
+    border-color: vars.$info-color;
+    padding: vars.$spacing-3;
+    font-weight: vars.$font-weight-medium;
+    transition: vars.$transition-base;
+
+    &:hover:not(:disabled) {
+      background-color: vars.$info-hover;
+      border-color: vars.$info-hover;
+      transform: translateY(-2px);
+    }
+
+    &:disabled {
+      background-color: vars.$info-color;
+      border-color: vars.$info-color;
+      opacity: 0.7;
+    }
+  }
+
+  .invalid-feedback {
+    font-size: vars.$font-size-xs;
+    color: vars.$error-color;
+  }
+}
+
+// Password strength indicator
+.password-strength {
+  margin-top: vars.$spacing-2;
+
+  .strength-bar {
+    height: 4px;
+    background-color: vars.$gray-200;
+    border-radius: vars.$radius-sm;
+    overflow: hidden;
+    margin-bottom: vars.$spacing-2;
+
+    .strength-fill {
+      height: 100%;
+      transition: all 0.3s ease;
+      border-radius: vars.$radius-sm;
+
+      &.strength-weak {
+        background-color: vars.$error-color;
+      }
+
+      &.strength-fair {
+        background-color: vars.$warning-color;
+      }
+
+      &.strength-good {
+        background-color: vars.$info-color;
+      }
+
+      &.strength-strong {
+        background-color: vars.$success-color;
+      }
+    }
+  }
+
+  .strength-label {
+    font-size: vars.$font-size-xs;
+    font-weight: vars.$font-weight-medium;
+
+    &.strength-weak {
+      color: vars.$error-color;
+    }
+
+    &.strength-fair {
+      color: vars.$warning-color;
+    }
+
+    &.strength-good {
+      color: vars.$info-color;
+    }
+
+    &.strength-strong {
+      color: vars.$success-color;
+    }
+  }
+}
+
+// File upload area
+.file-upload-area {
+  position: relative;
+
+  .file-input {
+    position: absolute;
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    z-index: -1;
+  }
+
+  .file-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: vars.$spacing-4;
+    border: 2px dashed vars.$gray-300;
+    border-radius: vars.$radius-md;
+    background-color: vars.$gray-50;
+    cursor: pointer;
+    transition: vars.$transition-base;
+    color: vars.$gray-600;
+
+    &:hover {
+      border-color: vars.$primary-color;
+      background-color: vars.$gray-100;
+      color: vars.$primary-color;
+    }
+
+    i {
+      font-size: vars.$font-size-lg;
+    }
+
+    span {
+      font-size: vars.$font-size-sm;
+    }
+  }
+}
+
+// Photo preview
+.photo-preview {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-3;
+  padding: vars.$spacing-3;
+  border: 1px solid vars.$gray-200;
+  border-radius: vars.$radius-md;
+  background-color: vars.$gray-50;
+
+  img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: vars.$radius-md;
+    border: 2px solid vars.$white;
+    box-shadow: vars.$shadow-sm;
+  }
+
+  .btn-danger {
+    margin-left: auto;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 576px) {
+  .login-card {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-height: 100vh;
+  }
+
+  .login-header {
+    padding: vars.$spacing-4 vars.$spacing-6;
+
+    .app-logo {
+      font-size: vars.$font-size-xl;
+    }
+
+    h2 {
+      font-size: vars.$font-size-lg;
+    }
+  }
+
+  .login-body {
+    padding: vars.$spacing-4 vars.$spacing-6;
+
+    .form-group {
+      margin-bottom: vars.$spacing-3 !important;
+    }
+  }
+}

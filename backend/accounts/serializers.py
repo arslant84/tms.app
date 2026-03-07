@@ -314,6 +314,123 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for user self-registration.
+    Security: Users CANNOT select their own role - automatically assigned "Registered User" role.
+    """
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+        style={'input_type': 'password'},
+        validators=[validate_password]
+    )
+    password_confirm = serializers.CharField(
+        write_only=True,
+        required=True,
+        style={'input_type': 'password'}
+    )
+    department = serializers.CharField(
+        required=True,
+        help_text='Department UUID, code, or name'
+    )
+    profile_photo = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text='Base64 encoded image (max 5MB)'
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            'email', 'name', 'password', 'password_confirm',
+            'staff_id', 'phone', 'department', 'gender', 'profile_photo'
+        ]
+        extra_kwargs = {
+            'staff_id': {'required': False},
+            'phone': {'required': False},
+            'gender': {'required': False},
+        }
+
+    def validate_email(self, value):
+        """Ensure email is unique"""
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError(
+                "A user with this email address already exists."
+            )
+        return value.lower()
+
+    def validate_password_confirm(self, value):
+        """Ensure password confirmation matches"""
+        password = self.initial_data.get('password')
+        if password != value:
+            raise serializers.ValidationError("Passwords do not match.")
+        return value
+
+    def validate_department(self, value):
+        """Resolve department by UUID, code, or name"""
+        # Try UUID
+        try:
+            return Department.objects.get(id=value, is_active=True)
+        except (Department.DoesNotExist, ValueError):
+            pass
+
+        # Try code
+        try:
+            return Department.objects.get(code__iexact=value, is_active=True)
+        except Department.DoesNotExist:
+            pass
+
+        # Try name
+        try:
+            return Department.objects.get(name__iexact=value, is_active=True)
+        except Department.DoesNotExist:
+            raise serializers.ValidationError(
+                "Department not found. Please provide a valid department."
+            )
+
+    def validate_profile_photo(self, value):
+        """Validate base64 image"""
+        if not value:
+            return value
+
+        # SECURITY: Validate base64 size to prevent DoS
+        if len(value) > 5 * 1024 * 1024:  # 5MB limit
+            raise serializers.ValidationError('Image too large (max 5MB)')
+
+        # SECURITY: Validate MIME type
+        if not value.startswith('data:image/'):
+            raise serializers.ValidationError('Invalid image format. Must be a base64 data URL.')
+
+        return value
+
+    def create(self, validated_data):
+        """Create user with default 'Registered User' role"""
+        # Remove password_confirm (not a model field)
+        validated_data.pop('password_confirm')
+
+        # Get default role
+        try:
+            registered_user_role = Role.objects.get(name='Registered User')
+        except Role.DoesNotExist:
+            raise serializers.ValidationError(
+                "System error: Default registration role not found. Please contact administrator."
+            )
+
+        # SECURITY: Set role (user cannot override this)
+        validated_data['role'] = registered_user_role
+        validated_data['is_admin'] = False
+        validated_data['is_active'] = True
+
+        # Create user
+        password = validated_data.pop('password')
+        user = User.objects.create(**validated_data)
+        user.set_password(password)
+        user.save()
+
+        return user
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(required=True, style={'input_type': 'password'})

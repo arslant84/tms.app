@@ -233,6 +233,55 @@ export class AuthService {
   }
 
   /**
+   * Register a new user account (self-registration)
+   * Note: Users cannot select their own role - admin assigns roles later
+   */
+  register(userData: {
+    email: string;
+    name: string;
+    password: string;
+    password_confirm: string;
+    staff_id?: string;
+    phone?: string;
+    department: string;
+    gender?: string;
+    profile_photo?: string;
+  }): Observable<{ success: boolean; message: string; data?: any }> {
+    return this.http.post<any>(`${this.apiUrl}/api/register/`, userData).pipe(
+      map(response => {
+        // Handle standardized response format
+        if (response.success) {
+          return {
+            success: true,
+            message: response.message || 'Registration successful',
+            data: response.data
+          };
+        }
+        return response;
+      }),
+      catchError(error => {
+        // Extract error message
+        const message = this.getErrorMessage(error);
+        return throwError(() => ({ success: false, message, error }));
+      })
+    );
+  }
+
+  private getErrorMessage(error: any): string {
+    if (error.error?.message) {
+      return error.error.message;
+    }
+    if (error.error?.errors) {
+      // Extract first field error
+      const firstError = Object.values(error.error.errors)[0];
+      if (Array.isArray(firstError)) {
+        return firstError[0];
+      }
+    }
+    return 'Registration failed. Please try again.';
+  }
+
+  /**
    * Get user's position/role name
    * The role can be either a string or an object with {id, name, description, permissions}
    */

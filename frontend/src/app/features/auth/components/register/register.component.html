@@ -1,1 +1,243 @@
-<p>register works!</p>
+<div class="login-wrapper">
+  <div class="login-card register-card">
+    <div class="login-header">
+      <div class="logo-container">
+        <h1 class="app-logo">TMS</h1>
+      </div>
+      <h2>Create Account</h2>
+      <p>Register for a new account</p>
+    </div>
+
+    <div class="login-body">
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+
+        <!-- Email field -->
+        <div class="form-group mb-3">
+          <label for="email" class="form-label">Email address <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input
+              type="email"
+              class="form-control"
+              id="email"
+              formControlName="email"
+              placeholder="name@example.com"
+              [ngClass]="{'is-invalid': hasError('email')}"
+            >
+          </div>
+          <div *ngIf="hasError('email')" class="invalid-feedback d-block mt-1 ms-1">
+            {{ getErrorMessage('email') }}
+          </div>
+        </div>
+
+        <!-- Full Name field -->
+        <div class="form-group mb-3">
+          <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              id="name"
+              formControlName="name"
+              placeholder="John Doe"
+              [ngClass]="{'is-invalid': hasError('name')}"
+            >
+          </div>
+          <div *ngIf="hasError('name')" class="invalid-feedback d-block mt-1 ms-1">
+            {{ getErrorMessage('name') }}
+          </div>
+        </div>
+
+        <!-- Staff ID field (optional) -->
+        <div class="form-group mb-3">
+          <label for="staff_id" class="form-label">Staff ID</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-badge-vr"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              id="staff_id"
+              formControlName="staff_id"
+              placeholder="EMP-12345"
+            >
+          </div>
+        </div>
+
+        <!-- Phone field (optional) -->
+        <div class="form-group mb-3">
+          <label for="phone" class="form-label">Phone</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+            <input
+              type="tel"
+              class="form-control"
+              id="phone"
+              formControlName="phone"
+              placeholder="+1234567890"
+            >
+          </div>
+        </div>
+
+        <!-- Department field -->
+        <div class="form-group mb-3">
+          <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-building"></i></span>
+            <select
+              class="form-select"
+              id="department"
+              formControlName="department"
+              [ngClass]="{'is-invalid': hasError('department')}"
+            >
+              <option value="">Select Department</option>
+              <option *ngFor="let dept of departments" [value]="dept.name">
+                {{ dept.name }}
+              </option>
+            </select>
+          </div>
+          <div *ngIf="hasError('department')" class="invalid-feedback d-block mt-1 ms-1">
+            {{ getErrorMessage('department') }}
+          </div>
+        </div>
+
+        <!-- Gender field (optional) -->
+        <div class="form-group mb-3">
+          <label for="gender" class="form-label">Gender</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+            <select
+              class="form-select"
+              id="gender"
+              formControlName="gender"
+            >
+              <option value="">Select Gender</option>
+              <option *ngFor="let option of genderOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Password field -->
+        <div class="form-group mb-3">
+          <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              class="form-control"
+              id="password"
+              formControlName="password"
+              autocomplete="new-password"
+              [ngClass]="{'is-invalid': hasError('password')}"
+            >
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              (click)="togglePasswordVisibility()"
+            >
+              <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
+
+          <!-- Password strength indicator -->
+          <div *ngIf="registerForm.get('password')?.value" class="password-strength mt-2">
+            <div class="strength-bar">
+              <div
+                class="strength-fill"
+                [ngClass]="getPasswordStrengthClass()"
+                [style.width.%]="getPasswordStrength() * 25"
+              ></div>
+            </div>
+            <small class="strength-label" [ngClass]="getPasswordStrengthClass()">
+              {{ getPasswordStrengthLabel() }}
+            </small>
+          </div>
+
+          <div *ngIf="hasError('password')" class="invalid-feedback d-block mt-1 ms-1">
+            {{ getErrorMessage('password') }}
+          </div>
+          <small class="form-text text-muted d-block mt-1">
+            Must be at least 8 characters with uppercase, lowercase, and number
+          </small>
+        </div>
+
+        <!-- Confirm Password field -->
+        <div class="form-group mb-3">
+          <label for="password_confirm" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              class="form-control"
+              id="password_confirm"
+              formControlName="password_confirm"
+              autocomplete="new-password"
+              [ngClass]="{'is-invalid': hasError('password_confirm')}"
+            >
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              (click)="toggleConfirmPasswordVisibility()"
+            >
+              <i [class]="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
+          <div *ngIf="hasError('password_confirm')" class="invalid-feedback d-block mt-1 ms-1">
+            {{ getErrorMessage('password_confirm') }}
+          </div>
+        </div>
+
+        <!-- Profile Photo (optional) -->
+        <div class="form-group mb-4">
+          <label for="profile_photo" class="form-label">Profile Photo</label>
+          <div class="file-upload-area">
+            <input
+              type="file"
+              id="profile_photo"
+              class="file-input"
+              accept="image/jpeg,image/jpg,image/png,image/gif"
+              (change)="onFileSelected($event)"
+            >
+            <label for="profile_photo" class="file-label">
+              <i class="bi bi-cloud-upload me-2"></i>
+              <span>{{ selectedFileName || 'Choose file or drag here' }}</span>
+            </label>
+            <small class="form-text text-muted d-block mt-1">
+              Max 5MB. Formats: JPG, PNG, GIF
+            </small>
+          </div>
+
+          <!-- Photo preview -->
+          <div *ngIf="profilePhotoPreview" class="photo-preview mt-2">
+            <img [src]="profilePhotoPreview" alt="Profile Preview">
+            <button type="button" class="btn btn-sm btn-danger" (click)="clearFileSelection()">
+              <i class="bi bi-x-circle me-1"></i>Remove
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit button -->
+        <div class="d-grid mt-4">
+          <button
+            type="submit"
+            class="btn btn-primary btn-lg"
+            [disabled]="registerForm.invalid || isLoading"
+          >
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            {{ isLoading ? 'Creating Account...' : 'Create Account' }}
+          </button>
+        </div>
+
+        <!-- Link to login -->
+        <div class="text-center mt-3">
+          <span class="text-muted">Already have an account?</span>
+          <a routerLink="/auth/login" class="text-decoration-none ms-2">
+            Sign In
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
