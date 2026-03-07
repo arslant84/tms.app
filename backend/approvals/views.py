@@ -74,7 +74,12 @@ def unified_approvals(request):
 
     # Helper function to check if user can approve this entity
     def can_user_approve(entity, module_name):
-        """Check if current user is authorized to approve this entity based on workflow step"""
+        """Check if current user is authorized to approve this entity based on workflow step.
+
+        IMPORTANT: When a specific approver is selected (assigned_to is set),
+        ONLY that user (or admin/delegated users) can approve. Role-based
+        matching is only used when no specific user is assigned.
+        """
         # Only superusers see ALL approvals without workflow check
         if user.is_superuser:
             return True
@@ -99,12 +104,23 @@ def unified_approvals(request):
         if not current_step_execution:
             return False
 
-        # Check if user is directly assigned to this step
+        # Check if user is directly assigned to this step (specific approver was selected)
         if current_step_execution.assigned_to == user:
             return True
 
-        # Check if user's role matches the step's approver_role
-        # approver_role stores the role UUID as a string
+        # If a specific approver is assigned (assigned_to is NOT null),
+        # only that user can approve - skip role-based matching and only check delegations
+        from django.utils import timezone
+        if current_step_execution.assigned_to is not None:
+            active_delegations = current_step_execution.delegations.filter(
+                delegated_to=user,
+                is_active=True
+            ).filter(
+                Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now())
+            ).exists()
+            return active_delegations
+
+        # Role-based matching - only when NO specific user is assigned (assigned_to is NULL)
         if hasattr(user, 'role') and user.role and current_step_execution.workflow_step.approver_role:
             approver_role_value = current_step_execution.workflow_step.approver_role
 
@@ -125,7 +141,6 @@ def unified_approvals(request):
                 pass
 
         # Check for active delegation
-        from django.utils import timezone
         active_delegations = current_step_execution.delegations.filter(
             delegated_to=user,
             is_active=True

@@ -38,6 +38,11 @@ export class ApprovalSubmissionComponent implements OnInit {
   @Input() approvalWorkflow: ApprovalStep[] = [];
   @Input() entityType: string = 'travelrequest';
   @Input() enableApproverSelection: boolean = true;
+  /**
+   * Staff ID of the original requestor. Used for department-based approver filtering
+   * in edit mode to ensure approvers are filtered by the original requester's department.
+   */
+  @Input() requesterStaffId?: string;
 
   @Output() formSubmit = new EventEmitter<ApprovalSubmissionData>();
   @Output() backClick = new EventEmitter<void>();

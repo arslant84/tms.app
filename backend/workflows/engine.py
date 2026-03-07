@@ -581,16 +581,33 @@ class WorkflowEngine:
 
     @staticmethod
     def _is_user_authorized(step_execution: WorkflowStepExecution, user: User) -> bool:
-        """Check if user is authorized to action this step"""
+        """Check if user is authorized to action this step.
+
+        IMPORTANT: When a specific approver is selected (assigned_to is set),
+        ONLY that user (or admin/delegated users) can approve. Role-based
+        matching is only used when no specific user is assigned.
+        """
         # Admin override - workflow managers can approve any step
         if user.is_superuser or can_manage(user, 'workflow'):
             return True
 
-        # Check if user is directly assigned
+        # Check if user is directly assigned (specific approver was selected)
         if step_execution.assigned_to == user:
             return True
 
-        # Check if user has the required role (allows any user with matching role to approve)
+        # If a specific approver is assigned (assigned_to is NOT null),
+        # only that user can approve - skip role-based matching
+        if step_execution.assigned_to is not None:
+            # Only check delegations since assigned_to is set but doesn't match current user
+            active_delegations = step_execution.delegations.filter(
+                delegated_to=user,
+                is_active=True
+            ).filter(
+                models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=timezone.now())
+            ).exists()
+            return active_delegations
+
+        # Role-based matching - only when NO specific user is assigned (assigned_to is NULL)
         if hasattr(user, 'role') and user.role and step_execution.workflow_step.approver_role:
             from accounts.models import Role
             approver_role = step_execution.workflow_step.approver_role

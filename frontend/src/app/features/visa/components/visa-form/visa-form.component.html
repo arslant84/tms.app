@@ -310,6 +310,8 @@
           [required]="false"
           [showTitle]="false"
           [initialSelections]="initialApproverSelections"
+          [requesterId]="requesterId"
+          [staffId]="requesterStaffId"
           (selectionChange)="onApproverSelectionChange($event)"
           (validityChange)="onApproverValidityChange($event)"
         ></app-approver-selection>

@@ -31,6 +31,8 @@ export class VisaFormComponent implements OnInit {
   approverSelectionValid: boolean = true;
   showApproverSelection: boolean = true;
   initialApproverSelections: ApproverSelection = {};
+  requesterId?: number; // Original user ID for department-based approver filtering
+  requesterStaffId?: string; // Fallback: staff ID for department lookup
 
   // Passport file upload properties
   passportFile: File | null = null;
@@ -201,6 +203,19 @@ export class VisaFormComponent implements OnInit {
           const urlParts = application.passport_file_url.split('/');
           this.passportFileName = urlParts[urlParts.length - 1];
         }
+        // Set the user ID for proper department-based approver filtering
+        // This ensures approvers are filtered by the original user's department
+        if (application.user && application.user.id) {
+          this.requesterId = application.user.id;
+        } else if (application.user && typeof application.user === 'number') {
+          this.requesterId = application.user;
+        }
+
+        // Also set staff ID as fallback for department lookup
+        if (application.staff_id) {
+          this.requesterStaffId = application.staff_id;
+        }
+
         // Load saved approver selections for edit mode
         if (application.selected_approvers) {
           this.initialApproverSelections = application.selected_approvers;

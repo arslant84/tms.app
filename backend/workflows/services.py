@@ -24,9 +24,12 @@ class WorkflowApprovalHelper:
         Get IDs of entities pending approval for a specific user based on workflow step assignments.
 
         This checks:
-        1. Direct assignment to the user
-        2. User's role UUID matching the step's approver_role
+        1. Direct assignment to the user (when a specific approver was selected)
+        2. User's role UUID matching the step's approver_role (only when no specific user is assigned)
         3. Active delegations to the user
+
+        IMPORTANT: When a specific approver is selected (assigned_to is set), ONLY that user
+        should see the request. Role-based matching is only used when no specific user is assigned.
 
         Args:
             user: The user to check approvals for
@@ -41,16 +44,17 @@ class WorkflowApprovalHelper:
         content_type = ContentType.objects.get_for_model(model_class)
 
         # Build query for pending step executions
-        # 1. Direct assignment to user
+        # 1. Direct assignment to user (specific approver was selected)
         direct_assignment_q = Q(assigned_to=user)
 
-        # 2. User's role matches step's approver_role (by UUID)
+        # 2. Role-based matching ONLY when no specific user is assigned (assigned_to is NULL)
         role_match_q = Q()
         if hasattr(user, 'role') and user.role:
-            # approver_role stores role UUID as string
-            role_match_q = Q(workflow_step__approver_role=str(user.role.id))
-            # Also try role name for legacy data
-            role_match_q |= Q(workflow_step__approver_role=user.role.name)
+            # Only match by role when assigned_to is NULL (no specific approver selected)
+            role_match_q = Q(assigned_to__isnull=True) & (
+                Q(workflow_step__approver_role=str(user.role.id)) |
+                Q(workflow_step__approver_role=user.role.name)
+            )
 
         # Get pending step executions that match user
         pending_steps = WorkflowStepExecution.objects.filter(

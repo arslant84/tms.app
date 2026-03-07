@@ -12,6 +12,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
+import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 import { TransportRequestForm, TransportDetail, TransportType, toBackendFormat } from '../../models/transport.model';
 import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
@@ -37,6 +38,7 @@ export class TransportCreateComponent implements OnInit {
   approverSelectionValid: boolean = true;
   showApproverSelection: boolean = true;
   initialApproverSelections: ApproverSelection = {};
+  requesterStaffId?: string; // Staff ID for department-based approver filtering
 
   transportTypes: TransportType[] = ['Local', 'Intercity', 'Airport Transfer', 'Charter', 'Other'];
 
@@ -48,7 +50,8 @@ export class TransportCreateComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private authService: AuthService,
-    private formUtils: FormUtilsService
+    private formUtils: FormUtilsService,
+    private userFormHelper: UserFormHelperService
   ) {}
 
   ngOnInit(): void {
@@ -90,28 +93,15 @@ export class TransportCreateComponent implements OnInit {
   }
 
   loadUserDetails(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      const position = this.authService.getUserPosition(currentUser);
-      const department = this.extractDepartmentName(currentUser.department);
+    // Use centralized UserFormHelperService for consistent user data extraction
+    const userDefaults = this.userFormHelper.getUserFormDefaults();
 
-      this.transportForm.patchValue({
-        requestorName: currentUser.name || currentUser.email || '',
-        staffId: currentUser.staff_id || '',
-        department: department,
-        position: position || ''
-      });
-    }
-  }
-
-  private extractDepartmentName(department: any): string {
-    if (!department) {
-      return '';
-    }
-    if (typeof department === 'string') {
-      return department;
-    }
-    return department.name || '';
+    this.transportForm.patchValue({
+      requestorName: userDefaults.fullName,
+      staffId: userDefaults.staffId,
+      department: userDefaults.department,
+      position: userDefaults.position
+    });
   }
 
   loadRequestData(id: number): void {
@@ -166,6 +156,13 @@ export class TransportCreateComponent implements OnInit {
         } else {
           // If no transport details, add one default
           this.addTransportDetail();
+        }
+
+        // Set the staff ID for proper department-based approver filtering
+        // This ensures approvers are filtered by the original requester's department
+        // TransportRequest uses staffId (camelCase) in the frontend model
+        if (request.staffId) {
+          this.requesterStaffId = request.staffId;
         }
 
         // Load saved approver selections for edit mode

@@ -32,6 +32,7 @@ export class AccommodationCreateComponent implements OnInit {
   approverSelectionValid: boolean = true;
   showApproverSelection: boolean = true;
   initialApproverSelections: ApproverSelection = {};
+  requesterStaffId?: string; // Original requestor's staff ID for department-based approver filtering
 
   // TRF/TSR selection
   availableTrfs: any[] = [];
@@ -246,6 +247,12 @@ export class AccommodationCreateComponent implements OnInit {
         // Set selected TRF details for display
         if (trfValue && this.availableTrfs.length > 0) {
           this.selectedTrfDetails = this.availableTrfs.find(trf => trf.id === +trfValue);
+        }
+
+        // Set the staff ID for proper department-based approver filtering
+        // This ensures approvers are filtered by the original requester's department
+        if (request.staff_id) {
+          this.requesterStaffId = request.staff_id;
         }
 
         // Load saved approver selections for edit mode

@@ -71,6 +71,7 @@
         [requestorData]="requestorData"
         [travelDetails]="getTravelDetailsForApproval()"
         [initialData]="approvalData"
+        [requesterStaffId]="requestorData.staffId"
         (formSubmit)="onSubmit()"
         (backClick)="onPrevious()">
       </app-approval-submission>
