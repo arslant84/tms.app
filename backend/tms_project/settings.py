@@ -213,7 +213,12 @@ EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='SynTra TMS <noreply@pctsb-travel.site>')
-EMAIL_TIMEOUT = 10  # seconds
+EMAIL_TIMEOUT = 30  # seconds (increased for slower connections)
+
+# SSL context for email (helps with certificate issues on Windows)
+import ssl
+EMAIL_SSL_CERTFILE = None
+EMAIL_SSL_KEYFILE = None
 
 # Frontend URL for email links
 # This is used to generate absolute URLs in email notifications
