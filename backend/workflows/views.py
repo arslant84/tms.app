@@ -628,12 +628,45 @@ def get_eligible_approvers(request, entity_type: str):
     Args:
         entity_type: Type of entity (travelrequest, visaapplication, etc.)
 
+    Query Params:
+        requester_id: Optional. User ID of the original requester for department
+                      filtering. Use this in edit mode to ensure approvers are
+                      filtered by the original requester's department, not the
+                      current viewer's department.
+        staff_id: Optional. Staff ID of the original requester. Used as fallback
+                  when requester_id is not available (for modules like accommodation
+                  that store staff_id instead of user FK).
+
     Returns:
         Standardized response with template info and eligible approvers per step
     """
     from django.db.models import Q
+    from django.contrib.auth import get_user_model
     from .services import WorkflowApprovalHelper
     from .models import WorkflowTemplate
+
+    User = get_user_model()
+
+    # Determine the requester for department filtering
+    # Priority: requester_id > staff_id > current user
+    requester_id = request.query_params.get('requester_id')
+    staff_id = request.query_params.get('staff_id')
+
+    requester = None
+    if requester_id:
+        try:
+            requester = User.objects.select_related('department').get(id=requester_id)
+        except (User.DoesNotExist, ValueError):
+            pass
+
+    if not requester and staff_id:
+        try:
+            requester = User.objects.select_related('department').filter(staff_id=staff_id).first()
+        except Exception:
+            pass
+
+    if not requester:
+        requester = request.user
 
     # Build flexible query to handle common entity_type aliases
     # Maps frontend values to possible database values
@@ -665,7 +698,7 @@ def get_eligible_approvers(request, entity_type: str):
 
     steps_data = []
     for step in template.steps.all().order_by('step_order'):
-        approvers = WorkflowApprovalHelper.get_eligible_approvers_for_step(step, request.user)
+        approvers = WorkflowApprovalHelper.get_eligible_approvers_for_step(step, requester)
         steps_data.append({
             'step_order': step.step_order,
             'step_name': step.step_name,
