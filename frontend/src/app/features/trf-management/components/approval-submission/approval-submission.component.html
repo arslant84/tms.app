@@ -139,6 +139,7 @@
         [required]="false"
         [showTitle]="false"
         [initialSelections]="initialData.selected_approvers || {}"
+        [staffId]="requesterStaffId"
         (selectionChange)="onApproverSelectionChange($event)"
         (validityChange)="onApproverValidityChange($event)"
       ></app-approver-selection>

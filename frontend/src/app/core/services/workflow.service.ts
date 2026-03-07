@@ -300,19 +300,41 @@ export class WorkflowService {
    * Use this to allow users to select specific approvers before submitting a request.
    *
    * @param entityType The entity type (e.g., 'travelrequest', 'visaapplication')
+   * @param options Optional parameters for filtering:
+   *   - requesterId: User ID of the original requester
+   *   - staffId: Staff ID of the original requester (fallback when requesterId is not available)
    * @returns Observable of eligible approvers for each workflow step
    *
    * Usage:
    * ```typescript
+   * // For new requests (uses current user's department)
    * this.workflowService.getEligibleApprovers('travelrequest').subscribe({
    *   next: (response) => {
    *     this.workflowSteps = response.steps;
    *   }
    * });
+   *
+   * // For edit mode (uses original requester's department)
+   * this.workflowService.getEligibleApprovers('travelrequest', { requesterId: 123 }).subscribe({...});
+   * this.workflowService.getEligibleApprovers('accommodation', { staffId: 'EMP001' }).subscribe({...});
    * ```
    */
-  getEligibleApprovers(entityType: string): Observable<EligibleApproversResponse | null> {
-    return this.http.get<any>(`${this.apiUrl}/eligible-approvers/${entityType}/`).pipe(
+  getEligibleApprovers(entityType: string, options?: { requesterId?: number; staffId?: string }): Observable<EligibleApproversResponse | null> {
+    let url = `${this.apiUrl}/eligible-approvers/${entityType}/`;
+    const params: string[] = [];
+
+    if (options?.requesterId) {
+      params.push(`requester_id=${options.requesterId}`);
+    }
+    if (options?.staffId) {
+      params.push(`staff_id=${encodeURIComponent(options.staffId)}`);
+    }
+
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+
+    return this.http.get<any>(url).pipe(
       map(response => extractData<EligibleApproversResponse>(response)),
       catchError(error => {
         console.error('Error fetching eligible approvers:', error);

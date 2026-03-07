@@ -20,6 +20,16 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
   @Input() required: boolean = false;
   @Input() showTitle: boolean = true;
   @Input() initialSelections: ApproverSelection = {};
+  /**
+   * Optional requester user ID. Use this in edit mode to ensure approvers are
+   * filtered by the original requester's department, not the current viewer's department.
+   */
+  @Input() requesterId?: number;
+  /**
+   * Optional staff ID. Used as fallback when requesterId is not available
+   * (for modules like accommodation that store staff_id instead of user FK).
+   */
+  @Input() staffId?: string;
   @Output() selectionChange = new EventEmitter<ApproverSelection>();
   @Output() validityChange = new EventEmitter<boolean>();
 
@@ -37,7 +47,10 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['entityType'] && !changes['entityType'].firstChange) {
+    // Reload approvers if entityType, requesterId, or staffId changes
+    if ((changes['entityType'] && !changes['entityType'].firstChange) ||
+        (changes['requesterId'] && !changes['requesterId'].firstChange) ||
+        (changes['staffId'] && !changes['staffId'].firstChange)) {
       this.initialSelectionsApplied = false;
       this.loadEligibleApprovers();
     }
@@ -56,7 +69,16 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
     this.selections = {};
     this.searchTerms = {};
 
-    this.workflowService.getEligibleApprovers(this.entityType).subscribe({
+    // Build options for the service call
+    const options: { requesterId?: number; staffId?: string } = {};
+    if (this.requesterId) {
+      options.requesterId = this.requesterId;
+    }
+    if (this.staffId) {
+      options.staffId = this.staffId;
+    }
+
+    this.workflowService.getEligibleApprovers(this.entityType, Object.keys(options).length > 0 ? options : undefined).subscribe({
       next: (response) => {
         if (response && response.steps) {
           this.steps = response.steps;
