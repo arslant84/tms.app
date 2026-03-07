@@ -355,9 +355,10 @@ class PasswordResetRequestView(APIView):
             # Send email with reset link
             reset_url = f"{settings.FRONTEND_URL}/auth/reset-password?token={reset_token}"
 
-            send_mail(
-                subject='Password Reset Request - SynTra TMS',
-                message=f'''Hello {user.name},
+            try:
+                send_mail(
+                    subject='Password Reset Request - SynTra TMS',
+                    message=f'''Hello {user.name},
 
 You have requested to reset your password for your SynTra Travel Management System account.
 
@@ -370,10 +371,14 @@ If you did not request this password reset, please ignore this email and your pa
 
 Best regards,
 SynTra TMS Team''',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            )
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                # Log email sending failure but don't expose it to user
+                logger.error(f"Failed to send password reset email to {email}: {str(e)}")
+                # Continue execution - token is saved, user will see generic success message
 
         except User.DoesNotExist:
             # SECURITY: Don't reveal if email exists or not
