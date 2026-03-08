@@ -147,8 +147,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
     this.listState.clearError();
 
     const params: any = {
-      ...this.listState.getFilters(),
-      limit: this.listState.getPageSize()
+      ...this.listState.getFilters()
+      // Don't add limit - page_size is already in getFilters()
     };
 
     if (this.statusFilter) {
@@ -185,6 +185,14 @@ export class TrfListComponent implements OnInit, OnDestroy {
           }
         },
         error: (err) => {
+          // Handle "Invalid page" error from DRF pagination
+          if (err.error?.detail === 'Invalid page.' || err.statusText === 'Not Found') {
+            // Reset to first page and retry
+            this.listState.resetToFirstPage();
+            this.fetchTrfs();
+            return;
+          }
+
           this.listState.setError(err.message || 'Failed to load TRFs');
           this.trfs = [];
         }

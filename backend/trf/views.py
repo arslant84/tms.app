@@ -3,6 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime
@@ -68,10 +69,12 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
     - ?travel_type=type - Filter by travel type
     - ?department=dept - Filter by department (contains)
     - ?requestor_name=name - Filter by requestor name (contains)
+    - ?sortBy=field&sortOrder=ascending|descending - Custom sorting (frontend compatibility)
     """
     queryset = TravelRequest.objects.all()
     serializer_class = TravelRequestSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = PageNumberPagination
 
     # Search across key fields
     search_fields = ['requestor_name', 'department', 'purpose', 'staff_id', 'request_number']
@@ -318,7 +321,18 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 Q(request_number__icontains=search)
             )
 
-        result = queryset.order_by('-created_at')
+        # Handle custom sortBy and sortOrder parameters from frontend
+        sort_by = self.request.query_params.get('sortBy', None)
+        sort_order = self.request.query_params.get('sortOrder', 'descending')
+
+        if sort_by and sort_by in self.ordering_fields:
+            # Apply sorting: prefix with - for descending
+            order_field = f"-{sort_by}" if sort_order == 'descending' else sort_by
+            result = queryset.order_by(order_field)
+        else:
+            # Default ordering
+            result = queryset.order_by('-created_at')
+
         logger.debug(f"Filtered queryset count: {result.count()}")
         logger.debug(f"=== END GET_QUERYSET ===\n")
         return result
