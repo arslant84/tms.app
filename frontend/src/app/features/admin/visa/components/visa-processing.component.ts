@@ -40,7 +40,7 @@ interface CompletedVisa {
 @Component({
   selector: 'app-visa-processing',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './visa-processing.component.html',
   styleUrl: './visa-processing.component.scss'
 })

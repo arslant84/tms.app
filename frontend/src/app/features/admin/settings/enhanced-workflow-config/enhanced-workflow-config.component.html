@@ -177,7 +177,7 @@
           class="btn btn-primary"
           (click)="saveWorkflow()"
           [disabled]="isSaving || !selectedModule || steps.length === 0">
-          <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+          <app-loading-spinner *ngIf="isSaving" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
           <i *ngIf="!isSaving" class="bi bi-check-circle me-2"></i>
           {{ editingWorkflowId ? 'Update Workflow' : 'Create Workflow' }}
         </button>
@@ -204,7 +204,7 @@
     </div>
     <div class="card-body">
       <div *ngIf="isLoading" class="text-center py-4">
-        <div class="spinner-border text-primary" role="status"></div>
+        <app-loading-spinner size="md"></app-loading-spinner>
         <p class="mt-2 text-muted">Loading workflows...</p>
       </div>
 

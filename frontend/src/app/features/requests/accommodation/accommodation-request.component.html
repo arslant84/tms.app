@@ -32,9 +32,7 @@
         
         <!-- Loading indicator -->
         <div *ngIf="isLoading" class="text-center py-4">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
+          <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
           <p class="mt-2">Loading accommodation options...</p>
         </div>
 
@@ -294,7 +292,7 @@
         <button type="submit" class="btn btn-success" 
                 *ngIf="currentStep === totalSteps" 
                 [disabled]="accommodationForm.invalid || isSubmitting">
-          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          <app-loading-spinner *ngIf="isSubmitting" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
           {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
         </button>
         

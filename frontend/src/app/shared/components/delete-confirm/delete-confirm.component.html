@@ -16,7 +16,7 @@
           Cancel
         </button>
         <button type="button" class="btn btn-danger" (click)="onConfirm()" [disabled]="isSaving">
-          <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+          <app-loading-spinner *ngIf="isSaving" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
           Delete
         </button>
       </div>

@@ -24,7 +24,7 @@ export interface ApprovalSubmissionData {
 @Component({
   selector: 'app-approval-submission',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent],
+  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent, LoadingSpinnerComponent],
   templateUrl: './approval-submission.component.html',
   styleUrls: ['./approval-submission.component.scss']
 })

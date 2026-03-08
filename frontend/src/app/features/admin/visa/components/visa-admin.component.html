@@ -193,7 +193,7 @@
                     <span *ngIf="!isProcessing(app.id)">
                       <i class="bi bi-check-circle"></i>
                     </span>
-                    <span *ngIf="isProcessing(app.id)" class="spinner-border spinner-border-sm"></span>
+                    <app-loading-spinner *ngIf="isProcessing(app.id)" size="sm" class="d-inline-block"></app-loading-spinner>
                   </button>
 
                   <button *ngIf="canReject(app)" class="btn btn-sm btn-outline-danger btn-icon"
@@ -320,7 +320,7 @@
                         processAction === 'reject' ? 'bi bi-x-circle' : 'bi bi-check2-all'"></i>
             {{ getActionLabel() }}
           </span>
-          <span *ngIf="processingId !== null" class="spinner-border spinner-border-sm"></span>
+          <app-loading-spinner *ngIf="processingId !== null" size="sm" class="d-inline-block"></app-loading-spinner>
         </button>
       </div>
     </div>

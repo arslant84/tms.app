@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../core/models/workflow.models';
 import { WorkflowService } from '../../../core/services/workflow.service';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
+import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-workflow-status',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingSpinnerComponent],
   templateUrl: './workflow-status.component.html',
   styleUrls: ['./workflow-status.component.scss']
 })
