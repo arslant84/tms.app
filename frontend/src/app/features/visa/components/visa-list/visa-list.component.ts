@@ -152,6 +152,14 @@ export class VisaListComponent implements OnInit, OnDestroy {
           this.loadWorkflowInstances();
         },
         error: (error) => {
+          // Handle "Invalid page" error from DRF pagination
+          if (error.error?.detail === 'Invalid page.' || error.statusText === 'Not Found') {
+            // Reset to first page and retry
+            this.listState.resetToFirstPage();
+            this.fetchApplications();
+            return;
+          }
+
           this.listState.setLoading(false);
         }
       });
