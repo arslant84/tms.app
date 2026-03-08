@@ -234,7 +234,7 @@
         <button type="submit" class="btn btn-success" 
                 *ngIf="currentStep === totalSteps" 
                 [disabled]="transportForm.invalid || isSubmitting">
-          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          <app-loading-spinner *ngIf="isSubmitting" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
           {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
         </button>
         

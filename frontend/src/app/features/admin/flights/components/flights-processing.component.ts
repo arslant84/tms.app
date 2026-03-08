@@ -7,6 +7,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface ItinerarySegment {
   from_location?: string;
@@ -55,7 +56,7 @@ interface BookedFlight {
 @Component({
   selector: 'app-flights-processing',
   standalone: true,
-  imports: [CommonModule, FormsModule, DepartmentNamePipe],
+  imports: [CommonModule, FormsModule, DepartmentNamePipe, LoadingSpinnerComponent],
   templateUrl: './flights-processing.component.html',
   styleUrl: './flights-processing.component.scss'
 })

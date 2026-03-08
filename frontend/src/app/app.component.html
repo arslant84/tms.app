@@ -1,3 +1,11 @@
+<!-- Global loading indicator for page navigation -->
+<app-loading-spinner
+  *ngIf="loading$ | async"
+  size="lg"
+  fullScreen="true"
+  message="Loading...">
+</app-loading-spinner>
+
 <!-- Toast notifications -->
 <app-toast-container></app-toast-container>
 

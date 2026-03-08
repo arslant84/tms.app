@@ -65,7 +65,7 @@
             class="btn btn-primary btn-lg"
             [disabled]="loginForm.invalid || isSubmitting"
           >
-            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <app-loading-spinner *ngIf="isSubmitting" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
             {{ isSubmitting ? 'Signing in...' : 'Sign In' }}
           </button>
         </div>

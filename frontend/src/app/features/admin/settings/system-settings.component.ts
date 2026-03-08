@@ -22,7 +22,7 @@ interface SettingsForm {
 @Component({
   selector: 'app-system-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TmsApp_Admin_SystemSettings_RoleManagementComponent, DepartmentManagementComponent, EnhancedWorkflowConfigComponent],
+  imports: [CommonModule, FormsModule, RouterModule, TmsApp_Admin_SystemSettings_RoleManagementComponent, DepartmentManagementComponent, EnhancedWorkflowConfigComponent, LoadingSpinnerComponent],
   templateUrl: './system-settings.component.html',
   styleUrls: ['./system-settings.component.scss']
 })

@@ -38,7 +38,7 @@ interface PendingApproval {
 @Component({
   selector: 'app-approvals-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './approvals-dashboard.component.html',
   styleUrls: ['./approvals-dashboard.component.scss']
 })

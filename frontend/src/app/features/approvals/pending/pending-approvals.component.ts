@@ -7,11 +7,12 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { CurrencyFormatPipe } from '../../../core/pipes/currency-format.pipe';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
+import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-pending-approvals',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyFormatPipe],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe, LoadingSpinnerComponent],
   templateUrl: './pending-approvals.component.html',
   styleUrl: './pending-approvals.component.scss'
 })

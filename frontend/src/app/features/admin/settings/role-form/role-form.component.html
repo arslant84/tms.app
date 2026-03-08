@@ -52,7 +52,7 @@
           Cancel
         </button>
         <button type="button" class="btn btn-primary" (click)="submitForm()" [disabled]="isSaving || !form.name || (form.permissionIds?.length || 0) === 0">
-          <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+          <app-loading-spinner *ngIf="isSaving" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
           {{ editId ? 'Update Role' : 'Create Role' }}
         </button>
       </div>

@@ -1,0 +1,70 @@
+@use '../../../../styles/variables' as vars;
+
+:host {
+  // Allow inline display when parent has d-inline-block
+  display: inline-flex;
+
+  &.d-inline-block {
+    display: inline-flex;
+  }
+}
+
+.loading-spinner-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(255 255 255 / 90%);
+    z-index: 10;
+  }
+
+  &.full-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(255 255 255 / 95%);
+    z-index: 9999;
+  }
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: vars.$spacing-3;
+}
+
+.loading-gif {
+  display: block;
+
+  &.size-sm {
+    width: 40px;
+    height: 40px;
+  }
+
+  &.size-md {
+    width: 80px;
+    height: 80px;
+  }
+
+  &.size-lg {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+.loading-message {
+  margin: 0;
+  color: vars.$text-secondary;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
+  text-align: center;
+}

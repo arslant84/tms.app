@@ -6,11 +6,12 @@ import { BookingsService, FlightBooking } from '../../../bookings/services/booki
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-flight-create',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, LoadingSpinnerComponent],
   templateUrl: './flight-create.component.html',
   styleUrls: ['./flight-create.component.scss']
 })

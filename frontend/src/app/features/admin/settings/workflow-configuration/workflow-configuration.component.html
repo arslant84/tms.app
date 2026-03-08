@@ -8,7 +8,7 @@
   </div>
   <div class="card-body">
     <div *ngIf="isLoading" class="d-flex justify-content-center py-4">
-      <div class="spinner-border text-primary" role="status"></div>
+      <app-loading-spinner size="md"></app-loading-spinner>
     </div>
 
     <ng-container *ngIf="!isLoading">
@@ -70,7 +70,7 @@
         <div class="d-flex gap-2 mt-3">
           <button class="btn btn-secondary" (click)="cancelForm()" [disabled]="isSaving">Cancel</button>
           <button class="btn btn-primary" (click)="submitForm()" [disabled]="isSaving">
-            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+            <app-loading-spinner *ngIf="isSaving" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
             {{ editStepId ? 'Update Step' : 'Create Step' }}
           </button>
         </div>

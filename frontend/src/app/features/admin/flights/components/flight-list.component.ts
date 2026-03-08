@@ -30,7 +30,7 @@ export const BOOKING_CLASSES = [
 @Component({
   selector: 'app-flight-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './flight-list.component.html',
   styleUrls: ['./flight-list.component.scss']
 })

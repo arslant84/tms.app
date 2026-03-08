@@ -7,11 +7,12 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-flight-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './flight-detail.component.html',
   styleUrls: ['./flight-detail.component.scss']
 })

@@ -71,9 +71,7 @@
 
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-container">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
+    <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
     <p class="mt-2">Loading pending approvals...</p>
   </div>
 
@@ -347,13 +345,13 @@
             <button class="btn btn-danger" (click)="rejectRequest()" [disabled]="isProcessing">
               <i class="bi bi-x-circle"></i>
               <span *ngIf="!isProcessing">Reject</span>
-              <span *ngIf="isProcessing" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <app-loading-spinner *ngIf="isProcessing" size="sm" class="d-inline-block"></app-loading-spinner>
             </button>
             
             <button class="btn btn-success" (click)="approveRequest()" [disabled]="isProcessing">
               <i class="bi bi-check-circle"></i>
               <span *ngIf="!isProcessing">Approve</span>
-              <span *ngIf="isProcessing" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <app-loading-spinner *ngIf="isProcessing" size="sm" class="d-inline-block"></app-loading-spinner>
             </button>
           </div>
         </div>

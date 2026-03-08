@@ -1,10 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-confirm-delete-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LoadingSpinnerComponent],
   template: `
     <div class="modal fade show" style="display: flex;" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
@@ -22,7 +23,7 @@ import { CommonModule } from '@angular/common';
               Cancel
             </button>
             <button type="button" class="btn btn-danger" (click)="onConfirm()" [disabled]="isDeleting">
-              <span *ngIf="isDeleting" class="spinner-border spinner-border-sm me-2"></span>
+              <app-loading-spinner *ngIf="isDeleting" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
               {{ confirmButtonText }}
             </button>
           </div>

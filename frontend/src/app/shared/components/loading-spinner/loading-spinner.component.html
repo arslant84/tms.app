@@ -1,0 +1,10 @@
+<div class="loading-spinner-container" [class.overlay]="overlay" [class.full-screen]="fullScreen">
+  <div class="loading-content" [ngClass]="'size-' + size">
+    <img
+      src="/img/pet-loading.gif"
+      alt="Loading..."
+      class="loading-gif"
+      [ngClass]="'size-' + size">
+    <p *ngIf="message" class="loading-message">{{ message }}</p>
+  </div>
+</div>

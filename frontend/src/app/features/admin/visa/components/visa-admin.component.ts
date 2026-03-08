@@ -8,11 +8,12 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { WorkflowService } from '../../../../core/services/workflow.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-visa-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './visa-admin.component.html',
   styleUrl: './visa-admin.component.scss'
 })

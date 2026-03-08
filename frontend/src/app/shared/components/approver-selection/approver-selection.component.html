@@ -3,8 +3,7 @@
 
   <!-- Loading State -->
   <div *ngIf="isLoading" class="loading-state">
-    <div class="spinner-border spinner-border-sm text-primary"></div>
-    <span class="ms-2">Loading approvers...</span>
+    <app-loading-spinner size="sm" message="Loading approvers..."></app-loading-spinner>
   </div>
 
   <!-- Error State -->

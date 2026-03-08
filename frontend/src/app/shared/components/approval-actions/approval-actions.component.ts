@@ -6,11 +6,12 @@ import { WorkflowStepExecution } from '../../../core/models/workflow.models';
 import { WorkflowService } from '../../../core/services/workflow.service';
 import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-approval-actions',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './approval-actions.component.html',
   styleUrls: ['./approval-actions.component.scss']
 })

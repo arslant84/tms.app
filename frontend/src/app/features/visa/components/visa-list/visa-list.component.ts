@@ -10,11 +10,12 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-visa-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './visa-list.component.html',
   styleUrl: './visa-list.component.scss'
 })

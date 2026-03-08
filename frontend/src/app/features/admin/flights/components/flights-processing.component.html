@@ -76,8 +76,7 @@
 
             <!-- Loading State -->
             <div *ngIf="isLoadingPending" class="loading-container">
-              <div class="spinner"></div>
-              <p>Loading pending flight requests...</p>
+              <app-loading-spinner size="md" message="Loading pending flight requests..."></app-loading-spinner>
             </div>
 
             <!-- Error State -->
@@ -356,7 +355,7 @@
                     <i class="bi bi-airplane me-2"></i>
                     <span *ngIf="!isProcessing">Confirm Flight Booking</span>
                     <span *ngIf="isProcessing">
-                      <span class="spinner-border spinner-border-sm me-2"></span>
+                      <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
                       Booking...
                     </span>
                   </button>
@@ -378,8 +377,7 @@
       <div *ngIf="activeTab === 'booked'" class="tab-panel">
         <!-- Loading State -->
         <div *ngIf="isLoadingBooked" class="loading-container">
-          <div class="spinner"></div>
-          <p>Loading booked flights...</p>
+          <app-loading-spinner size="md" message="Loading booked flights..."></app-loading-spinner>
         </div>
 
         <!-- Empty State -->

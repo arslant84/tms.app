@@ -12,9 +12,7 @@
 
   <!-- Loading State -->
   <div *ngIf="loading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
+    <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
     <p class="mt-3 text-muted">Loading booking details...</p>
   </div>
 
@@ -498,7 +496,7 @@
             <i class="bi bi-save me-2"></i>
             <span *ngIf="!submitting">Save Draft</span>
             <span *ngIf="submitting">
-              <span class="spinner-border spinner-border-sm me-2"></span>Saving...
+              <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>Saving...
             </span>
           </button>
           <button
@@ -508,7 +506,7 @@
             <i class="bi bi-check-circle me-2"></i>
             <span *ngIf="!submitting">{{ isEditMode ? 'Update' : 'Create' }} Booking</span>
             <span *ngIf="submitting">
-              <span class="spinner-border spinner-border-sm me-2"></span>Submitting...
+              <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>Submitting...
             </span>
           </button>
         </div>

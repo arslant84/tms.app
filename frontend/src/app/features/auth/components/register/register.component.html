@@ -238,7 +238,7 @@
             class="btn btn-primary btn-lg"
             [disabled]="registerForm.invalid || isLoading"
           >
-            <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <app-loading-spinner *ngIf="isLoading" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
             {{ isLoading ? 'Creating Account...' : 'Create Account' }}
           </button>
         </div>

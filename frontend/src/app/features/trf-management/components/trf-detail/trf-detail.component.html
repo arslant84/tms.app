@@ -59,7 +59,7 @@
       <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span>
       <!-- Loading state -->
       <span *ngIf="workflowLoading" class="badge bg-secondary">
-        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
         Loading workflow...
       </span>
       <span *ngIf="trfData.requestNumber" class="text-muted">Request Number: {{ trfData.requestNumber }}</span>
@@ -451,9 +451,7 @@
           <h5><i class="bi bi-diagram-3"></i> Approval Workflow</h5>
         </div>
         <div class="card-body text-center py-3">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading workflow...</span>
-          </div>
+          <app-loading-spinner size="lg" message="Loading workflow..."></app-loading-spinner>
           <p class="text-muted mt-2">Loading workflow status...</p>
         </div>
       </div>

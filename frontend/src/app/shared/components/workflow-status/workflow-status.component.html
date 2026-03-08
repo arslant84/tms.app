@@ -1,9 +1,7 @@
 <div class="workflow-status" *ngIf="workflow">
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-state">
-    <div class="spinner-border spinner-border-sm" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
+    <app-loading-spinner size="md" message="Loading..."></app-loading-spinner>
     <span class="ms-2">Loading workflow status...</span>
   </div>
 

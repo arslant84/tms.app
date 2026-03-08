@@ -23,7 +23,7 @@ interface BookingDetails {
 @Component({
   selector: 'app-transport-processing',
   standalone: true,
-  imports: [CommonModule, FormsModule, DepartmentNamePipe],
+  imports: [CommonModule, FormsModule, DepartmentNamePipe, LoadingSpinnerComponent],
   templateUrl: './transport-processing.component.html',
   styleUrl: './transport-processing.component.scss'
 })

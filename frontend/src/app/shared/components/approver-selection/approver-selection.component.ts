@@ -7,11 +7,12 @@ import {
   EligibleApprover,
   ApproverSelection
 } from '../../../core/services/workflow.service';
+import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-approver-selection',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './approver-selection.component.html',
   styleUrls: ['./approver-selection.component.scss']
 })

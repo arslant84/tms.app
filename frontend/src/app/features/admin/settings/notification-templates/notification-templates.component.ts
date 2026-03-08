@@ -6,11 +6,12 @@ import { TmsApp_Core_Services_NotificationsService, TmsApp_Notifications_Notific
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'tmsapp-admin-systemsettings-notification-templates',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './notification-templates.component.html',
   styleUrls: ['./notification-templates.component.scss']
 })

@@ -8,12 +8,13 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
 
 @Component({
   selector: 'app-visa-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, ApproverSelectionComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ApproverSelectionComponent, LoadingSpinnerComponent],
   templateUrl: './visa-form.component.html',
   styleUrl: './visa-form.component.scss'
 })
