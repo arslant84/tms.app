@@ -8,6 +8,7 @@ import { EnhancedWorkflowConfigComponent } from './enhanced-workflow-config/enha
 import { ToastService } from '../../../core/services/toast.service';
 import { SettingsService, ApplicationSetting, SettingUpdate } from '../../../core/services/settings.service';
 import { AppSettingsService } from '../../../core/services/app-settings.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface SettingsForm {
   application_name: string;

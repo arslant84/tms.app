@@ -6,7 +6,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { NotificationService, UserNotification } from '../../services/notification.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-notification-list',

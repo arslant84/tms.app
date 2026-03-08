@@ -8,6 +8,7 @@ import {
   TopPerformer
 } from './services/reports.service';
 import { HttpErrorHandlerService } from '../../../core/utils/http-error-handler.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface ChartData {
   labels: string[];

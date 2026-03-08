@@ -1,8 +1,7 @@
 <div class="transport-detail-container">
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Loading transport request details...</p>
+    <app-loading-spinner size="md" message="Loading transport request details..."></app-loading-spinner>
   </div>
 
   <!-- Error State -->

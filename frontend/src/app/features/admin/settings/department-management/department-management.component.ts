@@ -9,7 +9,7 @@ import { Permission } from '../../../../core/models/permission.models';
 import { Department } from '../../../../core/models/user.model';
 import { ModalService } from '../../../../core/services/modal.service';
 import { ConfirmDeleteModalComponent } from '../../../../core/components/confirm-delete-modal/confirm-delete-modal.component';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-department-management',
