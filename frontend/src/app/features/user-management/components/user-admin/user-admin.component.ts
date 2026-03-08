@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { UserService, User, Role } from '../../services/user.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
@@ -46,6 +46,10 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     { value: 'Other', label: 'Other' }
   ];
 
+  // Password visibility toggles
+  showPassword = false;
+  showConfirmPassword = false;
+
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
@@ -75,6 +79,8 @@ export class UserAdminComponent implements OnInit, OnDestroy {
       staff_id: [''],
       phone: [''],
       gender: ['']
+    }, {
+      validators: this.passwordMatchValidator
     });
   }
 
@@ -151,8 +157,10 @@ export class UserAdminComponent implements OnInit, OnDestroy {
       is_admin: false,
       is_active: true
     });
-    this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(8)]);
+    this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(8), this.passwordStrengthValidator]);
     this.userForm.get('password_confirm')?.setValidators([Validators.required]);
+    this.userForm.get('password')?.updateValueAndValidity();
+    this.userForm.get('password_confirm')?.updateValueAndValidity();
     this.showModal = true;
     // Lock body scroll
     document.body.classList.add('modal-open');
@@ -415,7 +423,136 @@ export class UserAdminComponent implements OnInit, OnDestroy {
       if (field.errors['required']) return 'This field is required';
       if (field.errors['email']) return 'Invalid email format';
       if (field.errors['minlength']) return `Minimum length is ${field.errors['minlength'].requiredLength}`;
+      if (field.errors['passwordMismatch']) return 'Passwords do not match';
+      if (field.errors['passwordStrength']) {
+        const errors = field.errors['passwordStrength'];
+        if (errors.isCommonPattern) return 'Password is too common. Please choose a stronger password';
+        if (!errors.hasUpperCase) return 'Password must contain at least one uppercase letter';
+        if (!errors.hasLowerCase) return 'Password must contain at least one lowercase letter';
+        if (!errors.hasNumber) return 'Password must contain at least one number';
+        if (!errors.isLongEnough) return 'Password must be at least 8 characters';
+        return 'Password must contain uppercase, lowercase, and number';
+      }
     }
     return '';
+  }
+
+  /**
+   * Custom validator for password strength
+   * Requires: uppercase, lowercase, number, min 8 chars
+   * Checks for common password patterns
+   */
+  private passwordStrengthValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value) return null;
+
+    const hasUpperCase = /[A-Z]/.test(value);
+    const hasLowerCase = /[a-z]/.test(value);
+    const hasNumber = /[0-9]/.test(value);
+    const isLongEnough = value.length >= 8;
+    const hasSpecialChar = /[^a-zA-Z0-9]/.test(value);
+
+    // Check for common weak patterns
+    const commonPatterns = [
+      /^password/i,
+      /^123456/,
+      /^qwerty/i,
+      /^abc123/i,
+      /^letmein/i
+    ];
+    const isCommonPattern = commonPatterns.some(pattern => pattern.test(value));
+
+    const passwordValid = hasUpperCase && hasLowerCase && hasNumber && isLongEnough && !isCommonPattern;
+
+    if (!passwordValid) {
+      return {
+        passwordStrength: {
+          hasUpperCase,
+          hasLowerCase,
+          hasNumber,
+          isLongEnough,
+          hasSpecialChar,
+          isCommonPattern
+        }
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Validator to check if password and password_confirm match
+   */
+  private passwordMatchValidator(group: AbstractControl): ValidationErrors | null {
+    const password = group.get('password')?.value;
+    const confirmPassword = group.get('password_confirm')?.value;
+
+    // Skip validation if both are empty (edit mode)
+    if (!password && !confirmPassword) {
+      return null;
+    }
+
+    if (password && confirmPassword && password !== confirmPassword) {
+      group.get('password_confirm')?.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    }
+
+    // Clear error if passwords match
+    const confirmControl = group.get('password_confirm');
+    if (confirmControl?.hasError('passwordMismatch')) {
+      confirmControl.setErrors(null);
+    }
+
+    return null;
+  }
+
+  /**
+   * Get password strength level (0-4)
+   */
+  getPasswordStrength(): number {
+    const password = this.userForm.get('password')?.value || '';
+    let strength = 0;
+
+    if (password.length >= 8) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^a-zA-Z0-9]/.test(password)) strength++;
+
+    return Math.min(strength, 4);
+  }
+
+  /**
+   * Get password strength label
+   */
+  getPasswordStrengthLabel(): string {
+    const strength = this.getPasswordStrength();
+    const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+    return labels[strength] || '';
+  }
+
+  /**
+   * Get password strength CSS class
+   */
+  getPasswordStrengthClass(): string {
+    const strength = this.getPasswordStrength();
+    if (strength <= 1) return 'strength-weak';
+    if (strength === 2) return 'strength-fair';
+    if (strength === 3) return 'strength-good';
+    return 'strength-strong';
+  }
+
+  /**
+   * Toggle password visibility
+   */
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  /**
+   * Toggle confirm password visibility
+   */
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 }

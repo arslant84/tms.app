@@ -458,6 +458,7 @@ class RegisterView(APIView):
     - All registrations are audit logged
     - No auto-login (prevents bot abuse)
     """
+    authentication_classes = []  # Public endpoint - no authentication required
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
