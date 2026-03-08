@@ -72,3 +72,4 @@ out-tsc/
 Thumbs.db
 Desktop.ini
 CODE_STANDARDS_AND_REFACTORING_GUIDE.md
+*.md
