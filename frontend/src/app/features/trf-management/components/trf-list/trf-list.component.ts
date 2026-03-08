@@ -12,6 +12,7 @@ import { filter } from 'rxjs/operators';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 // Base statuses that don't come from workflow (Draft, Approved, Rejected, etc.)
 const BASE_STATUSES = ['Draft', 'Approved', 'Rejected', 'Cancelled', 'Completed'];
@@ -39,7 +40,7 @@ export interface TrfListItem {
 @Component({
   selector: 'app-trf-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './trf-list.component.html',
   styleUrls: ['./trf-list.component.scss']
 })
