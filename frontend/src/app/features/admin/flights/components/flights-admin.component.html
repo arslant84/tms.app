@@ -57,8 +57,7 @@
 
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-container">
-    <div class="spinner"></div>
-    <p>Loading bookings...</p>
+    <app-loading-spinner size="md" message="Loading bookings..."></app-loading-spinner>
   </div>
 
   <!-- Error State -->

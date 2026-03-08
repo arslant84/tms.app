@@ -2,8 +2,7 @@
 <div class="trf-wizard-container">
   <!-- Loading State (Edit Mode) -->
   <div *ngIf="isLoadingTrf" class="loading-overlay">
-    <div class="spinner"></div>
-    <p>Loading TRF data...</p>
+    <app-loading-spinner size="md" message="Loading TRF data..."></app-loading-spinner>
   </div>
 
   <!-- Page Header -->

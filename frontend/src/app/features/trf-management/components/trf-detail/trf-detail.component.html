@@ -2,8 +2,7 @@
 <div class="trf-detail-container">
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Loading TRF details...</p>
+    <app-loading-spinner size="md" message="Loading TRF details..."></app-loading-spinner>
   </div>
 
   <!-- Error State -->

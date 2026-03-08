@@ -2,7 +2,7 @@
 <app-loading-spinner
   *ngIf="loading$ | async"
   size="lg"
-  fullScreen="true"
+  [fullScreen]="true"
   message="Loading...">
 </app-loading-spinner>
 

@@ -9,12 +9,13 @@ import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { TrfService } from '../../../trf-management/services/trf.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
 
 @Component({
   selector: 'app-accommodation-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent],
+  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent, LoadingSpinnerComponent],
   templateUrl: './accommodation-create.component.html',
   styleUrls: ['./accommodation-create.component.scss']
 })

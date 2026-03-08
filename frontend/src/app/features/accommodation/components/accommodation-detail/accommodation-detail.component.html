@@ -1,8 +1,7 @@
 <div class="accommodation-detail-container">
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Loading accommodation request details...</p>
+    <app-loading-spinner size="md" message="Loading accommodation request details..."></app-loading-spinner>
   </div>
 
   <!-- Error State -->

@@ -6,7 +6,7 @@ import { WorkflowStepExecution } from '../../../core/models/workflow.models';
 import { WorkflowService } from '../../../core/services/workflow.service';
 import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-approval-actions',
