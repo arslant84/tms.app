@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NotificationService, NotificationPreference, NotificationEventType } from '../../services/notification.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface Subscription {
   id?: number;

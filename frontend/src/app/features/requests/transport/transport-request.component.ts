@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { FormUtilsService } from '../../../core/utils/form-utils.service';
 import { Router } from '@angular/router';
-import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-transport-request',

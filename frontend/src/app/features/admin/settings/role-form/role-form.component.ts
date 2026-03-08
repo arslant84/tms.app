@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TmsApp_Core_Services_RolesService, TmsApp_Roles_Permission, TmsApp_Roles_RoleFormValues, TmsApp_Roles_RoleWithPermissions } from '../../../../core/services/roles.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-role-form',

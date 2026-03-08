@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-delete-confirm',

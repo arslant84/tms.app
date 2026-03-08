@@ -7,6 +7,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface PendingAccommodation {
   id: number;
@@ -56,7 +57,7 @@ interface BookingData {
 @Component({
   selector: 'app-accommodation-processing',
   standalone: true,
-  imports: [CommonModule, FormsModule, DepartmentNamePipe],
+  imports: [CommonModule, FormsModule, DepartmentNamePipe, LoadingSpinnerComponent],
   templateUrl: './accommodation-processing.component.html',
   styleUrl: './accommodation-processing.component.scss'
 })

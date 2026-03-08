@@ -7,7 +7,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { CurrencyFormatPipe } from '../../../core/pipes/currency-format.pipe';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
-import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-pending-approvals',

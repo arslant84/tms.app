@@ -13,6 +13,7 @@ import { TrfService } from '../../services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { RbacService } from '../../../../core/services/rbac.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-trf-wizard',
@@ -25,7 +26,8 @@ import { RbacService } from '../../../../core/services/rbac.service';
     OverseasTravelDetailsComponent,
     HomeLeaveDetailsComponent,
     ExternalPartiesDetailsComponent,
-    ApprovalSubmissionComponent
+    ApprovalSubmissionComponent,
+    LoadingSpinnerComponent
   ],
   templateUrl: './trf-wizard.component.html',
   styleUrls: ['./trf-wizard.component.scss']

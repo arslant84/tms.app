@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { TmsApp_Core_Services_WorkflowsService, TmsApp_Workflows_WorkflowModuleWithSteps, TmsApp_Workflows_WorkflowStepFormValues, TmsApp_Workflows_WorkflowStep } from '../../../../core/services/workflows.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'tmsapp-admin-systemsettings-workflow-configuration',

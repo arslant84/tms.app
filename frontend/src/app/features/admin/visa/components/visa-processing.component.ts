@@ -6,6 +6,7 @@ import { VisaService, VisaApplication } from '../../../visa/services/visa.servic
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface PendingVisa {
   id: number;

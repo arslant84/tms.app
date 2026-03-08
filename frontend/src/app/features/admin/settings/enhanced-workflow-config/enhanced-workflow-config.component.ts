@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 import { WorkflowStepNotificationConfig } from '../../../../core/models/workflow.models';
 import { StepNotificationConfigComponent } from '../step-notification-config/step-notification-config.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface WorkflowStepConfig {
   order: number;

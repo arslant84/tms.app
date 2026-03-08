@@ -7,6 +7,7 @@ import { StatusUtilsService } from '../../../../core/utils/status-utils.service'
 import { WorkflowService, ApproverSelection } from '../../../../core/services/workflow.service';
 import { WorkflowTemplate, WorkflowStep } from '../../../../core/models/workflow.models';
 import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 export interface ApprovalStep {
   role: string;

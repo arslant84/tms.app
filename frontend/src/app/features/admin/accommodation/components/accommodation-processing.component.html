@@ -147,8 +147,7 @@
 
           <!-- Loading State for Calendar -->
           <div *ngIf="isLoadingBookings" class="calendar-loading">
-            <div class="spinner"></div>
-            <p>Loading calendar data...</p>
+            <app-loading-spinner size="md" message="Loading calendar data..."></app-loading-spinner>
           </div>
         </div>
 
@@ -161,8 +160,7 @@
 
           <!-- Loading State -->
           <div *ngIf="isLoadingPending" class="loading-container">
-            <div class="spinner"></div>
-            <p>Loading pending accommodations...</p>
+            <app-loading-spinner size="md" message="Loading pending accommodations..."></app-loading-spinner>
           </div>
 
           <!-- Error State -->
@@ -398,8 +396,7 @@
 
       <!-- Loading State -->
       <div *ngIf="isLoadingBooked" class="loading-container">
-        <div class="spinner"></div>
-        <p>Loading booked accommodations...</p>
+        <app-loading-spinner size="md" message="Loading booked accommodations..."></app-loading-spinner>
       </div>
 
       <!-- Empty State -->

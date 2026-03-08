@@ -7,7 +7,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-flights-admin',

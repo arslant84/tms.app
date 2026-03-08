@@ -12,7 +12,7 @@ import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-transport-detail',
