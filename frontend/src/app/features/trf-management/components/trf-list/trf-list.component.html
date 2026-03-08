@@ -71,19 +71,19 @@
         <h3 class="card-title">My TSRs</h3>
       </div>
       <p class="card-description">
-        List of your submitted travel requests. Total:
-        <span *ngIf="(listState.loading | async) && listState.getTotalItems() === 0" class="loading-inline">
-          <i class="bi bi-arrow-clockwise spin-animation"></i>
-        </span>
-        <span *ngIf="!(listState.loading | async) || listState.getTotalItems() > 0">{{ listState.getTotalItems() }}</span>
+        List of your submitted travel requests. Total: {{ listState.getTotalItems() }}
       </p>
     </div>
 
     <div class="tsr-card-content">
-      <!-- Loading State -->
+      <!-- Loading State (Initial Load) -->
       <div *ngIf="(listState.loading | async) && trfs.length === 0" class="loading-state">
-        <i class="bi bi-arrow-clockwise spin-animation"></i>
-        <p class="loading-text">Loading TSRs...</p>
+        <app-loading-spinner size="lg" message="Loading TSRs..."></app-loading-spinner>
+      </div>
+
+      <!-- Loading Overlay (Pagination Navigation) -->
+      <div *ngIf="(listState.loading | async) && trfs.length > 0" class="loading-overlay">
+        <app-loading-spinner size="md" message="Loading..."></app-loading-spinner>
       </div>
 
       <!-- Error State -->

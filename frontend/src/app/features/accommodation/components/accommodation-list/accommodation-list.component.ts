@@ -7,6 +7,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 export const ACCOMMODATION_STATUSES = [
   'Draft',
@@ -22,7 +23,7 @@ export const ACCOMMODATION_STATUSES = [
 @Component({
   selector: 'app-accommodation-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LoadingSpinnerComponent],
   templateUrl: './accommodation-list.component.html',
   styleUrls: ['./accommodation-list.component.scss']
 })
