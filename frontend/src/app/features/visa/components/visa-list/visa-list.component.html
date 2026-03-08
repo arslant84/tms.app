@@ -71,19 +71,19 @@
         <h3 class="card-title">My Visa Applications</h3>
       </div>
       <p class="card-description">
-        List of your submitted visa applications. Total:
-        <span *ngIf="(listState.loading | async) && listState.getTotalItems() === 0" class="loading-inline">
-          <i class="bi bi-arrow-clockwise spin-animation"></i>
-        </span>
-        <span *ngIf="!(listState.loading | async) || listState.getTotalItems() > 0">{{ listState.getTotalItems() }}</span>
+        List of your submitted visa applications. Total: {{ listState.getTotalItems() }}
       </p>
     </div>
 
     <div class="visa-card-content">
-      <!-- Loading State -->
-      <div *ngIf="(listState.loading | async)" class="loading-state">
-        <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
-        <p class="loading-text">Loading visa applications...</p>
+      <!-- Loading State (Initial Load) -->
+      <div *ngIf="(listState.loading | async) && applications.length === 0" class="loading-state">
+        <app-loading-spinner size="lg" message="Loading visa applications..."></app-loading-spinner>
+      </div>
+
+      <!-- Loading Overlay (Pagination Navigation) -->
+      <div *ngIf="(listState.loading | async) && applications.length > 0" class="loading-overlay">
+        <app-loading-spinner size="md" message="Loading..."></app-loading-spinner>
       </div>
 
       <!-- Empty State -->

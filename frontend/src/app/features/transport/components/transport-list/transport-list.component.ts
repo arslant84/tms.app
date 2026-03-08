@@ -8,6 +8,7 @@ import { AppSettingsService } from '../../../../core/services/app-settings.servi
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 // Status constants for filtering (broad categories to match workflow statuses)
 export const TRANSPORT_STATUSES = [
@@ -22,7 +23,7 @@ export const TRANSPORT_STATUSES = [
 @Component({
   selector: 'app-transport-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LoadingSpinnerComponent],
   templateUrl: './transport-list.component.html',
   styleUrls: ['./transport-list.component.scss']
 })

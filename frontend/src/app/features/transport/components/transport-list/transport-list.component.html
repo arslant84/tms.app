@@ -60,10 +60,14 @@
       <p class="card-description">Total: {{ listState.getTotalItems() }} requests</p>
     </div>
 
-    <!-- Loading State -->
-    <div *ngIf="(listState.loading | async)" class="loading-state">
-      <i class="bi bi-arrow-clockwise spin-animation"></i>
-      <p>Loading transport requests...</p>
+    <!-- Loading State (Initial Load) -->
+    <div *ngIf="(listState.loading | async) && requests.length === 0" class="loading-state">
+      <app-loading-spinner size="lg" message="Loading transport requests..."></app-loading-spinner>
+    </div>
+
+    <!-- Loading Overlay (Pagination Navigation) -->
+    <div *ngIf="(listState.loading | async) && requests.length > 0" class="loading-overlay">
+      <app-loading-spinner size="md" message="Loading..."></app-loading-spinner>
     </div>
 
     <!-- Error State -->
