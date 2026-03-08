@@ -149,7 +149,7 @@
                 </button>
                 <button class="btn btn-sm btn-outline-primary btn-icon" (click)="completeTransport(request)" [disabled]="isProcessing" title="Complete Transport">
                   <i class="bi bi-check-circle" *ngIf="!isProcessing"></i>
-                  <span class="spinner-border spinner-border-sm" *ngIf="isProcessing"></span>
+                  <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
                 </button>
               </div>
             </div>
@@ -303,7 +303,7 @@
             Assign Vehicle & Start Processing
           </span>
           <span *ngIf="isLoading">
-            <span class="spinner-border spinner-border-sm me-2"></span>
+            <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
             Assigning...
           </span>
         </button>

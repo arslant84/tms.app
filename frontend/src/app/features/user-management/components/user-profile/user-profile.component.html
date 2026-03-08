@@ -10,9 +10,7 @@
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-container">
     <div class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
+      <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
       <p class="mt-3 text-muted">Loading profile...</p>
     </div>
   </div>
@@ -141,7 +139,7 @@
             <i *ngIf="!submitting" class="bi bi-save me-2"></i>
             <span *ngIf="!submitting">Save Changes</span>
             <span *ngIf="submitting">
-              <span class="spinner-border spinner-border-sm me-2"></span>Saving...
+              <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>Saving...
             </span>
           </button>
         </div>
@@ -212,7 +210,7 @@
           <button type="submit" class="btn btn-primary" [disabled]="submitting || passwordForm.invalid">
             <span *ngIf="!submitting">Change Password</span>
             <span *ngIf="submitting">
-              <span class="spinner-border spinner-border-sm me-2"></span>Changing...
+              <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>Changing...
             </span>
           </button>
         </div>

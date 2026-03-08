@@ -26,7 +26,7 @@ interface ModuleWorkflowConfig {
 @Component({
   selector: 'app-enhanced-workflow-config',
   standalone: true,
-  imports: [CommonModule, FormsModule, StepNotificationConfigComponent],
+  imports: [CommonModule, FormsModule, StepNotificationConfigComponent, LoadingSpinnerComponent],
   templateUrl: './enhanced-workflow-config.component.html',
   styleUrls: ['./enhanced-workflow-config.component.scss']
 })

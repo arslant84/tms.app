@@ -18,7 +18,7 @@ interface Subscription {
 @Component({
   selector: 'app-notification-preferences',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, LoadingSpinnerComponent],
   templateUrl: './notification-preferences.component.html',
   styleUrls: ['./notification-preferences.component.scss']
 })

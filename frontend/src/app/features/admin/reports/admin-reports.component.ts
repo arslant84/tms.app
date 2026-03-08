@@ -24,7 +24,7 @@ interface ChartData {
 @Component({
   selector: 'app-admin-reports',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './admin-reports.component.html',
   styleUrl: './admin-reports.component.scss'
 })

@@ -9,11 +9,12 @@ import { DepartmentService } from '../../../../core/services/department.service'
 import { ToastService } from '../../../../core/services/toast.service';
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import { DepartmentListItem } from '../../../../core/models/user.model';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss']
 })

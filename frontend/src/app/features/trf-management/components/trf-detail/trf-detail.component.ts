@@ -11,11 +11,12 @@ import { ApprovalActionsComponent } from '../../../../shared/components/approval
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-trf-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, WorkflowStatusComponent, ApprovalActionsComponent],
+  imports: [CommonModule, RouterModule, WorkflowStatusComponent, ApprovalActionsComponent, LoadingSpinnerComponent],
   templateUrl: './trf-detail.component.html',
   styleUrls: ['./trf-detail.component.scss']
 })

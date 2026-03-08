@@ -8,11 +8,12 @@ import { DepartmentService } from '../../../../core/services/department.service'
 import { DepartmentListItem } from '../../../../core/models/user.model';
 import { ModalService } from '../../../../core/services/modal.service';
 import { ConfirmDeleteModalComponent } from '../../../../core/components/confirm-delete-modal/confirm-delete-modal.component';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-user-admin',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './user-admin.component.html',
   styleUrls: ['./user-admin.component.scss']
 })
