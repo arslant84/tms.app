@@ -95,6 +95,14 @@ export class FlightListComponent implements OnInit, OnDestroy {
         this.listState.setLoading(false);
       },
       error: (err) => {
+        // Handle "Invalid page" error from DRF pagination
+        if (err.error?.detail === 'Invalid page.' || err.statusText === 'Not Found') {
+          // Reset to first page and retry
+          this.listState.resetToFirstPage();
+          this.fetchBookings();
+          return;
+        }
+
         console.error('Error fetching bookings:', err);
         this.listState.setError('Failed to load flight bookings');
         this.listState.setLoading(false);

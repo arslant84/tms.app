@@ -3,6 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -149,6 +150,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
     queryset = AccommodationRequest.objects.all()
     serializer_class = AccommodationRequestSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = PageNumberPagination
 
     # Search across key fields
     search_fields = ['requestor_name', 'staff_id', 'department', 'request_number']

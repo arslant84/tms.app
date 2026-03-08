@@ -86,6 +86,14 @@ export class TransportListComponent implements OnInit, OnDestroy {
         this.listState.setLoading(false);
       },
       error: (err) => {
+        // Handle "Invalid page" error from DRF pagination
+        if (err.error?.detail === 'Invalid page.' || err.statusText === 'Not Found') {
+          // Reset to first page and retry
+          this.listState.resetToFirstPage();
+          this.fetchRequests();
+          return;
+        }
+
         this.listState.setError('Failed to load transport requests');
         this.listState.setLoading(false);
       }

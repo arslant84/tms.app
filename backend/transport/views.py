@@ -3,6 +3,7 @@ from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
@@ -30,6 +31,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
     Supports CRUD operations and custom actions for workflow
     """
     permission_classes = [IsAuthenticated]
+    pagination_class = PageNumberPagination
 
     # Search across key fields
     search_fields = ['purpose', 'request_number', 'requestor_name', 'staff_id', 'department', 'requestor__email', 'requestor__name']
