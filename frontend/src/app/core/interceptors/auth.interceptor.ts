@@ -22,9 +22,15 @@ export const AuthInterceptor: HttpInterceptorFn = (
   // SECURITY: Token is now in HttpOnly cookie (automatically sent by browser)
   // No need to manually add Authorization header
 
-  // Clone the request and add withCredentials to include cookies
+  // Skip sending credentials for public endpoints
+  const isPublicEndpoint = request.url.includes('/api/register/') ||
+                          request.url.includes('/api/departments/active/') ||
+                          request.url.includes('/api/login/') ||
+                          request.url.includes('/api/password/reset/');
+
+  // Clone the request and add withCredentials to include cookies (except for public endpoints)
   const authReq = request.clone({
-    withCredentials: true  // Enables sending/receiving cookies
+    withCredentials: !isPublicEndpoint  // Only send cookies for protected endpoints
   });
 
   // Handle the authenticated request

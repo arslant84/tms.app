@@ -384,6 +384,52 @@
   color: vars.$gray-500;
 }
 
+// Password Strength Indicator
+.password-strength {
+  margin-top: vars.$spacing-2;
+
+  .strength-bar {
+    height: 4px;
+    background-color: vars.$gray-200;
+    border-radius: vars.$radius-sm;
+    overflow: hidden;
+    margin-bottom: vars.$spacing-1;
+
+    .strength-fill {
+      height: 100%;
+      transition: width 0.3s ease, background-color 0.3s ease;
+      border-radius: vars.$radius-sm;
+    }
+  }
+
+  .strength-label {
+    font-size: vars.$font-size-xs;
+    font-weight: vars.$font-weight-medium;
+    display: block;
+  }
+
+  // Strength colors
+  .strength-weak {
+    background-color: vars.$error-color;
+    color: vars.$error-color;
+  }
+
+  .strength-fair {
+    background-color: vars.$warning-color;
+    color: vars.$warning-color;
+  }
+
+  .strength-good {
+    background-color: vars.$info-color;
+    color: vars.$info-color;
+  }
+
+  .strength-strong {
+    background-color: vars.$success-color;
+    color: vars.$success-color;
+  }
+}
+
 // Responsive
 @media (width <= 768px) {
   .container-fluid {

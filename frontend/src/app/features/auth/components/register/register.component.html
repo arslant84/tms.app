@@ -22,11 +22,15 @@
               id="email"
               formControlName="email"
               placeholder="name@example.com"
+              autocomplete="email"
               [ngClass]="{'is-invalid': hasError('email')}"
             >
           </div>
           <div *ngIf="hasError('email')" class="invalid-feedback d-block mt-1 ms-1">
             {{ getErrorMessage('email') }}
+          </div>
+          <div *ngIf="registerForm.get('email')?.hasError('serverError')" class="invalid-feedback d-block mt-1 ms-1">
+            {{ registerForm.get('email')?.errors?.['serverError'] }}
           </div>
         </div>
 
@@ -91,13 +95,16 @@
               [ngClass]="{'is-invalid': hasError('department')}"
             >
               <option value="">Select Department</option>
-              <option *ngFor="let dept of departments" [value]="dept.name">
+              <option *ngFor="let dept of departments" [value]="dept.id">
                 {{ dept.name }}
               </option>
             </select>
           </div>
           <div *ngIf="hasError('department')" class="invalid-feedback d-block mt-1 ms-1">
             {{ getErrorMessage('department') }}
+          </div>
+          <div *ngIf="registerForm.get('department')?.hasError('serverError')" class="invalid-feedback d-block mt-1 ms-1">
+            {{ registerForm.get('department')?.errors?.['serverError'] }}
           </div>
         </div>
 
@@ -158,8 +165,11 @@
           <div *ngIf="hasError('password')" class="invalid-feedback d-block mt-1 ms-1">
             {{ getErrorMessage('password') }}
           </div>
+          <div *ngIf="registerForm.get('password')?.hasError('serverError')" class="invalid-feedback d-block mt-1 ms-1">
+            {{ registerForm.get('password')?.errors?.['serverError'] }}
+          </div>
           <small class="form-text text-muted d-block mt-1">
-            Must be at least 8 characters with uppercase, lowercase, and number
+            Must be at least 8 characters with uppercase, lowercase, and number. Avoid common passwords.
           </small>
         </div>
 
@@ -186,6 +196,9 @@
           </div>
           <div *ngIf="hasError('password_confirm')" class="invalid-feedback d-block mt-1 ms-1">
             {{ getErrorMessage('password_confirm') }}
+          </div>
+          <div *ngIf="registerForm.get('password_confirm')?.hasError('serverError')" class="invalid-feedback d-block mt-1 ms-1">
+            {{ registerForm.get('password_confirm')?.errors?.['serverError'] }}
           </div>
         </div>
 

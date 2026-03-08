@@ -229,29 +229,63 @@
             <!-- Password (only for create) -->
             <div class="col-md-6" *ngIf="!isEditMode">
               <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-              <input
-                type="password"
-                id="password"
-                class="form-control"
-                formControlName="password"
-                [class.is-invalid]="isFieldInvalid('password')"
-                placeholder="Min 8 characters">
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('password')">
+              <div class="input-group">
+                <input
+                  [type]="showPassword ? 'text' : 'password'"
+                  id="password"
+                  class="form-control"
+                  formControlName="password"
+                  [class.is-invalid]="isFieldInvalid('password')"
+                  placeholder="Min 8 characters">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="togglePasswordVisibility()">
+                  <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                </button>
+              </div>
+
+              <!-- Password strength indicator -->
+              <div *ngIf="userForm.get('password')?.value" class="password-strength mt-2">
+                <div class="strength-bar">
+                  <div
+                    class="strength-fill"
+                    [ngClass]="getPasswordStrengthClass()"
+                    [style.width.%]="getPasswordStrength() * 25"
+                  ></div>
+                </div>
+                <small class="strength-label" [ngClass]="getPasswordStrengthClass()">
+                  {{ getPasswordStrengthLabel() }}
+                </small>
+              </div>
+
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('password')" style="display: block;">
                 {{ getFieldError('password') }}
               </div>
+              <small class="form-text text-muted d-block mt-1">
+                Must be at least 8 characters with uppercase, lowercase, and number. Avoid common passwords.
+              </small>
             </div>
 
             <!-- Confirm Password (only for create) -->
             <div class="col-md-6" *ngIf="!isEditMode">
               <label for="password_confirm" class="form-label">Confirm Password <span class="text-danger">*</span></label>
-              <input
-                type="password"
-                id="password_confirm"
-                class="form-control"
-                formControlName="password_confirm"
-                [class.is-invalid]="isFieldInvalid('password_confirm')"
-                placeholder="Confirm password">
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('password_confirm')">
+              <div class="input-group">
+                <input
+                  [type]="showConfirmPassword ? 'text' : 'password'"
+                  id="password_confirm"
+                  class="form-control"
+                  formControlName="password_confirm"
+                  [class.is-invalid]="isFieldInvalid('password_confirm')"
+                  placeholder="Confirm password">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="toggleConfirmPasswordVisibility()">
+                  <i [class]="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                </button>
+              </div>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('password_confirm')" style="display: block;">
                 {{ getFieldError('password_confirm') }}
               </div>
             </div>

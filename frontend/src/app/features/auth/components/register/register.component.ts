@@ -87,6 +87,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   /**
    * Custom validator for password strength
    * Requires: uppercase, lowercase, number, min 8 chars
+   * Note: Backend has additional validation (common passwords, similarity to user attributes)
    */
   private passwordStrengthValidator(control: AbstractControl): ValidationErrors | null {
     const value = control.value;
@@ -96,8 +97,19 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const hasLowerCase = /[a-z]/.test(value);
     const hasNumber = /[0-9]/.test(value);
     const isLongEnough = value.length >= 8;
+    const hasSpecialChar = /[^a-zA-Z0-9]/.test(value);
 
-    const passwordValid = hasUpperCase && hasLowerCase && hasNumber && isLongEnough;
+    // Check for common weak patterns
+    const commonPatterns = [
+      /^password/i,
+      /^123456/,
+      /^qwerty/i,
+      /^abc123/i,
+      /^letmein/i
+    ];
+    const isCommonPattern = commonPatterns.some(pattern => pattern.test(value));
+
+    const passwordValid = hasUpperCase && hasLowerCase && hasNumber && isLongEnough && !isCommonPattern;
 
     if (!passwordValid) {
       return {
@@ -105,7 +117,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
           hasUpperCase,
           hasLowerCase,
           hasNumber,
-          isLongEnough
+          isLongEnough,
+          hasSpecialChar,
+          isCommonPattern
         }
       };
     }
@@ -256,7 +270,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
       return `Must be at least ${minLength} characters`;
     }
     if (field.hasError('passwordMismatch')) return 'Passwords do not match';
-    if (field.hasError('passwordStrength')) return 'Password must contain uppercase, lowercase, and number';
+    if (field.hasError('passwordStrength')) {
+      const errors = field.errors['passwordStrength'];
+      if (errors.isCommonPattern) return 'Password is too common. Please choose a stronger password';
+      if (!errors.hasUpperCase) return 'Password must contain at least one uppercase letter';
+      if (!errors.hasLowerCase) return 'Password must contain at least one lowercase letter';
+      if (!errors.hasNumber) return 'Password must contain at least one number';
+      if (!errors.isLongEnough) return 'Password must be at least 8 characters';
+      return 'Password must contain uppercase, lowercase, and number';
+    }
 
     return 'Invalid value';
   }
@@ -290,6 +312,24 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     const formData = this.registerForm.value;
 
+    // Debug logging
+    console.log('=== REGISTRATION FORM SUBMISSION ===');
+    console.log('Form valid:', this.registerForm.valid);
+    console.log('Form data:', {
+      email: formData.email,
+      name: formData.name,
+      staff_id: formData.staff_id || '(empty)',
+      phone: formData.phone || '(empty)',
+      department: formData.department,
+      gender: formData.gender || '(empty)',
+      password: '[REDACTED]',
+      password_confirm: '[REDACTED]',
+      profile_photo: formData.profile_photo ? '[BASE64_DATA]' : null
+    });
+    console.log('Available departments:', this.departments);
+    console.log('Selected department value:', formData.department);
+    console.log('====================================');
+
     this.authService.register(formData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -311,20 +351,42 @@ export class RegisterComponent implements OnInit, OnDestroy {
         },
         error: (err: any) => {
           this.isLoading = false;
+
+          // Debug logging
+          console.error('Registration error:', err);
+          console.error('Error response:', err.error);
+          console.error('Error status:', err.status);
+          console.error('Full error object:', JSON.stringify(err.error, null, 2));
+
+          // Handle rate limiting (403/429)
+          if (err.status === 403 || err.status === 429) {
+            this.toastService.error('Too many registration attempts. Please try again later.');
+            return;
+          }
+
           const message = this.errorHandler.getErrorMessage(err);
 
           // Apply field errors if available
-          if (err.error?.errors) {
-            const fieldErrors = this.errorHandler.getFieldErrors(err);
+          const fieldErrors = this.errorHandler.getFieldErrors(err);
+          if (Object.keys(fieldErrors).length > 0) {
+            console.log('Field errors detected:');
+            Object.entries(fieldErrors).forEach(([field, error]) => {
+              console.log(`  - ${field}: ${error}`);
+            });
+
             Object.keys(fieldErrors).forEach(field => {
               const control = this.registerForm.get(field);
               if (control) {
                 control.setErrors({ serverError: fieldErrors[field] });
+                control.markAsTouched();
               }
             });
-          }
 
-          this.toastService.error(message);
+            // Show specific field errors to user
+            this.toastService.error('Registration failed. Please check the form for errors.');
+          } else {
+            this.toastService.error(message);
+          }
         }
       });
   }
