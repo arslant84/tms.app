@@ -237,6 +237,7 @@
         }
 
         .fw-medium {
+          font-family: vars.$font-mono;
           font-weight: vars.$font-weight-semibold;
           color: vars.$primary-color;
         }

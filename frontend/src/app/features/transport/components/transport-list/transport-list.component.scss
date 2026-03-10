@@ -265,6 +265,7 @@
 
 // Request Number Styling
 .request-number {
+  font-family: vars.$font-mono;
   color: vars.$primary-color;
   font-weight: vars.$font-weight-semibold;
 }
