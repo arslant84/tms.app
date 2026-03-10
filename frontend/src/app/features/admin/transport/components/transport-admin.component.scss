@@ -332,6 +332,7 @@ $gray-900: #1F2937; // Darkest text
         }
 
         .fw-medium {
+          font-family: vars.$font-mono;
           font-weight: vars.$font-weight-semibold;
           color: $primary;
         }
