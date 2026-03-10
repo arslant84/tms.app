@@ -462,7 +462,7 @@
       vertical-align: middle;
       color: vars.$gray-700;
     }
-    .request-id { font-weight: vars.$font-weight-semibold; color: vars.$primary-color; }
+    .request-id { font-family: vars.$font-mono; font-weight: vars.$font-weight-semibold; color: vars.$primary-color; }
   }
 }
 

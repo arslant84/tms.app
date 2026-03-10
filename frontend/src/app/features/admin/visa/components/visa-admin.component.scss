@@ -320,7 +320,9 @@
             color: vars.$gray-900;
           }
 
+          // Request number links use monospace font
           a.fw-medium {
+            font-family: vars.$font-mono;
             color: vars.$primary-color;
 
             &:hover {

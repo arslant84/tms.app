@@ -243,11 +243,12 @@ $gray-900: #1F2937; // Darkest text
   }
 }
 
+.id-cell .request-number,
 .request-number {
-  font-family: 'Courier New', monospace;
+  font-family: vars.$font-mono;
   font-weight: vars.$font-weight-semibold;
   font-size: vars.$font-size-sm;
-  color: $primary;
+  color: vars.$primary-color;
 }
 
 .purpose-cell {

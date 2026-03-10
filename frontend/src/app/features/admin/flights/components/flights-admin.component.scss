@@ -149,8 +149,10 @@
   }
 }
 
-// Primary Custom Color
+// Primary Custom Color (Request Numbers)
 .text-primary-custom {
+  font-family: vars.$font-mono;
+  font-weight: vars.$font-weight-semibold;
   color: vars.$primary-color !important;
 }
 
