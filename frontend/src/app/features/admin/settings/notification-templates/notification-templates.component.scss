@@ -380,7 +380,7 @@
             display: inline-block;
             padding: vars.$spacing-1 0.5rem;
             font-size: vars.$font-size-xs;
-            font-family: 'Courier New', monospace;
+            font-family: vars.$font-mono;
             background-color: vars.$gray-100;
             border: 1px solid vars.$gray-300;
             border-radius: 0.25rem;

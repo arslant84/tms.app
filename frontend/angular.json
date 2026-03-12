@@ -36,17 +36,7 @@
                 "input": "node_modules/bootstrap-icons/font/fonts",
                 "output": "/media"
               },
-              {
-                "glob": "**/*.woff",
-                "input": "node_modules/@fontsource/raleway/files",
-                "output": "/media"
-              },
-              {
-                "glob": "**/*.woff2",
-                "input": "node_modules/@fontsource/raleway/files",
-                "output": "/media"
-              }
-            ],
+                          ],
             "styles": [
               {
                 "input": "public/css/bootstrap.fixed.min.css",
@@ -54,9 +44,6 @@
                 "bundleName": "bootstrap"
               },
               "node_modules/bootstrap-icons/font/bootstrap-icons.min.css",
-              "node_modules/@fontsource/raleway/300.css",
-              "node_modules/@fontsource/raleway/700.css",
-              "node_modules/@fontsource/raleway/900.css",
               "src/styles.scss"
             ],
             "scripts": [

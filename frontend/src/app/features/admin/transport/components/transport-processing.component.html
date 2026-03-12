@@ -74,7 +74,7 @@
               <div class="request-main">
                 <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
                 <div class="text-muted small">
-                  {{ request.department || 'N/A' }} • ID: {{ request.request_number || request.id }}
+                  {{ request.department || 'N/A' }} • ID: <a href="javascript:void(0)" (click)="viewRequest(request.id)" class="text-decoration-none">{{ request.request_number || request.id }}</a>
                 </div>
                 <div class="text-muted small mt-1">
                   <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}
@@ -125,7 +125,7 @@
               <div class="request-main">
                 <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
                 <div class="text-muted small">
-                  {{ request.department || 'N/A' }} • ID: {{ request.request_number || request.id }}
+                  {{ request.department || 'N/A' }} • ID: <a href="javascript:void(0)" (click)="viewRequest(request.id)" class="text-decoration-none">{{ request.request_number || request.id }}</a>
                 </div>
                 <div class="text-muted small mt-1">
                   <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}
@@ -174,7 +174,7 @@
               <div class="request-main">
                 <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
                 <div class="text-muted small">
-                  {{ request.department || 'N/A' }} • ID: {{ request.request_number || request.id }}
+                  {{ request.department || 'N/A' }} • ID: <a href="javascript:void(0)" (click)="viewRequest(request.id)" class="text-decoration-none">{{ request.request_number || request.id }}</a>
                 </div>
                 <div class="text-muted small mt-1">
                   <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}

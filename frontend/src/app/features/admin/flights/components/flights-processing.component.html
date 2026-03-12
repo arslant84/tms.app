@@ -115,7 +115,11 @@
                   <tr
                     *ngFor="let trf of filteredPendingTrfs"
                     [class.selected]="selectedTrf?.id === trf.id">
-                    <td class="fw-medium text-primary-custom">{{ trf.request_number }}</td>
+                    <td class="request-id">
+                      <a href="javascript:void(0)" (click)="viewTrf(trf.id)" class="text-decoration-none fw-medium">
+                        {{ trf.request_number }}
+                      </a>
+                    </td>
                     <td>{{ trf.requestorName }}</td>
                     <td>
                       <span class="badge" [class]="getTravelTypeBadgeClass(trf.travelType)">

@@ -1,4 +1,5 @@
 // Using Unified Design System
+@use 'sass:color';
 @use '../../../../../styles/variables' as vars;
 
 // Petronas Green Color Scheme (from pctsb.syntra reference)
@@ -159,6 +160,17 @@ $border-light: #dee2e6;
       font-size: vars.$font-size-base;
       color: $text-dark;
       margin-bottom: 0.25rem;
+    }
+
+    // Request ID links within the text-muted area
+    .text-muted a {
+      font-family: vars.$font-mono;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$primary-color;
+
+      &:hover {
+        color: color.adjust(vars.$primary-color, $lightness: -10%);
+      }
     }
   }
 

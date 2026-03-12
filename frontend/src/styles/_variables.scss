@@ -87,10 +87,10 @@ $status-completed: $primary-color;
 // TYPOGRAPHY SYSTEM
 // ============================================================================
 
-// Font Families
-$font-primary: 'Raleway', -apple-system, blinkmacsystemfont, 'Segoe UI', sans-serif;
-$font-secondary: 'Verdana', sans-serif;
-$font-mono: 'Courier New', monospace;
+// Font Families (Microsoft Azure / Fluent 2 Style)
+$font-primary: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
+$font-secondary: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-mono: 'Cascadia Code', 'Cascadia Mono', Consolas, 'Courier New', monospace;
 
 // Font Sizes
 $font-size-xs: 0.75rem;      // 12px

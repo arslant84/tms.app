@@ -223,9 +223,15 @@
         }
       }
 
-      .fw-medium {
+      // Request number links use monospace font
+      a.fw-medium {
+        font-family: vars.$font-mono;
         font-weight: vars.$font-weight-semibold;
         color: vars.$primary-color;
+
+        &:hover {
+          color: color.adjust(vars.$primary-color, $lightness: -10%);
+        }
       }
     }
   }

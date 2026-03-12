@@ -1,4 +1,5 @@
 // Using Unified Design System
+@use 'sass:color';
 @use '../../../../../styles/variables' as vars;
 
 /**
@@ -331,10 +332,15 @@ $gray-900: #1F2937; // Darkest text
           vertical-align: middle;
         }
 
-        .fw-medium {
+        // Request number links use monospace font
+        a.fw-medium {
           font-family: vars.$font-mono;
           font-weight: vars.$font-weight-semibold;
           color: $primary;
+
+          &:hover {
+            color: color.adjust($primary, $lightness: -10%);
+          }
         }
       }
     }

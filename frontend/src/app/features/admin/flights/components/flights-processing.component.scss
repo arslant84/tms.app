@@ -1,6 +1,7 @@
 /**
  * Flights Processing - Using Unified Design System
  */
+@use 'sass:color';
 @use '../../../../../styles/variables' as vars;
 
 // Container
@@ -296,6 +297,19 @@
   font-family: vars.$font-mono;
   font-weight: vars.$font-weight-semibold;
   color: vars.$primary-color !important;
+}
+
+// Request ID cell styling
+.request-id {
+  a.fw-medium {
+    font-family: vars.$font-mono;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$primary-color;
+
+    &:hover {
+      color: color.adjust(vars.$primary-color, $lightness: -10%);
+    }
+  }
 }
 
 // Icon Styles
