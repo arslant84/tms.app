@@ -1,6 +1,58 @@
 // User Admin Component - Using Unified Design System
 @use '../../../../../styles/variables' as vars;
 
+// ========== PAGE HEADER ==========
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: vars.$spacing-8;
+  gap: vars.$spacing-4;
+  flex-wrap: wrap;
+
+  @media (width <= 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-content {
+    .page-title {
+      font-size: vars.$font-size-2xl;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$gray-900;
+      letter-spacing: -0.025em;
+      margin: 0 0 vars.$spacing-2;
+      display: flex;
+      align-items: center;
+
+      i {
+        color: vars.$primary-color;
+      }
+    }
+
+    .page-subtitle {
+      color: vars.$gray-500;
+      font-size: vars.$font-size-sm;
+      margin: 0;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: vars.$spacing-3;
+
+    .btn-primary {
+      background-color: vars.$primary-color;
+      border-color: vars.$primary-color;
+
+      &:hover {
+        background-color: vars.$primary-hover;
+        border-color: vars.$primary-hover;
+      }
+    }
+  }
+}
+
 .container-fluid {
   /* Full-width adaptive layout */
   width: 100%;

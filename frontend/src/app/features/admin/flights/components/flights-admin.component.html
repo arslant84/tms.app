@@ -98,7 +98,9 @@
           <tbody>
             <tr *ngFor="let booking of filteredBookings">
               <td>
-                <div class="fw-medium text-primary-custom">{{ booking.booking_reference }}</div>
+                <a href="javascript:void(0)" (click)="viewBooking(booking)" class="text-decoration-none fw-medium text-primary-custom">
+                  {{ booking.booking_reference }}
+                </a>
                 <div *ngIf="booking.ticket_number" class="small text-muted">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-xs me-1">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3v.75m-9-3h.375m-.375 3h.375m0-6h.375m-.375-3h.375M9 12.75h.375M3.75 12h.375m-.375-3h.375m-.375-3h.375M9 6.75h.375M6 18.75h.375m-.375-3h.375M9 15.75h.375m9 3h.375M9 9.75h.375M18.75 18.75h.375M18.75 15.75h.375M18.75 12.75h.375M18.75 9.75h.375M18.75 6.75h.375M6 3.75h12M6 20.25h12" />
