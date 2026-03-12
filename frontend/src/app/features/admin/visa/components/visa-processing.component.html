@@ -117,7 +117,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let app of pendingVisas">
-            <td class="fw-medium">{{ app.request_number }}</td>
+            <td>
+              <a href="javascript:void(0)" (click)="viewApplication(app.id)" class="text-decoration-none fw-medium">
+                {{ app.request_number }}
+              </a>
+            </td>
             <td>
               <div class="fw-medium">{{ app.requestorName }}</div>
               <small class="text-muted" *ngIf="app.staffId">{{ app.staffId }}</small>
@@ -201,7 +205,11 @@
             </thead>
             <tbody>
               <tr *ngFor="let visa of completedVisas">
-                <td class="fw-medium">{{ visa.request_number }}</td>
+                <td>
+                  <a href="javascript:void(0)" (click)="viewApplication(visa.id)" class="text-decoration-none fw-medium">
+                    {{ visa.request_number }}
+                  </a>
+                </td>
                 <td>
                   <div class="fw-medium">{{ visa.requestorName }}</div>
                   <small class="text-muted" *ngIf="visa.staffId">{{ visa.staffId }}</small>

@@ -140,7 +140,11 @@
           </thead>
           <tbody>
             <tr *ngFor="let request of filteredRequests">
-              <td class="fw-medium">{{ request.request_number || request.id }}</td>
+              <td>
+                <a href="javascript:void(0)" (click)="viewRequest(request)" class="text-decoration-none fw-medium">
+                  {{ request.request_number || request.id }}
+                </a>
+              </td>
               <td>{{ request.requestorName || 'N/A' }}</td>
               <td>{{ request.department || 'N/A' }}</td>
               <td>

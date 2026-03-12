@@ -194,7 +194,11 @@
                 <tr
                   *ngFor="let request of pendingAccommodations"
                   [class.selected]="selectedRequest?.id === request.id">
-                  <td class="request-id">{{ request.request_number }}</td>
+                  <td class="request-id">
+                    <a href="javascript:void(0)" (click)="viewRequest(request.id)" class="text-decoration-none">
+                      {{ request.request_number }}
+                    </a>
+                  </td>
                   <td>{{ request.requestorName }}</td>
                   <td>{{ request.department | departmentName }}</td>
                   <td>

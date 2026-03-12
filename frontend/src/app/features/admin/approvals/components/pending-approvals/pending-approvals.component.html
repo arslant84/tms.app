@@ -144,7 +144,9 @@
               </div>
             </td>
             <td class="id-cell">
-              <span class="request-number">{{ item.requestNumber }}</span>
+              <a href="javascript:void(0)" (click)="viewItem(item)" class="request-number text-decoration-none">
+                {{ item.requestNumber }}
+              </a>
             </td>
             <td>{{ item.requestorName }}</td>
             <td class="purpose-cell">
