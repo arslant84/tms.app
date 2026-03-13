@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -18,11 +20,17 @@ export class ForgotPasswordComponent {
   error = '';
   success = '';
   loading = false;
+  applicationName$: Observable<string>;
 
   constructor(
     private http: HttpClient,
-    private router: Router
-  ) {}
+    private router: Router,
+    private appSettingsService: AppSettingsService
+  ) {
+    this.applicationName$ = this.appSettingsService.settings$.pipe(
+      map(settings => settings.application_name || 'TMS')
+    );
+  }
 
   onSubmit(): void {
     this.error = '';

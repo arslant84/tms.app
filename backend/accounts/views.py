@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, status, generics
+from rest_framework import viewsets, permissions, status, generics, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate, login
@@ -591,12 +591,38 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    # Search across user fields
-    search_fields = ['email', 'name', 'staff_id', 'department', 'phone']
+    # Filter backends
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+
+    # Search across user fields (use __name for ForeignKey fields)
+    search_fields = ['email', 'name', 'staff_id', 'department__name', 'phone']
 
     # Allow ordering
-    ordering_fields = ['email', 'name', 'date_joined', 'department', 'is_active']
+    ordering_fields = ['email', 'name', 'date_joined', 'department__name', 'is_active']
     ordering = ['-date_joined']  # Default: newest first
+
+    def get_queryset(self):
+        """Apply filters for role, department, and is_active."""
+        queryset = super().get_queryset()
+
+        # Filter by role (UUID)
+        role = self.request.query_params.get('role')
+        if role:
+            queryset = queryset.filter(role_id=role)
+
+        # Filter by department (UUID)
+        department = self.request.query_params.get('department')
+        if department:
+            queryset = queryset.filter(department_id=department)
+
+        # Filter by is_active status
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None and is_active != '':
+            # Convert string to boolean
+            is_active_bool = is_active.lower() in ('true', '1', 'yes')
+            queryset = queryset.filter(is_active=is_active_bool)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'create':

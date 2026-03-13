@@ -8,11 +8,12 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { WorkflowService } from '../../../../core/services/workflow.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-transport-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, LoadingSpinnerComponent],
   templateUrl: './transport-admin.component.html',
   styleUrl: './transport-admin.component.scss'
 })

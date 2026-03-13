@@ -8,11 +8,12 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { LocationDialogComponent, LocationDialogData } from './location-dialog.component';
 import { RoomDialogComponent, RoomDialogData } from './room-dialog.component';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-accommodation-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, LocationDialogComponent, RoomDialogComponent],
+  imports: [CommonModule, FormsModule, LocationDialogComponent, RoomDialogComponent, LoadingSpinnerComponent],
   templateUrl: './accommodation-admin.component.html',
   styleUrl: './accommodation-admin.component.scss'
 })

@@ -2,11 +2,12 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, Observable, map } from 'rxjs';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { DepartmentService } from '../../../../core/services/department.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import { DepartmentListItem } from '../../../../core/models/user.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
@@ -28,6 +29,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   showConfirmPassword = false;
   selectedFileName = '';
   profilePhotoPreview: string | null = null;
+  applicationName$: Observable<string>;
 
   genderOptions = [
     { value: 'Male', label: 'Male' },
@@ -40,9 +42,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private departmentService: DepartmentService,
     private toastService: ToastService,
+    private appSettingsService: AppSettingsService,
     private errorHandler: HttpErrorHandlerService,
     private router: Router
   ) {
+    this.applicationName$ = this.appSettingsService.settings$.pipe(
+      map(settings => settings.application_name || 'TMS')
+    );
     this.initializeForm();
   }
 

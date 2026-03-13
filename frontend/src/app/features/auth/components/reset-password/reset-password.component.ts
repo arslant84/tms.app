@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -21,12 +23,18 @@ export class ResetPasswordComponent implements OnInit {
   success = '';
   loading = false;
   invalidToken = false;
+  applicationName$: Observable<string>;
 
   constructor(
     private http: HttpClient,
     private router: Router,
-    private route: ActivatedRoute
-  ) {}
+    private route: ActivatedRoute,
+    private appSettingsService: AppSettingsService
+  ) {
+    this.applicationName$ = this.appSettingsService.settings$.pipe(
+      map(settings => settings.application_name || 'TMS')
+    );
+  }
 
   ngOnInit(): void {
     // Get token from URL query parameter

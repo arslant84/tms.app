@@ -1,6 +1,7 @@
 /**
  * Flights Administration Overview - Using Unified Design System
  */
+@use 'sass:color';
 @use '../../../../../styles/variables' as vars;
 
 // =========== CONTAINER ==========
@@ -30,7 +31,7 @@
 
   .header-content {
     .page-title {
-      font-size: vars.$font-size-2xl;
+      font-size: vars.$font-size-3xl;
       font-weight: vars.$font-weight-bold;
       color: vars.$gray-900;
       letter-spacing: -0.025em;
@@ -40,11 +41,12 @@
 
       i {
         color: vars.$primary-color;
+        margin-right: vars.$spacing-2;
       }
     }
 
     .page-subtitle {
-      color: vars.$gray-600;
+      color: vars.$text-secondary;
       font-size: vars.$font-size-sm;
       margin: 0;
     }
@@ -177,17 +179,36 @@
   }
 }
 
-// ========== FILTERS ==========
-.filters-group {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-3;
-  flex-wrap: wrap;
+// ========== FORM CONTROLS ==========
+.form-control,
+.form-select {
+  font-size: vars.$font-size-sm;
+  padding: vars.$spacing-2 vars.$spacing-3;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-base;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
-  .filter-select {
-    width: auto;
-    min-width: 200px;
+  &:focus {
+    outline: none;
+    border-color: vars.$primary-color;
+    box-shadow: vars.$input-focus-shadow;
+  }
+
+  &::placeholder {
+    color: vars.$gray-400;
     font-size: vars.$font-size-sm;
+  }
+}
+
+// ========== REQUEST NUMBER LINKS ==========
+.request-number,
+a.fw-medium {
+  font-family: vars.$font-mono;
+  color: vars.$primary-color;
+  cursor: pointer;
+
+  &:hover {
+    color: color.adjust(vars.$primary-color, $lightness: -10%);
   }
 }
 
@@ -234,12 +255,6 @@
           color: vars.$gray-700;
           border: none;
           vertical-align: middle;
-        }
-
-        .fw-medium {
-          font-family: vars.$font-mono;
-          font-weight: vars.$font-weight-semibold;
-          color: vars.$primary-color;
         }
       }
     }
@@ -438,17 +453,7 @@
 
   .page-header {
     .header-content .page-title {
-      font-size: vars.$font-size-xl;
-    }
-  }
-
-  .filters-group {
-    width: 100%;
-    flex-direction: column;
-    align-items: flex-start !important;
-
-    .filter-select {
-      width: 100% !important;
+      font-size: vars.$font-size-2xl;
     }
   }
 

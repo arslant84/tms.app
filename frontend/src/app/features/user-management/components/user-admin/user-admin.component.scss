@@ -17,7 +17,7 @@
 
   .header-content {
     .page-title {
-      font-size: vars.$font-size-2xl;
+      font-size: vars.$font-size-3xl;
       font-weight: vars.$font-weight-bold;
       color: vars.$gray-900;
       letter-spacing: -0.025em;
@@ -31,7 +31,7 @@
     }
 
     .page-subtitle {
-      color: vars.$gray-500;
+      color: vars.$text-secondary;
       font-size: vars.$font-size-sm;
       margin: 0;
     }
@@ -74,6 +74,39 @@
 
   &:hover {
     box-shadow: vars.$shadow-md;
+  }
+
+  .card-header {
+    padding: vars.$spacing-6;
+    border-bottom: 1px solid vars.$border-light;
+    background-color: vars.$white;
+
+    .card-header-content {
+      .card-title-group {
+        display: flex;
+        align-items: center;
+        gap: vars.$spacing-2;
+        margin-bottom: vars.$spacing-1;
+
+        .card-title {
+          font-size: vars.$font-size-lg;
+          font-weight: vars.$font-weight-semibold;
+          color: vars.$gray-900;
+          margin: 0;
+        }
+
+        i {
+          color: vars.$text-secondary;
+          font-size: vars.$font-size-lg;
+        }
+      }
+
+      .card-description {
+        font-size: vars.$font-size-sm;
+        color: vars.$text-secondary;
+        margin: 0;
+      }
+    }
   }
 
   .card-body {
@@ -222,10 +255,6 @@
   color: vars.$text-primary;
   font-size: vars.$font-size-sm;
 
-  &.small {
-    font-size: vars.$font-size-xs;
-  }
-
   .text-danger {
     font-weight: vars.$font-weight-bold;
   }
@@ -247,9 +276,8 @@
   }
 
   &::placeholder {
-    color: vars.$gray-500;
-    font-size: vars.$font-size-xs;
-    opacity: 0.85;
+    color: vars.$gray-400;
+    font-size: vars.$font-size-sm;
   }
 
   &.is-invalid {

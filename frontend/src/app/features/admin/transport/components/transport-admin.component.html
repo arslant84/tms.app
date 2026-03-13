@@ -105,8 +105,7 @@
 
       <!-- Loading State -->
       <div *ngIf="loading" class="loading-state">
-        <i class="bi bi-arrow-clockwise spin"></i>
-        <p>Loading transport requests...</p>
+        <app-loading-spinner size="md" message="Loading transport requests..."></app-loading-spinner>
       </div>
 
       <!-- Error State -->
@@ -141,7 +140,7 @@
           <tbody>
             <tr *ngFor="let request of filteredRequests">
               <td>
-                <a href="javascript:void(0)" (click)="viewRequest(request)" class="text-decoration-none fw-medium">
+                <a href="javascript:void(0)" (click)="viewRequest(request)" class="text-decoration-none fw-medium request-number">
                   {{ request.request_number || request.id }}
                 </a>
               </td>

@@ -102,8 +102,7 @@
 
     <!-- Loading State -->
     <div *ngIf="isLoading" class="loading-state">
-      <i class="bi bi-arrow-clockwise spin-animation"></i>
-      <p>Loading approvals...</p>
+      <app-loading-spinner size="md" message="Loading approvals..."></app-loading-spinner>
     </div>
 
     <!-- Error State -->
@@ -132,7 +131,7 @@
             <th>Purpose/Details</th>
             <th>Status</th>
             <th>Submitted</th>
-            <th>Actions</th>
+            <th class="text-end">Actions</th>
           </tr>
         </thead>
         <tbody>

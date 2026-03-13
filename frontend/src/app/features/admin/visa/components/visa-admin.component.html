@@ -116,8 +116,7 @@
 
       <!-- Loading State -->
       <div *ngIf="loadingApplications" class="loading-state">
-        <i class="bi bi-arrow-clockwise spin"></i>
-        <p>Loading applications...</p>
+        <app-loading-spinner size="md" message="Loading applications..."></app-loading-spinner>
       </div>
 
       <!-- Error State -->

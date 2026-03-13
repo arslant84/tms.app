@@ -1,7 +1,7 @@
-// Register Component - Using Unified Design System
+// Register Component - Corporate Design Style
+@use 'sass:color';
 @use '../../../../../styles/variables' as vars;
 
-// Reuse login styles
 .login-wrapper {
   display: flex;
   justify-content: center;
@@ -17,85 +17,160 @@
   background-position: center center;
   background-repeat: no-repeat;
   background-attachment: fixed;
+
+  // Dark overlay for better contrast and readability
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgb(0 0 0 / 60%) 0%,
+      rgb(0 0 0 / 40%) 100%
+    );
+    z-index: 0;
+  }
 }
 
 .login-card {
-  border-radius: vars.$radius-md;
+  position: relative;
+  z-index: 1;
+  border-radius: vars.$radius-lg;
   width: 100%;
-  max-width: 550px; // Slightly wider for register form
+  max-width: 480px;
   overflow: hidden;
   margin: vars.$spacing-md;
-  box-shadow: vars.$shadow-xl;
-  max-height: 90vh; // Limit height for scrolling
+  box-shadow:
+    0 25px 50px -12px rgb(0 0 0 / 25%),
+    0 0 0 1px rgb(255 255 255 / 5%);
+  backdrop-filter: blur(4px);
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
 }
 
 .login-header {
-  background-color: vars.$bg-dark;
+  background: linear-gradient(
+    135deg,
+    vars.$primary-color 0%,
+    color.adjust(vars.$primary-color, $lightness: -8%) 100%
+  );
   color: vars.$text-inverse;
-  padding: vars.$spacing-6 vars.$spacing-8;
+  padding: vars.$spacing-6 vars.$spacing-6;
   text-align: center;
-  flex-shrink: 0; // Don't shrink header
+  position: relative;
+  flex-shrink: 0;
+
+  // Subtle pattern overlay
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 1;
+    pointer-events: none;
+  }
 
   .logo-container {
-    margin-bottom: vars.$spacing-4;
+    margin-bottom: vars.$spacing-3;
+    position: relative;
   }
 
   .app-logo {
     font-size: vars.$font-size-2xl;
     font-weight: vars.$font-weight-bold;
     margin: 0;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgb(0 0 0 / 10%);
   }
 
   h2 {
-    font-size: vars.$font-size-xl;
-    font-weight: vars.$font-weight-semibold;
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-medium;
     color: vars.$text-inverse;
-    margin-bottom: vars.$spacing-2;
+    margin-bottom: vars.$spacing-1;
+    opacity: 0.95;
+    position: relative;
   }
 
   p {
-    font-size: vars.$font-size-base;
-    opacity: 0.8;
+    font-size: vars.$font-size-sm;
+    opacity: 0.75;
     margin: 0;
+    position: relative;
   }
 }
 
 .login-body {
-  padding: vars.$spacing-6 vars.$spacing-8;
+  padding: vars.$spacing-6;
   background-color: vars.$white;
-  overflow-y: auto; // Allow scrolling if content is too tall
+  overflow-y: auto;
   flex: 1;
 
   .form-label {
+    font-size: vars.$font-size-sm;
     font-weight: vars.$font-weight-medium;
+    color: vars.$gray-700;
     margin-bottom: vars.$spacing-2;
+    display: block;
+  }
+
+  .form-group {
+    margin-bottom: vars.$spacing-4;
   }
 
   .input-group {
+    border-radius: vars.$radius-base;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 1px solid vars.$border-light;
+
+    &:focus-within {
+      border-color: vars.$primary-color;
+      box-shadow: 0 0 0 3px color.adjust(vars.$primary-color, $alpha: -0.85);
+    }
+
     .input-group-text {
       background-color: vars.$gray-50;
-      color: vars.$gray-600;
+      border: none;
+      color: vars.$gray-500;
+      padding: vars.$spacing-2 vars.$spacing-3;
 
       i {
-        font-size: vars.$font-size-base;
+        font-size: vars.$font-size-sm;
       }
     }
 
     .form-control,
     .form-select {
+      border: none;
+      padding: vars.$spacing-2 vars.$spacing-3;
+      font-size: vars.$font-size-sm;
+      color: vars.$text-primary;
+
+      &::placeholder {
+        color: vars.$gray-400;
+      }
+
       &:focus {
         box-shadow: none;
-        border-color: vars.$primary-color;
+        outline: none;
       }
     }
 
     .btn-outline-secondary {
-      border-left: 0;
+      border: none;
+      border-left: 1px solid vars.$border-light;
       background-color: vars.$gray-50;
-      color: vars.$gray-600;
+      color: vars.$gray-500;
+      padding: vars.$spacing-2 vars.$spacing-3;
 
       &:hover {
         background-color: vars.$gray-100;
@@ -103,34 +178,81 @@
       }
 
       i {
-        font-size: vars.$font-size-base;
+        font-size: vars.$font-size-sm;
       }
     }
   }
 
+  // Error state for input groups
+  .input-group:has(.is-invalid) {
+    border-color: vars.$error-color;
+
+    &:focus-within {
+      box-shadow: 0 0 0 3px color.adjust(vars.$error-color, $alpha: -0.85);
+    }
+  }
+
   .btn-primary {
-    background-color: vars.$info-color;
-    border-color: vars.$info-color;
-    padding: vars.$spacing-3;
-    font-weight: vars.$font-weight-medium;
-    transition: vars.$transition-base;
+    background: linear-gradient(
+      135deg,
+      vars.$primary-color 0%,
+      color.adjust(vars.$primary-color, $lightness: -5%) 100%
+    );
+    border: none;
+    padding: vars.$spacing-3 vars.$spacing-4;
+    font-size: vars.$font-size-base;
+    font-weight: vars.$font-weight-semibold;
+    border-radius: vars.$radius-base;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 
     &:hover:not(:disabled) {
-      background-color: vars.$info-hover;
-      border-color: vars.$info-hover;
-      transform: translateY(-2px);
+      background: linear-gradient(
+        135deg,
+        vars.$primary-hover 0%,
+        color.adjust(vars.$primary-hover, $lightness: -5%) 100%
+      );
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px color.adjust(vars.$primary-color, $alpha: -0.6);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
     }
 
     &:disabled {
-      background-color: vars.$info-color;
-      border-color: vars.$info-color;
-      opacity: 0.7;
+      background: vars.$gray-400;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
   }
 
   .invalid-feedback {
     font-size: vars.$font-size-xs;
     color: vars.$error-color;
+  }
+
+  .form-text {
+    font-size: vars.$font-size-xs;
+    color: vars.$gray-500;
+  }
+
+  // Sign in link
+  .text-decoration-none {
+    color: vars.$primary-color;
+    font-weight: vars.$font-weight-medium;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: vars.$primary-hover;
+    }
+  }
+
+  .text-muted {
+    color: vars.$gray-500;
+    font-size: vars.$font-size-sm;
   }
 }
 
@@ -143,7 +265,7 @@
     background-color: vars.$gray-200;
     border-radius: vars.$radius-sm;
     overflow: hidden;
-    margin-bottom: vars.$spacing-2;
+    margin-bottom: vars.$spacing-1;
 
     .strength-fill {
       height: 100%;
@@ -159,7 +281,7 @@
       }
 
       &.strength-good {
-        background-color: vars.$info-color;
+        background-color: vars.$primary-color;
       }
 
       &.strength-strong {
@@ -181,7 +303,7 @@
     }
 
     &.strength-good {
-      color: vars.$info-color;
+      color: vars.$primary-color;
     }
 
     &.strength-strong {
@@ -209,15 +331,15 @@
     justify-content: center;
     padding: vars.$spacing-4;
     border: 2px dashed vars.$gray-300;
-    border-radius: vars.$radius-md;
+    border-radius: vars.$radius-base;
     background-color: vars.$gray-50;
     cursor: pointer;
-    transition: vars.$transition-base;
-    color: vars.$gray-600;
+    transition: all 0.2s ease;
+    color: vars.$gray-500;
 
     &:hover {
       border-color: vars.$primary-color;
-      background-color: vars.$gray-100;
+      background-color: color.adjust(vars.$primary-color, $alpha: -0.95);
       color: vars.$primary-color;
     }
 
@@ -237,50 +359,59 @@
   align-items: center;
   gap: vars.$spacing-3;
   padding: vars.$spacing-3;
-  border: 1px solid vars.$gray-200;
-  border-radius: vars.$radius-md;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-base;
   background-color: vars.$gray-50;
 
   img {
-    width: 80px;
-    height: 80px;
+    width: 64px;
+    height: 64px;
     object-fit: cover;
-    border-radius: vars.$radius-md;
+    border-radius: vars.$radius-base;
     border: 2px solid vars.$white;
     box-shadow: vars.$shadow-sm;
   }
 
   .btn-danger {
     margin-left: auto;
+    background-color: vars.$error-color;
+    border-color: vars.$error-color;
+    font-size: vars.$font-size-xs;
+    padding: vars.$spacing-1 vars.$spacing-2;
+
+    &:hover {
+      background-color: vars.$error-hover;
+      border-color: vars.$error-hover;
+    }
   }
 }
 
 // Responsive adjustments
-@media (max-width: 576px) {
+@media (max-width: 480px) {
   .login-card {
-    max-width: 100%;
     margin: 0;
+    max-width: none;
     border-radius: 0;
     max-height: 100vh;
   }
 
   .login-header {
-    padding: vars.$spacing-4 vars.$spacing-6;
+    padding: vars.$spacing-5;
 
     .app-logo {
       font-size: vars.$font-size-xl;
     }
 
     h2 {
-      font-size: vars.$font-size-lg;
+      font-size: vars.$font-size-base;
     }
   }
 
   .login-body {
-    padding: vars.$spacing-4 vars.$spacing-6;
+    padding: vars.$spacing-5;
 
     .form-group {
-      margin-bottom: vars.$spacing-3 !important;
+      margin-bottom: vars.$spacing-3;
     }
   }
 }
