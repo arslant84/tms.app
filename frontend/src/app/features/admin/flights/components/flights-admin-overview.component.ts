@@ -6,6 +6,7 @@ import { TrfService } from '../../../trf-management/services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface FlightApplication {
   id: string;
@@ -31,7 +32,7 @@ interface FlightStats {
 @Component({
   selector: 'app-flights-admin-overview',
   standalone: true,
-  imports: [CommonModule, FormsModule, DepartmentNamePipe],
+  imports: [CommonModule, FormsModule, DepartmentNamePipe, LoadingSpinnerComponent],
   templateUrl: './flights-admin-overview.component.html',
   styleUrl: './flights-admin-overview.component.scss'
 })

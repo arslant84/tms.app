@@ -48,7 +48,7 @@ $gray-900: #1F2937; // Darkest text
 
   .header-content {
     .page-title {
-      font-size: vars.$font-size-2xl;
+      font-size: vars.$font-size-3xl;
       font-weight: vars.$font-weight-bold;
       color: $gray-900;
       letter-spacing: -0.025em;
@@ -333,10 +333,12 @@ $gray-900: #1F2937; // Darkest text
         }
 
         // Request number links use monospace font
+        .request-number,
         a.fw-medium {
           font-family: vars.$font-mono;
           font-weight: vars.$font-weight-semibold;
           color: $primary;
+          cursor: pointer;
 
           &:hover {
             color: color.adjust($primary, $lightness: -10%);

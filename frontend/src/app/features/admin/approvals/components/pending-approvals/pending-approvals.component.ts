@@ -10,6 +10,7 @@ import { DateUtilsService } from '../../../../../core/utils/date-utils.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { DepartmentNamePipe } from '../../../../../core/pipes/department-name.pipe';
 import { WorkflowService } from '../../../../../core/services/workflow.service';
+import { LoadingSpinnerComponent } from '../../../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface ApprovableItem {
   id: string;
@@ -34,7 +35,7 @@ interface ApprovableItem {
 @Component({
   selector: 'app-pending-approvals',
   standalone: true,
-  imports: [CommonModule, FormsModule, DepartmentNamePipe],
+  imports: [CommonModule, FormsModule, DepartmentNamePipe, LoadingSpinnerComponent],
   templateUrl: './pending-approvals.component.html',
   styleUrls: ['./pending-approvals.component.scss']
 })

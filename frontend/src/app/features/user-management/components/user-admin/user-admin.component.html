@@ -20,7 +20,7 @@
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-3">
-          <label class="form-label small">Search</label>
+          <label class="form-label">Search</label>
           <input
             type="text"
             id="userSearch"
@@ -32,8 +32,8 @@
             placeholder="Search by name or email...">
         </div>
 
-        <div class="col-md-2">
-          <label class="form-label small">Role</label>
+        <div class="col-md-3">
+          <label class="form-label">Role</label>
           <select
             class="form-select"
             [(ngModel)]="filterRole"
@@ -43,8 +43,8 @@
           </select>
         </div>
 
-        <div class="col-md-2">
-          <label class="form-label small">Department</label>
+        <div class="col-md-3">
+          <label class="form-label">Department</label>
           <select
             class="form-select"
             [(ngModel)]="filterDepartment"
@@ -54,8 +54,8 @@
           </select>
         </div>
 
-        <div class="col-md-2">
-          <label class="form-label small">Status</label>
+        <div class="col-md-3">
+          <label class="form-label">Status</label>
           <select
             class="form-select"
             [(ngModel)]="filterStatus"
@@ -64,15 +64,6 @@
             <option [ngValue]="true">Active</option>
             <option [ngValue]="false">Inactive</option>
           </select>
-        </div>
-
-        <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-outline-primary me-2" (click)="onSearch()">
-            <i class="bi bi-search me-2"></i>Search
-          </button>
-          <button class="btn btn-outline-secondary" (click)="clearFilters()">
-            <i class="bi bi-x-circle me-2"></i>Clear
-          </button>
         </div>
       </div>
     </div>

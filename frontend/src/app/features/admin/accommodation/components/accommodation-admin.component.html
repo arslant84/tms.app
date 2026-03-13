@@ -104,8 +104,7 @@
 
             <!-- Loading State -->
             <div *ngIf="loadingLocations" class="loading-state">
-              <i class="bi bi-arrow-clockwise spin"></i>
-              <p>Loading locations...</p>
+              <app-loading-spinner size="md" message="Loading locations..."></app-loading-spinner>
             </div>
 
             <!-- Empty State -->
@@ -193,8 +192,7 @@
 
             <!-- Loading State -->
             <div *ngIf="loadingRooms" class="loading-state">
-              <i class="bi bi-arrow-clockwise spin"></i>
-              <p>Loading rooms...</p>
+              <app-loading-spinner size="md" message="Loading rooms..."></app-loading-spinner>
             </div>
 
             <!-- Empty State -->
