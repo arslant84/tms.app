@@ -35,20 +35,20 @@
                     Users: {{ dept.user_count || 0 }} assigned
                   </p>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="action-buttons">
                   <button
-                    class="btn btn-outline-secondary btn-sm"
+                    class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="openEdit(dept)"
                     [disabled]="isSaving || showForm"
                     title="Edit">
-                    <i class="bi bi-pencil icon-sm"></i>
+                    <i class="bi bi-pencil"></i>
                   </button>
                   <button
-                    class="btn btn-outline-danger btn-sm"
+                    class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="confirmDelete(dept)"
                     [disabled]="isSaving || showForm || (dept.user_count && dept.user_count > 0)"
                     [title]="(dept.user_count && dept.user_count > 0) ? 'Cannot delete department with assigned users' : 'Delete'">
-                    <i class="bi bi-trash icon-sm"></i>
+                    <i class="bi bi-trash"></i>
                   </button>
                 </div>
               </div>

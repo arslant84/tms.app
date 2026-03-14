@@ -47,30 +47,41 @@
 
 .page-subtitle {
   font-size: vars.$font-size-sm;
-  color: vars.$text-secondary;
+  color: vars.$gray-800;  // Dark color for high visibility on header
+  font-weight: vars.$font-weight-medium;
   margin: 0 0 0 2.75rem;
 }
 
+// Fluent 2 large button (40px height)
 .btn-create {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: vars.$spacing-2;
-  padding: vars.$spacing-2 vars.$spacing-md;
-  font-size: vars.$font-size-base;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 vars.$spacing-5; // 0 20px
+  font-size: 1rem; // 16px
+  font-weight: vars.$font-weight-semibold; // 600
   background-color: vars.$primary-color;
   border-color: vars.$primary-color;
   color: vars.$text-inverse;
-  border-radius: vars.$radius-md;
-  font-weight: vars.$font-weight-medium;
-  transition: vars.$transition-base;
+  border-radius: vars.$radius-base; // 4px
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+  line-height: 1;
 
   &:hover {
     background-color: vars.$primary-hover;
     border-color: vars.$primary-hover;
   }
 
+  &:active {
+    background-color: vars.$primary-active;
+    border-color: vars.$primary-active;
+  }
+
   i {
-    font-size: vars.$font-size-lg;
+    font-size: 1rem;
   }
 }
 
@@ -321,12 +332,21 @@
   }
 }
 
-// Action Buttons
+// Action Buttons - circular icon buttons
 .action-buttons {
   display: flex;
   gap: vars.$spacing-2;
   justify-content: flex-end;
 
+  .btn,
+  .btn-icon {
+    width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    border-radius: vars.$radius-full !important;
+    font-size: vars.$font-size-xs;
+  }
 }
 
 // Pagination

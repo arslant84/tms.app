@@ -89,6 +89,9 @@ export class NotificationService {
     if (this.pollingSubscription) {
       return; // Already polling
     }
+    // Load initial notifications and unread count
+    this.refreshNotifications();
+    // Then poll only the count every 30 seconds (notifications are heavier to fetch)
     this.pollingSubscription = interval(30000).subscribe(() => {
       this.refreshUnreadCount();
     });
