@@ -162,7 +162,9 @@
                   {{ application.requestNumber }}
                 </a>
               </td>
-              <td>{{ application.requestorName }}</td>
+              <td class="staff-cell">
+                <div class="staff-name">{{ application.requestorName }}</div>
+              </td>
               <td>{{ application.department | departmentName }}</td>
               <td>
                 <span class="badge" [ngClass]="getTravelTypeBadge(application.travelType)">

@@ -199,7 +199,9 @@
                       {{ request.request_number }}
                     </a>
                   </td>
-                  <td>{{ request.requestorName }}</td>
+                  <td class="staff-cell">
+                    <div class="staff-name">{{ request.requestorName }}</div>
+                  </td>
                   <td>{{ request.department | departmentName }}</td>
                   <td>
                     <span class="badge" [class]="getStatusClass(request.status)">{{ request.status }}</span>
@@ -428,7 +430,9 @@
           <tbody>
             <tr *ngFor="let booking of bookedAccommodations">
               <td class="request-id">{{ booking.requestNumber }}</td>
-              <td>{{ booking.requestorName }}</td>
+              <td class="staff-cell">
+                <div class="staff-name">{{ booking.requestorName }}</div>
+              </td>
               <td>{{ booking.location }}</td>
               <td>
                 <div class="assigned-room">

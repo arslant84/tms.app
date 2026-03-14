@@ -115,9 +115,9 @@
                   <span *ngIf="trf.request_number" class="request-number">{{ trf.request_number }}</span>
                   <span *ngIf="!trf.request_number" class="text-muted">TSR-{{ trf.id }}</span>
                 </td>
-                <td>
-                  <div>{{ trf.requestor_name || 'N/A' }}</div>
-                  <small class="text-muted d-block" *ngIf="trf.staff_id">{{ trf.staff_id }}</small>
+                <td class="staff-cell">
+                  <div class="staff-name">{{ trf.requestor_name || 'N/A' }}</div>
+                  <small class="staff-id" *ngIf="trf.staff_id">{{ trf.staff_id }}</small>
                 </td>
                 <td>{{ formatTravelTypeDisplay(trf.travel_type) }}</td>
                 <td class="purpose-cell">{{ trf.purpose || 'N/A' }}</td>

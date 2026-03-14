@@ -332,6 +332,21 @@
   font-weight: vars.$font-weight-semibold;
 }
 
+// Staff Name Cell Styling
+.staff-cell {
+  .staff-name {
+    font-weight: vars.$font-weight-medium;
+    color: vars.$text-primary;
+  }
+
+  .staff-id {
+    display: block;
+    font-size: vars.$font-size-xs;
+    color: vars.$text-secondary;
+    margin-top: 2px;
+  }
+}
+
 // Action Buttons - circular icon buttons
 .action-buttons {
   display: flex;

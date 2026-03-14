@@ -349,6 +349,21 @@ $gray-900: #1F2937; // Darkest text
   }
 }
 
+// ========== STAFF NAME CELL ==========
+.staff-cell {
+  .staff-name {
+    font-weight: vars.$font-weight-medium;
+    color: vars.$text-primary;
+  }
+
+  .staff-id {
+    display: block;
+    font-size: vars.$font-size-xs;
+    color: vars.$text-secondary;
+    margin-top: 2px;
+  }
+}
+
 // ========== BADGES ==========
 .badge {
   display: inline-flex;

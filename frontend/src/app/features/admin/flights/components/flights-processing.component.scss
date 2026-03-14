@@ -292,6 +292,21 @@
   }
 }
 
+// Staff Name Cell Styling
+.staff-cell {
+  .staff-name {
+    font-weight: vars.$font-weight-medium;
+    color: vars.$text-primary;
+  }
+
+  .staff-id {
+    display: block;
+    font-size: vars.$font-size-xs;
+    color: vars.$text-secondary;
+    margin-top: 2px;
+  }
+}
+
 // Primary Custom Color (Request Numbers)
 .text-primary-custom {
   font-family: vars.$font-mono;
