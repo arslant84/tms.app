@@ -72,32 +72,34 @@
 }
 
 .btn-action {
-  // Uniform sizing for all action buttons - matches request list buttons
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
-  min-height: 44px;
+  // Fluent 2 large button - 40px height, flat design
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  min-height: 40px;
+  height: 40px;
   white-space: nowrap;
   text-align: center;
-  padding: vars.$spacing-2 vars.$spacing-md;
-  font-size: vars.$font-size-base;
-  font-weight: vars.$font-weight-medium;
-  border-radius: vars.$radius-md;
-  line-height: vars.$line-height-normal;
+  padding: 0 vars.$spacing-5;  // Fluent 2: 0 20px
+  font-size: vars.$font-size-base;  // 16px
+  font-weight: vars.$font-weight-semibold;  // Fluent 2: 600
+  border-radius: vars.$radius-base !important;  // Fluent 2: 4px
+  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all vars.$transition-base;
-  box-shadow: vars.$shadow-base;
+  gap: vars.$spacing-2;
+  transition: background-color 0.1s ease, border-color 0.1s ease;  // Fluent 2: fast, flat
 
   i {
-    font-size: vars.$font-size-md;
+    font-size: 1em;
+    line-height: 1;
     flex-shrink: 0;
   }
 
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: vars.$shadow-md;
+  // Fluent 2: No transform or shadow on hover - flat design
+  &:hover:not(:disabled) {
+    // Colors handled by .btn-primary in global styles
   }
 }
 

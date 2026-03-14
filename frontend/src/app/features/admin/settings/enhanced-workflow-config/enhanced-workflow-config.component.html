@@ -243,21 +243,21 @@
                 <small>{{ workflow.created_at | date:'short' }}</small>
               </td>
               <td>
-                <div class="btn-group btn-group-sm" role="group">
+                <div class="action-buttons">
                   <button
-                    class="btn btn-outline-primary"
+                    class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="editWorkflow(workflow)"
                     title="Edit Workflow">
                     <i class="bi bi-pencil"></i>
                   </button>
                   <button
-                    class="btn btn-outline-secondary"
+                    class="btn btn-sm btn-outline-secondary btn-icon"
                     (click)="toggleWorkflowStatus(workflow)"
                     [title]="workflow.is_active ? 'Deactivate' : 'Activate'">
                     <i class="bi" [class.bi-toggle-on]="workflow.is_active" [class.bi-toggle-off]="!workflow.is_active"></i>
                   </button>
                   <button
-                    class="btn btn-outline-danger"
+                    class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="deleteWorkflow(workflow)"
                     title="Delete Workflow">
                     <i class="bi bi-trash"></i>

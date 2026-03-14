@@ -128,8 +128,26 @@
     }
   }
 
-  .btn-group-sm .btn {
-    padding: vars.$spacing-1 0.5rem;
+  // Action buttons - circular icon buttons with gaps
+  .action-buttons {
+    display: flex;
+    gap: vars.$spacing-2;
+    justify-content: flex-end;
+
+    .btn-icon {
+      width: 28px;
+      height: 28px;
+      min-height: 28px;
+      padding: 0;
+      border-radius: vars.$radius-full !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      i {
+        font-size: vars.$font-size-sm;
+      }
+    }
   }
 
   // Delete confirmation modal

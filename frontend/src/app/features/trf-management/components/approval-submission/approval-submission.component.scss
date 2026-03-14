@@ -496,15 +496,15 @@ textarea.form-control {
   color: vars.$text-inverse;
   border: 1px solid vars.$primary-color;
 
+  // Fluent 2: Flat hover, no lift or shadow
   &:hover:not(:disabled) {
     background-color: vars.$primary-hover;
     border-color: vars.$primary-hover;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%);
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
+    background-color: vars.$primary-active;
+    border-color: vars.$primary-active;
   }
 }
 

@@ -109,7 +109,7 @@
     .avatar-circle {
       width: 96px;
       height: 96px;
-      border-radius: 50%;
+      border-radius: vars.$radius-full;
       background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
       color: vars.$white;
       display: flex;
@@ -123,7 +123,7 @@
     .avatar-image {
       width: 96px;
       height: 96px;
-      border-radius: 50%;
+      border-radius: vars.$radius-full;
       object-fit: cover;
       box-shadow: vars.$shadow-md;
     }
@@ -134,7 +134,7 @@
       right: -0.5rem;
       width: 2rem;
       height: 2rem;
-      border-radius: 50%;
+      border-radius: vars.$radius-full;
       background: vars.$primary-color;
       color: vars.$white;
       border: 2px solid vars.$white;

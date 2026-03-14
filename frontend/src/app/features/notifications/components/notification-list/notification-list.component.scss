@@ -49,6 +49,7 @@
   }
 
   .page-subtitle {
+  // Using darker color for better contrast
     font-size: vars.$font-size-base;
     color: vars.$text-secondary;
     margin: 0;
@@ -221,7 +222,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: vars.$radius-full;
     background: vars.$gray-100;
 
     i {
@@ -327,7 +328,7 @@
     width: 10px;
     height: 10px;
     background: vars.$primary-color;
-    border-radius: 50%;
+    border-radius: vars.$radius-full;
   }
 }
 

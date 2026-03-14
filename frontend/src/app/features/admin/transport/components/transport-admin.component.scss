@@ -427,11 +427,13 @@ $gray-900: #1F2937; // Darkest text
   justify-content: flex-end;
 }
 
+// Standalone btn-icon for circular buttons (used with Bootstrap d-flex)
 .btn-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
   padding: 0;
-  border-radius: 50%;
+  border-radius: vars.$radius-full !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;

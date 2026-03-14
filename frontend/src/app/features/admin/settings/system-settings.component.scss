@@ -227,7 +227,7 @@
       display: inline-block;
       width: 8px;
       height: 8px;
-      border-radius: 50%;
+      border-radius: vars.$radius-full;
       background-color: vars.$warning-color;
     }
 
@@ -240,30 +240,45 @@
   .action-buttons {
     display: flex;
     gap: 0.75rem;
+
+    // Override global action-buttons styles for form buttons
+    .btn {
+      width: auto !important;
+      height: 36px !important;
+      min-height: 36px !important;
+      padding: 0 vars.$spacing-4 !important; // 0 16px
+      border-radius: vars.$radius-base !important;
+    }
   }
 }
 
-// Buttons
+// Buttons - Fluent 2 Design System
 .btn {
-  border-radius: 0.375rem;
-  padding: 0.625rem 1.25rem;
-  font-weight: vars.$font-weight-medium;
-  font-size: vars.$font-size-sm;
-  transition: all 0.2s ease;
+  height: 36px;
+  min-height: 36px;
+  border-radius: vars.$radius-base; // 4px - Fluent 2
+  padding: 0 vars.$spacing-4; // 0 16px
+  font-weight: vars.$font-weight-semibold; // 600
+  font-size: vars.$font-size-sm; // 14px
+  transition: background-color 0.1s ease, border-color 0.1s ease;
   border: 1px solid transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: vars.$spacing-2;
   cursor: pointer;
+  line-height: 1;
 
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
-  }
+  // Fluent 2: No transform or shadow on hover
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.4;
+  }
+
+  &:focus-visible {
+    outline: 2px solid vars.$black;
+    outline-offset: 2px;
   }
 
   &.btn-primary {
@@ -275,6 +290,11 @@
       background-color: vars.$primary-hover;
       border-color: vars.$primary-hover;
     }
+
+    &:active:not(:disabled) {
+      background-color: vars.$primary-active;
+      border-color: vars.$primary-active;
+    }
   }
 
   &.btn-outline-primary {
@@ -284,6 +304,12 @@
 
     &:hover:not(:disabled) {
       background-color: vars.$primary-color;
+      color: vars.$white;
+    }
+
+    &:active:not(:disabled) {
+      background-color: vars.$primary-hover;
+      border-color: vars.$primary-hover;
       color: vars.$white;
     }
   }
@@ -297,10 +323,15 @@
       background-color: vars.$gray-50;
       border-color: vars.$gray-400;
     }
+
+    &:active:not(:disabled) {
+      background-color: vars.$gray-100;
+      border-color: vars.$gray-400;
+    }
   }
 
   i {
-    font-size: vars.$font-size-base;
+    font-size: 1em;
   }
 }
 

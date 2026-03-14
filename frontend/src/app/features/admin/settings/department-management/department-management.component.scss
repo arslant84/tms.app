@@ -127,13 +127,15 @@
   }
 }
 
-// Button styling enhancements
+// Button styling - Fluent 2 (no lift/shadow on hover)
 .btn {
-  transition: all 0.2s ease;
-  font-weight: vars.$font-weight-medium;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+  font-weight: vars.$font-weight-semibold;
+  border-radius: vars.$radius-base; // 4px
 
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(var(--bs-primary-rgb), 0.25);
+  &:focus-visible {
+    outline: 2px solid vars.$black;
+    outline-offset: 2px;
   }
 
   &.btn-primary {
@@ -143,21 +145,17 @@
     &:hover:not(:disabled) {
       background-color: vars.$primary-hover;
       border-color: vars.$primary-hover;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 6%);
     }
-  }
 
-  &.btn-outline-secondary,
-  &.btn-outline-danger {
-    &:hover:not(:disabled) {
-      transform: translateY(-1px);
+    &:active:not(:disabled) {
+      background-color: vars.$primary-active;
+      border-color: vars.$primary-active;
     }
   }
 
   &.btn-outline-danger {
     &:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
     }
   }
@@ -184,6 +182,28 @@
 }
 
 // Modal styles handled by global modal.scss
+
+// Action buttons - circular icon buttons with gaps
+.action-buttons {
+  display: flex;
+  gap: vars.$spacing-2;
+  justify-content: flex-end;
+
+  .btn-icon {
+    width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    border-radius: vars.$radius-full !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    i {
+      font-size: vars.$font-size-sm;
+    }
+  }
+}
 
 // Responsive improvements
 @media (width <= 768px) {

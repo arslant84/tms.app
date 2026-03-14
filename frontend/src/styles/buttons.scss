@@ -2,47 +2,49 @@
 @use './variables' as vars;
 @use './colors' as colors;
 
-// Button Base Styles - Consistent sizing and typography
+// ============================================================================
+// FLUENT 2 / AZURE DEVOPS STYLE BUTTONS
+// Flat design with Petronas teal color scheme
+// ============================================================================
+
+// Button Base Styles - Fluent 2 specifications
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: inherit;
-  font-weight: vars.$font-weight-medium;
+  font-weight: vars.$font-weight-semibold;  // Fluent uses 600
   text-align: center;
   white-space: nowrap;
   vertical-align: middle;
   user-select: none;
   border: 1px solid transparent;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease;  // Faster, Fluent-style
   cursor: pointer;
   text-decoration: none;
-  line-height: 1.5;
-  border-radius: vars.$radius-base;
+  line-height: 1;
+  border-radius: vars.$radius-base !important;  // 4px - Fluent default (force override Bootstrap)
 
-  // Uniform sizing for all buttons
-  font-size: vars.$font-size-sm;      // 14px - consistent text size
-  padding: vars.$spacing-2 vars.$spacing-4;     // 8px 16px - consistent padding
-  min-height: 38px;         // Consistent height
-  gap: vars.$spacing-2;              // Space between icon and text
-
-  // Responsive font sizing
-  @media (width >= 768px) {
-    font-size: 0.9375rem;   // 15px on tablets and up
-  }
-
-  @media (width >= 1024px) {
-    font-size: 1rem;        // 16px on desktop
-  }
+  // Fluent 2 sizing - 32px default height
+  font-size: vars.$font-size-sm;      // 14px
+  padding: 0 vars.$spacing-3;         // 0 12px - Fluent horizontal padding
+  min-height: 32px;
+  height: 32px;
+  gap: vars.$spacing-2;               // 8px - Space between icon and text
 
   &:focus {
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
+    outline: none;
+  }
+
+  // Fluent 2 focus ring - high contrast black outline
+  &:focus-visible {
+    outline: 2px solid vars.$black;
+    outline-offset: 2px;
   }
 
   &:disabled,
   &.disabled {
-    opacity: 0.6;
+    opacity: 0.4;  // Fluent uses more muted disabled state
     cursor: not-allowed;
     pointer-events: none;
   }
@@ -69,74 +71,71 @@
       margin-left: -7px;
       margin-top: -7px;
       border: 2px solid currentcolor;
-      border-radius: 50%;
+      border-radius: vars.$radius-full;
       border-right-color: transparent;
       animation: spinner-border 0.75s linear infinite;
     }
   }
 }
 
-// Primary Button - Main teal color
+// ============================================================================
+// PRIMARY BUTTON - Fluent "Primary" appearance
+// Solid teal background, white text
+// ============================================================================
 .btn-primary {
   background-color: colors.$primary-teal;
   border-color: colors.$primary-teal;
   color: vars.$white;
+  border-radius: vars.$radius-base !important; // Force 4px
 
   &:hover:not(:disabled) {
     background-color: colors.$primary-teal-hover;
     border-color: colors.$primary-teal-hover;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(13 148 136 / 20%);
   }
 
   &:active,
   &.active {
     background-color: colors.$primary-teal-active;
     border-color: colors.$primary-teal-active;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 50%);
   }
 }
 
-// Secondary Button - Light gray
+// ============================================================================
+// SECONDARY BUTTON - Fluent "Secondary" appearance
+// White/light background with border
+// ============================================================================
 .btn-secondary {
-  background-color: vars.$gray-100;
+  background-color: vars.$white;
   border-color: vars.$gray-300;
-  color: vars.$gray-800;
+  color: vars.$gray-700;
+  border-radius: vars.$radius-base !important; // Force 4px
 
   &:hover:not(:disabled) {
-    background-color: vars.$gray-200;
+    background-color: vars.$gray-50;
     border-color: vars.$gray-400;
-    transform: translateY(-1px);
   }
 
   &:active,
   &.active {
-    background-color: vars.$gray-300;
+    background-color: vars.$gray-100;
     border-color: vars.$gray-400;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(107 114 128 / 25%); // gray-500 with opacity
   }
 }
 
-// Outline Primary - Teal outline
+// ============================================================================
+// OUTLINE BUTTONS - Fluent "Outline" appearance
+// Transparent with colored border
+// ============================================================================
 .btn-outline-primary {
   background-color: transparent;
   border-color: colors.$primary-teal;
   color: colors.$primary-teal;
+  border-radius: vars.$radius-base !important; // Force 4px
 
   &:hover:not(:disabled) {
     background-color: colors.$primary-teal;
     border-color: colors.$primary-teal;
     color: vars.$white;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(13 148 136 / 20%);
   }
 
   &:active,
@@ -144,41 +143,34 @@
     background-color: colors.$primary-teal-hover;
     border-color: colors.$primary-teal-hover;
     color: vars.$white;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
   }
 }
 
-// Outline Secondary - Gray outline
 .btn-outline-secondary {
   background-color: transparent;
-  border-color: vars.$gray-500;
-  color: vars.$gray-500;
+  border-color: vars.$gray-400;
+  color: vars.$gray-600;
+  border-radius: vars.$radius-base !important; // Force 4px
 
   &:hover:not(:disabled) {
-    background-color: vars.$gray-500;
+    background-color: vars.$gray-100;
     border-color: vars.$gray-500;
-    color: vars.$white;
-    transform: translateY(-1px);
+    color: vars.$gray-700;
   }
 
   &:active,
   &.active {
-    background-color: vars.$gray-600;
-    border-color: vars.$gray-600;
-    color: vars.$white;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(107 114 128 / 25%); // gray-500 with opacity
+    background-color: vars.$gray-200;
+    border-color: vars.$gray-500;
+    color: vars.$gray-800;
   }
 }
 
-// Success Button - Green with teal undertones
+// ============================================================================
+// SEMANTIC BUTTONS - Success, Danger, Warning, Info
+// ============================================================================
+
+// Success Button - Green
 .btn-success {
   background-color: vars.$success-color;
   border-color: vars.$success-color;
@@ -187,19 +179,12 @@
   &:hover:not(:disabled) {
     background-color: vars.$success-hover;
     border-color: vars.$success-hover;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(16 185 129 / 20%); // success-color with opacity
   }
 
   &:active,
   &.active {
     background-color: vars.$success-dark;
     border-color: vars.$success-dark;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(16 185 129 / 50%); // success-color with opacity
   }
 }
 
@@ -212,19 +197,12 @@
   &:hover:not(:disabled) {
     background-color: vars.$error-hover;
     border-color: vars.$error-hover;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(239 68 68 / 20%); // error-color with opacity
   }
 
   &:active,
   &.active {
     background-color: vars.$error-dark;
     border-color: vars.$error-dark;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(239 68 68 / 50%); // error-color with opacity
   }
 }
 
@@ -238,8 +216,6 @@
     background-color: vars.$error-color;
     border-color: vars.$error-color;
     color: vars.$white;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(239 68 68 / 20%); // error-color with opacity
   }
 
   &:active,
@@ -247,15 +223,10 @@
     background-color: vars.$error-hover;
     border-color: vars.$error-hover;
     color: vars.$white;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(239 68 68 / 25%); // error-color with opacity
   }
 }
 
-// Warning Button - Amber/yellow
+// Warning Button - Amber
 .btn-warning {
   background-color: vars.$warning-color;
   border-color: vars.$warning-color;
@@ -264,19 +235,12 @@
   &:hover:not(:disabled) {
     background-color: vars.$warning-hover;
     border-color: vars.$warning-hover;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(245 158 11 / 20%); // warning-color with opacity
   }
 
   &:active,
   &.active {
     background-color: vars.$warning-dark;
     border-color: vars.$warning-dark;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(245 158 11 / 50%); // warning-color with opacity
   }
 }
 
@@ -289,84 +253,71 @@
   &:hover:not(:disabled) {
     background-color: vars.$info-hover;
     border-color: vars.$info-hover;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(59 130 246 / 20%); // info-color with opacity
   }
 
   &:active,
   &.active {
     background-color: vars.$info-dark;
     border-color: vars.$info-dark;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(59 130 246 / 50%); // info-color with opacity
   }
 }
 
-// Light Button
+// ============================================================================
+// SUBTLE / LIGHT BUTTONS - Fluent "Subtle" appearance
+// Transparent background, colored on hover
+// ============================================================================
 .btn-light {
-  background-color: vars.$gray-50;
-  border-color: vars.$gray-50;
-  color: vars.$gray-800;
+  background-color: transparent;
+  border-color: transparent;
+  color: vars.$gray-700;
 
   &:hover:not(:disabled) {
-    background-color: vars.$gray-200;
-    border-color: vars.$gray-200;
-    transform: translateY(-1px);
+    background-color: vars.$gray-100;
+    border-color: vars.$gray-100;
   }
 
   &:active,
   &.active {
-    background-color: vars.$gray-300;
-    border-color: vars.$gray-300;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(249 250 251 / 50%); // gray-50 with opacity
+    background-color: vars.$gray-200;
+    border-color: vars.$gray-200;
   }
 }
 
-// Dark Button - Using primary dark variant
+// Dark Button
 .btn-dark {
-  background-color: vars.$primary-active;
-  border-color: vars.$primary-active;
+  background-color: vars.$gray-800;
+  border-color: vars.$gray-800;
   color: vars.$white;
 
   &:hover:not(:disabled) {
-    background-color: vars.$gray-800;
-    border-color: vars.$gray-800;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(31 41 55 / 20%); // gray-800 with opacity
+    background-color: vars.$gray-700;
+    border-color: vars.$gray-700;
   }
 
   &:active,
   &.active {
     background-color: vars.$gray-900;
     border-color: vars.$gray-900;
-    transform: translateY(0);
-  }
-
-  &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(31 41 55 / 50%); // gray-800 with opacity
   }
 }
 
-// Link Button - Teal text
+// ============================================================================
+// LINK BUTTON - Fluent "Transparent" appearance
+// Text-only, no background or border
+// ============================================================================
 .btn-link {
   background-color: transparent;
   border-color: transparent;
   color: colors.$primary-teal;
   text-decoration: none;
-  padding: vars.$spacing-2 vars.$spacing-3;
+  padding: 0 vars.$spacing-2;
+  min-height: auto;
+  height: auto;
 
   &:hover:not(:disabled) {
     color: colors.$primary-teal-hover;
     text-decoration: underline;
     background-color: transparent;
-    transform: none;
   }
 
   &:active,
@@ -374,45 +325,44 @@
     color: colors.$primary-teal-active;
   }
 
-  &:focus {
-    box-shadow: none;
-    text-decoration: underline;
+  &:focus-visible {
+    outline: 2px solid colors.$primary-teal;
+    outline-offset: 2px;
   }
 }
 
-// Button Sizes - All maintain aspect ratio
+// ============================================================================
+// BUTTON SIZES - Fluent 2 specifications
+// ============================================================================
+
+// Small - 24px height (Fluent "small")
 .btn-sm {
-  font-size: vars.$font-size-xs;     // 12px base
-  padding: vars.$spacing-1 vars.$spacing-3; // 4px 12px
-  min-height: 32px;
-  border-radius: vars.$radius-sm;
-
-  @media (width >= 768px) {
-    font-size: vars.$font-size-sm;    // 14px on tablets and up
-  }
+  font-size: vars.$font-size-xs;     // 12px
+  padding: 0 vars.$spacing-2;        // 0 8px
+  min-height: 24px;
+  height: 24px;
+  border-radius: vars.$radius-sm !important;    // 2px for small buttons (force override)
 }
 
+// Large - 40px height (Fluent "medium")
 .btn-lg {
-  font-size: vars.$font-size-base;          // 16px
-  padding: vars.$spacing-3 vars.$spacing-5; // 12px 20px
-  min-height: 44px;
-  border-radius: vars.$radius-md;
-
-  @media (width >= 768px) {
-    font-size: vars.$font-size-md;   // 18px on tablets and up
-  }
-
-  @media (width >= 1024px) {
-    font-size: vars.$font-size-lg;    // 20px on desktop
-  }
+  font-size: vars.$font-size-base;   // 16px
+  padding: 0 vars.$spacing-5;        // 0 20px
+  min-height: 40px;
+  height: 40px;
+  border-radius: vars.$radius-base !important;  // 4px (force override)
 }
 
-// Icon-only buttons (circular - matching TSR list style)
+// ============================================================================
+// ICON-ONLY BUTTONS - Fluent "icon" appearance
+// Square/circular buttons for icons only
+// ============================================================================
 .btn-icon {
   padding: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: vars.$radius-full;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  border-radius: vars.$radius-base !important;  // 4px - Fluent rounded square (force override)
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -422,17 +372,29 @@
   }
 
   &.btn-sm {
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
+    min-height: 24px;
     padding: 0;
+    border-radius: vars.$radius-sm !important;  // 2px (force override)
   }
 
   &.btn-lg {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
     padding: 0;
   }
+
+  // Circular variant (opt-in)
+  &.btn-icon-circle {
+    border-radius: vars.$radius-full;
+  }
 }
+
+// ============================================================================
+// BUTTON CONTAINERS
+// ============================================================================
 
 // Action buttons container with gap spacing
 .action-buttons {
@@ -440,6 +402,17 @@
   gap: vars.$spacing-2;
   justify-content: flex-end;
   align-items: center;
+
+  // Action buttons in tables - 28px circular buttons
+  .btn,
+  .btn-icon {
+    width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    border-radius: vars.$radius-full !important;  // Circular action buttons
+    font-size: vars.$font-size-xs;
+  }
 }
 
 // Button groups - uniform sizing
@@ -459,14 +432,49 @@
   }
 }
 
-@keyframes spinner-border {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 // Block button (full width)
 .btn-block {
   display: flex;
   width: 100%;
+}
+
+// ============================================================================
+// CLOSE BUTTON - Fluent style
+// ============================================================================
+.btn-close {
+  background: transparent;
+  border: none;
+  padding: vars.$spacing-1;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: vars.$radius-base;
+  color: vars.$gray-500;
+  cursor: pointer;
+  transition: background-color 0.1s ease, color 0.1s ease;
+
+  &:hover {
+    background-color: vars.$gray-100;
+    color: vars.$gray-700;
+  }
+
+  &:active {
+    background-color: vars.$gray-200;
+  }
+
+  &:focus-visible {
+    outline: 2px solid vars.$black;
+    outline-offset: 2px;
+  }
+}
+
+// ============================================================================
+// ANIMATIONS
+// ============================================================================
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
 }

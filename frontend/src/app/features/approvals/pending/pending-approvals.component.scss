@@ -165,7 +165,7 @@
   .request-icon {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
+    border-radius: vars.$radius-full;
     background-color: vars.$primary-color;
     color: vars.$white;
     display: flex;
