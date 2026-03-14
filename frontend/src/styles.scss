@@ -421,6 +421,7 @@ tmsapp-admin-systemsettings-workflow-configuration,
 // Applied to: Visa, Transport, Accommodation, Expense Claims, TRF lists
 
 // Unified button styling for all "Create New" buttons in list pages
+// Using Fluent 2 "large" button size (40px height)
 .visa-list-container,
 .transport-list-container,
 .accommodation-list-container,
@@ -429,22 +430,24 @@ tmsapp-admin-systemsettings-workflow-configuration,
   // Standardize header button width and styling
   .header-section {
     .btn-primary {
-      width: 220px; // Fixed width for consistency across all request buttons
-      min-width: 220px; // Also set min-width as fallback
-      max-width: 220px; // Prevent expansion beyond fixed width
-      padding: 0.625rem 1rem; // Consistent padding
-      font-size: 0.9375rem; // 15px - consistent font size
-      font-weight: 500; // Consistent font weight
-      white-space: nowrap; // Prevent text wrapping
-      display: inline-flex; // Ensure proper alignment
-      align-items: center; // Center content vertically
-      justify-content: center; // Center content horizontally
-      line-height: 1.5; // Consistent line height
-      min-height: 44px; // Consistent minimum height
+      // Fluent 2 large button sizing
+      height: 40px;
+      min-height: 40px;
+      padding: 0 vars.$spacing-5; // 0 20px - Fluent horizontal padding
+      font-size: 1rem; // 16px - Fluent large button font
+      font-weight: 600; // Fluent semibold
+      border-radius: vars.$radius-base; // 4px
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: vars.$spacing-2; // 8px icon gap
+      line-height: 1;
+      min-width: 180px; // Minimum width for readability
 
       i {
-        font-size: 1.125rem; // Consistent icon size
-        flex-shrink: 0; // Prevent icon from shrinking
+        font-size: 1rem;
+        flex-shrink: 0;
       }
     }
   }
@@ -565,45 +568,47 @@ tmsapp-admin-systemsettings-workflow-configuration,
     gap: 0.5rem; // ~8px consistent spacing
   }
 
+  // Fluent 2 icon button sizing (28px for table actions)
   .action-buttons .btn,
   .action-buttons .btn-icon,
   .action-buttons .action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
+    width: 28px;
+    height: 28px;
     padding: 0;
-    border-radius: 999px;
+    border-radius: vars.$radius-base !important; // 4px - Fluent rounded square (force override)
     font-size: 0.875rem;
     border-width: 1px;
-    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+    transition: background-color 0.1s ease, border-color 0.1s ease; // Fluent fast transition
 
     i {
-      font-size: 1rem;
+      font-size: 0.875rem;
     }
 
-    &:hover,
+    // Fluent 2: No lift or shadow on hover
     &:focus-visible {
-      outline: none;
-      transform: translateY(-1px);
-      box-shadow: 0 1px 4px rgb(15 23 42 / 15%);
+      outline: 2px solid vars.$black;
+      outline-offset: 2px;
     }
   }
 }
 
 // Override any component-specific button styles to ensure consistency
+// Fluent 2 large button sizing
 .btn-create {
-  width: 220px !important;
-  min-width: 220px !important;
-  max-width: 220px !important;
-  padding: 0.625rem 1rem !important;
-  font-size: 0.9375rem !important;
-  font-weight: 500 !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 vars.$spacing-5 !important; // 0 20px
+  font-size: 1rem !important; // 16px
+  font-weight: 600 !important; // semibold
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  min-height: 44px !important;
+  gap: vars.$spacing-2 !important; // 8px
+  min-width: 180px !important;
+  border-radius: vars.$radius-base !important; // 4px
 }
 
 // ==================== Unified Badge Styles ====================
@@ -695,34 +700,48 @@ tmsapp-admin-systemsettings-workflow-configuration,
   box-shadow: 0 0 0 3px rgb(13 148 136 / 10%) !important;
 }
 
-// Primary buttons - teal theme
+// Primary buttons - teal theme (Fluent 2 style)
 .btn-primary {
   background-color: vars.$primary-color !important;
   border-color: vars.$primary-color !important;
 
-  &:hover, &:focus, &:active {
+  &:hover, &:active {
     background-color: vars.$primary-hover !important;
     border-color: vars.$primary-hover !important;
   }
 
-  &:focus {
-    box-shadow: 0 0 0 3px rgb(13 148 136 / 25%) !important;
+  // Fluent 2: High contrast black focus ring, no colored glow
+  &:focus-visible {
+    outline: 2px solid #000 !important;
+    outline-offset: 2px !important;
+    box-shadow: none !important;
+  }
+
+  &:focus:not(:focus-visible) {
+    box-shadow: none !important;
   }
 }
 
-// Outline primary buttons - teal theme
+// Outline primary buttons - teal theme (Fluent 2 style)
 .btn-outline-primary {
   color: vars.$primary-color !important;
   border-color: vars.$primary-color !important;
 
-  &:hover, &:focus, &:active {
+  &:hover, &:active {
     background-color: vars.$primary-color !important;
     border-color: vars.$primary-color !important;
     color: #ffffff !important;
   }
 
-  &:focus {
-    box-shadow: 0 0 0 3px rgb(13 148 136 / 25%) !important;
+  // Fluent 2: High contrast black focus ring
+  &:focus-visible {
+    outline: 2px solid #000 !important;
+    outline-offset: 2px !important;
+    box-shadow: none !important;
+  }
+
+  &:focus:not(:focus-visible) {
+    box-shadow: none !important;
   }
 }
 

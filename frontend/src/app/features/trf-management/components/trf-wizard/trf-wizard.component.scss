@@ -46,6 +46,7 @@
   }
 
   .page-subtitle {
+  // Using darker color for better contrast
     font-size: vars.$font-size-base;
     color: vars.$text-secondary;
     margin: 0;
@@ -138,6 +139,7 @@
     }
 
     .page-subtitle {
+  // Using darker color for better contrast
       font-size: vars.$font-size-sm;
     }
   }

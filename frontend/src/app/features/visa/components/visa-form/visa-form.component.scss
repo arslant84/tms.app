@@ -168,11 +168,15 @@ textarea.form-control {
       background-color: vars.$primary-color;
       border-color: vars.$primary-color;
 
+      // Fluent 2: Flat hover
       &:hover {
         background-color: vars.$primary-hover;
         border-color: vars.$primary-hover;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgb(13 148 136 / 20%);
+      }
+
+      &:active {
+        background-color: vars.$primary-active;
+        border-color: vars.$primary-active;
       }
     }
   }

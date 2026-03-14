@@ -570,11 +570,13 @@
   justify-content: flex-end;
 }
 
+// Standalone btn-icon for circular buttons (used with Bootstrap d-flex)
 .btn-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
   padding: 0;
-  border-radius: 50%;
+  border-radius: vars.$radius-full !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -652,7 +654,7 @@
   height: 3rem;
   border: 4px solid #f3f3f3;
   border-top: 4px solid vars.$primary-color;
-  border-radius: 50%;
+  border-radius: vars.$radius-full;
   animation: spin 1s linear infinite;
 }
 

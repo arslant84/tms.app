@@ -46,6 +46,7 @@
 }
 
 .page-subtitle {
+  // Using darker color for better contrast
   font-size: vars.$font-size-sm;
   color: vars.$text-secondary;
   margin: 0 0 0 2.75rem;
@@ -295,11 +296,13 @@
   justify-content: flex-end;
 }
 
+// Standalone btn-icon for circular buttons
 .btn-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
   padding: 0;
-  border-radius: 50%;
+  border-radius: vars.$radius-full !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -371,6 +374,7 @@
   }
 
   .page-subtitle {
+  // Using darker color for better contrast
     margin-left: 0;
   }
 

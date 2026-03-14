@@ -26,12 +26,12 @@
                     Permissions: {{ getPermissionNames(role.permissionIds) }}
                   </p>
                 </div>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-outline-secondary btn-sm" (click)="openEdit(role)" [disabled]="isSaving">
-                    <i class="bi bi-pencil icon-sm"></i>
+                <div class="action-buttons">
+                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="openEdit(role)" [disabled]="isSaving" title="Edit">
+                    <i class="bi bi-pencil"></i>
                   </button>
-                  <button class="btn btn-outline-danger btn-sm" (click)="confirmDelete(role)" [disabled]="isSaving">
-                    <i class="bi bi-trash icon-sm"></i>
+                  <button class="btn btn-sm btn-outline-danger btn-icon" (click)="confirmDelete(role)" [disabled]="isSaving" title="Delete">
+                    <i class="bi bi-trash"></i>
                   </button>
                 </div>
               </div>
