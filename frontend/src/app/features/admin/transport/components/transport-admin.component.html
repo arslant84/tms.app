@@ -144,7 +144,9 @@
                   {{ request.request_number || request.id }}
                 </a>
               </td>
-              <td>{{ request.requestorName || 'N/A' }}</td>
+              <td class="staff-cell">
+                <div class="staff-name">{{ request.requestorName || 'N/A' }}</div>
+              </td>
               <td>{{ request.department || 'N/A' }}</td>
               <td>
                 <div class="text-truncate truncate-lg" [title]="request.purpose">

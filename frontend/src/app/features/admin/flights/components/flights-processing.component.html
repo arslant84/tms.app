@@ -120,7 +120,9 @@
                         {{ trf.request_number }}
                       </a>
                     </td>
-                    <td>{{ trf.requestorName }}</td>
+                    <td class="staff-cell">
+                      <div class="staff-name">{{ trf.requestorName }}</div>
+                    </td>
                     <td>
                       <span class="badge" [class]="getTravelTypeBadgeClass(trf.travelType)">
                         {{ trf.travelType }}
@@ -412,7 +414,9 @@
             <tbody>
               <tr *ngFor="let flight of bookedFlights">
                 <td class="fw-medium text-primary-custom">{{ flight.trfRequestNumber }}</td>
-                <td>{{ flight.requestorName }}</td>
+                <td class="staff-cell">
+                <div class="staff-name">{{ flight.requestorName }}</div>
+              </td>
                 <td>{{ flight.airline }}</td>
                 <td>{{ flight.flightNumber }}</td>
                 <td>{{ flight.departureLocation }} → {{ flight.arrivalLocation }}</td>
