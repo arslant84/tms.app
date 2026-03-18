@@ -182,11 +182,20 @@ export class VisaService {
     });
   }
 
-  // Legacy status update methods (kept for compatibility)
-  // Note: The backend WorkflowRouter will determine the actual first approval step
-  // based on the configured workflow template
-  submitApplication(id: number): Observable<VisaApplication> {
-    return this.http.post<VisaApplication>(`${this.apiUrl}${id}/submit/`, {});
+  // Submit application for approval with optional approver selection
+  submitApplication(
+    id: number,
+    selectedApprovers?: { [stepOrder: number]: number },
+    skippedSteps?: { [stepOrder: number]: string | null }
+  ): Observable<VisaApplication> {
+    const payload: any = {};
+    if (selectedApprovers && Object.keys(selectedApprovers).length > 0) {
+      payload.selected_approvers = selectedApprovers;
+    }
+    if (skippedSteps && Object.keys(skippedSteps).length > 0) {
+      payload.skipped_steps = skippedSteps;
+    }
+    return this.http.post<VisaApplication>(`${this.apiUrl}${id}/submit/`, payload);
   }
 
   approveApplication(id: number, comments?: string): Observable<VisaApplication> {

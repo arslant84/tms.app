@@ -308,12 +308,13 @@ class AccommodationRequestDetailSerializer(AccommodationRequestSerializer):
     assigned_room = serializers.SerializerMethodField()
     assigned_staff_house = serializers.SerializerMethodField()
     selected_approvers = serializers.SerializerMethodField()
+    skipped_steps = serializers.SerializerMethodField()
 
     class Meta(AccommodationRequestSerializer.Meta):
         fields = AccommodationRequestSerializer.Meta.fields + [
             'bookings', 'assigned_room', 'assigned_room_name',
             'assigned_staff_house', 'assigned_staff_house_name',
-            'selected_approvers'
+            'selected_approvers', 'skipped_steps'
         ]
 
     def get_selected_approvers(self, obj):
@@ -330,6 +331,24 @@ class AccommodationRequestDetailSerializer(AccommodationRequestSerializer):
                 stored_approvers = workflow_instance.additional_data.get('selected_approvers', {})
                 # Convert string keys to integers for frontend compatibility
                 return {int(k): v for k, v in stored_approvers.items()}
+        except Exception:
+            pass
+        return {}
+
+    def get_skipped_steps(self, obj):
+        """Get skipped steps from workflow instance additional_data"""
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            content_type = ContentType.objects.get_for_model(obj)
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=obj.id
+            ).order_by('-created_at').first()
+            if workflow_instance and workflow_instance.additional_data:
+                stored_skipped = workflow_instance.additional_data.get('skipped_steps', {})
+                # Convert string keys to integers for frontend compatibility
+                return {int(k): v for k, v in stored_skipped.items()}
         except Exception:
             pass
         return {}

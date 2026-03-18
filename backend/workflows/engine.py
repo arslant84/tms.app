@@ -36,7 +36,8 @@ class WorkflowEngine:
         entity,
         initiated_by: User,
         module_name: str,
-        selected_approvers: Optional[Dict[int, int]] = None
+        selected_approvers: Optional[Dict[int, int]] = None,
+        skipped_steps: Optional[Dict[int, str]] = None
     ) -> WorkflowInstance:
         """
         Start a new workflow for an entity (TRF, Visa, etc.)
@@ -46,6 +47,8 @@ class WorkflowEngine:
             initiated_by: User who initiated the workflow
             module_name: Module identifier ('trf', 'visa', etc.)
             selected_approvers: Optional dict mapping step_order to selected user_id
+            skipped_steps: Optional dict mapping step_order to skip reason
+                          (for steps where approver is not available)
 
         Returns:
             WorkflowInstance: The created workflow instance
@@ -65,12 +68,17 @@ class WorkflowEngine:
         # Get content type for the entity
         content_type = ContentType.objects.get_for_model(entity)
 
-        # Create workflow instance with optional selected approvers
+        # Create workflow instance with optional selected approvers and skipped steps
         additional_data = {}
         if selected_approvers:
             # Store with string keys for JSON compatibility
             additional_data['selected_approvers'] = {
                 str(k): v for k, v in selected_approvers.items()
+            }
+        if skipped_steps:
+            # Store skipped steps with string keys for JSON compatibility
+            additional_data['skipped_steps'] = {
+                str(k): v for k, v in skipped_steps.items()
             }
 
         workflow_instance = WorkflowInstance.objects.create(
@@ -383,6 +391,44 @@ class WorkflowEngine:
     @staticmethod
     def _start_step(workflow_instance: WorkflowInstance, step: WorkflowStep, initiator: User):
         """Create and start a workflow step execution"""
+        # Check if this step is marked for skip (user indicated approver not available)
+        skipped_steps = (workflow_instance.additional_data or {}).get('skipped_steps', {})
+        step_order_str = str(step.step_order)
+
+        logger.info(f"_start_step: workflow={workflow_instance.id}, step={step.step_name}, step_order={step.step_order}, can_skip={step.can_skip}")
+        logger.info(f"_start_step: skipped_steps from additional_data: {skipped_steps}")
+        logger.info(f"_start_step: checking if step_order {step.step_order} (str: '{step_order_str}') is in skipped_steps")
+
+        if step_order_str in skipped_steps or step.step_order in skipped_steps:
+            # Step is marked for skip - verify it's allowed and auto-skip
+            if step.can_skip:
+                skip_reason = skipped_steps.get(step_order_str) or skipped_steps.get(step.step_order) or "Approver not available"
+                logger.info(f"Auto-skipping step '{step.step_name}' - marked as skipped by requester: {skip_reason}")
+
+                # Create skipped step execution
+                step_execution = WorkflowStepExecution.objects.create(
+                    workflow_instance=workflow_instance,
+                    workflow_step=step,
+                    assigned_to=None,
+                    status='skipped',
+                    actioned_by=initiator,
+                    action_date=timezone.now(),
+                    comments=f"Skipped during submission: {skip_reason}"
+                )
+
+                # Log the skip
+                WorkflowAuditLog.objects.create(
+                    workflow_instance=workflow_instance,
+                    action_type='skipped',
+                    action_description=f"Step '{step.step_name}' skipped by requester: {skip_reason}",
+                    performed_by=initiator
+                )
+
+                # Move to next step
+                return WorkflowEngine._handle_step_approval(workflow_instance, step_execution, initiator)
+            else:
+                logger.warning(f"Step '{step.step_name}' marked for skip but can_skip=False. Proceeding normally.")
+
         # Check if a step execution already exists for this step
         existing_execution = WorkflowStepExecution.objects.filter(
             workflow_instance=workflow_instance,
@@ -507,7 +553,16 @@ class WorkflowEngine:
             workflow_instance.save()
 
             # Start next step
-            WorkflowEngine._start_step(workflow_instance, next_step, actioned_by)
+            result = WorkflowEngine._start_step(workflow_instance, next_step, actioned_by)
+
+            # If _start_step returned a dict (from recursive _handle_step_approval), use that
+            if isinstance(result, dict):
+                return result
+
+            # Ensure entity status is updated to reflect current pending step
+            # This is necessary because _start_step may return early in some cases
+            # without updating the entity status (e.g., existing execution, race conditions)
+            WorkflowEngine._update_entity_status_from_step(workflow_instance, next_step)
 
             return {
                 'success': True,
@@ -747,17 +802,30 @@ class WorkflowEngine:
 
         entity = workflow_instance.content_object
         if entity and hasattr(entity, 'status'):
+            old_status = entity.status
+            new_status = None
+
             # Generate status based on approver role
             if step.approver_role:
                 # approver_role is stored as UUID, need to get role name
                 try:
                     role = Role.objects.get(id=step.approver_role)
-                    entity.status = f"Pending {role.name}"
+                    new_status = f"Pending {role.name}"
                 except Role.DoesNotExist:
-                    entity.status = "Pending Approval"
+                    logger.warning(f"Role not found for approver_role '{step.approver_role}' in step '{step.step_name}'")
+                    new_status = "Pending Approval"
             else:
-                entity.status = "Pending Approval"
+                # No approver_role set, use step name as fallback
+                if step.step_name:
+                    new_status = f"Pending {step.step_name}"
+                else:
+                    new_status = "Pending Approval"
+
+            entity.status = new_status
             entity.save(update_fields=['status'])
+            logger.info(f"Updated entity status: '{old_status}' -> '{new_status}' (step: {step.step_name}, step_order: {step.step_order})")
+        else:
+            logger.warning(f"Could not update entity status - entity: {entity}, has_status: {hasattr(entity, 'status') if entity else 'N/A'}")
 
     @staticmethod
     def check_and_escalate_overdue_steps():

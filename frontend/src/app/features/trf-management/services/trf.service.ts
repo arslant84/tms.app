@@ -95,10 +95,18 @@ export class TrfService {
   }
 
   // Submit TRF for approval
-  submitTrf(id: number, isOverseas: boolean = false, selectedApprovers?: { [stepOrder: number]: number }): Observable<TravelRequestForm> {
+  submitTrf(
+    id: number,
+    isOverseas: boolean = false,
+    selectedApprovers?: { [stepOrder: number]: number },
+    skippedSteps?: { [stepOrder: number]: string | null }
+  ): Observable<TravelRequestForm> {
     const payload: any = {};
     if (selectedApprovers && Object.keys(selectedApprovers).length > 0) {
       payload.selected_approvers = selectedApprovers;
+    }
+    if (skippedSteps && Object.keys(skippedSteps).length > 0) {
+      payload.skipped_steps = skippedSteps;
     }
     return this.http.post<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/submit/`, payload)
       .pipe(
