@@ -89,8 +89,8 @@ class WorkflowStep(models.Model):
         help_text="Whether this step must be completed for workflow to proceed"
     )
     can_skip = models.BooleanField(
-        default=False,
-        help_text="Whether this step can be skipped"
+        default=True,
+        help_text="Whether this step can be skipped when no approver is available"
     )
     requires_comments = models.BooleanField(
         default=False,

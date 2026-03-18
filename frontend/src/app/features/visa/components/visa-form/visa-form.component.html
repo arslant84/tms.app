@@ -308,10 +308,12 @@
           [required]="false"
           [showTitle]="false"
           [initialSelections]="initialApproverSelections"
+          [initialSkippedSteps]="initialSkippedSteps"
           [requesterId]="requesterId"
           [staffId]="requesterStaffId"
           (selectionChange)="onApproverSelectionChange($event)"
           (validityChange)="onApproverValidityChange($event)"
+          (skippedStepsChange)="onSkippedStepsChange($event)"
         ></app-approver-selection>
       </div>
     </div>
@@ -321,7 +323,7 @@
       <button type="button" class="btn btn-outline-secondary" (click)="onCancel()" [disabled]="isSubmitting">
         <i class="bi bi-x-circle"></i> Cancel
       </button>
-      <div class="action-buttons">
+      <div class="submit-buttons">
         <button type="button" class="btn btn-outline-primary" (click)="onSaveDraft()" [disabled]="isSubmitting">
           <i class="bi bi-save"></i> Save Draft
         </button>

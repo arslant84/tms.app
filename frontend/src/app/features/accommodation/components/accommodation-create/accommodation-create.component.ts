@@ -8,7 +8,7 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { TrfService } from '../../../trf-management/services/trf.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
-import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
+import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
 
@@ -30,9 +30,11 @@ export class AccommodationCreateComponent implements OnInit {
 
   // Approver selection properties
   selectedApprovers: ApproverSelection = {};
+  skippedSteps: SkippedStepsSelection = {};
   approverSelectionValid: boolean = true;
   showApproverSelection: boolean = true;
   initialApproverSelections: ApproverSelection = {};
+  initialSkippedSteps: SkippedStepsSelection = {};
   requesterStaffId?: string; // Original requestor's staff ID for department-based approver filtering
 
   // TRF/TSR selection
@@ -262,6 +264,12 @@ export class AccommodationCreateComponent implements OnInit {
           this.selectedApprovers = request.selected_approvers;
         }
 
+        // Load saved skipped steps for edit mode
+        if (request.skipped_steps) {
+          this.initialSkippedSteps = request.skipped_steps;
+          this.skippedSteps = request.skipped_steps;
+        }
+
         this.loading = false;
       },
       error: (err) => {
@@ -281,6 +289,10 @@ export class AccommodationCreateComponent implements OnInit {
     this.approverSelectionValid = isValid;
   }
 
+  onSkippedStepsChange(skippedSteps: SkippedStepsSelection): void {
+    this.skippedSteps = skippedSteps;
+  }
+
   onSubmit(): void {
     if (this.accommodationForm.invalid) {
       this.formUtils.markFormGroupTouched(this.accommodationForm);
@@ -290,8 +302,13 @@ export class AccommodationCreateComponent implements OnInit {
 
     this.submitting = true;
     const formData = this.prepareFormData();
-    // Set status to Pending to trigger workflow on submit
-    formData.status = 'Pending';
+    // Remove skipped_steps from formData - it will be sent via submit endpoint
+    const skippedStepsForSubmit = this.skippedSteps;
+    const selectedApproversForSubmit = this.selectedApprovers;
+    delete formData.skipped_steps;
+    delete formData.selected_approvers;
+    // Save as draft first, then submit to properly trigger workflow
+    formData.status = 'Draft';
 
     const saveOperation = this.isEditMode && this.requestId
       ? this.accommodationService.updateRequest(this.requestId, formData)
@@ -299,13 +316,19 @@ export class AccommodationCreateComponent implements OnInit {
 
     saveOperation.subscribe({
       next: (response) => {
-        this.submitting = false;
-        const message = this.isEditMode
-          ? 'Accommodation request updated and submitted successfully'
-          : 'Accommodation request created and submitted successfully';
-        this.toastService.success(message);
-        // Redirect to detail page to see workflow status
-        this.router.navigate(['/accommodation', response.id]);
+        // Now submit for approval with approver selections
+        this.accommodationService.submitRequest(response.id, selectedApproversForSubmit, skippedStepsForSubmit).subscribe({
+          next: () => {
+            this.submitting = false;
+            this.toastService.success('Accommodation request submitted successfully');
+            // Redirect to detail page to see workflow status
+            this.router.navigate(['/accommodation', response.id]);
+          },
+          error: (submitErr) => {
+            this.submitting = false;
+            this.toastService.error(submitErr.error?.error || 'Failed to submit accommodation request');
+          }
+        });
       },
       error: (err) => {
         this.submitting = false;
@@ -381,6 +404,11 @@ export class AccommodationCreateComponent implements OnInit {
     // Include selected approvers if any were selected
     if (Object.keys(this.selectedApprovers).length > 0) {
       data.selected_approvers = this.selectedApprovers;
+    }
+
+    // Include skipped steps if any were skipped
+    if (Object.keys(this.skippedSteps).length > 0) {
+      data.skipped_steps = this.skippedSteps;
     }
 
     return data;

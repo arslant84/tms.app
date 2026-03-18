@@ -704,6 +704,7 @@ def get_eligible_approvers(request, entity_type: str):
             'step_name': step.step_name,
             'step_description': step.step_description,
             'is_required': step.is_required,
+            'can_skip': step.can_skip,
             'approver_role': step.approver_role,
             'approver_permission': step.approver_permission,
             'eligible_approvers': [

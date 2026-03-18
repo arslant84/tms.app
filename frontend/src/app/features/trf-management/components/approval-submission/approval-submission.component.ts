@@ -6,7 +6,7 @@ import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { WorkflowService, ApproverSelection } from '../../../../core/services/workflow.service';
 import { WorkflowTemplate, WorkflowStep } from '../../../../core/models/workflow.models';
-import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
+import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 export interface ApprovalStep {
@@ -20,6 +20,7 @@ export interface ApprovalStep {
 export interface ApprovalSubmissionData {
   additionalComments: string;
   selected_approvers?: ApproverSelection;
+  skipped_steps?: SkippedStepsSelection;
 }
 
 @Component({
@@ -52,6 +53,7 @@ export class ApprovalSubmissionComponent implements OnInit {
   isInternationalTravel: boolean = false;
   isLoadingWorkflow: boolean = false;
   selectedApprovers: ApproverSelection = {};
+  skippedSteps: SkippedStepsSelection = {};
   approverSelectionValid: boolean = true;
 
   constructor(
@@ -70,6 +72,11 @@ export class ApprovalSubmissionComponent implements OnInit {
     // Initialize selectedApprovers from initialData if available (edit mode)
     if (this.initialData?.selected_approvers) {
       this.selectedApprovers = this.initialData.selected_approvers;
+    }
+
+    // Initialize skippedSteps from initialData if available (edit mode)
+    if (this.initialData?.skipped_steps) {
+      this.skippedSteps = this.initialData.skipped_steps;
     }
 
     this.initForm();
@@ -165,11 +172,16 @@ export class ApprovalSubmissionComponent implements OnInit {
     this.approverSelectionValid = isValid;
   }
 
+  onSkippedStepsChange(skippedSteps: SkippedStepsSelection): void {
+    this.skippedSteps = skippedSteps;
+  }
+
   onSubmit(): void {
     if (this.approvalForm.valid && this.approverSelectionValid) {
       const submissionData: ApprovalSubmissionData = {
         ...this.approvalForm.value,
-        selected_approvers: this.selectedApprovers
+        selected_approvers: this.selectedApprovers,
+        skipped_steps: this.skippedSteps
       };
       this.formSubmit.emit(submissionData);
     } else {
@@ -185,7 +197,8 @@ export class ApprovalSubmissionComponent implements OnInit {
   getFormData(): ApprovalSubmissionData {
     return {
       ...this.approvalForm.value,
-      selected_approvers: this.selectedApprovers
+      selected_approvers: this.selectedApprovers,
+      skipped_steps: this.skippedSteps
     };
   }
 

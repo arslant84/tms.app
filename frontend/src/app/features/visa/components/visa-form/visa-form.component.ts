@@ -7,7 +7,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
-import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
+import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
 
@@ -29,9 +29,11 @@ export class VisaFormComponent implements OnInit {
 
   // Approver selection properties
   selectedApprovers: ApproverSelection = {};
+  skippedSteps: SkippedStepsSelection = {};
   approverSelectionValid: boolean = true;
   showApproverSelection: boolean = true;
   initialApproverSelections: ApproverSelection = {};
+  initialSkippedSteps: SkippedStepsSelection = {};
   requesterId?: number; // Original user ID for department-based approver filtering
   requesterStaffId?: string; // Fallback: staff ID for department lookup
 
@@ -222,6 +224,12 @@ export class VisaFormComponent implements OnInit {
           this.initialApproverSelections = application.selected_approvers;
           this.selectedApprovers = application.selected_approvers;
         }
+
+        // Load saved skipped steps for edit mode
+        if (application.skipped_steps) {
+          this.initialSkippedSteps = application.skipped_steps;
+          this.skippedSteps = application.skipped_steps;
+        }
         this.isLoading = false;
       },
       error: (error) => {
@@ -254,7 +262,12 @@ export class VisaFormComponent implements OnInit {
 
     this.isSubmitting = true;
     const formData = this.prepareFormData();
-    formData.status = 'Pending';
+    // Remove skipped_steps from formData - it will be sent via submit endpoint
+    const skippedStepsForSubmit = this.skippedSteps;
+    const selectedApproversForSubmit = this.selectedApprovers;
+    delete (formData as any).skipped_steps;
+    delete (formData as any).selected_approvers;
+    formData.status = 'Draft'; // Save as draft first, then submit
 
     const saveOperation = this.isEditMode && this.applicationId
       ? this.visaService.updateApplication(this.applicationId, formData)
@@ -267,8 +280,17 @@ export class VisaFormComponent implements OnInit {
         if (this.passportFile && savedId) {
           this.uploadPassportFileToServer(savedId);
         }
-        this.toastService.success(`Visa application ${this.isEditMode ? 'updated' : 'submitted'} successfully`);
-        this.router.navigate(['/visa']);
+        // Now submit for approval with approver selections
+        this.visaService.submitApplication(savedId, selectedApproversForSubmit, skippedStepsForSubmit).subscribe({
+          next: () => {
+            this.toastService.success(`Visa application submitted successfully`);
+            this.router.navigate(['/visa']);
+          },
+          error: (submitError) => {
+            this.isSubmitting = false;
+            this.toastService.error(submitError.error?.error || 'Failed to submit visa application');
+          }
+        });
       },
       error: (error) => {
 
@@ -384,6 +406,10 @@ export class VisaFormComponent implements OnInit {
     this.approverSelectionValid = isValid;
   }
 
+  onSkippedStepsChange(skippedSteps: SkippedStepsSelection): void {
+    this.skippedSteps = skippedSteps;
+  }
+
   prepareFormData(): Partial<VisaApplication> & { selected_approvers?: ApproverSelection } {
     const formValue = this.visaForm.value;
 
@@ -410,6 +436,11 @@ export class VisaFormComponent implements OnInit {
     // Include selected approvers if any were selected
     if (Object.keys(this.selectedApprovers).length > 0) {
       formValue.selected_approvers = this.selectedApprovers;
+    }
+
+    // Include skipped steps if any were skipped
+    if (Object.keys(this.skippedSteps).length > 0) {
+      formValue.skipped_steps = this.skippedSteps;
     }
 
     return formValue;

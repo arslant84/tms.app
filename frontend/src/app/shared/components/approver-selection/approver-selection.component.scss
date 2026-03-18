@@ -88,6 +88,60 @@
     margin-left: 36px; // Align with step name (24px number + 12px gap)
   }
 
+  .skip-option {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: vars.$spacing-2;
+    margin-bottom: vars.$spacing-3;
+    padding: vars.$spacing-2 vars.$spacing-3;
+    background-color: vars.$gray-50;
+    border-radius: vars.$radius-sm;
+    border: 1px dashed vars.$border-light;
+  }
+
+  .skip-checkbox {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-2;
+    cursor: pointer;
+    margin: 0;
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: vars.$warning-color;
+    }
+
+    .skip-label {
+      font-size: vars.$font-size-sm;
+      font-weight: vars.$font-weight-medium;
+      color: vars.$text-primary;
+    }
+  }
+
+  .skip-hint {
+    font-size: vars.$font-size-xs;
+    color: vars.$text-secondary;
+    font-style: italic;
+  }
+
+  .skipped-state {
+    display: flex;
+    align-items: center;
+    padding: vars.$spacing-3;
+    background-color: vars.$gray-100;
+    border: 1px solid vars.$gray-300;
+    border-radius: vars.$radius-sm;
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-sm;
+
+    i {
+      color: vars.$warning-color;
+    }
+  }
+
   .search-input {
     margin-bottom: vars.$spacing-2;
     font-size: vars.$font-size-sm;

@@ -14,7 +14,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 import { TransportRequestForm, TransportDetail, TransportType, toBackendFormat } from '../../models/transport.model';
-import { ApproverSelectionComponent } from '../../../../shared/components/approver-selection/approver-selection.component';
+import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
 
 @Component({
@@ -35,9 +35,11 @@ export class TransportCreateComponent implements OnInit {
 
   // Approver selection properties
   selectedApprovers: ApproverSelection = {};
+  skippedSteps: SkippedStepsSelection = {};
   approverSelectionValid: boolean = true;
   showApproverSelection: boolean = true;
   initialApproverSelections: ApproverSelection = {};
+  initialSkippedSteps: SkippedStepsSelection = {};
   requesterStaffId?: string; // Staff ID for department-based approver filtering
 
   transportTypes: TransportType[] = ['Local', 'Intercity', 'Airport Transfer', 'Charter', 'Other'];
@@ -171,6 +173,12 @@ export class TransportCreateComponent implements OnInit {
           this.selectedApprovers = request.selected_approvers;
         }
 
+        // Load saved skipped steps for edit mode
+        if (request.skipped_steps && Object.keys(request.skipped_steps).length > 0) {
+          this.initialSkippedSteps = request.skipped_steps;
+          this.skippedSteps = request.skipped_steps;
+        }
+
         this.loading = false;
       },
       error: (error) => {
@@ -227,6 +235,10 @@ export class TransportCreateComponent implements OnInit {
     this.approverSelectionValid = isValid;
   }
 
+  onSkippedStepsChange(skippedSteps: SkippedStepsSelection): void {
+    this.skippedSteps = skippedSteps;
+  }
+
   onSubmit(): void {
     if (this.transportForm.invalid) {
       this.formUtils.markFormGroupTouched(this.transportForm);
@@ -245,6 +257,11 @@ export class TransportCreateComponent implements OnInit {
     // Include selected approvers if any were selected
     if (Object.keys(this.selectedApprovers).length > 0) {
       (backendData as any).selected_approvers = this.selectedApprovers;
+    }
+
+    // Include skipped steps if any were skipped
+    if (Object.keys(this.skippedSteps).length > 0) {
+      (backendData as any).skipped_steps = this.skippedSteps;
     }
 
     const saveOperation = this.isEditMode && this.requestId

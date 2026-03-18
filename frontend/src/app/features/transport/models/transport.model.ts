@@ -63,6 +63,7 @@ export interface TransportRequestForm extends TransportRequestData, TransportApp
   approval_steps?: any[]; // Legacy field for backward compatibility
   vehicle_assignments?: any[]; // Vehicle assignments for transport processing
   selected_approvers?: { [stepOrder: number]: number }; // Selected approvers for workflow steps
+  skipped_steps?: { [stepOrder: number]: string | null }; // Skipped workflow steps
   createdAt?: Date | string;
   submittedAt?: Date | string;
   updatedAt?: Date | string;
@@ -204,6 +205,9 @@ export function toFrontendFormat(backendData: any): TransportRequestForm {
 
     // Selected approvers for workflow steps
     selected_approvers: backendData.selected_approvers || {},
+
+    // Skipped workflow steps
+    skipped_steps: backendData.skipped_steps || {},
 
     // Booking details
     bookingDetails: backendData.booking_details ? {

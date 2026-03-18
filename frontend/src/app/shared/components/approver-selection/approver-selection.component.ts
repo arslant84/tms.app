@@ -9,6 +9,14 @@ import {
 } from '../../../core/services/workflow.service';
 import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 
+/**
+ * Interface for skipped steps selection.
+ * Maps step_order to skip reason (optional).
+ */
+export interface SkippedStepsSelection {
+  [stepOrder: number]: string | null;  // step_order -> skip_reason (null means no reason provided)
+}
+
 @Component({
   selector: 'app-approver-selection',
   standalone: true,
@@ -31,11 +39,22 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
    * (for modules like accommodation that store staff_id instead of user FK).
    */
   @Input() staffId?: string;
+  /**
+   * Initial skipped steps to pre-populate (for edit mode).
+   */
+  @Input() initialSkippedSteps: SkippedStepsSelection = {};
+  /**
+   * Whether to show the skip option for skippable steps.
+   * Default: true
+   */
+  @Input() allowSkip: boolean = true;
   @Output() selectionChange = new EventEmitter<ApproverSelection>();
   @Output() validityChange = new EventEmitter<boolean>();
+  @Output() skippedStepsChange = new EventEmitter<SkippedStepsSelection>();
 
   steps: WorkflowStepWithApprovers[] = [];
   selections: ApproverSelection = {};
+  skippedSteps: SkippedStepsSelection = {};
   isLoading = false;
   error: string | null = null;
   searchTerms: { [stepOrder: number]: string } = {};
@@ -68,6 +87,7 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
     this.isLoading = true;
     this.error = null;
     this.selections = {};
+    this.skippedSteps = {};
     this.searchTerms = {};
 
     // Build options for the service call
@@ -87,14 +107,19 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
           // First, apply initial selections if provided
           this.applyInitialSelections();
 
-          // Then, for steps without initial selection, pre-select if only one approver
+          // Apply initial skipped steps
+          this.applyInitialSkippedSteps();
+
+          // Then, for steps without initial selection or skip, pre-select if only one approver
           this.steps.forEach(step => {
-            if (this.selections[step.step_order] === undefined && step.eligible_approvers.length === 1) {
+            const isSkipped = this.skippedSteps[step.step_order] !== undefined;
+            if (!isSkipped && this.selections[step.step_order] === undefined && step.eligible_approvers.length === 1) {
               this.selections[step.step_order] = step.eligible_approvers[0].id;
             }
           });
 
           this.emitSelection();
+          this.emitSkippedSteps();
           this.emitValidity();
         } else {
           // Response was null or had no steps - workflow not found
@@ -139,6 +164,66 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
     this.initialSelectionsApplied = true;
   }
 
+  /**
+   * Apply initial skipped steps to the component.
+   * Only applies skips for steps that have can_skip=true.
+   */
+  private applyInitialSkippedSteps(): void {
+    if (!this.initialSkippedSteps || Object.keys(this.initialSkippedSteps).length === 0) {
+      return;
+    }
+
+    for (const [stepOrderStr, reason] of Object.entries(this.initialSkippedSteps)) {
+      const stepOrder = parseInt(stepOrderStr, 10);
+      const step = this.steps.find(s => s.step_order === stepOrder);
+
+      if (step && step.can_skip) {
+        this.skippedSteps[stepOrder] = reason;
+        // Remove any approver selection for skipped step
+        delete this.selections[stepOrder];
+      }
+    }
+  }
+
+  /**
+   * Toggle skip status for a workflow step.
+   * Only works for steps with can_skip=true.
+   */
+  onSkipToggle(stepOrder: number, skip: boolean, reason?: string): void {
+    const step = this.steps.find(s => s.step_order === stepOrder);
+    if (!step || !step.can_skip) return;
+
+    if (skip) {
+      this.skippedSteps[stepOrder] = reason || null;
+      // Remove approver selection when skipping
+      delete this.selections[stepOrder];
+    } else {
+      delete this.skippedSteps[stepOrder];
+      // Auto-select approver if only one available
+      if (step.eligible_approvers.length === 1) {
+        this.selections[stepOrder] = step.eligible_approvers[0].id;
+      }
+    }
+
+    this.emitSelection();
+    this.emitSkippedSteps();
+    this.emitValidity();
+  }
+
+  /**
+   * Check if a step is currently marked as skipped.
+   */
+  isStepSkipped(stepOrder: number): boolean {
+    return this.skippedSteps[stepOrder] !== undefined;
+  }
+
+  /**
+   * Check if a step can be skipped.
+   */
+  canSkipStep(step: WorkflowStepWithApprovers): boolean {
+    return this.allowSkip && step.can_skip;
+  }
+
   onApproverSelect(stepOrder: number, userId: number | null): void {
     if (userId) {
       this.selections[stepOrder] = userId;
@@ -167,11 +252,20 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
 
     return this.steps
       .filter(s => s.is_required)
-      .every(s => this.selections[s.step_order] !== undefined);
+      .every(s => {
+        // Step is valid if it has an approver selected OR if it's skipped
+        const hasApprover = this.selections[s.step_order] !== undefined;
+        const isSkipped = this.skippedSteps[s.step_order] !== undefined;
+        return hasApprover || isSkipped;
+      });
   }
 
   private emitSelection(): void {
     this.selectionChange.emit({ ...this.selections });
+  }
+
+  private emitSkippedSteps(): void {
+    this.skippedStepsChange.emit({ ...this.skippedSteps });
   }
 
   private emitValidity(): void {
@@ -191,9 +285,15 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
     return { ...this.selections };
   }
 
+  getSkippedSteps(): SkippedStepsSelection {
+    return { ...this.skippedSteps };
+  }
+
   clearSelections(): void {
     this.selections = {};
+    this.skippedSteps = {};
     this.emitSelection();
+    this.emitSkippedSteps();
     this.emitValidity();
   }
 
@@ -213,15 +313,46 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
         if (step) {
           const isEligible = step.eligible_approvers.some(a => a.id === userId);
           if (isEligible) {
+            // Clear skip if selecting an approver
+            delete this.skippedSteps[stepOrder];
             this.selections[stepOrder] = userId;
           }
         }
       }
       this.emitSelection();
+      this.emitSkippedSteps();
       this.emitValidity();
     } else {
       // Steps not loaded yet, store as initial selections
       this.initialSelections = selections;
+    }
+  }
+
+  /**
+   * Programmatically set skipped steps from outside the component.
+   * Useful when loading existing data in edit mode.
+   */
+  setSkippedSteps(skippedSteps: SkippedStepsSelection): void {
+    if (!skippedSteps) return;
+
+    // Apply only if steps are loaded
+    if (this.steps.length > 0) {
+      for (const [stepOrderStr, reason] of Object.entries(skippedSteps)) {
+        const stepOrder = parseInt(stepOrderStr, 10);
+        const step = this.steps.find(s => s.step_order === stepOrder);
+
+        if (step && step.can_skip) {
+          this.skippedSteps[stepOrder] = reason;
+          // Clear approver selection if skipping
+          delete this.selections[stepOrder];
+        }
+      }
+      this.emitSelection();
+      this.emitSkippedSteps();
+      this.emitValidity();
+    } else {
+      // Steps not loaded yet, store as initial skipped steps
+      this.initialSkippedSteps = skippedSteps;
     }
   }
 }

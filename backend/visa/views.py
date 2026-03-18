@@ -204,15 +204,26 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         if status_value in ['Pending', 'Submitted']:
             # Extract selected approvers from request data (optional)
             selected_approvers = self.request.data.get('selected_approvers', None)
+            logger.info(f" Visa #{visa_application.id} - Raw selected_approvers from request: {selected_approvers}")
             if selected_approvers:
                 selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+                logger.info(f" Visa #{visa_application.id} - Parsed selected_approvers: {selected_approvers}")
+
+            # Extract skipped steps from request data (optional)
+            skipped_steps = self.request.data.get('skipped_steps', None)
+            logger.info(f" Visa #{visa_application.id} - Raw skipped_steps from request: {skipped_steps}")
+            if skipped_steps:
+                skipped_steps = {int(k): v for k, v in skipped_steps.items()}
+                logger.info(f" Visa #{visa_application.id} - Parsed skipped_steps: {skipped_steps}")
 
             try:
+                logger.info(f" Starting workflow for Visa #{visa_application.id} with selected_approvers={selected_approvers}, skipped_steps={skipped_steps}")
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=visa_application,
                     entity_type='visaapplication',
                     initiated_by=self.request.user,
-                    selected_approvers=selected_approvers
+                    selected_approvers=selected_approvers,
+                    skipped_steps=skipped_steps
                 )
 
                 if workflow_instance:
@@ -224,6 +235,8 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                     logger.warning(f" No active workflow configured for visaapplication - using legacy approval system")
             except Exception as e:
                 logger.error(f" Error starting workflow for Visa Application #{visa_application.id}: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 # Don't fail the request creation if workflow fails
                 pass
 
@@ -495,6 +508,78 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         serializer = VisaApplicationDetailSerializer(visa)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'], url_path='submit')
+    def submit(self, request, pk=None):
+        """
+        Submit a visa application for approval.
+        Changes status from Draft to Pending and starts workflow.
+        This endpoint properly returns the updated status after workflow starts.
+        """
+        visa = self.get_object()
+
+        # Validate status
+        if visa.status != 'Draft':
+            return Response(
+                {'error': f'Cannot submit visa application with status {visa.status}. Only Draft applications can be submitted.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Generate request number if it doesn't exist
+        if not visa.request_number:
+            try:
+                destination = visa.destination or 'VIS'
+                request_number = generate_request_id('VIS', destination)
+                visa.request_number = request_number
+                logger.info(f" Generated request number: {request_number}")
+            except Exception as e:
+                logger.error(f" Error generating request number: {str(e)}")
+                # Fallback to simple format
+                visa.request_number = f"VIS-{datetime.now().strftime('%Y%m%d-%H%M')}-VIS-{visa.id}"
+
+        # Set submitted date
+        visa.submitted_date = timezone.now()
+        visa.status = 'Pending'  # Initial status before workflow updates it
+        visa.save()
+
+        # Extract selected approvers from request data (optional)
+        selected_approvers = request.data.get('selected_approvers', None)
+        if selected_approvers:
+            selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+            logger.info(f" Visa #{visa.id} SUBMIT - Parsed selected_approvers: {selected_approvers}")
+
+        # Extract skipped steps from request data (optional)
+        skipped_steps = request.data.get('skipped_steps', None)
+        if skipped_steps:
+            skipped_steps = {int(k): v for k, v in skipped_steps.items()}
+            logger.info(f" Visa #{visa.id} SUBMIT - Parsed skipped_steps: {skipped_steps}")
+
+        # Start workflow
+        try:
+            logger.info(f" Starting workflow for Visa #{visa.id} with selected_approvers={selected_approvers}, skipped_steps={skipped_steps}")
+            workflow_instance = WorkflowRouter.start_workflow_for_request(
+                entity=visa,
+                entity_type='visaapplication',
+                initiated_by=request.user,
+                selected_approvers=selected_approvers,
+                skipped_steps=skipped_steps
+            )
+
+            if workflow_instance:
+                # Reload to get updated status from workflow
+                visa.refresh_from_db()
+                logger.info(f" Workflow started for Visa #{visa.id}: Instance #{workflow_instance.id}, Status: {visa.status}")
+            else:
+                logger.warning(f" No active workflow configured for visaapplication")
+        except Exception as e:
+            logger.error(f" Error starting workflow for Visa #{visa.id}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            # Don't fail - visa is already saved with Pending status
+
+        # Return fresh serialized data with updated status
+        serializer = VisaApplicationDetailSerializer(visa, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['post'], url_path='upload-passport')
     def upload_passport(self, request, pk=None):
         """
@@ -605,24 +690,38 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         if old_status == 'Draft' and new_status in ['Pending', 'Submitted']:
             # Extract selected approvers from request data (optional)
             selected_approvers = self.request.data.get('selected_approvers', None)
+            logger.info(f" Visa #{visa_application.id} UPDATE - Raw selected_approvers: {selected_approvers}")
             if selected_approvers:
                 selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+                logger.info(f" Visa #{visa_application.id} UPDATE - Parsed selected_approvers: {selected_approvers}")
+
+            # Extract skipped steps from request data (optional)
+            skipped_steps = self.request.data.get('skipped_steps', None)
+            logger.info(f" Visa #{visa_application.id} UPDATE - Raw skipped_steps: {skipped_steps}")
+            if skipped_steps:
+                skipped_steps = {int(k): v for k, v in skipped_steps.items()}
+                logger.info(f" Visa #{visa_application.id} UPDATE - Parsed skipped_steps: {skipped_steps}")
 
             try:
+                logger.info(f" Starting workflow for Visa #{visa_application.id} with selected_approvers={selected_approvers}, skipped_steps={skipped_steps}")
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=visa_application,
                     entity_type='visaapplication',
                     initiated_by=self.request.user,
-                    selected_approvers=selected_approvers
+                    selected_approvers=selected_approvers,
+                    skipped_steps=skipped_steps
                 )
 
                 if workflow_instance:
                     visa_application.refresh_from_db()
                     logger.info(f" Workflow started for Visa Application #{visa_application.id}: Workflow Instance #{workflow_instance.id}")
+                    logger.info(f" Status after workflow: {visa_application.status}")
                 else:
                     logger.warning(f" No active workflow configured for visaapplication")
             except Exception as e:
                 logger.error(f" Error starting workflow for Visa Application #{visa_application.id}: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 pass
 
         # Handle status change to Completed

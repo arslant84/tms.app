@@ -30,7 +30,8 @@ class WorkflowRouter:
         entity: any,
         entity_type: str,
         initiated_by: User,
-        selected_approvers: Optional[Dict[int, int]] = None
+        selected_approvers: Optional[Dict[int, int]] = None,
+        skipped_steps: Optional[Dict[int, str]] = None
     ) -> Optional[WorkflowInstance]:
         """
         Start a workflow for a newly created request
@@ -40,6 +41,8 @@ class WorkflowRouter:
             entity_type: Type identifier (travelrequest, etc.)
             initiated_by: User who created the request
             selected_approvers: Optional dict mapping step_order to selected user_id
+            skipped_steps: Optional dict mapping step_order to skip reason
+                          (for steps where approver is not available)
 
         Returns:
             WorkflowInstance if workflow started, None if no workflow configured
@@ -65,7 +68,8 @@ class WorkflowRouter:
                 entity=entity,
                 initiated_by=initiated_by,
                 module_name=entity_type,
-                selected_approvers=selected_approvers
+                selected_approvers=selected_approvers,
+                skipped_steps=skipped_steps
             )
 
             logger.info(f"Workflow started: {workflow_instance.id} for {entity_type} #{entity.id}")

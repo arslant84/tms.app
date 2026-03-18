@@ -279,9 +279,11 @@
         [required]="false"
         [showTitle]="false"
         [initialSelections]="initialApproverSelections"
+        [initialSkippedSteps]="initialSkippedSteps"
         [staffId]="requesterStaffId"
         (selectionChange)="onApproverSelectionChange($event)"
         (validityChange)="onApproverValidityChange($event)"
+        (skippedStepsChange)="onSkippedStepsChange($event)"
       ></app-approver-selection>
     </section>
 
