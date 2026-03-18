@@ -237,12 +237,18 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             if selected_approvers:
                 selected_approvers = {int(k): v for k, v in selected_approvers.items()}
 
+            # Extract skipped steps from request data (optional)
+            skipped_steps = self.request.data.get('skipped_steps', None)
+            if skipped_steps:
+                skipped_steps = {int(k): v for k, v in skipped_steps.items()}
+
             try:
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=transport_request,
                     entity_type='transportrequest',
                     initiated_by=user,
-                    selected_approvers=selected_approvers
+                    selected_approvers=selected_approvers,
+                    skipped_steps=skipped_steps
                 )
 
                 if workflow_instance:
@@ -318,13 +324,19 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             if selected_approvers:
                 selected_approvers = {int(k): v for k, v in selected_approvers.items()}
 
+            # Extract skipped steps from request data
+            skipped_steps = self.request.data.get('skipped_steps', None)
+            if skipped_steps:
+                skipped_steps = {int(k): v for k, v in skipped_steps.items()}
+
             # Start new workflow
             try:
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=transport_request,
                     entity_type='transportrequest',
                     initiated_by=self.request.user,
-                    selected_approvers=selected_approvers
+                    selected_approvers=selected_approvers,
+                    skipped_steps=skipped_steps
                 )
 
                 if workflow_instance:
@@ -402,13 +414,19 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         if selected_approvers:
             selected_approvers = {int(k): v for k, v in selected_approvers.items()}
 
+        # Extract skipped steps from request data (optional)
+        skipped_steps = request.data.get('skipped_steps', None)
+        if skipped_steps:
+            skipped_steps = {int(k): v for k, v in skipped_steps.items()}
+
         # Start workflow using WorkflowRouter
         try:
             workflow_instance = WorkflowRouter.start_workflow_for_request(
                 entity=transport_request,
                 entity_type='transportrequest',
                 initiated_by=request.user,
-                selected_approvers=selected_approvers
+                selected_approvers=selected_approvers,
+                skipped_steps=skipped_steps
             )
 
             if workflow_instance:

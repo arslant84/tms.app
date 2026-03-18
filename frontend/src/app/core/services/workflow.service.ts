@@ -33,6 +33,7 @@ export interface WorkflowStepWithApprovers {
   step_name: string;
   step_description: string | null;
   is_required: boolean;
+  can_skip: boolean;
   approver_role: string | null;
   approver_permission: string | null;
   eligible_approvers: EligibleApprover[];

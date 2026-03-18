@@ -119,6 +119,22 @@ export class AccommodationService {
     return this.http.post(`${this.apiUrl}/requests/${id}/cancel/`, { reason });
   }
 
+  // Submit request for approval with optional approver selection
+  submitRequest(
+    id: number,
+    selectedApprovers?: { [stepOrder: number]: number },
+    skippedSteps?: { [stepOrder: number]: string | null }
+  ): Observable<AccommodationRequestDetail> {
+    const payload: any = {};
+    if (selectedApprovers && Object.keys(selectedApprovers).length > 0) {
+      payload.selected_approvers = selectedApprovers;
+    }
+    if (skippedSteps && Object.keys(skippedSteps).length > 0) {
+      payload.skipped_steps = skippedSteps;
+    }
+    return this.http.post<AccommodationRequestDetail>(`${this.apiUrl}/requests/${id}/submit/`, payload);
+  }
+
   approveRequest(id: number, comments?: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/requests/${id}/approve/`, { comments });
   }

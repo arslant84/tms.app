@@ -359,8 +359,9 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
     externalPartyRequestorInfo = serializers.SerializerMethodField()
     flight_details = serializers.SerializerMethodField()
 
-    # Add selected approvers from workflow instance for edit mode
+    # Add selected approvers and skipped steps from workflow instance for edit mode
     selected_approvers = serializers.SerializerMethodField()
+    skipped_steps = serializers.SerializerMethodField()
 
     class Meta:
         model = TravelRequest
@@ -377,7 +378,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             'passport_details',
             'domesticTravelDetails', 'overseasTravelDetails',
             'externalPartiesTravelDetails', 'externalPartyRequestorInfo',
-            'selected_approvers'
+            'selected_approvers', 'skipped_steps'
         ]
         read_only_fields = ['id', 'request_number', 'submitted_at', 'created_at', 'updated_at']
 
@@ -557,6 +558,32 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
                 stored_approvers = workflow_instance.additional_data.get('selected_approvers', {})
                 # Convert string keys to integers for frontend compatibility
                 return {int(k): v for k, v in stored_approvers.items()}
+        except Exception:
+            pass
+
+        return {}
+
+    def get_skipped_steps(self, obj):
+        """
+        Get the skipped steps from the workflow instance's additional_data.
+        This is used to pre-populate skipped steps in edit mode.
+        Returns dict with integer keys for frontend compatibility.
+        """
+        from workflows.models import WorkflowInstance
+        from django.contrib.contenttypes.models import ContentType
+
+        try:
+            content_type = ContentType.objects.get_for_model(obj)
+            # Get the most recent workflow instance for this TRF
+            workflow_instance = WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=obj.id
+            ).order_by('-created_at').first()
+
+            if workflow_instance and workflow_instance.additional_data:
+                stored_skipped = workflow_instance.additional_data.get('skipped_steps', {})
+                # Convert string keys to integers for frontend compatibility
+                return {int(k): v for k, v in stored_skipped.items()}
         except Exception:
             pass
 

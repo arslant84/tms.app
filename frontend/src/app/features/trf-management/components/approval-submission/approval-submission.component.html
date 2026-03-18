@@ -137,9 +137,11 @@
         [required]="false"
         [showTitle]="false"
         [initialSelections]="initialData.selected_approvers || {}"
+        [initialSkippedSteps]="initialData.skipped_steps || {}"
         [staffId]="requesterStaffId"
         (selectionChange)="onApproverSelectionChange($event)"
         (validityChange)="onApproverValidityChange($event)"
+        (skippedStepsChange)="onSkippedStepsChange($event)"
       ></app-approver-selection>
     </div>
   </div>
