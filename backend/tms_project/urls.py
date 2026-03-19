@@ -44,7 +44,7 @@ def security_txt(request):
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('django-admin/', admin.site.urls),
     path('api/csrf/', csrf_token_view, name='csrf-token'),
     path('api/', include('accounts.urls')),
     path('api/trf/', include('trf.urls')),
