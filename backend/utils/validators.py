@@ -452,7 +452,8 @@ def validate_min_length(
         ValidationError: If string is too short
 
     Example:
-        validate_min_length(password, 8, 'password')
+        from utils.constants import PASSWORD_MIN_LENGTH
+        validate_min_length(password, PASSWORD_MIN_LENGTH, 'password')
     """
     if value is not None and len(value) < min_length:
         raise ValidationError({

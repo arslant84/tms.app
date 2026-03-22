@@ -182,7 +182,7 @@
               formControlName="new_password"
               autocomplete="new-password"
               [class.is-invalid]="isFieldInvalid('password', 'new_password')"
-              placeholder="Min 8 characters">
+              placeholder="Min {{ passwordMinLength }} characters">
             <div class="invalid-feedback" *ngIf="isFieldInvalid('password', 'new_password')">
               {{ getFieldError('password', 'new_password') }}
             </div>

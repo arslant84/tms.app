@@ -9,6 +9,7 @@ import { DepartmentListItem } from '../../../../core/models/user.model';
 import { ModalService } from '../../../../core/services/modal.service';
 import { ConfirmDeleteModalComponent } from '../../../../core/components/confirm-delete-modal/confirm-delete-modal.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
 
 @Component({
   selector: 'app-user-admin',
@@ -27,6 +28,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
   selectedUserId: number | null = null;
   userForm!: FormGroup;
   submitting = false;
+  passwordMinLength = PASSWORD_MIN_LENGTH;
 
   // Delete confirmation
   private userToDelete: User | null = null;
@@ -158,7 +160,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
       is_admin: false,
       is_active: true
     });
-    this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(8), this.passwordStrengthValidator]);
+    this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), this.passwordStrengthValidator]);
     this.userForm.get('password_confirm')?.setValidators([Validators.required]);
     this.userForm.get('password')?.updateValueAndValidity();
     this.userForm.get('password_confirm')?.updateValueAndValidity();
@@ -431,7 +433,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
         if (!errors.hasUpperCase) return 'Password must contain at least one uppercase letter';
         if (!errors.hasLowerCase) return 'Password must contain at least one lowercase letter';
         if (!errors.hasNumber) return 'Password must contain at least one number';
-        if (!errors.isLongEnough) return 'Password must be at least 8 characters';
+        if (!errors.isLongEnough) return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
         return 'Password must contain uppercase, lowercase, and number';
       }
     }
@@ -440,7 +442,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
 
   /**
    * Custom validator for password strength
-   * Requires: uppercase, lowercase, number, min 8 chars
+   * Requires: uppercase, lowercase, number, min PASSWORD_MIN_LENGTH chars
    * Checks for common password patterns
    */
   private passwordStrengthValidator(control: AbstractControl): ValidationErrors | null {
@@ -450,7 +452,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     const hasUpperCase = /[A-Z]/.test(value);
     const hasLowerCase = /[a-z]/.test(value);
     const hasNumber = /[0-9]/.test(value);
-    const isLongEnough = value.length >= 8;
+    const isLongEnough = value.length >= PASSWORD_MIN_LENGTH;
     const hasSpecialChar = /[^a-zA-Z0-9]/.test(value);
 
     // Check for common weak patterns
@@ -514,7 +516,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     const password = this.userForm.get('password')?.value || '';
     let strength = 0;
 
-    if (password.length >= 8) strength++;
+    if (password.length >= PASSWORD_MIN_LENGTH) strength++;
     if (/[a-z]/.test(password)) strength++;
     if (/[A-Z]/.test(password)) strength++;
     if (/[0-9]/.test(password)) strength++;

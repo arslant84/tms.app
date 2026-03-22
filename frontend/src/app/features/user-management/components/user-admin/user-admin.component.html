@@ -229,7 +229,7 @@
                   class="form-control"
                   formControlName="password"
                   [class.is-invalid]="isFieldInvalid('password')"
-                  placeholder="Min 8 characters">
+                  placeholder="Min {{ passwordMinLength }} characters">
                 <button
                   type="button"
                   class="btn btn-outline-secondary"
@@ -256,7 +256,7 @@
                 {{ getFieldError('password') }}
               </div>
               <small class="form-text text-muted d-block mt-1">
-                Must be at least 8 characters with uppercase, lowercase, and number. Avoid common passwords.
+                Must be at least {{ passwordMinLength }} characters with uppercase, lowercase, and number. Avoid common passwords.
               </small>
             </div>
 

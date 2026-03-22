@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
 
 @Component({
   selector: 'app-change-password',
@@ -39,8 +40,8 @@ export class ChangePasswordComponent {
       return;
     }
 
-    if (this.newPassword.length < 8) {
-      this.error = 'Password must be at least 8 characters';
+    if (this.newPassword.length < PASSWORD_MIN_LENGTH) {
+      this.error = `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
       return;
     }
 
