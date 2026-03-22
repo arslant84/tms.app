@@ -157,3 +157,8 @@ PENDING_STATUSES = RequestStatus.pending_statuses()
 DRAFT_STATUSES = RequestStatus.draft_statuses()
 FINAL_STATUSES = RequestStatus.final_statuses()
 BOOKABLE_STATUSES = RequestStatus.bookable_statuses()
+
+# =============================================================================
+# Password Configuration
+# =============================================================================
+PASSWORD_MIN_LENGTH = 15

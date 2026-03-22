@@ -6,6 +6,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
 
 @Component({
   selector: 'app-user-profile',
@@ -27,6 +28,7 @@ export class UserProfileComponent implements OnInit {
 
   previewImage: string | null = null;
   selectedFile: File | null = null;
+  passwordMinLength = PASSWORD_MIN_LENGTH;
 
   genders = [
     { value: 'Male', label: 'Male' },
@@ -59,7 +61,7 @@ export class UserProfileComponent implements OnInit {
     // Password change form
     this.passwordForm = this.fb.group({
       current_password: ['', Validators.required],
-      new_password: ['', [Validators.required, Validators.minLength(8)]],
+      new_password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH)]],
       confirm_password: ['', Validators.required]
     });
   }

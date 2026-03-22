@@ -7,6 +7,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
 
 @Component({
   selector: 'app-reset-password',
@@ -24,6 +25,7 @@ export class ResetPasswordComponent implements OnInit {
   loading = false;
   invalidToken = false;
   applicationName$: Observable<string>;
+  passwordMinLength = PASSWORD_MIN_LENGTH;
 
   constructor(
     private http: HttpClient,
@@ -61,8 +63,8 @@ export class ResetPasswordComponent implements OnInit {
       return;
     }
 
-    if (this.newPassword.length < 8) {
-      this.error = 'Password must be at least 8 characters';
+    if (this.newPassword.length < PASSWORD_MIN_LENGTH) {
+      this.error = `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
       return;
     }
 

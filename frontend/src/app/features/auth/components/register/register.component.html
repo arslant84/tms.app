@@ -169,7 +169,7 @@
             {{ registerForm.get('password')?.errors?.['serverError'] }}
           </div>
           <small class="form-text text-muted d-block mt-1">
-            Must be at least 8 characters with uppercase, lowercase, and number. Avoid common passwords.
+            Must be at least {{ passwordMinLength }} characters with uppercase, lowercase, and number. Avoid common passwords.
           </small>
         </div>
 
