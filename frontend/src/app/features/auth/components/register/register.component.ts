@@ -11,6 +11,7 @@ import { AppSettingsService } from '../../../../core/services/app-settings.servi
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import { DepartmentListItem } from '../../../../core/models/user.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
 
 @Component({
   selector: 'app-register',
@@ -30,6 +31,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   selectedFileName = '';
   profilePhotoPreview: string | null = null;
   applicationName$: Observable<string>;
+  passwordMinLength = PASSWORD_MIN_LENGTH;
 
   genderOptions = [
     { value: 'Male', label: 'Male' },
@@ -69,7 +71,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       phone: [''],
       department: ['', Validators.required],
       gender: [''],
-      password: ['', [Validators.required, Validators.minLength(8), this.passwordStrengthValidator]],
+      password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), this.passwordStrengthValidator]],
       password_confirm: ['', Validators.required],
       profile_photo: ['']
     }, {
@@ -93,7 +95,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   /**
    * Custom validator for password strength
-   * Requires: uppercase, lowercase, number, min 8 chars
+   * Requires: uppercase, lowercase, number, min PASSWORD_MIN_LENGTH chars
    * Note: Backend has additional validation (common passwords, similarity to user attributes)
    */
   private passwordStrengthValidator(control: AbstractControl): ValidationErrors | null {
@@ -103,7 +105,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const hasUpperCase = /[A-Z]/.test(value);
     const hasLowerCase = /[a-z]/.test(value);
     const hasNumber = /[0-9]/.test(value);
-    const isLongEnough = value.length >= 8;
+    const isLongEnough = value.length >= PASSWORD_MIN_LENGTH;
     const hasSpecialChar = /[^a-zA-Z0-9]/.test(value);
 
     // Check for common weak patterns
@@ -162,7 +164,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const password = this.registerForm.get('password')?.value || '';
     let strength = 0;
 
-    if (password.length >= 8) strength++;
+    if (password.length >= PASSWORD_MIN_LENGTH) strength++;
     if (/[a-z]/.test(password)) strength++;
     if (/[A-Z]/.test(password)) strength++;
     if (/[0-9]/.test(password)) strength++;
@@ -283,7 +285,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       if (!errors.hasUpperCase) return 'Password must contain at least one uppercase letter';
       if (!errors.hasLowerCase) return 'Password must contain at least one lowercase letter';
       if (!errors.hasNumber) return 'Password must contain at least one number';
-      if (!errors.isLongEnough) return 'Password must be at least 8 characters';
+      if (!errors.isLongEnough) return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
       return 'Password must contain uppercase, lowercase, and number';
     }
 
