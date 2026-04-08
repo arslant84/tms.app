@@ -49,7 +49,7 @@
           [(ngModel)]="travelTypeFilter"
           (change)="onTravelTypeFilterChange()">
           <option value="">All Travel Types</option>
-          <option *ngFor="let type of TRAVEL_TYPES" [value]="type">
+          <option *ngFor="let type of travelTypes" [value]="type">
             {{ formatTravelTypeDisplay(type) }}
           </option>
         </select>

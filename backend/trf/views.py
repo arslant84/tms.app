@@ -284,15 +284,9 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     queryset = queryset.filter(created_by=user)
                     logger.warning(f" Admin view: User lacks permission - showing only own TRFs")
         else:
-            # Personal requests view - show user's own TRFs plus those pending their approval
-            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, TravelRequest)
-            if pending_approval_ids:
-                from django.db.models import Q
-                queryset = queryset.filter(Q(created_by=user) | Q(id__in=pending_approval_ids))
-                logger.info(f" Personal view: User {user.username} - showing own TRFs plus {len(pending_approval_ids)} pending approval")
-            else:
-                queryset = queryset.filter(created_by=user)
-                logger.info(f" Personal view: User {user.username} - showing only own TRFs (created_by={user.id})")
+            # Personal requests view - show only user's own TRFs
+            queryset = queryset.filter(created_by=user)
+            logger.info(f" Personal view: User {user.username} - showing only own TRFs (created_by={user.id})")
 
         # Filter by status
         status_filter = self.request.query_params.get('status', None)
