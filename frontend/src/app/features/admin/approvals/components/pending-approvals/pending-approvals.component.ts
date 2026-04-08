@@ -75,8 +75,8 @@ export class PendingApprovalsComponent implements OnInit {
 
   private apiUrl = environment.apiUrl;
 
-  // Dynamic status options loaded from workflow templates
-  statusOptions: string[] = ['Pending', 'Under Review'];
+  // Dynamic status options derived from real data
+  statusOptions: string[] = [];
 
   constructor(
     private http: HttpClient,
@@ -120,38 +120,6 @@ export class PendingApprovalsComponent implements OnInit {
       }
     });
 
-    // Load dynamic status options from workflow templates
-    this.loadWorkflowStatuses();
-  }
-
-  /**
-   * Load workflow statuses dynamically from workflow templates
-   */
-  private loadWorkflowStatuses(): void {
-    // Load statuses from all entity types used in approvals
-    const entityTypes = ['travelrequest', 'transport', 'visa', 'accommodation'];
-    const statusSet = new Set<string>(['Pending', 'Under Review']);
-
-    entityTypes.forEach(entityType => {
-      this.workflowService.getTemplates({ entity_type: entityType, is_active: true })
-        .subscribe({
-          next: (templates) => {
-            if (templates && templates.length > 0) {
-              const template = templates[0];
-              if (template.steps) {
-                template.steps.forEach(step => {
-                  statusSet.add(`Pending ${step.step_name}`);
-                });
-              }
-            }
-            // Update status options
-            this.statusOptions = Array.from(statusSet).sort();
-          },
-          error: (err) => {
-            console.error(`Error loading workflow statuses for ${entityType}:`, err);
-          }
-        });
-    });
   }
 
   /**
@@ -197,6 +165,10 @@ export class PendingApprovalsComponent implements OnInit {
           this.tabCounts.all = this.totalCount;
         }
         this.applyFilters();
+        const uniqueStatuses = [...new Set(this.pendingItems.map(i => i.status).filter(Boolean))].sort();
+        if (uniqueStatuses.length > 0) {
+          this.statusOptions = uniqueStatuses;
+        }
         this.isLoading = false;
       },
       error: (err) => {

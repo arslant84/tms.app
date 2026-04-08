@@ -57,21 +57,10 @@ export class FlightsAdminOverviewComponent implements OnInit {
   };
 
   // Status options
-  statusOptions = [
-    { value: 'all', label: 'All Statuses' },
-    { value: 'Approved', label: 'Approved' },
-    { value: 'Awaiting Visa', label: 'Awaiting Visa' },
-    { value: 'TRF Processed', label: 'TRF Processed' },
-    { value: 'Rejected', label: 'Rejected' }
-  ];
+  statusOptions = [{ value: 'all', label: 'All Statuses' }];
 
   // Travel type options
-  travelTypeOptions = [
-    { value: 'all', label: 'All Types' },
-    { value: 'Overseas', label: 'Overseas' },
-    { value: 'Home Leave Passage', label: 'Home Leave Passage' },
-    { value: 'Home Leave', label: 'Home Leave' }
-  ];
+  travelTypeOptions = [{ value: 'all', label: 'All Types' }];
 
   constructor(
     private trfService: TrfService,
@@ -190,6 +179,16 @@ export class FlightsAdminOverviewComponent implements OnInit {
         });
 
         this.applyFilters();
+        const uniqueStatuses = [...new Set(this.applications.map(a => a.status).filter(Boolean))].sort();
+        this.statusOptions = [
+          { value: 'all', label: 'All Statuses' },
+          ...uniqueStatuses.map(s => ({ value: s, label: s }))
+        ];
+        const uniqueTypes = [...new Set(this.applications.map(a => a.travelType).filter(Boolean))].sort();
+        this.travelTypeOptions = [
+          { value: 'all', label: 'All Types' },
+          ...uniqueTypes.map(t => ({ value: t, label: t }))
+        ];
         this.isLoading = false;
       },
       error: (err) => {
