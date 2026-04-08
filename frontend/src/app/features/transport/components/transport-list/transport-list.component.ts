@@ -10,16 +10,6 @@ import { StatusUtilsService } from '../../../../core/utils/status-utils.service'
 import { ListStateService } from '../../../../core/services/list-state.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
-// Status constants for filtering (broad categories to match workflow statuses)
-export const TRANSPORT_STATUSES = [
-  'Draft',
-  'Pending', // Matches "Pending", "Pending Line Manager", "Pending Department Focal", etc.
-  'Approved',
-  'Rejected',
-  'Completed',
-  'Cancelled'
-];
-
 @Component({
   selector: 'app-transport-list',
   standalone: true,
@@ -32,7 +22,7 @@ export class TransportListComponent implements OnInit, OnDestroy {
 
   // Filters
   statusFilter = '';
-  statuses = TRANSPORT_STATUSES;
+  statuses: string[] = [];
 
   // Sorting
   sortField = 'submittedAt';
@@ -51,6 +41,9 @@ export class TransportListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Load filter options from actual data
+    this.loadFilterOptions();
+
     // Subscribe to debounced search changes
     this.listState.search$.subscribe(() => {
       this.fetchRequests();
@@ -58,6 +51,21 @@ export class TransportListComponent implements OnInit, OnDestroy {
 
     // Initial load
     this.fetchRequests();
+  }
+
+  private loadFilterOptions(): void {
+    this.transportService.getAllRequests({ page_size: 1000 }).subscribe({
+      next: (response) => {
+        const items: TransportRequest[] = Array.isArray(response)
+          ? response
+          : (response.results ?? []);
+
+        this.statuses = [...new Set(
+          items.map(i => i.status ?? '').filter(Boolean)
+        )].sort();
+      },
+      error: () => { /* silently ignore — dropdown stays empty */ }
+    });
   }
 
   ngOnDestroy(): void {
