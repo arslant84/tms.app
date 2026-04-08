@@ -113,24 +113,20 @@
             <div class="row g-3 mb-3">
               <div class="col-md-4">
                 <label class="form-label">ETD / Вылет</label>
-                <input type="time" formControlName="etd" class="form-control" />
+                <input type="text" formControlName="etd" class="form-control" placeholder="HH:mm" />
               </div>
               <div class="col-md-4">
                 <label class="form-label">ETA / Прилет</label>
-                <input type="time" formControlName="eta" class="form-control" />
+                <input type="text" formControlName="eta" class="form-control" placeholder="HH:mm" />
               </div>
               <div class="col-md-4">
-                <label class="form-label">Flight <span class="text-danger">*</span></label>
+                <label class="form-label">Flight</label>
                 <input
                   type="text"
                   formControlName="flightNumber"
                   placeholder="e.g., LH1234"
                   class="form-control"
-                  [ngClass]="{'is-invalid': segment.get('flightNumber')?.invalid && segment.get('flightNumber')?.touched}"
                 />
-                <div class="invalid-feedback" *ngIf="segment.get('flightNumber')?.errors?.['required'] && segment.get('flightNumber')?.touched">
-                  Flight number is required
-                </div>
               </div>
             </div>
 

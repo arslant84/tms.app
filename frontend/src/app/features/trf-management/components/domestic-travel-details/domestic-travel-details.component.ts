@@ -159,7 +159,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
       to: [data?.to || '', Validators.required],
       etd: [data?.etd || '', Validators.pattern(this.timeRegex)],
       eta: [data?.eta || '', Validators.pattern(this.timeRegex)],
-      flightNumber: [data?.flightNumber || '', Validators.required],
+      flightNumber: [data?.flightNumber || ''],
       remarks: [data?.remarks || '']
     });
   }
