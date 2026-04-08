@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -17,7 +19,8 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
   templateUrl: './visa-admin.component.html',
   styleUrl: './visa-admin.component.scss'
 })
-export class VisaAdminComponent implements OnInit {
+export class VisaAdminComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   // Stats
   stats = {
     total: 0,
@@ -89,11 +92,16 @@ export class VisaAdminComponent implements OnInit {
     this.loadApplications();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   /**
    * Load filter options dynamically from real data
    */
   private loadFilterOptions(): void {
-    this.visaService.getAllApplications({ adminView: true, page_size: 1000 }).subscribe({
+    this.visaService.getAllApplications({ adminView: true, page_size: 1000 }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         const apps = response.results || response || [];
 

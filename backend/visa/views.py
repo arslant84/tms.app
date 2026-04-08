@@ -9,6 +9,7 @@ from django.db.models import Q
 logger = logging.getLogger(__name__)
 
 from utils import success_response, error_response, not_found_response
+from accounts.utils import can_view_all
 
 from .models import VisaApplication, VisaApprovalStep, VisaDocument
 from .serializers import (
@@ -91,7 +92,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         # For retrieve (viewing details), check view_all permission first, then pending approvals
         if self.action == 'retrieve':
             # Users with view_all_visa permission can access any application detail (e.g. from Recent Activity)
-            if user.role and user.role.permissions.filter(name='view_all_visa').exists():
+            if can_view_all(user, 'visa'):
                 logger.info(f" Retrieve action: User has view_all_visa - allowing full access")
                 return queryset
             pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, VisaApplication)
@@ -105,9 +106,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         # Permission-based filtering
         if admin_view and user.role:
             # Admin module context - check permissions
-            can_view_all = user.role.permissions.filter(name='view_all_visa').exists()
-
-            if can_view_all:
+            if can_view_all(user, 'visa'):
                 logger.info(f" Admin view: User {user.username} (role: {user.role.name}) has 'view_all_visa' permission - showing all visa applications")
                 pass  # No filtering - show all
             elif user.role.permissions.filter(name__in=['approve_visa', 'view_pending_approvals']).exists():
