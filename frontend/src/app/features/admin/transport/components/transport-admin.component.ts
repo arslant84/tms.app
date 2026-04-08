@@ -58,16 +58,8 @@ export class TransportAdminComponent implements OnInit {
     assignment_date: new Date().toISOString().split('T')[0]
   };
 
-  // Status options for filter - workflow statuses loaded dynamically
-  statusOptions: { value: string; label: string }[] = [
-    { value: 'all', label: 'All Statuses' },
-    { value: 'Pending Approval', label: 'Pending Approval' },
-    { value: 'Approved', label: 'Approved' },
-    { value: 'In Progress', label: 'In Progress' },
-    { value: 'Completed', label: 'Completed' },
-    { value: 'Rejected', label: 'Rejected' },
-    { value: 'Cancelled', label: 'Cancelled' }
-  ];
+  // Status options for filter - populated dynamically
+  statusOptions: { value: string; label: string }[] = [{ value: 'all', label: 'All Statuses' }];
 
   // Vehicle types
   vehicleTypes = [
@@ -87,47 +79,27 @@ export class TransportAdminComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadWorkflowStatuses();
+    this.loadFilterOptions();
     this.loadRequests();
   }
 
   /**
-   * Load workflow statuses dynamically from workflow templates
+   * Load filter options dynamically from real data
    */
-  private loadWorkflowStatuses(): void {
-    this.workflowService.getTemplates({ entity_type: 'transport', is_active: true })
-      .subscribe({
-        next: (templates) => {
-          if (templates && templates.length > 0) {
-            const template = templates[0];
-            if (template.steps && template.steps.length > 0) {
-              // Build status options from workflow steps
-              const workflowStatuses = template.steps
-                .sort((a, b) => a.step_order - b.step_order)
-                .map(step => ({
-                  value: `Pending ${step.step_name}`,
-                  label: `Pending ${step.step_name}`
-                }));
-
-              // Build complete status options list
-              this.statusOptions = [
-                { value: 'all', label: 'All Statuses' },
-                ...workflowStatuses,
-                { value: 'Pending Approval', label: 'Pending Approval' },
-                { value: 'Approved', label: 'Approved' },
-                { value: 'In Progress', label: 'In Progress' },
-                { value: 'Completed', label: 'Completed' },
-                { value: 'Rejected', label: 'Rejected' },
-                { value: 'Cancelled', label: 'Cancelled' }
-              ];
-            }
-          }
-        },
-        error: (err) => {
-          console.error('Error loading workflow statuses for transport:', err);
-          // Keep default options on error
-        }
-      });
+  private loadFilterOptions(): void {
+    this.transportService.getAllRequests({ adminView: true, page_size: 1000 }).subscribe({
+      next: (response: any) => {
+        const requests = response.results || response || [];
+        const uniqueStatuses = [...new Set<string>(requests.map((r: any) => r.status).filter(Boolean))].sort();
+        this.statusOptions = [
+          { value: 'all', label: 'All Statuses' },
+          ...uniqueStatuses.map((s: string) => ({ value: s, label: s }))
+        ];
+      },
+      error: (err) => {
+        console.error('Error loading filter options for transport:', err);
+      }
+    });
   }
 
   /**
