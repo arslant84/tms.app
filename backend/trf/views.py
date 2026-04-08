@@ -242,16 +242,18 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 logger.info(f" Booking action: User role '{user.role.name}' indicates booking capability - allowing access")
                 return queryset.filter(status__in=bookable_statuses)
 
-        # For retrieve (viewing details), include TRFs pending user's approval via workflow
+        # For retrieve (viewing details), check view_all permission first, then pending approvals
         if self.action == 'retrieve':
+            # Users with view_all_trf permission can access any TRF detail (e.g. from Recent Activity)
+            if user.role and user.role.permissions.filter(name='view_all_trf').exists():
+                logger.info(f" Retrieve action: User has view_all_trf - allowing full access")
+                return queryset
             # Get IDs of TRFs pending this user's approval
             pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, TravelRequest)
-            if pending_approval_ids:
-                # Include both user's own TRFs and TRFs pending their approval
-                from django.db.models import Q
-                queryset = queryset.filter(Q(created_by=user) | Q(id__in=pending_approval_ids))
-                logger.info(f" Retrieve action: Including user's TRFs and {len(pending_approval_ids)} TRFs pending approval")
-                return queryset
+            from django.db.models import Q
+            queryset = queryset.filter(Q(created_by=user) | Q(id__in=pending_approval_ids))
+            logger.info(f" Retrieve action: Filtering to own TRFs and {len(pending_approval_ids)} pending approval")
+            return queryset
 
         # Check if this is an admin view (Admin module for TRF/Ticketing)
         admin_view = self.request.query_params.get('admin_view', 'false').lower() == 'true'

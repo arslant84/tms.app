@@ -88,13 +88,16 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             logger.info(f" Approval action: Allowing access to all visa applications (authorization checked in WorkflowEngine)")
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
-        # For retrieve (viewing details), include applications pending user's approval via workflow
+        # For retrieve (viewing details), check view_all permission first, then pending approvals
         if self.action == 'retrieve':
-            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, VisaApplication)
-            if pending_approval_ids:
-                queryset = queryset.filter(Q(user=user) | Q(id__in=pending_approval_ids))
-                logger.info(f" Retrieve action: Including user's applications and {len(pending_approval_ids)} pending approval")
+            # Users with view_all_visa permission can access any application detail (e.g. from Recent Activity)
+            if user.role and user.role.permissions.filter(name='view_all_visa').exists():
+                logger.info(f" Retrieve action: User has view_all_visa - allowing full access")
                 return queryset
+            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, VisaApplication)
+            queryset = queryset.filter(Q(user=user) | Q(id__in=pending_approval_ids))
+            logger.info(f" Retrieve action: Filtering to own applications and {len(pending_approval_ids)} pending approval")
+            return queryset
 
         # Check if this is an admin view (Visa Admin module)
         admin_view = self.request.query_params.get('admin_view', 'false').lower() == 'true'
