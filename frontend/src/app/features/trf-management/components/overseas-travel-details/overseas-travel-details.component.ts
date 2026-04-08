@@ -121,15 +121,15 @@ export class OverseasTravelDetailsComponent
 	ngOnChanges(changes: SimpleChanges): void {
 		// When initialData changes (e.g., loaded from API in edit mode), rebuild the form
 		if (
-			changes.initialData &&
-			!changes.initialData.firstChange &&
+			changes['initialData'] &&
+			!changes['initialData'].firstChange &&
 			this.overseasForm
 		) {
 			this.initForm(); // Rebuild form with new data
 		}
 
 		// Load existing passport file URL if available
-		if (changes.initialData && this.initialData?.passportUpload) {
+		if (changes['initialData'] && this.initialData?.passportUpload) {
 			this.passportFileName = this.initialData.passportUpload.fileName || "";
 			this.passportFileUrl = this.initialData.passportUpload.fileUrl || "";
 		}

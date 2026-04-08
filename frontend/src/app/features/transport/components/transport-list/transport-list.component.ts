@@ -1,19 +1,17 @@
 import { CommonModule } from "@angular/common";
-import { Component, type OnDestroy, type OnInit } from "@angular/core";
+import { Component, inject, type OnDestroy, type OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { type Router, RouterLink } from "@angular/router";
+import { Router, RouterLink } from "@angular/router";
 import { Subject } from "rxjs";
 import { takeUntil } from "rxjs/operators";
-import type { AppSettingsService } from "../../../../core/services/app-settings.service";
+import { AppSettingsService } from "../../../../core/services/app-settings.service";
 import { ListStateService } from "../../../../core/services/list-state.service";
-import type { ToastService } from "../../../../core/services/toast.service";
-import type { DateUtilsService } from "../../../../core/utils/date-utils.service";
-import type { StatusUtilsService } from "../../../../core/utils/status-utils.service";
+import { ToastService } from "../../../../core/services/toast.service";
+import { DateUtilsService } from "../../../../core/utils/date-utils.service";
+import { StatusUtilsService } from "../../../../core/utils/status-utils.service";
 import { LoadingSpinnerComponent } from "../../../../shared/components/loading-spinner/loading-spinner.component";
-import type {
-	TransportRequest,
-	TransportService,
-} from "../../services/transport.service";
+import type { TransportRequest } from "../../services/transport.service";
+import { TransportService } from "../../services/transport.service";
 
 @Component({
 	selector: "app-transport-list",
@@ -38,14 +36,12 @@ export class TransportListComponent implements OnInit, OnDestroy {
 	// Create list state service manually (not via DI)
 	listState = new ListStateService({ pageSize: 10 });
 
-	constructor(
-		private transportService: TransportService,
-		private router: Router,
-		private toastService: ToastService,
-		private appSettingsService: AppSettingsService,
-		public dateUtils: DateUtilsService,
-		public statusUtils: StatusUtilsService,
-	) {}
+	private transportService = inject(TransportService);
+	private router = inject(Router);
+	private toastService = inject(ToastService);
+	private appSettingsService = inject(AppSettingsService);
+	dateUtils = inject(DateUtilsService);
+	statusUtils = inject(StatusUtilsService);
 
 	ngOnInit(): void {
 		// Load filter options from actual data
