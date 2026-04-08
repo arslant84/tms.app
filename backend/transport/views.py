@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
 
-from accounts.utils import is_module_admin, can_approve
+from accounts.utils import is_module_admin, can_approve, can_view_all
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +96,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # For retrieve (viewing details), check view_all permission first, then pending approvals
         if self.action == 'retrieve':
             # Users with view_all_transport permission can access any request detail (e.g. from Recent Activity)
-            if user.role and user.role.permissions.filter(name='view_all_transport').exists():
+            if can_view_all(user, 'transport'):
                 logger.info(f" Retrieve action: User has view_all_transport - allowing full access")
                 return queryset
             pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, TransportRequest)
@@ -110,9 +110,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # Permission-based filtering
         if admin_view and user.role:
             # Admin module context - check if user has permission to view all
-            can_view_all = user.role.permissions.filter(name='view_all_transport').exists()
-
-            if can_view_all:
+            if can_view_all(user, 'transport'):
                 logger.info(f" Admin view: User {user.username} (role: {user.role.name}) has 'view_all_transport' permission - showing all transport requests")
                 pass  # No filtering - show all transport requests
             else:

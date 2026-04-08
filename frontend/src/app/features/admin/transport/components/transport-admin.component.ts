@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -17,7 +19,9 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
   templateUrl: './transport-admin.component.html',
   styleUrl: './transport-admin.component.scss'
 })
-export class TransportAdminComponent implements OnInit {
+export class TransportAdminComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
   requests: TransportRequest[] = [];
   filteredRequests: TransportRequest[] = [];
   selectedRequest: TransportRequest | null = null;
@@ -83,11 +87,16 @@ export class TransportAdminComponent implements OnInit {
     this.loadRequests();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   /**
    * Load filter options dynamically from real data
    */
   private loadFilterOptions(): void {
-    this.transportService.getAllRequests({ adminView: true, page_size: 1000 }).subscribe({
+    this.transportService.getAllRequests({ adminView: true, page_size: 1000 }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         const requests = response.results || response || [];
         const uniqueStatuses = [...new Set<string>(requests.map((r: any) => r.status).filter(Boolean))].sort();

@@ -9,6 +9,7 @@ from django.utils import timezone
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+from accounts.utils import can_view_all
 from workflows.router import WorkflowRouter
 from utils.request_id_generator import generate_request_id, extract_context_from_itinerary
 from utils.api_response import (
@@ -245,7 +246,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         # For retrieve (viewing details), check view_all permission first, then pending approvals
         if self.action == 'retrieve':
             # Users with view_all_trf permission can access any TRF detail (e.g. from Recent Activity)
-            if user.role and user.role.permissions.filter(name='view_all_trf').exists():
+            if can_view_all(user, 'trf'):
                 logger.info(f" Retrieve action: User has view_all_trf - allowing full access")
                 return queryset
             # Get IDs of TRFs pending this user's approval
@@ -261,9 +262,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         # Permission-based filtering
         if admin_view and user.role:
             # Admin module context - check permissions
-            can_view_all = user.role.permissions.filter(name='view_all_trf').exists()
-
-            if can_view_all:
+            if can_view_all(user, 'trf'):
                 logger.info(f" Admin view: User (role: {user.role.name}) has 'view_all_trf' permission - showing all TRFs")
                 pass  # No filtering - show all
 

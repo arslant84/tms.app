@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { TransportService, TransportRequest } from '../../services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
@@ -18,6 +20,8 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
   styleUrls: ['./transport-list.component.scss']
 })
 export class TransportListComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
   requests: TransportRequest[] = [];
 
   // Filters
@@ -54,7 +58,7 @@ export class TransportListComponent implements OnInit, OnDestroy {
   }
 
   private loadFilterOptions(): void {
-    this.transportService.getAllRequests({ page_size: 1000 }).subscribe({
+    this.transportService.getAllRequests({ page_size: 1000 }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         const items: TransportRequest[] = Array.isArray(response)
           ? response
@@ -69,6 +73,8 @@ export class TransportListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.listState.destroy();
   }
 
