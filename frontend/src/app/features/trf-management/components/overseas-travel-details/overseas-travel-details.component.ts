@@ -159,7 +159,7 @@ export class OverseasTravelDetailsComponent implements OnInit, OnChanges {
       to: [data?.to || '', Validators.required],
       etd: [data?.etd || '', Validators.pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)],
       eta: [data?.eta || '', Validators.pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)],
-      flightNumber: [data?.flightNumber || '', Validators.required],
+      flightNumber: [data?.flightNumber || ''],
       remarks: [data?.remarks || '']
     });
   }
