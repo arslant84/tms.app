@@ -64,29 +64,14 @@ export class VisaAdminComponent implements OnInit {
   visaValidFrom: string = '';
   visaValidTo: string = '';
 
-  // Status options for filter - base options, workflow statuses loaded dynamically
-  statusOptions: { value: string; label: string }[] = [
-    { value: 'all', label: 'All Statuses' },
-    { value: 'Submitted', label: 'Submitted' },
-    { value: 'Under Review', label: 'Under Review' },
-    { value: 'Approved', label: 'Approved' },
-    { value: 'Rejected', label: 'Rejected' },
-    { value: 'Cancelled', label: 'Cancelled' },
-    { value: 'Processing', label: 'Processing' },
-    { value: 'Completed', label: 'Completed' }
-  ];
+  // Status options for filter - populated dynamically
+  statusOptions: { value: string; label: string }[] = [{ value: 'all', label: 'All Statuses' }];
 
-  // Visa type options
-  visaTypeOptions = [
-    { value: 'all', label: 'All Types' },
-    { value: 'Tourist', label: 'Tourist' },
-    { value: 'Business', label: 'Business' },
-    { value: 'Work', label: 'Work' },
-    { value: 'Student', label: 'Student' },
-    { value: 'Transit', label: 'Transit' },
-    { value: 'Diplomatic', label: 'Diplomatic' },
-    { value: 'Official', label: 'Official' }
-  ];
+  // Visa type options - populated dynamically
+  visaTypeOptions: { value: string; label: string }[] = [{ value: 'all', label: 'All Types' }];
+
+  // All destinations loaded for filter
+  allDestinations: string[] = [];
 
   constructor(
     private visaService: VisaService,
@@ -99,49 +84,37 @@ export class VisaAdminComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadWorkflowStatuses();
+    this.loadFilterOptions();
     this.fetchStats();
     this.loadApplications();
   }
 
   /**
-   * Load workflow statuses dynamically from workflow templates
+   * Load filter options dynamically from real data
    */
-  private loadWorkflowStatuses(): void {
-    this.workflowService.getTemplates({ entity_type: 'visa', is_active: true })
-      .subscribe({
-        next: (templates) => {
-          if (templates && templates.length > 0) {
-            const template = templates[0];
-            if (template.steps && template.steps.length > 0) {
-              // Build status options from workflow steps
-              const workflowStatuses = template.steps
-                .sort((a, b) => a.step_order - b.step_order)
-                .map(step => ({
-                  value: `Pending ${step.step_name}`,
-                  label: `Pending ${step.step_name}`
-                }));
+  private loadFilterOptions(): void {
+    this.visaService.getAllApplications({ adminView: true, page_size: 1000 }).subscribe({
+      next: (response: any) => {
+        const apps = response.results || response || [];
 
-              // Insert workflow statuses after 'All Statuses' option
-              this.statusOptions = [
-                { value: 'all', label: 'All Statuses' },
-                ...workflowStatuses,
-                { value: 'Submitted', label: 'Submitted' },
-                { value: 'Under Review', label: 'Under Review' },
-                { value: 'Approved', label: 'Approved' },
-                { value: 'Rejected', label: 'Rejected' },
-                { value: 'Cancelled', label: 'Cancelled' },
-                { value: 'Processing', label: 'Processing' },
-                { value: 'Completed', label: 'Completed' }
-              ];
-            }
-          }
-        },
-        error: (err) => {
-          console.error('Error loading workflow statuses for visa:', err);
-          // Keep default options on error
-        }
-      });
+        const uniqueStatuses = [...new Set<string>(apps.map((app: any) => app.status).filter(Boolean))].sort();
+        this.statusOptions = [
+          { value: 'all', label: 'All Statuses' },
+          ...uniqueStatuses.map((s: string) => ({ value: s, label: s }))
+        ];
+
+        const uniqueVisaTypes = [...new Set<string>(apps.map((app: any) => app.visa_type).filter(Boolean))].sort();
+        this.visaTypeOptions = [
+          { value: 'all', label: 'All Types' },
+          ...uniqueVisaTypes.map((t: string) => ({ value: t, label: t }))
+        ];
+
+        this.allDestinations = [...new Set<string>(apps.map((app: any) => app.destination).filter(Boolean))].sort();
+      },
+      error: (err) => {
+        console.error('Error loading filter options for visa:', err);
+      }
+    });
   }
 
   /**
@@ -255,13 +228,10 @@ export class VisaAdminComponent implements OnInit {
   }
 
   /**
-   * Get unique destinations
+   * Get unique destinations (populated by loadFilterOptions)
    */
   get uniqueDestinations(): string[] {
-    const destinations = this.applications
-      .map(app => app.destination)
-      .filter((dest, index, self) => dest && self.indexOf(dest) === index);
-    return Array.from(new Set(destinations));
+    return this.allDestinations;
   }
 
   /**
