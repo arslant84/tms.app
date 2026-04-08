@@ -12,6 +12,7 @@ import { StatusUtilsService } from '../../../../core/utils/status-utils.service'
 import { ListStateService } from '../../../../core/services/list-state.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
+
 @Component({
   selector: 'app-visa-list',
   standalone: true,
@@ -31,26 +32,9 @@ export class VisaListComponent implements OnInit, OnDestroy {
 
   Math = Math; // Expose Math to template
 
-  // Filter options - workflow statuses loaded dynamically
-  statuses: string[] = [
-    'Submitted',
-    'Under Review',
-    'Approved',
-    'Rejected',
-    'Cancelled',
-    'Processing',
-    'Completed'
-  ];
-
-  visaTypes = [
-    'Tourist',
-    'Business',
-    'Work',
-    'Student',
-    'Transit',
-    'Diplomatic',
-    'Official'
-  ];
+  // Filter options populated dynamically from actual data
+  statuses: string[] = [];
+  visaTypes: string[] = [];
 
   // Create list state service manually (not via DI)
   listState = new ListStateService({ pageSize: 10 });
@@ -64,8 +48,8 @@ export class VisaListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Load workflow statuses dynamically
-    this.loadWorkflowStatuses();
+    // Load filter options from actual data
+    this.loadFilterOptions();
 
     // Subscribe to debounced search changes
     this.listState.search$
@@ -78,40 +62,24 @@ export class VisaListComponent implements OnInit, OnDestroy {
     this.fetchApplications();
   }
 
-  /**
-   * Load workflow statuses dynamically from workflow templates
-   */
-  private loadWorkflowStatuses(): void {
-    this.workflowService.getTemplates({ entity_type: 'visa', is_active: true })
+  private loadFilterOptions(): void {
+    this.visaService.getAllApplications({ page_size: 1000 })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (templates) => {
-          if (templates && templates.length > 0) {
-            const template = templates[0];
-            if (template.steps && template.steps.length > 0) {
-              // Build statuses from workflow steps
-              const workflowStatuses = template.steps
-                .sort((a, b) => a.step_order - b.step_order)
-                .map(step => `Pending ${step.step_name}`);
+        next: (response: { results?: VisaApplication[] } | VisaApplication[]) => {
+          const items: VisaApplication[] = Array.isArray(response)
+            ? response
+            : (response.results ?? []);
 
-              // Combine workflow statuses with base statuses
-              this.statuses = [
-                ...workflowStatuses,
-                'Submitted',
-                'Under Review',
-                'Approved',
-                'Rejected',
-                'Cancelled',
-                'Processing',
-                'Completed'
-              ];
-            }
-          }
+          this.statuses = [...new Set(
+            items.map(i => i.status ?? '').filter(Boolean)
+          )].sort();
+
+          this.visaTypes = [...new Set(
+            items.map(i => i.visa_type ?? '').filter(Boolean)
+          )].sort();
         },
-        error: (err) => {
-          console.error('Error loading workflow statuses for visa:', err);
-          // Keep default statuses on error
-        }
+        error: () => { /* silently ignore — dropdowns stay empty */ }
       });
   }
 

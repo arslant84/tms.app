@@ -3,9 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TrfService } from '../../services/trf.service';
-import { TravelRequestForm } from '../../../../core/models/trf.model';
 import { ToastService } from '../../../../core/services/toast.service';
-import { WorkflowService } from '../../../../core/services/workflow.service';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -13,16 +11,6 @@ import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
-
-// Base statuses that don't come from workflow (Draft, Approved, Rejected, etc.)
-const BASE_STATUSES = ['Draft', 'Approved', 'Rejected', 'Cancelled', 'Completed'];
-
-export const TRAVEL_TYPES = [
-  'Domestic',
-  'International',
-  'Local',
-  'Field Visit'
-];
 
 export interface TrfListItem {
   id: number;
@@ -58,9 +46,9 @@ export class TrfListComponent implements OnInit, OnDestroy {
   sortKey: string | null = 'submitted_at';
   sortDirection: 'ascending' | 'descending' = 'descending';
 
-  // Dynamic statuses loaded from workflow template
-  trfStatuses: string[] = [...BASE_STATUSES];
-  readonly TRAVEL_TYPES = TRAVEL_TYPES;
+  // Filter options populated dynamically from actual data
+  trfStatuses: string[] = [];
+  travelTypes: string[] = [];
 
   // Create list state service manually (not via DI)
   listState = new ListStateService({ pageSize: 10 });
@@ -69,14 +57,13 @@ export class TrfListComponent implements OnInit, OnDestroy {
     private router: Router,
     private trfService: TrfService,
     private toastService: ToastService,
-    private workflowService: WorkflowService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
-    // Load workflow statuses dynamically
-    this.loadWorkflowStatuses();
+    // Load filter options from actual data
+    this.loadFilterOptions();
 
     // Subscribe to debounced search changes
     this.listState.search$
@@ -89,7 +76,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
-        filter((event: any) => event.url === '/trf' || event.url.startsWith('/trf?')),
+        filter((event: NavigationEnd) => event.url === '/trf' || event.url.startsWith('/trf?')),
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
@@ -101,35 +88,27 @@ export class TrfListComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Load workflow statuses dynamically from workflow template
+   * Load filter options by fetching all user's TRFs without filters,
+   * then extracting unique statuses and travel types from the actual data.
    */
-  private loadWorkflowStatuses(): void {
-    this.workflowService.getTemplates({ entity_type: 'travelrequest', is_active: true })
+  private loadFilterOptions(): void {
+    this.trfService.getAllTrfs({ page_size: 1000 })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (templates) => {
-          if (templates && templates.length > 0) {
-            const template = templates[0];
-            // Build statuses from workflow steps
-            const workflowStatuses: string[] = ['Draft'];
+        next: (response: { results?: TrfListItem[] } | TrfListItem[]) => {
+          const items: TrfListItem[] = Array.isArray(response)
+            ? response
+            : (response.results ?? []);
 
-            if (template.steps && template.steps.length > 0) {
-              // Sort steps by order and create "Pending {step_name}" statuses
-              const sortedSteps = [...template.steps].sort((a, b) => a.step_order - b.step_order);
-              for (const step of sortedSteps) {
-                workflowStatuses.push(`Pending ${step.step_name}`);
-              }
-            }
+          this.trfStatuses = [...new Set(
+            items.map(i => i.status).filter(Boolean)
+          )].sort();
 
-            // Add terminal statuses
-            workflowStatuses.push('Approved', 'Rejected', 'Cancelled', 'Completed');
-            this.trfStatuses = workflowStatuses;
-          }
+          this.travelTypes = [...new Set(
+            items.map(i => i.travel_type).filter(Boolean)
+          )].sort();
         },
-        error: (err) => {
-          console.error('Error loading workflow statuses:', err);
-          // Keep default statuses on error
-        }
+        error: () => { /* silently ignore — dropdowns stay empty */ }
       });
   }
 
@@ -147,22 +126,21 @@ export class TrfListComponent implements OnInit, OnDestroy {
     this.listState.setLoading(true);
     this.listState.clearError();
 
-    const params: any = {
+    const params: Record<string, unknown> = {
       ...this.listState.getFilters()
-      // Don't add limit - page_size is already in getFilters()
     };
 
     if (this.statusFilter) {
-      params.status = this.statusFilter;
+      params['status'] = this.statusFilter;
     }
 
     if (this.travelTypeFilter) {
-      params.travel_type = this.travelTypeFilter;
+      params['travel_type'] = this.travelTypeFilter;
     }
 
     if (this.sortKey && this.sortDirection) {
-      params.sortBy = this.sortKey;
-      params.sortOrder = this.sortDirection;
+      params['sortBy'] = this.sortKey;
+      params['sortOrder'] = this.sortDirection;
     }
 
     this.trfService.getAllTrfs(params)
@@ -173,28 +151,25 @@ export class TrfListComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe({
-        next: (response: any) => {
+        next: (response: { results?: TrfListItem[]; count?: number } | TrfListItem[]) => {
           // Handle both array response and paginated response
           if (Array.isArray(response)) {
-            // Direct array response from Django
             this.trfs = response;
             this.listState.setTotalItems(response.length);
           } else {
-            // Paginated response
-            this.trfs = response.results || response.trfs || [];
-            this.listState.setTotalItems(response.count || response.totalCount || 0);
+            this.trfs = response.results ?? [];
+            this.listState.setTotalItems(response.count ?? 0);
           }
         },
-        error: (err) => {
+        error: (err: { error?: { detail?: string }; statusText?: string; message?: string }) => {
           // Handle "Invalid page" error from DRF pagination
           if (err.error?.detail === 'Invalid page.' || err.statusText === 'Not Found') {
-            // Reset to first page and retry
             this.listState.resetToFirstPage();
             this.fetchTrfs();
             return;
           }
 
-          this.listState.setError(err.message || 'Failed to load TRFs');
+          this.listState.setError(err.message ?? 'Failed to load TRFs');
           this.trfs = [];
         }
       });
@@ -247,14 +222,15 @@ export class TrfListComponent implements OnInit, OnDestroy {
   }
 
   private deleteConfirmId: number | null = null;
-  private deleteConfirmTimeout: any = null;
+  private deleteConfirmTimeout: ReturnType<typeof setTimeout> | null = null;
 
   deleteTrf(id: number, event: Event): void {
     event.stopPropagation();
 
-    // If this is the second click on the same item within 3 seconds, proceed with deletion
     if (this.deleteConfirmId === id) {
-      clearTimeout(this.deleteConfirmTimeout);
+      if (this.deleteConfirmTimeout !== null) {
+        clearTimeout(this.deleteConfirmTimeout);
+      }
       this.deleteConfirmId = null;
 
       this.trfService.deleteTrf(id)
@@ -263,17 +239,16 @@ export class TrfListComponent implements OnInit, OnDestroy {
           next: () => {
             this.toastService.success('Travel request deleted successfully');
             this.fetchTrfs();
+            this.loadFilterOptions();
           },
-          error: (error: any) => {
+          error: () => {
             this.toastService.error('Failed to delete travel request');
           }
         });
     } else {
-      // First click - show confirmation toast
       this.deleteConfirmId = id;
       this.toastService.warning('Click delete again to confirm deletion');
 
-      // Reset confirmation after 3 seconds
       this.deleteConfirmTimeout = setTimeout(() => {
         this.deleteConfirmId = null;
       }, 3000);
@@ -310,5 +285,4 @@ export class TrfListComponent implements OnInit, OnDestroy {
   formatTravelTypeDisplay(type: string): string {
     return type.replace(/_/g, ' ');
   }
-
 }

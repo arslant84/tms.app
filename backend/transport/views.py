@@ -122,14 +122,9 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                     queryset = queryset.filter(requestor=user)
                     logger.warning(f" Admin view: User {user.username} lacks permission - showing only own transport requests")
         else:
-            # Personal requests view - show user's own requests plus those pending their approval
-            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, TransportRequest)
-            if pending_approval_ids:
-                queryset = queryset.filter(Q(requestor=user) | Q(id__in=pending_approval_ids))
-                logger.info(f" Personal view: User {user.username} - showing own requests plus {len(pending_approval_ids)} pending approval")
-            else:
-                queryset = queryset.filter(requestor=user)
-                logger.info(f" Personal view: User {user.username} - showing only own transport requests")
+            # Personal requests view - show only user's own transport requests
+            queryset = queryset.filter(requestor=user)
+            logger.info(f" Personal view: User {user.username} - showing only own transport requests")
 
         # Query parameter filters
         status_filter = self.request.query_params.get('status', None)
