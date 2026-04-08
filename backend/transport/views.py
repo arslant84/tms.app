@@ -93,13 +93,16 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             logger.info(f" Approval action: Allowing access to all transport requests (authorization checked in WorkflowEngine)")
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
-        # For retrieve (viewing details), include requests pending user's approval via workflow
+        # For retrieve (viewing details), check view_all permission first, then pending approvals
         if self.action == 'retrieve':
-            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, TransportRequest)
-            if pending_approval_ids:
-                queryset = queryset.filter(Q(requestor=user) | Q(id__in=pending_approval_ids))
-                logger.info(f" Retrieve action: Including user's requests and {len(pending_approval_ids)} pending approval")
+            # Users with view_all_transport permission can access any request detail (e.g. from Recent Activity)
+            if user.role and user.role.permissions.filter(name='view_all_transport').exists():
+                logger.info(f" Retrieve action: User has view_all_transport - allowing full access")
                 return queryset
+            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, TransportRequest)
+            queryset = queryset.filter(Q(requestor=user) | Q(id__in=pending_approval_ids))
+            logger.info(f" Retrieve action: Filtering to own requests and {len(pending_approval_ids)} pending approval")
+            return queryset
 
         # Check if this is an admin view (Transport Admin module)
         admin_view = self.request.query_params.get('admin_view', 'false').lower() == 'true'
