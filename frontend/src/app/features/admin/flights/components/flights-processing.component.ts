@@ -113,7 +113,7 @@ export class FlightsProcessingComponent implements OnInit {
     this.isLoadingPending = true;
     this.errorPending = null;
 
-    this.trfService.getAllTrfs({ adminView: true }).subscribe({
+    this.trfService.getAllTrfs({ adminView: true, status: 'Approved', page_size: 1000 }).subscribe({
       next: (response: any) => {
         const trfs = response.results || response.trfs || [];
 
@@ -205,7 +205,7 @@ export class FlightsProcessingComponent implements OnInit {
   fetchBookedFlights(): void {
     this.isLoadingBooked = true;
 
-    this.trfService.getAllTrfs({ adminView: true }).subscribe({
+    this.trfService.getAllTrfs({ adminView: true, page_size: 1000 }).subscribe({
       next: (response: any) => {
         const trfs = response.results || response.trfs || [];
 
