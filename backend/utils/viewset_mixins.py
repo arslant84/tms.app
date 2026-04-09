@@ -20,6 +20,14 @@ Usage:
 import logging
 from django.db.models import Q
 from rest_framework.exceptions import NotFound
+from rest_framework.pagination import PageNumberPagination
+
+
+class StandardResultsPagination(PageNumberPagination):
+    """Default pagination: respects client-supplied page_size, capped at 1000."""
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
 
 logger = logging.getLogger(__name__)
 
