@@ -82,7 +82,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
 	 */
 	fetchFlightStats(): void {
 		// Calculate stats from TRFs
-		this.trfService.getAllTrfs({ adminView: true }).subscribe({
+		this.trfService.getAllTrfs({ adminView: true, page_size: 1000 }).subscribe({
 			next: (response: any) => {
 				const trfs = response.results || response.trfs || [];
 
@@ -131,7 +131,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
 		this.isLoading = true;
 		this.error = null;
 
-		this.trfService.getAllTrfs({ adminView: true }).subscribe({
+		this.trfService.getAllTrfs({ adminView: true, page_size: 1000 }).subscribe({
 			next: (response: any) => {
 				const trfs = response.results || response.trfs || [];
 
