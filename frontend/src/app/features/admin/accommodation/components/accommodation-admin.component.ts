@@ -70,7 +70,7 @@ export class AccommodationAdminComponent implements OnInit {
    * Fetch accommodation statistics
    */
   fetchStats(): void {
-    this.accommodationService.getAllRequests({ adminView: true }).subscribe({
+    this.accommodationService.getAllRequests({ adminView: true, page_size: 1000 }).subscribe({
       next: (response: any) => {
         const requests = response.results || response || [];
 

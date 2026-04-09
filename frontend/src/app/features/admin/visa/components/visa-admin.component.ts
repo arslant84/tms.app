@@ -145,7 +145,7 @@ export class VisaAdminComponent implements OnInit, OnDestroy {
 	 * Fetch visa application statistics
 	 */
 	fetchStats(): void {
-		this.visaService.getAllApplications({ adminView: true }).subscribe({
+		this.visaService.getAllApplications({ adminView: true, page_size: 1000 }).subscribe({
 			next: (response: any) => {
 				const applications = response.results || response || [];
 

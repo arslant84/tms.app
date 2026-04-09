@@ -134,7 +134,7 @@ export class AccommodationProcessingComponent implements OnInit {
     this.isLoadingPending = true;
     this.errorPending = null;
 
-    this.accommodationService.getAllRequests({ status: 'Approved', adminView: true }).subscribe({
+    this.accommodationService.getAllRequests({ status: 'Approved', adminView: true, page_size: 1000 }).subscribe({
       next: (response: any) => {
         const requests = response.results || response;
 
@@ -211,7 +211,7 @@ export class AccommodationProcessingComponent implements OnInit {
   fetchBookedAccommodations(): void {
     this.isLoadingBooked = true;
 
-    this.accommodationService.getAllRequests({ status: 'Accommodation Assigned', adminView: true }).subscribe({
+    this.accommodationService.getAllRequests({ status: 'Accommodation Assigned', adminView: true, page_size: 1000 }).subscribe({
       next: (response: any) => {
         const requests = response.results || response;
 

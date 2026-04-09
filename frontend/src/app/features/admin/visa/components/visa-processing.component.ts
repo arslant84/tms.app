@@ -88,7 +88,7 @@ export class VisaProcessingComponent implements OnInit {
     this.isLoadingPending = true;
     this.errorPending = null;
 
-    this.visaService.getAllApplications({ status: 'Approved', adminView: true }).subscribe({
+    this.visaService.getAllApplications({ status: 'Approved', adminView: true, page_size: 1000 }).subscribe({
       next: (response: any) => {
         const applications = response.results || response;
 
@@ -124,7 +124,7 @@ export class VisaProcessingComponent implements OnInit {
   fetchCompletedVisas(): void {
     this.isLoadingCompleted = true;
 
-    this.visaService.getAllApplications({ status: 'Completed', adminView: true }).subscribe({
+    this.visaService.getAllApplications({ status: 'Completed', adminView: true, page_size: 1000 }).subscribe({
       next: (response: any) => {
         const applications = response.results || response;
 

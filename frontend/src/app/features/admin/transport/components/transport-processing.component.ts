@@ -80,7 +80,7 @@ export class TransportProcessingComponent implements OnInit {
     this.error = null;
 
     // Fetch all requests and filter on client side for better reliability
-    this.transportService.getAllRequests({}).subscribe({
+    this.transportService.getAllRequests({ page_size: 1000 }).subscribe({
       next: (response: any) => {
         const allRequests = response.results || response || [];
 
