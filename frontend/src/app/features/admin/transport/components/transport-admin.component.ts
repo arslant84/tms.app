@@ -3,7 +3,6 @@ import { Component, inject, type OnDestroy, type OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router, RouterLink } from "@angular/router";
 import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
 import { AppSettingsService } from "../../../../core/services/app-settings.service";
 import { ConfirmationService } from "../../../../core/services/confirmation.service";
 import { ToastService } from "../../../../core/services/toast.service";
@@ -86,7 +85,6 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 	dateUtils = inject(DateUtilsService);
 
 	ngOnInit(): void {
-		this.loadFilterOptions();
 		this.loadRequests();
 	}
 
@@ -96,51 +94,19 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Load filter options dynamically from real data
-	 */
-	private loadFilterOptions(): void {
-		this.transportService
-			.getAllRequests({ adminView: true, page_size: 1000 })
-			.pipe(takeUntil(this.destroy$))
-			.subscribe({
-				next: (response: any) => {
-					const requests = response.results || response || [];
-					const uniqueStatuses = [
-						...new Set<string>(
-							requests.map((r: any) => r.status).filter(Boolean),
-						),
-					].sort();
-					this.statusOptions = [
-						{ value: "all", label: "All Statuses" },
-						...uniqueStatuses.map((s: string) => ({ value: s, label: s })),
-					];
-				},
-				error: (err) => {
-					console.error("Error loading filter options for transport:", err);
-				},
-			});
-	}
-
-	/**
 	 * Load transport requests from API
 	 */
 	loadRequests(): void {
 		this.loading = true;
 		this.error = "";
 
-		const filters: any = {
+		const filters = {
 			page: this.currentPage,
 			page_size: this.pageSize,
-			adminView: true, // Show all transport requests for admin processing
+			adminView: true,
+			status: this.filterCriteria.status !== "all" ? this.filterCriteria.status : undefined,
+			search: this.filterCriteria.search || undefined,
 		};
-
-		if (this.filterCriteria.status !== "all") {
-			filters.status = this.filterCriteria.status;
-		}
-
-		if (this.filterCriteria.search) {
-			filters.search = this.filterCriteria.search;
-		}
 
 		this.transportService.getAllRequests(filters).subscribe({
 			next: (response) => {
@@ -149,6 +115,11 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 				this.filteredRequests = [...this.requests];
 				this.calculateStats();
 				this.loading = false;
+				if (this.statusOptions.length <= 1) {
+					const statuses = this.requests.map((r) => r.status).filter(Boolean) as string[];
+					const uniqueStatuses = [...new Set(statuses)].sort();
+					this.statusOptions = [{ value: "all", label: "All Statuses" }, ...uniqueStatuses.map((s) => ({ value: s, label: s }))];
+				}
 			},
 			error: (err) => {
 				this.error =
