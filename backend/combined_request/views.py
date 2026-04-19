@@ -250,7 +250,7 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
 
         if not serializer.is_valid():
             logger.error(f"CombinedRequest UPDATE validation errors for #{instance.id}: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return validation_error_response(serializer.errors)
 
         logger.info(
             f"CombinedRequest UPDATE #{instance.id}: "
