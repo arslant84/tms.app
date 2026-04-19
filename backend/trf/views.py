@@ -287,7 +287,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         else:
             # Personal requests view - show only user's own TRFs
             queryset = queryset.filter(created_by=user)
-            logger.info(f" Personal view: User {user.username} - showing only own TRFs (created_by={user.id})")
+            logger.info(f" Personal view: User {user.email or user.username} - showing only own TRFs (created_by={user.id})")
 
         # Filter by status
         status_filter = self.request.query_params.get('status', None)
