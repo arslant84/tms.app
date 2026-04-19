@@ -1,6 +1,8 @@
 // Combined Detail Component - Using Unified Design System
 @use '../../../../styles/variables' as vars;
 
+.pre-line { white-space: pre-line; }
+
 :host {
   display: block;
   width: 100%;
@@ -232,7 +234,7 @@
   margin-top: vars.$spacing-5;
   padding: vars.$spacing-4;
   background: vars.$success-lightest;
-  border: 1px solid #6ee7b7;
+  border: 1px solid vars.$success-light;
   border-radius: vars.$radius-lg;
 
   .processing-result-title {
