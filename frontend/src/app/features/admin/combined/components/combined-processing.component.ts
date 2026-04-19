@@ -1,15 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { CombinedRequestService } from '../../../requests/combined/services/combined-request.service';
-import { CombinedRequest } from '../../../requests/combined/models/combined-request.model';
+import type { CombinedRequest } from '../../../requests/combined/models/combined-request.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { RbacService } from '../../../../core/services/rbac.service';
-import { AccommodationService, AccommodationStaffHouse, AccommodationRoom } from '../../../accommodation/services/accommodation.service';
+import { AccommodationService } from '../../../accommodation/services/accommodation.service';
+import type { AccommodationStaffHouse, AccommodationRoom } from '../../../accommodation/services/accommodation.service';
 
 interface FlightForm {
   pnr: string;
@@ -61,7 +64,7 @@ interface VisaForm {
   styleUrl: './combined-processing.component.scss'
 })
 export class CombinedProcessingComponent implements OnInit, OnDestroy {
-  private routeSub?: Subscription;
+  private destroy$ = new Subject<void>();
 
   // ===== MODE =====
   mode: 'list' | 'detail' = 'list';
@@ -114,16 +117,16 @@ export class CombinedProcessingComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     public dateUtils: DateUtilsService,
+    public statusUtils: StatusUtilsService,
     public rbacService: RbacService
   ) {}
 
   ngOnInit(): void {
-    this.accommodationService.getAllStaffHouses().subscribe({
-      next: (houses) => { this.staffHouses = houses; },
-      error: () => {}
-    });
+    this.accommodationService.getAllStaffHouses()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({ next: (houses) => { this.staffHouses = houses; }, error: () => {} });
 
-    this.routeSub = this.route.queryParamMap.subscribe(params => {
+    this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const id = params.get('id');
       if (id) {
         this.mode = 'detail';
@@ -133,6 +136,11 @@ export class CombinedProcessingComponent implements OnInit, OnDestroy {
         this.loadRequests();
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   onStaffHouseChange(): void {
@@ -146,11 +154,8 @@ export class CombinedProcessingComponent implements OnInit, OnDestroy {
     this.accommodationForm.staffHouseName = house?.name || '';
 
     this.loadingRooms = true;
-    this.accommodationService.getAllRooms(+id).subscribe({
-      next: (rooms) => {
-        this.availableRooms = rooms.filter(r => r.status === 'Available');
-        this.loadingRooms = false;
-      },
+    this.accommodationService.getAllRooms(+id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (rooms) => { this.availableRooms = rooms.filter(r => r.status === 'Available'); this.loadingRooms = false; },
       error: () => { this.loadingRooms = false; }
     });
   }
@@ -159,10 +164,6 @@ export class CombinedProcessingComponent implements OnInit, OnDestroy {
     const id = this.accommodationForm.roomId;
     const room = this.availableRooms.find(r => r.id === +(id ?? 0));
     this.accommodationForm.roomName = room ? `${room.name}${room.room_type ? ` (${room.room_type})` : ''}` : '';
-  }
-
-  ngOnDestroy(): void {
-    this.routeSub?.unsubscribe();
   }
 
   // ===== LIST MODE =====
@@ -223,15 +224,15 @@ export class CombinedProcessingComponent implements OnInit, OnDestroy {
 
     // Pre-fill travel airports from first/last itinerary segment
     if (req.itinerarySegments?.length) {
-      const first = req.itinerarySegments[0];
-      const last  = req.itinerarySegments[req.itinerarySegments.length - 1];
-      this.flightForm.departureAirport = (first as any).fromLocation || '';
-      this.flightForm.arrivalAirport   = (last as any).toLocation    || '';
-      if ((first as any).segmentDate) this.flightForm.departureDate = (first as any).segmentDate;
+      const first = req.itinerarySegments[0] as { fromLocation?: string; segmentDate?: string };
+      const last  = req.itinerarySegments[req.itinerarySegments.length - 1] as { toLocation?: string };
+      this.flightForm.departureAirport = first.fromLocation || '';
+      this.flightForm.arrivalAirport   = last.toLocation    || '';
+      if (first.segmentDate) this.flightForm.departureDate = first.segmentDate;
     }
 
     // Re-fill from any previously saved processing data (allow editing)
-    const proc = req.additionalData?.['processing'] as Record<string, any> | undefined;
+    const proc = req.additionalData?.['processing'] as Record<string, Record<string, unknown>> | undefined;
     if (proc?.['travel'])         Object.assign(this.flightForm,        proc['travel']);
     if (proc?.['transport'])      Object.assign(this.transportForm,     proc['transport']);
     if (proc?.['accommodation']) {
@@ -239,7 +240,7 @@ export class CombinedProcessingComponent implements OnInit, OnDestroy {
       // Reload room list for the saved staff house so dropdowns reflect saved selection
       if (this.accommodationForm.staffHouseId) {
         this.loadingRooms = true;
-        this.accommodationService.getAllRooms(this.accommodationForm.staffHouseId).subscribe({
+        this.accommodationService.getAllRooms(this.accommodationForm.staffHouseId).pipe(takeUntil(this.destroy$)).subscribe({
           next: (rooms) => { this.availableRooms = rooms.filter(r => r.status === 'Available'); this.loadingRooms = false; },
           error: () => { this.loadingRooms = false; }
         });
@@ -379,14 +380,7 @@ export class CombinedProcessingComponent implements OnInit, OnDestroy {
   }
 
   getStatusClass(status: string): string {
-    if (!status) return 'bg-secondary';
-    const s = status.toLowerCase();
-    if (s.includes('pending') || s === 'submitted') return 'bg-warning text-dark';
-    if (s === 'approved')   return 'bg-success';
-    if (s === 'processing') return 'bg-info';
-    if (s === 'completed')  return 'bg-primary';
-    if (s === 'rejected' || s === 'cancelled') return 'bg-danger';
-    return 'bg-secondary';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   canProcessModule(module: string): boolean {

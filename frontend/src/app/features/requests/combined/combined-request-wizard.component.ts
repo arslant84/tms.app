@@ -69,7 +69,6 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
   visaDocumentQueue: { file: File; documentType: string }[] = [];
   uploadedDocuments: CombinedRequestDocument[] = [];
   newDocumentType = 'passport';
-  visaDocError: string | null = null;
 
   // Approver selection state
   selectedApprovers: ApproverSelection = {};
@@ -854,10 +853,8 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
     if (savedDraft) {
       try {
         const draftData = JSON.parse(savedDraft);
-        // Normalize department in case old drafts stored a Department object
         if (draftData.formData?.department && typeof draftData.formData.department !== 'string') {
-          const dept = draftData.formData.department;
-          draftData.formData.department = dept?.name || dept?.code || '';
+          draftData.formData.department = this.normalizeDepartment(draftData.formData.department);
         }
         this.combinedRequestForm.patchValue(draftData.formData);
 
@@ -1145,7 +1142,7 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
         this.uploadedDocuments = this.uploadedDocuments.filter(d => d.id !== doc.id);
       },
       error: () => {
-        this.visaDocError = 'Failed to delete document.';
+        this.toastService.error('Failed to delete document.');
       }
     });
   }
@@ -1159,7 +1156,7 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (doc) => this.uploadedDocuments.push(doc),
-          error: () => { this.visaDocError = 'One or more document uploads failed.'; }
+          error: () => { this.toastService.error('One or more document uploads failed.'); }
         });
     });
   }
@@ -1167,5 +1164,10 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
   cancel(): void {
     this.clearDraft();
     this.router.navigate(['/combined']);
+  }
+
+  private normalizeDepartment(dept: unknown): string {
+    const d = dept as { name?: string; code?: string };
+    return d?.name || d?.code || '';
   }
 }
