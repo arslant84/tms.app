@@ -66,6 +66,9 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
   private deleteConfirmId: number | null = null;
   private deleteConfirmTimeout: any = null;
 
+  // Prevents NavigationEnd that fires during component init from triggering a second fetchData()
+  private navigationRefreshReady = false;
+
   // Filter properties - override in subclass for additional filters
   statusFilter = '';
 
@@ -94,6 +97,7 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
     this.setupNavigationRefresh();
     this.onInit();
     this.fetchData();
+    this.navigationRefreshReady = true;
   }
 
   /**
@@ -146,7 +150,9 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-        this.fetchData();
+        if (this.navigationRefreshReady) {
+          this.fetchData();
+        }
       });
   }
 
