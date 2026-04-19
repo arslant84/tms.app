@@ -219,9 +219,12 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
 
   /**
    * Check if a step can be skipped.
+   * Always allow skipping when no eligible approvers exist — the user must
+   * be able to proceed even if no one matches the department filter.
    */
   canSkipStep(step: WorkflowStepWithApprovers): boolean {
-    return this.allowSkip && step.can_skip;
+    if (!this.allowSkip) return false;
+    return step.can_skip || step.eligible_approvers.length === 0;
   }
 
   onApproverSelect(stepOrder: number, userId: number | null): void {

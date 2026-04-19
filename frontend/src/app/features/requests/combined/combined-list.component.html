@@ -1,0 +1,201 @@
+<div class="combined-list-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="header-left">
+      <div class="title-with-icon">
+        <i class="bi bi-layers header-icon"></i>
+        <h1 class="page-title">Combined Requests</h1>
+      </div>
+      <p class="page-subtitle">Viewing your combined travel requests</p>
+    </div>
+    <button class="btn btn-primary" routerLink="/combined/new">
+      <i class="bi bi-plus-circle me-2"></i>New Combined Request
+    </button>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="filters-card shadow-lg">
+    <div class="filters-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-funnel"></i>
+        <h3 class="card-title">Filter & Search</h3>
+      </div>
+      <p class="card-description">Search and filter your combined requests by various criteria.</p>
+    </div>
+    <div class="filters-card-content">
+      <div class="filters-grid">
+        <input
+          type="text"
+          id="combinedSearch"
+          name="combinedSearch"
+          autocomplete="off"
+          class="form-control search-input"
+          placeholder="Search by ID, Requestor, Purpose..."
+          [value]="(listState.searchTerm | async) || ''"
+          (input)="onSearchChange($any($event.target).value)">
+
+        <select
+          class="form-select filter-select"
+          [(ngModel)]="statusFilter"
+          (change)="onStatusFilterChange()">
+          <option value="">All Statuses</option>
+          <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+
+      <div *ngIf="hasActiveFilters()" class="clear-filters-section">
+        <button class="btn btn-outline-secondary btn-sm btn-clear" (click)="clearFilters()">
+          <i class="bi bi-x me-1"></i>Clear All Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Combined List Card -->
+  <div class="combined-list-card shadow-lg">
+    <div class="combined-card-header">
+      <div class="card-title-with-icon">
+        <i class="bi bi-layers"></i>
+        <h3 class="card-title">My Combined Requests</h3>
+      </div>
+      <p class="card-description">
+        List of your submitted combined travel requests. Total: {{ listState.getTotalItems() }}
+      </p>
+    </div>
+
+    <div class="combined-card-content">
+      <!-- Loading State (Initial Load) -->
+      <div *ngIf="(listState.loading | async) && requests.length === 0" class="loading-state">
+        <app-loading-spinner size="lg" message="Loading combined requests..."></app-loading-spinner>
+      </div>
+
+      <!-- Loading Overlay (Pagination Navigation) -->
+      <div *ngIf="(listState.loading | async) && requests.length > 0" class="loading-overlay">
+        <app-loading-spinner size="md" message="Loading..."></app-loading-spinner>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="!(listState.loading | async) && (listState.error | async)" class="error-state">
+        <i class="bi bi-exclamation-triangle error-icon"></i>
+        <h3 class="error-title">Error Loading Requests</h3>
+        <p class="error-message">{{ listState.error | async }}</p>
+        <button class="btn btn-primary" (click)="fetchRequests()">Try Again</button>
+      </div>
+
+      <!-- Table with Data -->
+      <div *ngIf="!(listState.loading | async) && !(listState.error | async) && requests.length > 0" class="table-container">
+        <div class="table-responsive">
+          <table class="combined-table">
+            <thead>
+              <tr>
+                <th>REQUEST NUMBER</th>
+                <th>STAFF NAME</th>
+                <th>MODULES</th>
+                <th>PURPOSE</th>
+                <th>STATUS</th>
+                <th>SUBMITTED</th>
+                <th class="text-end">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of requests" [routerLink]="['/combined', item.id]" class="clickable-row">
+                <td class="font-medium">
+                  <span *ngIf="item.requestNumber" class="request-number">{{ item.requestNumber }}</span>
+                  <span *ngIf="!item.requestNumber" class="text-muted">CR-{{ item.id }}</span>
+                </td>
+                <td class="staff-cell">
+                  <div class="staff-name">{{ item.requestorName || 'N/A' }}</div>
+                  <small class="staff-id" *ngIf="item.staffId">{{ item.staffId }}</small>
+                </td>
+                <td>
+                  <div class="module-icons">
+                    <span
+                      *ngFor="let mod of getModuleIcons(item)"
+                      class="module-icon-badge"
+                      [title]="mod.title">
+                      <i [class]="'bi ' + mod.icon"></i>
+                    </span>
+                  </div>
+                </td>
+                <td class="purpose-cell">{{ item.travelPurpose || item.transportPurpose || 'N/A' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(item.status || '')">
+                    {{ item.status || 'Draft' }}
+                  </span>
+                </td>
+                <td>{{ dateUtils.formatDate(item.submittedAt) }}</td>
+                <td class="text-end">
+                  <div class="action-buttons">
+                    <button
+                      class="btn btn-sm btn-outline-primary btn-icon"
+                      [routerLink]="['/combined', item.id]"
+                      (click)="$event.stopPropagation()"
+                      title="View Details">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-primary btn-icon"
+                      [routerLink]="['/combined', 'edit', item.id]"
+                      (click)="$event.stopPropagation()"
+                      title="Edit Request">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger btn-icon"
+                      (click)="deleteRequest(item.id, $event)"
+                      title="Delete Request">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div *ngIf="listState.getTotalPages() > 1" class="pagination-container">
+          <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+              <li class="page-item" [class.disabled]="!listState.hasPreviousPage()">
+                <a class="page-link" (click)="previousPage()" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+              <li
+                class="page-item"
+                *ngFor="let page of listState.getPageNumbers()"
+                [class.active]="(listState.currentPage | async) === page">
+                <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+              </li>
+              <li class="page-item" [class.disabled]="!listState.hasNextPage()">
+                <a class="page-link" (click)="nextPage()" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <div class="text-center mt-3 pagination-info">
+            <small>
+              Showing {{ ((listState.currentPage | async)! - 1) * listState.getPageSize() + 1 }} -
+              {{ Math.min((listState.currentPage | async)! * listState.getPageSize(), listState.getTotalItems()) }}
+              of {{ listState.getTotalItems() }} requests
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!(listState.loading | async) && !(listState.error | async) && requests.length === 0" class="empty-state">
+        <i class="bi bi-layers empty-icon"></i>
+        <p class="empty-message">
+          {{ hasActiveFilters() ? 'No combined requests found matching your criteria.' : 'No combined requests found.' }}
+        </p>
+        <p class="empty-subtitle">Click "New Combined Request" to get started.</p>
+        <button *ngIf="hasActiveFilters()" class="btn btn-link" (click)="clearFilters()">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

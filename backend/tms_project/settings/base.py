@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'workflows',
     'notifications',
     'reports',
+    'combined_request.apps.CombinedRequestConfig',
 ]
 
 MIDDLEWARE = [

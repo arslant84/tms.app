@@ -1,0 +1,351 @@
+// Combined Detail Component - Using Unified Design System
+@use '../../../../styles/variables' as vars;
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.combined-detail-container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: vars.$spacing-6 vars.$spacing-8;
+  box-sizing: border-box;
+  background-color: vars.$gray-50;
+  min-height: 100vh;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$spacing-6;
+}
+
+// ── Loading / Error ──────────────────────────────────────────
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+
+  .error-icon {
+    font-size: vars.$font-size-3xl;
+    color: vars.$error-color;
+    margin-bottom: vars.$spacing-md;
+  }
+
+  h3 {
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-800;
+    margin-top: vars.$spacing-md;
+  }
+
+  p {
+    margin-top: vars.$spacing-2;
+    color: vars.$gray-600;
+  }
+}
+
+// ── Page Header ──────────────────────────────────────────────
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: vars.$spacing-4;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$spacing-2;
+}
+
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: vars.$spacing-2;
+  background: none;
+  border: none;
+  color: vars.$primary-color;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.page-title {
+  font-size: vars.$font-size-2xl;
+  font-weight: vars.$font-weight-bold;
+  color: vars.$text-primary;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: vars.$spacing-3;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+// ── Status Bar ───────────────────────────────────────────────
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: vars.$spacing-3;
+  padding: vars.$spacing-3 vars.$spacing-5;
+  background: vars.$white;
+  border-radius: vars.$radius-lg;
+  border: 1px solid vars.$border-light;
+  box-shadow: vars.$shadow-sm;
+}
+
+// ── Detail Cards ─────────────────────────────────────────────
+
+.detail-card {
+  background: vars.$white;
+  border-radius: vars.$radius-lg;
+  border: 1px solid vars.$border-light;
+  box-shadow: vars.$shadow-sm;
+  overflow: hidden;
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-3;
+    padding: vars.$spacing-5 vars.$spacing-6;
+    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
+    border-bottom: 2px solid vars.$primary-color;
+    color: vars.$text-inverse;
+
+    i {
+      font-size: vars.$font-size-xl;
+      color: vars.$text-inverse;
+    }
+
+    h3 {
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$text-inverse;
+      margin: 0;
+      flex: 1;
+    }
+
+    // Right-side status badge inside card header
+    .module-status-badge {
+      margin-left: auto;
+      background: rgba(255, 255, 255, 0.2);
+      color: vars.$text-inverse;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  .card-body {
+    padding: vars.$spacing-5 vars.$spacing-6;
+  }
+}
+
+// ── Module Status Badge ──────────────────────────────────────
+
+.module-status-badge {
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-medium;
+  padding: vars.$spacing-1 vars.$spacing-3;
+  border-radius: vars.$radius-full;
+  text-transform: capitalize;
+
+  &.status-not_requested { background: vars.$gray-100; color: vars.$gray-600; }
+  &.status-pending        { background: vars.$warning-lightest; color: vars.$warning-dark; }
+  &.status-approved       { background: vars.$success-lightest; color: vars.$success-dark; }
+  &.status-processing     { background: vars.$info-lightest; color: vars.$info-dark; }
+  &.status-completed      { background: vars.$success-lightest; color: vars.$success-dark; }
+  &.status-rejected       { background: vars.$error-lightest; color: vars.$error-dark; }
+}
+
+// ── Module Badges (included modules) ────────────────────────
+
+.module-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: vars.$spacing-3;
+}
+
+.module-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: vars.$spacing-2 vars.$spacing-4;
+  background-color: vars.$primary-lightest;
+  color: vars.$primary-active;
+  border-radius: vars.$radius-full;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
+}
+
+// ── Detail Grid ──────────────────────────────────────────────
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: vars.$spacing-5;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: vars.$spacing-1;
+
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    font-size: vars.$font-size-xs;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .value {
+    font-size: vars.$font-size-sm;
+    color: vars.$text-primary;
+    font-weight: vars.$font-weight-medium;
+  }
+}
+
+// ── Processing Result Box ─────────────────────────────────────
+
+.processing-result-box {
+  margin-top: vars.$spacing-5;
+  padding: vars.$spacing-4;
+  background: vars.$success-lightest;
+  border: 1px solid #6ee7b7;
+  border-radius: vars.$radius-lg;
+
+  .processing-result-title {
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$success-dark;
+    margin-bottom: vars.$spacing-3;
+    display: flex;
+    align-items: center;
+  }
+
+  .processing-result-meta {
+    margin-top: vars.$spacing-3;
+    font-size: vars.$font-size-xs;
+    color: vars.$gray-500;
+  }
+}
+
+// ── Sub Sections (itinerary / passport tables) ───────────────
+
+.sub-section {
+  margin-top: vars.$spacing-5;
+  padding-top: vars.$spacing-4;
+  border-top: 1px solid vars.$border-light;
+}
+
+.sub-title {
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-semibold;
+  color: vars.$text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: vars.$spacing-3;
+}
+
+// ── Tables ───────────────────────────────────────────────────
+
+.table-container {
+  overflow-x: auto;
+}
+
+.detail-table {
+  width: 100%;
+  font-size: vars.$font-size-sm;
+  border-collapse: collapse;
+
+  thead {
+    background-color: vars.$gray-50;
+
+    th {
+      padding: vars.$spacing-2 vars.$spacing-3;
+      font-size: vars.$font-size-xs;
+      font-weight: vars.$font-weight-semibold;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: vars.$gray-600;
+      border-bottom: 1px solid vars.$border-light;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid vars.$border-light;
+
+      &:last-child { border-bottom: none; }
+      &:hover { background-color: vars.$gray-50; }
+
+      td {
+        padding: vars.$spacing-3;
+        color: vars.$gray-700;
+        vertical-align: middle;
+      }
+    }
+  }
+}
+
+// ── Comments ─────────────────────────────────────────────────
+
+.comments-text {
+  font-size: vars.$font-size-sm;
+  color: vars.$text-primary;
+  line-height: 1.6;
+  margin: 0;
+}
+
+// ── Alert ────────────────────────────────────────────────────
+
+.alert-info {
+  background-color: vars.$info-lightest;
+  color: vars.$info-dark;
+  border-radius: vars.$radius-lg;
+  padding: vars.$spacing-3 vars.$spacing-4;
+  font-size: vars.$font-size-sm;
+  border: none;
+}
+
+// ── Responsive ───────────────────────────────────────────────
+
+@media (width <= 768px) {
+  .combined-detail-container {
+    padding: vars.$spacing-4 vars.$spacing-4;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+}

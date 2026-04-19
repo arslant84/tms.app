@@ -3,8 +3,37 @@
     <div class="icon-container">
       <i class="bi bi-file-earmark-text text-primary"></i>
     </div>
-    <h1 class="request-title">Create New Travel Request Form</h1>
-    <p class="request-subtitle">Please select the type of travel request you want to create.</p>
+    <h1 class="request-title">Create New Request</h1>
+    <p class="request-subtitle">Select the type of request you want to create</p>
+  </div>
+
+  <!-- Featured Combined Request -->
+  <div class="featured-request-section">
+    <div class="featured-request-card" (click)="selectRequestType(combinedRequest)">
+      <div class="featured-badge">
+        <i class="bi bi-star-fill me-1"></i> Recommended
+      </div>
+      <div class="featured-icon">
+        <i [class]="combinedRequest.icon"></i>
+      </div>
+      <div class="featured-content">
+        <h3 class="featured-title">{{ combinedRequest.title }}</h3>
+        <p class="featured-description">{{ combinedRequest.description }}</p>
+        <div class="featured-modules">
+          <span class="module-tag"><i class="bi bi-airplane"></i> Travel</span>
+          <span class="module-tag"><i class="bi bi-car-front"></i> Transport</span>
+          <span class="module-tag"><i class="bi bi-building"></i> Accommodation</span>
+          <span class="module-tag"><i class="bi bi-passport"></i> Visa</span>
+        </div>
+      </div>
+      <div class="featured-arrow">
+        <i class="bi bi-arrow-right"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider">
+    <span>Or select a specific travel type</span>
   </div>
 
   <div class="request-types-grid">

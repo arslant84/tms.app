@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'transport',
     'workflows',
     'notifications',
+    'combined_request.apps.CombinedRequestConfig',
 ]
 
 MIDDLEWARE = [

@@ -37,7 +37,8 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
     { value: 'travelrequest', label: 'Travel Service Request (TSR)' },
     { value: 'transportrequest', label: 'Transport Request' },
     { value: 'visaapplication', label: 'Visa Application' },
-    { value: 'accommodation', label: 'Accommodation Request' }
+    { value: 'accommodation', label: 'Accommodation Request' },
+    { value: 'combinedrequest', label: 'Combined Request (TSR + Transport + Accommodation + Visa)' }
   ];
 
   // Available roles

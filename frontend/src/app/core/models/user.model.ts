@@ -53,6 +53,8 @@ export interface User {
   gender?: string;
   // Phone number
   phone?: string;
+  // Position/Job title
+  position?: string;
   // Last login timestamp
   last_login_at?: string;
   // SECURITY: Password change required flag
