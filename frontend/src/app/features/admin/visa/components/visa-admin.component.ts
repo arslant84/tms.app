@@ -88,8 +88,7 @@ export class VisaAdminComponent implements OnInit, OnDestroy {
 	statusUtils = inject(StatusUtilsService);
 
 	ngOnInit(): void {
-		this.loadFilterOptions();
-		this.fetchStats();
+		this.loadSummaryData();
 		this.loadApplications();
 	}
 
@@ -99,83 +98,34 @@ export class VisaAdminComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Load filter options dynamically from real data
+	 * Single fetch to derive filter options and stats from the full dataset.
+	 * Replaces the separate loadFilterOptions() and fetchStats() calls.
 	 */
-	private loadFilterOptions(): void {
+	private loadSummaryData(): void {
 		this.visaService
 			.getAllApplications({ adminView: true, page_size: 1000 })
 			.pipe(takeUntil(this.destroy$))
 			.subscribe({
 				next: (response: any) => {
-					const apps = response.results || response || [];
+					const apps: VisaApplication[] = response.results || response || [];
 
-					const uniqueStatuses = [
-						...new Set<string>(
-							apps.map((app: any) => app.status).filter(Boolean),
-						),
-					].sort();
-					this.statusOptions = [
-						{ value: "all", label: "All Statuses" },
-						...uniqueStatuses.map((s: string) => ({ value: s, label: s })),
-					];
+					// Filter options
+					const uniqueStatuses = [...new Set<string>(apps.map((a) => a.status).filter(Boolean))].sort();
+					this.statusOptions = [{ value: "all", label: "All Statuses" }, ...uniqueStatuses.map((s) => ({ value: s, label: s }))];
+					const uniqueVisaTypes = [...new Set<string>(apps.map((a) => a.visa_type).filter(Boolean))].sort();
+					this.visaTypeOptions = [{ value: "all", label: "All Types" }, ...uniqueVisaTypes.map((t) => ({ value: t, label: t }))];
+					this.allDestinations = [...new Set<string>(apps.map((a) => a.destination).filter(Boolean))].sort();
 
-					const uniqueVisaTypes = [
-						...new Set<string>(
-							apps.map((app: any) => app.visa_type).filter(Boolean),
-						),
-					].sort();
-					this.visaTypeOptions = [
-						{ value: "all", label: "All Types" },
-						...uniqueVisaTypes.map((t: string) => ({ value: t, label: t })),
-					];
-
-					this.allDestinations = [
-						...new Set<string>(
-							apps.map((app: any) => app.destination).filter(Boolean),
-						),
-					].sort();
+					// Stats
+					this.stats.total = apps.length;
+					this.stats.pending = apps.filter((a) => a.status && (a.status.toLowerCase().includes("pending") || a.status === "Submitted")).length;
+					this.stats.approved = apps.filter((a) => a.status === "Approved").length;
+					this.stats.processing = apps.filter((a) => a.status && (a.status.toLowerCase().includes("processing") || a.status === "Under Review")).length;
+					this.stats.completed = apps.filter((a) => a.status === "Completed").length;
+					this.stats.rejected = apps.filter((a) => a.status === "Rejected" || a.status === "Cancelled").length;
 				},
-				error: (err) => {
-					console.error("Error loading filter options for visa:", err);
-				},
+				error: () => { /* keep defaults */ },
 			});
-	}
-
-	/**
-	 * Fetch visa application statistics
-	 */
-	fetchStats(): void {
-		this.visaService.getAllApplications({ adminView: true, page_size: 1000 }).subscribe({
-			next: (response: any) => {
-				const applications = response.results || response || [];
-
-				this.stats.total = applications.length;
-				this.stats.pending = applications.filter(
-					(app: any) =>
-						app.status &&
-						(app.status.toLowerCase().includes("pending") ||
-							app.status === "Submitted"),
-				).length;
-				this.stats.approved = applications.filter(
-					(app: any) => app.status === "Approved",
-				).length;
-				this.stats.processing = applications.filter(
-					(app: any) =>
-						app.status &&
-						(app.status.toLowerCase().includes("processing") ||
-							app.status === "Under Review"),
-				).length;
-				this.stats.completed = applications.filter(
-					(app: any) => app.status === "Completed",
-				).length;
-				this.stats.rejected = applications.filter(
-					(app: any) => app.status === "Rejected" || app.status === "Cancelled",
-				).length;
-			},
-			error: (err) => {
-				// Keep default values on error
-			},
-		});
 	}
 
 	/**
@@ -373,7 +323,7 @@ export class VisaAdminComponent implements OnInit, OnDestroy {
 				this.toastService.success(`Application ${actionLabel} successfully`);
 				this.closeProcessModal();
 				this.processingId = null;
-				this.fetchStats(); // Refresh stats
+				this.loadSummaryData();
 				this.loadApplications();
 			},
 			error: (err) => {
