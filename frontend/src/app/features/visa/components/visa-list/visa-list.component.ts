@@ -48,39 +48,11 @@ export class VisaListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Load filter options from actual data
-    this.loadFilterOptions();
-
-    // Subscribe to debounced search changes
     this.listState.search$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.fetchApplications();
-      });
+      .subscribe(() => { this.fetchApplications(); });
 
-    // Initial load
     this.fetchApplications();
-  }
-
-  private loadFilterOptions(): void {
-    this.visaService.getAllApplications({ page_size: 1000 })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response: { results?: VisaApplication[] } | VisaApplication[]) => {
-          const items: VisaApplication[] = Array.isArray(response)
-            ? response
-            : (response.results ?? []);
-
-          this.statuses = [...new Set(
-            items.map(i => i.status ?? '').filter(Boolean)
-          )].sort();
-
-          this.visaTypes = [...new Set(
-            items.map(i => i.visa_type ?? '').filter(Boolean)
-          )].sort();
-        },
-        error: () => { /* silently ignore — dropdowns stay empty */ }
-      });
   }
 
   ngOnDestroy(): void {
@@ -116,7 +88,13 @@ export class VisaListComponent implements OnInit, OnDestroy {
           this.listState.setTotalItems(response.count || this.applications.length);
           this.listState.setLoading(false);
 
-          // Load workflow instances for each application
+          if (this.statuses.length === 0) {
+            this.statuses = [...new Set(this.applications.map(i => i.status ?? '').filter(Boolean))].sort();
+          }
+          if (this.visaTypes.length === 0) {
+            this.visaTypes = [...new Set(this.applications.map(i => i.visa_type ?? '').filter(Boolean))].sort();
+          }
+
           this.loadWorkflowInstances();
         },
         error: (error) => {

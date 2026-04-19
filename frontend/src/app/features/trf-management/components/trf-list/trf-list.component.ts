@@ -38,6 +38,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
   travelTypeFilter = '';
 
   private destroy$ = new Subject<void>();
+  private navigationRefreshReady = false;
 
   // TRF data
   trfs: TrfListItem[] = [];
@@ -62,17 +63,10 @@ export class TrfListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Load filter options from actual data
-    this.loadFilterOptions();
-
-    // Subscribe to debounced search changes
     this.listState.search$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.fetchTrfs();
-      });
+      .subscribe(() => { this.fetchTrfs(); });
 
-    // Refresh list when navigating back to this page
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
@@ -80,36 +74,11 @@ export class TrfListComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-        this.fetchTrfs();
+        if (this.navigationRefreshReady) { this.fetchTrfs(); }
       });
 
-    // Load initial data
     this.fetchTrfs();
-  }
-
-  /**
-   * Load filter options by fetching all user's TRFs without filters,
-   * then extracting unique statuses and travel types from the actual data.
-   */
-  private loadFilterOptions(): void {
-    this.trfService.getAllTrfs({ page_size: 1000 })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response: { results?: TrfListItem[] } | TrfListItem[]) => {
-          const items: TrfListItem[] = Array.isArray(response)
-            ? response
-            : (response.results ?? []);
-
-          this.trfStatuses = [...new Set(
-            items.map(i => i.status).filter(Boolean)
-          )].sort();
-
-          this.travelTypes = [...new Set(
-            items.map(i => i.travel_type).filter(Boolean)
-          )].sort();
-        },
-        error: () => { /* silently ignore — dropdowns stay empty */ }
-      });
+    this.navigationRefreshReady = true;
   }
 
   ngOnDestroy(): void {
@@ -152,13 +121,18 @@ export class TrfListComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (response: { results?: TrfListItem[]; count?: number } | TrfListItem[]) => {
-          // Handle both array response and paginated response
           if (Array.isArray(response)) {
             this.trfs = response;
             this.listState.setTotalItems(response.length);
           } else {
             this.trfs = response.results ?? [];
             this.listState.setTotalItems(response.count ?? 0);
+          }
+          if (this.trfStatuses.length === 0) {
+            this.trfStatuses = [...new Set(this.trfs.map(i => i.status).filter(Boolean))].sort();
+          }
+          if (this.travelTypes.length === 0) {
+            this.travelTypes = [...new Set(this.trfs.map(i => i.travel_type).filter(Boolean))].sort();
           }
         },
         error: (err: { error?: { detail?: string }; statusText?: string; message?: string }) => {
@@ -238,8 +212,9 @@ export class TrfListComponent implements OnInit, OnDestroy {
         .subscribe({
           next: () => {
             this.toastService.success('Travel request deleted successfully');
+            this.trfStatuses = [];
+            this.travelTypes = [];
             this.fetchTrfs();
-            this.loadFilterOptions();
           },
           error: () => {
             this.toastService.error('Failed to delete travel request');

@@ -231,7 +231,7 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
         # All users (including admins) only see notifications sent to them
         # Notifications are created for the appropriate users by the notification service
         queryset = UserNotification.objects.filter(user=user)
-        logger.info(f"User {user.username} - showing only notifications sent to them")
+        logger.info(f"User {user.email or user.username} - showing only notifications sent to them")
 
         # Filter by read status
         is_read = self.request.query_params.get('is_read', None)
