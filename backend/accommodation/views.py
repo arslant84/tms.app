@@ -240,7 +240,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 ).exists()
 
                 if can_view_all or user.is_admin:
-                    logger.info(f" Retrieve action: User {user.username} has admin permissions - allowing access to all requests")
+                    logger.info(f" Retrieve action: User {user.email or user.username} has admin permissions - allowing access to all requests")
                     return queryset  # No filtering for admins
 
             # Include requests pending user's approval via workflow
@@ -251,10 +251,10 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                     Q(staff_id=user.staff_id) |
                     Q(id__in=pending_approval_ids)
                 )
-                logger.info(f" Retrieve action: User {user.username} - showing own requests plus {len(pending_approval_ids)} pending approval")
+                logger.info(f" Retrieve action: User {user.email or user.username} - showing own requests plus {len(pending_approval_ids)} pending approval")
             else:
                 # Regular users can view their own requests only
-                logger.info(f" Retrieve action: User {user.username} - filtering by requestor")
+                logger.info(f" Retrieve action: User {user.email or user.username} - filtering by requestor")
                 # Filter by requestor_name or staff_id to handle different data entry methods
                 queryset = queryset.filter(
                     Q(requestor_name=user.get_full_name()) |
@@ -269,7 +269,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             ).exists()
 
             if can_view_all or user.is_admin:
-                logger.info(f" Assign action: User {user.username} has admin permissions - allowing access to all requests")
+                logger.info(f" Assign action: User {user.email or user.username} has admin permissions - allowing access to all requests")
                 return queryset  # No filtering for admins
 
         # Check if this is an admin view (Accommodation Admin module)
@@ -281,7 +281,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             can_view_all = user.role.permissions.filter(name='view_all_accommodation').exists()
 
             if can_view_all:
-                logger.info(f" Admin view: User {user.username} (role: {user.role.name}) has 'view_all_accommodation' permission - showing all accommodation requests")
+                logger.info(f" Admin view: User {user.email or user.username} (role: {user.role.name}) has 'view_all_accommodation' permission - showing all accommodation requests")
                 pass  # No filtering - show all
             elif user.role.permissions.filter(name__in=['approve_accommodation', 'view_pending_approvals']).exists():
                 # Department-level approvers - could be extended to filter by department if needed
@@ -294,7 +294,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
         else:
             # Personal requests view - always show only user's own requests
             queryset = queryset.filter(requestor_name=user.get_full_name())
-            logger.info(f" Personal view: User {user.username} - showing only own accommodation requests")
+            logger.info(f" Personal view: User {user.email or user.username} - showing only own accommodation requests")
 
         # Apply additional filters from query parameters
         status_filter = self.request.query_params.get('status', None)

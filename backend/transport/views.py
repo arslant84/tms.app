@@ -111,21 +111,21 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         if admin_view and user.role:
             # Admin module context - check if user has permission to view all
             if can_view_all(user, 'transport'):
-                logger.info(f" Admin view: User {user.username} (role: {user.role.name}) has 'view_all_transport' permission - showing all transport requests")
+                logger.info(f" Admin view: User {user.email or user.username} (role: {user.role.name}) has 'view_all_transport' permission - showing all transport requests")
                 pass  # No filtering - show all transport requests
             else:
                 # User doesn't have permission - show only their own plus pending approval
                 pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, TransportRequest)
                 if pending_approval_ids:
                     queryset = queryset.filter(Q(requestor=user) | Q(id__in=pending_approval_ids))
-                    logger.info(f" Admin view: User {user.username} - showing own requests plus {len(pending_approval_ids)} pending approval")
+                    logger.info(f" Admin view: User {user.email or user.username} - showing own requests plus {len(pending_approval_ids)} pending approval")
                 else:
                     queryset = queryset.filter(requestor=user)
-                    logger.warning(f" Admin view: User {user.username} lacks permission - showing only own transport requests")
+                    logger.warning(f" Admin view: User {user.email or user.username} lacks permission - showing only own transport requests")
         else:
             # Personal requests view - show only user's own transport requests
             queryset = queryset.filter(requestor=user)
-            logger.info(f" Personal view: User {user.username} - showing only own transport requests")
+            logger.info(f" Personal view: User {user.email or user.username} - showing only own transport requests")
 
         # Query parameter filters
         status_filter = self.request.query_params.get('status', None)

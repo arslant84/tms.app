@@ -107,7 +107,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         if admin_view and user.role:
             # Admin module context - check permissions
             if can_view_all(user, 'visa'):
-                logger.info(f" Admin view: User {user.username} (role: {user.role.name}) has 'view_all_visa' permission - showing all visa applications")
+                logger.info(f" Admin view: User {user.email or user.username} (role: {user.role.name}) has 'view_all_visa' permission - showing all visa applications")
                 pass  # No filtering - show all
             elif user.role.permissions.filter(name__in=['approve_visa', 'view_pending_approvals']).exists():
                 # Department-level approvers
@@ -131,10 +131,10 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, VisaApplication)
             if pending_approval_ids:
                 queryset = queryset.filter(Q(user=user) | Q(id__in=pending_approval_ids))
-                logger.info(f" Personal view: User {user.username} - showing own applications plus {len(pending_approval_ids)} pending approval")
+                logger.info(f" Personal view: User {user.email or user.username} - showing own applications plus {len(pending_approval_ids)} pending approval")
             else:
                 queryset = queryset.filter(user=user)
-                logger.info(f" Personal view: User {user.username} - showing only own visa applications")
+                logger.info(f" Personal view: User {user.email or user.username} - showing only own visa applications")
 
         # Apply status filter if provided
         status_filter = self.request.query_params.get('status', None)
