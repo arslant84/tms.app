@@ -211,7 +211,11 @@ class WorkflowApprovalHelper:
 
                 # Filter by department for department-specific roles
                 if department and role.name in ['Department Focal', 'Line Manager']:
-                    queryset = queryset.filter(department=department)
+                    dept_filtered = queryset.filter(department=department)
+                    # Fall back to all users with this role when no dept match found
+                    # (covers cross-department requests or unassigned departments)
+                    if dept_filtered.exists():
+                        queryset = dept_filtered
 
                 return queryset.select_related('role', 'department').order_by('name')
 

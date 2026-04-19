@@ -146,7 +146,8 @@ class WorkflowRouter:
             'travelrequest': 'Travel Desk',
             'transportrequest': 'Transport Admin',
             'visaapplication': 'Visa Admin',
-            'accommodation': 'Accommodation Admin'
+            'accommodation': 'Accommodation Admin',
+            'combinedrequest': 'Travel Desk',  # Combined requests routed to Travel Desk for coordination
         }
 
         admin_role_name = admin_role_map.get(entity_type)

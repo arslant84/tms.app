@@ -6,6 +6,7 @@ Provides a single endpoint for all pending approvals across all modules:
 - Transport Requests
 - Visa Applications
 - Accommodation Requests
+- Combined Requests (unified TSR + Transport + Accommodation + Visa)
 """
 
 from rest_framework.decorators import api_view, permission_classes
@@ -23,6 +24,7 @@ from trf.models import TravelRequest
 from transport.models import TransportRequest
 from visa.models import VisaApplication
 from accommodation.models import AccommodationRequest
+# CombinedRequest is imported lazily inside functions to avoid circular import issues
 from workflows.models import WorkflowInstance, WorkflowStepExecution
 from accounts.models import Role, AdminActionLog
 
@@ -30,12 +32,12 @@ from accounts.models import Role, AdminActionLog
 @extend_schema(
     tags=['Approvals'],
     summary='List pending approvals',
-    description='Get all pending approvals across all modules (TRF, Transport, Visa, Accommodation). '
+    description='Get all pending approvals across all modules (TRF, Transport, Visa, Accommodation, Combined). '
                 'Returns items based on user role and workflow assignments.',
     parameters=[
         OpenApiParameter('page', OpenApiTypes.INT, description='Page number', default=1),
         OpenApiParameter('limit', OpenApiTypes.INT, description='Items per page', default=20),
-        OpenApiParameter('type', OpenApiTypes.STR, description='Filter by type: trf, transport, visa, accommodation')
+        OpenApiParameter('type', OpenApiTypes.STR, description='Filter by type: trf, transport, visa, accommodation, combined')
     ],
     responses={200: {'description': 'List of pending approval items'}}
 )
@@ -53,7 +55,7 @@ def unified_approvals(request):
     user = request.user
     page = int(request.GET.get('page', 1))
     limit = int(request.GET.get('limit', 20))
-    item_type = request.GET.get('type', None)  # 'trf', 'transport', 'visa', 'accommodation'
+    item_type = request.GET.get('type', None)  # 'trf', 'transport', 'visa', 'accommodation', 'combined'
 
     offset = (page - 1) * limit
 
@@ -264,6 +266,23 @@ def unified_approvals(request):
                     item['checkOutDate'] = accom.additional_data.get('requested_check_out_date', '')
                 all_items.append(item)
 
+    # 5. Combined Requests (TSR + Transport + Accommodation + Visa)
+    if not item_type or item_type == 'combined':
+        from combined_request.models import CombinedRequest
+        combined_requests = CombinedRequest.objects.filter(
+            status__in=approval_statuses
+        ).order_by('-submitted_at')
+
+        for combined in combined_requests:
+            # Only include if user is authorized to approve
+            if can_user_approve(combined, 'combinedrequest'):
+                item = format_item(combined, 'Combined')
+                # Add included modules info
+                item['includedModules'] = combined.get_included_modules()
+                item['travelType'] = getattr(combined, 'travel_type', '')
+                item['destination'] = f"{combined.destination_city or ''}, {combined.destination_country or ''}".strip(', ')
+                all_items.append(item)
+
     # Sort all items by submission date (newest first)
     all_items.sort(key=lambda x: x['submittedAt'] or '', reverse=True)
 
@@ -357,12 +376,14 @@ def bulk_approve(request):
             status_code=400
         )
 
-    # Map item types to models
+    # Map item types to models (lazy import CombinedRequest to avoid circular import)
+    from combined_request.models import CombinedRequest
     type_model_map = {
         'trf': TravelRequest,
         'transport': TransportRequest,
         'visa': VisaApplication,
-        'accommodation': AccommodationRequest
+        'accommodation': AccommodationRequest,
+        'combined': CombinedRequest
     }
 
     results = {
@@ -534,12 +555,14 @@ def approval_history(request):
 
     offset = (page - 1) * limit
 
-    # Map item types to models
+    # Map item types to models (lazy import CombinedRequest to avoid circular import)
+    from combined_request.models import CombinedRequest
     type_model_map = {
         'trf': TravelRequest,
         'transport': TransportRequest,
         'visa': VisaApplication,
-        'accommodation': AccommodationRequest
+        'accommodation': AccommodationRequest,
+        'combined': CombinedRequest
     }
 
     history_items = []
@@ -638,6 +661,8 @@ def approval_history(request):
                     detected_type = 'visa'
                 elif model_name == 'accommodationrequest':
                     detected_type = 'accommodation'
+                elif model_name == 'combinedrequest':
+                    detected_type = 'combined'
                 else:
                     detected_type = model_name
 

@@ -1,0 +1,925 @@
+<div class="combined-detail-container">
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">
+    <app-loading-spinner size="md" message="Loading request details..."></app-loading-spinner>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="error-state">
+    <i class="bi bi-exclamation-triangle error-icon"></i>
+    <h3>Error Loading Request</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" routerLink="/combined">Back to List</button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="request && !loading" class="detail-content">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <button class="btn-back" routerLink="/combined">
+          <i class="bi bi-arrow-left"></i> Back to List
+        </button>
+        <h1 class="page-title">
+          <i class="bi bi-layers me-2"></i>Combined Request
+        </h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" (click)="onExportPdf()">
+          <i class="bi bi-file-earmark-pdf"></i>
+          Export PDF
+        </button>
+        <button class="btn btn-primary" (click)="onSubmit()" *ngIf="canSubmit()">
+          <i class="bi bi-send me-1"></i>Submit
+        </button>
+        <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
+          <i class="bi bi-pencil"></i>
+          Edit
+        </button>
+        <button class="btn btn-warning" (click)="onCancel()" *ngIf="canCancel()">
+          <i class="bi bi-x-circle"></i>
+          Cancel
+        </button>
+        <button class="btn btn-danger" (click)="onDelete()">
+          <i class="bi bi-trash"></i>
+          Delete
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span *ngIf="workflow" class="badge" [ngClass]="getWorkflowStatusClass()">
+        <i class="bi bi-diagram-3 me-1"></i>{{ getWorkflowStatus() }}
+      </span>
+      <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">
+        {{ request.status }}
+      </span>
+      <span *ngIf="workflowLoading" class="badge bg-secondary">
+        <app-loading-spinner size="sm" class="me-1 d-inline-block"></app-loading-spinner>
+        Loading workflow...
+      </span>
+      <span class="text-muted ms-3" *ngIf="request.requestNumber">
+        Request Number: <strong>{{ request.requestNumber }}</strong>
+      </span>
+      <span class="text-muted ms-3" *ngIf="!request.requestNumber">
+        CR-{{ request.id }} (Draft)
+      </span>
+    </div>
+
+    <!-- Included Modules -->
+    <div class="detail-card">
+      <div class="card-header">
+        <i class="bi bi-layers"></i>
+        <h3>Included Modules</h3>
+      </div>
+      <div class="card-body">
+        <div class="module-badges">
+          <span *ngFor="let mod of getIncludedModules()" class="module-badge">
+            <i [class]="'bi ' + mod.icon + ' me-1'"></i>{{ mod.label }}
+          </span>
+          <span *ngIf="getIncludedModules().length === 0" class="text-muted">No modules selected</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Requestor Information -->
+    <div class="detail-card">
+      <div class="card-header">
+        <i class="bi bi-person"></i>
+        <h3>Requestor Information</h3>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Full Name</label>
+            <span class="value">{{ request.requestorName || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Staff ID</label>
+            <span class="value">{{ request.staffId || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Department</label>
+            <span class="value">{{ request.department || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Position</label>
+            <span class="value">{{ request.position || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Email</label>
+            <span class="value">{{ request.email || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Phone</label>
+            <span class="value">{{ request.phone || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Cost Center</label>
+            <span class="value">{{ request.costCenter || 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Travel / TSR Details -->
+    <div class="detail-card" *ngIf="request.includeTravel">
+      <div class="card-header">
+        <i class="bi bi-airplane"></i>
+        <h3>Travel / TSR Details</h3>
+        <span class="module-status-badge" [ngClass]="'status-' + request.travelStatus">
+          {{ request.travelStatus | titlecase }}
+        </span>
+      </div>
+      <div class="card-body">
+
+        <!-- Core fields — always shown -->
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Travel Type</label>
+            <span class="value">{{ getTravelTypeLabel(request.travelType) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Trip Type</label>
+            <span class="value">{{ request.tripType || 'Round Trip' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Purpose</label>
+            <span class="value">{{ request.travelPurpose || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Departure Date</label>
+            <span class="value">{{ dateUtils.formatDate(request.departureDate) || 'N/A' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="request.tripType !== 'One Way'">
+            <label>Return Date</label>
+            <span class="value">{{ dateUtils.formatDate(request.returnDate) || 'N/A' }}</span>
+          </div>
+
+          <!-- Domestic: city only -->
+          <ng-container *ngIf="request.travelType === 'domestic'">
+            <div class="detail-item">
+              <label>Destination City</label>
+              <span class="value">{{ request.destinationCity || 'N/A' }}</span>
+            </div>
+          </ng-container>
+
+          <!-- International / home_leave: country + city -->
+          <ng-container *ngIf="request.travelType === 'international' || request.travelType === 'home_leave'">
+            <div class="detail-item">
+              <label>Destination Country</label>
+              <span class="value">{{ request.destinationCountry || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Destination City</label>
+              <span class="value">{{ request.destinationCity || 'N/A' }}</span>
+            </div>
+          </ng-container>
+
+          <!-- External: country + city (no cost) -->
+          <ng-container *ngIf="request.travelType === 'external'">
+            <div class="detail-item">
+              <label>Destination Country</label>
+              <span class="value">{{ request.destinationCountry || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Destination City</label>
+              <span class="value">{{ request.destinationCity || 'N/A' }}</span>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- External Party Information -->
+        <ng-container *ngIf="request.travelType === 'external' && (request.externalFullName || request.externalOrganization)">
+          <h4 class="sub-title mt-3">External Party Information</h4>
+          <div class="detail-grid">
+            <div class="detail-item" *ngIf="request.externalFullName">
+              <label>Full Name</label>
+              <span class="value">{{ request.externalFullName }}</span>
+            </div>
+            <div class="detail-item" *ngIf="request.externalOrganization">
+              <label>Organization</label>
+              <span class="value">{{ request.externalOrganization }}</span>
+            </div>
+            <div class="detail-item" *ngIf="request.externalRefToAuthorityLetter">
+              <label>Authority Letter Ref.</label>
+              <span class="value">{{ request.externalRefToAuthorityLetter }}</span>
+            </div>
+            <div class="detail-item" *ngIf="request.externalCostCenter">
+              <label>Cost Center</label>
+              <span class="value">{{ request.externalCostCenter }}</span>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Bank / Advance Details (international + home_leave) -->
+        <ng-container *ngIf="(request.travelType === 'international' || request.travelType === 'home_leave') && request.advanceBankAccountName">
+          <h4 class="sub-title mt-3">Advance Payment Bank Details</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Account Name</label>
+              <span class="value">{{ request.advanceBankAccountName || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Bank Name</label>
+              <span class="value">{{ request.advanceBankName || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Account Number</label>
+              <span class="value">{{ request.advanceBankAccountNumber || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Currency</label>
+              <span class="value">{{ request.advanceBankCurrency || 'TMT' }}</span>
+            </div>
+            <div class="detail-item full-width" *ngIf="request.advanceBankBranchRemarks">
+              <label>Branch / Remarks</label>
+              <span class="value">{{ request.advanceBankBranchRemarks }}</span>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Advance Amount Items (international only) -->
+        <ng-container *ngIf="request.travelType === 'international' && getAdvanceAmountItems().length > 0">
+          <h4 class="sub-title mt-3">Advance Amount</h4>
+          <div class="table-container">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>From</th><th>To</th>
+                  <th>LH</th><th>MA</th><th>OA</th><th>TR</th><th>OE</th><th>USD</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of getAdvanceAmountItems()">
+                  <td>{{ dateUtils.formatDate(item.dateFrom) || '—' }}</td>
+                  <td>{{ dateUtils.formatDate(item.dateTo) || '—' }}</td>
+                  <td>{{ item.lh || 0 }}</td>
+                  <td>{{ item.ma || 0 }}</td>
+                  <td>{{ item.oa || 0 }}</td>
+                  <td>{{ item.tr || 0 }}</td>
+                  <td>{{ item.oe || 0 }}</td>
+                  <td>{{ item.usd || 0 }}</td>
+                  <td>{{ item.remarks || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+
+        <!-- Itinerary -->
+        <div *ngIf="request.itinerarySegments && request.itinerarySegments.length > 0" class="sub-section">
+          <h4 class="sub-title">Itinerary</h4>
+          <div class="table-container">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Day</th>
+                  <th>Date</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Departure</th>
+                  <th>Arrival</th>
+                  <th>Mode</th>
+                  <th *ngIf="request.travelType !== 'domestic'">Flight/Ref</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let seg of request.itinerarySegments">
+                  <td>{{ seg.segmentOrder }}</td>
+                  <td>{{ seg.dayOfWeek || '—' }}</td>
+                  <td>{{ dateUtils.formatDate(seg.segmentDate) || '—' }}</td>
+                  <td>{{ seg.fromLocation || 'N/A' }}</td>
+                  <td>{{ seg.toLocation || 'N/A' }}</td>
+                  <td>{{ seg.departureTime || '—' }}</td>
+                  <td>{{ seg.arrivalTime || '—' }}</td>
+                  <td>{{ seg.modeOfTravel || '—' }}</td>
+                  <td *ngIf="request.travelType !== 'domestic'">{{ seg.flightNumber || '—' }}</td>
+                  <td>{{ seg.remarks || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Admin Flight Booking Result -->
+        <ng-container *ngIf="request.additionalData?.['processing']?.['travel'] as tr">
+          <ng-container *ngIf="tr['status'] === 'completed'">
+            <div class="processing-result-box">
+              <div class="processing-result-title">
+                <i class="bi bi-check-circle-fill me-2 text-success"></i>Flight Booking Confirmed
+              </div>
+              <div class="detail-grid">
+                <div class="detail-item" *ngIf="tr['pnr']">
+                  <label>PNR</label>
+                  <span class="value">{{ tr['pnr'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tr['airline']">
+                  <label>Airline</label>
+                  <span class="value">{{ tr['airline'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tr['flightNumber']">
+                  <label>Flight No.</label>
+                  <span class="value">{{ tr['flightNumber'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tr['departureAirport']">
+                  <label>Departure Airport</label>
+                  <span class="value">{{ tr['departureAirport'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tr['arrivalAirport']">
+                  <label>Arrival Airport</label>
+                  <span class="value">{{ tr['arrivalAirport'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tr['departureDate']">
+                  <label>Departure</label>
+                  <span class="value">{{ dateUtils.formatDate(tr['departureDate']) }} {{ tr['departureTime'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tr['arrivalDate']">
+                  <label>Arrival</label>
+                  <span class="value">{{ dateUtils.formatDate(tr['arrivalDate']) }} {{ tr['arrivalTime'] }}</span>
+                </div>
+                <div class="detail-item full-width" *ngIf="tr['notes']">
+                  <label>Notes</label>
+                  <span class="value">{{ tr['notes'] }}</span>
+                </div>
+              </div>
+              <div class="processing-result-meta" *ngIf="tr['completed_by']">
+                Processed by {{ tr['completed_by'] }}
+                <span *ngIf="tr['completed_at']"> on {{ dateUtils.formatDate(tr['completed_at']) }}</span>
+              </div>
+            </div>
+          </ng-container>
+        </ng-container>
+
+        <!-- Meal Provision (domestic only) -->
+        <ng-container *ngIf="request.travelType === 'domestic' && getMealSelections().length > 0">
+          <h4 class="sub-title mt-3">Meal Provision</h4>
+          <div class="table-container">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Breakfast</th>
+                  <th>Lunch</th>
+                  <th>Dinner</th>
+                  <th>Supper</th>
+                  <th>Refreshment</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of getMealSelections()">
+                  <td>{{ dateUtils.formatDate(row.date) || '—' }}</td>
+                  <td><i class="bi" [ngClass]="row.breakfast ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'"></i></td>
+                  <td><i class="bi" [ngClass]="row.lunch    ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'"></i></td>
+                  <td><i class="bi" [ngClass]="row.dinner   ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'"></i></td>
+                  <td><i class="bi" [ngClass]="row.supper   ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'"></i></td>
+                  <td><i class="bi" [ngClass]="row.refreshment ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'"></i></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+
+      </div>
+    </div>
+
+    <!-- Transport Details -->
+    <div class="detail-card" *ngIf="request.includeTransport">
+      <div class="card-header">
+        <i class="bi bi-truck"></i>
+        <h3>Transport Details</h3>
+        <span class="module-status-badge" [ngClass]="'status-' + request.transportStatus">
+          {{ request.transportStatus | titlecase }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item" *ngIf="request.transportPurpose">
+            <label>Purpose</label>
+            <span class="value">{{ request.transportPurpose }}</span>
+          </div>
+          <div class="detail-item" *ngIf="request.transportTsrReference">
+            <label>TSR Reference</label>
+            <span class="value">{{ request.transportTsrReference }}</span>
+          </div>
+        </div>
+
+        <!-- Transport Segments -->
+        <div *ngIf="request.transportSegments && request.transportSegments.length > 0" class="sub-section">
+          <h4 class="sub-title">Journey Segments</h4>
+          <div class="table-container">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Day</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Pax</th>
+                  <th>Vehicle Pref.</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let seg of request.transportSegments">
+                  <td>{{ seg.segmentOrder }}</td>
+                  <td>{{ seg.dayOfWeek || '—' }}</td>
+                  <td>{{ dateUtils.formatDate(seg.pickupDate) || '—' }}</td>
+                  <td>{{ seg.pickupTime || '—' }}</td>
+                  <td>{{ seg.pickupLocation || 'N/A' }}</td>
+                  <td>{{ seg.dropoffLocation || 'N/A' }}</td>
+                  <td>{{ seg.passengers }}</td>
+                  <td>{{ seg.vehicleTypePreference || '—' }}</td>
+                  <td>{{ seg.notes || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- Admin Transport Assignment Result -->
+        <ng-container *ngIf="request.additionalData?.['processing']?.['transport'] as tp">
+          <ng-container *ngIf="tp['status'] === 'completed'">
+            <div class="processing-result-box">
+              <div class="processing-result-title">
+                <i class="bi bi-check-circle-fill me-2 text-success"></i>Vehicle Assigned
+              </div>
+              <div class="detail-grid">
+                <div class="detail-item" *ngIf="tp['vehicleType']">
+                  <label>Vehicle Type</label>
+                  <span class="value">{{ tp['vehicleType'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tp['vehicleNumber']">
+                  <label>Vehicle No.</label>
+                  <span class="value">{{ tp['vehicleNumber'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tp['driverName']">
+                  <label>Driver</label>
+                  <span class="value">{{ tp['driverName'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tp['driverContact']">
+                  <label>Driver Contact</label>
+                  <span class="value">{{ tp['driverContact'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tp['pickupTime']">
+                  <label>Pickup Time</label>
+                  <span class="value">{{ tp['pickupTime'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tp['dropoffTime']">
+                  <label>Drop-off Time</label>
+                  <span class="value">{{ tp['dropoffTime'] }}</span>
+                </div>
+                <div class="detail-item full-width" *ngIf="tp['actualRoute']">
+                  <label>Route</label>
+                  <span class="value">{{ tp['actualRoute'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="tp['bookingReference']">
+                  <label>Booking Ref.</label>
+                  <span class="value">{{ tp['bookingReference'] }}</span>
+                </div>
+                <div class="detail-item full-width" *ngIf="tp['notes']">
+                  <label>Notes</label>
+                  <span class="value">{{ tp['notes'] }}</span>
+                </div>
+              </div>
+              <div class="processing-result-meta" *ngIf="tp['completed_by']">
+                Processed by {{ tp['completed_by'] }}
+                <span *ngIf="tp['completed_at']"> on {{ dateUtils.formatDate(tp['completed_at']) }}</span>
+              </div>
+            </div>
+          </ng-container>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Accommodation Details -->
+    <div class="detail-card" *ngIf="request.includeAccommodation">
+      <div class="card-header">
+        <i class="bi bi-house-door"></i>
+        <h3>Accommodation Details</h3>
+        <span class="module-status-badge" [ngClass]="'status-' + request.accommodationStatus">
+          {{ request.accommodationStatus | titlecase }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Gender</label>
+            <span class="value">{{ request.accommodationGender || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Check-in Date</label>
+            <span class="value">{{ dateUtils.formatDate(request.accommodationCheckin) || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Check-out Date</label>
+            <span class="value">{{ dateUtils.formatDate(request.accommodationCheckout) || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Location</label>
+            <span class="value">{{ request.accommodationLocation || 'N/A' }}</span>
+          </div>
+          <div class="detail-item" *ngIf="request.accommodationRoomType">
+            <label>Room Type</label>
+            <span class="value">{{ request.accommodationRoomType }}</span>
+          </div>
+          <div class="detail-item" *ngIf="request.accommodationFlightArrivalTime">
+            <label>Flight Arrival Time</label>
+            <span class="value">{{ request.accommodationFlightArrivalTime }}</span>
+          </div>
+          <div class="detail-item" *ngIf="request.accommodationFlightDepartureTime">
+            <label>Flight Departure Time</label>
+            <span class="value">{{ request.accommodationFlightDepartureTime }}</span>
+          </div>
+          <div class="detail-item full-width" *ngIf="request.accommodationSpecialRequests">
+            <label>Special Requests</label>
+            <span class="value">{{ request.accommodationSpecialRequests }}</span>
+          </div>
+        </div>
+
+        <!-- Admin Accommodation Assignment Result -->
+        <ng-container *ngIf="request.additionalData?.['processing']?.['accommodation'] as ac">
+          <ng-container *ngIf="ac['status'] === 'completed'">
+            <div class="processing-result-box">
+              <div class="processing-result-title">
+                <i class="bi bi-check-circle-fill me-2 text-success"></i>Room Assigned
+              </div>
+              <div class="detail-grid">
+                <div class="detail-item" *ngIf="ac['staffHouseName']">
+                  <label>Staff House</label>
+                  <span class="value">{{ ac['staffHouseName'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="ac['roomName']">
+                  <label>Room</label>
+                  <span class="value">{{ ac['roomName'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="ac['checkIn']">
+                  <label>Check-in</label>
+                  <span class="value">{{ dateUtils.formatDate(ac['checkIn']) }}</span>
+                </div>
+                <div class="detail-item" *ngIf="ac['checkOut']">
+                  <label>Check-out</label>
+                  <span class="value">{{ dateUtils.formatDate(ac['checkOut']) }}</span>
+                </div>
+                <div class="detail-item full-width" *ngIf="ac['notes']">
+                  <label>Notes</label>
+                  <span class="value">{{ ac['notes'] }}</span>
+                </div>
+              </div>
+              <div class="processing-result-meta" *ngIf="ac['completed_by']">
+                Processed by {{ ac['completed_by'] }}
+                <span *ngIf="ac['completed_at']"> on {{ dateUtils.formatDate(ac['completed_at']) }}</span>
+              </div>
+            </div>
+          </ng-container>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Visa Details -->
+    <div class="detail-card" *ngIf="request.includeVisa">
+      <div class="card-header">
+        <i class="bi bi-passport"></i>
+        <h3>Visa Details</h3>
+        <span class="module-status-badge" [ngClass]="'status-' + request.visaStatus">
+          {{ request.visaStatus | titlecase }}
+        </span>
+      </div>
+      <div class="card-body">
+
+        <!-- Visa Application Summary -->
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Destination Country</label>
+            <span class="value">{{ request.visaDestinationCountry || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Visa Type</label>
+            <span class="value">{{ request.visaType || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Request Type</label>
+            <span class="value">{{ request.visa_request_type || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Entry Type</label>
+            <span class="value">{{ request.visa_entry_type || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>TRF Reference</label>
+            <span class="value">{{ request.visa_trf_reference_number || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Work / Visit Category</label>
+            <span class="value">{{ request.visa_work_visit_category || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Trip Start Date</label>
+            <span class="value">{{ dateUtils.formatDate(request.visa_trip_start_date) || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Trip End Date</label>
+            <span class="value">{{ dateUtils.formatDate(request.visa_trip_end_date) || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Approx. Arrival Date</label>
+            <span class="value">{{ dateUtils.formatDate(request.visa_approximately_arrival_date) || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Duration of Stay</label>
+            <span class="value">{{ request.visa_duration_of_stay || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Application Fees Borne By</label>
+            <span class="value">{{ request.visa_application_fees_borne_by || 'N/A' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Cost Centre</label>
+            <span class="value">{{ request.visa_cost_centre_number || 'N/A' }}</span>
+          </div>
+          <div class="detail-item full-width" *ngIf="request.visa_travel_purpose">
+            <label>Travel Purpose</label>
+            <span class="value">{{ request.visa_travel_purpose }}</span>
+          </div>
+          <div class="detail-item full-width" *ngIf="request.visa_itinerary_details">
+            <label>Itinerary Details</label>
+            <span class="value" style="white-space: pre-line">{{ request.visa_itinerary_details }}</span>
+          </div>
+        </div>
+
+        <!-- Passport Information -->
+        <div class="sub-section">
+          <h4 class="sub-title">Passport Information</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Passport Number</label>
+              <span class="value">{{ request.visa_passport_number || request.passportNumber || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Passport Expiry</label>
+              <span class="value">{{ dateUtils.formatDate(request.visa_passport_expiry_date || request.passportExpiry) }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Place of Issuance</label>
+              <span class="value">{{ request.visa_passport_place_of_issuance || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Date of Issuance</label>
+              <span class="value">{{ dateUtils.formatDate(request.visa_passport_date_of_issuance) || 'N/A' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Personal Information -->
+        <div class="sub-section">
+          <h4 class="sub-title">Personal Information</h4>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Date of Birth</label>
+              <span class="value">{{ dateUtils.formatDate(request.visa_date_of_birth) || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Place of Birth</label>
+              <span class="value">{{ request.visa_place_of_birth || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Citizenship</label>
+              <span class="value">{{ request.visa_citizenship || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Marital Status</label>
+              <span class="value">{{ request.visa_marital_status || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Contact Telephone</label>
+              <span class="value">{{ request.visa_contact_telephone || 'N/A' }}</span>
+            </div>
+            <div class="detail-item full-width" *ngIf="request.visa_home_address">
+              <label>Home Address</label>
+              <span class="value">{{ request.visa_home_address }}</span>
+            </div>
+            <div class="detail-item full-width" *ngIf="request.visa_family_information">
+              <label>Family Information</label>
+              <span class="value" style="white-space: pre-line">{{ request.visa_family_information }}</span>
+            </div>
+            <div class="detail-item full-width" *ngIf="request.visa_education_details">
+              <label>Education Details</label>
+              <span class="value" style="white-space: pre-line">{{ request.visa_education_details }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employment Information -->
+        <div class="sub-section" *ngIf="request.visa_current_employer_name || request.visa_current_employer_address">
+          <h4 class="sub-title">Employment Information</h4>
+          <div class="detail-grid">
+            <div class="detail-item" *ngIf="request.visa_current_employer_name">
+              <label>Employer Name</label>
+              <span class="value">{{ request.visa_current_employer_name }}</span>
+            </div>
+            <div class="detail-item full-width" *ngIf="request.visa_current_employer_address">
+              <label>Employer Address</label>
+              <span class="value">{{ request.visa_current_employer_address }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Notes -->
+        <div class="sub-section" *ngIf="request.visa_additional_comments || request.visa_supporting_documents_notes">
+          <h4 class="sub-title">Additional Notes</h4>
+          <div class="detail-grid">
+            <div class="detail-item full-width" *ngIf="request.visa_additional_comments">
+              <label>Additional Comments</label>
+              <span class="value" style="white-space: pre-line">{{ request.visa_additional_comments }}</span>
+            </div>
+            <div class="detail-item full-width" *ngIf="request.visa_supporting_documents_notes">
+              <label>Supporting Documents Notes</label>
+              <span class="value" style="white-space: pre-line">{{ request.visa_supporting_documents_notes }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Supporting Documents -->
+        <div *ngIf="request.documents && request.documents.length > 0" class="sub-section">
+          <h4 class="sub-title"><i class="bi bi-paperclip me-2"></i>Supporting Documents</h4>
+          <div class="table-container">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>File</th>
+                  <th>Type</th>
+                  <th>Uploaded By</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let doc of request.documents">
+                  <td>
+                    <a *ngIf="doc.file" [href]="doc.file" target="_blank" rel="noopener">
+                      <i class="bi bi-file-earmark me-1"></i>{{ doc.fileName || doc.file }}
+                    </a>
+                    <span *ngIf="!doc.file">{{ doc.fileName || 'N/A' }}</span>
+                  </td>
+                  <td>{{ doc.documentType | titlecase }}</td>
+                  <td>{{ doc.uploadedByName || 'N/A' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Passport holders -->
+        <div *ngIf="request.passports && request.passports.length > 0" class="sub-section">
+          <h4 class="sub-title">Passport Holders</h4>
+          <div class="table-container">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>Full Name</th>
+                  <th>Passport No.</th>
+                  <th>Nationality</th>
+                  <th>Date of Birth</th>
+                  <th>Issue Date</th>
+                  <th>Expiry Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of request.passports">
+                  <td>{{ p.fullName || 'N/A' }}</td>
+                  <td>{{ p.passportNumber || 'N/A' }}</td>
+                  <td>{{ p.nationality || 'N/A' }}</td>
+                  <td>{{ dateUtils.formatDate(p.dateOfBirth) }}</td>
+                  <td>{{ dateUtils.formatDate(p.issueDate) }}</td>
+                  <td>{{ dateUtils.formatDate(p.expiryDate) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div><!-- /sub-section passport holders -->
+
+        <!-- Admin Visa Processing Result -->
+        <ng-container *ngIf="request.additionalData?.['processing']?.['visa'] as vi">
+          <ng-container *ngIf="vi['status'] === 'completed'">
+            <div class="processing-result-box">
+              <div class="processing-result-title">
+                <i class="bi bi-check-circle-fill me-2 text-success"></i>Visa Issued
+              </div>
+              <div class="detail-grid">
+                <div class="detail-item" *ngIf="vi['visaNumber']">
+                  <label>Visa Number</label>
+                  <span class="value">{{ vi['visaNumber'] }}</span>
+                </div>
+                <div class="detail-item" *ngIf="vi['issueDate']">
+                  <label>Issue Date</label>
+                  <span class="value">{{ dateUtils.formatDate(vi['issueDate']) }}</span>
+                </div>
+                <div class="detail-item" *ngIf="vi['expiryDate']">
+                  <label>Expiry Date</label>
+                  <span class="value">{{ dateUtils.formatDate(vi['expiryDate']) }}</span>
+                </div>
+                <div class="detail-item full-width" *ngIf="vi['notes']">
+                  <label>Notes</label>
+                  <span class="value">{{ vi['notes'] }}</span>
+                </div>
+              </div>
+              <div class="processing-result-meta" *ngIf="vi['completed_by']">
+                Processed by {{ vi['completed_by'] }}
+                <span *ngIf="vi['completed_at']"> on {{ dateUtils.formatDate(vi['completed_at']) }}</span>
+              </div>
+            </div>
+          </ng-container>
+        </ng-container>
+      </div><!-- /card-body -->
+    </div><!-- /detail-card visa -->
+
+    <!-- Additional Comments -->
+    <div class="detail-card" *ngIf="request.additionalComments">
+      <div class="card-header">
+        <i class="bi bi-chat-left-text"></i>
+        <h3>Additional Comments</h3>
+      </div>
+      <div class="card-body">
+        <p class="comments-text">{{ request.additionalComments }}</p>
+      </div>
+    </div>
+
+    <!-- Request Information -->
+    <div class="detail-card">
+      <div class="card-header">
+        <i class="bi bi-info-circle"></i>
+        <h3>Request Information</h3>
+      </div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Request Number</label>
+            <span class="value" *ngIf="request.requestNumber">{{ request.requestNumber }}</span>
+            <span class="value text-muted" *ngIf="!request.requestNumber">CR-{{ request.id }} (Not submitted)</span>
+          </div>
+          <div class="detail-item">
+            <label>Current Status</label>
+            <span class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Submitted At</label>
+            <span class="value">{{ dateUtils.formatDate(request.submittedAt) || 'Not yet submitted' }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Created At</label>
+            <span class="value">{{ dateUtils.formatDate(request.createdAt) }}</span>
+          </div>
+          <div class="detail-item">
+            <label>Last Updated</label>
+            <span class="value">{{ dateUtils.formatDate(request.updatedAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workflow Status -->
+    <div *ngIf="workflow || workflowLoading">
+      <div *ngIf="workflowLoading && !workflow" class="detail-card">
+        <div class="card-header">
+          <i class="bi bi-diagram-3"></i>
+          <h3>Approval Workflow</h3>
+        </div>
+        <div class="card-body text-center py-3">
+          <app-loading-spinner size="lg" message="Loading workflow..."></app-loading-spinner>
+        </div>
+      </div>
+
+      <app-workflow-status
+        *ngIf="workflow && !workflowLoading"
+        [workflowInstance]="workflow">
+      </app-workflow-status>
+
+      <app-approval-actions
+        *ngIf="currentStepExecution && !workflowLoading"
+        [stepExecution]="currentStepExecution"
+        (approved)="onWorkflowApproved()"
+        (rejected)="onWorkflowRejected()"
+        (delegated)="onWorkflowDelegated()">
+      </app-approval-actions>
+    </div>
+
+    <div *ngIf="!workflow && !workflowLoading" class="detail-card">
+      <div class="card-header">
+        <i class="bi bi-diagram-3"></i>
+        <h3>Approval Workflow</h3>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>
+          No workflow has been initiated for this request yet.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

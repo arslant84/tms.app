@@ -9,7 +9,7 @@ from accounts.models import User
 
 
 class Command(BaseCommand):
-    help = 'Creates default workflow templates for all modules (TRF, Claims, Visa, Transport, Accommodation)'
+    help = 'Creates default workflow templates for all modules (TRF, Claims, Visa, Transport, Accommodation, Combined Request)'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -29,13 +29,12 @@ class Command(BaseCommand):
         # Get or create an admin user for created_by field
         admin_user = User.objects.filter(is_staff=True).first()
 
-        # Create workflows
+        # Create workflows (each creator skips if entity type already has a workflow)
         with transaction.atomic():
             self.create_trf_workflow(admin_user)
-            self.create_claims_workflow(admin_user)
             self.create_visa_workflow(admin_user)
             self.create_transport_workflow(admin_user)
-            self.create_accommodation_workflow(admin_user)
+            self.create_combined_request_workflow(admin_user)
 
         self.stdout.write(self.style.SUCCESS('✅ Successfully created all default workflows!'))
         self.stdout.write(self.style.SUCCESS(''))
@@ -44,8 +43,19 @@ class Command(BaseCommand):
             step_count = template.steps.count()
             self.stdout.write(f'  - {template.name} ({template.entity_type}): {step_count} steps')
 
+    def _already_exists(self, entity_type: str) -> bool:
+        """Return True if an active workflow already exists for this entity type."""
+        exists = WorkflowTemplate.objects.filter(entity_type=entity_type, is_active=True).exists()
+        if exists:
+            self.stdout.write(self.style.WARNING(
+                f'  ⚠ Skipping {entity_type} — active workflow already exists'
+            ))
+        return exists
+
     def create_trf_workflow(self, created_by):
         """Create TRF (Travel Request Form) workflow"""
+        if self._already_exists('travelrequest'):
+            return
         self.stdout.write('Creating TRF workflow...')
 
         template = WorkflowTemplate.objects.create(
@@ -176,6 +186,8 @@ class Command(BaseCommand):
 
     def create_visa_workflow(self, created_by):
         """Create Visa Application workflow"""
+        if self._already_exists('visaapplication'):
+            return
         self.stdout.write('Creating Visa Application workflow...')
 
         template = WorkflowTemplate.objects.create(
@@ -248,6 +260,8 @@ class Command(BaseCommand):
 
     def create_transport_workflow(self, created_by):
         """Create Transport Request workflow"""
+        if self._already_exists('transportrequest'):
+            return
         self.stdout.write('Creating Transport Request workflow...')
 
         template = WorkflowTemplate.objects.create(
@@ -389,3 +403,77 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.SUCCESS(f'  ✓ Created Accommodation workflow with 4 steps (inactive)'))
+
+    def create_combined_request_workflow(self, created_by):
+        """Create Combined Request workflow - unified workflow for TSR + Transport + Accommodation + Visa"""
+        if self._already_exists('combinedrequest'):
+            return
+        self.stdout.write('Creating Combined Request workflow...')
+
+        template = WorkflowTemplate.objects.create(
+            name='Combined Request Unified Approval Workflow',
+            description='Unified approval workflow for Combined Requests (TSR, Transport, Accommodation, Visa)',
+            entity_type='combinedrequest',
+            is_active=True,
+            allow_parallel_steps=False,
+            auto_approve_on_condition=False,
+            created_by=created_by
+        )
+
+        # Step 1: Department Focal
+        WorkflowStep.objects.create(
+            workflow_template=template,
+            step_order=1,
+            step_name='Department Focal Approval',
+            step_description='Department Focal reviews and approves the combined request',
+            approver_role='Department Focal',
+            is_required=True,
+            can_skip=True,  # Allow skip if no dept focal available
+            requires_comments=False,
+            sla_hours=48,
+            escalation_hours=36
+        )
+
+        # Step 2: Line Manager
+        WorkflowStep.objects.create(
+            workflow_template=template,
+            step_order=2,
+            step_name='Line Manager Approval',
+            step_description='Line Manager reviews and approves the combined request',
+            approver_role='Line Manager',
+            is_required=True,
+            can_skip=True,  # Allow skip if no line manager available
+            requires_comments=False,
+            sla_hours=48,
+            escalation_hours=36
+        )
+
+        # Step 3: HOD
+        WorkflowStep.objects.create(
+            workflow_template=template,
+            step_order=3,
+            step_name='HOD Approval',
+            step_description='Head of Department reviews and approves the combined request',
+            approver_role='HOD',
+            is_required=True,
+            can_skip=True,  # Allow skip if no HOD available
+            requires_comments=False,
+            sla_hours=72,
+            escalation_hours=60
+        )
+
+        # Step 4: Travel Desk (coordinates all module processing)
+        WorkflowStep.objects.create(
+            workflow_template=template,
+            step_order=4,
+            step_name='Travel Desk Coordination',
+            step_description='Travel Desk coordinates processing across all included modules (Travel, Transport, Accommodation, Visa)',
+            approver_role='Travel Desk',
+            is_required=True,
+            can_skip=False,  # Required - main processing step
+            requires_comments=False,
+            sla_hours=120,  # 5 days - longer SLA for multi-module coordination
+            escalation_hours=96
+        )
+
+        self.stdout.write(self.style.SUCCESS(f'  ✓ Created Combined Request workflow with 4 steps'))

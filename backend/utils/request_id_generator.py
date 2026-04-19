@@ -11,6 +11,7 @@ Examples:
 - ACCOM: ACCOM-20250702-1423-DEL-2Y8P
 - CLM: CLM-20250702-1423-QWSDF-P4Z5 (5+4 character unique IDs)
 - TRN: TRN-20250702-1423-LOCAL-3K8M
+- CMB: CMB-20250702-1423-DXB-7K9P (Combined Request)
 """
 
 import random
@@ -19,7 +20,7 @@ from datetime import datetime
 from typing import Literal, Optional, Tuple
 
 # Valid request types
-RequestType = Literal['TSR', 'VIS', 'ACCOM', 'CLM', 'TRN']
+RequestType = Literal['TSR', 'VIS', 'ACCOM', 'CLM', 'TRN', 'CMB']
 
 # Characters to use for unique ID generation (avoiding ambiguous characters like 0/O, 1/I)
 UNIQUE_ID_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -130,7 +131,7 @@ def parse_request_id(request_id: str) -> Optional[dict]:
         unique_id = part4
 
     # Validate type
-    if request_type not in ['TSR', 'VIS', 'ACCOM', 'CLM', 'TRN']:
+    if request_type not in ['TSR', 'VIS', 'ACCOM', 'CLM', 'TRN', 'CMB']:
         return None
 
     # Parse date
@@ -226,3 +227,22 @@ def extract_context_from_transport(transport_details: list) -> str:
         )
         return destination if destination else 'TRN'
     return 'TRN'
+
+
+def extract_context_for_combined(destination_city: str = None, destination_country: str = None) -> str:
+    """
+    Extracts context for CMB (Combined Request) IDs
+    Uses destination city or country
+
+    Args:
+        destination_city: Destination city
+        destination_country: Destination country (fallback)
+
+    Returns:
+        Context string (will be validated and limited to 5 chars by generate_request_id)
+    """
+    if destination_city:
+        return destination_city
+    if destination_country:
+        return destination_country
+    return 'CMB'

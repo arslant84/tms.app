@@ -53,6 +53,7 @@ urlpatterns = [
     path('api/visa/', include('visa.urls')),
     path('api/accommodation/', include('accommodation.urls')),
     path('api/transport/', include('transport.urls')),
+    path('api/combined/', include('combined_request.urls')),
     path('api/workflows/', include('workflows.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/reports/', include('reports.urls')),
