@@ -1,0 +1,1147 @@
+<div class="combined-request-wizard">
+  <!-- Loading State -->
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+
+  <!-- Main Form -->
+  <div class="wizard-container" *ngIf="!isLoading">
+
+    <!-- Header -->
+    <div class="wizard-header">
+      <h1 class="wizard-title">
+        <i class="bi bi-layers me-2"></i>
+        {{ editMode ? 'Edit Combined Request' : 'New Combined Request' }}
+      </h1>
+      <p class="wizard-subtitle">
+        Complete all relevant sections below, then save as draft or submit for approval.
+      </p>
+    </div>
+
+    <form [formGroup]="combinedRequestForm" (ngSubmit)="submitRequest()">
+
+      <!-- ── Section: Select Services ─────────────────────────────── -->
+      <div class="form-section">
+        <div class="section-title">
+          <span class="title-text">
+            <i class="bi bi-grid-3x3-gap"></i>
+            Select Services
+          </span>
+          <span class="section-desc">Choose which services you need for this request</span>
+        </div>
+
+        <div class="module-chips">
+          <div class="module-chip" [class.selected]="combinedRequestForm.get('includeTravel')?.value">
+            <label class="chip-label">
+              <input type="checkbox" formControlName="includeTravel" class="d-none">
+              <i class="bi bi-airplane chip-icon"></i>
+              <span class="chip-title">Travel / TSR</span>
+              <span class="chip-desc">Flight bookings, arrangements, itinerary planning</span>
+              <i class="bi bi-check-circle-fill chip-check" *ngIf="combinedRequestForm.get('includeTravel')?.value"></i>
+            </label>
+          </div>
+
+          <div class="module-chip" [class.selected]="combinedRequestForm.get('includeTransport')?.value">
+            <label class="chip-label">
+              <input type="checkbox" formControlName="includeTransport" class="d-none">
+              <i class="bi bi-car-front chip-icon"></i>
+              <span class="chip-title">Transport</span>
+              <span class="chip-desc">Local transportation, airport transfers</span>
+              <i class="bi bi-check-circle-fill chip-check" *ngIf="combinedRequestForm.get('includeTransport')?.value"></i>
+            </label>
+          </div>
+
+          <div class="module-chip" [class.selected]="combinedRequestForm.get('includeAccommodation')?.value">
+            <label class="chip-label">
+              <input type="checkbox" formControlName="includeAccommodation" class="d-none">
+              <i class="bi bi-building chip-icon"></i>
+              <span class="chip-title">Accommodation</span>
+              <span class="chip-desc">Hotel bookings, lodging arrangements</span>
+              <i class="bi bi-check-circle-fill chip-check" *ngIf="combinedRequestForm.get('includeAccommodation')?.value"></i>
+            </label>
+          </div>
+
+          <div class="module-chip" [class.selected]="combinedRequestForm.get('includeVisa')?.value">
+            <label class="chip-label">
+              <input type="checkbox" formControlName="includeVisa" class="d-none">
+              <i class="bi bi-passport chip-icon"></i>
+              <span class="chip-title">Visa</span>
+              <span class="chip-desc">Visa applications, passport handling</span>
+              <i class="bi bi-check-circle-fill chip-check" *ngIf="combinedRequestForm.get('includeVisa')?.value"></i>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Section: Basic Information ────────────────────────────── -->
+      <div class="form-section">
+        <div class="section-title">
+          <span class="title-text">
+            <i class="bi bi-person-circle"></i>
+            Basic Information
+          </span>
+          <span class="section-desc">Your personal and department details</span>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="requestorName"
+                   [class.is-invalid]="combinedRequestForm.get('requestorName')?.invalid && combinedRequestForm.get('requestorName')?.touched">
+            <div class="invalid-feedback">Full name is required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Staff ID</label>
+            <input type="text" class="form-control" formControlName="staffId">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Department <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="department"
+                   [class.is-invalid]="combinedRequestForm.get('department')?.invalid && combinedRequestForm.get('department')?.touched">
+            <div class="invalid-feedback">Department is required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Position</label>
+            <input type="text" class="form-control" formControlName="position">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Email <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" formControlName="email"
+                   [class.is-invalid]="combinedRequestForm.get('email')?.invalid && combinedRequestForm.get('email')?.touched">
+            <div class="invalid-feedback">Valid email is required</div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Phone</label>
+            <input type="tel" class="form-control" formControlName="phone">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Cost Center</label>
+            <input type="text" class="form-control" formControlName="costCenter">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section: Travel / TSR Details ─────────────────────────── -->
+      <div class="form-section" *ngIf="combinedRequestForm.get('includeTravel')?.value">
+        <div class="section-title">
+          <span class="title-text">
+            <i class="bi bi-airplane"></i>
+            Travel / TSR Details
+          </span>
+          <span class="section-title-right">
+            <span class="section-desc">
+              <ng-container [ngSwitch]="combinedRequestForm.get('travelType')?.value">
+                <span *ngSwitchCase="'domestic'">Domestic business trip details</span>
+                <span *ngSwitchCase="'international'">International business trip details</span>
+                <span *ngSwitchCase="'home_leave'">Home leave passage details</span>
+                <span *ngSwitchCase="'external'">External parties visit details</span>
+                <span *ngSwitchDefault>Trip information and itinerary</span>
+              </ng-container>
+            </span>
+            <button type="button" class="btn btn-add-ghost"
+                    *ngIf="combinedRequestForm.get('tripType')?.value === 'Round Trip' || itinerarySegments.length === 0"
+                    (click)="addItinerarySegment()">
+              <i class="bi bi-plus-circle"></i>
+              Add Segment
+            </button>
+          </span>
+        </div>
+
+        <!-- Travel Type + Trip Type -->
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Travel Type</label>
+            <select class="form-select" formControlName="travelType">
+              <option *ngFor="let type of travelTypes" [value]="type.value">{{ type.label }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Trip Type <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="tripType">
+              <option value="One Way">One Way</option>
+              <option value="Round Trip">Round Trip</option>
+            </select>
+          </div>
+
+          <!-- Purpose -->
+          <div class="col-12">
+            <label class="form-label">
+              <ng-container [ngSwitch]="combinedRequestForm.get('travelType')?.value">
+                <span *ngSwitchCase="'external'">Purpose of Visit <span class="text-danger">*</span></span>
+                <span *ngSwitchCase="'home_leave'">Purpose of Home Leave <span class="text-danger">*</span></span>
+                <span *ngSwitchDefault>Purpose of Travel <span class="text-danger">*</span></span>
+              </ng-container>
+            </label>
+            <textarea class="form-control" formControlName="travelPurpose" rows="3"
+                      [placeholder]="combinedRequestForm.get('travelType')?.value === 'external'
+                        ? 'Describe the purpose of the visit...'
+                        : 'Describe the purpose of your travel...'"></textarea>
+          </div>
+
+          <!-- Departure / Return Dates -->
+          <div class="col-md-6">
+            <label class="form-label">Departure Date</label>
+            <input type="date" class="form-control" formControlName="departureDate">
+          </div>
+          <div class="col-md-6"
+               *ngIf="combinedRequestForm.get('tripType')?.value !== 'One Way'">
+            <label class="form-label">Return Date</label>
+            <input type="date" class="form-control" formControlName="returnDate">
+          </div>
+
+          <!-- Destination Country (non-domestic) -->
+          <div class="col-md-6"
+               *ngIf="combinedRequestForm.get('travelType')?.value !== 'domestic'">
+            <label class="form-label">Destination Country</label>
+            <input type="text" class="form-control" formControlName="destinationCountry"
+                   placeholder="e.g. Turkey">
+          </div>
+
+          <!-- Destination City -->
+          <div class="col-md-6">
+            <label class="form-label">Destination City</label>
+            <input type="text" class="form-control" formControlName="destinationCity"
+                   placeholder="e.g. Istanbul">
+          </div>
+        </div>
+
+        <!-- Itinerary Segments -->
+        <div class="sub-section mt-4">
+          <div class="d-flex align-items-center mb-3">
+            <h5 class="sub-section-title"><i class="bi bi-clipboard-check me-2"></i>Itinerary</h5>
+          </div>
+
+          <div *ngIf="itinerarySegments.length === 0" class="empty-state">
+            <i class="bi bi-route"></i>
+            <p>No segments added yet. Click "Add Itinerary Segment" to add travel legs.</p>
+          </div>
+
+          <ng-container formArrayName="itinerarySegments">
+            <div *ngFor="let segment of itinerarySegments.controls; let i = index"
+                 class="itinerary-segment mb-3" [formGroupName]="i">
+              <div class="itinerary-grid"
+                   [class.itinerary-grid-6col]="combinedRequestForm.get('travelType')?.value === 'home_leave'">
+
+                <!-- Date (always) -->
+                <div class="form-group">
+                  <label class="form-label">Date</label>
+                  <input type="date" class="form-control"
+                         formControlName="segmentDate"
+                         (change)="onItineraryDateChange(i, $event)"
+                         [class.is-invalid]="segment.get('segmentDate')?.invalid && segment.get('segmentDate')?.touched">
+                </div>
+
+                <!-- Day (always) -->
+                <div class="form-group">
+                  <label class="form-label">Day</label>
+                  <input type="text" class="form-control" formControlName="dayOfWeek" readonly>
+                </div>
+
+                <!-- From (always) -->
+                <div class="form-group">
+                  <label class="form-label">From <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="fromLocation" placeholder="Origin"
+                         [class.is-invalid]="segment.get('fromLocation')?.invalid && segment.get('fromLocation')?.touched">
+                </div>
+
+                <!-- To (always) -->
+                <div class="form-group">
+                  <label class="form-label">To <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="toLocation" placeholder="Destination"
+                         [class.is-invalid]="segment.get('toLocation')?.invalid && segment.get('toLocation')?.touched">
+                </div>
+
+                <!-- ETD — domestic & international only -->
+                <div class="form-group"
+                     *ngIf="combinedRequestForm.get('travelType')?.value !== 'home_leave' && combinedRequestForm.get('travelType')?.value !== 'external'">
+                  <label class="form-label">ETD</label>
+                  <input type="text" class="form-control" formControlName="departureTime" placeholder="HH:mm">
+                </div>
+                <!-- Departure Time — external only (time input) -->
+                <div class="form-group"
+                     *ngIf="combinedRequestForm.get('travelType')?.value === 'external'">
+                  <label class="form-label">Departure Time</label>
+                  <input type="time" class="form-control" formControlName="departureTime">
+                </div>
+
+                <!-- ETA — domestic & international only -->
+                <div class="form-group"
+                     *ngIf="combinedRequestForm.get('travelType')?.value !== 'home_leave' && combinedRequestForm.get('travelType')?.value !== 'external'">
+                  <label class="form-label">ETA</label>
+                  <input type="text" class="form-control" formControlName="arrivalTime" placeholder="HH:mm">
+                </div>
+                <!-- Arrival Time — external only (time input) -->
+                <div class="form-group"
+                     *ngIf="combinedRequestForm.get('travelType')?.value === 'external'">
+                  <label class="form-label">Arrival Time</label>
+                  <input type="time" class="form-control" formControlName="arrivalTime">
+                </div>
+
+                <!-- Flight Number — domestic, international, home_leave -->
+                <div class="form-group"
+                     *ngIf="combinedRequestForm.get('travelType')?.value !== 'external'">
+                  <label class="form-label">
+                    <ng-container *ngIf="combinedRequestForm.get('travelType')?.value === 'home_leave'; else defaultFlightLabel">
+                      Flight / Transport Number
+                    </ng-container>
+                    <ng-template #defaultFlightLabel>Flight Number</ng-template>
+                  </label>
+                  <input type="text" class="form-control" formControlName="flightNumber" placeholder="e.g. EK123">
+                </div>
+                <!-- Mode of Transport — external only -->
+                <div class="form-group"
+                     *ngIf="combinedRequestForm.get('travelType')?.value === 'external'">
+                  <label class="form-label">Mode of Transport <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" formControlName="modeOfTravel"
+                         placeholder="e.g. Flight, Bus, Train"
+                         [class.is-invalid]="segment.get('modeOfTravel')?.invalid && segment.get('modeOfTravel')?.touched">
+                </div>
+
+                <!-- Remarks + delete (always, full width) -->
+                <div class="form-group itinerary-remarks">
+                  <label class="form-label">Remarks</label>
+                  <div class="remarks-input-wrapper">
+                    <input type="text" class="form-control" formControlName="remarks">
+                    <button type="button" class="btn btn-danger btn-remove"
+                            *ngIf="itinerarySegments.length > 1"
+                            (click)="removeItinerarySegment(i)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <hr *ngIf="i < itinerarySegments.length - 1" class="my-2">
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Meal Provision (domestic only) -->
+        <div class="sub-section mt-4"
+             *ngIf="combinedRequestForm.get('travelType')?.value === 'domestic'">
+          <div class="d-flex align-items-center mb-3">
+            <h5 class="sub-section-title"><i class="bi bi-cup-hot me-2"></i>Meal Provision</h5>
+          </div>
+
+          <!-- No itinerary dates yet -->
+          <div *ngIf="dailyMealDates.length === 0" class="info-hint">
+            <i class="bi bi-info-circle"></i>
+            Please add itinerary dates to enable meal selection.
+          </div>
+
+          <!-- Travel Period card (matches TSR style) -->
+          <div *ngIf="dailyMealDates.length > 0" class="travel-period-info mb-4">
+            <div class="info-icon">
+              <i class="bi bi-cup-hot-fill"></i>
+            </div>
+            <div class="info-content">
+              <div class="period-header">Travel Period</div>
+              <div class="period-details">
+                <span class="days-count">{{ dailyMealDates.length }} {{ dailyMealDates.length === 1 ? 'day' : 'days' }}</span>
+                <span class="date-range">{{ dateUtils.formatDate(dailyMealDates[0]) }} → {{ dateUtils.formatDate(dailyMealDates[dailyMealDates.length - 1]) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick-action buttons -->
+          <div *ngIf="dailyMealDates.length > 0" class="quick-actions mb-3">
+            <div class="quick-action-group">
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('breakfast')">All Breakfast</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('breakfast')"><i class="bi bi-arrow-counterclockwise"></i></button>
+            </div>
+            <div class="quick-action-group">
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('lunch')">All Lunch</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('lunch')"><i class="bi bi-arrow-counterclockwise"></i></button>
+            </div>
+            <div class="quick-action-group">
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('dinner')">All Dinner</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('dinner')"><i class="bi bi-arrow-counterclockwise"></i></button>
+            </div>
+            <div class="quick-action-group">
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('supper')">All Supper</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('supper')"><i class="bi bi-arrow-counterclockwise"></i></button>
+            </div>
+            <div class="quick-action-group">
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('refreshment')">All Refreshment</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('refreshment')"><i class="bi bi-arrow-counterclockwise"></i></button>
+            </div>
+          </div>
+
+          <!-- Per-day meal grid -->
+          <div *ngIf="dailyMealDates.length > 0" class="meal-selection-grid" formArrayName="mealDailySelections">
+            <!-- Header -->
+            <div class="meal-grid-header">
+              <div class="grid-cell grid-header-cell">Date</div>
+              <div class="grid-cell grid-header-cell text-center">Breakfast</div>
+              <div class="grid-cell grid-header-cell text-center">Lunch</div>
+              <div class="grid-cell grid-header-cell text-center">Dinner</div>
+              <div class="grid-cell grid-header-cell text-center">Supper</div>
+              <div class="grid-cell grid-header-cell text-center">Refreshment</div>
+            </div>
+            <!-- Rows -->
+            <div *ngFor="let row of mealDailySelections.controls; let i = index"
+                 [formGroupName]="i"
+                 class="meal-grid-row">
+              <div class="grid-cell date-cell">{{ dateUtils.formatDate(dailyMealDates[i]) }}</div>
+              <div class="grid-cell checkbox-cell">
+                <input class="form-check-input" type="checkbox" formControlName="breakfast" [id]="'b-'+i">
+                <label [for]="'b-'+i" class="visually-hidden">Breakfast</label>
+              </div>
+              <div class="grid-cell checkbox-cell">
+                <input class="form-check-input" type="checkbox" formControlName="lunch" [id]="'l-'+i">
+                <label [for]="'l-'+i" class="visually-hidden">Lunch</label>
+              </div>
+              <div class="grid-cell checkbox-cell">
+                <input class="form-check-input" type="checkbox" formControlName="dinner" [id]="'d-'+i">
+                <label [for]="'d-'+i" class="visually-hidden">Dinner</label>
+              </div>
+              <div class="grid-cell checkbox-cell">
+                <input class="form-check-input" type="checkbox" formControlName="supper" [id]="'s-'+i">
+                <label [for]="'s-'+i" class="visually-hidden">Supper</label>
+              </div>
+              <div class="grid-cell checkbox-cell">
+                <input class="form-check-input" type="checkbox" formControlName="refreshment" [id]="'r-'+i">
+                <label [for]="'r-'+i" class="visually-hidden">Refreshment</label>
+              </div>
+            </div>
+            <!-- Summary -->
+            <div class="meal-summary mt-3">
+              <div class="summary-header">Summary Totals:</div>
+              <div class="summary-grid">
+                <div class="summary-item"><div class="summary-label">Breakfast</div><div class="summary-value">{{ mealSummary.breakfast }}</div></div>
+                <div class="summary-item"><div class="summary-label">Lunch</div><div class="summary-value">{{ mealSummary.lunch }}</div></div>
+                <div class="summary-item"><div class="summary-label">Dinner</div><div class="summary-value">{{ mealSummary.dinner }}</div></div>
+                <div class="summary-item"><div class="summary-label">Supper</div><div class="summary-value">{{ mealSummary.supper }}</div></div>
+                <div class="summary-item"><div class="summary-label">Refreshment</div><div class="summary-value">{{ mealSummary.refreshment }}</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── International: Advance Bank Details ─────────────────── -->
+        <div class="sub-section mt-4"
+             *ngIf="combinedRequestForm.get('travelType')?.value === 'international'">
+          <div class="d-flex align-items-center mb-3">
+            <h5 class="sub-section-title"><i class="bi bi-bank me-2"></i>Advance Bank Details</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Account Name</label>
+              <input type="text" class="form-control" formControlName="advanceBankAccountName"
+                     placeholder="Full name on bank account">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Bank Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="advanceBankName"
+                     placeholder="e.g. Türkmenbaşy Bank">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Account Number <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="advanceBankAccountNumber"
+                     placeholder="Bank account number">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Currency</label>
+              <select class="form-select" formControlName="advanceBankCurrency">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="TMT">TMT</option>
+                <option value="RUB">RUB</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Branch Address / Remarks</label>
+              <textarea class="form-control" formControlName="advanceBankBranchRemarks" rows="2"
+                        placeholder="Branch address or additional banking remarks"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── International: Advance Amount Requested ──────────────── -->
+        <div class="sub-section mt-4"
+             *ngIf="combinedRequestForm.get('travelType')?.value === 'international'">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="sub-section-title"><i class="bi bi-cash-stack me-2"></i>Advance Amount Requested</h5>
+            <button type="button" class="btn btn-add-outline" (click)="addAdvanceAmountItem()">
+              <i class="bi bi-plus-circle"></i>
+              Add Item
+            </button>
+          </div>
+
+          <div *ngIf="advanceAmountItems.length === 0" class="empty-state">
+            <i class="bi bi-table"></i>
+            <p>Click "Add Item" to add advance amount rows.</p>
+          </div>
+
+          <div *ngIf="advanceAmountItems.length > 0" class="advance-amount-table" formArrayName="advanceAmountItems">
+            <div class="advance-amount-header">
+              <div>Date From <span class="text-danger">*</span></div>
+              <div>Date To <span class="text-danger">*</span></div>
+              <div>LH</div>
+              <div>MA</div>
+              <div>OA</div>
+              <div>TR</div>
+              <div>OE</div>
+              <div>USD (Total)</div>
+              <div>Remarks</div>
+              <div></div>
+            </div>
+            <div *ngFor="let item of advanceAmountItems.controls; let j = index"
+                 class="advance-amount-row" [formGroupName]="j">
+              <div>
+                <input type="date" class="form-control form-control-sm" formControlName="dateFrom"
+                       [class.is-invalid]="item.get('dateFrom')?.invalid && item.get('dateFrom')?.touched">
+              </div>
+              <div>
+                <input type="date" class="form-control form-control-sm" formControlName="dateTo"
+                       [class.is-invalid]="item.get('dateTo')?.invalid && item.get('dateTo')?.touched">
+              </div>
+              <div><input type="number" class="form-control form-control-sm" formControlName="lh" min="0" step="0.01"></div>
+              <div><input type="number" class="form-control form-control-sm" formControlName="ma" min="0" step="0.01"></div>
+              <div><input type="number" class="form-control form-control-sm" formControlName="oa" min="0" step="0.01"></div>
+              <div><input type="number" class="form-control form-control-sm" formControlName="tr" min="0" step="0.01"></div>
+              <div><input type="number" class="form-control form-control-sm" formControlName="oe" min="0" step="0.01"></div>
+              <div><input type="number" class="form-control form-control-sm" formControlName="usd" readonly></div>
+              <div><input type="text" class="form-control form-control-sm" formControlName="remarks"></div>
+              <div class="text-center">
+                <button type="button" class="btn btn-remove-sm" (click)="removeAdvanceAmountItem(j)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Home Leave: Bank Details (optional) ───────────────────── -->
+        <div class="sub-section mt-4"
+             *ngIf="combinedRequestForm.get('travelType')?.value === 'home_leave'">
+          <div class="d-flex align-items-center mb-3">
+            <h5 class="sub-section-title">
+              <i class="bi bi-bank me-2"></i>Bank Details
+              <span class="text-muted fw-normal fs-6 ms-2">(optional)</span>
+            </h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Account Name</label>
+              <input type="text" class="form-control" formControlName="advanceBankAccountName"
+                     placeholder="Full name on bank account">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Bank Name</label>
+              <input type="text" class="form-control" formControlName="advanceBankName"
+                     placeholder="e.g. Türkmenbaşy Bank">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Account Number</label>
+              <input type="text" class="form-control" formControlName="advanceBankAccountNumber"
+                     placeholder="Bank account number">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Currency</label>
+              <select class="form-select" formControlName="advanceBankCurrency">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="TMT">TMT</option>
+                <option value="RUB">RUB</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Remarks</label>
+              <textarea class="form-control" formControlName="advanceBankBranchRemarks" rows="2"
+                        placeholder="Additional banking remarks"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── External Parties: External Party Information ─────────── -->
+        <div class="sub-section mt-4"
+             *ngIf="combinedRequestForm.get('travelType')?.value === 'external'">
+          <div class="d-flex align-items-center mb-3">
+            <h5 class="sub-section-title"><i class="bi bi-people me-2"></i>External Party Information</h5>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="externalFullName"
+                     placeholder="External party full name">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Organization <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="externalOrganization"
+                     placeholder="Company or organization name">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Reference to Authority Letter</label>
+              <input type="text" class="form-control" formControlName="externalRefToAuthorityLetter"
+                     placeholder="Reference number or document ID">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cost Center <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="externalCostCenter"
+                     placeholder="Cost center code">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Section: Transport Details ────────────────────────────── -->
+      <div class="form-section" *ngIf="combinedRequestForm.get('includeTransport')?.value">
+        <div class="section-title">
+          <span class="title-text">
+            <i class="bi bi-truck"></i>
+            Transport Details
+          </span>
+          <span class="section-title-right">
+            <span class="section-desc">Local transportation requirements</span>
+            <button type="button" class="btn btn-add-ghost" (click)="addTransportSegment()">
+              <i class="bi bi-plus-circle"></i>
+              Add Journey
+            </button>
+          </span>
+        </div>
+
+        <!-- Purpose + TSR Reference -->
+        <div class="row g-3 mb-4">
+          <div class="col-12">
+            <label class="form-label">Purpose of Transport <span class="text-danger">*</span></label>
+            <textarea class="form-control" formControlName="transportPurpose" rows="3"
+                      placeholder="Describe the purpose of this transport request"
+                      [class.is-invalid]="combinedRequestForm.get('transportPurpose')?.invalid && combinedRequestForm.get('transportPurpose')?.touched"></textarea>
+            <div class="invalid-feedback">Purpose is required</div>
+          </div>
+          <div class="col-12">
+            <label class="form-label">TSR Reference (if applicable)</label>
+            <input type="text" class="form-control" formControlName="transportTsrReference"
+                   placeholder="Reference to related TSR">
+          </div>
+        </div>
+
+        <!-- Journey segments -->
+        <div class="sub-section">
+          <div class="d-flex align-items-center mb-3">
+            <h5 class="sub-section-title"><i class="bi bi-geo-alt me-2"></i>Transport Journeys</h5>
+          </div>
+
+          <div *ngIf="transportSegments.length === 0" class="empty-state">
+            <i class="bi bi-truck"></i>
+            <p>No journeys added yet. Click "Add Journey" to add transport legs.</p>
+          </div>
+
+          <ng-container formArrayName="transportSegments">
+            <div *ngFor="let segment of transportSegments.controls; let i = index"
+                 class="segment-card mb-3" [formGroupName]="i">
+              <div class="segment-card-header">
+                <span>Journey {{ i + 1 }}</span>
+                <button type="button" class="btn btn-remove-sm"
+                        *ngIf="transportSegments.length > 1"
+                        (click)="removeTransportSegment(i)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+              <div class="segment-card-body">
+                <div class="transport-journey-grid">
+                  <div class="form-group">
+                    <label class="form-label">Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" formControlName="pickupDate"
+                           (change)="onTransportDateChange(i, $event)"
+                           [class.is-invalid]="segment.get('pickupDate')?.invalid && segment.get('pickupDate')?.touched">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Day</label>
+                    <input type="text" class="form-control" formControlName="dayOfWeek"
+                           placeholder="Auto-filled" readonly>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">From <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="pickupLocation"
+                           placeholder="Starting location"
+                           [class.is-invalid]="segment.get('pickupLocation')?.invalid && segment.get('pickupLocation')?.touched">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">To <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="dropoffLocation"
+                           placeholder="Destination"
+                           [class.is-invalid]="segment.get('dropoffLocation')?.invalid && segment.get('dropoffLocation')?.touched">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Departure Time <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" formControlName="pickupTime"
+                           placeholder="HH:mm"
+                           [class.is-invalid]="segment.get('pickupTime')?.invalid && segment.get('pickupTime')?.touched">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Transport Type <span class="text-danger">*</span></label>
+                    <select class="form-select" formControlName="transportType"
+                            [class.is-invalid]="segment.get('transportType')?.invalid && segment.get('transportType')?.touched">
+                      <option value="">Select type</option>
+                      <option *ngFor="let type of transportTypes" [value]="type">{{ type }}</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Passengers <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" formControlName="passengers" min="1"
+                           [class.is-invalid]="segment.get('passengers')?.invalid && segment.get('passengers')?.touched">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Vehicle Preference</label>
+                    <input type="text" class="form-control" formControlName="vehicleTypePreference"
+                           placeholder="e.g. SUV, Van, Bus">
+                  </div>
+                </div>
+                <div class="form-group mt-2">
+                  <label class="form-label">Notes</label>
+                  <textarea class="form-control" formControlName="notes" rows="2"
+                            placeholder="Any additional notes for this journey"></textarea>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- ── Section: Accommodation Details ────────────────────────── -->
+      <div class="form-section" *ngIf="combinedRequestForm.get('includeAccommodation')?.value">
+        <div class="section-title">
+          <span class="title-text">
+            <i class="bi bi-building"></i>
+            Accommodation Details
+          </span>
+          <span class="section-desc">Hotel and lodging preferences</span>
+        </div>
+
+        <div class="row g-3">
+          <!-- Requestor Gender -->
+          <div class="col-md-4">
+            <label class="form-label">Gender <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="accommodationGender"
+                    [class.is-invalid]="combinedRequestForm.get('accommodationGender')?.invalid && combinedRequestForm.get('accommodationGender')?.touched">
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+            <div class="invalid-feedback">Please select gender</div>
+          </div>
+
+          <!-- Location -->
+          <div class="col-md-4">
+            <label class="form-label">Location <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="accommodationLocation"
+                    [class.is-invalid]="combinedRequestForm.get('accommodationLocation')?.invalid && combinedRequestForm.get('accommodationLocation')?.touched">
+              <option value="">Select location</option>
+              <option value="Ashgabat">Ashgabat</option>
+              <option value="Kiyanly">Kiyanly</option>
+              <option value="Turkmenbashy">Turkmenbashy</option>
+            </select>
+            <div class="invalid-feedback">Please select location</div>
+          </div>
+
+          <!-- Preferred Room Type -->
+          <div class="col-md-4">
+            <label class="form-label">Preferred Room Type</label>
+            <select class="form-select" formControlName="accommodationRoomType">
+              <option value="">Select room type (optional)</option>
+              <option value="Single">Single</option>
+              <option value="Double">Double</option>
+              <option value="Suite">Suite</option>
+              <option value="Tent">Tent</option>
+            </select>
+            <small class="form-text text-muted">Subject to availability</small>
+          </div>
+
+          <!-- Check-in Date -->
+          <div class="col-md-6">
+            <label class="form-label">Check-in Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" formControlName="accommodationCheckin"
+                   [class.is-invalid]="combinedRequestForm.get('accommodationCheckin')?.invalid && combinedRequestForm.get('accommodationCheckin')?.touched">
+            <div class="invalid-feedback">Check-in date is required</div>
+          </div>
+
+          <!-- Check-out Date -->
+          <div class="col-md-6">
+            <label class="form-label">Check-out Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" formControlName="accommodationCheckout"
+                   [class.is-invalid]="combinedRequestForm.get('accommodationCheckout')?.invalid && combinedRequestForm.get('accommodationCheckout')?.touched">
+            <div class="invalid-feedback">Check-out date is required</div>
+          </div>
+
+          <!-- Flight/Train Arrival Time -->
+          <div class="col-md-6">
+            <label class="form-label">Flight / Train Arrival Time</label>
+            <input type="text" class="form-control" formControlName="accommodationFlightArrivalTime"
+                   placeholder="HH:mm">
+            <small class="form-text text-muted">Time of arrival</small>
+          </div>
+
+          <!-- Flight/Train Departure Time -->
+          <div class="col-md-6">
+            <label class="form-label">Flight / Train Departure Time</label>
+            <input type="text" class="form-control" formControlName="accommodationFlightDepartureTime"
+                   placeholder="HH:mm">
+            <small class="form-text text-muted">Time of departure</small>
+          </div>
+
+          <!-- Special Requests -->
+          <div class="col-12">
+            <label class="form-label">Special Requests</label>
+            <textarea class="form-control" formControlName="accommodationSpecialRequests" rows="4"
+                      placeholder="Any special requirements or preferences (e.g., dietary restrictions, accessibility needs, etc.)"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section: Visa Details ──────────────────────────────────── -->
+      <div class="form-section" *ngIf="combinedRequestForm.get('includeVisa')?.value">
+        <div class="section-title">
+          <span class="title-text">
+            <i class="bi bi-passport"></i>
+            Visa Details
+          </span>
+          <span class="section-desc">Passport and visa application information</span>
+        </div>
+
+        <!-- Section A: Particulars of Applicant -->
+        <div class="visa-section-block">
+          <div class="visa-section-label">
+            <i class="bi bi-person-circle me-2"></i>Section A: Particulars of Applicant
+          </div>
+
+          <!-- A.1 Personal Information -->
+          <div class="visa-field-group">
+            <div class="visa-field-group-title"><i class="bi bi-person me-1"></i>Personal Information</div>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Date of Birth</label>
+                <input type="date" class="form-control" formControlName="visa_date_of_birth">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Place of Birth</label>
+                <input type="text" class="form-control" formControlName="visa_place_of_birth">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Citizenship</label>
+                <input type="text" class="form-control" formControlName="visa_citizenship">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Contact Telephone</label>
+                <input type="text" class="form-control" formControlName="visa_contact_telephone">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Marital Status</label>
+                <select class="form-select" formControlName="visa_marital_status">
+                  <option value="">Select Status</option>
+                  <option *ngFor="let status of maritalStatuses" [value]="status">{{ status }}</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Home Address</label>
+                <textarea class="form-control" formControlName="visa_home_address" rows="2"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Family Information</label>
+                <textarea class="form-control" formControlName="visa_family_information" rows="2"
+                          placeholder="Spouse name, children, dependents..."></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Education Details</label>
+                <textarea class="form-control" formControlName="visa_education_details" rows="2"
+                          placeholder="Highest degree, institution, year..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- A.2 Passport Details -->
+          <div class="visa-field-group">
+            <div class="visa-field-group-title"><i class="bi bi-passport me-1"></i>Passport Details</div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Passport Number</label>
+                <input type="text" class="form-control" formControlName="visa_passport_number">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Passport Expiry Date</label>
+                <input type="date" class="form-control" formControlName="visa_passport_expiry_date">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Place of Issuance</label>
+                <input type="text" class="form-control" formControlName="visa_passport_place_of_issuance">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Date of Issuance</label>
+                <input type="date" class="form-control" formControlName="visa_passport_date_of_issuance">
+              </div>
+            </div>
+          </div>
+
+          <!-- A.3 Employment Information -->
+          <div class="visa-field-group">
+            <div class="visa-field-group-title"><i class="bi bi-building me-1"></i>Employment Information</div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Current Employer Name</label>
+                <input type="text" class="form-control" formControlName="visa_current_employer_name">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Current Employer Address</label>
+                <input type="text" class="form-control" formControlName="visa_current_employer_address">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section B: Type of Request -->
+        <div class="visa-section-block">
+          <div class="visa-section-label">
+            <i class="bi bi-file-earmark-text me-2"></i>Section B: Type of Request
+          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Request Type</label>
+              <select class="form-select" formControlName="visa_request_type">
+                <option value="">Select Request Type</option>
+                <option value="LOI">LOI (Letter of Invitation)</option>
+                <option value="VISA">VISA</option>
+                <option value="WORK_PERMIT">Work Permit</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Approximate Arrival Date</label>
+              <input type="date" class="form-control" formControlName="visa_approximately_arrival_date">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Duration of Stay</label>
+              <input type="text" class="form-control" formControlName="visa_duration_of_stay"
+                     placeholder="e.g., 7 days, 2 weeks">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Visa Entry Type</label>
+              <select class="form-select" formControlName="visa_entry_type">
+                <option value="">Select Entry Type</option>
+                <option *ngFor="let type of entryTypes" [value]="type">{{ type }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Work Visit Category</label>
+              <select class="form-select" formControlName="visa_work_visit_category">
+                <option value="">Select Category</option>
+                <option value="Technical">Technical</option>
+                <option value="Managerial">Managerial</option>
+                <option value="Training">Training</option>
+                <option value="Consultation">Consultation</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Application Fees Borne By</label>
+              <input type="text" class="form-control" formControlName="visa_application_fees_borne_by"
+                     placeholder="Company, Individual, etc.">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cost Centre Number</label>
+              <input type="text" class="form-control" formControlName="visa_cost_centre_number">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section C: Travel Details -->
+        <div class="visa-section-block">
+          <div class="visa-section-label">
+            <i class="bi bi-airplane me-2"></i>Section C: Travel Details
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Destination Country <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="visaDestinationCountry"
+                     placeholder="Country requiring visa">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Visa Type <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="visaType">
+                <option value="">Select Visa Type</option>
+                <option *ngFor="let type of visaTypes" [value]="type.value">{{ type.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">TRF Reference Number</label>
+              <input type="text" class="form-control" formControlName="visa_trf_reference_number">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Trip Start Date</label>
+              <input type="date" class="form-control" formControlName="visa_trip_start_date">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Trip End Date</label>
+              <input type="date" class="form-control" formControlName="visa_trip_end_date">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Travel Purpose <span class="text-danger">*</span></label>
+              <textarea class="form-control" formControlName="visa_travel_purpose" rows="3"
+                        placeholder="Describe the purpose of your visit..."></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Itinerary Details</label>
+              <textarea class="form-control" formControlName="visa_itinerary_details" rows="3"
+                        placeholder="Provide detailed travel itinerary including cities, dates, and activities..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="visa-section-block">
+          <div class="visa-section-label">
+            <i class="bi bi-chat-left-text me-2"></i>Additional Information
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Comments</label>
+              <textarea class="form-control" formControlName="visa_additional_comments" rows="3"
+                        placeholder="Any additional information or special requests..."></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Supporting Documents Notes</label>
+              <textarea class="form-control" formControlName="visa_supporting_documents_notes" rows="2"
+                        placeholder="List any documents attached or to be attached..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Supporting Documents Upload -->
+        <div class="visa-section-block">
+          <div class="visa-section-label">
+            <i class="bi bi-paperclip me-2"></i>Supporting Documents
+          </div>
+          <p class="text-muted small mb-3">
+            Upload passport copy, visa photo, invitation letter, or any other required supporting documents.
+            Files will be attached after saving the request.
+          </p>
+
+          <!-- Queued files (not yet saved) -->
+          <div *ngIf="visaDocumentQueue.length > 0" class="mb-3">
+            <div *ngFor="let item of visaDocumentQueue; let qi = index"
+                 class="d-flex align-items-center justify-content-between p-2 border rounded mb-2 bg-light">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark fs-5 text-primary"></i>
+                <div>
+                  <div class="fw-medium small">{{ item.file.name }}</div>
+                  <div class="text-muted" style="font-size:0.75rem">{{ item.documentType | titlecase }} · queued</div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeQueuedDocument(qi)">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Existing uploaded documents (edit mode) -->
+          <div *ngIf="uploadedDocuments.length > 0" class="mb-3">
+            <div *ngFor="let doc of uploadedDocuments"
+                 class="d-flex align-items-center justify-content-between p-2 border rounded mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-check fs-5 text-success"></i>
+                <div>
+                  <div class="fw-medium small">{{ doc.fileName || doc.file }}</div>
+                  <div class="text-muted" style="font-size:0.75rem">{{ doc.documentType | titlecase }} · uploaded</div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="deleteUploadedDocument(doc)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Add document row -->
+          <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label">Document Type</label>
+              <select class="form-select form-select-sm" [value]="newDocumentType" (change)="newDocumentType = $any($event.target).value">
+                <option value="passport">Passport Copy</option>
+                <option value="visa_photo">Visa Photo</option>
+                <option value="invitation_letter">Invitation Letter</option>
+                <option value="flight_ticket">Flight Ticket</option>
+                <option value="hotel_booking">Hotel Booking</option>
+                <option value="travel_insurance">Travel Insurance</option>
+                <option value="supporting_doc">Supporting Document</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">File <span class="text-muted">(PDF, JPG, PNG — max 10 MB)</span></label>
+              <input type="file" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png"
+                     (change)="onVisaDocumentSelected($event)" #visaDocInput>
+            </div>
+            <div class="col-md-2">
+              <div *ngIf="visaDocError" class="text-danger small mt-1">{{ visaDocError }}</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Section: Additional Comments ──────────────────────────── -->
+      <div class="form-section">
+        <div class="section-title">
+          <span class="title-text">
+            <i class="bi bi-chat-left-text"></i>
+            Additional Comments
+          </span>
+          <span class="section-desc">Any extra information or special requests</span>
+        </div>
+
+        <textarea class="form-control" formControlName="additionalComments" rows="4"
+                  placeholder="Any additional information or special requests..."></textarea>
+
+      </div>
+
+      <!-- ── Section: Approval Workflow ────────────────────────────── -->
+      <div class="form-section">
+        <div class="section-title">
+          <span class="title-text">
+            <i class="bi bi-diagram-3"></i>
+            Approval Workflow
+          </span>
+          <span class="section-desc">Select approvers for each step or skip optional steps</span>
+        </div>
+
+        <app-approver-selection
+          entityType="combinedrequest"
+          [showTitle]="false"
+          [allowSkip]="true"
+          (selectionChange)="onApproverSelectionChange($event)"
+          (validityChange)="onApproverValidityChange($event)"
+          (skippedStepsChange)="onSkippedStepsChange($event)">
+        </app-approver-selection>
+      </div>
+
+      <!-- ── Action Buttons ─────────────────────────────────────────── -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="isSubmitting">
+          <i class="bi bi-x-circle"></i>
+          Cancel
+        </button>
+        <button type="button" class="btn btn-draft" *ngIf="!editMode" (click)="clearDraft()" [disabled]="isSubmitting">
+          <i class="bi bi-arrow-counterclockwise"></i>
+          Reset
+        </button>
+        <button type="button" class="btn btn-draft" (click)="saveAsDraft()"
+                [disabled]="isSubmitting || !isAtLeastOneModuleSelected()">
+          <i class="bi bi-save"></i>
+          {{ isSubmitting ? 'Saving...' : 'Save as Draft' }}
+        </button>
+        <button type="submit" class="btn btn-submit"
+                [disabled]="isSubmitting || !isAtLeastOneModuleSelected() || !approverSelectionValid">
+          <i class="bi bi-send"></i>
+          {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

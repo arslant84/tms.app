@@ -18,6 +18,15 @@ interface RequestType {
   styleUrl: './request-type-selection.component.scss'
 })
 export class RequestTypeSelectionComponent {
+  // Featured combined request option
+  combinedRequest: RequestType = {
+    id: 'combined',
+    title: 'Combined Request',
+    icon: 'bi bi-layers',
+    description: 'Submit a unified request for Travel, Transport, Accommodation, and/or Visa services all at once.',
+    route: '/requests/combined'
+  };
+
   requestTypes: RequestType[] = [
     {
       id: 'domestic',

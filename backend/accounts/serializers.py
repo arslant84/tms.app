@@ -89,7 +89,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password_change_required']
+        fields = ['id', 'email', 'name', 'role', 'department', 'is_admin', 'is_active', 'staff_id', 'phone', 'position', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password_change_required']
         # SECURITY: Prevent privilege escalation - these fields can only be modified by admins
         read_only_fields = ['id', 'email', 'is_admin', 'is_active', 'role', 'department', 'last_login_at', 'permissions', 'password_change_required']
 
@@ -126,12 +126,13 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     # Make all fields optional for partial updates
     name = serializers.CharField(required=False)
     phone = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    position = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     gender = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     profile_photo = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = User
-        fields = ['name', 'phone', 'gender', 'profile_photo']
+        fields = ['name', 'phone', 'position', 'gender', 'profile_photo']
 
     def validate_profile_photo(self, value):
         """Validate profile photo - can be None or a base64 string"""
@@ -165,7 +166,7 @@ class UserAdminUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'role', 'role_id', 'department', 'department_data', 'is_admin', 'is_active', 'staff_id', 'phone', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password', 'password_confirm', 'password_change_required']
+        fields = ['id', 'email', 'name', 'role', 'role_id', 'department', 'department_data', 'is_admin', 'is_active', 'staff_id', 'phone', 'position', 'profile_photo', 'gender', 'last_login_at', 'permissions', 'password', 'password_confirm', 'password_change_required']
         read_only_fields = ['id', 'last_login_at', 'permissions', 'department_data']
 
     def get_permissions(self, obj):

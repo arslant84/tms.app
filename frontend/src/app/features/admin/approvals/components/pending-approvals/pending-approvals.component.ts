@@ -15,7 +15,7 @@ interface ApprovableItem {
 	id: string;
 	requestNumber: string;
 	requestorName: string;
-	itemType: "TSR" | "Visa" | "Accommodation" | "Transport";
+	itemType: "TSR" | "Visa" | "Accommodation" | "Transport" | "Combined";
 	purpose: string;
 	status: string;
 	submittedAt: string;
@@ -29,6 +29,7 @@ interface ApprovableItem {
 	department?: string;
 	transportType?: string;
 	documentNumber?: string;
+	includedModules?: string[];
 }
 
 @Component({
@@ -50,7 +51,7 @@ export class PendingApprovalsComponent implements OnInit {
 	error: string | null = null;
 
 	// Filters
-	activeTab: "all" | "trf" | "visa" | "accommodation" | "transport" = "all";
+	activeTab: "all" | "trf" | "visa" | "accommodation" | "transport" | "combined" = "all";
 	searchTerm = "";
 	statusFilter = "";
 
@@ -61,6 +62,7 @@ export class PendingApprovalsComponent implements OnInit {
 		transport: 0,
 		visa: 0,
 		accommodation: 0,
+		combined: 0,
 	};
 
 	// Pagination
@@ -127,12 +129,13 @@ export class PendingApprovalsComponent implements OnInit {
 	 */
 	private setActiveTabFromType(type: string): void {
 		const tabMap: {
-			[key: string]: "all" | "trf" | "visa" | "accommodation" | "transport";
+			[key: string]: "all" | "trf" | "visa" | "accommodation" | "transport" | "combined";
 		} = {
 			trf: "trf",
 			transport: "transport",
 			visa: "visa",
 			accommodation: "accommodation",
+			combined: "combined",
 			expenses: "all",
 		};
 		this.activeTab = tabMap[type] || "all";
@@ -186,11 +189,12 @@ export class PendingApprovalsComponent implements OnInit {
 
 	fetchTabCounts(): void {
 		// Fetch counts for each tab type
-		const types: Array<"trf" | "transport" | "visa" | "accommodation"> = [
+		const types: Array<"trf" | "transport" | "visa" | "accommodation" | "combined"> = [
 			"trf",
 			"transport",
 			"visa",
 			"accommodation",
+			"combined",
 		];
 
 		types.forEach((type) => {
@@ -218,6 +222,7 @@ export class PendingApprovalsComponent implements OnInit {
 					item.requestorName?.toLowerCase().includes(search) ||
 					item.purpose?.toLowerCase().includes(search) ||
 					item.department?.toLowerCase().includes(search) ||
+					item.requestNumber?.toLowerCase().includes(search) ||
 					item.id?.toLowerCase().includes(search),
 			);
 		}
@@ -231,7 +236,7 @@ export class PendingApprovalsComponent implements OnInit {
 	}
 
 	onTabChange(
-		tab: "all" | "trf" | "visa" | "accommodation" | "transport",
+		tab: "all" | "trf" | "visa" | "accommodation" | "transport" | "combined",
 	): void {
 		this.activeTab = tab;
 		this.currentPage = 1;
@@ -252,6 +257,7 @@ export class PendingApprovalsComponent implements OnInit {
 			Transport: "bi-truck",
 			Visa: "bi-passport",
 			Accommodation: "bi-house-door",
+			Combined: "bi-layers",
 		};
 		return icons[itemType] || "bi-file-text";
 	}
@@ -279,6 +285,7 @@ export class PendingApprovalsComponent implements OnInit {
 			Transport: `/transport/${item.id}`,
 			Visa: `/visa/${item.id}`,
 			Accommodation: `/accommodation/${item.id}`,
+			Combined: `/combined/${item.id}`,
 		};
 
 		const route = routes[item.itemType];
@@ -316,6 +323,7 @@ export class PendingApprovalsComponent implements OnInit {
 			Transport: "transport/requests",
 			Visa: "visa/applications",
 			Accommodation: "accommodation/requests",
+			Combined: "combined/combined-requests",
 		};
 
 		const path = apiPaths[this.selectedItem.itemType];
@@ -371,6 +379,7 @@ export class PendingApprovalsComponent implements OnInit {
 			Transport: "transport/requests",
 			Visa: "visa/applications",
 			Accommodation: "accommodation/requests",
+			Combined: "combined/combined-requests",
 		};
 
 		const path = apiPaths[this.selectedItem.itemType];
@@ -440,6 +449,7 @@ export class PendingApprovalsComponent implements OnInit {
 			Transport: "Transport Request",
 			Visa: "Visa Application",
 			Accommodation: "Accommodation",
+			Combined: "Combined Request",
 		};
 		return labels[itemType] || itemType;
 	}

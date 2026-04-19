@@ -100,6 +100,7 @@ export class AuthService {
           // Include all additional fields from backend
           staff_id: response.data.staff_id,
           phone: response.data.phone,
+          position: response.data.position,
           gender: response.data.gender,
           profile_photo: response.data.profile_photo,
           last_login_at: response.data.last_login_at
