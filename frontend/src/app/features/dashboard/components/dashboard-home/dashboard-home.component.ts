@@ -1,13 +1,13 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Component, type OnDestroy, type OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { InsightsService, DashboardSummary, RecentActivity } from '../../../../core/services/insights.service';
-import { AppSettingsService } from '../../../../core/services/app-settings.service';
-import { Observable, map, Subject, takeUntil } from 'rxjs';
+import { RouterModule } from '@angular/router';
+import { type Observable, Subject, map, takeUntil } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { InsightsService, type DashboardSummary, type RecentActivity } from '../../../../core/services/insights.service';
 import { extractData } from '../../../../core/utils/api-response.handler';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -35,7 +35,7 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
   // Recent activities
   activities: RecentActivity[] = [];
   filteredActivities: RecentActivity[] = [];
-  searchQuery: string = '';
+  searchQuery = '';
 
   // Loading states
   isLoading = false;
@@ -47,18 +47,17 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private insightsService: InsightsService,
-    private appSettingsService: AppSettingsService,
-    public statusUtils: StatusUtilsService
-  ) {
+  private insightsService = inject(InsightsService);
+  private appSettingsService = inject(AppSettingsService);
+  statusUtils = inject(StatusUtilsService);
+
+  constructor() {
     this.applicationName$ = this.appSettingsService.settings$.pipe(
       map(settings => settings.application_name || 'TMS')
     );
   }
 
   ngOnInit(): void {
-    // Small delay to ensure component is mounted
     setTimeout(() => {
       this.fetchDashboardData();
     }, 100);
@@ -70,7 +69,6 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
   }
 
   fetchDashboardData(): void {
-    // Prevent multiple concurrent requests
     if (this.isFetching) {
       return;
     }
@@ -126,7 +124,7 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
   }
 
   getActivityIcon(type: string): string {
-    const iconMap: { [key: string]: string } = {
+    const iconMap: Record<string, string> = {
       'TRF': 'bi-clipboard-check',
       'TSR': 'bi-clipboard-check',
       'VISA': 'bi-file-earmark-text',
@@ -144,9 +142,6 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
     return status.toUpperCase() === 'APPROVED' ? 'bg-success-light' : 'bg-muted-light';
   }
 
-  /**
-   * Get the correct route for viewing an activity item based on its type
-   */
   getActivityRoute(item: RecentActivity): string {
     const type = item.type.toUpperCase();
 
@@ -161,9 +156,7 @@ export class DashboardHomeComponent implements OnInit, OnDestroy {
       case 'TRANSPORT':
         return `/transport/${item.id}`;
       default:
-        // Log unknown type for debugging
         console.warn(`Unknown activity type: ${item.type}, ID: ${item.id}`);
-        // Fallback to TSR view if type is unknown
         return `/trf/${item.id}`;
     }
   }
