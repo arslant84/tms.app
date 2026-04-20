@@ -44,36 +44,11 @@ export class TransportListComponent implements OnInit, OnDestroy {
 	statusUtils = inject(StatusUtilsService);
 
 	ngOnInit(): void {
-		// Load filter options from actual data
-		this.loadFilterOptions();
-
-		// Subscribe to debounced search changes
 		this.listState.search$.pipe(takeUntil(this.destroy$)).subscribe(() => {
 			this.fetchRequests();
 		});
 
-		// Initial load
 		this.fetchRequests();
-	}
-
-	private loadFilterOptions(): void {
-		this.transportService
-			.getAllRequests({ page_size: 1000 })
-			.pipe(takeUntil(this.destroy$))
-			.subscribe({
-				next: (response) => {
-					const items: TransportRequest[] = Array.isArray(response)
-						? response
-						: (response.results ?? []);
-
-					this.statuses = [
-						...new Set(items.map((i) => i.status ?? "").filter(Boolean)),
-					].sort();
-				},
-				error: () => {
-					/* silently ignore — dropdown stays empty */
-				},
-			});
 	}
 
 	ngOnDestroy(): void {
@@ -94,13 +69,15 @@ export class TransportListComponent implements OnInit, OnDestroy {
 
 		this.transportService.getAllRequests(filters).subscribe({
 			next: (response) => {
-				// Handle both array and paginated responses
 				if (Array.isArray(response)) {
 					this.requests = response;
 					this.listState.setTotalItems(response.length);
 				} else {
 					this.requests = response.results || [];
 					this.listState.setTotalItems(response.count || 0);
+				}
+				if (this.statuses.length === 0) {
+					this.statuses = [...new Set(this.requests.map((i) => i.status ?? "").filter(Boolean))].sort();
 				}
 				this.listState.setLoading(false);
 			},
