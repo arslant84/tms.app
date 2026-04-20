@@ -10,7 +10,7 @@
   "parserOptions": {
     "ecmaVersion": 2022,
     "sourceType": "module",
-    "project": ["./frontend/tsconfig.json", "./tsconfig.json"]
+    "project": ["./tsconfig.json"]
   },
   "plugins": [
     "@typescript-eslint"
