@@ -1,14 +1,14 @@
-import { Component, OnInit, DoCheck } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, type DoCheck, type OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { TmsApp_Admin_SystemSettings_RoleManagementComponent } from './role-management/role-management.component';
+import { AppSettingsService } from '../../../core/services/app-settings.service';
+import { SettingsService, type ApplicationSetting, type SettingUpdate } from '../../../core/services/settings.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { DepartmentManagementComponent } from './department-management/department-management.component';
 import { EnhancedWorkflowConfigComponent } from './enhanced-workflow-config/enhanced-workflow-config.component';
-import { ToastService } from '../../../core/services/toast.service';
-import { SettingsService, ApplicationSetting, SettingUpdate } from '../../../core/services/settings.service';
-import { AppSettingsService } from '../../../core/services/app-settings.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { TmsApp_Admin_SystemSettings_RoleManagementComponent } from './role-management/role-management.component';
 
 interface SettingsForm {
   application_name: string;
@@ -44,11 +44,9 @@ export class SystemSettingsComponent implements OnInit, DoCheck {
   };
   originalData: SettingsForm = { ...this.formData };
 
-  constructor(
-    private toastService: ToastService,
-    private settingsService: SettingsService,
-    private appSettingsService: AppSettingsService
-  ) {}
+  private toastService = inject(ToastService);
+  private settingsService = inject(SettingsService);
+  private appSettingsService = inject(AppSettingsService);
 
   ngOnInit(): void {
     this.loadSettings();
@@ -69,41 +67,38 @@ export class SystemSettingsComponent implements OnInit, DoCheck {
     this.isLoading = true;
     this.settingsService.getAllSettings().subscribe({
       next: (response) => {
-        // Handle both paginated and non-paginated responses
-        const settingsData = Array.isArray(response) ? response : (response as any).results || [];
+        const settingsData: ApplicationSetting[] = Array.isArray(response)
+          ? response
+          : ((response as { results?: ApplicationSetting[] }).results ?? []);
 
         if (Array.isArray(settingsData)) {
           this.settings = settingsData;
           const formDataFromSettings = settingsData.reduce((acc, setting) => {
-            if (Object.prototype.hasOwnProperty.call(this.formData, setting.setting_key)) {
-              // Use typed 'value' field if available from backend's get_value() method
-              // Otherwise fallback to setting_value with type conversion
-              let typedValue: any;
+            if (Object.hasOwn(this.formData, setting.setting_key)) {
+              let typedValue: string | boolean | number;
 
               if (setting.value !== undefined) {
-                // Backend provides typed value through serializer
-                typedValue = setting.value;
+                typedValue = setting.value as string | boolean | number;
               } else {
-                // Fallback: manually convert setting_value based on setting_type
                 const rawValue = setting.setting_value;
 
                 if (setting.setting_type === 'boolean') {
-                  typedValue = rawValue === 'true' || rawValue === true;
+                  typedValue = rawValue === 'true';
                 } else if (setting.setting_type === 'number') {
-                  typedValue = parseFloat(rawValue);
+                  typedValue = parseFloat(rawValue as string);
                 } else if (setting.setting_type === 'json') {
                   try {
                     typedValue = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
                   } catch (e) {
                     console.error('Failed to parse JSON setting:', setting.setting_key, e);
-                    typedValue = rawValue;
+                    typedValue = rawValue as string;
                   }
                 } else {
-                  typedValue = rawValue;
+                  typedValue = rawValue as string;
                 }
               }
 
-              (acc as any)[setting.setting_key] = typedValue;
+              (acc as unknown as Record<string, string | boolean | number>)[setting.setting_key] = typedValue;
             }
             return acc;
           }, {} as SettingsForm);
@@ -115,7 +110,7 @@ export class SystemSettingsComponent implements OnInit, DoCheck {
           this.toastService.error('Failed to load application settings: Invalid data format');
         }
         this.isLoading = false;
-        this.checkChanges(); // Initial check
+        this.checkChanges();
       },
       error: (err) => {
         console.error('Error loading settings:', err);
@@ -151,8 +146,8 @@ export class SystemSettingsComponent implements OnInit, DoCheck {
     this.settingsService.bulkUpdateSettings(updates).subscribe({
       next: () => {
         this.toastService.success(`${updates.length} setting${updates.length > 1 ? 's' : ''} updated successfully`);
-        this.loadSettings(); // Reload to sync state
-        this.appSettingsService.refresh(); // Refresh app-wide settings
+        this.loadSettings();
+        this.appSettingsService.refresh();
       },
       error: (err) => {
         console.error('Error saving settings:', err);
