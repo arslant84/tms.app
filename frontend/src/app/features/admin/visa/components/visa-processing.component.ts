@@ -77,75 +77,60 @@ export class VisaProcessingComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.fetchPendingVisas();
-    this.fetchCompletedVisas();
+    this.loadAll();
   }
 
-  /**
-   * Fetch pending visa applications (Approved status)
-   */
-  fetchPendingVisas(): void {
+  private loadAll(): void {
     this.isLoadingPending = true;
+    this.isLoadingCompleted = true;
     this.errorPending = null;
 
-    this.visaService.getAllApplications({ status: 'Approved', adminView: true, page_size: 1000 }).subscribe({
+    this.visaService.getAllApplications({ adminView: true, page_size: 1000 }).subscribe({
       next: (response: any) => {
-        const applications = response.results || response;
+        const all = response.results || response;
 
-        this.pendingVisas = applications.map((app: any) => ({
-          id: app.id,
-          request_number: app.request_number || `VIS-${app.id}`,
-          requestorName: app.requestor_name || 'N/A',
-          department: app.department || 'N/A',
-          staffId: app.staff_id || 'N/A',
-          destination: app.destination || 'N/A',
-          visaType: app.visa_type || 'N/A',
-          travelPurpose: app.travel_purpose || 'N/A',
-          tripStartDate: app.trip_start_date || 'N/A',
-          tripEndDate: app.trip_end_date || 'N/A',
-          status: app.status,
-          submittedDate: app.submitted_date || app.created_at,
-          passportNumber: app.passport_number || 'N/A'
-        }));
+        this.pendingVisas = all
+          .filter((app: any) => app.status === 'Approved')
+          .map((app: any) => ({
+            id: app.id,
+            request_number: app.request_number || `VIS-${app.id}`,
+            requestorName: app.requestor_name || 'N/A',
+            department: app.department || 'N/A',
+            staffId: app.staff_id || 'N/A',
+            destination: app.destination || 'N/A',
+            visaType: app.visa_type || 'N/A',
+            travelPurpose: app.travel_purpose || 'N/A',
+            tripStartDate: app.trip_start_date || 'N/A',
+            tripEndDate: app.trip_end_date || 'N/A',
+            status: app.status,
+            submittedDate: app.submitted_date || app.created_at,
+            passportNumber: app.passport_number || 'N/A'
+          }));
+
+        this.completedVisas = all
+          .filter((app: any) => app.status === 'Completed')
+          .map((app: any) => ({
+            id: app.id,
+            request_number: app.request_number || `VIS-${app.id}`,
+            requestorName: app.requestor_name || 'N/A',
+            destination: app.destination || 'N/A',
+            visaType: app.visa_type || 'N/A',
+            status: app.status,
+            completedDate: app.processing_completed_at || app.updated_at,
+            notes: app.additional_comments,
+            staffId: app.staff_id || 'N/A',
+            department: app.department || 'N/A',
+            processing_details: app.processing_details
+          }));
 
         this.isLoadingPending = false;
-      },
-      error: (err) => {
-        this.errorPending = 'Failed to load pending visa applications. Please try again.';
-        this.pendingVisas = [];
-        this.isLoadingPending = false;
-      }
-    });
-  }
-
-  /**
-   * Fetch completed visa applications
-   */
-  fetchCompletedVisas(): void {
-    this.isLoadingCompleted = true;
-
-    this.visaService.getAllApplications({ status: 'Completed', adminView: true, page_size: 1000 }).subscribe({
-      next: (response: any) => {
-        const applications = response.results || response;
-
-        this.completedVisas = applications.map((app: any) => ({
-          id: app.id,
-          request_number: app.request_number || `VIS-${app.id}`,
-          requestorName: app.requestor_name || 'N/A',
-          destination: app.destination || 'N/A',
-          visaType: app.visa_type || 'N/A',
-          status: app.status,
-          completedDate: app.processing_completed_at || app.updated_at,
-          notes: app.additional_comments,
-          staffId: app.staff_id || 'N/A',
-          department: app.department || 'N/A',
-          processing_details: app.processing_details
-        }));
-
         this.isLoadingCompleted = false;
       },
-      error: (err) => {
+      error: () => {
+        this.errorPending = 'Failed to load visa applications. Please try again.';
+        this.pendingVisas = [];
         this.completedVisas = [];
+        this.isLoadingPending = false;
         this.isLoadingCompleted = false;
       }
     });
@@ -186,7 +171,7 @@ export class VisaProcessingComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.toastService.success(`Processing started for ${this.selectedApplication!.requestorName}`);
-        this.fetchPendingVisas();
+        this.loadAll();
         this.selectedApplication = null;
         this.resetFormFields();
         this.isProcessing = false;
@@ -248,9 +233,7 @@ export class VisaProcessingComponent implements OnInit {
         this.selectedApplication = null;
         this.resetFormFields();
 
-        // Refresh both lists to ensure UI is in sync
-        this.fetchPendingVisas();
-        this.fetchCompletedVisas();
+        this.loadAll();
 
         this.isProcessing = false;
       },
@@ -280,7 +263,7 @@ export class VisaProcessingComponent implements OnInit {
     this.visaService.rejectApplication(this.selectedApplication.id, reason).subscribe({
       next: () => {
         this.toastService.success(`Visa application ${this.selectedApplication!.request_number} rejected`);
-        this.fetchPendingVisas();
+        this.loadAll();
         this.selectedApplication = null;
         this.resetFormFields();
         this.isProcessing = false;
@@ -297,11 +280,6 @@ export class VisaProcessingComponent implements OnInit {
    */
   switchTab(tab: 'pending' | 'processing' | 'completed'): void {
     this.activeTab = tab;
-    if (tab === 'pending' && this.pendingVisas.length === 0) {
-      this.fetchPendingVisas();
-    } else if (tab === 'completed' && this.completedVisas.length === 0) {
-      this.fetchCompletedVisas();
-    }
   }
 
   /**
@@ -370,10 +348,8 @@ export class VisaProcessingComponent implements OnInit {
       next: (response) => {
         this.toastService.success(`Visa application for ${this.selectedApplication!.requestorName} marked as completed`);
 
-        // Close dialog and refresh lists
         this.closeProcessingDialog();
-        this.fetchPendingVisas();
-        this.fetchCompletedVisas();
+        this.loadAll();
 
         this.isProcessing = false;
       },
@@ -434,6 +410,6 @@ export class VisaProcessingComponent implements OnInit {
    * Retry loading pending visas
    */
   retryPending(): void {
-    this.fetchPendingVisas();
+    this.loadAll();
   }
 }

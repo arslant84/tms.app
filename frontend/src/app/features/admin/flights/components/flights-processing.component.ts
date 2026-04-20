@@ -102,33 +102,23 @@ export class FlightsProcessingComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.fetchPendingTrfs();
-    this.fetchBookedFlights();
+    this.loadAll();
   }
 
-  /**
-   * Fetch pending TRFs (Approved status, requiring flights)
-   */
-  fetchPendingTrfs(): void {
+  private loadAll(): void {
     this.isLoadingPending = true;
+    this.isLoadingBooked = true;
     this.errorPending = null;
 
-    this.trfService.getAllTrfs({ adminView: true, status: 'Approved', page_size: 1000 }).subscribe({
+    this.trfService.getAllTrfs({ adminView: true, page_size: 1000 }).subscribe({
       next: (response: any) => {
         const trfs = response.results || response.trfs || [];
 
-        // Filter for Approved TRFs requiring flights (Overseas, Home Leave, Domestic with itinerary)
+        // Pending: Approved TRFs requiring flights
         const approvedTrfs = trfs.filter((trf: any) => {
           if (trf.status !== 'Approved') return false;
-
-          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage' || trf.travel_type === 'Home Leave') {
-            return true;
-          }
-
-          if (trf.travel_type === 'Domestic' && trf.domestic_travel_details?.itinerary?.length > 0) {
-            return true;
-          }
-
+          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage' || trf.travel_type === 'Home Leave') return true;
+          if (trf.travel_type === 'Domestic' && trf.domestic_travel_details?.itinerary?.length > 0) return true;
           return false;
         });
 
@@ -137,33 +127,26 @@ export class FlightsProcessingComponent implements OnInit {
           let requestedDate = trf.submitted_at || trf.created_at;
           let itinerary: ItinerarySegment[] | undefined;
 
-          // Support both snake_case (list API) and camelCase (detail API) formats
           const overseasDetails = trf.overseas_travel_details || trf.overseasTravelDetails;
-          const homeLeaveDetails = trf.home_leave_details || trf.overseasTravelDetails; // Home leave reuses overseas structure
+          const homeLeaveDetails = trf.home_leave_details || trf.overseasTravelDetails;
           const domesticDetails = trf.domestic_travel_details || trf.domesticTravelDetails;
 
           if (overseasDetails?.itinerary?.length) {
             itinerary = overseasDetails.itinerary;
             if (itinerary) {
-              destinationSummary = itinerary
-                .map(s => `${s.from_location || s.from} → ${s.to_location || s.to}`)
-                .join(', ');
+              destinationSummary = itinerary.map((s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`).join(', ');
               requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
             }
           } else if (homeLeaveDetails?.itinerary?.length) {
             itinerary = homeLeaveDetails.itinerary;
             if (itinerary) {
-              destinationSummary = itinerary
-                .map(s => `${s.from_location || s.from} → ${s.to_location || s.to}`)
-                .join(', ');
+              destinationSummary = itinerary.map((s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`).join(', ');
               requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
             }
           } else if (domesticDetails?.itinerary?.length) {
             itinerary = domesticDetails.itinerary;
             if (itinerary) {
-              destinationSummary = itinerary
-                .map(s => `${s.from_location || s.from} → ${s.to_location || s.to}`)
-                .join(', ');
+              destinationSummary = itinerary.map((s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`).join(', ');
               requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
             }
           } else if (trf.purpose) {
@@ -188,32 +171,9 @@ export class FlightsProcessingComponent implements OnInit {
         this.pendingTrfs = mappedTrfs;
         this.filteredPendingTrfs = mappedTrfs;
         this.applyFilters();
-        this.isLoadingPending = false;
-      },
-      error: (err) => {
-        console.error('Failed to fetch pending TRFs:', err);
-        this.errorPending = 'Failed to load TRFs. Please try again.';
-        this.pendingTrfs = [];
-        this.isLoadingPending = false;
-      }
-    });
-  }
 
-  /**
-   * Fetch booked flights
-   */
-  fetchBookedFlights(): void {
-    this.isLoadingBooked = true;
-
-    this.trfService.getAllTrfs({ adminView: true, page_size: 1000 }).subscribe({
-      next: (response: any) => {
-        const trfs = response.results || response.trfs || [];
-
-        // Filter for TRFs with flight bookings
-        const bookedTrfs = trfs.filter((trf: any) =>
-          trf.has_flight_booking && trf.flight_details
-        );
-
+        // Booked: TRFs with flight bookings
+        const bookedTrfs = trfs.filter((trf: any) => trf.has_flight_booking && trf.flight_details);
         this.bookedFlights = bookedTrfs.map((trf: any) => ({
           id: trf.flight_details.id,
           trfId: trf.id,
@@ -232,11 +192,15 @@ export class FlightsProcessingComponent implements OnInit {
           department: trf.department || 'N/A'
         }));
 
+        this.isLoadingPending = false;
         this.isLoadingBooked = false;
       },
       error: (err) => {
-        console.error('Failed to fetch booked flights:', err);
+        console.error('Failed to fetch TRFs:', err);
+        this.errorPending = 'Failed to load TRFs. Please try again.';
+        this.pendingTrfs = [];
         this.bookedFlights = [];
+        this.isLoadingPending = false;
         this.isLoadingBooked = false;
       }
     });
@@ -326,8 +290,7 @@ export class FlightsProcessingComponent implements OnInit {
       next: (response: any) => {
         const trfDisplay = this.selectedTrf!.request_number || this.selectedTrf!.id;
         this.toastService.success(`Flight booked successfully for TRF ${trfDisplay}`);
-        this.fetchPendingTrfs();
-        this.fetchBookedFlights();
+        this.loadAll();
         this.selectedTrf = null;
         this.resetFormFields();
         this.isProcessing = false;
@@ -368,7 +331,7 @@ export class FlightsProcessingComponent implements OnInit {
     this.trfService.rejectTrf(this.selectedTrf.id, 'No flights available for requested travel dates and destinations. Request cancelled by Flight Admin.').subscribe({
       next: () => {
         this.toastService.success(`TRF ${trfDisplay} cancelled due to no available flights`);
-        this.fetchPendingTrfs();
+        this.loadAll();
         this.selectedTrf = null;
         this.resetFormFields();
         this.isProcessing = false;
@@ -402,8 +365,7 @@ export class FlightsProcessingComponent implements OnInit {
     this.trfService.cancelFlightBooking(flight.id).subscribe({
       next: () => {
         this.toastService.success(`Flight booking for TRF ${trfDisplay} cancelled successfully`);
-        this.fetchPendingTrfs();
-        this.fetchBookedFlights();
+        this.loadAll();
         this.isProcessing = false;
       },
       error: (err) => {
@@ -418,11 +380,6 @@ export class FlightsProcessingComponent implements OnInit {
    */
   switchTab(tab: 'pending' | 'booked'): void {
     this.activeTab = tab;
-    if (tab === 'pending' && this.pendingTrfs.length === 0) {
-      this.fetchPendingTrfs();
-    } else if (tab === 'booked' && this.bookedFlights.length === 0) {
-      this.fetchBookedFlights();
-    }
   }
 
   /**
@@ -466,7 +423,7 @@ export class FlightsProcessingComponent implements OnInit {
    * Retry loading pending TRFs
    */
   retryPending(): void {
-    this.fetchPendingTrfs();
+    this.loadAll();
   }
 
   /**

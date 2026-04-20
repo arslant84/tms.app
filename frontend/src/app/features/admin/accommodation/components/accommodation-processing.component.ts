@@ -120,146 +120,90 @@ export class AccommodationProcessingComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.calculateTotalDays(); // Initialize totalDays
-    this.fetchPendingAccommodations();
-    this.fetchBookedAccommodations();
+    this.calculateTotalDays();
+    this.loadAccommodationRequests();
     this.fetchStaffHouses();
     this.fetchBookings();
   }
 
-  /**
-   * Fetch pending accommodation requests (Approved status)
-   */
-  fetchPendingAccommodations(): void {
-    this.isLoadingPending = true;
-    this.errorPending = null;
-
-    this.accommodationService.getAllRequests({ status: 'Approved', adminView: true, page_size: 1000 }).subscribe({
-      next: (response: any) => {
-        const requests = response.results || response;
-
-        this.pendingAccommodations = requests.map((req: any) => {
-          // Extract accommodation details from additional_data
-          const additionalData = req.additional_data || {};
-          const accommodations = additionalData.accommodations || [];
-
-          // Get the first accommodation for display
-          const firstAccom = accommodations[0] || {};
-
-          // Try multiple locations for dates (including requested dates from form)
-          const checkInDate = firstAccom.check_in_date ||
-                             firstAccom.checkInDate ||
-                             additionalData.check_in_date ||
-                             additionalData.checkInDate ||
-                             additionalData.requested_check_in_date ||  // From accommodation request form
-                             additionalData.requestedCheckInDate ||     // From accommodation request form (camelCase)
-                             req.check_in_date ||
-                             req.requested_check_in_date ||
-                             'N/A';
-
-          const checkOutDate = firstAccom.check_out_date ||
-                              firstAccom.checkOutDate ||
-                              additionalData.check_out_date ||
-                              additionalData.checkOutDate ||
-                              additionalData.requested_check_out_date || // From accommodation request form
-                              additionalData.requestedCheckOutDate ||    // From accommodation request form (camelCase)
-                              req.check_out_date ||
-                              req.requested_check_out_date ||
-                              'N/A';
-
-          return {
-            id: req.id,
-            request_number: req.request_number || `ACC-${req.id}`,
-            requestorName: req.requestor_name || 'N/A',
-            department: req.department || 'N/A',
-            staffId: req.staff_id || 'N/A',
-            location: firstAccom.location || additionalData.location || 'N/A',
-            checkInDate: checkInDate,
-            checkOutDate: checkOutDate,
-            roomType: firstAccom.room_type || firstAccom.roomType || 'Any',
-            status: req.status,
-            requestedDate: req.submitted_at || req.created_at,
-            duration: this.calculateDuration(checkInDate, checkOutDate),
-            gender: firstAccom.gender || additionalData.gender || 'N/A',
-            trfId: req.trf || null,
-            tsrDepartureDate: req.tsr_departure_date || '',  // Use backend-provided TSR dates
-            tsrReturnDate: req.tsr_return_date || ''         // Use backend-provided TSR dates
-          };
-        });
-
-        this.isLoadingPending = false;
-      },
-      error: (err) => {
-        console.error('Failed to fetch pending accommodations:', err);
-        console.error('Error details:', {
-          status: err.status,
-          statusText: err.statusText,
-          error: err.error,
-          message: err.message,
-          url: err.url
-        });
-        this.errorPending = 'Failed to load pending accommodations. Please try again.';
-        this.pendingAccommodations = [];
-        this.isLoadingPending = false;
-      }
-    });
+  private extractDates(req: any): { checkInDate: string; checkOutDate: string } {
+    const additionalData = req.additional_data || {};
+    const firstAccom = (additionalData.accommodations || [])[0] || {};
+    const checkInDate = firstAccom.check_in_date || firstAccom.checkInDate ||
+      additionalData.check_in_date || additionalData.checkInDate ||
+      additionalData.requested_check_in_date || additionalData.requestedCheckInDate ||
+      req.check_in_date || req.requested_check_in_date || 'N/A';
+    const checkOutDate = firstAccom.check_out_date || firstAccom.checkOutDate ||
+      additionalData.check_out_date || additionalData.checkOutDate ||
+      additionalData.requested_check_out_date || additionalData.requestedCheckOutDate ||
+      req.check_out_date || req.requested_check_out_date || 'N/A';
+    return { checkInDate, checkOutDate };
   }
 
-  /**
-   * Fetch booked accommodations
-   */
-  fetchBookedAccommodations(): void {
+  loadAccommodationRequests(): void {
+    this.isLoadingPending = true;
     this.isLoadingBooked = true;
+    this.errorPending = null;
 
-    this.accommodationService.getAllRequests({ status: 'Accommodation Assigned', adminView: true, page_size: 1000 }).subscribe({
+    this.accommodationService.getAllRequests({ adminView: true, page_size: 1000 }).subscribe({
       next: (response: any) => {
         const requests = response.results || response;
 
-        this.bookedAccommodations = requests.map((req: any) => {
-          const additionalData = req.additional_data || {};
-          const accommodations = additionalData.accommodations || [];
-          const firstAccom = accommodations[0] || {};
+        this.pendingAccommodations = requests
+          .filter((req: any) => req.status === 'Approved')
+          .map((req: any) => {
+            const additionalData = req.additional_data || {};
+            const firstAccom = (additionalData.accommodations || [])[0] || {};
+            const { checkInDate, checkOutDate } = this.extractDates(req);
+            return {
+              id: req.id,
+              request_number: req.request_number || `ACC-${req.id}`,
+              requestorName: req.requestor_name || 'N/A',
+              department: req.department || 'N/A',
+              staffId: req.staff_id || 'N/A',
+              location: firstAccom.location || additionalData.location || 'N/A',
+              checkInDate,
+              checkOutDate,
+              roomType: firstAccom.room_type || firstAccom.roomType || 'Any',
+              status: req.status,
+              requestedDate: req.submitted_at || req.created_at,
+              duration: this.calculateDuration(checkInDate, checkOutDate),
+              gender: firstAccom.gender || additionalData.gender || 'N/A',
+              trfId: req.trf || null,
+              tsrDepartureDate: req.tsr_departure_date || '',
+              tsrReturnDate: req.tsr_return_date || ''
+            };
+          });
 
-          // Try multiple locations for dates (including requested dates from form)
-          const checkInDate = firstAccom.check_in_date ||
-                             firstAccom.checkInDate ||
-                             additionalData.check_in_date ||
-                             additionalData.checkInDate ||
-                             additionalData.requested_check_in_date ||  // From accommodation request form
-                             additionalData.requestedCheckInDate ||     // From accommodation request form (camelCase)
-                             req.check_in_date ||
-                             req.requested_check_in_date ||
-                             'N/A';
+        this.bookedAccommodations = requests
+          .filter((req: any) => req.status === 'Accommodation Assigned')
+          .map((req: any) => {
+            const additionalData = req.additional_data || {};
+            const firstAccom = (additionalData.accommodations || [])[0] || {};
+            const { checkInDate, checkOutDate } = this.extractDates(req);
+            return {
+              id: req.id,
+              requestNumber: req.request_number || `ACC-${req.id}`,
+              requestorName: req.requestor_name || 'N/A',
+              staffHouseName: 'Not assigned',
+              roomName: 'Not assigned',
+              location: firstAccom.location || additionalData.location || 'N/A',
+              checkInDate,
+              checkOutDate,
+              status: req.status || 'Confirmed',
+              notes: req.additional_comments
+            };
+          });
 
-          const checkOutDate = firstAccom.check_out_date ||
-                              firstAccom.checkOutDate ||
-                              additionalData.check_out_date ||
-                              additionalData.checkOutDate ||
-                              additionalData.requested_check_out_date || // From accommodation request form
-                              additionalData.requestedCheckOutDate ||    // From accommodation request form (camelCase)
-                              req.check_out_date ||
-                              req.requested_check_out_date ||
-                              'N/A';
-
-          return {
-            id: req.id,
-            requestNumber: req.request_number || `ACC-${req.id}`,
-            requestorName: req.requestor_name || 'N/A',
-            staffHouseName: 'Not assigned', // Will be populated from bookings
-            roomName: 'Not assigned',
-            location: firstAccom.location || additionalData.location || 'N/A',
-            checkInDate: checkInDate,
-            checkOutDate: checkOutDate,
-            status: req.status || 'Confirmed',
-            notes: req.additional_comments
-          };
-        });
-
+        this.isLoadingPending = false;
         this.isLoadingBooked = false;
       },
       error: (err) => {
-        console.error('Failed to fetch booked accommodations:', err);
+        console.error('Failed to fetch accommodation requests:', err);
+        this.errorPending = 'Failed to load pending accommodations. Please try again.';
+        this.pendingAccommodations = [];
         this.bookedAccommodations = [];
+        this.isLoadingPending = false;
         this.isLoadingBooked = false;
       }
     });
@@ -606,8 +550,7 @@ export class AccommodationProcessingComponent implements OnInit {
     this.accommodationService.assignAccommodation(this.selectedRequest.id, assignmentData).subscribe({
       next: (response) => {
         this.toastService.success(response.message || `Room assigned successfully for ${this.selectedRequest!.requestorName}`);
-        this.fetchPendingAccommodations();
-        this.fetchBookedAccommodations();
+        this.loadAccommodationRequests();
         this.fetchBookings();
         this.selectedRequest = null;
         this.resetFormFields();
@@ -651,7 +594,7 @@ export class AccommodationProcessingComponent implements OnInit {
     ).subscribe({
       next: () => {
         this.toastService.success(`Request ${this.selectedRequest!.request_number} rejected due to no available rooms`);
-        this.fetchPendingAccommodations();
+        this.loadAccommodationRequests();
         this.selectedRequest = null;
         this.resetFormFields();
         this.isProcessing = false;
@@ -697,8 +640,7 @@ export class AccommodationProcessingComponent implements OnInit {
             this.accommodationService.updateRequest(booking.id, { status: 'Approved' }).subscribe({
               next: () => {
                 this.toastService.success(`Booking for ${booking.requestorName} cancelled successfully`);
-                this.fetchPendingAccommodations();
-                this.fetchBookedAccommodations();
+                this.loadAccommodationRequests();
                 this.fetchBookings();
                 this.isProcessing = false;
               },
@@ -740,11 +682,6 @@ export class AccommodationProcessingComponent implements OnInit {
    */
   switchTab(tab: 'pending' | 'booked'): void {
     this.activeTab = tab;
-    if (tab === 'pending' && this.pendingAccommodations.length === 0) {
-      this.fetchPendingAccommodations();
-    } else if (tab === 'booked' && this.bookedAccommodations.length === 0) {
-      this.fetchBookedAccommodations();
-    }
   }
 
   /**
@@ -925,7 +862,7 @@ export class AccommodationProcessingComponent implements OnInit {
    * Retry loading pending accommodations
    */
   retryPending(): void {
-    this.fetchPendingAccommodations();
+    this.loadAccommodationRequests();
   }
 
   /**
