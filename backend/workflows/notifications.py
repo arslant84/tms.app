@@ -291,35 +291,50 @@ class WorkflowNotifications:
                 else:
                     logger.warning(f" No step executions found for workflow {workflow_instance.id}")
             else:
-                # Fall back to default notification (only to requestor)
                 logger.info(f" No workflow_completed configs found, using default notification")
 
-                # Get last approver for completion context
+                # Get last step execution for context
                 last_step_execution = workflow_instance.step_executions.order_by('-workflow_step__step_order').first()
-                processor_name = last_step_execution.actioned_by.get_full_name() if last_step_execution and last_step_execution.actioned_by else 'The approval team'
-                entity_id = WorkflowNotifications._get_entity_id(workflow_instance)
 
-                from django.utils import timezone
-                completion_date = timezone.now().strftime('%B %d, %Y at %I:%M %p')
-
-                NotificationService.create_notification(
-                    user=workflow_instance.initiated_by,
-                    title=f"Request Approved: {workflow_instance.workflow_template.name}",
-                    message=f"Your {workflow_instance.workflow_template.entity_type} request has been fully approved! All approval steps are complete.",
-                    event_type=_get_event_type('WORKFLOW_APPROVED'),
-                    priority='high',
-                    action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
-                    additional_data={
-                        'requestorName': workflow_instance.initiated_by.get_full_name(),
-                        'requestType': workflow_instance.workflow_template.entity_type.title(),
-                        'entityId': entity_id,
-                        'processorName': processor_name,
-                        'completionDate': completion_date,
-                        'completionDetails': 'All approval steps have been successfully completed.',
-                        'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
-                    },
-                    send_email=True
+                # Skip default if the last step already had configured 'approval' notifications —
+                # those notifications already told the requester their request was approved,
+                # so sending this default too would be a duplicate.
+                has_configured_approval_notification = (
+                    last_step_execution is not None and
+                    WorkflowStepNotificationConfig.objects.filter(
+                        workflow_step=last_step_execution.workflow_step,
+                        event_type='approval',
+                        is_active=True
+                    ).exists()
                 )
+
+                if has_configured_approval_notification:
+                    logger.info(f" Skipping default workflow_completed notification — configured approval notification already sent for step '{last_step_execution.workflow_step.step_name}'")
+                else:
+                    processor_name = last_step_execution.actioned_by.get_full_name() if last_step_execution and last_step_execution.actioned_by else 'The approval team'
+                    entity_id = WorkflowNotifications._get_entity_id(workflow_instance)
+
+                    from django.utils import timezone
+                    completion_date = timezone.now().strftime('%B %d, %Y at %I:%M %p')
+
+                    NotificationService.create_notification(
+                        user=workflow_instance.initiated_by,
+                        title=f"Request Approved: {workflow_instance.workflow_template.name}",
+                        message=f"Your {workflow_instance.workflow_template.entity_type} request has been fully approved! All approval steps are complete.",
+                        event_type=_get_event_type('WORKFLOW_APPROVED'),
+                        priority='high',
+                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        additional_data={
+                            'requestorName': workflow_instance.initiated_by.get_full_name(),
+                            'requestType': workflow_instance.workflow_template.entity_type.title(),
+                            'entityId': entity_id,
+                            'processorName': processor_name,
+                            'completionDate': completion_date,
+                            'completionDetails': 'All approval steps have been successfully completed.',
+                            'actionUrl': f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        },
+                        send_email=True
+                    )
 
             logger.info(f" Workflow completion notifications sent for: {workflow_instance.id}")
         except Exception as e:
