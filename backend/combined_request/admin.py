@@ -124,7 +124,6 @@ class CombinedRequestAdmin(admin.ModelAdmin):
                 'travel_purpose',
                 ('departure_date', 'return_date'),
                 ('destination_country', 'destination_city'),
-                'estimated_cost',
                 'travel_data',
             ),
             'classes': ('collapse',),

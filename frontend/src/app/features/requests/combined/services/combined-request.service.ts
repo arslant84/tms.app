@@ -222,10 +222,6 @@ export class CombinedRequestService {
    * Error handler
    */
   private handleError(error: any): Observable<never> {
-    console.error('CombinedRequestService error:', error);
-    if (error.error && typeof error.error === 'object') {
-      console.error('Validation errors:', JSON.stringify(error.error, null, 2));
-    }
     // Flatten DRF field-level validation errors into a readable message
     let message = error.error?.detail || error.error?.message || error.message || 'An error occurred';
     if (error.error && typeof error.error === 'object' && !error.error.detail && !error.error.message) {
