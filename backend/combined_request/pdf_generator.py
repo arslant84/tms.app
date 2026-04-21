@@ -4,8 +4,11 @@ Extracted from views.py to keep ViewSet lean.
 """
 
 import io
+import logging
 from django.http import HttpResponse
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 # ── Design-system colour tokens ──────────────────────────────────────────────
@@ -214,8 +217,8 @@ def generate_combined_request_pdf(cr) -> HttpResponse:
             elements.append(Table(approval_data, style=table_style,
                                   colWidths=[0.4*inch, 1.5*inch, 0.9*inch,
                                              1.2*inch, 1*inch, 2.3*inch]))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Could not render approval history in PDF: %s", e)
 
     # ── Footer ────────────────────────────────────────────────────────────────
     elements.append(Spacer(1, 20))
