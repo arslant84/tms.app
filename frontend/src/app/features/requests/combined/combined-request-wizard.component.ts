@@ -773,7 +773,7 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
       supper:      [data?.supper      ?? false],
       refreshment: [data?.refreshment ?? false]
     });
-    group.valueChanges.subscribe(() => this.updateMealSummary());
+    group.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => this.updateMealSummary());
     return group;
   }
 

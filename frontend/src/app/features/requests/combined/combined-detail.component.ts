@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
@@ -21,7 +21,7 @@ import { WorkflowInstance, WorkflowStepExecution } from '../../../core/models/wo
   templateUrl: './combined-detail.component.html',
   styleUrls: ['./combined-detail.component.scss']
 })
-export class CombinedDetailComponent implements OnInit {
+export class CombinedDetailComponent implements OnInit, OnDestroy {
   request: CombinedRequest | null = null;
   loading = true;
   error = '';
@@ -83,7 +83,7 @@ export class CombinedDetailComponent implements OnInit {
     this.workflowService.getInstances({
       entity_type: 'combinedrequest',
       object_id: this.requestId
-    }).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: any) => {
         const instances = Array.isArray(response) ? response : (response.results || []);
         const instance = instances.find((i: any) =>
@@ -92,7 +92,7 @@ export class CombinedDetailComponent implements OnInit {
           i.entity_id === this.requestId
         );
         if (instance?.id) {
-          this.workflowService.getInstance(instance.id).subscribe({
+          this.workflowService.getInstance(instance.id).pipe(takeUntil(this.destroy$)).subscribe({
             next: (wf) => {
               this.workflow = wf;
               this.updateCurrentStepExecution();

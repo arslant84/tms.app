@@ -6,7 +6,6 @@ with workflow integration and proper permission handling.
 """
 
 import logging
-import traceback
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -502,8 +501,7 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
                 status_code=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
-            logger.error(f"Error in approve: {str(e)}")
-            traceback.print_exc()
+            logger.error(f"Error in approve: {str(e)}", exc_info=True)
             return server_error_response(
                 message='Failed to process approval',
                 error_details=str(e)
@@ -585,9 +583,7 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
                 )
 
         except Exception as e:
-            logger.error(f"Error in reject: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Error in reject: {str(e)}", exc_info=True)
             return server_error_response(
                 message='Failed to process rejection',
                 error_details=str(e)

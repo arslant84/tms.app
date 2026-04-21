@@ -241,26 +241,13 @@ class CombinedRequest(models.Model):
 
     def save(self, *args, **kwargs):
         """Override save to update module statuses based on inclusion flags."""
-        # Set module statuses to 'not_requested' if module is not included
-        if not self.include_travel:
-            self.travel_status = 'not_requested'
-        elif self.travel_status == 'not_requested':
-            self.travel_status = 'pending'
-
-        if not self.include_transport:
-            self.transport_status = 'not_requested'
-        elif self.transport_status == 'not_requested':
-            self.transport_status = 'pending'
-
-        if not self.include_accommodation:
-            self.accommodation_status = 'not_requested'
-        elif self.accommodation_status == 'not_requested':
-            self.accommodation_status = 'pending'
-
-        if not self.include_visa:
-            self.visa_status = 'not_requested'
-        elif self.visa_status == 'not_requested':
-            self.visa_status = 'pending'
+        for module in ('travel', 'transport', 'accommodation', 'visa'):
+            include_field = f'include_{module}'
+            status_field = f'{module}_status'
+            if not getattr(self, include_field):
+                setattr(self, status_field, 'not_requested')
+            elif getattr(self, status_field) == 'not_requested':
+                setattr(self, status_field, 'pending')
 
         super().save(*args, **kwargs)
 
