@@ -12,7 +12,7 @@ import { StatusUtilsService } from '../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { WorkflowStatusComponent } from '../../../shared/components/workflow-status/workflow-status.component';
 import { ApprovalActionsComponent } from '../../../shared/components/approval-actions/approval-actions.component';
-import { WorkflowInstance, WorkflowStepExecution } from '../../../core/models/workflow.models';
+import { type WorkflowInstance, type WorkflowInstanceList, type WorkflowStepExecution } from '../../../core/models/workflow.models';
 
 @Component({
   selector: 'app-combined-detail',
@@ -81,15 +81,12 @@ export class CombinedDetailComponent implements OnInit, OnDestroy {
   loadWorkflow(): void {
     this.workflowLoading = true;
     this.workflowService.getInstances({
-      entity_type: 'combinedrequest',
+      entity_type: 'combinedrequest', // cspell:ignore combinedrequest
       object_id: this.requestId
     }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response: any) => {
-        const instances = Array.isArray(response) ? response : (response.results || []);
-        const instance = instances.find((i: any) =>
-          i.object_id === this.requestId ||
-          i.entity_info?.id === this.requestId ||
-          i.entity_id === this.requestId
+      next: (instances: WorkflowInstanceList[]) => {
+        const instance = instances.find((i: WorkflowInstanceList) =>
+          i.entity_info?.id === this.requestId
         );
         if (instance?.id) {
           this.workflowService.getInstance(instance.id).pipe(takeUntil(this.destroy$)).subscribe({
