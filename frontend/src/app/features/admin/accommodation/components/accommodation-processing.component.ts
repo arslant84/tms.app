@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AccommodationService, AccommodationRequest, AccommodationRoom, AccommodationStaffHouse, AccommodationBooking } from '../../../accommodation/services/accommodation.service';
+import { AccommodationService, AccommodationRoom, AccommodationStaffHouse } from '../../../accommodation/services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
@@ -79,6 +80,7 @@ export class AccommodationProcessingComponent implements OnInit {
 
   // Available staff houses and rooms
   availableStaffHouses: AccommodationStaffHouse[] = [];
+  private allStaffHouses: AccommodationStaffHouse[] = [];
   availableRooms: AccommodationRoom[] = [];
   allRooms: AccommodationRoom[] = [];
 
@@ -215,8 +217,8 @@ export class AccommodationProcessingComponent implements OnInit {
   fetchStaffHouses(): void {
     this.accommodationService.getAllStaffHouses().subscribe({
       next: (staffHouses) => {
+        this.allStaffHouses = staffHouses;
         this.availableStaffHouses = staffHouses;
-        // Fetch all rooms for calendar display
         this.fetchAllRooms();
       },
       error: (err) => {
@@ -381,14 +383,9 @@ export class AccommodationProcessingComponent implements OnInit {
       // Filter staff houses by location if specified
       if (request.location && request.location !== 'N/A') {
         this.selectedLocation = request.location;
-        this.accommodationService.getAllStaffHouses(request.location).subscribe({
-          next: (staffHouses) => {
-            this.availableStaffHouses = staffHouses.filter(h => h.location === request.location);
-          },
-          error: (err) => {
-            console.error('Failed to fetch staff houses:', err);
-          }
-        });
+        this.availableStaffHouses = this.allStaffHouses.filter(h => h.location === request.location);
+      } else {
+        this.availableStaffHouses = this.allStaffHouses;
       }
     }, 0);
   }
@@ -631,7 +628,7 @@ export class AccommodationProcessingComponent implements OnInit {
         const relatedBookings = bookingsList.filter((b: any) => b.trf === booking.id);
 
         const deletePromises = relatedBookings.map((b: any) =>
-          this.accommodationService.deleteBooking(b.id).toPromise()
+          lastValueFrom(this.accommodationService.deleteBooking(b.id))
         );
 
         Promise.all(deletePromises)
@@ -655,7 +652,7 @@ export class AccommodationProcessingComponent implements OnInit {
             this.isProcessing = false;
           });
       },
-      error: (err) => {
+      error: () => {
         this.toastService.error('Failed to fetch bookings for cancellation');
         this.isProcessing = false;
       }
