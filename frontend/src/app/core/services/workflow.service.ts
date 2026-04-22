@@ -133,7 +133,9 @@ export class WorkflowService {
     if (filters?.object_id) {
       params = params.set('object_id', filters.object_id.toString());
     }
-    return this.http.get<WorkflowInstanceList[]>(`${this.apiUrl}/instances/`, { params });
+    return this.http.get<any>(`${this.apiUrl}/instances/`, { params }).pipe(
+      map(response => Array.isArray(response) ? response : (response.results || []))
+    );
   }
 
   /**
