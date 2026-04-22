@@ -230,8 +230,13 @@ export class NotificationService {
 
   // Helper method to refresh notifications
   refreshNotifications(): void {
-    this.getAllNotifications({ page_size: 20 }).subscribe();
-    this.refreshUnreadCount();
+    // Single HTTP call — derive unread count from results to avoid a second request.
+    // The 30s poller still calls refreshUnreadCount() for an accurate server-side count.
+    this.getAllNotifications({ page_size: 20 }).subscribe(response => {
+      const notifications = Array.isArray(response) ? response : (response.results || []);
+      const unreadCount = (notifications as UserNotification[]).filter(n => !n.is_read).length;
+      this.unreadCountSubject.next(unreadCount);
+    });
   }
 
   // Initialize service (call this on app init)
