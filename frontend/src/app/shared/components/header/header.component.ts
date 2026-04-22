@@ -104,86 +104,59 @@ export class HeaderComponent implements OnInit, OnDestroy {
    * Mark a notification as read and navigate to its action URL
    */
   onNotificationClick(notification: UserNotification): void {
+    const navigate = () => {
+      if (notification.action_url) {
+        const nav = this.buildNavigation(notification);
+        this.router.navigate(nav.commands, nav.extras);
+      }
+      this.isNotificationsOpen = false;
+    };
+
     if (!notification.is_read) {
       this.notificationService.markAsRead(notification.id)
         .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            // Navigate to action URL if provided
-            if (notification.action_url) {
-              const mappedUrl = this.mapActionUrlToRoute(notification);
-              this.router.navigate([mappedUrl]);
-            }
-            this.isNotificationsOpen = false;
-          },
-          error: (err) => {
-            console.error('Error marking notification as read:', err);
-          }
-        });
+        .subscribe({ next: navigate, error: () => navigate() });
     } else {
-      // Just navigate if already read
-      if (notification.action_url) {
-        const mappedUrl = this.mapActionUrlToRoute(notification);
-        this.router.navigate([mappedUrl]);
-      }
-      this.isNotificationsOpen = false;
+      navigate();
     }
   }
 
-  /**
-   * Maps backend entity types to frontend route paths and handles approval notifications
-   * Backend sends: /travelrequest/123, /transportrequest/123, /visaapplication/123
-   * Frontend needs: /trf/123, /transport/123, /visa/123
-   *
-   * For approval notifications, routes to admin approvals page with entity info
-   */
-  private mapActionUrlToRoute(notification: UserNotification): string {
-    const actionUrl = notification.action_url;
-    if (!actionUrl) return '/dashboard';
+  private buildNavigation(notification: UserNotification): { commands: any[]; extras?: any } {
+    const actionUrl = notification.action_url!;
 
-    // Check if this is an approval notification
-    const isApprovalNotification =
+    const isApproval =
       notification.title?.toLowerCase().includes('approval required') ||
       notification.title?.toLowerCase().includes('approval delegated') ||
-      notification.title?.toLowerCase().includes('review') ||
-      notification.action_text?.toLowerCase().includes('approve') ||
-      notification.action_text?.toLowerCase().includes('review');
+      notification.action_text?.toLowerCase().includes('approve');
 
-    // If it's an approval notification, extract entity info and route to admin approvals
-    if (isApprovalNotification) {
+    if (isApproval) {
       const entityInfo = this.extractEntityInfo(actionUrl);
       if (entityInfo) {
-        // Navigate with query params to auto-select the item
-        this.router.navigate(['/admin/approvals'], {
-          queryParams: {
-            type: entityInfo.type,
-            id: entityInfo.id,
-            action: 'approve'
-          }
-        });
-        return '/admin/approvals'; // Return for fallback
+        return {
+          commands: ['/admin/approvals'],
+          extras: { queryParams: { type: entityInfo.type, id: entityInfo.id, action: 'approve' } }
+        };
       }
-      return '/admin/approvals';
+      return { commands: ['/admin/approvals'] };
     }
 
-    // Map backend entity types to frontend routes
-    const mappings: { [key: string]: string } = {
+    const mappings: Record<string, string> = {
       '/travelrequest/': '/trf/',
       '/transportrequest/': '/transport/',
       '/visaapplication/': '/visa/',
+      '/combinedrequest/': '/combined/',
       '/expenseclaim/': '/expenses/',
-      // accommodation already matches: /accommodation/
     };
 
-    let mappedUrl = actionUrl;
-    for (const [backendPath, frontendPath] of Object.entries(mappings)) {
-      if (mappedUrl.includes(backendPath)) {
-        mappedUrl = mappedUrl.replace(backendPath, frontendPath);
+    let url = actionUrl;
+    for (const [backend, frontend] of Object.entries(mappings)) {
+      if (url.includes(backend)) {
+        url = url.replace(backend, frontend);
         break;
       }
     }
 
-    return mappedUrl;
+    return { commands: [url] };
   }
 
   /**
