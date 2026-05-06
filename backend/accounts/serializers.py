@@ -341,17 +341,35 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         help_text='Base64 encoded image (max 5MB)'
     )
 
+    privacy_consent = serializers.BooleanField(
+        required=True,
+        help_text='Must be true — user accepts the privacy policy (CTRL-0000001000/1001/1003)'
+    )
+    privacy_policy_version = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text='Privacy policy version accepted by the user'
+    )
+
     class Meta:
         model = User
         fields = [
             'email', 'name', 'password', 'password_confirm',
-            'staff_id', 'phone', 'department', 'gender', 'profile_photo'
+            'staff_id', 'phone', 'department', 'gender', 'profile_photo',
+            'privacy_consent', 'privacy_policy_version',
         ]
         extra_kwargs = {
             'staff_id': {'required': False},
             'phone': {'required': False},
             'gender': {'required': False},
         }
+
+    def validate_privacy_consent(self, value):
+        if not value:
+            raise serializers.ValidationError(
+                "You must accept the privacy policy to register."
+            )
+        return value
 
     def validate_email(self, value):
         """Ensure email is unique"""
@@ -407,10 +425,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Create user with default 'Registered User' role"""
-        # Remove password_confirm (not a model field)
+        from django.utils import timezone as tz
+        from django.conf import settings as django_settings
+
         validated_data.pop('password_confirm')
 
-        # Get default role
         try:
             registered_user_role = Role.objects.get(name='Registered User')
         except Role.DoesNotExist:
@@ -418,12 +437,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 "System error: Default registration role not found. Please contact administrator."
             )
 
-        # SECURITY: Set role (user cannot override this)
         validated_data['role'] = registered_user_role
         validated_data['is_admin'] = False
         validated_data['is_active'] = True
 
-        # Create user
+        # Stamp privacy consent timestamp (CTRL-0000001000/1001/1003)
+        if validated_data.get('privacy_consent'):
+            validated_data['privacy_consent_date'] = tz.now()
+        if not validated_data.get('privacy_policy_version'):
+            validated_data['privacy_policy_version'] = getattr(django_settings, 'PRIVACY_POLICY_VERSION', '1.0')
+
         password = validated_data.pop('password')
         user = User.objects.create(**validated_data)
         user.set_password(password)
@@ -556,4 +579,57 @@ class AdminActionLogSerializer(serializers.ModelSerializer):
     def get_user_name(self, obj):
         """Return name of user who performed the action"""
         return obj.user.name if obj.user else 'System/Unknown'
+
+
+# ---------------------------------------------------------------------------
+# MFA Serializers — CTRL-0000001024 / CTRL-0000001063
+# ---------------------------------------------------------------------------
+
+class MFAStatusSerializer(serializers.Serializer):
+    mfa_enabled = serializers.BooleanField(read_only=True)
+
+
+class MFAConfirmSerializer(serializers.Serializer):
+    """Verify a TOTP code to enable MFA after setup."""
+    otp = serializers.CharField(
+        required=True,
+        min_length=6,
+        max_length=6,
+        help_text='6-digit TOTP code from authenticator app'
+    )
+
+
+class MFAVerifySerializer(serializers.Serializer):
+    """Verify a TOTP code during the login MFA challenge step."""
+    otp = serializers.CharField(
+        required=True,
+        min_length=6,
+        max_length=6,
+        help_text='6-digit TOTP code from authenticator app'
+    )
+    challenge_token = serializers.CharField(
+        required=True,
+        help_text='Short-lived challenge token returned by login when MFA is required'
+    )
+
+
+class MFADisableSerializer(serializers.Serializer):
+    """Disable MFA — requires both current OTP and account password for safety."""
+    otp = serializers.CharField(
+        required=True,
+        min_length=6,
+        max_length=6,
+        help_text='6-digit TOTP code from authenticator app'
+    )
+    password = serializers.CharField(
+        required=True,
+        style={'input_type': 'password'},
+        help_text='Current account password'
+    )
+
+
+class PrivacyPolicySerializer(serializers.Serializer):
+    version = serializers.CharField(read_only=True)
+    content = serializers.CharField(read_only=True)
+    effective_date = serializers.CharField(read_only=True)
 

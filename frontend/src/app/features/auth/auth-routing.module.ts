@@ -5,6 +5,8 @@ import { RegisterComponent } from './components/register/register.component';
 import { ChangePasswordComponent } from './components/change-password/change-password.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { MfaVerifyComponent } from './components/mfa-verify/mfa-verify.component';
+import { MfaSetupComponent } from './components/mfa-setup/mfa-setup.component';
 
 const routes: Routes = [
   {
@@ -12,26 +14,13 @@ const routes: Routes = [
     redirectTo: 'login',
     pathMatch: 'full'
   },
-  {
-    path: 'login',
-    component: LoginComponent
-  },
-  {
-    path: 'register',
-    component: RegisterComponent
-  },
-  {
-    path: 'change-password',
-    component: ChangePasswordComponent
-  },
-  {
-    path: 'forgot-password',
-    component: ForgotPasswordComponent
-  },
-  {
-    path: 'reset-password',
-    component: ResetPasswordComponent
-  }
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'change-password', component: ChangePasswordComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
+  { path: 'mfa-verify', component: MfaVerifyComponent },
+  { path: 'mfa-setup', component: MfaSetupComponent }
 ];
 
 @NgModule({
