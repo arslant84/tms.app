@@ -12,4 +12,6 @@ class AccountsConfig(AppConfig):
         """
         # Import signals to register handlers for audit logging
         import accounts.signals  # noqa: F401
+        # Register drf-spectacular OpenAPI extensions for custom auth backends
+        import accounts.schema_extensions  # noqa: F401
         # Email settings are now loaded from .env file (no database loading needed)

@@ -1,0 +1,232 @@
+@use 'sass:color';
+@use '../../../../../styles/variables' as vars;
+
+.auth-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    vars.$primary-color 0%,
+    color.adjust(vars.$primary-color, $lightness: -8%) 100%
+  );
+  padding: vars.$spacing-4;
+  overflow-y: auto;
+}
+
+.auth-card {
+  background: vars.$white;
+  border-radius: vars.$radius-2xl;
+  box-shadow: vars.$shadow-2xl;
+  width: 100%;
+  max-width: 460px;
+  overflow: hidden;
+}
+
+.auth-header {
+  background: linear-gradient(
+    135deg,
+    vars.$primary-color 0%,
+    color.adjust(vars.$primary-color, $lightness: -8%) 100%
+  );
+  color: vars.$text-inverse;
+  padding: vars.$spacing-xl;
+  text-align: center;
+
+  h2 {
+    margin: vars.$spacing-3 0 vars.$spacing-1;
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-semibold;
+  }
+
+  p {
+    margin: 0;
+    opacity: 0.85;
+    font-size: vars.$font-size-sm;
+  }
+}
+
+.mfa-icon {
+  font-size: vars.$spacing-10;
+  line-height: 1;
+}
+
+.auth-body {
+  padding: vars.$spacing-7;
+
+  .input-group {
+    border-radius: vars.$radius-base;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 1px solid vars.$border-light;
+
+    &:focus-within {
+      border-color: vars.$primary-color;
+      box-shadow: 0 0 0 3px color.adjust(vars.$primary-color, $alpha: -0.85);
+    }
+
+    .input-group-text {
+      background-color: vars.$gray-50;
+      border: none;
+      color: vars.$gray-500;
+      padding: vars.$spacing-3 vars.$spacing-4;
+    }
+
+    .form-control {
+      border: none;
+      padding: vars.$spacing-3 vars.$spacing-4;
+      font-size: vars.$font-size-base;
+      color: vars.$text-primary;
+
+      &::placeholder { color: vars.$gray-400; }
+      &:focus { box-shadow: none; outline: none; }
+    }
+  }
+
+  .input-group:has(.is-invalid) {
+    border-color: vars.$error-color;
+
+    &:focus-within {
+      box-shadow: 0 0 0 3px color.adjust(vars.$error-color, $alpha: -0.85);
+    }
+  }
+
+  .btn-primary {
+    background: linear-gradient(
+      135deg,
+      vars.$primary-color 0%,
+      color.adjust(vars.$primary-color, $lightness: -5%) 100%
+    );
+    border: none;
+    padding: vars.$spacing-3 vars.$spacing-4;
+    font-size: vars.$font-size-base;
+    font-weight: vars.$font-weight-semibold;
+    border-radius: vars.$radius-base;
+    transition: background 0.1s ease;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(
+        135deg,
+        vars.$primary-hover 0%,
+        color.adjust(vars.$primary-hover, $lightness: -5%) 100%
+      );
+    }
+
+    &:active:not(:disabled) {
+      background: linear-gradient(
+        135deg,
+        vars.$primary-active 0%,
+        color.adjust(vars.$primary-active, $lightness: -5%) 100%
+      );
+    }
+
+    &:disabled {
+      background: vars.$gray-400;
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
+  }
+
+  .btn-outline-secondary {
+    border-color: vars.$border-light;
+    color: vars.$gray-500;
+
+    &:hover { border-color: vars.$primary-color; color: vars.$primary-color; }
+  }
+
+  .invalid-feedback {
+    font-size: vars.$font-size-xs;
+    color: vars.$error-color;
+    margin-top: vars.$spacing-1;
+  }
+
+  .alert-danger {
+    background-color: vars.$error-light;
+    border: 1px solid color.adjust(vars.$error-color, $alpha: -0.7);
+    color: vars.$error-dark;
+    border-radius: vars.$radius-base;
+    padding: vars.$spacing-3 vars.$spacing-4;
+    font-size: vars.$font-size-sm;
+    margin-bottom: vars.$spacing-5;
+  }
+}
+
+.step-section {
+  margin-bottom: vars.$spacing-6;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.step-label {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-2;
+  font-weight: vars.$font-weight-semibold;
+  font-size: vars.$font-size-base;
+  margin-bottom: vars.$spacing-2;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: vars.$primary-color;
+  color: vars.$text-inverse;
+  border-radius: vars.$radius-full;
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-bold;
+  flex-shrink: 0;
+}
+
+.step-hint {
+  color: vars.$text-secondary;
+  font-size: vars.$font-size-sm;
+  margin: 0;
+}
+
+.qr-container {
+  display: flex;
+  justify-content: center;
+  padding: vars.$spacing-4 0;
+}
+
+.qr-code {
+  border: 2px solid vars.$border-light;
+  border-radius: vars.$radius-lg;
+}
+
+.secret-section {
+  margin-top: vars.$spacing-3;
+}
+
+.secret-box {
+  display: flex;
+  align-items: center;
+  background: vars.$gray-50;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-lg;
+  padding: vars.$spacing-2 vars.$spacing-3;
+}
+
+.secret-text {
+  font-size: vars.$font-size-sm;
+  letter-spacing: 0.15rem;
+  color: vars.$gray-600;
+  flex: 1;
+  word-break: break-all;
+}
+
+.otp-input {
+  font-size: vars.$font-size-xl;
+  letter-spacing: 0.5rem;
+  text-align: center;
+  font-weight: vars.$font-weight-semibold;
+}

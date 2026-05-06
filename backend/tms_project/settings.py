@@ -25,6 +25,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 
+# Field-level encryption key for sensitive personal data at rest (CTRL-0000001066).
+# Generate: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+FIELD_ENCRYPTION_KEY = config('FIELD_ENCRYPTION_KEY', default=None)
+
+# SIEM log output directory (CTRL-0000001356). Point your SIEM agent at <dir>/security.json.
+SIEM_LOG_DIR = config('SIEM_LOG_DIR', default=str(BASE_DIR / 'logs'))
+
+# Privacy policy version shown to users at registration (CTRL-0000001000/1001/1003).
+PRIVACY_POLICY_VERSION = config('PRIVACY_POLICY_VERSION', default='1.0')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
@@ -47,6 +57,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',  # JWT authentication
     'rest_framework_simplejwt.token_blacklist',  # Token blacklist for logout
     'corsheaders',
+    'drf_spectacular',
+    'drf_spectacular_sidecar',  # Serves Swagger/ReDoc assets locally (no CDN)
 
     # Custom apps
     'accounts',
@@ -63,6 +75,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -184,6 +197,19 @@ REST_FRAMEWORK = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# Serve Angular SPA static assets at root URL (JS, CSS, images with <base href="/">)
+WHITENOISE_ROOT = os.path.join(BASE_DIR.parent, 'frontend', 'dist', 'tms-frontend', 'browser')
+
+# drf-spectacular: serve Swagger/ReDoc UI assets locally so CDN is not required
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'TMS API',
+    'DESCRIPTION': 'Travel Management System API',
+    'VERSION': '1.0.0',
+    'SWAGGER_UI_DIST': 'SIDECAR',
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+}
+
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = False  # SECURITY: Restricted to specific origins
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:4200,http://127.0.0.1:4200', cast=Csv())
@@ -276,6 +302,9 @@ SIMPLE_JWT = {
 
 # Logging Configuration
 # Clean, readable logs for development - ONLY application logs
+import os as _os
+_os.makedirs(SIEM_LOG_DIR, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -285,12 +314,24 @@ LOGGING = {
             'style': '{',
             'datefmt': '%H:%M:%S',
         },
+        'json': {
+            'format': '%(message)s',
+        },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'app',
             'level': 'INFO',
+        },
+        'siem_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': str(BASE_DIR / SIEM_LOG_DIR / 'security.json') if not _os.path.isabs(SIEM_LOG_DIR) else str(_os.path.join(SIEM_LOG_DIR, 'security.json')),
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB per file
+            'backupCount': 30,              # 30 days of rotated files
+            'formatter': 'json',
+            'level': 'INFO',
+            'encoding': 'utf-8',
         },
     },
     'root': {
@@ -372,6 +413,11 @@ LOGGING = {
         },
         'accommodation': {
             'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'security.siem': {
+            'handlers': ['siem_file'],
             'level': 'INFO',
             'propagate': False,
         },

@@ -1352,8 +1352,6 @@ class TrfPassportDetailViewSet(viewsets.ModelViewSet):
     queryset = TrfPassportDetail.objects.all()
     serializer_class = TrfPassportDetailSerializer
     permission_classes = [IsAuthenticated]
-    # Support both JSON and multipart for file uploads
-    parser_classes = None  # Will use default parsers including MultiPartParser
 
     def get_serializer_context(self):
         """Include request in serializer context for building absolute URLs"""
