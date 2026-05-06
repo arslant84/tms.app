@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { map, tap, catchError, shareReplay, filter, take, switchMap } from 'rxjs/operators';
-import { User, AuthResponse } from '../models/user.model';
+import { User, AuthResponse, LoginResult } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -67,70 +67,138 @@ export class AuthService {
     );
   }
 
-  login(email: string, password: string): Observable<User> {
-    // The backend login endpoint is at /api/login/
-    const url = `${this.apiUrl}/api/login/`;
+  private challengeToken: string | null = null;
 
-    // Django expects JSON data
-    const body = {
-      email: email,
-      password: password
+  getChallengeToken(): string | null { return this.challengeToken; }
+
+  private mapToUser(data: Partial<User>, fallbackEmail = ''): User {
+    return {
+      id: data.id!,
+      name: data.name || fallbackEmail.split('@')[0],
+      email: data.email || fallbackEmail,
+      role: data.role || '' as any,
+      department: data.department || '',
+      is_admin: data.is_admin || false,
+      is_active: data.is_active !== undefined ? data.is_active : true,
+      permissions: data.permissions || [],
+      staff_id: data.staff_id,
+      phone: data.phone,
+      position: data.position,
+      gender: data.gender,
+      profile_photo: data.profile_photo,
+      last_login_at: data.last_login_at,
+      password_change_required: data.password_change_required,
+      mfa_enabled: data.mfa_enabled,
+      mfa_setup_required: data.mfa_setup_required,
     };
+  }
 
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
+  login(email: string, password: string): Observable<LoginResult> {
+    const url = `${this.apiUrl}/api/login/`;
+    const body = { email, password };
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
 
-    // SECURITY: withCredentials: true allows cookies to be sent/received
     return this.http.post<AuthResponse>(url, body, { headers, withCredentials: true }).pipe(
       map(response => {
-        // SECURITY: No localStorage - token is in HttpOnly cookie
-        // Backend sets the cookie, we just store user data in memory
+        // MFA challenge — backend has NOT set cookies yet
+        if (response.data.mfa_required) {
+          this.challengeToken = response.data.challenge_token || null;
+          return { type: 'mfa_required' as const };
+        }
 
-        const user: User = {
-          id: response.data.id!,
-          name: response.data.name || email.split('@')[0],
-          email: response.data.email || email,
-          role: response.data.role || '' as any,
-          department: response.data.department || '',
-          is_admin: response.data.is_admin || false,
-          is_active: response.data.is_active !== undefined ? response.data.is_active : true,
-          // Include permissions array from backend
-          permissions: response.data.permissions || [],
-          // Include all additional fields from backend
-          staff_id: response.data.staff_id,
-          phone: response.data.phone,
-          position: response.data.position,
-          gender: response.data.gender,
-          profile_photo: response.data.profile_photo,
-          last_login_at: response.data.last_login_at
-        };
-
-        // Store user data in memory (not localStorage)
+        // Normal login or privileged user needing MFA enrolment — cookies already set
+        const user = this.mapToUser(response.data, email);
         this.currentUserSubject.next(user);
         this.initializedSubject.next(true);
-        return user;
+
+        if (response.data.mfa_setup_required) {
+          return { type: 'mfa_setup_required' as const, user };
+        }
+
+        return { type: 'success' as const, user };
       }),
       catchError(error => {
-        console.error('Login failed', error);
-        console.error('Error status:', error.status);
-        console.error('Error message:', error.message);
-        console.error('Error details:', error.error);
-
         let errorMessage = 'Login failed. Please check your credentials.';
-
         if (error.status === 0) {
           errorMessage = 'Cannot connect to the server. Please check your network connection.';
         } else if (error.status === 404) {
           errorMessage = 'Login service not found. Please contact the administrator.';
         } else if (error.status === 401) {
           errorMessage = 'Invalid email or password. Please try again.';
-        } else if (error.error?.detail) {
-          errorMessage = error.error.detail;
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
         }
-
         return throwError(() => new Error(errorMessage));
       })
+    );
+  }
+
+  verifyMfa(challengeToken: string, otp: string): Observable<User> {
+    return this.http.post<AuthResponse>(
+      `${this.apiUrl}/api/mfa/verify/`,
+      { challenge_token: challengeToken, otp },
+      { withCredentials: true }
+    ).pipe(
+      map(response => {
+        this.challengeToken = null;
+        const user = this.mapToUser(response.data);
+        this.currentUserSubject.next(user);
+        this.initializedSubject.next(true);
+        return user;
+      }),
+      catchError(error => throwError(() => new Error(
+        error.error?.message || error.error?.detail || 'Invalid or expired code.'
+      )))
+    );
+  }
+
+  setupMfa(): Observable<{ secret: string; qr_uri: string }> {
+    return this.http.get<{ success: boolean; data: { secret: string; qr_uri: string } }>(
+      `${this.apiUrl}/api/mfa/setup/`,
+      { withCredentials: true }
+    ).pipe(
+      map(response => response.data),
+      catchError(error => throwError(() => new Error(
+        error.error?.message || 'Failed to initialise MFA setup.'
+      )))
+    );
+  }
+
+  confirmMfa(otp: string): Observable<void> {
+    return this.http.post<any>(
+      `${this.apiUrl}/api/mfa/confirm/`,
+      { otp },
+      { withCredentials: true }
+    ).pipe(
+      tap(() => {
+        const user = this.currentUserSubject.value;
+        if (user) {
+          this.currentUserSubject.next({ ...user, mfa_enabled: true, mfa_setup_required: false });
+        }
+      }),
+      map(() => void 0),
+      catchError(error => throwError(() => new Error(
+        error.error?.message || 'Invalid code. Please try again.'
+      )))
+    );
+  }
+
+  disableMfa(password: string, otp: string): Observable<void> {
+    return this.http.post<any>(
+      `${this.apiUrl}/api/mfa/disable/`,
+      { password, otp },
+      { withCredentials: true }
+    ).pipe(
+      tap(() => {
+        const user = this.currentUserSubject.value;
+        if (user) {
+          this.currentUserSubject.next({ ...user, mfa_enabled: false });
+        }
+      }),
+      map(() => void 0),
+      catchError(error => throwError(() => new Error(
+        error.error?.message || 'Failed to disable MFA.'
+      )))
     );
   }
 

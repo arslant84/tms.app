@@ -32,6 +32,15 @@ def csrf_token_view(request):
     return JsonResponse({'detail': 'CSRF cookie set'})
 
 
+def serve_spa(request, path=''):
+    index_path = os.path.join(settings.BASE_DIR.parent, 'frontend', 'dist', 'tms-frontend', 'browser', 'index.html')
+    try:
+        with open(index_path, 'rb') as f:
+            return HttpResponse(f.read(), content_type='text/html')
+    except FileNotFoundError:
+        return HttpResponse("Frontend not built. Run 'ng build' in the frontend/ directory.", status=503, content_type='text/plain')
+
+
 def security_txt(request):
     """Serve the security.txt file per RFC 9116"""
     security_txt_path = os.path.join(settings.BASE_DIR, 'static', '.well-known', 'security.txt')
@@ -73,3 +82,10 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Catch-all: serve Angular SPA index.html for any non-API path
+# WhiteNoise handles the actual JS/CSS/image asset files at root URL
+urlpatterns += [
+    path('', serve_spa, name='spa-root'),
+    path('<path:path>', serve_spa, name='spa'),
+]

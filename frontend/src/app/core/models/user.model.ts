@@ -59,6 +59,9 @@ export interface User {
   last_login_at?: string;
   // SECURITY: Password change required flag
   password_change_required?: boolean;
+  // MFA flags
+  mfa_enabled?: boolean;
+  mfa_setup_required?: boolean;
 }
 
 export interface AuthMeta {
@@ -71,6 +74,14 @@ export interface AuthMeta {
 export interface AuthResponse {
   success: boolean;
   message: string;
-  data: Partial<User>;
+  data: Partial<User> & {
+    mfa_required?: boolean;
+    challenge_token?: string;
+  };
   meta?: AuthMeta;
+}
+
+export interface LoginResult {
+  type: 'success' | 'mfa_required' | 'mfa_setup_required';
+  user?: User;
 }

@@ -16,6 +16,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 
+# Field-level encryption key for sensitive personal data at rest (CTRL-0000001066).
+# Generate: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+FIELD_ENCRYPTION_KEY = config('FIELD_ENCRYPTION_KEY', default=None)
+
+# SIEM log output directory (CTRL-0000001356). Point your SIEM agent at <dir>/security.json.
+SIEM_LOG_DIR = config('SIEM_LOG_DIR', default=str(BASE_DIR / 'logs'))
+
+# Privacy policy version shown to users at registration (CTRL-0000001000/1001/1003).
+PRIVACY_POLICY_VERSION = config('PRIVACY_POLICY_VERSION', default='1.0')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
@@ -40,6 +50,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'csp',  # Content Security Policy
     'drf_spectacular',  # OpenAPI schema generation
+    'drf_spectacular_sidecar',  # Serves Swagger/ReDoc assets locally (no CDN)
 
     # Custom apps
     'accounts',
@@ -57,6 +68,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve Angular SPA static assets at root URL
     'csp.middleware.CSPMiddleware',  # Content Security Policy - add early for security
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -222,6 +234,9 @@ All responses follow a standardized format:
     ''',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_DIST': 'SIDECAR',  # Serve Swagger UI assets locally, no CDN
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
     'SWAGGER_UI_SETTINGS': {
         'deepLinking': True,
         'persistAuthorization': True,
@@ -249,6 +264,9 @@ All responses follow a standardized format:
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Serve Angular SPA static assets at root URL (JS, CSS, images with <base href="/">)
+WHITENOISE_ROOT = os.path.join(BASE_DIR.parent, 'frontend', 'dist', 'tms-frontend', 'browser')
 
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = False  # SECURITY: Restricted to specific origins
@@ -363,6 +381,9 @@ SIMPLE_JWT = {
 
 # Logging Configuration
 # Clean, readable logs for development - ONLY application logs
+import os as _os
+_os.makedirs(SIEM_LOG_DIR, exist_ok=True)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -372,12 +393,24 @@ LOGGING = {
             'style': '{',
             'datefmt': '%H:%M:%S',
         },
+        'json': {
+            'format': '%(message)s',
+        },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'app',
             'level': 'INFO',
+        },
+        'siem_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(SIEM_LOG_DIR, 'security.json'),
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB per file
+            'backupCount': 30,              # 30 days of rotated files
+            'formatter': 'json',
+            'level': 'INFO',
+            'encoding': 'utf-8',
         },
     },
     'root': {
@@ -459,6 +492,11 @@ LOGGING = {
         },
         'accommodation': {
             'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'security.siem': {
+            'handlers': ['siem_file'],
             'level': 'INFO',
             'propagate': False,
         },

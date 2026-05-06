@@ -1,0 +1,103 @@
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="mfa-icon">
+        <i class="bi bi-shield-check"></i>
+      </div>
+      <h2>Set Up Two-Factor Authentication</h2>
+      <p>Required for privileged accounts</p>
+    </div>
+
+    <div class="auth-body">
+      <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+        {{ errorMessage }}
+      </div>
+
+      <div *ngIf="isLoading" class="text-center py-4">
+        <app-loading-spinner size="md"></app-loading-spinner>
+        <p class="text-muted mt-2 mb-0">Generating your setup code…</p>
+      </div>
+
+      <div *ngIf="!isLoading && !errorMessage">
+        <!-- Step 1: QR Code -->
+        <div class="step-section">
+          <div class="step-label">
+            <span class="step-number">1</span>
+            Install an authenticator app
+          </div>
+          <p class="step-hint">
+            Use <strong>Google Authenticator</strong>, <strong>Microsoft Authenticator</strong>,
+            <strong>Authy</strong>, or any TOTP-compatible app.
+          </p>
+        </div>
+
+        <div class="step-section">
+          <div class="step-label">
+            <span class="step-number">2</span>
+            Scan the QR code
+          </div>
+          <div class="qr-container">
+            <img [src]="qrCodeDataUrl" alt="MFA QR Code" class="qr-code" />
+          </div>
+
+          <div class="secret-section">
+            <p class="text-muted small mb-1">Can't scan? Enter this key manually:</p>
+            <div class="secret-box">
+              <code class="secret-text">{{ secret }}</code>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary ms-2"
+                (click)="copySecret()"
+                [title]="secretCopied ? 'Copied!' : 'Copy to clipboard'"
+              >
+                <i class="bi" [class.bi-clipboard]="!secretCopied" [class.bi-clipboard-check]="secretCopied"></i>
+                {{ secretCopied ? 'Copied' : 'Copy' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Confirm OTP -->
+        <div class="step-section">
+          <div class="step-label">
+            <span class="step-number">3</span>
+            Enter the 6-digit code to confirm
+          </div>
+
+          <form [formGroup]="confirmForm" (ngSubmit)="onConfirm()" novalidate>
+            <div class="form-group mb-3">
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                <input
+                  type="text"
+                  class="form-control otp-input"
+                  formControlName="otp"
+                  placeholder="000000"
+                  maxlength="6"
+                  inputmode="numeric"
+                  autocomplete="one-time-code"
+                  [ngClass]="{'is-invalid': confirmForm.get('otp')?.invalid && confirmForm.get('otp')?.touched}"
+                >
+              </div>
+              <div *ngIf="confirmForm.get('otp')?.invalid && confirmForm.get('otp')?.touched" class="invalid-feedback d-block mt-1 ms-1">
+                <div *ngIf="confirmForm.get('otp')?.errors?.['required']">Code is required</div>
+                <div *ngIf="confirmForm.get('otp')?.errors?.['pattern']">Enter the 6-digit code from your app</div>
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <button
+                type="submit"
+                class="btn btn-primary btn-lg"
+                [disabled]="confirmForm.invalid || isSubmitting"
+              >
+                <app-loading-spinner *ngIf="isSubmitting" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
+                {{ isSubmitting ? 'Activating…' : 'Activate MFA & Continue' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

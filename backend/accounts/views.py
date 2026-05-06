@@ -17,6 +17,10 @@ from datetime import timedelta
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
 from drf_spectacular.types import OpenApiTypes
 import logging
+import pyotp
+from django.db.models import Q
+from django.core import signing
+from django.core.signing import SignatureExpired, BadSignature
 
 # Import standardized response utilities
 from utils.api_response import (
@@ -31,7 +35,9 @@ from .serializers import (
     UserSerializer, UserCreateSerializer, UserProfileUpdateSerializer, UserAdminUpdateSerializer, RoleSerializer, PermissionSerializer,
     ApplicationSettingSerializer, ApplicationSettingCreateSerializer, ApplicationSettingUpdateSerializer, PasswordChangeSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer, AdminActionLogSerializer,
-    DepartmentSerializer, DepartmentListSerializer, UserRegistrationSerializer
+    DepartmentSerializer, DepartmentListSerializer, UserRegistrationSerializer,
+    MFAStatusSerializer, MFAConfirmSerializer, MFAVerifySerializer, MFADisableSerializer,
+    PrivacyPolicySerializer,
 )
 from .utils import has_permission
 from .models import Role, Permission, ApplicationSetting, AdminActionLog, Department
@@ -76,6 +82,27 @@ class LoginView(APIView):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            # MFA gate — if MFA is enabled, return a short-lived challenge
+            # token instead of issuing JWT cookies (CTRL-0000001024/1063).
+            if user.mfa_enabled:
+                challenge_token = signing.dumps(
+                    {'user_id': str(user.id)},
+                    salt='mfa-login-challenge',
+                )
+                AdminActionLog.log_action(
+                    user=user,
+                    action_type='login_success',
+                    description=f"MFA challenge issued for: {user.email}",
+                    entity_type='User',
+                    entity_id=str(user.id),
+                    request=request
+                )
+                return success_response(
+                    data={'mfa_required': True, 'challenge_token': challenge_token},
+                    message='MFA verification required',
+                    status_code=status.HTTP_200_OK
+                )
+
             # SECURITY: Log successful login for audit trail
             AdminActionLog.log_action(
                 user=user,
@@ -91,11 +118,34 @@ class LoginView(APIView):
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)
 
-            # Create standardized response with user data
-            # Note: User data goes directly in 'data' field for frontend compatibility
+            # CTRL-0000001025 / CTRL-0000001061: privileged passwords expire after 30 days.
+            is_privileged = user.is_admin or user.is_staff or user.is_superuser
+            if is_privileged and user.password_last_changed:
+                age_days = (timezone.now() - user.password_last_changed).days
+                if age_days >= 30 and not user.password_change_required:
+                    user.password_change_required = True
+                    user.save(update_fields=['password_change_required'])
+                    AdminActionLog.log_action(
+                        user=user,
+                        action_type='password_expired',
+                        description=f"Privileged account password expired ({age_days} days old): {user.email}",
+                        entity_type='User',
+                        entity_id=str(user.id),
+                        request=request
+                    )
+
+            # CTRL-0000001063: privileged accounts must enrol MFA.
+            # Issue JWT so they can reach the setup endpoint, but signal
+            # the frontend to redirect to MFA setup before allowing access.
+            mfa_setup_required = is_privileged and not user.mfa_enabled
+
+            user_data = UserSerializer(user).data
+            if mfa_setup_required:
+                user_data['mfa_setup_required'] = True
+
             response = success_response(
-                data=UserSerializer(user).data,
-                message='Login successful',
+                data=user_data,
+                message='Login successful — MFA setup required' if mfa_setup_required else 'Login successful',
                 status_code=status.HTTP_200_OK
             )
 
@@ -302,8 +352,8 @@ class PasswordChangeView(APIView):
 
         # Set new password
         user.set_password(new_password)
-        # SECURITY: Clear password change requirement
         user.password_change_required = False
+        user.password_last_changed = timezone.now()  # CTRL-0000001025
         user.save()
 
         return success_response(
@@ -427,11 +477,10 @@ class PasswordResetConfirmView(APIView):
 
             # Set new password
             user.set_password(new_password)
-            # Clear reset token
             user.password_reset_token = None
             user.password_reset_token_expires = None
-            # Clear password change requirement if set
             user.password_change_required = False
+            user.password_last_changed = timezone.now()  # CTRL-0000001025
             user.save()
 
             logger.info(f"Password reset successful for user: {user.email}")
@@ -755,6 +804,45 @@ class UserViewSet(viewsets.ModelViewSet):
             data=serializer.data,
             message='User deactivated successfully',
             status_code=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=['post'], url_path='access-review', permission_classes=[permissions.IsAdminUser])
+    def access_review(self, request, pk=None):
+        """Record a completed access review for a user. CTRL-0000001018."""
+        user = self.get_object()
+        user.last_access_review = timezone.now()
+        user.last_access_review_by = request.user
+        user.save(update_fields=['last_access_review', 'last_access_review_by'])
+        AdminActionLog.log_action(
+            user=request.user,
+            action_type='access_review',
+            description=f'Access review completed for user: {user.email}',
+            entity_type='User',
+            entity_id=str(user.id),
+            request=request,
+        )
+        return success_response(
+            data={
+                'last_access_review': user.last_access_review.isoformat(),
+                'reviewed_by': request.user.email,
+            },
+            message=f'Access review recorded for {user.email}',
+            status_code=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=['get'], url_path='access-review-due', permission_classes=[permissions.IsAdminUser])
+    def access_review_due(self, request):
+        """List active users overdue for access review (never reviewed or >90 days). CTRL-0000001018."""
+        review_threshold = timezone.now() - timedelta(days=90)
+        users = self.get_queryset().filter(
+            Q(last_access_review__isnull=True) | Q(last_access_review__lt=review_threshold),
+            is_active=True,
+        )
+        serializer = self.get_serializer(users, many=True)
+        return success_response(
+            data=serializer.data,
+            message=f'{users.count()} user(s) due for access review',
+            status_code=status.HTTP_200_OK,
         )
 
 
@@ -1097,5 +1185,303 @@ class AdminActionLogViewSet(viewsets.ReadOnlyModelViewSet):
         return success_response(
             data=stats_data,
             message='Audit log statistics retrieved successfully',
+            status_code=status.HTTP_200_OK
+        )
+
+
+# ---------------------------------------------------------------------------
+# MFA Views — CTRL-0000001024 / CTRL-0000001063
+# ---------------------------------------------------------------------------
+
+class MFASetupView(APIView):
+    """
+    GET  /api/auth/mfa/setup/
+    Returns a TOTP secret and QR provisioning URI.
+    The user scans the QR code in their authenticator app, then calls
+    MFAConfirmView to activate MFA on their account.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        if user.mfa_enabled:
+            return error_response(
+                message='MFA is already enabled on this account.',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Generate a new secret (overwriting any previous unconfirmed setup)
+        secret = pyotp.random_base32()
+        user.mfa_secret = secret
+        user.save(update_fields=['mfa_secret'])
+
+        totp = pyotp.TOTP(secret)
+        qr_uri = totp.provisioning_uri(name=user.email, issuer_name='TMS Application')
+
+        return success_response(
+            data={'secret': secret, 'qr_uri': qr_uri},
+            message='Scan the QR code with your authenticator app, then confirm with /mfa/confirm/',
+            status_code=status.HTTP_200_OK
+        )
+
+
+class MFAConfirmView(APIView):
+    """
+    POST /api/auth/mfa/confirm/
+    Verifies the first OTP from the authenticator app and enables MFA.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = MFAConfirmSerializer(data=request.data)
+        if not serializer.is_valid():
+            return validation_error_response(serializer.errors)
+
+        user = request.user
+        otp = serializer.validated_data['otp']
+
+        if not user.mfa_secret:
+            return error_response(
+                message='No MFA setup in progress. Call /mfa/setup/ first.',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        totp = pyotp.TOTP(user.mfa_secret)
+        if not totp.verify(otp, valid_window=1):
+            AdminActionLog.log_action(
+                user=user,
+                action_type='mfa_failed',
+                description=f"MFA confirm failed (invalid OTP): {user.email}",
+                entity_type='User',
+                entity_id=str(user.id),
+                request=request
+            )
+            return error_response(
+                message='Invalid OTP code. Please try again.',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.mfa_enabled = True
+        user.save(update_fields=['mfa_enabled'])
+
+        AdminActionLog.log_action(
+            user=user,
+            action_type='mfa_enabled',
+            description=f"MFA enabled for user: {user.email}",
+            entity_type='User',
+            entity_id=str(user.id),
+            request=request
+        )
+
+        return success_response(
+            data={'mfa_enabled': True},
+            message='MFA has been enabled on your account.',
+            status_code=status.HTTP_200_OK
+        )
+
+
+class MFAVerifyView(APIView):
+    """
+    POST /api/auth/mfa/verify/
+    Called after a login attempt returns mfa_required=true.
+    Validates the challenge_token and OTP, then issues full JWT cookies.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    @method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True))
+    def post(self, request):
+        serializer = MFAVerifySerializer(data=request.data)
+        if not serializer.is_valid():
+            return validation_error_response(serializer.errors)
+
+        challenge_token = serializer.validated_data['challenge_token']
+        otp = serializer.validated_data['otp']
+
+        # Decode the challenge token (max age 5 minutes)
+        try:
+            data = signing.loads(challenge_token, salt='mfa-login-challenge', max_age=300)
+        except SignatureExpired:
+            return unauthorized_response(message='MFA challenge expired. Please log in again.')
+        except BadSignature:
+            return unauthorized_response(message='Invalid challenge token.')
+
+        user = User.objects.filter(id=data.get('user_id')).first()
+        if not user or not user.mfa_enabled or not user.mfa_secret:
+            return unauthorized_response(message='Invalid MFA session.')
+
+        totp = pyotp.TOTP(user.mfa_secret)
+        if not totp.verify(otp, valid_window=1):
+            AdminActionLog.log_action(
+                user=user,
+                action_type='mfa_failed',
+                description=f"MFA login verification failed: {user.email}",
+                entity_type='User',
+                entity_id=str(user.id),
+                request=request
+            )
+            return unauthorized_response(message='Invalid OTP code.')
+
+        # CTRL-0000001025: check password age for privileged accounts after MFA verification.
+        is_privileged = user.is_admin or user.is_staff or user.is_superuser
+        if is_privileged and user.password_last_changed:
+            age_days = (timezone.now() - user.password_last_changed).days
+            if age_days >= 30 and not user.password_change_required:
+                user.password_change_required = True
+                user.save(update_fields=['password_change_required'])
+                AdminActionLog.log_action(
+                    user=user,
+                    action_type='password_expired',
+                    description=f"Privileged account password expired ({age_days} days old): {user.email}",
+                    entity_type='User',
+                    entity_id=str(user.id),
+                    request=request
+                )
+
+        # OTP valid — issue JWT tokens (same flow as normal login)
+        AdminActionLog.log_action(
+            user=user,
+            action_type='login_success',
+            description=f"MFA-verified login for: {user.email}",
+            entity_type='User',
+            entity_id=str(user.id),
+            request=request
+        )
+
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token_str = str(refresh)
+
+        response = success_response(
+            data=UserSerializer(user).data,
+            message='Login successful',
+            status_code=status.HTTP_200_OK
+        )
+        response.set_cookie('access_token', access_token, httponly=True, secure=not settings.DEBUG, samesite='Lax', max_age=3600, path='/')
+        response.set_cookie('refresh_token', refresh_token_str, httponly=True, secure=not settings.DEBUG, samesite='Lax', max_age=86400 * 7, path='/')
+
+        token, _ = Token.objects.get_or_create(user=user)
+        response.set_cookie('auth_token', token.key, httponly=True, secure=not settings.DEBUG, samesite='Lax', max_age=86400 * 7, path='/')
+
+        return response
+
+
+class MFADisableView(APIView):
+    """
+    POST /api/auth/mfa/disable/
+    Disables MFA after verifying OTP + account password for safety.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = MFADisableSerializer(data=request.data)
+        if not serializer.is_valid():
+            return validation_error_response(serializer.errors)
+
+        user = request.user
+        otp = serializer.validated_data['otp']
+        password = serializer.validated_data['password']
+
+        if not user.mfa_enabled:
+            return error_response(
+                message='MFA is not enabled on this account.',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not user.check_password(password):
+            return unauthorized_response(message='Incorrect password.')
+
+        totp = pyotp.TOTP(user.mfa_secret)
+        if not totp.verify(otp, valid_window=1):
+            AdminActionLog.log_action(
+                user=user,
+                action_type='mfa_failed',
+                description=f"MFA disable failed (invalid OTP): {user.email}",
+                entity_type='User',
+                entity_id=str(user.id),
+                request=request
+            )
+            return error_response(
+                message='Invalid OTP code.',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.mfa_enabled = False
+        user.mfa_secret = None
+        user.save(update_fields=['mfa_enabled', 'mfa_secret'])
+
+        AdminActionLog.log_action(
+            user=user,
+            action_type='mfa_disabled',
+            description=f"MFA disabled for user: {user.email}",
+            entity_type='User',
+            entity_id=str(user.id),
+            request=request
+        )
+
+        return success_response(
+            data={'mfa_enabled': False},
+            message='MFA has been disabled on your account.',
+            status_code=status.HTTP_200_OK
+        )
+
+
+class MFAStatusView(APIView):
+    """GET /api/auth/mfa/status/ — returns whether MFA is enabled for the current user."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        return success_response(
+            data={'mfa_enabled': request.user.mfa_enabled},
+            message='MFA status retrieved',
+            status_code=status.HTTP_200_OK
+        )
+
+
+# ---------------------------------------------------------------------------
+# Privacy Policy View — CTRL-0000001000 / CTRL-0000001001 / CTRL-0000001003
+# ---------------------------------------------------------------------------
+
+class PrivacyPolicyView(APIView):
+    """
+    GET /api/auth/privacy-policy/
+    Returns the current privacy policy text and version.
+    Public endpoint — shown to users before/during registration.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    POLICY_TEXT = """
+TMS APPLICATION PRIVACY NOTICE
+
+1. PURPOSE: Your personal data (name, email, staff ID, phone, department, travel details,
+   passport information, and bank details) is collected solely for the purpose of processing
+   travel requests and related logistics within the organisation.
+
+2. RETENTION: Personal data is retained for the period required by the organisation's
+   data retention policy (default 7 years) and then securely disposed of.
+
+3. PROTECTION: Your data is protected using industry-standard encryption (AES-256 at rest,
+   TLS 1.2+ in transit) and access is restricted on a least-privilege basis.
+
+4. ACCESS & CORRECTION: You may request a copy of your personal data or corrections
+   by contacting the system administrator.
+
+5. OPT-OUT / ERASURE: Contact the system administrator to request deletion of your
+   account and associated personal data, subject to legal retention obligations.
+
+6. THIRD PARTIES: Your data will not be sold or disclosed to third parties outside
+   the organisation without your consent, except as required by law.
+""".strip()
+
+    def get(self, request):
+        from django.conf import settings as django_settings
+        version = getattr(django_settings, 'PRIVACY_POLICY_VERSION', '1.0')
+        return success_response(
+            data={
+                'version': version,
+                'content': self.POLICY_TEXT,
+                'effective_date': '2026-01-01',
+            },
+            message='Privacy policy retrieved',
             status_code=status.HTTP_200_OK
         )

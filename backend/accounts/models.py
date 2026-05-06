@@ -66,6 +66,7 @@ class UserManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
+        user.password_last_changed = timezone.now()
         user.save(using=self._db)
         return user
 
@@ -104,6 +105,22 @@ class User(AbstractUser):
     password_change_required = models.BooleanField(default=False, help_text='User must change password on next login')
     password_reset_token = models.CharField(max_length=64, blank=True, null=True, help_text='Token for password reset')
     password_reset_token_expires = models.DateTimeField(blank=True, null=True, help_text='Expiry time for reset token')
+
+    # MFA fields — CTRL-0000001024 / CTRL-0000001063
+    mfa_enabled = models.BooleanField(default=False, help_text='Whether TOTP MFA is enabled for this account')
+    mfa_secret = models.CharField(max_length=64, blank=True, null=True, help_text='TOTP secret (base32). Null until MFA is set up.')
+
+    # Password age tracking — CTRL-0000001025 / CTRL-0000001061
+    password_last_changed = models.DateTimeField(blank=True, null=True, help_text='Timestamp of last password change. Used to enforce 30-day expiry for privileged accounts.')
+
+    # Access review tracking — CTRL-0000001018
+    last_access_review = models.DateTimeField(blank=True, null=True, help_text='Timestamp of last formal access review by an administrator.')
+    last_access_review_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_users', help_text='Administrator who last reviewed this account access.')
+
+    # Privacy consent fields — CTRL-0000001000 / CTRL-0000001001 / CTRL-0000001003
+    privacy_consent = models.BooleanField(default=False, help_text='User accepted the privacy policy at registration')
+    privacy_consent_date = models.DateTimeField(blank=True, null=True, help_text='Timestamp when privacy consent was given')
+    privacy_policy_version = models.CharField(max_length=20, blank=True, null=True, help_text='Version of the privacy policy accepted')
 
     objects = UserManager()
     
@@ -230,6 +247,12 @@ class AdminActionLog(models.Model):
         ('approval_override', 'Approval Workflow Override'),
         ('permission_override', 'Permission Override'),
         ('data_modification', 'Direct Data Modification'),
+        ('mfa_enabled', 'MFA Enabled'),
+        ('mfa_disabled', 'MFA Disabled'),
+        ('mfa_failed', 'MFA Verification Failed'),
+        ('privacy_consent_given', 'Privacy Consent Given'),
+        ('access_review', 'Access Review Completed'),
+        ('password_expired', 'Password Expired — Change Forced'),
         ('other', 'Other Action'),
     )
 
@@ -291,4 +314,20 @@ class AdminActionLog(models.Model):
                 log_data['ip_address'] = request.META.get('REMOTE_ADDR')
             log_data['user_agent'] = request.META.get('HTTP_USER_AGENT', '')[:500]  # Limit length
 
-        return AdminActionLog.objects.create(**log_data)
+        instance = AdminActionLog.objects.create(**log_data)
+
+        # Forward every audit event to the SIEM log file (CTRL-0000001356)
+        try:
+            from utils.siem_logger import log_security_event
+            log_security_event(
+                action_type=action_type,
+                description=description,
+                user=user,
+                ip_address=log_data.get('ip_address'),
+                entity_type=entity_type,
+                entity_id=str(entity_id) if entity_id else '',
+            )
+        except Exception:
+            pass  # Never let SIEM logging break the audit trail itself
+
+        return instance

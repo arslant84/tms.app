@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from utils.encryption import EncryptedTextField
 
 class TravelRequest(models.Model):
     """
@@ -66,8 +67,8 @@ class TrfAdvanceAmountRequestedItem(models.Model):
 class TrfAdvanceBankDetail(models.Model):
     trf = models.OneToOneField(TravelRequest, on_delete=models.CASCADE)
     bank_name = models.CharField(max_length=255, blank=True, null=True)
-    account_number = models.CharField(max_length=255, blank=True, null=True)
-    account_name = models.CharField(max_length=255, blank=True, null=True)
+    account_number = EncryptedTextField(blank=True, null=True)  # CTRL-0000001066: encrypted at rest
+    account_name = EncryptedTextField(blank=True, null=True)    # CTRL-0000001066: encrypted at rest
     branch_address = models.TextField(blank=True, null=True)
     currency = models.CharField(max_length=255, blank=True, null=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
@@ -142,7 +143,7 @@ class TrfMealProvision(models.Model):
 class TrfPassportDetail(models.Model):
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=255, blank=True, null=True)
-    passport_number = models.CharField(max_length=255, blank=True, null=True)
+    passport_number = EncryptedTextField(blank=True, null=True)  # CTRL-0000001066: encrypted at rest
     nationality = models.CharField(max_length=255, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     place_of_birth = models.CharField(max_length=255, blank=True, null=True)

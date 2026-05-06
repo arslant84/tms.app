@@ -7,6 +7,8 @@ import { LoginComponent } from './components/login/login.component';
 import { ChangePasswordComponent } from './components/change-password/change-password.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { MfaVerifyComponent } from './components/mfa-verify/mfa-verify.component';
+import { MfaSetupComponent } from './components/mfa-setup/mfa-setup.component';
 
 @NgModule({
   declarations: [],
@@ -17,7 +19,9 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
     LoginComponent,
     ChangePasswordComponent,
     ForgotPasswordComponent,
-    ResetPasswordComponent
+    ResetPasswordComponent,
+    MfaVerifyComponent,
+    MfaSetupComponent
   ]
 })
 export class AuthModule { }
