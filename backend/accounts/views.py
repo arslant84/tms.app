@@ -350,6 +350,17 @@ class PasswordChangeView(APIView):
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
+        # CTRL-0000001025: enforce minimum 1-day password age for privileged accounts.
+        # Skip when password_change_required is True (forced change must not be blocked).
+        is_privileged = user.is_admin or user.is_staff or user.is_superuser
+        if is_privileged and not user.password_change_required and user.password_last_changed:
+            age_seconds = (timezone.now() - user.password_last_changed).total_seconds()
+            if age_seconds < 86400:
+                return error_response(
+                    message='Password was changed less than 24 hours ago. Please wait before changing again.',
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
         # Set new password
         user.set_password(new_password)
         user.password_change_required = False
