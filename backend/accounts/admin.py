@@ -2,7 +2,16 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django import forms
-from .models import User, Role, Permission, RolePermission, ApplicationSetting, AdminActionLog
+from django.conf import settings
+from django.http import FileResponse, HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import path, reverse
+from django.utils import timezone
+from django.utils.html import format_html
+from django.contrib import messages
+import subprocess
+import os
+from .models import User, Role, Permission, RolePermission, ApplicationSetting, AdminActionLog, DatabaseBackup
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -186,3 +195,214 @@ class AdminActionLogAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Prevent deletion of audit logs for security
         return False
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Database Backup & Restore (CTRL-0000001040, 1382)
+# ──────────────────────────────────────────────────────────────────────────────
+
+class RestoreForm(forms.Form):
+    backup_file = forms.FileField(
+        label='Backup file (.dump)',
+        help_text='Upload a pg_dump backup file previously created by this system.',
+    )
+    confirm = forms.BooleanField(
+        label='I understand this will permanently overwrite all current data',
+        required=True,
+    )
+
+
+@admin.register(DatabaseBackup)
+class DatabaseBackupAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'created_by', 'status_badge', 'size_display', 'created_at', 'download_btn')
+    readonly_fields = ('created_at', 'created_by', 'filename', 'file_size', 'status', 'notes')
+    list_filter = ('status',)
+
+    def has_add_permission(self, request):
+        return False  # created via the "Create Backup" button only
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path('create/', self.admin_site.admin_view(self.create_backup_view), name='accounts_create_backup'),
+            path('<int:pk>/download/', self.admin_site.admin_view(self.download_backup_view), name='accounts_download_backup'),
+            path('restore/', self.admin_site.admin_view(self.restore_backup_view), name='accounts_restore_backup'),
+        ]
+        return custom + urls
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['create_backup_url'] = reverse('admin:accounts_create_backup')
+        extra_context['restore_backup_url'] = reverse('admin:accounts_restore_backup')
+        return super().changelist_view(request, extra_context=extra_context)
+
+    # ── column helpers ──────────────────────────────────────────────────────
+
+    def status_badge(self, obj):
+        colours = {
+            DatabaseBackup.STATUS_COMPLETED: 'green',
+            DatabaseBackup.STATUS_FAILED: 'red',
+            DatabaseBackup.STATUS_CREATING: 'orange',
+        }
+        colour = colours.get(obj.status, 'grey')
+        return format_html(
+            '<span style="color:{};font-weight:bold">{}</span>',
+            colour, obj.get_status_display(),
+        )
+    status_badge.short_description = 'Status'
+
+    def size_display(self, obj):
+        if obj.file_size is None:
+            return '—'
+        for unit in ('B', 'KB', 'MB', 'GB'):
+            if obj.file_size < 1024:
+                return f'{obj.file_size:.1f} {unit}'
+            obj.file_size /= 1024
+        return f'{obj.file_size:.1f} TB'
+    size_display.short_description = 'Size'
+
+    def download_btn(self, obj):
+        if obj.status != DatabaseBackup.STATUS_COMPLETED:
+            return '—'
+        url = reverse('admin:accounts_download_backup', args=[obj.pk])
+        return format_html('<a class="button" href="{}">⬇ Download</a>', url)
+    download_btn.short_description = 'Download'
+
+    # ── views ───────────────────────────────────────────────────────────────
+
+    def create_backup_view(self, request):
+        backup_dir = settings.BACKUP_DIR
+        timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'tms_backup_{timestamp}.dump'
+        filepath = backup_dir / filename
+
+        record = DatabaseBackup.objects.create(
+            created_by=request.user,
+            filename=filename,
+            status=DatabaseBackup.STATUS_CREATING,
+            notes='Manual backup via admin panel.',
+        )
+
+        db = settings.DATABASES['default']
+        env = {**os.environ, 'PGPASSWORD': db.get('PASSWORD', '')}
+
+        try:
+            subprocess.run(
+                [
+                    'pg_dump',
+                    '-h', db.get('HOST', 'localhost'),
+                    '-p', str(db.get('PORT', 5432)),
+                    '-U', db.get('USER', 'postgres'),
+                    '-Fc',
+                    '-f', str(filepath),
+                    db.get('NAME', ''),
+                ],
+                env=env,
+                check=True,
+                capture_output=True,
+            )
+            record.file_size = filepath.stat().st_size
+            record.status = DatabaseBackup.STATUS_COMPLETED
+            record.save(update_fields=['file_size', 'status'])
+            messages.success(request, f'Backup "{filename}" created ({record.file_size:,} bytes).')
+        except subprocess.CalledProcessError as exc:
+            stderr = exc.stderr.decode(errors='replace') if exc.stderr else str(exc)
+            record.status = DatabaseBackup.STATUS_FAILED
+            record.notes = stderr
+            record.save(update_fields=['status', 'notes'])
+            messages.error(request, f'Backup failed: {stderr}')
+        except Exception as exc:
+            record.status = DatabaseBackup.STATUS_FAILED
+            record.notes = str(exc)
+            record.save(update_fields=['status', 'notes'])
+            messages.error(request, f'Backup failed: {exc}')
+
+        return HttpResponseRedirect(reverse('admin:accounts_databasebackup_changelist'))
+
+    def download_backup_view(self, request, pk):
+        backup = DatabaseBackup.objects.get(pk=pk)
+        filepath = settings.BACKUP_DIR / backup.filename
+        if not filepath.exists():
+            messages.error(request, 'Backup file not found on disk.')
+            return HttpResponseRedirect(reverse('admin:accounts_databasebackup_changelist'))
+        response = FileResponse(open(filepath, 'rb'), content_type='application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="{backup.filename}"'
+        return response
+
+    def restore_backup_view(self, request):
+        if not request.user.is_superuser:
+            messages.error(request, 'Only superusers can perform a restore.')
+            return HttpResponseRedirect(reverse('admin:accounts_databasebackup_changelist'))
+
+        if request.method == 'POST':
+            form = RestoreForm(request.POST, request.FILES)
+            if form.is_valid():
+                uploaded = request.FILES['backup_file']
+                timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+                restore_path = settings.BACKUP_DIR / f'restore_{timestamp}_{uploaded.name}'
+                with open(restore_path, 'wb') as f:
+                    for chunk in uploaded.chunks():
+                        f.write(chunk)
+
+                db = settings.DATABASES['default']
+                env = {**os.environ, 'PGPASSWORD': db.get('PASSWORD', '')}
+
+                # Auto-snapshot current state before overwriting
+                pre_filename = f'pre_restore_auto_{timestamp}.dump'
+                pre_path = settings.BACKUP_DIR / pre_filename
+                try:
+                    subprocess.run(
+                        ['pg_dump', '-h', db.get('HOST', 'localhost'),
+                         '-p', str(db.get('PORT', 5432)),
+                         '-U', db.get('USER', 'postgres'),
+                         '-Fc', '-f', str(pre_path), db.get('NAME', '')],
+                        env=env, check=True, capture_output=True,
+                    )
+                    DatabaseBackup.objects.create(
+                        created_by=request.user,
+                        filename=pre_filename,
+                        file_size=pre_path.stat().st_size,
+                        status=DatabaseBackup.STATUS_COMPLETED,
+                        notes='Auto-snapshot created before restore operation.',
+                    )
+                except Exception as exc:
+                    messages.warning(request, f'Pre-restore snapshot failed ({exc}). Proceeding anyway.')
+
+                try:
+                    subprocess.run(
+                        ['pg_restore', '-h', db.get('HOST', 'localhost'),
+                         '-p', str(db.get('PORT', 5432)),
+                         '-U', db.get('USER', 'postgres'),
+                         '-d', db.get('NAME', ''),
+                         '--clean', '--if-exists', str(restore_path)],
+                        env=env, check=True, capture_output=True,
+                    )
+                    messages.success(
+                        request,
+                        'Database restored successfully. '
+                        'Your session has been cleared — please log in again.',
+                    )
+                    return HttpResponseRedirect('/admin/login/')
+                except subprocess.CalledProcessError as exc:
+                    stderr = exc.stderr.decode(errors='replace') if exc.stderr else str(exc)
+                    messages.error(
+                        request,
+                        f'Restore failed: {stderr}. '
+                        f'A pre-restore snapshot was saved as "{pre_filename}".',
+                    )
+        else:
+            form = RestoreForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            'title': 'Restore Database from Backup',
+            'form': form,
+            'opts': DatabaseBackup._meta,
+        }
+        return render(request, 'admin/accounts/restore_backup.html', context)

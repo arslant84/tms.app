@@ -1,0 +1,26 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Restore Database Backup{% endblock %}
+
+{% block content %}
+<h1>Restore Database from Backup</h1>
+
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:16px;margin-bottom:24px">
+  <strong>&#9888; Warning — this operation is destructive.</strong>
+  <ul style="margin:8px 0 0 20px">
+    <li>All current data will be <strong>permanently replaced</strong> by the uploaded backup.</li>
+    <li>A pre-restore snapshot of the current database is saved automatically before proceeding.</li>
+    <li>Your session will be cleared and you will need to log in again after the restore completes.</li>
+    <li>Only restore files that were created by this system's backup function.</li>
+  </ul>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <table>{{ form.as_table }}</table>
+  <br>
+  <input type="submit" value="Restore Database"
+    style="background:#dc3545;color:#fff;border:none;padding:8px 16px;cursor:pointer;border-radius:4px">
+  &nbsp;
+  <a href="{% url 'admin:accounts_databasebackup_changelist' %}" class="button">Cancel</a>
+</form>
+{% endblock %}
