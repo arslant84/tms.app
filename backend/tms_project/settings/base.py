@@ -23,6 +23,10 @@ FIELD_ENCRYPTION_KEY = config('FIELD_ENCRYPTION_KEY', default=None)
 # SIEM log output directory (CTRL-0000001356). Point your SIEM agent at <dir>/security.json.
 SIEM_LOG_DIR = config('SIEM_LOG_DIR', default=str(BASE_DIR / 'logs'))
 
+# Database backup directory (CTRL-0000001040). pg_dump files are written here.
+BACKUP_DIR = BASE_DIR / 'backups'
+BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+
 # Privacy policy version shown to users at registration (CTRL-0000001000/1001/1003).
 PRIVACY_POLICY_VERSION = config('PRIVACY_POLICY_VERSION', default='1.0')
 

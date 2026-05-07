@@ -31,6 +31,9 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Database backup files (pg_dump) — never commit backup binaries to git
+backend/backups/
+
 # Static and media files (generated/uploaded)
 staticfiles/
 media/
