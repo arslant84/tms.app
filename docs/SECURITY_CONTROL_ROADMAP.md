@@ -107,9 +107,9 @@
 
 | Control ID | Control Title | Status | TMS Evidence / Gap |
 |---|---|---|---|
-| CTRL-0000001040 | Data backups performed per backup plan | ❌ | **No documented backup plan; no evidence of scheduled backups** |
-| CTRL-0000001296 | Backup and restoration plans created and maintained | ❌ | **No backup schedule or BSO-approved backup plan exists** |
-| CTRL-0000001382 | Backup restoration tested and verified | ❌ | **No backup restore test has been performed or documented** |
+| CTRL-0000001040 | Data backups performed per backup plan | ⚠️ | `backup_db` management command creates pg_dump `.dump` files; `DatabaseBackup` model tracks each run ✅; **backup must be registered as a scheduled task (cron/Task Scheduler) and BSO must approve schedule + retention policy** |
+| CTRL-0000001296 | Backup and restoration plans created and maintained | ⚠️ | Backup tooling implemented ✅; **no BSO-approved written backup plan (schedule, retention, off-site storage) exists yet** |
+| CTRL-0000001382 | Backup restoration tested and verified | ⚠️ | `validate_backup` management command validates backup integrity via `pg_restore --list` ✅; **a full restoration drill must be performed and documented** |
 
 ---
 
@@ -129,8 +129,8 @@
 | # | Priority | Control(s) | Action | Owner | Status |
 |---|---|---|---|---|---|
 | 1 | 🔴 High | 1025 | Enforce minimum 1-day password age for privileged accounts (prevent immediate re-change) | Dev | ✅ Done 2026-05-07 |
-| 2 | 🔴 High | 1040, 1296 | Define and document a backup schedule agreed with BSO; configure scheduled DB backups | Ops/DBA | ❌ Open |
-| 3 | 🔴 High | 1382 | Execute and document a backup restoration test | Ops/DBA | ❌ Open |
+| 2 | 🔴 High | 1040, 1296 | Register `backup_db` command as a scheduled task (daily cron); get BSO sign-off on schedule + retention | Ops/DBA | ⚙️ Dev done — Ops pending |
+| 3 | 🔴 High | 1382 | Perform and document a full backup restoration drill using `validate_backup` + `pg_restore` | Ops/DBA | ⚙️ Dev done — drill pending |
 | 4 | 🔴 High | 1192 | Create and maintain a system architecture diagram | Dev/Architect | ❌ Open |
 | 5 | 🔴 High | 1495 | Register TMS in CMDB / asset register with CS ratings | IT/Ops | ❌ Open |
 | 6 | 🟡 Medium | 1019 | Implement automated inactive account detection and disable (e.g. no login in 90 days) | Dev | ✅ Done 2026-05-07 |
@@ -156,8 +156,8 @@
 | Status | Count | Controls |
 |---|---|---|
 | ✅ Complete | 27 | 1000, 1001, 1003, 1006, 1008, 1009, 1013, 1014, 1018, 1019, 1021, 1022, 1023, 1024, 1025, 1061, 1063, 1065, 1066, 1067, 1178, 1191, 1356, 1415, 1513, 1514, 1517 |
-| ⚠️ Partial | 19 | 1005, 1007, 1012, 1015, 1016, 1033, 1036, 1037, 1038, 1042, 1053, 1190, 1195, 1196, 1360, 1515, 1596, 1601, 1603 |
-| ❌ Missing | 5 | 1040, 1192, 1296, 1382, 1495 |
+| ⚠️ Partial | 22 | 1005, 1007, 1012, 1015, 1016, 1033, 1036, 1037, 1038, 1040, 1042, 1053, 1190, 1195, 1196, 1296, 1360, 1382, 1515, 1596, 1601, 1603 |
+| ❌ Missing | 2 | 1192, 1495 |
 | 🏛️ Process/Org | 7 | 1002, 1035, 1177, 1189, 1050*, 1051* |
 | N/A | 3 | 1011, 1516, 1597** |
 | **Total** | **61** | |
