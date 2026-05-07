@@ -92,13 +92,14 @@ class Command(BaseCommand):
             bank_qs.update(account_number='', account_name='', branch_address='')
             self.stdout.write(self.style.SUCCESS(f"  Anonymised {bank_count} bank detail records."))
 
-        # --- 3. Delete old audit logs ---
-        old_logs_qs = AdminActionLog.objects.filter(created_at__lt=cutoff)
-        log_count = old_logs_qs.count()
-        self.stdout.write(f"  Audit logs to delete: {log_count}")
-        if not dry_run and log_count:
-            old_logs_qs.delete()
-            self.stdout.write(self.style.SUCCESS(f"  Deleted {log_count} audit log entries."))
+        # --- 3. Audit logs are intentionally excluded from PD cleanup ---
+        # AdminActionLog entries must be retained for compliance and forensic purposes.
+        # They are append-only (DB trigger prevents modification) and should only be
+        # purged manually by a DBA after the required legal retention period.
+        log_count = 0
+        self.stdout.write(
+            self.style.WARNING("  Audit logs: skipped (retained for compliance — CTRL-0000001603)")
+        )
 
         # --- 4. Delete inactive deactivated accounts past cutoff ---
         from accounts.models import User
