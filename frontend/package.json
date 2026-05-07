@@ -10,6 +10,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "postinstall": "node fix-bootstrap-css.js",
+    "prepare": "cd .. && git config core.hooksPath .husky",
     "lint": "npm run lint:ts && npm run lint:scss",
     "lint:ts": "eslint \"src/**/*.ts\"",
     "lint:ts:fix": "eslint \"src/**/*.ts\" --fix",
@@ -17,6 +18,19 @@
     "lint:scss:fix": "stylelint \"src/**/*.scss\" --fix",
     "format": "prettier --write \"src/**/*.{ts,html,scss,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss,css,json}\""
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --fix --max-warnings 0",
+      "prettier --write"
+    ],
+    "src/**/*.scss": [
+      "stylelint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.html": [
+      "prettier --write"
+    ]
   },
   "private": true,
   "dependencies": {
@@ -49,12 +63,14 @@
     "@typescript-eslint/parser": "7.18.0",
     "autoprefixer": "10.4.21",
     "eslint": "8.57.1",
+    "husky": "^9.1.7",
     "jasmine-core": "5.6.0",
     "karma": "6.4.0",
     "karma-chrome-launcher": "3.2.0",
     "karma-coverage": "2.2.0",
     "karma-jasmine": "5.1.0",
     "karma-jasmine-html-reporter": "2.1.0",
+    "lint-staged": "^16.4.0",
     "postcss": "8.5.6",
     "prettier": "3.7.4",
     "stylelint": "16.26.1",
