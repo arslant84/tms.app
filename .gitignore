@@ -17,6 +17,8 @@
 !VULNERABILITY_FIX_ROADMAP.md
 !README.md
 !LICENSE
+!.pre-commit-config.yaml
+!docs/
 
 # ========== Python Cache & Compiled Files ==========
 __pycache__/
@@ -78,3 +80,4 @@ Thumbs.db
 Desktop.ini
 CODE_STANDARDS_AND_REFACTORING_GUIDE.md
 *.md
+!docs/*.md
