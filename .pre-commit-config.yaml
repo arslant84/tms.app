@@ -1,0 +1,67 @@
+# Pre-commit hooks for TMS backend Python code.
+# Runs automatically before every git commit via Husky + lint-staged (frontend)
+# and this config (backend Python).
+#
+# First-time setup:
+#   pip install pre-commit      # already in requirements.txt
+#   pre-commit install          # registers the hook alongside husky
+#
+# Manual run on all files:
+#   pre-commit run --all-files
+
+repos:
+  # ── Standard file hygiene ────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        files: ^backend/
+      - id: end-of-file-fixer
+        files: ^backend/
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: debug-statements
+        files: ^backend/
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  # ── Python import sorting ─────────────────────────────────────────────────
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        files: ^backend/
+        args: ["--profile", "black", "--skip", "migrations", "--skip", "venv"]
+
+  # ── Python code formatting ────────────────────────────────────────────────
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        files: ^backend/
+        language_version: python3.12
+        exclude: ^backend/(migrations|venv)/
+
+  # ── Python linting ────────────────────────────────────────────────────────
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        files: ^backend/
+        args:
+          - "--max-line-length=120"
+          - "--extend-ignore=E203,W503"
+        exclude: ^backend/(migrations|venv)/
+
+  # ── Security scan (uses existing bandit.yaml) ────────────────────────────
+  - repo: local
+    hooks:
+      - id: bandit
+        name: bandit (security scan)
+        entry: bandit
+        language: system
+        types: [python]
+        files: ^backend/
+        args: ["-c", "backend/bandit.yaml", "-ll"]
+        exclude: ^backend/(migrations|venv|tests)/
