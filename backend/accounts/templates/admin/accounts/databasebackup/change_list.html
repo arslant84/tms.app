@@ -1,0 +1,14 @@
+{% extends "admin/change_list.html" %}
+{% block object-tools-items %}
+  <li>
+    <a href="{{ create_backup_url }}" class="button" style="background:#28a745;color:#fff;padding:6px 12px;border-radius:4px;text-decoration:none">
+      &#128190; Create Backup Now
+    </a>
+  </li>
+  <li>
+    <a href="{{ restore_backup_url }}" class="button" style="background:#dc3545;color:#fff;padding:6px 12px;border-radius:4px;text-decoration:none">
+      &#9100; Restore from Backup
+    </a>
+  </li>
+  {{ block.super }}
+{% endblock %}
