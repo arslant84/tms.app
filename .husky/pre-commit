@@ -1,2 +1,15 @@
 #!/usr/bin/env sh
+# Frontend: ESLint + Prettier + Stylelint via lint-staged
 cd frontend && npx lint-staged
+cd ..
+
+# Backend: black, isort, flake8, bandit via pre-commit
+# Tries Windows venv path first, then Unix path
+if [ -f backend/venv/Scripts/pre-commit ]; then
+    backend/venv/Scripts/pre-commit run --hook-stage pre-commit
+elif [ -f backend/venv/bin/pre-commit ]; then
+    backend/venv/bin/pre-commit run --hook-stage pre-commit
+else
+    echo "pre-commit not found in backend/venv — skipping Python checks"
+    echo "Run: pip install pre-commit  (in backend/venv)"
+fi
