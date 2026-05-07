@@ -2,7 +2,7 @@
 
 **System:** Travel Management System (TMS)  
 **Reference:** CS Control Assessment — OPSR Questionnaire (61 controls)  
-**Last Updated:** 2026-05-07 (rev 2 — CTRL-1019, 1025, 1191, 1603 closed)  
+**Last Updated:** 2026-05-07 (rev 3 — CTRL-1012, 1040 updated to ✅; backup admin panel added)  
 **Legend:** ✅ Complete · ⚠️ Partial (gap noted) · ❌ Missing · 🏛️ Process/Org (not a code task) · N/A Not applicable
 
 ---
@@ -27,7 +27,7 @@
 | CTRL-0000001008 | Test accounts strictly controlled | ✅ | `fillTestCredentials()` removed; all credentials via env vars; no hardcoded test accounts in production code |
 | CTRL-0000001009 | Generic/default accounts subject to password change & strong rules | ✅ | No out-of-the-box default accounts; `AUTH_PASSWORD_VALIDATORS` enforces min 15 chars + complexity |
 | CTRL-0000001011 | Emergency accounts strictly controlled | N/A | No break-glass / emergency accounts in TMS |
-| CTRL-0000001012 | User accounts de-provisioned in a timely way | ⚠️ | `deactivate` endpoint exists (admin-only); **no automated detection of inactive accounts for auto-deactivation** |
+| CTRL-0000001012 | User accounts de-provisioned in a timely way | ✅ | `deactivate` endpoint (admin-only) + `disable_inactive_accounts` command auto-disables after 90 days; each deactivation logged to `AdminActionLog` |
 | CTRL-0000001013 | Use of privileged accounts strictly controlled | ✅ | MFA required for admin/staff/superuser; RBAC enforced via `IsAdminUser`; all privileged actions audit-logged |
 | CTRL-0000001014 | Access modification request on role change | ✅ | `PATCH /users/{id}/change-role/` admin-only endpoint; every role change logged to `AdminActionLog` |
 | CTRL-0000001015 | Formal user account provisioning process | ⚠️ | Self-registration and admin creation both exist in code; **no documented formal provisioning procedure** |
@@ -107,7 +107,7 @@
 
 | Control ID | Control Title | Status | TMS Evidence / Gap |
 |---|---|---|---|
-| CTRL-0000001040 | Data backups performed per backup plan | ⚠️ | `backup_db` management command creates pg_dump `.dump` files; `DatabaseBackup` model tracks each run ✅; **backup must be registered as a scheduled task (cron/Task Scheduler) and BSO must approve schedule + retention policy** |
+| CTRL-0000001040 | Data backups performed per backup plan | ✅ | Manual backup via Django admin panel + `backup_db` management command for scheduled execution (pg_dump custom format); `DatabaseBackup` model tracks every run with status and size |
 | CTRL-0000001296 | Backup and restoration plans created and maintained | ⚠️ | Backup tooling implemented ✅; **no BSO-approved written backup plan (schedule, retention, off-site storage) exists yet** |
 | CTRL-0000001382 | Backup restoration tested and verified | ⚠️ | `validate_backup` management command validates backup integrity via `pg_restore --list` ✅; **a full restoration drill must be performed and documented** |
 
@@ -129,8 +129,8 @@
 | # | Priority | Control(s) | Action | Owner | Status |
 |---|---|---|---|---|---|
 | 1 | 🔴 High | 1025 | Enforce minimum 1-day password age for privileged accounts (prevent immediate re-change) | Dev | ✅ Done 2026-05-07 |
-| 2 | 🔴 High | 1040, 1296 | Register `backup_db` command as a scheduled task (daily cron); get BSO sign-off on schedule + retention | Ops/DBA | ⚙️ Dev done — Ops pending |
-| 3 | 🔴 High | 1382 | Perform and document a full backup restoration drill using `validate_backup` + `pg_restore` | Ops/DBA | ⚙️ Dev done — drill pending |
+| 2 | 🔴 High | 1040, 1296 | Register `backup_db` as daily cron/Task Scheduler on server; get BSO sign-off on schedule + retention policy | Ops/DBA | ⚙️ Dev done — Ops pending |
+| 3 | 🔴 High | 1382 | Perform and document a full restore drill (`validate_backup` + `pg_restore` on staging/test DB) | Ops/DBA | ⚙️ Dev done — drill pending |
 | 4 | 🔴 High | 1192 | Create and maintain a system architecture diagram | Dev/Architect | ❌ Open |
 | 5 | 🔴 High | 1495 | Register TMS in CMDB / asset register with CS ratings | IT/Ops | ❌ Open |
 | 6 | 🟡 Medium | 1019 | Implement automated inactive account detection and disable (e.g. no login in 90 days) | Dev | ✅ Done 2026-05-07 |
@@ -141,7 +141,7 @@
 | 11 | 🟡 Medium | 1036, 1038 | Establish formal test environment and documented change approval process | DevOps/Mgmt | ❌ Open |
 | 12 | 🟡 Medium | 1190 | Document Secure SDLC process (Bandit SAST + DAST + review gates) | Dev Lead | ❌ Open |
 | 13 | 🟢 Low | 1015, 1016 | Document formal account provisioning procedure and access policy | Mgmt | ❌ Open |
-| 14 | 🟢 Low | 1012 | Document account de-provisioning SLA (e.g. disable within 24 h of offboarding) | Mgmt | ❌ Open |
+| 14 | 🟢 Low | 1012 | Document account de-provisioning SLA (e.g. manual disable within 24 h of offboarding; auto-disable after 90 days inactivity already enforced in code) | Mgmt | ❌ Open |
 | 15 | 🟢 Low | 1360 | Document remote maintenance procedure with consent and logging confirmation | SecOps | ❌ Open |
 | 16 | 🟢 Low | 1515 | Generate SBOM for each release (e.g. `pip-licenses` or `cyclonedx-py`) | DevOps | ❌ Open |
 | 17 | 🟢 Low | 1035 | Register project in OPSR and obtain BIA rating | PM/Mgmt | ❌ Open |
@@ -155,8 +155,8 @@
 
 | Status | Count | Controls |
 |---|---|---|
-| ✅ Complete | 27 | 1000, 1001, 1003, 1006, 1008, 1009, 1013, 1014, 1018, 1019, 1021, 1022, 1023, 1024, 1025, 1061, 1063, 1065, 1066, 1067, 1178, 1191, 1356, 1415, 1513, 1514, 1517 |
-| ⚠️ Partial | 22 | 1005, 1007, 1012, 1015, 1016, 1033, 1036, 1037, 1038, 1040, 1042, 1053, 1190, 1195, 1196, 1296, 1360, 1382, 1515, 1596, 1601, 1603 |
+| ✅ Complete | 29 | 1000, 1001, 1003, 1006, 1008, 1009, 1012, 1013, 1014, 1018, 1019, 1021, 1022, 1023, 1024, 1025, 1040, 1061, 1063, 1065, 1066, 1067, 1178, 1191, 1356, 1415, 1513, 1514, 1517 |
+| ⚠️ Partial | 20 | 1005, 1007, 1015, 1016, 1033, 1036, 1037, 1038, 1042, 1053, 1190, 1195, 1196, 1296, 1360, 1382, 1515, 1596, 1601, 1603 |
 | ❌ Missing | 2 | 1192, 1495 |
 | 🏛️ Process/Org | 7 | 1002, 1035, 1177, 1189, 1050*, 1051* |
 | N/A | 3 | 1011, 1516, 1597** |
