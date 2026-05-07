@@ -11,6 +11,7 @@
 !backend/
 !.gitignore
 !.github/
+!.husky/
 
 # Exception: Allow security and documentation files at root
 !VULNERABILITY_FIX_ROADMAP.md
