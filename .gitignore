@@ -11,7 +11,6 @@
 !backend/
 !.gitignore
 !.github/
-!docs/
 
 # Exception: Allow security and documentation files at root
 !VULNERABILITY_FIX_ROADMAP.md
@@ -78,4 +77,3 @@ Thumbs.db
 Desktop.ini
 CODE_STANDARDS_AND_REFACTORING_GUIDE.md
 *.md
-!docs/*.md
