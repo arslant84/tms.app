@@ -331,3 +331,34 @@ class AdminActionLog(models.Model):
             pass  # Never let SIEM logging break the audit trail itself
 
         return instance
+
+
+class DatabaseBackup(models.Model):
+    """
+    Tracks pg_dump backup files created by backup_db management command (CTRL-0000001040).
+    """
+    STATUS_CREATING = 'creating'
+    STATUS_COMPLETED = 'completed'
+    STATUS_FAILED = 'failed'
+    STATUS_CHOICES = [
+        (STATUS_CREATING, 'Creating'),
+        (STATUS_COMPLETED, 'Completed'),
+        (STATUS_FAILED, 'Failed'),
+    ]
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        'User', null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+    )
+    filename = models.CharField(max_length=255)
+    file_size = models.BigIntegerField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_CREATING)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Database Backup'
+        verbose_name_plural = 'Database Backups'
+
+    def __str__(self):
+        return f'Backup {self.created_at:%Y-%m-%d %H:%M} ({self.get_status_display()})'
