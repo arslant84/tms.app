@@ -10,10 +10,11 @@
 
     <div class="login-body">
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
-
         <!-- Email field -->
         <div class="form-group mb-3">
-          <label for="email" class="form-label">Email address <span class="text-danger">*</span></label>
+          <label for="email" class="form-label"
+            >Email address <span class="text-danger">*</span></label
+          >
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
             <input
@@ -23,13 +24,16 @@
               formControlName="email"
               placeholder="name@example.com"
               autocomplete="email"
-              [ngClass]="{'is-invalid': hasError('email')}"
-            >
+              [ngClass]="{ 'is-invalid': hasError('email') }"
+            />
           </div>
           <div *ngIf="hasError('email')" class="invalid-feedback d-block mt-1 ms-1">
             {{ getErrorMessage('email') }}
           </div>
-          <div *ngIf="registerForm.get('email')?.hasError('serverError')" class="invalid-feedback d-block mt-1 ms-1">
+          <div
+            *ngIf="registerForm.get('email')?.hasError('serverError')"
+            class="invalid-feedback d-block mt-1 ms-1"
+          >
             {{ registerForm.get('email')?.errors?.['serverError'] }}
           </div>
         </div>
@@ -45,8 +49,8 @@
               id="name"
               formControlName="name"
               placeholder="John Doe"
-              [ngClass]="{'is-invalid': hasError('name')}"
-            >
+              [ngClass]="{ 'is-invalid': hasError('name') }"
+            />
           </div>
           <div *ngIf="hasError('name')" class="invalid-feedback d-block mt-1 ms-1">
             {{ getErrorMessage('name') }}
@@ -64,7 +68,7 @@
               id="staff_id"
               formControlName="staff_id"
               placeholder="EMP-12345"
-            >
+            />
           </div>
         </div>
 
@@ -79,20 +83,22 @@
               id="phone"
               formControlName="phone"
               placeholder="+1234567890"
-            >
+            />
           </div>
         </div>
 
         <!-- Department field -->
         <div class="form-group mb-3">
-          <label for="department" class="form-label">Department <span class="text-danger">*</span></label>
+          <label for="department" class="form-label"
+            >Department <span class="text-danger">*</span></label
+          >
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-building"></i></span>
             <select
               class="form-select"
               id="department"
               formControlName="department"
-              [ngClass]="{'is-invalid': hasError('department')}"
+              [ngClass]="{ 'is-invalid': hasError('department') }"
             >
               <option value="">Select Department</option>
               <option *ngFor="let dept of departments" [value]="dept.id">
@@ -103,7 +109,10 @@
           <div *ngIf="hasError('department')" class="invalid-feedback d-block mt-1 ms-1">
             {{ getErrorMessage('department') }}
           </div>
-          <div *ngIf="registerForm.get('department')?.hasError('serverError')" class="invalid-feedback d-block mt-1 ms-1">
+          <div
+            *ngIf="registerForm.get('department')?.hasError('serverError')"
+            class="invalid-feedback d-block mt-1 ms-1"
+          >
             {{ registerForm.get('department')?.errors?.['serverError'] }}
           </div>
         </div>
@@ -113,11 +122,7 @@
           <label for="gender" class="form-label">Gender</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-            <select
-              class="form-select"
-              id="gender"
-              formControlName="gender"
-            >
+            <select class="form-select" id="gender" formControlName="gender">
               <option value="">Select Gender</option>
               <option *ngFor="let option of genderOptions" [value]="option.value">
                 {{ option.label }}
@@ -128,7 +133,9 @@
 
         <!-- Password field -->
         <div class="form-group mb-3">
-          <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+          <label for="password" class="form-label"
+            >Password <span class="text-danger">*</span></label
+          >
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-lock"></i></span>
             <input
@@ -137,8 +144,8 @@
               id="password"
               formControlName="password"
               autocomplete="new-password"
-              [ngClass]="{'is-invalid': hasError('password')}"
-            >
+              [ngClass]="{ 'is-invalid': hasError('password') }"
+            />
             <button
               type="button"
               class="btn btn-outline-secondary"
@@ -165,17 +172,23 @@
           <div *ngIf="hasError('password')" class="invalid-feedback d-block mt-1 ms-1">
             {{ getErrorMessage('password') }}
           </div>
-          <div *ngIf="registerForm.get('password')?.hasError('serverError')" class="invalid-feedback d-block mt-1 ms-1">
+          <div
+            *ngIf="registerForm.get('password')?.hasError('serverError')"
+            class="invalid-feedback d-block mt-1 ms-1"
+          >
             {{ registerForm.get('password')?.errors?.['serverError'] }}
           </div>
           <small class="form-text text-muted d-block mt-1">
-            Must be at least {{ passwordMinLength }} characters with uppercase, lowercase, and number. Avoid common passwords.
+            Must be at least {{ passwordMinLength }} characters with uppercase, lowercase, and
+            number. Avoid common passwords.
           </small>
         </div>
 
         <!-- Confirm Password field -->
         <div class="form-group mb-3">
-          <label for="password_confirm" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+          <label for="password_confirm" class="form-label"
+            >Confirm Password <span class="text-danger">*</span></label
+          >
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
             <input
@@ -184,8 +197,8 @@
               id="password_confirm"
               formControlName="password_confirm"
               autocomplete="new-password"
-              [ngClass]="{'is-invalid': hasError('password_confirm')}"
-            >
+              [ngClass]="{ 'is-invalid': hasError('password_confirm') }"
+            />
             <button
               type="button"
               class="btn btn-outline-secondary"
@@ -197,7 +210,10 @@
           <div *ngIf="hasError('password_confirm')" class="invalid-feedback d-block mt-1 ms-1">
             {{ getErrorMessage('password_confirm') }}
           </div>
-          <div *ngIf="registerForm.get('password_confirm')?.hasError('serverError')" class="invalid-feedback d-block mt-1 ms-1">
+          <div
+            *ngIf="registerForm.get('password_confirm')?.hasError('serverError')"
+            class="invalid-feedback d-block mt-1 ms-1"
+          >
             {{ registerForm.get('password_confirm')?.errors?.['serverError'] }}
           </div>
         </div>
@@ -212,7 +228,7 @@
               class="file-input"
               accept="image/jpeg,image/jpg,image/png,image/gif"
               (change)="onFileSelected($event)"
-            >
+            />
             <label for="profile_photo" class="file-label">
               <i class="bi bi-cloud-upload me-2"></i>
               <span>{{ selectedFileName || 'Choose file or drag here' }}</span>
@@ -224,10 +240,49 @@
 
           <!-- Photo preview -->
           <div *ngIf="profilePhotoPreview" class="photo-preview mt-2">
-            <img [src]="profilePhotoPreview" alt="Profile Preview">
+            <img [src]="profilePhotoPreview" alt="Profile Preview" />
             <button type="button" class="btn btn-sm btn-danger" (click)="clearFileSelection()">
               <i class="bi bi-x-circle me-1"></i>Remove
             </button>
+          </div>
+        </div>
+
+        <!-- Privacy Consent -->
+        <div class="mb-3 mt-4">
+          <div class="card border-info">
+            <div class="card-body p-3">
+              <h6 class="card-title text-info mb-2">
+                <i class="bi bi-shield-lock me-1"></i>Privacy Notice &amp; Data Consent
+              </h6>
+              <p class="card-text small text-muted mb-3">
+                By registering, you agree to the collection and processing of your personal data
+                (name, email, staff ID, department, phone number, and profile photo) for the purpose
+                of operating this Ticket Management System. Your data is stored securely, encrypted
+                at rest, and retained for the duration of your employment plus a defined retention
+                period. You have the right to access, correct, or request deletion of your data by
+                contacting your system administrator. For full details, please review our
+                <a href="/api/auth/privacy-policy/" target="_blank" class="text-info"
+                  >Privacy Policy</a
+                >.
+              </p>
+              <div class="form-check">
+                <input
+                  type="checkbox"
+                  id="privacy_consent"
+                  class="form-check-input"
+                  formControlName="privacy_consent"
+                  [class.is-invalid]="hasError('privacy_consent')"
+                />
+                <label class="form-check-label" for="privacy_consent">
+                  <strong>I have read and agree to the Privacy Policy</strong>
+                  and consent to the processing of my personal data as described above.
+                  <span class="text-danger">*</span>
+                </label>
+                <div *ngIf="hasError('privacy_consent')" class="invalid-feedback d-block">
+                  You must accept the Privacy Policy to create an account.
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -238,7 +293,11 @@
             class="btn btn-primary btn-lg"
             [disabled]="registerForm.invalid || isLoading"
           >
-            <app-loading-spinner *ngIf="isLoading" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
+            <app-loading-spinner
+              *ngIf="isLoading"
+              size="sm"
+              class="me-2 d-inline-block"
+            ></app-loading-spinner>
             {{ isLoading ? 'Creating Account...' : 'Create Account' }}
           </button>
         </div>
@@ -246,9 +305,7 @@
         <!-- Link to login -->
         <div class="text-center mt-3">
           <span class="text-muted">Already have an account?</span>
-          <a routerLink="/auth/login" class="text-decoration-none ms-2">
-            Sign In
-          </a>
+          <a routerLink="/auth/login" class="text-decoration-none ms-2"> Sign In </a>
         </div>
       </form>
     </div>
