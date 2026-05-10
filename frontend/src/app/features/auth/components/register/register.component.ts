@@ -1,6 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Subject, takeUntil, Observable, map } from 'rxjs';
 
@@ -18,7 +25,7 @@ import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './register.component.html',
-  styleUrls: ['./register.component.scss']
+  styleUrls: ['./register.component.scss'],
 })
 export class RegisterComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -36,7 +43,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   genderOptions = [
     { value: 'Male', label: 'Male' },
     { value: 'Female', label: 'Female' },
-    { value: 'Other', label: 'Other' }
+    { value: 'Other', label: 'Other' },
   ];
 
   constructor(
@@ -64,32 +71,44 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   private initializeForm(): void {
-    this.registerForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      name: ['', [Validators.required, Validators.minLength(2)]],
-      staff_id: [''],
-      phone: [''],
-      department: ['', Validators.required],
-      gender: [''],
-      password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), this.passwordStrengthValidator]],
-      password_confirm: ['', Validators.required],
-      profile_photo: ['']
-    }, {
-      validators: this.passwordMatchValidator
-    });
+    this.registerForm = this.fb.group(
+      {
+        email: ['', [Validators.required, Validators.email]],
+        name: ['', [Validators.required, Validators.minLength(2)]],
+        staff_id: [''],
+        phone: [''],
+        department: ['', Validators.required],
+        gender: [''],
+        password: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(PASSWORD_MIN_LENGTH),
+            this.passwordStrengthValidator,
+          ],
+        ],
+        password_confirm: ['', Validators.required],
+        profile_photo: [''],
+        privacy_consent: [false, Validators.requiredTrue],
+      },
+      {
+        validators: this.passwordMatchValidator,
+      }
+    );
   }
 
   private loadDepartments(): void {
-    this.departmentService.getActiveDepartments()
+    this.departmentService
+      .getActiveDepartments()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: DepartmentListItem[]) => {
           this.departments = response;
         },
-        error: (err: any) => {
+        error: (err: unknown) => {
           const message = this.errorHandler.getErrorMessage(err);
           this.toastService.error('Failed to load departments: ' + message);
-        }
+        },
       });
   }
 
@@ -109,16 +128,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const hasSpecialChar = /[^a-zA-Z0-9]/.test(value);
 
     // Check for common weak patterns
-    const commonPatterns = [
-      /^password/i,
-      /^123456/,
-      /^qwerty/i,
-      /^abc123/i,
-      /^letmein/i
-    ];
+    const commonPatterns = [/^password/i, /^123456/, /^qwerty/i, /^abc123/i, /^letmein/i];
     const isCommonPattern = commonPatterns.some(pattern => pattern.test(value));
 
-    const passwordValid = hasUpperCase && hasLowerCase && hasNumber && isLongEnough && !isCommonPattern;
+    const passwordValid =
+      hasUpperCase && hasLowerCase && hasNumber && isLongEnough && !isCommonPattern;
 
     if (!passwordValid) {
       return {
@@ -128,8 +142,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
           hasNumber,
           isLongEnough,
           hasSpecialChar,
-          isCommonPattern
-        }
+          isCommonPattern,
+        },
       };
     }
 
@@ -281,11 +295,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
     if (field.hasError('passwordMismatch')) return 'Passwords do not match';
     if (field.hasError('passwordStrength')) {
       const errors = field.errors['passwordStrength'];
-      if (errors.isCommonPattern) return 'Password is too common. Please choose a stronger password';
+      if (errors.isCommonPattern)
+        return 'Password is too common. Please choose a stronger password';
       if (!errors.hasUpperCase) return 'Password must contain at least one uppercase letter';
       if (!errors.hasLowerCase) return 'Password must contain at least one lowercase letter';
       if (!errors.hasNumber) return 'Password must contain at least one number';
-      if (!errors.isLongEnough) return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
+      if (!errors.isLongEnough)
+        return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
       return 'Password must contain uppercase, lowercase, and number';
     }
 
@@ -301,7 +317,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       department: 'Department',
       gender: 'Gender',
       password: 'Password',
-      password_confirm: 'Confirm Password'
+      password_confirm: 'Confirm Password',
     };
     return labels[fieldName] || fieldName;
   }
@@ -321,28 +337,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     const formData = this.registerForm.value;
 
-    // Debug logging
-    console.log('=== REGISTRATION FORM SUBMISSION ===');
-    console.log('Form valid:', this.registerForm.valid);
-    console.log('Form data:', {
-      email: formData.email,
-      name: formData.name,
-      staff_id: formData.staff_id || '(empty)',
-      phone: formData.phone || '(empty)',
-      department: formData.department,
-      gender: formData.gender || '(empty)',
-      password: '[REDACTED]',
-      password_confirm: '[REDACTED]',
-      profile_photo: formData.profile_photo ? '[BASE64_DATA]' : null
-    });
-    console.log('Available departments:', this.departments);
-    console.log('Selected department value:', formData.department);
-    console.log('====================================');
-
-    this.authService.register(formData)
+    this.authService
+      .register(formData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
+        next: (response: { success: boolean; message?: string }) => {
           this.isLoading = false;
 
           if (response.success) {
@@ -351,38 +350,25 @@ export class RegisterComponent implements OnInit, OnDestroy {
             // Redirect to login after 2 seconds
             setTimeout(() => {
               this.router.navigate(['/auth/login'], {
-                queryParams: { registered: 'true' }
+                queryParams: { registered: 'true' },
               });
             }, 2000);
           } else {
             this.toastService.error(response.message || 'Registration failed');
           }
         },
-        error: (err: any) => {
+        error: (err: { status: number; error: unknown }) => {
           this.isLoading = false;
 
-          // Debug logging
-          console.error('Registration error:', err);
-          console.error('Error response:', err.error);
-          console.error('Error status:', err.status);
-          console.error('Full error object:', JSON.stringify(err.error, null, 2));
-
-          // Handle rate limiting (403/429)
           if (err.status === 403 || err.status === 429) {
             this.toastService.error('Too many registration attempts. Please try again later.');
             return;
           }
 
           const message = this.errorHandler.getErrorMessage(err);
+          const fieldErrors = this.errorHandler.getFieldErrors(err.error);
 
-          // Apply field errors if available
-          const fieldErrors = this.errorHandler.getFieldErrors(err);
           if (Object.keys(fieldErrors).length > 0) {
-            console.log('Field errors detected:');
-            Object.entries(fieldErrors).forEach(([field, error]) => {
-              console.log(`  - ${field}: ${error}`);
-            });
-
             Object.keys(fieldErrors).forEach(field => {
               const control = this.registerForm.get(field);
               if (control) {
@@ -390,13 +376,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
                 control.markAsTouched();
               }
             });
-
-            // Show specific field errors to user
             this.toastService.error('Registration failed. Please check the form for errors.');
           } else {
             this.toastService.error(message);
           }
-        }
+        },
       });
   }
 }
