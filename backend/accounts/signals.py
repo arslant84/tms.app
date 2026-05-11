@@ -32,15 +32,8 @@ def log_user_changes(sender, instance, created, **kwargs):
     Tracks account creation, role changes, and status changes.
     """
     try:
+        req = getattr(instance, "_update_request", None)
         if created:
-            # Log new user creation
-            AdminActionLog.log_action(
-                user=None,  # System action or will be set by view
-                action_type="user_created",
-                description=f"User account created: {instance.email} ({instance.name})",
-                entity_type="User",
-                entity_id=str(instance.id),
-            )
             logger.info(f"Audit: User created - {instance.email}")
         else:
             # Check for status changes (activation/deactivation)
@@ -51,11 +44,12 @@ def log_user_changes(sender, instance, created, **kwargs):
                     )
                     status_text = "activated" if instance.is_active else "deactivated"
                     AdminActionLog.log_action(
-                        user=None,  # Will be set by view
+                        user=req.user if req else None,
                         action_type=action_type,
                         description=f"User account {status_text}: {instance.email}",
                         entity_type="User",
                         entity_id=str(instance.id),
+                        request=req,
                     )
                     logger.info(f"Audit: User {status_text} - {instance.email}")
 
@@ -87,15 +81,18 @@ def log_user_changes(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=User)
 def log_user_deletion(sender, instance, **kwargs):
-    """Log user account deletion."""
+    """Log user account deletion — only for paths that don't log via perform_destroy (e.g. Django admin)."""
     try:
-        AdminActionLog.log_action(
-            user=None,  # Will be set by view or system
-            action_type="user_deleted",
-            description=f"User account deleted: {instance.email} ({instance.name})",
-            entity_type="User",
-            entity_id=str(instance.id),
-        )
+        req = getattr(instance, "_update_request", None)
+        if not getattr(instance, "_deletion_logged", False):
+            AdminActionLog.log_action(
+                user=req.user if (req and req.user.is_authenticated) else None,
+                action_type="user_deleted",
+                description=f"User account deleted: {instance.email} ({instance.name})",
+                entity_type="User",
+                entity_id=str(instance.id),
+                request=req,
+            )
         logger.info(f"Audit: User deleted - {instance.email}")
     except Exception as e:
         logger.error(f"Error logging user deletion: {e}", exc_info=True)

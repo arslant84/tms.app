@@ -609,7 +609,9 @@ class RegisterView(APIView):
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
-        serializer = UserRegistrationSerializer(data=request.data)
+        serializer = UserRegistrationSerializer(
+            data=request.data, context={"request": request}
+        )
 
         if not serializer.is_valid():
             return validation_error_response(
@@ -623,15 +625,13 @@ class RegisterView(APIView):
             # Get IP address from request
             ip_address = self.get_client_ip(request)
 
-            # Log registration action
-            AdminActionLog.objects.create(
+            AdminActionLog.log_action(
                 user=user,
                 action_type="user_created",
+                description=f"User self-registered: {user.email} ({user.name})",
                 entity_type="User",
                 entity_id=str(user.id),
-                description=f"User self-registered: {user.email}",
-                ip_address=ip_address,
-                user_agent=request.META.get("HTTP_USER_AGENT", ""),
+                request=request,
             )
 
             logger.info(
@@ -815,9 +815,32 @@ class UserViewSet(viewsets.ModelViewSet):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
 
+    def perform_create(self, serializer):
+        user = serializer.save()
+        AdminActionLog.log_action(
+            user=self.request.user,
+            action_type="user_created",
+            description=f"User account created: {user.email} ({user.name})",
+            entity_type="User",
+            entity_id=str(user.id),
+            request=self.request,
+        )
+
     def perform_update(self, serializer):
         serializer.instance._update_request = self.request
         serializer.save()
+
+    def perform_destroy(self, instance):
+        AdminActionLog.log_action(
+            user=self.request.user,
+            action_type="user_deleted",
+            description=f"User account deleted: {instance.email} ({instance.name})",
+            entity_type="User",
+            entity_id=str(instance.id),
+            request=self.request,
+        )
+        instance._deletion_logged = True
+        instance.delete()
 
     @action(
         detail=False, methods=["get"], permission_classes=[permissions.IsAuthenticated]

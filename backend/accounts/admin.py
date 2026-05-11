@@ -150,6 +150,31 @@ class UserAdmin(BaseUserAdmin):
     ordering = ("email",)
     filter_horizontal = ()
 
+    def save_model(self, request, obj, form, change):
+        obj._update_request = request
+        super().save_model(request, obj, form, change)
+        if not change:
+            AdminActionLog.log_action(
+                user=request.user,
+                action_type="user_created",
+                description=f"User account created: {obj.email} ({obj.name})",
+                entity_type="User",
+                entity_id=str(obj.id),
+                request=request,
+            )
+
+    def delete_model(self, request, obj):
+        AdminActionLog.log_action(
+            user=request.user,
+            action_type="user_deleted",
+            description=f"User account deleted: {obj.email} ({obj.name})",
+            entity_type="User",
+            entity_id=str(obj.id),
+            request=request,
+        )
+        obj._deletion_logged = True
+        super().delete_model(request, obj)
+
 
 class RolePermissionInline(admin.TabularInline):
     """Inline for managing role permissions"""
