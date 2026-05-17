@@ -14,7 +14,7 @@ import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './reset-password.component.html',
-  styleUrls: ['./reset-password.component.scss']
+  styleUrls: ['./reset-password.component.scss'],
 })
 export class ResetPasswordComponent implements OnInit {
   token = '';
@@ -39,12 +39,19 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Get token from URL query parameter
-    this.route.queryParams.subscribe(params => {
-      this.token = params['token'] || '';
+    this.route.fragment.subscribe(fragment => {
+      const params = new URLSearchParams(fragment || '');
+      this.token = params.get('token') || '';
       if (!this.token) {
         this.invalidToken = true;
         this.error = 'Invalid or missing reset token';
+      } else {
+        // Strip fragment from URL immediately — token held in memory only, submitted via POST body.
+        this.router.navigate([], {
+          relativeTo: this.route,
+          fragment: undefined,
+          replaceUrl: true,
+        });
       }
     });
   }
@@ -71,25 +78,29 @@ export class ResetPasswordComponent implements OnInit {
     this.loading = true;
     const url = `${environment.apiUrl}/password/reset/confirm/`;
 
-    this.http.post(url, {
-      token: this.token,
-      new_password: this.newPassword,
-      new_password_confirm: this.newPasswordConfirm
-    }).subscribe({
-      next: (response: any) => {
-        this.loading = false;
-        this.success = response.message || 'Password reset successfully. You can now log in with your new password.';
+    this.http
+      .post(url, {
+        token: this.token,
+        new_password: this.newPassword,
+        new_password_confirm: this.newPasswordConfirm,
+      })
+      .subscribe({
+        next: (response: { message?: string }) => {
+          this.loading = false;
+          this.success =
+            response.message ||
+            'Password reset successfully. You can now log in with your new password.';
 
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          this.router.navigate(['/auth/login']);
-        }, 3000);
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error?.message || err.error?.error || 'Invalid or expired reset token';
-        this.invalidToken = true;
-      }
-    });
+          // Redirect to login after 3 seconds
+          setTimeout(() => {
+            this.router.navigate(['/auth/login']);
+          }, 3000);
+        },
+        error: err => {
+          this.loading = false;
+          this.error = err.error?.message || err.error?.error || 'Invalid or expired reset token';
+          this.invalidToken = true;
+        },
+      });
   }
 }

@@ -455,7 +455,7 @@ class PasswordResetRequestView(APIView):
 
             # Send email with reset link
             reset_url = (
-                f"{settings.FRONTEND_URL}/auth/reset-password?token={reset_token}"
+                f"{settings.FRONTEND_URL}/auth/reset-password#token={reset_token}"
             )
 
             try:
