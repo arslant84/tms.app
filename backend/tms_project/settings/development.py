@@ -20,8 +20,24 @@ ALLOWED_HOSTS = ["*"]
 #     }
 # }
 
-# CORS - Allow all origins in development for easier testing
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS - Restrict to Angular dev server origins only (fixes ZAP Cross-Domain Misconfiguration)
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+]
+
+# CSP - Allow unsafe-eval in development for Angular JIT compilation
+CONTENT_SECURITY_POLICY["DIRECTIVES"]["script-src"] = (
+    "'self'",
+    "'unsafe-inline'",
+    "'unsafe-eval'",
+)
+CONTENT_SECURITY_POLICY["DIRECTIVES"]["script-src-elem"] = (
+    "'self'",
+    "'unsafe-inline'",
+    "'unsafe-eval'",
+)
 
 # CSP - Allow connections to localhost for API calls in development
 CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] = (

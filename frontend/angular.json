@@ -35,8 +35,8 @@
                 "glob": "**/*",
                 "input": "node_modules/bootstrap-icons/font/fonts",
                 "output": "/media"
-              },
-                          ],
+              }
+            ],
             "styles": [
               {
                 "input": "public/css/bootstrap.fixed.min.css",
@@ -88,7 +88,13 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "proxyConfig": "proxy.conf.json"
+            "proxyConfig": "proxy.conf.json",
+            "headers": {
+              "X-Frame-Options": "DENY",
+              "X-Content-Type-Options": "nosniff",
+              "Referrer-Policy": "strict-origin-when-cross-origin",
+              "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' http://localhost:8000 http://127.0.0.1:8000 ws://localhost:8000 ws://127.0.0.1:8000; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
+            }
           },
           "configurations": {
             "production": {

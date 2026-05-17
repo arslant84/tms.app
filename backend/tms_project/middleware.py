@@ -1,13 +1,15 @@
 """
 Custom middleware for TMS application
 """
-from django.http import HttpResponse, JsonResponse
-from django.conf import settings
-from django.utils import timezone
-from django.core.exceptions import PermissionDenied
-from django.core.cache import cache
-from datetime import timedelta
+
 import json
+from datetime import timedelta
+
+from django.conf import settings
+from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse, JsonResponse
+from django.utils import timezone
 
 # Cache timeout for settings (5 minutes)
 SETTINGS_CACHE_TIMEOUT = 300
@@ -24,44 +26,54 @@ class MaintenanceModeMiddleware:
 
     def __call__(self, request):
         # Check cache first, then database
-        maintenance_mode = cache.get('setting_maintenance_mode')
+        maintenance_mode = cache.get("setting_maintenance_mode")
         if maintenance_mode is None:
             # Import here to avoid circular imports
             from accounts.models import ApplicationSetting
-            maintenance_mode = ApplicationSetting.get_setting('maintenance_mode', False)
-            cache.set('setting_maintenance_mode', maintenance_mode, SETTINGS_CACHE_TIMEOUT)
+
+            maintenance_mode = ApplicationSetting.get_setting("maintenance_mode", False)
+            cache.set(
+                "setting_maintenance_mode", maintenance_mode, SETTINGS_CACHE_TIMEOUT
+            )
 
         if maintenance_mode:
             # Allow superusers and staff to access
-            if request.user.is_authenticated and (request.user.is_superuser or request.user.is_staff):
+            if request.user.is_authenticated and (
+                request.user.is_superuser or request.user.is_staff
+            ):
                 response = self.get_response(request)
                 return response
 
             # Allow access to admin panel and static/media files
-            if request.path.startswith('/admin/') or \
-               request.path.startswith('/static/') or \
-               request.path.startswith('/media/'):
+            if (
+                request.path.startswith("/admin/")
+                or request.path.startswith("/static/")
+                or request.path.startswith("/media/")
+            ):
                 response = self.get_response(request)
                 return response
 
             # Block all other requests
-            if request.path.startswith('/api/'):
+            if request.path.startswith("/api/"):
                 # Return JSON response for API requests
-                return JsonResponse({
-                    'error': 'System under maintenance',
-                    'message': 'The system is currently undergoing maintenance. Please try again later.',
-                    'maintenance_mode': True
-                }, status=503)
+                return JsonResponse(
+                    {
+                        "error": "System under maintenance",
+                        "message": "The system is currently undergoing maintenance. Please try again later.",
+                        "maintenance_mode": True,
+                    },
+                    status=503,
+                )
             else:
                 # Return HTML response for web requests
                 return HttpResponse(
-                    '<html><head><title>Maintenance</title></head>'
+                    "<html><head><title>Maintenance</title></head>"
                     '<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">'
-                    '<h1>🔧 System Under Maintenance</h1>'
-                    '<p>The system is currently undergoing maintenance. Please try again later.</p>'
+                    "<h1>🔧 System Under Maintenance</h1>"
+                    "<p>The system is currently undergoing maintenance. Please try again later.</p>"
                     '<p style="color: #666;">We apologize for any inconvenience.</p>'
-                    '</body></html>',
-                    status=503
+                    "</body></html>",
+                    status=503,
                 )
 
         response = self.get_response(request)
@@ -80,20 +92,28 @@ class SessionTimeoutMiddleware:
     def __call__(self, request):
         if request.user.is_authenticated:
             # Check cache first, then database
-            timeout_minutes = cache.get('setting_session_timeout_minutes')
+            timeout_minutes = cache.get("setting_session_timeout_minutes")
             if timeout_minutes is None:
                 # Import here to avoid circular imports
                 from accounts.models import ApplicationSetting
-                timeout_minutes = ApplicationSetting.get_setting('session_timeout_minutes', 480)  # Default: 8 hours
-                cache.set('setting_session_timeout_minutes', timeout_minutes, SETTINGS_CACHE_TIMEOUT)
+
+                timeout_minutes = ApplicationSetting.get_setting(
+                    "session_timeout_minutes", 480
+                )  # Default: 8 hours
+                cache.set(
+                    "setting_session_timeout_minutes",
+                    timeout_minutes,
+                    SETTINGS_CACHE_TIMEOUT,
+                )
 
             # Get last activity time from session
-            last_activity = request.session.get('last_activity')
+            last_activity = request.session.get("last_activity")
 
             if last_activity:
                 # Convert string to datetime if needed
                 if isinstance(last_activity, str):
                     from datetime import datetime
+
                     last_activity = datetime.fromisoformat(last_activity)
 
                 # Calculate time since last activity
@@ -105,15 +125,18 @@ class SessionTimeoutMiddleware:
                     request.session.flush()
 
                     # Return 401 for API requests
-                    if request.path.startswith('/api/'):
-                        return JsonResponse({
-                            'error': 'Session expired',
-                            'message': 'Your session has expired due to inactivity. Please log in again.',
-                            'session_expired': True
-                        }, status=401)
+                    if request.path.startswith("/api/"):
+                        return JsonResponse(
+                            {
+                                "error": "Session expired",
+                                "message": "Your session has expired due to inactivity. Please log in again.",
+                                "session_expired": True,
+                            },
+                            status=401,
+                        )
 
             # Update last activity time
-            request.session['last_activity'] = timezone.now().isoformat()
+            request.session["last_activity"] = timezone.now().isoformat()
 
         response = self.get_response(request)
         return response
@@ -130,17 +153,22 @@ class FileSizeValidationMiddleware:
 
     def __call__(self, request):
         # Only check for POST/PUT/PATCH requests with file uploads
-        if request.method in ['POST', 'PUT', 'PATCH']:
-            content_length = request.META.get('CONTENT_LENGTH')
+        if request.method in ["POST", "PUT", "PATCH"]:
+            content_length = request.META.get("CONTENT_LENGTH")
 
             if content_length:
                 # Check cache first, then database
-                max_size = cache.get('setting_max_file_upload_size')
+                max_size = cache.get("setting_max_file_upload_size")
                 if max_size is None:
                     # Import here to avoid circular imports
                     from accounts.models import ApplicationSetting
-                    max_size = ApplicationSetting.get_setting('max_file_upload_size', 10485760)  # Default: 10MB
-                    cache.set('setting_max_file_upload_size', max_size, SETTINGS_CACHE_TIMEOUT)
+
+                    max_size = ApplicationSetting.get_setting(
+                        "max_file_upload_size", 10485760
+                    )  # Default: 10MB
+                    cache.set(
+                        "setting_max_file_upload_size", max_size, SETTINGS_CACHE_TIMEOUT
+                    )
 
                 # Check if request size exceeds limit
                 if int(content_length) > max_size:
@@ -149,21 +177,24 @@ class FileSizeValidationMiddleware:
                     actual_size_mb = int(content_length) / (1024 * 1024)
 
                     # Return error response
-                    if request.path.startswith('/api/'):
-                        return JsonResponse({
-                            'error': 'File too large',
-                            'message': f'Upload size ({actual_size_mb:.2f} MB) exceeds maximum allowed size ({max_size_mb:.2f} MB).',
-                            'max_size_bytes': max_size,
-                            'max_size_mb': round(max_size_mb, 2)
-                        }, status=413)
+                    if request.path.startswith("/api/"):
+                        return JsonResponse(
+                            {
+                                "error": "File too large",
+                                "message": f"Upload size ({actual_size_mb:.2f} MB) exceeds maximum allowed size ({max_size_mb:.2f} MB).",
+                                "max_size_bytes": max_size,
+                                "max_size_mb": round(max_size_mb, 2),
+                            },
+                            status=413,
+                        )
                     else:
                         return HttpResponse(
-                            f'<html><head><title>File Too Large</title></head>'
+                            f"<html><head><title>File Too Large</title></head>"
                             f'<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">'
-                            f'<h1>❌ File Too Large</h1>'
-                            f'<p>Upload size ({actual_size_mb:.2f} MB) exceeds maximum allowed size ({max_size_mb:.2f} MB).</p>'
-                            f'</body></html>',
-                            status=413
+                            f"<h1>❌ File Too Large</h1>"
+                            f"<p>Upload size ({actual_size_mb:.2f} MB) exceeds maximum allowed size ({max_size_mb:.2f} MB).</p>"
+                            f"</body></html>",
+                            status=413,
                         )
 
         response = self.get_response(request)
@@ -181,17 +212,18 @@ class DynamicSettingsMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        from django.utils import timezone as tz
         import pytz
+        from django.utils import timezone as tz
 
         # Apply timezone setting dynamically with caching
         try:
-            timezone_str = cache.get('setting_timezone')
+            timezone_str = cache.get("setting_timezone")
             if timezone_str is None:
                 # Import here to avoid circular imports
                 from accounts.models import ApplicationSetting
-                timezone_str = ApplicationSetting.get_setting('timezone', 'UTC')
-                cache.set('setting_timezone', timezone_str, SETTINGS_CACHE_TIMEOUT)
+
+                timezone_str = ApplicationSetting.get_setting("timezone", "UTC")
+                cache.set("setting_timezone", timezone_str, SETTINGS_CACHE_TIMEOUT)
 
             # Activate timezone for this request
             request_timezone = pytz.timezone(timezone_str)
@@ -208,6 +240,24 @@ class DynamicSettingsMiddleware:
         return response
 
 
+class SecurityHeadersMiddleware:
+    """
+    Strips the Server header to prevent version fingerprinting and adds
+    Referrer-Policy to control cross-origin referrer leakage.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        response["Server"] = "TMS"
+        response.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.setdefault("X-Content-Type-Options", "nosniff")
+        response.setdefault("Cross-Origin-Resource-Policy", "same-site")
+        return response
+
+
 def clear_settings_cache():
     """
     Utility function to clear all cached settings.
@@ -218,10 +268,10 @@ def clear_settings_cache():
         clear_settings_cache()
     """
     cache_keys = [
-        'setting_maintenance_mode',
-        'setting_session_timeout_minutes',
-        'setting_max_file_upload_size',
-        'setting_timezone',
+        "setting_maintenance_mode",
+        "setting_session_timeout_minutes",
+        "setting_max_file_upload_size",
+        "setting_timezone",
     ]
     for key in cache_keys:
         cache.delete(key)
