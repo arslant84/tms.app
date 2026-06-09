@@ -87,7 +87,7 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
       - name: TypeScript type-check
-        run: npx tsc --noEmit
+        run: npx tsc --noEmit -p tsconfig.app.json
 
       - name: Build (production)
         run: npm run build -- --configuration production
