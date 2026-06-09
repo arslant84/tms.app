@@ -1,6 +1,6 @@
 annotated-types==0.7.0
 anyio==4.12.1
-asgiref==3.7.2
+asgiref>=3.8.1
 attrs==23.2.0
 Authlib==1.6.12
 backports-datetime-fromisoformat==2.0.3

@@ -3,6 +3,16 @@
  * Matches backend Django models for workflow approval system
  */
 
+export interface Role {
+  id: string;
+  name: string;
+}
+
+export interface NotificationTemplate {
+  id: string;
+  name: string;
+}
+
 export interface WorkflowUser {
   id: string;
   email: string;
@@ -15,7 +25,13 @@ export interface WorkflowUser {
 
 export interface WorkflowCondition {
   id: string;
-  condition_type: 'field_equals' | 'field_greater_than' | 'field_less_than' | 'field_contains' | 'field_exists' | 'custom_logic';
+  condition_type:
+    | 'field_equals'
+    | 'field_greater_than'
+    | 'field_less_than'
+    | 'field_contains'
+    | 'field_exists'
+    | 'custom_logic';
   field_name: string;
   field_value?: string;
   logical_operator: 'AND' | 'OR';
@@ -138,7 +154,17 @@ export interface WorkflowStepExecution {
 export interface WorkflowAuditLog {
   id: string;
   workflow_instance: string;
-  action_type: 'created' | 'started' | 'step_completed' | 'approved' | 'rejected' | 'delegated' | 'cancelled' | 'on_hold' | 'resumed' | 'escalated';
+  action_type:
+    | 'created'
+    | 'started'
+    | 'step_completed'
+    | 'approved'
+    | 'rejected'
+    | 'delegated'
+    | 'cancelled'
+    | 'on_hold'
+    | 'resumed'
+    | 'escalated';
   action_description: string;
   performed_by?: string;
   performed_by_user?: WorkflowUser;
