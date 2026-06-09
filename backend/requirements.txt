@@ -62,11 +62,11 @@ pip-api==0.0.34
 pip-requirements-parser==32.0.1
 pip_audit==2.7.0
 platformdirs==4.5.1
-pluggy==1.4.0
+pluggy>=1.5
 pre-commit==3.6.0
 psycopg2-binary==2.9.9
 py-serializable==1.1.2
-pyasn1==0.6.3
+pyasn1>=0.4.1
 pycparser==2.21
 pydantic==2.12.5
 pydantic_core==2.41.5
