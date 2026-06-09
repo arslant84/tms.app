@@ -8,7 +8,7 @@ bandit==1.7.7
 boolean.py==5.0
 CacheControl==0.14.4
 certifi==2026.1.4
-cffi==1.16.0
+cffi>=2.0.0
 cfgv==3.5.0
 chardet==5.2.0
 charset-normalizer==3.4.4
