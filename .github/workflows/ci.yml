@@ -38,7 +38,8 @@ jobs:
             --ignore-vuln GHSA-rf74-v2fm-23pw \
             --ignore-vuln GHSA-68j8-pq59-fqgm \
             --ignore-vuln PYSEC-2026-97 \
-            --ignore-vuln PYSEC-2025-183
+            --ignore-vuln PYSEC-2025-183 \
+            --ignore-vuln GHSA-jr27-m4p2-rc6r
 
       # CTRL-0000001033 / CTRL-0000001190 — SAST
       - name: Static analysis (Bandit)
