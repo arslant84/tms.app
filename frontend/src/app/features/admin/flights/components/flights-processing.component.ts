@@ -117,8 +117,8 @@ export class FlightsProcessingComponent implements OnInit {
         // Pending: Approved TRFs requiring flights
         const approvedTrfs = trfs.filter((trf: any) => {
           if (trf.status !== 'Approved') return false;
-          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage' || trf.travel_type === 'Home Leave') return true;
-          if (trf.travel_type === 'Domestic' && trf.domestic_travel_details?.itinerary?.length > 0) return true;
+          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage' || trf.travel_type === 'Home Leave' || trf.travel_type === 'External Parties') return true;
+          if (trf.travel_type === 'Domestic') return true;
           return false;
         });
 

@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from utils.viewset_mixins import StandardResultsPagination
 from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime
@@ -75,7 +76,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
     queryset = TravelRequest.objects.all()
     serializer_class = TravelRequestSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = PageNumberPagination
+    pagination_class = StandardResultsPagination
 
     # Search across key fields
     search_fields = ['requestor_name', 'department', 'purpose', 'staff_id', 'request_number']
