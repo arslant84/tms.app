@@ -58,7 +58,7 @@ interface BookedFlight {
   standalone: true,
   imports: [CommonModule, FormsModule, DepartmentNamePipe, LoadingSpinnerComponent],
   templateUrl: './flights-processing.component.html',
-  styleUrl: './flights-processing.component.scss'
+  styleUrl: './flights-processing.component.scss',
 })
 export class FlightsProcessingComponent implements OnInit {
   activeTab: 'pending' | 'booked' = 'pending';
@@ -111,17 +111,27 @@ export class FlightsProcessingComponent implements OnInit {
     this.errorPending = null;
 
     this.trfService.getAllTrfs({ adminView: true, page_size: 1000 }).subscribe({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       next: (response: any) => {
         const trfs = response.results || response.trfs || [];
 
         // Pending: Approved TRFs requiring flights
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const approvedTrfs = trfs.filter((trf: any) => {
           if (trf.status !== 'Approved') return false;
-          if (trf.travel_type === 'Overseas' || trf.travel_type === 'Home Leave Passage' || trf.travel_type === 'Home Leave') return true;
-          if (trf.travel_type === 'Domestic' && trf.domestic_travel_details?.itinerary?.length > 0) return true;
+          if (
+            trf.travel_type === 'Overseas' ||
+            trf.travel_type === 'Home Leave Passage' ||
+            trf.travel_type === 'Home Leave' ||
+            trf.travel_type === 'External Parties'
+          )
+            return true;
+          if (trf.travel_type === 'Domestic' && trf.domestic_travel_details?.itinerary?.length > 0)
+            return true;
           return false;
         });
 
+        // eslint-disable-next-line complexity, @typescript-eslint/no-explicit-any
         const mappedTrfs = approvedTrfs.map((trf: any) => {
           let destinationSummary = 'N/A';
           let requestedDate = trf.submitted_at || trf.created_at;
@@ -134,19 +144,31 @@ export class FlightsProcessingComponent implements OnInit {
           if (overseasDetails?.itinerary?.length) {
             itinerary = overseasDetails.itinerary;
             if (itinerary) {
-              destinationSummary = itinerary.map((s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`).join(', ');
+              destinationSummary = itinerary
+                .map(
+                  (s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`
+                )
+                .join(', ');
               requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
             }
           } else if (homeLeaveDetails?.itinerary?.length) {
             itinerary = homeLeaveDetails.itinerary;
             if (itinerary) {
-              destinationSummary = itinerary.map((s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`).join(', ');
+              destinationSummary = itinerary
+                .map(
+                  (s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`
+                )
+                .join(', ');
               requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
             }
           } else if (domesticDetails?.itinerary?.length) {
             itinerary = domesticDetails.itinerary;
             if (itinerary) {
-              destinationSummary = itinerary.map((s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`).join(', ');
+              destinationSummary = itinerary
+                .map(
+                  (s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`
+                )
+                .join(', ');
               requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
             }
           } else if (trf.purpose) {
@@ -164,7 +186,7 @@ export class FlightsProcessingComponent implements OnInit {
             status: trf.status,
             destinationSummary,
             requestedDate,
-            itinerary
+            itinerary,
           };
         });
 
@@ -173,7 +195,9 @@ export class FlightsProcessingComponent implements OnInit {
         this.applyFilters();
 
         // Booked: TRFs with flight bookings
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const bookedTrfs = trfs.filter((trf: any) => trf.has_flight_booking && trf.flight_details);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.bookedFlights = bookedTrfs.map((trf: any) => ({
           id: trf.flight_details.id,
           trfId: trf.id,
@@ -189,26 +213,27 @@ export class FlightsProcessingComponent implements OnInit {
           remarks: trf.flight_details.remarks,
           requestorName: trf.requestor_name || 'N/A',
           travelType: trf.travel_type,
-          department: trf.department || 'N/A'
+          department: trf.department || 'N/A',
         }));
 
         this.isLoadingPending = false;
         this.isLoadingBooked = false;
       },
-      error: (err) => {
+      error: err => {
         console.error('Failed to fetch TRFs:', err);
         this.errorPending = 'Failed to load TRFs. Please try again.';
         this.pendingTrfs = [];
         this.bookedFlights = [];
         this.isLoadingPending = false;
         this.isLoadingBooked = false;
-      }
+      },
     });
   }
 
   /**
    * Select TRF for booking
    */
+  // eslint-disable-next-line complexity
   selectTrf(trf: PendingTrf): void {
     this.selectedTrf = trf;
     this.resetFormFields();
@@ -281,13 +306,18 @@ export class FlightsProcessingComponent implements OnInit {
       flightNumber: this.flightNumber,
       departureAirport: this.departureAirport,
       arrivalAirport: this.arrivalAirport,
-      departureDateTime: this.departureDate ? `${this.departureDate}T${this.departureTime || '00:00'}` : undefined,
-      arrivalDateTime: this.arrivalDate ? `${this.arrivalDate}T${this.arrivalTime || '00:00'}` : undefined,
-      flightNotes: this.flightNotes
+      departureDateTime: this.departureDate
+        ? `${this.departureDate}T${this.departureTime || '00:00'}`
+        : undefined,
+      arrivalDateTime: this.arrivalDate
+        ? `${this.arrivalDate}T${this.arrivalTime || '00:00'}`
+        : undefined,
+      flightNotes: this.flightNotes,
     };
 
     this.trfService.bookFlight(this.selectedTrf.id, payload).subscribe({
-      next: (response: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      next: (_response: any) => {
         const trfDisplay = this.selectedTrf!.request_number || this.selectedTrf!.id;
         this.toastService.success(`Flight booked successfully for TRF ${trfDisplay}`);
         this.loadAll();
@@ -295,11 +325,11 @@ export class FlightsProcessingComponent implements OnInit {
         this.resetFormFields();
         this.isProcessing = false;
       },
-      error: (err) => {
+      error: err => {
         const errorMessage = this.extractErrorMessage(err);
         this.toastService.error(errorMessage);
         this.isProcessing = false;
-      }
+      },
     });
   }
 
@@ -313,34 +343,43 @@ export class FlightsProcessingComponent implements OnInit {
     }
 
     const trfDisplay = this.selectedTrf.request_number || this.selectedTrf.id;
-    this.confirmationService.confirm({
-      title: 'Cancel TRF',
-      message: `Cancel TRF ${trfDisplay} due to no available flights?`,
-      confirmText: 'Cancel TRF',
-      type: 'danger'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-      this.executeNoFlightsAvailable(trfDisplay);
-    });
+    this.confirmationService
+      .confirm({
+        title: 'Cancel TRF',
+        message: `Cancel TRF ${trfDisplay} due to no available flights?`,
+        confirmText: 'Cancel TRF',
+        type: 'danger',
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.executeNoFlightsAvailable(trfDisplay);
+      });
   }
 
   private executeNoFlightsAvailable(trfDisplay: string): void {
     if (!this.selectedTrf) return;
     this.isProcessing = true;
 
-    this.trfService.rejectTrf(this.selectedTrf.id, 'No flights available for requested travel dates and destinations. Request cancelled by Flight Admin.').subscribe({
-      next: () => {
-        this.toastService.success(`TRF ${trfDisplay} cancelled due to no available flights`);
-        this.loadAll();
-        this.selectedTrf = null;
-        this.resetFormFields();
-        this.isProcessing = false;
-      },
-      error: (err) => {
-        this.toastService.error('Failed to cancel request: ' + (err.error?.error || err.message || 'Unknown error'));
-        this.isProcessing = false;
-      }
-    });
+    this.trfService
+      .rejectTrf(
+        this.selectedTrf.id,
+        'No flights available for requested travel dates and destinations. Request cancelled by Flight Admin.'
+      )
+      .subscribe({
+        next: () => {
+          this.toastService.success(`TRF ${trfDisplay} cancelled due to no available flights`);
+          this.loadAll();
+          this.selectedTrf = null;
+          this.resetFormFields();
+          this.isProcessing = false;
+        },
+        error: err => {
+          this.toastService.error(
+            'Failed to cancel request: ' + (err.error?.error || err.message || 'Unknown error')
+          );
+          this.isProcessing = false;
+        },
+      });
   }
 
   /**
@@ -348,15 +387,17 @@ export class FlightsProcessingComponent implements OnInit {
    */
   cancelBooking(flight: BookedFlight): void {
     const trfDisplay = flight.trfRequestNumber || flight.trfId;
-    this.confirmationService.confirm({
-      title: 'Cancel Booking',
-      message: `Cancel flight booking for TRF ${trfDisplay}?`,
-      confirmText: 'Cancel Booking',
-      type: 'danger'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-      this.executeCancelBooking(flight, trfDisplay);
-    });
+    this.confirmationService
+      .confirm({
+        title: 'Cancel Booking',
+        message: `Cancel flight booking for TRF ${trfDisplay}?`,
+        confirmText: 'Cancel Booking',
+        type: 'danger',
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.executeCancelBooking(flight, trfDisplay);
+      });
   }
 
   private executeCancelBooking(flight: BookedFlight, trfDisplay: string): void {
@@ -368,10 +409,12 @@ export class FlightsProcessingComponent implements OnInit {
         this.loadAll();
         this.isProcessing = false;
       },
-      error: (err) => {
-        this.toastService.error('Failed to cancel booking: ' + (err.error?.error || err.message || 'Unknown error'));
+      error: err => {
+        this.toastService.error(
+          'Failed to cancel booking: ' + (err.error?.error || err.message || 'Unknown error')
+        );
         this.isProcessing = false;
-      }
+      },
     });
   }
 
@@ -431,11 +474,15 @@ export class FlightsProcessingComponent implements OnInit {
    */
   getTravelTypeBadgeClass(travelType: string): string {
     switch (travelType) {
-      case 'Overseas': return 'badge-blue';
+      case 'Overseas':
+        return 'badge-blue';
       case 'Home Leave Passage':
-      case 'Home Leave': return 'badge-purple';
-      case 'Domestic': return 'badge-green';
-      default: return 'badge-gray';
+      case 'Home Leave':
+        return 'badge-purple';
+      case 'Domestic':
+        return 'badge-green';
+      default:
+        return 'badge-gray';
     }
   }
 
@@ -466,6 +513,7 @@ export class FlightsProcessingComponent implements OnInit {
   /**
    * Extract error message from HTTP error response
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private extractErrorMessage(err: any): string {
     // Handle various Django REST framework error response formats
     if (err.error) {
@@ -516,11 +564,12 @@ export class FlightsProcessingComponent implements OnInit {
     // Apply search term
     if (this.searchTerm) {
       const searchLower = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(trf =>
-        trf.request_number?.toLowerCase().includes(searchLower) ||
-        trf.requestorName.toLowerCase().includes(searchLower) ||
-        trf.destinationSummary.toLowerCase().includes(searchLower) ||
-        trf.department.toLowerCase().includes(searchLower)
+      filtered = filtered.filter(
+        trf =>
+          trf.request_number?.toLowerCase().includes(searchLower) ||
+          trf.requestorName.toLowerCase().includes(searchLower) ||
+          trf.destinationSummary.toLowerCase().includes(searchLower) ||
+          trf.department.toLowerCase().includes(searchLower)
       );
     }
 
