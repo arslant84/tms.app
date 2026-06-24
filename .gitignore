@@ -36,6 +36,9 @@ db.sqlite3-journal
 # Database backup files (pg_dump) — never commit backup binaries to git
 backend/backups/
 
+# Runtime log files
+backend/logs/
+
 # Static and media files (generated/uploaded)
 staticfiles/
 media/
@@ -80,4 +83,4 @@ Thumbs.db
 Desktop.ini
 CODE_STANDARDS_AND_REFACTORING_GUIDE.md
 *.md
-!docs/*.md
+!docs/ARCHITECTURE.md
