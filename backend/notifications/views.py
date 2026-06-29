@@ -2,7 +2,14 @@ import logging
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, BasePermission
+
+
+class CanManageNotifications(BasePermission):
+    """Allows access to users with manage_notifications or view_system_settings permission."""
+    def has_permission(self, request, view):
+        return has_permission(request.user, 'manage_notifications') or \
+               has_permission(request.user, 'view_system_settings')
 from django.utils import timezone
 from django.db.models import Q, Count
 from datetime import datetime, timedelta
@@ -35,7 +42,7 @@ class NotificationEventTypeViewSet(viewsets.ModelViewSet):
     """
     queryset = NotificationEventType.objects.all()
     serializer_class = NotificationEventTypeSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, CanManageNotifications]
     pagination_class = None  # Disable pagination
 
     def get_queryset(self):
@@ -59,7 +66,7 @@ class NotificationTemplateViewSet(viewsets.ModelViewSet):
     """
     queryset = NotificationTemplate.objects.all()
     serializer_class = NotificationTemplateSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, CanManageNotifications]
     pagination_class = None  # Disable pagination
 
     def get_serializer_class(self):
