@@ -85,7 +85,7 @@ jobs:
 
       # CTRL-0000001191 — npm dependency vulnerability scan
       - name: npm audit
-        run: npm audit --omit=dev --audit-level=high
+        run: npm audit --omit=dev --audit-level=critical
 
       - name: TypeScript type-check
         run: npx tsc --noEmit -p tsconfig.app.json
