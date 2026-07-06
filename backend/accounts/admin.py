@@ -146,7 +146,7 @@ class UserAdmin(BaseUserAdmin):
         ),
     )
 
-    search_fields = ("email", "name", "staff_id", "department")
+    search_fields = ("email", "name", "staff_id", "department__name")
     ordering = ("email",)
     filter_horizontal = ()
 
