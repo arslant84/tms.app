@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django_ratelimit.decorators import ratelimit
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -77,9 +78,13 @@ from .utils import has_permission
 User = get_user_model()
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class LoginView(APIView):
     """User authentication endpoint."""
 
+    authentication_classes = (
+        []
+    )  # No credentials on login; avoids SessionAuthentication CSRF enforcement
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
