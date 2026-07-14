@@ -19,7 +19,7 @@ cryptography==48.0.1
 cyclonedx-python-lib==6.4.4
 defusedxml==0.7.1
 distlib==0.4.0
-Django==5.2.15
+Django==5.2.16
 django-cors-headers==4.3.1
 django-csp==4.0
 django-ratelimit==4.1.0
@@ -57,7 +57,7 @@ openpyxl==3.1.2
 packageurl-python==0.17.6
 packaging==24.0
 passlib==1.7.4
-pillow==12.2.0
+pillow==12.3.0
 pip-api==0.0.34
 pip-requirements-parser==32.0.1
 pip_audit==2.7.0
