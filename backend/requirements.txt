@@ -12,7 +12,7 @@ cffi>=2.0.0
 cfgv==3.5.0
 chardet==5.2.0
 charset-normalizer==3.4.4
-click==8.3.1
+click==8.3.3
 colorama==0.4.6
 coverage==7.4.1
 cryptography==48.0.1
