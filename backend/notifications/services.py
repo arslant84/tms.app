@@ -145,6 +145,12 @@ class NotificationService:
             except Exception as e:
                 # Error is already logged in send_email_notification
                 logger.error(f"Background email send failed for notification {notification.id}: {str(e)}")
+            finally:
+                # This thread falls outside Django's request_finished signal, which is
+                # what normally closes DB connections - without this, each send leaks
+                # a Postgres connection that never gets reclaimed.
+                from django.db import connection
+                connection.close()
 
         # Start background thread (daemon=True ensures thread doesn't block shutdown)
         thread = threading.Thread(target=_send_in_background, daemon=True)
