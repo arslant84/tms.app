@@ -1,11 +1,19 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnInit,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   WorkflowService,
   WorkflowStepWithApprovers,
   EligibleApprover,
-  ApproverSelection
+  ApproverSelection,
 } from '../../../core/services/workflow.service';
 import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 
@@ -14,7 +22,7 @@ import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.comp
  * Maps step_order to skip reason (optional).
  */
 export interface SkippedStepsSelection {
-  [stepOrder: number]: string | null;  // step_order -> skip_reason (null means no reason provided)
+  [stepOrder: number]: string | null; // step_order -> skip_reason (null means no reason provided)
 }
 
 @Component({
@@ -22,7 +30,7 @@ export interface SkippedStepsSelection {
   standalone: true,
   imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './approver-selection.component.html',
-  styleUrls: ['./approver-selection.component.scss']
+  styleUrls: ['./approver-selection.component.scss'],
 })
 export class ApproverSelectionComponent implements OnInit, OnChanges {
   @Input() entityType: string = '';
@@ -68,9 +76,11 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     // Reload approvers if entityType, requesterId, or staffId changes
-    if ((changes['entityType'] && !changes['entityType'].firstChange) ||
-        (changes['requesterId'] && !changes['requesterId'].firstChange) ||
-        (changes['staffId'] && !changes['staffId'].firstChange)) {
+    if (
+      (changes['entityType'] && !changes['entityType'].firstChange) ||
+      (changes['requesterId'] && !changes['requesterId'].firstChange) ||
+      (changes['staffId'] && !changes['staffId'].firstChange)
+    ) {
       this.initialSelectionsApplied = false;
       this.loadEligibleApprovers();
     }
@@ -99,41 +109,47 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
       options.staffId = this.staffId;
     }
 
-    this.workflowService.getEligibleApprovers(this.entityType, Object.keys(options).length > 0 ? options : undefined).subscribe({
-      next: (response) => {
-        if (response && response.steps) {
-          this.steps = response.steps;
+    this.workflowService
+      .getEligibleApprovers(this.entityType, Object.keys(options).length > 0 ? options : undefined)
+      .subscribe({
+        next: response => {
+          if (response && response.steps) {
+            this.steps = response.steps;
 
-          // First, apply initial selections if provided
-          this.applyInitialSelections();
+            // First, apply initial selections if provided
+            this.applyInitialSelections();
 
-          // Apply initial skipped steps
-          this.applyInitialSkippedSteps();
+            // Apply initial skipped steps
+            this.applyInitialSkippedSteps();
 
-          // Then, for steps without initial selection or skip, pre-select if only one approver
-          this.steps.forEach(step => {
-            const isSkipped = this.skippedSteps[step.step_order] !== undefined;
-            if (!isSkipped && this.selections[step.step_order] === undefined && step.eligible_approvers.length === 1) {
-              this.selections[step.step_order] = step.eligible_approvers[0].id;
-            }
-          });
+            // Then, for steps without initial selection or skip, pre-select if only one approver
+            this.steps.forEach(step => {
+              const isSkipped = this.skippedSteps[step.step_order] !== undefined;
+              if (
+                !isSkipped &&
+                this.selections[step.step_order] === undefined &&
+                step.eligible_approvers.length === 1
+              ) {
+                this.selections[step.step_order] = step.eligible_approvers[0].id;
+              }
+            });
 
-          this.emitSelection();
-          this.emitSkippedSteps();
+            this.emitSelection();
+            this.emitSkippedSteps();
+            this.emitValidity();
+          } else {
+            // Response was null or had no steps - workflow not found
+            this.steps = [];
+          }
+          this.isLoading = false;
+        },
+        error: err => {
+          console.error('Error loading eligible approvers:', err);
+          this.error = 'Failed to load approvers. Please try again.';
+          this.isLoading = false;
           this.emitValidity();
-        } else {
-          // Response was null or had no steps - workflow not found
-          this.steps = [];
-        }
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading eligible approvers:', err);
-        this.error = 'Failed to load approvers. Please try again.';
-        this.isLoading = false;
-        this.emitValidity();
-      }
-    });
+        },
+      });
   }
 
   /**
@@ -191,7 +207,7 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
    */
   onSkipToggle(stepOrder: number, skip: boolean, reason?: string): void {
     const step = this.steps.find(s => s.step_order === stepOrder);
-    if (!step || !step.can_skip) return;
+    if (!step || !this.canSkipStep(step)) return;
 
     if (skip) {
       this.skippedSteps[stepOrder] = reason || null;
@@ -241,11 +257,12 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
     const searchTerm = (this.searchTerms[step.step_order] || '').toLowerCase().trim();
     if (!searchTerm) return step.eligible_approvers;
 
-    return step.eligible_approvers.filter(approver =>
-      approver.full_name.toLowerCase().includes(searchTerm) ||
-      approver.email.toLowerCase().includes(searchTerm) ||
-      (approver.department && approver.department.toLowerCase().includes(searchTerm)) ||
-      (approver.role && approver.role.toLowerCase().includes(searchTerm))
+    return step.eligible_approvers.filter(
+      approver =>
+        approver.full_name.toLowerCase().includes(searchTerm) ||
+        approver.email.toLowerCase().includes(searchTerm) ||
+        (approver.department && approver.department.toLowerCase().includes(searchTerm)) ||
+        (approver.role && approver.role.toLowerCase().includes(searchTerm))
     );
   }
 
