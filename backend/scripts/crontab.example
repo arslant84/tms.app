@@ -1,0 +1,30 @@
+# TMS backend maintenance schedule — example crontab
+#
+# None of these are scheduled automatically anywhere in this repository or by
+# the application itself. This file exists so the intended schedule is
+# documented and versioned, matching what docs/ARCHITECTURE.md's deployment
+# diagram already describes (backup_db daily, cleanup_expired_data monthly).
+# An operator must install this on the actual deployment host — see
+# instructions below.
+#
+# Install with:
+#   crontab -e
+#   # then paste the lines below, adjusting REPO_PATH and VENV_PATH for your
+#   # deployment, or:
+#   crontab backend/scripts/crontab.example   # after editing the paths
+#
+# All commands log to backend/logs/ so cron failures are visible without
+# relying on cron's own (often misconfigured) mail delivery.
+
+REPO_PATH=/path/to/tms-app/backend
+VENV_PATH=/path/to/tms-app/backend/venv
+
+# Daily database backup — 02:00
+0 2 * * * cd $REPO_PATH && $VENV_PATH/bin/python manage.py backup_db >> logs/cron_backup_db.log 2>&1
+
+# Weekly inactive-account disable (90-day threshold by default) — Sunday 03:00
+0 3 * * 0 cd $REPO_PATH && $VENV_PATH/bin/python manage.py disable_inactive_accounts >> logs/cron_disable_inactive_accounts.log 2>&1
+
+# Monthly data retention cleanup (7-year default, or ApplicationSetting
+# 'data_retention_days') — 1st of the month, 04:00
+0 4 1 * * cd $REPO_PATH && $VENV_PATH/bin/python manage.py cleanup_expired_data >> logs/cron_cleanup_expired_data.log 2>&1
