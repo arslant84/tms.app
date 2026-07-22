@@ -283,17 +283,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             if (
                 user.role
                 and user.role.permissions.filter(
-                    name__in=["book_flights", "manage_bookings", "view_all_trf"]
+                    name__in=["manage_bookings", "view_all_trf"]
                 ).exists()
             ):
                 logger.info(
                     " Booking action: User has booking permissions - allowing access to bookable TRFs"
-                )
-                return queryset.filter(status__in=bookable_statuses)
-            # Also allow staff users
-            if user.is_staff:
-                logger.info(
-                    " Booking action: Staff user - allowing access to bookable TRFs"
                 )
                 return queryset.filter(status__in=bookable_statuses)
             # Allow users with ticketing-related roles (Travel Desk, Ticketing, etc.)
