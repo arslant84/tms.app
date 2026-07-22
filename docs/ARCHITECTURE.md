@@ -30,7 +30,7 @@ graph TD
             NOTIF["notifications<br/>Email & In-app Alerts"]
             REP["reports<br/>Analytics & Exports"]
             INS["insights<br/>Dashboard Metrics"]
-            APR["approvals<br/>Unified Approval Engine"]
+            APR["approvals<br/>No models — bulk/read layer over workflows"]
         end
     end
 
@@ -266,7 +266,7 @@ Traces how a single `TravelRequest` (TRF) moves through the system from creation
 ```mermaid
 flowchart TD
     C["Traveller creates TRF<br/>trf.TravelRequest (status=Draft)<br/>trf/models.py"]
-    S["submit()<br/>trf/views.py — TravelRequestViewSet.submit<br/>status → Pending"]
+    S["submit()<br/>trf/views.py — TravelRequestViewSet.submit<br/>status: Draft to Pending"]
     WR["WorkflowRouter.start_workflow_for_request<br/>workflows/router.py"]
     WE1["WorkflowEngine.start_workflow<br/>workflows/engine.py<br/>creates WorkflowInstance + first WorkflowStepExecution"]
     N1["NotificationService.create_notification<br/>notifications/services.py<br/>notify_workflow_started"]
@@ -274,7 +274,7 @@ flowchart TD
     A["Approver acts: approve()/reject()<br/>trf/views.py — TravelRequestViewSet"]
     WE2["WorkflowEngine.process_action<br/>workflows/engine.py<br/>advances/finalizes WorkflowStepExecution<br/>writes WorkflowAuditLog"]
     N2["trigger_configured_notifications<br/>workflows/notifications.py"]
-    FIN["Entity status → Approved / Rejected<br/>engine.py"]
+    FIN["Entity status: Approved or Rejected<br/>engine.py"]
 
     BK["Admin: book_flight action<br/>trf/views.py<br/>creates bookings.FlightBooking(trf=trf)"]
 
@@ -283,7 +283,7 @@ flowchart TD
     A --> WE2 --> N2 --> FIN
     FIN -->|"Approved"| BK
 
-    subgraph Alt["Alternate approval paths (not fully consolidated)"]
+    subgraph Alt["Alternate approval paths — not fully consolidated"]
         AB["approvals.bulk_approve<br/>approvals/views.py<br/>writes AdminActionLog"]
         TA["WorkflowStepExecutionViewSet.take_action<br/>workflows/views.py"]
     end
