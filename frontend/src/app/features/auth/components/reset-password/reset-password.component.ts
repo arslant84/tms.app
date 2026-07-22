@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, map, take } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
@@ -39,7 +39,7 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.route.fragment.subscribe(fragment => {
+    this.route.fragment.pipe(take(1)).subscribe(fragment => {
       const params = new URLSearchParams(fragment || '');
       this.token = params.get('token') || '';
       if (!this.token) {
