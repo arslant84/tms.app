@@ -259,7 +259,50 @@ graph LR
 
 ---
 
-## 7. Key Dependencies
+## 7. Travel Request Data Flow
+
+Traces how a single `TravelRequest` (TRF) moves through the system from creation to a booked outcome. `combined_request` runs the same pattern independently for multi-modal requests (its own `CombinedRequest` model inlines travel/visa/accommodation/transport fields rather than creating child records).
+
+```mermaid
+flowchart TD
+    C["Traveller creates TRF<br/>trf.TravelRequest (status=Draft)<br/>trf/models.py"]
+    S["submit()<br/>trf/views.py — TravelRequestViewSet.submit<br/>status → Pending"]
+    WR["WorkflowRouter.start_workflow_for_request<br/>workflows/router.py"]
+    WE1["WorkflowEngine.start_workflow<br/>workflows/engine.py<br/>creates WorkflowInstance + first WorkflowStepExecution"]
+    N1["NotificationService.create_notification<br/>notifications/services.py<br/>notify_workflow_started"]
+
+    A["Approver acts: approve()/reject()<br/>trf/views.py — TravelRequestViewSet"]
+    WE2["WorkflowEngine.process_action<br/>workflows/engine.py<br/>advances/finalizes WorkflowStepExecution<br/>writes WorkflowAuditLog"]
+    N2["trigger_configured_notifications<br/>workflows/notifications.py"]
+    FIN["Entity status → Approved / Rejected<br/>engine.py"]
+
+    BK["Admin: book_flight action<br/>trf/views.py<br/>creates bookings.FlightBooking(trf=trf)"]
+
+    C --> S --> WR --> WE1 --> N1
+    WE1 -.-> A
+    A --> WE2 --> N2 --> FIN
+    FIN -->|"Approved"| BK
+
+    subgraph Alt["Alternate approval paths (not fully consolidated)"]
+        AB["approvals.bulk_approve<br/>approvals/views.py<br/>writes AdminActionLog"]
+        TA["WorkflowStepExecutionViewSet.take_action<br/>workflows/views.py"]
+    end
+
+    A -.->|"bulk action UI"| AB
+    A -.->|"alternate endpoint"| TA
+```
+
+**Known gaps / risks surfaced by this trace (not yet resolved in code):**
+
+- **Three divergent "approve a step" code paths** — `WorkflowEngine.process_action`, `approvals.bulk_approve`, and `WorkflowStepExecutionViewSet.take_action` implement overlapping but not identical logic. Which path the frontend calls for a single-item approval vs. a bulk approval is not consistently documented in backend code.
+- **`approvals` app has no models** — it is a read-aggregator/bulk-action layer over `workflows.WorkflowInstance` / `WorkflowStepExecution`, not an independent approval store, despite appearing as a peer domain app in §1.
+- **Audit logging gap** — `AdminActionLog` is only written from `approvals.bulk_approve`. The single-item `approve`/`reject` actions in `trf/views.py` (the main `WorkflowEngine.process_action` path) do not write an audit log entry.
+- **Downstream requests are not auto-created on approval** — bookings, visa, accommodation, and transport records are submitted independently by the traveller/admin after TRF approval; the only system-linked exception is the manual `book_flight` admin action.
+- **Dead signal handler** — `trf/signals.py` has a `post_save` receiver keyed off `status == 'Submitted'`, a value the code never actually sets (the real status is `'Pending'`); the signal appears vestigial and the actual trigger is the explicit `WorkflowRouter` call in `submit()`.
+
+---
+
+## 8. Key Dependencies
 
 | Layer | Package | Purpose |
 |---|---|---|
