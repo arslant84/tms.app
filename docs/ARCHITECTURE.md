@@ -354,6 +354,7 @@ All three approval entry points (single-item `approve`/`reject`, `bulk_approve`,
 - ~~Audit logging gap~~ — `WorkflowEngine.process_action` now writes an `AdminActionLog` entry for every approval path, not just bulk.
 - ~~Dead signal handler~~ — deleted across all four apps that had it: `trf`, `accommodation`, `transport`, `visa` (`combined_request` never had this dead pattern).
 - `approvals` app having no models is now called out directly in its module docstring and in the `APR` node label in §1 — not a bug, just previously under-documented.
+- ~~Legacy-fallback authorization gap~~ (found 2026-07-22 while auditing the "no template" branch above) — when no active `WorkflowTemplate` exists for an entity type, all five apps' `approve()`/`reject()` fell back to legacy status-mutation logic gated only by `IsAuthenticated`, with no role/permission check — any authenticated user could approve or reject, regardless of role. `combined_request`'s fallback was the worst: no status-transition check either. Fixed by adding an `accounts.utils.can_approve(user, module)` check (the same permission model backing `WorkflowEngine._is_user_authorized`) to all 10 fallback branches, and wiring `'combined'` → `approve_combined` into `can_approve()`, which existed as a real permission but wasn't in that helper's module map. See `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 4.
 
 **Still open, by design:**
 

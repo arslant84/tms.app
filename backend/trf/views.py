@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from utils.viewset_mixins import StandardResultsPagination
 
 logger = logging.getLogger(__name__)
-from accounts.utils import can_view_all
+from accounts.utils import can_approve, can_view_all
 from utils.api_response import (
     created_response,
     error_response,
@@ -642,6 +642,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     )
             else:
                 # Fallback to legacy manual approval if no workflow found
+                if not (request.user.is_superuser or can_approve(request.user, "trf")):
+                    return forbidden_response(
+                        message="You do not have permission to approve travel requests"
+                    )
+
                 logger.warning(
                     f" No workflow instance found for TRF #{trf.id}, using legacy approval"
                 )
@@ -780,6 +785,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     )
             else:
                 # Fallback to legacy manual rejection if no workflow found
+                if not (request.user.is_superuser or can_approve(request.user, "trf")):
+                    return forbidden_response(
+                        message="You do not have permission to reject travel requests"
+                    )
+
                 logger.warning(
                     f" No workflow instance found for TRF #{trf.id}, using legacy rejection"
                 )

@@ -57,7 +57,9 @@ def has_all_permissions(user, permission_names):
         return False
     if not user.role:
         return False
-    return user.role.permissions.filter(name__in=permission_names).count() == len(permission_names)
+    return user.role.permissions.filter(name__in=permission_names).count() == len(
+        permission_names
+    )
 
 
 def can_view_all(user, module):
@@ -72,13 +74,13 @@ def can_view_all(user, module):
         True if user can view all records for the module, False otherwise.
     """
     permission_map = {
-        'trf': 'view_all_trf',
-        'accommodation': 'view_all_accommodation',
-        'transport': 'view_all_transport',
-        'visa': 'view_all_visa',
-        'booking': 'view_all_bookings',
-        'bookings': 'view_all_bookings',
-        'flights': 'view_all_trf',  # Flights are tied to TRF admin
+        "trf": "view_all_trf",
+        "accommodation": "view_all_accommodation",
+        "transport": "view_all_transport",
+        "visa": "view_all_visa",
+        "booking": "view_all_bookings",
+        "bookings": "view_all_bookings",
+        "flights": "view_all_trf",  # Flights are tied to TRF admin
     }
     permission_name = permission_map.get(module)
     if not permission_name:
@@ -98,24 +100,24 @@ def can_manage(user, module):
         True if user can manage records for the module, False otherwise.
     """
     permission_map = {
-        'trf': ['process_trf', 'manage_trf'],
-        'accommodation': ['process_accommodation', 'manage_accommodation'],
-        'transport': ['process_transport', 'manage_transport'],
-        'visa': ['process_visa', 'manage_visa'],
-        'booking': ['process_bookings', 'manage_bookings'],
-        'bookings': ['process_bookings', 'manage_bookings'],
-        'workflow': ['manage_workflows'],
-        'workflows': ['manage_workflows'],
-        'user': ['manage_users'],
-        'users': ['manage_users'],
-        'role': ['manage_roles'],
-        'roles': ['manage_roles'],
-        'department': ['manage_departments'],
-        'departments': ['manage_departments'],
-        'notification': ['manage_notifications', 'send_notifications'],
-        'notifications': ['manage_notifications', 'send_notifications'],
-        'approval': ['manage_approvals'],
-        'approvals': ['manage_approvals'],
+        "trf": ["process_trf", "manage_trf"],
+        "accommodation": ["process_accommodation", "manage_accommodation"],
+        "transport": ["process_transport", "manage_transport"],
+        "visa": ["process_visa", "manage_visa"],
+        "booking": ["process_bookings", "manage_bookings"],
+        "bookings": ["process_bookings", "manage_bookings"],
+        "workflow": ["manage_workflows"],
+        "workflows": ["manage_workflows"],
+        "user": ["manage_users"],
+        "users": ["manage_users"],
+        "role": ["manage_roles"],
+        "roles": ["manage_roles"],
+        "department": ["manage_departments"],
+        "departments": ["manage_departments"],
+        "notification": ["manage_notifications", "send_notifications"],
+        "notifications": ["manage_notifications", "send_notifications"],
+        "approval": ["manage_approvals"],
+        "approvals": ["manage_approvals"],
     }
     permissions = permission_map.get(module, [])
     if not permissions:
@@ -154,10 +156,11 @@ def can_approve(user, module=None):
     """
     if module:
         permission_map = {
-            'trf': 'approve_trf',
-            'accommodation': 'approve_accommodation',
-            'transport': 'approve_transport',
-            'visa': 'approve_visa',
+            "trf": "approve_trf",
+            "accommodation": "approve_accommodation",
+            "transport": "approve_transport",
+            "visa": "approve_visa",
+            "combined": "approve_combined",
         }
         permission_name = permission_map.get(module)
         if permission_name:
@@ -166,11 +169,12 @@ def can_approve(user, module=None):
 
     # Check if user has any approval permission
     approval_permissions = [
-        'approve_trf',
-        'approve_accommodation',
-        'approve_transport',
-        'approve_visa',
-        'view_pending_approvals',
+        "approve_trf",
+        "approve_accommodation",
+        "approve_transport",
+        "approve_visa",
+        "approve_combined",
+        "view_pending_approvals",
     ]
     return has_any_permission(user, approval_permissions)
 
@@ -186,7 +190,7 @@ def get_user_admin_modules(user):
         List of module names the user can administer.
     """
     modules = []
-    module_list = ['trf', 'accommodation', 'transport', 'visa', 'booking']
+    module_list = ["trf", "accommodation", "transport", "visa", "booking"]
 
     for module in module_list:
         if is_module_admin(user, module):
