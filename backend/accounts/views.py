@@ -1264,7 +1264,7 @@ class AdminActionLogViewSet(viewsets.ReadOnlyModelViewSet):
     Read-only access for security monitoring and compliance.
 
     SECURITY: Access controlled by RBAC permissions.
-    Users must have 'view_audit_logs' permission.
+    Users must have 'view_activity_logs' permission.
     """
 
     queryset = AdminActionLog.objects.all().select_related("user")
@@ -1298,11 +1298,11 @@ class AdminActionLogViewSet(viewsets.ReadOnlyModelViewSet):
             return queryset
 
         # SECURITY: Check if user has explicit permission to view audit logs
-        # This should be controlled by RBAC permission 'view_audit_logs'
+        # This should be controlled by RBAC permission 'view_activity_logs'
         from .models import Permission as AppPermission
 
         try:
-            view_audit_perm = AppPermission.objects.get(name="view_audit_logs")
+            view_audit_perm = AppPermission.objects.get(name="view_activity_logs")
             user_permissions = []
             if user.role:
                 user_permissions = user.role.permissions.all()

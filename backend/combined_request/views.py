@@ -719,7 +719,7 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
             "accommodation": "view_admin_accommodation",
             "visa": "view_admin_visa",
         }
-        if not (request.user.is_admin or request.user.is_staff):
+        if not request.user.is_superuser:
             user_perms = (
                 set(request.user.role.permissions.values_list("name", flat=True))
                 if getattr(request.user, "role", None)

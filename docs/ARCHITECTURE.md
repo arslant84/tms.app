@@ -421,6 +421,8 @@ Both apps are almost entirely **live, read-only aggregation** — no ETL, no sch
 | `reports` | `TravelRequest`, `FlightBooking`/`HotelBooking`, `TransportRequest`, `VisaApplication`, `AccommodationRequest`, `WorkflowInstance`/`WorkflowStepExecution`, `User`/`Department` | No `models.py` at all — every endpoint computes stats on the fly per-request. `ReportExportView` re-runs the same query and serializes to CSV / Excel (`openpyxl`) / PDF (`reportlab`) synchronously in the request. |
 | `insights` | Same models as `reports`, plus its own `TravelInsight`/`DestinationStat`/`CategorySpend`/`MonthlyTrend`/`TravelAnalytics` models | `dashboard_summary`, `travel_spend_analytics`, `booking_analytics`, etc. are live queries exactly like `reports`. **But** the dedicated analytics models (`DestinationStat`, `CategorySpend`, `MonthlyTrend`, `TravelAnalytics`) have no population pipeline anywhere in the codebase — no management command, signal, or scheduled task writes to them. `TravelInsight` rows are created directly by users via the API, not computed. Treat this half of `insights` as a **dormant, unwired stub**, not a working analytics pipeline. |
 
+`reports`' 5 endpoints previously required only `IsAuthenticated` despite a `generate_admin_reports` permission existing specifically for them — any authenticated user could hit every reports endpoint. Fixed 2026-07-23 (see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 5) with a shared permission gate; `insights`' live-query endpoints were not part of that audit and remain `IsAuthenticated`-only.
+
 ### 7.5 Account Lifecycle
 
 ```mermaid
