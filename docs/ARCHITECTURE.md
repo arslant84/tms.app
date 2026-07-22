@@ -240,7 +240,7 @@ graph LR
         GN["Gunicorn WSGI<br/>Django application"]
         PG2[("PostgreSQL 15")]
         FS["File System<br/>backend/backups/<br/>backend/logs/"]
-        CRON["Task Scheduler / Cron<br/>backup_db — daily<br/>cleanup_expired_data — monthly"]
+        CRON["Task Scheduler / Cron<br/>backup_db — daily<br/>disable_inactive_accounts — weekly<br/>cleanup_expired_data — monthly"]
     end
 
     subgraph Build["Build / CI"]
@@ -256,6 +256,8 @@ graph LR
     GHA --> ANG
     ANG -->|deploy| FS
 ```
+
+None of the three `CRON` jobs above are scheduled by this repository or the application itself — they're real, tested Django management commands (`backend/accounts/management/commands/`), but installing them on a schedule is an operational step outside what a code commit can do. `backend/scripts/crontab.example` documents the exact schedule shown here so it's versioned and not just tribal knowledge; an operator still has to run `crontab backend/scripts/crontab.example` (with paths adjusted) on the actual deployment host.
 
 ---
 
@@ -441,7 +443,7 @@ flowchart TD
     CLEANUP -.->|"external cron / Task Scheduler — not configured in this repo"| DBX
 ```
 
-Notable: **self-registration has no approval gate at all** — a new account is active immediately, distinguished only by an auto-assigned low-privilege "Registered User" role (users cannot set their own role — it's forced server-side). `disable_inactive_accounts` and `cleanup_expired_data` are both real, tested management commands, but **neither is scheduled anywhere in this repository** — their docstrings say to run them "via cron or Task Scheduler," implying an external, undocumented-in-code schedule that whoever operates this deployment needs to have set up separately.
+Notable: **self-registration has no approval gate at all** — a new account is active immediately, distinguished only by an auto-assigned low-privilege "Registered User" role (users cannot set their own role — it's forced server-side). `disable_inactive_accounts` and `cleanup_expired_data` are both real, tested management commands; their intended schedule is now documented and versioned at `backend/scripts/crontab.example` (§6), though an operator still has to install it on the actual deployment host — no code commit can do that step.
 
 ### 7.6 Audit Trail Signals
 
