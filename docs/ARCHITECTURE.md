@@ -186,6 +186,12 @@ graph TD
     TRV --> DATA
 ```
 
+This diagram simplifies to 4 abstract role categories for readability — the real system is more granular: `accounts.Role` ↔ `accounts.Permission` via a `RolePermission` join table, 65 named permissions as of 2026-07-23 (`approve_trf`, `manage_bookings`, `view_all_visa`, etc.), checked via helpers in `accounts/utils.py` (`has_permission`, `can_approve`, `can_view_all`, `can_manage`, `is_module_admin`).
+
+**Known gaps in this permission system (audited 2026-07-23, see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 5 for the fixes already made):**
+- **5 orphaned `combined_request` permissions** — `approve_combined`, `manage_combined_requests`, `process_combined_requests`, `view_admin_combined`, `view_all_combined` all have **0 roles assigned** in this environment. Only `create_combined` (1 role) is actually usable. This is a data/role-configuration gap, not a code bug — an admin needs to assign these to appropriate roles for combined-request admin workflows to function for anyone but a superuser.
+- **~14 "paper" permissions never enforced anywhere in backend code** — exist in the DB, assigned to roles (some to 11-12 roles), but grepping the entire backend outside migrations/tests finds zero actual `has_permission`/`can_approve`/etc. checks against them. Most notably the whole `create_*` family (`create_trf`, `create_visa`, `create_transport`, `create_accommodation`, `create_combined`) and `manage_own_profile` — none gate their corresponding endpoints, which rely solely on `IsAuthenticated`. Others in this category: `access_debug_endpoints`, `export_data`, `manage_accommodation_bookings`, `manage_document_templates`, `manage_flights`, `manage_transport_requests`, `process_flights`, `process_visa_applications`. Not necessarily wrong (self-service creation gated only by authentication may be intentional), but it means the RBAC system's actual enforcement surface is narrower than the permission list suggests.
+
 ---
 
 ## 5. Security Controls Stack
