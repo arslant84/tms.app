@@ -125,52 +125,8 @@ export interface UserActivity {
   last_activity: string;
 }
 
-// Travel Insight Interface
-export interface TravelInsight {
-  id: number;
-  user: number;
-  user_name: string;
-  title: string;
-  description: string;
-  insight_type: string;
-  potential_savings?: number;
-  relevance_score: number;
-  expiry_date?: string;
-  is_expired: boolean;
-  created_at: string;
-}
-
-export interface SpendCategory {
-  category: string;
-  amount: number;
-  percentage?: number;
-}
-
-export interface MonthlyTrend {
-  month: string;
-  year?: number;
-  trips: number;
-  spend: number;
-}
-
-// Travel Analytics Interface
-export interface TravelAnalytics {
-  id: number;
-  user?: number;
-  user_name?: string;
-  total_trips: number;
-  total_spend: number;
-  average_trip_cost: number;
-  savings_opportunities: number;
-  top_destinations: Destination[];
-  spend_by_category: SpendCategory[];
-  monthly_trend: MonthlyTrend[];
-  created_at: string;
-  updated_at: string;
-}
-
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class InsightsService {
   private apiUrl = `${environment.apiUrl}/insights`;
@@ -196,10 +152,9 @@ export class InsightsService {
     if (dateFrom) params = params.set('date_from', dateFrom);
     if (dateTo) params = params.set('date_to', dateTo);
 
-    return this.http.get<TravelSpendAnalytics>(
-      `${this.apiUrl}/analytics/travel-spend/`,
-      { params }
-    );
+    return this.http.get<TravelSpendAnalytics>(`${this.apiUrl}/analytics/travel-spend/`, {
+      params,
+    });
   }
 
   /**
@@ -239,70 +194,6 @@ export class InsightsService {
     return this.http.get<UserActivity[]>(`${this.apiUrl}/reports/user-activity/`);
   }
 
-  // ============ Travel Insights APIs ============
-
-  /**
-   * Get all travel insights
-   */
-  getInsights(insightType?: string, includeExpired: boolean = false): Observable<TravelInsight[]> {
-    let params = new HttpParams();
-    if (insightType) params = params.set('insight_type', insightType);
-    if (includeExpired) params = params.set('include_expired', 'true');
-
-    return this.http.get<TravelInsight[]>(`${this.apiUrl}/insights/`, { params });
-  }
-
-  /**
-   * Get a specific travel insight by ID
-   */
-  getInsight(id: number): Observable<TravelInsight> {
-    return this.http.get<TravelInsight>(`${this.apiUrl}/insights/${id}/`);
-  }
-
-  /**
-   * Create a new travel insight
-   */
-  createInsight(insight: Partial<TravelInsight>): Observable<TravelInsight> {
-    return this.http.post<TravelInsight>(`${this.apiUrl}/insights/`, insight);
-  }
-
-  /**
-   * Update a travel insight
-   */
-  updateInsight(id: number, insight: Partial<TravelInsight>): Observable<TravelInsight> {
-    return this.http.patch<TravelInsight>(`${this.apiUrl}/insights/${id}/`, insight);
-  }
-
-  /**
-   * Delete a travel insight
-   */
-  deleteInsight(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/insights/${id}/`);
-  }
-
-  // ============ Travel Analytics APIs ============
-
-  /**
-   * Get all travel analytics
-   */
-  getAllTravelAnalytics(): Observable<TravelAnalytics[]> {
-    return this.http.get<TravelAnalytics[]>(`${this.apiUrl}/analytics/`);
-  }
-
-  /**
-   * Get user's own analytics
-   */
-  getMyAnalytics(): Observable<TravelAnalytics> {
-    return this.http.get<TravelAnalytics>(`${this.apiUrl}/analytics/my_analytics/`);
-  }
-
-  /**
-   * Get company-wide analytics (admin only)
-   */
-  getCompanyAnalytics(): Observable<TravelAnalytics> {
-    return this.http.get<TravelAnalytics>(`${this.apiUrl}/analytics/company_analytics/`);
-  }
-
   // ============ Helper Methods ============
 
   /**
@@ -311,7 +202,7 @@ export class InsightsService {
   formatCurrency(amount: number, currency: string = 'USD'): string {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency
+      currency: currency,
     }).format(amount);
   }
 
@@ -321,33 +212,5 @@ export class InsightsService {
   calculatePercentage(value: number, total: number): number {
     if (total === 0) return 0;
     return Math.round((value / total) * 100);
-  }
-
-  /**
-   * Get insight type label
-   */
-  getInsightTypeLabel(type: string): string {
-    const labels: { [key: string]: string } = {
-      'COST_SAVING': 'Cost Saving',
-      'BOOKING_TIMING': 'Booking Timing',
-      'PREFERRED_VENDOR': 'Preferred Vendor',
-      'TRAVEL_PATTERN': 'Travel Pattern',
-      'POLICY_COMPLIANCE': 'Policy Compliance'
-    };
-    return labels[type] || type;
-  }
-
-  /**
-   * Get insight type color
-   */
-  getInsightTypeColor(type: string): string {
-    const colors: { [key: string]: string } = {
-      'COST_SAVING': 'success',
-      'BOOKING_TIMING': 'info',
-      'PREFERRED_VENDOR': 'primary',
-      'TRAVEL_PATTERN': 'warning',
-      'POLICY_COMPLIANCE': 'danger'
-    };
-    return colors[type] || 'secondary';
   }
 }
