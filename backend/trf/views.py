@@ -23,6 +23,7 @@ from utils.api_response import (
     unauthorized_response,
     validation_error_response,
 )
+from utils.constants import BOOKABLE_STATUSES
 from utils.request_id_generator import (
     extract_context_from_itinerary,
     generate_request_id,
@@ -1014,14 +1015,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         logger.debug("========================\n")
 
         # Validate TRF status - allow booking for approved TRFs or updating existing bookings
-        allowed_statuses = [
-            "Approved",
-            "Flight Booked",
-            "Hotel Booked",
-            "Processing",
-            "Ready for Booking",
-        ]
-        if trf.status not in allowed_statuses:
+        if trf.status not in BOOKABLE_STATUSES:
             error_msg = f"Flights can only be booked for approved TRFs. Current status: {trf.status}"
             logger.error(f" Status validation failed: {error_msg}")
             return error_response(
