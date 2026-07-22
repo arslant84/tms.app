@@ -2,24 +2,26 @@
 Workflow Engine - Core business logic for workflow execution
 Handles workflow lifecycle: start, process actions, escalate, complete
 """
+
 import logging
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
-from typing import Optional, Dict, Any
-from django.db import transaction
-from django.utils import timezone
-from django.contrib.contenttypes.models import ContentType
-from django.db import models
-from accounts.models import User
+from typing import Any, Dict, Optional
+
+from accounts.models import AdminActionLog, User
 from accounts.utils import can_manage
+from django.contrib.contenttypes.models import ContentType
+from django.db import models, transaction
+from django.utils import timezone
+
 from .models import (
-    WorkflowTemplate,
-    WorkflowStep,
-    WorkflowInstance,
-    WorkflowStepExecution,
+    WorkflowAuditLog,
     WorkflowDelegation,
-    WorkflowAuditLog
+    WorkflowInstance,
+    WorkflowStep,
+    WorkflowStepExecution,
+    WorkflowTemplate,
 )
 from .notifications import WorkflowNotifications
 
@@ -37,7 +39,7 @@ class WorkflowEngine:
         initiated_by: User,
         module_name: str,
         selected_approvers: Optional[Dict[int, int]] = None,
-        skipped_steps: Optional[Dict[int, str]] = None
+        skipped_steps: Optional[Dict[int, str]] = None,
     ) -> WorkflowInstance:
         """
         Start a new workflow for an entity (TRF, Visa, etc.)
@@ -57,13 +59,16 @@ class WorkflowEngine:
             ValueError: If no active workflow template found for module
         """
         # Get active workflow template for the module
-        workflow_template = WorkflowTemplate.objects.filter(
-            entity_type=module_name,
-            is_active=True
-        ).prefetch_related('steps').first()
+        workflow_template = (
+            WorkflowTemplate.objects.filter(entity_type=module_name, is_active=True)
+            .prefetch_related("steps")
+            .first()
+        )
 
         if not workflow_template:
-            raise ValueError(f"No active workflow template found for module: {module_name}")
+            raise ValueError(
+                f"No active workflow template found for module: {module_name}"
+            )
 
         # Get content type for the entity
         content_type = ContentType.objects.get_for_model(entity)
@@ -72,12 +77,12 @@ class WorkflowEngine:
         additional_data = {}
         if selected_approvers:
             # Store with string keys for JSON compatibility
-            additional_data['selected_approvers'] = {
+            additional_data["selected_approvers"] = {
                 str(k): v for k, v in selected_approvers.items()
             }
         if skipped_steps:
             # Store skipped steps with string keys for JSON compatibility
-            additional_data['skipped_steps'] = {
+            additional_data["skipped_steps"] = {
                 str(k): v for k, v in skipped_steps.items()
             }
 
@@ -86,17 +91,17 @@ class WorkflowEngine:
             content_type=content_type,
             object_id=entity.id,
             initiated_by=initiated_by,
-            status='in_progress',
+            status="in_progress",
             current_step_order=1,
-            additional_data=additional_data if additional_data else None
+            additional_data=additional_data if additional_data else None,
         )
 
         # Log workflow creation
         WorkflowAuditLog.objects.create(
             workflow_instance=workflow_instance,
-            action_type='created',
+            action_type="created",
             action_description=f"Workflow started for {module_name} #{entity.id}",
-            performed_by=initiated_by
+            performed_by=initiated_by,
         )
 
         # Get first step
@@ -107,7 +112,7 @@ class WorkflowEngine:
             WorkflowEngine._start_step(workflow_instance, first_step, initiated_by)
         else:
             # No steps defined - auto-complete workflow
-            workflow_instance.status = 'approved'
+            workflow_instance.status = "approved"
             workflow_instance.completed_at = timezone.now()
             workflow_instance.save()
 
@@ -122,7 +127,7 @@ class WorkflowEngine:
         step_execution_id: int,
         action: str,
         actioned_by: User,
-        comments: Optional[str] = None
+        comments: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Process an approval action (approve, reject, skip)
@@ -139,19 +144,25 @@ class WorkflowEngine:
         Raises:
             ValueError: If action is invalid or user not authorized
         """
-        step_execution = WorkflowStepExecution.objects.select_related(
-            'workflow_instance',
-            'workflow_step',
-            'workflow_instance__workflow_template'
-        ).select_for_update().get(id=step_execution_id)
+        step_execution = (
+            WorkflowStepExecution.objects.select_related(
+                "workflow_instance",
+                "workflow_step",
+                "workflow_instance__workflow_template",
+            )
+            .select_for_update()
+            .get(id=step_execution_id)
+        )
 
         # Check if step has already been processed (handles rapid duplicate submissions)
-        if step_execution.status != 'pending':
-            logger.warning(f" Step execution {step_execution_id} already processed with status '{step_execution.status}'. Ignoring duplicate request.")
+        if step_execution.status != "pending":
+            logger.warning(
+                f" Step execution {step_execution_id} already processed with status '{step_execution.status}'. Ignoring duplicate request."
+            )
             return {
-                'success': True,
-                'workflow_status': step_execution.workflow_instance.status,
-                'message': f'Step already {step_execution.status}'
+                "success": True,
+                "workflow_status": step_execution.workflow_instance.status,
+                "message": f"Step already {step_execution.status}",
             }
 
         # Validate user is authorized
@@ -159,7 +170,7 @@ class WorkflowEngine:
             raise ValueError("User not authorized to action this step")
 
         # Validate action
-        if action not in ['approve', 'reject', 'skip']:
+        if action not in ["approve", "reject", "skip"]:
             raise ValueError(f"Invalid action: {action}")
 
         # Check if step requires comments
@@ -167,7 +178,7 @@ class WorkflowEngine:
             raise ValueError("Comments are required for this step")
 
         # Update step execution
-        step_execution.status = action + 'd' if action != 'skip' else 'skipped'
+        step_execution.status = action + "d" if action != "skip" else "skipped"
         step_execution.actioned_by = actioned_by
         step_execution.action_date = timezone.now()
         step_execution.comments = comments
@@ -178,23 +189,46 @@ class WorkflowEngine:
         # Log the action
         WorkflowAuditLog.objects.create(
             workflow_instance=workflow_instance,
-            action_type=action + 'd' if action != 'skip' else 'skipped',
+            action_type=action + "d" if action != "skip" else "skipped",
             action_description=f"Step '{step_execution.workflow_step.step_name}' {action}d by {actioned_by.email}",
-            performed_by=actioned_by
+            performed_by=actioned_by,
+        )
+
+        # Admin-facing audit trail (separate from the workflow-scoped log above)
+        admin_action_type = {
+            "approve": "workflow_step_approved",
+            "reject": "workflow_step_rejected",
+            "skip": "workflow_step_approved",
+        }[action]
+        AdminActionLog.log_action(
+            user=actioned_by,
+            action_type=admin_action_type,
+            description=f"{action.capitalize()}d step '{step_execution.workflow_step.step_name}' "
+            f"on workflow instance #{workflow_instance.id}",
+            entity_type=workflow_instance.content_type.model,
+            entity_id=workflow_instance.object_id,
         )
 
         # Process based on action - notifications are handled via configuration
         # If no config exists, default notification behavior is used
-        if action == 'approve' or action == 'skip':
+        if action == "approve" or action == "skip":
             # Trigger notifications for approval (uses config or falls back to defaults)
-            WorkflowNotifications.trigger_configured_notifications(step_execution, 'approval')
-            return WorkflowEngine._handle_step_approval(workflow_instance, step_execution, actioned_by)
-        elif action == 'reject':
+            WorkflowNotifications.trigger_configured_notifications(
+                step_execution, "approval"
+            )
+            return WorkflowEngine._handle_step_approval(
+                workflow_instance, step_execution, actioned_by
+            )
+        elif action == "reject":
             # Trigger notifications for rejection (uses config or falls back to defaults)
-            WorkflowNotifications.trigger_configured_notifications(step_execution, 'rejection')
-            return WorkflowEngine._handle_step_rejection(workflow_instance, step_execution, actioned_by, comments)
+            WorkflowNotifications.trigger_configured_notifications(
+                step_execution, "rejection"
+            )
+            return WorkflowEngine._handle_step_rejection(
+                workflow_instance, step_execution, actioned_by, comments
+            )
 
-        return {'success': True, 'workflow_status': workflow_instance.status}
+        return {"success": True, "workflow_status": workflow_instance.status}
 
     @staticmethod
     @transaction.atomic
@@ -203,7 +237,7 @@ class WorkflowEngine:
         delegated_from: User,
         delegated_to: User,
         reason: Optional[str] = None,
-        expires_at: Optional[datetime] = None
+        expires_at: Optional[datetime] = None,
     ) -> Dict[str, Any]:
         """
         Delegate a workflow step to another user
@@ -222,7 +256,7 @@ class WorkflowEngine:
             ValueError: If delegation not allowed or user not authorized
         """
         step_execution = WorkflowStepExecution.objects.select_related(
-            'workflow_step'
+            "workflow_step"
         ).get(id=step_execution_id)
 
         # Check if delegation is allowed
@@ -241,29 +275,31 @@ class WorkflowEngine:
             delegated_from=delegated_from,
             delegated_to=delegated_to,
             reason=reason,
-            expires_at=expires_at
+            expires_at=expires_at,
         )
 
         # Update step execution assignment
         step_execution.assigned_to = delegated_to
-        step_execution.status = 'delegated'
+        step_execution.status = "delegated"
         step_execution.save()
 
         # Log delegation
         WorkflowAuditLog.objects.create(
             workflow_instance=step_execution.workflow_instance,
-            action_type='delegated',
+            action_type="delegated",
             action_description=f"Step '{step_execution.workflow_step.step_name}' delegated from {delegated_from.email} to {delegated_to.email}",
-            performed_by=delegated_from
+            performed_by=delegated_from,
         )
 
         # Send delegation notification (uses config or falls back to defaults)
-        WorkflowNotifications.trigger_configured_notifications(step_execution, 'delegation')
+        WorkflowNotifications.trigger_configured_notifications(
+            step_execution, "delegation"
+        )
 
         return {
-            'success': True,
-            'delegation_id': delegation.id,
-            'delegated_to': delegated_to.email
+            "success": True,
+            "delegation_id": delegation.id,
+            "delegated_to": delegated_to.email,
         }
 
     @staticmethod
@@ -285,54 +321,60 @@ class WorkflowEngine:
         from django.db.models import Q
 
         # Get by direct assignment
-        direct_assignments = WorkflowStepExecution.objects.filter(
-            assigned_to=user,
-            status='pending',
-            workflow_instance__status='in_progress'
-        ).select_related(
-            'workflow_instance',
-            'workflow_step',
-            'workflow_instance__content_type'
-        ).prefetch_related(
-            'workflow_instance__content_object'
+        direct_assignments = (
+            WorkflowStepExecution.objects.filter(
+                assigned_to=user,
+                status="pending",
+                workflow_instance__status="in_progress",
+            )
+            .select_related(
+                "workflow_instance", "workflow_step", "workflow_instance__content_type"
+            )
+            .prefetch_related("workflow_instance__content_object")
         )
 
         # Get by role (matching by UUID or name)
         role_q = Q()
-        if hasattr(user, 'role') and user.role:
+        if hasattr(user, "role") and user.role:
             # Match by role UUID (primary) or role name (legacy)
-            role_q = Q(workflow_step__approver_role=str(user.role.id)) | Q(workflow_step__approver_role=user.role.name)
+            role_q = Q(workflow_step__approver_role=str(user.role.id)) | Q(
+                workflow_step__approver_role=user.role.name
+            )
 
-        role_assignments = WorkflowStepExecution.objects.filter(
-            role_q,
-            status='pending',
-            workflow_instance__status='in_progress'
-        ).select_related(
-            'workflow_instance',
-            'workflow_step',
-            'workflow_instance__content_type'
-        ).prefetch_related(
-            'workflow_instance__content_object'
+        role_assignments = (
+            WorkflowStepExecution.objects.filter(
+                role_q, status="pending", workflow_instance__status="in_progress"
+            )
+            .select_related(
+                "workflow_instance", "workflow_step", "workflow_instance__content_type"
+            )
+            .prefetch_related("workflow_instance__content_object")
         )
 
         # Get by active delegation
-        delegated_assignments = WorkflowStepExecution.objects.filter(
-            status='pending',
-            workflow_instance__status='in_progress',
-            delegations__delegated_to=user,
-            delegations__is_active=True
-        ).filter(
-            Q(delegations__expires_at__isnull=True) | Q(delegations__expires_at__gt=timezone.now())
-        ).select_related(
-            'workflow_instance',
-            'workflow_step',
-            'workflow_instance__content_type'
-        ).prefetch_related(
-            'workflow_instance__content_object'
+        delegated_assignments = (
+            WorkflowStepExecution.objects.filter(
+                status="pending",
+                workflow_instance__status="in_progress",
+                delegations__delegated_to=user,
+                delegations__is_active=True,
+            )
+            .filter(
+                Q(delegations__expires_at__isnull=True)
+                | Q(delegations__expires_at__gt=timezone.now())
+            )
+            .select_related(
+                "workflow_instance", "workflow_step", "workflow_instance__content_type"
+            )
+            .prefetch_related("workflow_instance__content_object")
         )
 
         # Combine, deduplicate and return
-        all_steps = list(direct_assignments) + list(role_assignments) + list(delegated_assignments)
+        all_steps = (
+            list(direct_assignments)
+            + list(role_assignments)
+            + list(delegated_assignments)
+        )
         seen_ids = set()
         unique_steps = []
         for step in all_steps:
@@ -344,7 +386,9 @@ class WorkflowEngine:
 
     @staticmethod
     @transaction.atomic
-    def cancel_workflow(workflow_instance_id: int, cancelled_by: User, reason: str) -> Dict[str, Any]:
+    def cancel_workflow(
+        workflow_instance_id: int, cancelled_by: User, reason: str
+    ) -> Dict[str, Any]:
         """
         Cancel an active workflow
 
@@ -358,93 +402,125 @@ class WorkflowEngine:
         """
         workflow_instance = WorkflowInstance.objects.get(id=workflow_instance_id)
 
-        if workflow_instance.status in ['approved', 'rejected', 'cancelled']:
-            raise ValueError(f"Cannot cancel workflow with status: {workflow_instance.status}")
+        if workflow_instance.status in ["approved", "rejected", "cancelled"]:
+            raise ValueError(
+                f"Cannot cancel workflow with status: {workflow_instance.status}"
+            )
 
         # Cancel all pending step executions
-        workflow_instance.step_executions.filter(status='pending').update(
-            status='skipped',
+        workflow_instance.step_executions.filter(status="pending").update(
+            status="skipped",
             action_date=timezone.now(),
-            comments=f"Skipped due to workflow cancellation: {reason}"
+            comments=f"Skipped due to workflow cancellation: {reason}",
         )
 
         # Update workflow instance
-        workflow_instance.status = 'cancelled'
+        workflow_instance.status = "cancelled"
         workflow_instance.completed_at = timezone.now()
         workflow_instance.save()
 
         # Log cancellation
         WorkflowAuditLog.objects.create(
             workflow_instance=workflow_instance,
-            action_type='cancelled',
+            action_type="cancelled",
             action_description=f"Workflow cancelled: {reason}",
-            performed_by=cancelled_by
+            performed_by=cancelled_by,
         )
 
         # Send workflow cancelled notification
-        WorkflowNotifications.notify_workflow_cancelled(workflow_instance, cancelled_by, reason)
+        WorkflowNotifications.notify_workflow_cancelled(
+            workflow_instance, cancelled_by, reason
+        )
 
-        return {'success': True, 'status': 'cancelled'}
+        return {"success": True, "status": "cancelled"}
 
     # Private helper methods
 
     @staticmethod
-    def _start_step(workflow_instance: WorkflowInstance, step: WorkflowStep, initiator: User):
+    def _start_step(
+        workflow_instance: WorkflowInstance, step: WorkflowStep, initiator: User
+    ):
         """Create and start a workflow step execution"""
         # Check if this step is marked for skip (user indicated approver not available)
-        skipped_steps = (workflow_instance.additional_data or {}).get('skipped_steps', {})
+        skipped_steps = (workflow_instance.additional_data or {}).get(
+            "skipped_steps", {}
+        )
         step_order_str = str(step.step_order)
 
-        logger.info(f"_start_step: workflow={workflow_instance.id}, step={step.step_name}, step_order={step.step_order}, can_skip={step.can_skip}")
+        logger.info(
+            f"_start_step: workflow={workflow_instance.id}, step={step.step_name}, step_order={step.step_order}, can_skip={step.can_skip}"
+        )
         logger.info(f"_start_step: skipped_steps from additional_data: {skipped_steps}")
-        logger.info(f"_start_step: checking if step_order {step.step_order} (str: '{step_order_str}') is in skipped_steps")
+        logger.info(
+            f"_start_step: checking if step_order {step.step_order} (str: '{step_order_str}') is in skipped_steps"
+        )
 
         if step_order_str in skipped_steps or step.step_order in skipped_steps:
             # Step is marked for skip - verify it's allowed and auto-skip
             if step.can_skip:
-                skip_reason = skipped_steps.get(step_order_str) or skipped_steps.get(step.step_order) or "Approver not available"
-                logger.info(f"Auto-skipping step '{step.step_name}' - marked as skipped by requester: {skip_reason}")
+                skip_reason = (
+                    skipped_steps.get(step_order_str)
+                    or skipped_steps.get(step.step_order)
+                    or "Approver not available"
+                )
+                logger.info(
+                    f"Auto-skipping step '{step.step_name}' - marked as skipped by requester: {skip_reason}"
+                )
 
                 # Create skipped step execution
                 step_execution = WorkflowStepExecution.objects.create(
                     workflow_instance=workflow_instance,
                     workflow_step=step,
                     assigned_to=None,
-                    status='skipped',
+                    status="skipped",
                     actioned_by=initiator,
                     action_date=timezone.now(),
-                    comments=f"Skipped during submission: {skip_reason}"
+                    comments=f"Skipped during submission: {skip_reason}",
                 )
 
                 # Log the skip
                 WorkflowAuditLog.objects.create(
                     workflow_instance=workflow_instance,
-                    action_type='skipped',
+                    action_type="skipped",
                     action_description=f"Step '{step.step_name}' skipped by requester: {skip_reason}",
-                    performed_by=initiator
+                    performed_by=initiator,
                 )
 
                 # Move to next step
-                return WorkflowEngine._handle_step_approval(workflow_instance, step_execution, initiator)
+                return WorkflowEngine._handle_step_approval(
+                    workflow_instance, step_execution, initiator
+                )
             else:
-                logger.warning(f"Step '{step.step_name}' marked for skip but can_skip=False. Proceeding normally.")
+                logger.warning(
+                    f"Step '{step.step_name}' marked for skip but can_skip=False. Proceeding normally."
+                )
 
         # Check if a step execution already exists for this step
         existing_execution = WorkflowStepExecution.objects.filter(
-            workflow_instance=workflow_instance,
-            workflow_step=step
+            workflow_instance=workflow_instance, workflow_step=step
         ).first()
 
         # Check for user-selected approver first (highest priority)
         assigned_user = None
-        selected_approvers = (workflow_instance.additional_data or {}).get('selected_approvers', {})
+        selected_approvers = (workflow_instance.additional_data or {}).get(
+            "selected_approvers", {}
+        )
 
-        if str(step.step_order) in selected_approvers or step.step_order in selected_approvers:
-            selected_user_id = selected_approvers.get(str(step.step_order)) or selected_approvers.get(step.step_order)
+        if (
+            str(step.step_order) in selected_approvers
+            or step.step_order in selected_approvers
+        ):
+            selected_user_id = selected_approvers.get(
+                str(step.step_order)
+            ) or selected_approvers.get(step.step_order)
             if selected_user_id:
-                assigned_user = User.objects.filter(id=selected_user_id, status='Active').first()
+                assigned_user = User.objects.filter(
+                    id=selected_user_id, status="Active"
+                ).first()
                 if assigned_user:
-                    logger.info(f"Using user-selected approver {assigned_user.email} for step '{step.step_name}'")
+                    logger.info(
+                        f"Using user-selected approver {assigned_user.email} for step '{step.step_name}'"
+                    )
 
         # Fall back to existing logic if no user-selected approver
         # Priority: approver_user > approver_permission > approver_role
@@ -455,15 +531,25 @@ class WorkflowEngine:
         if not assigned_user and step.approver_permission:
             assigned_user = WorkflowEngine._find_user_by_permission(
                 step.approver_permission,
-                workflow_instance.initiated_by.department if hasattr(workflow_instance.initiated_by, 'department') else None
+                (
+                    workflow_instance.initiated_by.department
+                    if hasattr(workflow_instance.initiated_by, "department")
+                    else None
+                ),
             )
 
         # Fallback: try to find by role (for backward compatibility)
         if not assigned_user and step.approver_role:
-            logger.warning(f"Using deprecated role-based assignment for step '{step.step_name}'. Consider using approver_permission instead.")
+            logger.warning(
+                f"Using deprecated role-based assignment for step '{step.step_name}'. Consider using approver_permission instead."
+            )
             assigned_user = WorkflowEngine._find_user_by_role(
                 step.approver_role,
-                workflow_instance.initiated_by.department if hasattr(workflow_instance.initiated_by, 'department') else None
+                (
+                    workflow_instance.initiated_by.department
+                    if hasattr(workflow_instance.initiated_by, "department")
+                    else None
+                ),
             )
 
         # Calculate SLA and escalation dates
@@ -478,14 +564,18 @@ class WorkflowEngine:
 
         if existing_execution:
             # If step already exists and is pending, it's a race condition - skip
-            if existing_execution.status == 'pending':
-                logger.warning(f" Step execution already pending for workflow {workflow_instance.id}, step {step.step_name}. Skipping.")
+            if existing_execution.status == "pending":
+                logger.warning(
+                    f" Step execution already pending for workflow {workflow_instance.id}, step {step.step_name}. Skipping."
+                )
                 return existing_execution
 
             # If step exists but is in 'waiting' state (pre-created by serializer), activate it
-            if existing_execution.status == 'waiting':
-                logger.info(f" Activating pre-created step execution for workflow {workflow_instance.id}, step {step.step_name}.")
-                existing_execution.status = 'pending'
+            if existing_execution.status == "waiting":
+                logger.info(
+                    f" Activating pre-created step execution for workflow {workflow_instance.id}, step {step.step_name}."
+                )
+                existing_execution.status = "pending"
                 existing_execution.assigned_to = assigned_user
                 existing_execution.sla_due_date = sla_due_date
                 existing_execution.escalation_date = escalation_date
@@ -494,7 +584,9 @@ class WorkflowEngine:
                 created = True  # Treat as newly created for logging/notifications
             else:
                 # Step already processed (approved/rejected/skipped) - don't re-create
-                logger.warning(f" Step execution already processed ({existing_execution.status}) for workflow {workflow_instance.id}, step {step.step_name}. Skipping.")
+                logger.warning(
+                    f" Step execution already processed ({existing_execution.status}) for workflow {workflow_instance.id}, step {step.step_name}. Skipping."
+                )
                 return existing_execution
         else:
             # Create step execution using get_or_create to handle race conditions
@@ -502,15 +594,17 @@ class WorkflowEngine:
                 workflow_instance=workflow_instance,
                 workflow_step=step,
                 defaults={
-                    'assigned_to': assigned_user,
-                    'status': 'pending',
-                    'sla_due_date': sla_due_date,
-                    'escalation_date': escalation_date
-                }
+                    "assigned_to": assigned_user,
+                    "status": "pending",
+                    "sla_due_date": sla_due_date,
+                    "escalation_date": escalation_date,
+                },
             )
 
             if not created:
-                logger.warning(f" Step execution created by concurrent request for workflow {workflow_instance.id}, step {step.step_name}.")
+                logger.warning(
+                    f" Step execution created by concurrent request for workflow {workflow_instance.id}, step {step.step_name}."
+                )
                 return step_execution
 
         # Only log and notify for newly activated steps
@@ -520,16 +614,18 @@ class WorkflowEngine:
         # Log step start
         WorkflowAuditLog.objects.create(
             workflow_instance=workflow_instance,
-            action_type='started',
+            action_type="started",
             action_description=f"Started step '{step.step_name}' (assigned to: {assigned_user.email if assigned_user else step.approver_role})",
-            performed_by=initiator
+            performed_by=initiator,
         )
 
         # Update entity status to reflect current step
         WorkflowEngine._update_entity_status_from_step(workflow_instance, step)
 
         # Trigger configured notifications for step assignment
-        WorkflowNotifications.trigger_configured_notifications(step_execution, 'assignment')
+        WorkflowNotifications.trigger_configured_notifications(
+            step_execution, "assignment"
+        )
 
         return step_execution
 
@@ -537,15 +633,19 @@ class WorkflowEngine:
     def _handle_step_approval(
         workflow_instance: WorkflowInstance,
         step_execution: WorkflowStepExecution,
-        actioned_by: User
+        actioned_by: User,
     ) -> Dict[str, Any]:
         """Handle approval of a step - move to next or complete workflow"""
         current_step_order = step_execution.workflow_step.step_order
 
         # Find next step
-        next_step = workflow_instance.workflow_template.steps.filter(
-            step_order__gt=current_step_order
-        ).order_by('step_order').first()
+        next_step = (
+            workflow_instance.workflow_template.steps.filter(
+                step_order__gt=current_step_order
+            )
+            .order_by("step_order")
+            .first()
+        )
 
         if next_step:
             # Move to next step
@@ -553,7 +653,9 @@ class WorkflowEngine:
             workflow_instance.save()
 
             # Start next step
-            result = WorkflowEngine._start_step(workflow_instance, next_step, actioned_by)
+            result = WorkflowEngine._start_step(
+                workflow_instance, next_step, actioned_by
+            )
 
             # If _start_step returned a dict (from recursive _handle_step_approval), use that
             if isinstance(result, dict):
@@ -565,73 +667,69 @@ class WorkflowEngine:
             WorkflowEngine._update_entity_status_from_step(workflow_instance, next_step)
 
             return {
-                'success': True,
-                'workflow_status': 'in_progress',
-                'next_step': next_step.step_name
+                "success": True,
+                "workflow_status": "in_progress",
+                "next_step": next_step.step_name,
             }
         else:
             # No more steps - complete workflow
-            workflow_instance.status = 'approved'
+            workflow_instance.status = "approved"
             workflow_instance.completed_at = timezone.now()
             workflow_instance.save()
 
             # Update entity status
-            WorkflowEngine._update_entity_status(workflow_instance, 'Approved')
+            WorkflowEngine._update_entity_status(workflow_instance, "Approved")
 
             # Log completion
             WorkflowAuditLog.objects.create(
                 workflow_instance=workflow_instance,
-                action_type='approved',
-                action_description=f"Workflow completed - all steps approved",
-                performed_by=actioned_by
+                action_type="approved",
+                action_description="Workflow completed - all steps approved",
+                performed_by=actioned_by,
             )
 
             # Send workflow completed notification
             WorkflowNotifications.notify_workflow_completed(workflow_instance)
 
-            return {
-                'success': True,
-                'workflow_status': 'approved',
-                'completed': True
-            }
+            return {"success": True, "workflow_status": "approved", "completed": True}
 
     @staticmethod
     def _handle_step_rejection(
         workflow_instance: WorkflowInstance,
         step_execution: WorkflowStepExecution,
         actioned_by: User,
-        comments: Optional[str]
+        comments: Optional[str],
     ) -> Dict[str, Any]:
         """Handle rejection of a step - cancel workflow"""
         # Mark all pending steps as skipped
-        workflow_instance.step_executions.filter(status='pending').exclude(
+        workflow_instance.step_executions.filter(status="pending").exclude(
             id=step_execution.id
         ).update(
-            status='skipped',
+            status="skipped",
             action_date=timezone.now(),
-            comments="Skipped due to workflow rejection"
+            comments="Skipped due to workflow rejection",
         )
 
         # Update workflow instance
-        workflow_instance.status = 'rejected'
+        workflow_instance.status = "rejected"
         workflow_instance.completed_at = timezone.now()
         workflow_instance.save()
 
         # Update entity status
-        WorkflowEngine._update_entity_status(workflow_instance, 'Rejected')
+        WorkflowEngine._update_entity_status(workflow_instance, "Rejected")
 
         # Log rejection
         WorkflowAuditLog.objects.create(
             workflow_instance=workflow_instance,
-            action_type='rejected',
+            action_type="rejected",
             action_description=f"Workflow rejected at step '{step_execution.workflow_step.step_name}': {comments}",
-            performed_by=actioned_by
+            performed_by=actioned_by,
         )
 
         return {
-            'success': True,
-            'workflow_status': 'rejected',
-            'rejected_at_step': step_execution.workflow_step.step_name
+            "success": True,
+            "workflow_status": "rejected",
+            "rejected_at_step": step_execution.workflow_step.step_name,
         }
 
     @staticmethod
@@ -643,7 +741,7 @@ class WorkflowEngine:
         matching is only used when no specific user is assigned.
         """
         # Admin override - workflow managers can approve any step
-        if user.is_superuser or can_manage(user, 'workflow'):
+        if user.is_superuser or can_manage(user, "workflow"):
             return True
 
         # Check if user is directly assigned (specific approver was selected)
@@ -654,17 +752,24 @@ class WorkflowEngine:
         # only that user can approve - skip role-based matching
         if step_execution.assigned_to is not None:
             # Only check delegations since assigned_to is set but doesn't match current user
-            active_delegations = step_execution.delegations.filter(
-                delegated_to=user,
-                is_active=True
-            ).filter(
-                models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=timezone.now())
-            ).exists()
+            active_delegations = (
+                step_execution.delegations.filter(delegated_to=user, is_active=True)
+                .filter(
+                    models.Q(expires_at__isnull=True)
+                    | models.Q(expires_at__gt=timezone.now())
+                )
+                .exists()
+            )
             return active_delegations
 
         # Role-based matching - only when NO specific user is assigned (assigned_to is NULL)
-        if hasattr(user, 'role') and user.role and step_execution.workflow_step.approver_role:
+        if (
+            hasattr(user, "role")
+            and user.role
+            and step_execution.workflow_step.approver_role
+        ):
             from accounts.models import Role
+
             approver_role = step_execution.workflow_step.approver_role
 
             # Try to match by UUID first
@@ -685,17 +790,21 @@ class WorkflowEngine:
                     return True
 
         # Check for active delegation
-        active_delegations = step_execution.delegations.filter(
-            delegated_to=user,
-            is_active=True
-        ).filter(
-            models.Q(expires_at__isnull=True) | models.Q(expires_at__gt=timezone.now())
-        ).exists()
+        active_delegations = (
+            step_execution.delegations.filter(delegated_to=user, is_active=True)
+            .filter(
+                models.Q(expires_at__isnull=True)
+                | models.Q(expires_at__gt=timezone.now())
+            )
+            .exists()
+        )
 
         return active_delegations
 
     @staticmethod
-    def _find_user_by_permission(permission_name: str, department: Optional[str] = None) -> Optional[User]:
+    def _find_user_by_permission(
+        permission_name: str, department: Optional[str] = None
+    ) -> Optional[User]:
         """
         Find a user with the specified permission (PREFERRED METHOD)
 
@@ -719,23 +828,26 @@ class WorkflowEngine:
                 return None
 
             # For department-specific permissions (approvals), filter by department
-            if department and permission_name.startswith('approve_'):
+            if department and permission_name.startswith("approve_"):
                 user = User.objects.filter(
                     role__in=roles_with_permission,
                     department=department,
-                    status='Active'
+                    status="Active",
                 ).first()
             else:
                 # For org-wide permissions (processing, admin)
                 user = User.objects.filter(
-                    role__in=roles_with_permission,
-                    status='Active'
+                    role__in=roles_with_permission, status="Active"
                 ).first()
 
             if user:
-                logger.info(f" Found user {user.email} with permission '{permission_name}'")
+                logger.info(
+                    f" Found user {user.email} with permission '{permission_name}'"
+                )
             else:
-                logger.warning(f" No active users found with permission '{permission_name}'")
+                logger.warning(
+                    f" No active users found with permission '{permission_name}'"
+                )
 
             return user
         except Permission.DoesNotExist:
@@ -743,7 +855,9 @@ class WorkflowEngine:
             return None
 
     @staticmethod
-    def _find_user_by_role(role_identifier: str, department: Optional[str] = None) -> Optional[User]:
+    def _find_user_by_role(
+        role_identifier: str, department: Optional[str] = None
+    ) -> Optional[User]:
         """
         Find a user with the specified role [DEPRECATED - use _find_user_by_permission instead]
 
@@ -764,21 +878,18 @@ class WorkflowEngine:
                 role = Role.objects.get(name=role_identifier)
 
             # For department-specific roles, filter by department
-            if department and role.name in ['Department Focal', 'Line Manager']:
+            if department and role.name in ["Department Focal", "Line Manager"]:
                 user = User.objects.filter(
-                    role=role,
-                    department=department,
-                    status='Active'
+                    role=role, department=department, status="Active"
                 ).first()
             else:
                 # For org-wide roles (HOD, CEO, etc.)
-                user = User.objects.filter(
-                    role=role,
-                    status='Active'
-                ).first()
+                user = User.objects.filter(role=role, status="Active").first()
 
             if user:
-                logger.info(f" Found user {user.email} with role '{role.name}' (ID: {role.id})")
+                logger.info(
+                    f" Found user {user.email} with role '{role.name}' (ID: {role.id})"
+                )
             else:
                 logger.warning(f" No active users found with role '{role.name}'")
 
@@ -791,17 +902,19 @@ class WorkflowEngine:
     def _update_entity_status(workflow_instance: WorkflowInstance, status: str):
         """Update the status of the related entity"""
         entity = workflow_instance.content_object
-        if entity and hasattr(entity, 'status'):
+        if entity and hasattr(entity, "status"):
             entity.status = status
-            entity.save(update_fields=['status'])
+            entity.save(update_fields=["status"])
 
     @staticmethod
-    def _update_entity_status_from_step(workflow_instance: WorkflowInstance, step: WorkflowStep):
+    def _update_entity_status_from_step(
+        workflow_instance: WorkflowInstance, step: WorkflowStep
+    ):
         """Update entity status to reflect current workflow step"""
         from accounts.models import Role
 
         entity = workflow_instance.content_object
-        if entity and hasattr(entity, 'status'):
+        if entity and hasattr(entity, "status"):
             old_status = entity.status
             new_status = None
 
@@ -812,7 +925,9 @@ class WorkflowEngine:
                     role = Role.objects.get(id=step.approver_role)
                     new_status = f"Pending {role.name}"
                 except Role.DoesNotExist:
-                    logger.warning(f"Role not found for approver_role '{step.approver_role}' in step '{step.step_name}'")
+                    logger.warning(
+                        f"Role not found for approver_role '{step.approver_role}' in step '{step.step_name}'"
+                    )
                     new_status = "Pending Approval"
             else:
                 # No approver_role set, use step name as fallback
@@ -822,10 +937,14 @@ class WorkflowEngine:
                     new_status = "Pending Approval"
 
             entity.status = new_status
-            entity.save(update_fields=['status'])
-            logger.info(f"Updated entity status: '{old_status}' -> '{new_status}' (step: {step.step_name}, step_order: {step.step_order})")
+            entity.save(update_fields=["status"])
+            logger.info(
+                f"Updated entity status: '{old_status}' -> '{new_status}' (step: {step.step_name}, step_order: {step.step_order})"
+            )
         else:
-            logger.warning(f"Could not update entity status - entity: {entity}, has_status: {hasattr(entity, 'status') if entity else 'N/A'}")
+            logger.warning(
+                f"Could not update entity status - entity: {entity}, has_status: {hasattr(entity, 'status') if entity else 'N/A'}"
+            )
 
     @staticmethod
     def check_and_escalate_overdue_steps():
@@ -837,14 +956,11 @@ class WorkflowEngine:
 
         # Find overdue steps
         overdue_steps = WorkflowStepExecution.objects.filter(
-            status='pending',
+            status="pending",
             escalation_date__isnull=False,
             escalation_date__lte=now,
-            is_escalated=False
-        ).select_related(
-            'workflow_instance',
-            'workflow_step'
-        )
+            is_escalated=False,
+        ).select_related("workflow_instance", "workflow_step")
 
         for step_execution in overdue_steps:
             # Mark as escalated
@@ -855,9 +971,9 @@ class WorkflowEngine:
             # Log escalation
             WorkflowAuditLog.objects.create(
                 workflow_instance=step_execution.workflow_instance,
-                action_type='escalated',
+                action_type="escalated",
                 action_description=f"Step '{step_execution.workflow_step.step_name}' escalated due to timeout",
-                performed_by=None
+                performed_by=None,
             )
 
             # TODO: Send escalation notification
