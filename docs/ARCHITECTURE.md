@@ -272,7 +272,9 @@ flowchart TD
     N1["NotificationService.create_notification<br/>notifications/services.py<br/>notify_workflow_started"]
 
     A["Approver acts: approve()/reject()<br/>trf/views.py — TravelRequestViewSet"]
-    WE2["WorkflowEngine.process_action<br/>workflows/engine.py<br/>advances/finalizes WorkflowStepExecution<br/>writes WorkflowAuditLog"]
+    AB["Bulk approve UI<br/>approvals.bulk_approve — approvals/views.py"]
+    TA["Alternate endpoint<br/>WorkflowStepExecutionViewSet.take_action — workflows/views.py"]
+    WE2["WorkflowEngine.process_action<br/>workflows/engine.py<br/>advances/finalizes WorkflowStepExecution<br/>writes WorkflowAuditLog + AdminActionLog"]
     N2["trigger_configured_notifications<br/>workflows/notifications.py"]
     FIN["Entity status: Approved or Rejected<br/>engine.py"]
 
@@ -280,25 +282,27 @@ flowchart TD
 
     C --> S --> WR --> WE1 --> N1
     WE1 -.-> A
-    A --> WE2 --> N2 --> FIN
+    WE1 -.->|"bulk action UI"| AB
+    WE1 -.->|"alternate endpoint"| TA
+    A --> WE2
+    AB --> WE2
+    TA --> WE2
+    WE2 --> N2 --> FIN
     FIN -->|"Approved"| BK
-
-    subgraph Alt["Alternate approval paths — not fully consolidated"]
-        AB["approvals.bulk_approve<br/>approvals/views.py<br/>writes AdminActionLog"]
-        TA["WorkflowStepExecutionViewSet.take_action<br/>workflows/views.py"]
-    end
-
-    A -.->|"bulk action UI"| AB
-    A -.->|"alternate endpoint"| TA
 ```
 
-**Known gaps / risks surfaced by this trace (not yet resolved in code):**
+All three entry points (single-item `approve`/`reject`, `bulk_approve`, `take_action`) now converge on `WorkflowEngine.process_action` as of 2026-07-22 — see `docs/APPROVAL_WORKFLOW_FIX_ROADMAP.md` for the fix history. `bulk_approve` additionally writes its own bulk-specific `AdminActionLog` entry (`workflow_bulk_approve`/`workflow_bulk_reject`) alongside the per-step entry `process_action` writes, to record that the action came from the bulk UI. `take_action`'s `delegate` branch is the one remaining exception — it's intentionally *not* routed through `WorkflowEngine.delegate_step`, because that method requires the acting user to be the step's current assignee, whereas `take_action` allows a workflow admin to delegate on someone else's behalf; consolidating it would have silently removed that admin capability.
 
-- **Three divergent "approve a step" code paths** — `WorkflowEngine.process_action`, `approvals.bulk_approve`, and `WorkflowStepExecutionViewSet.take_action` implement overlapping but not identical logic. Which path the frontend calls for a single-item approval vs. a bulk approval is not consistently documented in backend code.
-- **`approvals` app has no models** — it is a read-aggregator/bulk-action layer over `workflows.WorkflowInstance` / `WorkflowStepExecution`, not an independent approval store, despite appearing as a peer domain app in §1.
-- **Audit logging gap** — `AdminActionLog` is only written from `approvals.bulk_approve`. The single-item `approve`/`reject` actions in `trf/views.py` (the main `WorkflowEngine.process_action` path) do not write an audit log entry.
-- **Downstream requests are not auto-created on approval** — bookings, visa, accommodation, and transport records are submitted independently by the traveller/admin after TRF approval; the only system-linked exception is the manual `book_flight` admin action.
-- **Dead signal handler** — `trf/signals.py` has a `post_save` receiver keyed off `status == 'Submitted'`, a value the code never actually sets (the real status is `'Pending'`); the signal appears vestigial and the actual trigger is the explicit `WorkflowRouter` call in `submit()`.
+**Resolved (2026-07-22):**
+
+- ~~Three divergent "approve a step" code paths~~ — consolidated onto `WorkflowEngine.process_action` (see diagram above).
+- ~~Audit logging gap~~ — `WorkflowEngine.process_action` now writes an `AdminActionLog` entry for every approval path, not just bulk.
+- ~~Dead signal handler~~ — deleted. This turned out to be systemic, not TRF-specific: `accommodation/signals.py`, `transport/signals.py`, and `visa/signals.py` had the identical dead pattern and were removed too.
+- `approvals` app having no models is now called out directly in its module docstring and in the `APR` node label in §1 — not a bug, just previously under-documented.
+
+**Still open, by design:**
+
+- **Downstream requests are not auto-created on approval** — bookings, visa, accommodation, and transport records are still submitted independently by the traveller/admin after TRF approval; the only system-linked exception is the manual `book_flight` admin action. This wasn't fixed because it's a product decision (what should get prefilled, who owns the resulting draft, does the traveller review before submit), not a bug — see Fix 4 in `docs/APPROVAL_WORKFLOW_FIX_ROADMAP.md`.
 
 ---
 
