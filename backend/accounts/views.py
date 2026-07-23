@@ -862,6 +862,12 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def update_profile(self, request):
         """Update the current user's profile"""
+        if not request.user.is_superuser and not has_permission(
+            request.user, "manage_own_profile"
+        ):
+            return forbidden_response(
+                message="You do not have permission to update your profile."
+            )
         serializer = UserProfileUpdateSerializer(
             request.user, data=request.data, partial=True
         )

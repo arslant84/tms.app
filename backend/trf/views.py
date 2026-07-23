@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from utils.viewset_mixins import StandardResultsPagination
 
 logger = logging.getLogger(__name__)
-from accounts.utils import can_approve, can_view_all
+from accounts.utils import can_approve, can_view_all, has_permission
 from utils.api_response import (
     created_response,
     error_response,
@@ -162,6 +162,12 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """Create a new TRF with logging"""
+        if not request.user.is_superuser and not has_permission(
+            request.user, "create_trf"
+        ):
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied("You do not have permission to create TRFs.")
         logger.debug("\n=== TravelRequest CREATE ===")
         logger.debug(f"Request data: {request.data}")
         response = super().create(request, *args, **kwargs)

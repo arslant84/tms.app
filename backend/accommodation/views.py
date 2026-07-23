@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
-from accounts.utils import can_approve
+from accounts.utils import can_approve, has_permission
 from utils.request_id_generator import generate_request_id
 from workflows.router import WorkflowRouter
 
@@ -371,6 +371,18 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             logger.debug(f"Searching accommodation for: {search}")
 
         return queryset.order_by("-created_at")
+
+    def create(self, request, *args, **kwargs):
+        """Create a new accommodation request"""
+        if not request.user.is_superuser and not has_permission(
+            request.user, "create_accommodation"
+        ):
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied(
+                "You do not have permission to create accommodation requests."
+            )
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         """Create accommodation request and optionally start workflow if submitted"""

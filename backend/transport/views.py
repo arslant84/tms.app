@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from accounts.utils import can_approve, can_view_all, is_module_admin
+from accounts.utils import can_approve, can_view_all, has_permission, is_module_admin
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers, status, viewsets
@@ -228,6 +228,18 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         elif self.action in ["update", "partial_update"]:
             return TransportRequestUpdateSerializer
         return TransportRequestSerializer
+
+    def create(self, request, *args, **kwargs):
+        """Create a new transport request"""
+        if not request.user.is_superuser and not has_permission(
+            request.user, "create_transport"
+        ):
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied(
+                "You do not have permission to create transport requests."
+            )
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         """Set requestor to current user and auto-populate requestor info"""
