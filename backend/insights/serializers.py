@@ -76,7 +76,6 @@ class UserActivitySerializer(serializers.Serializer):
     email = serializers.EmailField()
     total_trfs = serializers.IntegerField()
     total_bookings = serializers.IntegerField()
-    total_claims = serializers.IntegerField()
     total_spend = serializers.DecimalField(max_digits=12, decimal_places=2)
     last_activity = serializers.DateTimeField()
 

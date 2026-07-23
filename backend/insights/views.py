@@ -2,13 +2,13 @@ import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from accounts.utils import can_view_all
+from accounts.utils import can_view_all, has_permission
 from django.db.models import Avg, Count, F, Max, Q, Sum
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from utils.api_response import success_response
+from utils.api_response import forbidden_response, success_response
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,23 @@ from .serializers import (
     TravelSpendAnalyticsSerializer,
     UserActivitySerializer,
 )
+
+
+def _require_admin_reports_permission(request):
+    """Shared gate for insights' company-wide (non-self-scoped) endpoints
+    below, matching reports/views.py's identically-named helper: same
+    permission, same class of data (company/department-wide aggregates,
+    not a per-user dashboard), so the two apps' admin analytics stay
+    consistent rather than diverging on IsAdminUser vs. the real RBAC
+    permission system.
+    Returns a 403 response if the user lacks generate_admin_reports, else None."""
+    if request.user.is_superuser or has_permission(
+        request.user, "generate_admin_reports"
+    ):
+        return None
+    return forbidden_response(
+        message="You do not have permission to view admin analytics"
+    )
 
 
 @api_view(["GET"])
@@ -461,11 +478,15 @@ def booking_analytics(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def department_analytics(request):
     """
     Get department-wise analytics (admin only)
     """
+    forbidden = _require_admin_reports_permission(request)
+    if forbidden:
+        return forbidden
+
     departments = []
 
     # Get all unique departments
@@ -480,19 +501,21 @@ def department_analytics(request):
         users_in_dept = User.objects.filter(department__name=dept_name)
 
         # Get TRFs for this department
-        dept_trfs = TravelRequest.objects.filter(user__in=users_in_dept)
+        dept_trfs = TravelRequest.objects.filter(created_by__in=users_in_dept)
 
         total_trips = dept_trfs.count()
         total_spend = dept_trfs.aggregate(total=Sum("estimated_cost"))[
             "total"
         ] or Decimal("0.00")
         active_travelers = (
-            users_in_dept.filter(travel_requests__isnull=False).distinct().count()
+            users_in_dept.filter(travel_requests_created__isnull=False)
+            .distinct()
+            .count()
         )
         average_trip_cost = dept_trfs.aggregate(avg=Avg("estimated_cost"))[
             "avg"
         ] or Decimal("0.00")
-        pending_approvals = dept_trfs.filter(status="PENDING").count()
+        pending_approvals = dept_trfs.filter(status__icontains="Pending").count()
 
         departments.append(
             {
@@ -512,31 +535,32 @@ def department_analytics(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def user_activity_report(request):
     """
     Get user activity report (admin only)
     """
+    forbidden = _require_admin_reports_permission(request)
+    if forbidden:
+        return forbidden
+
     users = User.objects.all()
     user_activities = []
 
     for user in users[:50]:  # Limit to 50 users for performance
-        total_trfs = user.travel_requests.count()
-        total_bookings = user.flight_bookings.count() + user.hotel_bookings.count()
-        total_claims = user.expense_claims.count()
-        total_spend = user.travel_requests.aggregate(total=Sum("estimated_cost"))[
-            "total"
-        ] or Decimal("0.00")
+        total_trfs = user.travel_requests_created.count()
+        total_bookings = user.flight_bookings.count()
+        total_spend = user.travel_requests_created.aggregate(
+            total=Sum("estimated_cost")
+        )["total"] or Decimal("0.00")
 
         # Last activity
-        last_activity = max(
-            user.travel_requests.aggregate(Max("created_at"))["created_at__max"]
-            or timezone.now(),
-            user.expense_claims.aggregate(Max("created_at"))["created_at__max"]
-            or timezone.now(),
+        last_activity = (
+            user.travel_requests_created.aggregate(Max("created_at"))["created_at__max"]
+            or timezone.now()
         )
 
-        if total_trfs > 0 or total_bookings > 0 or total_claims > 0:
+        if total_trfs > 0 or total_bookings > 0:
             user_activities.append(
                 {
                     "user_id": user.id,
@@ -544,7 +568,6 @@ def user_activity_report(request):
                     "email": user.email,
                     "total_trfs": total_trfs,
                     "total_bookings": total_bookings,
-                    "total_claims": total_claims,
                     "total_spend": total_spend,
                     "last_activity": last_activity,
                 }
