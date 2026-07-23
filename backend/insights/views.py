@@ -13,7 +13,7 @@ from utils.api_response import success_response
 logger = logging.getLogger(__name__)
 
 from accounts.models import User
-from bookings.models import FlightBooking, HotelBooking
+from bookings.models import FlightBooking
 from transport.models import TransportRequest
 
 # Import models from other apps for analytics
@@ -52,12 +52,6 @@ def dashboard_summary(request):
     else:
         flights = FlightBooking.objects.filter(user=user)
 
-    # Hotel/Accommodation bookings - check view_all_accommodation permission
-    if user.is_superuser or can_view_all(user, "accommodation"):
-        hotels = HotelBooking.objects.all()
-    else:
-        hotels = HotelBooking.objects.filter(user=user)
-
     # Transport requests - check view_all_transport permission
     if user.is_superuser or can_view_all(user, "transport"):
         transports = TransportRequest.objects.all()
@@ -84,7 +78,6 @@ def dashboard_summary(request):
 
     # Active bookings
     active_bookings = flights.filter(status__in=["CONFIRMED", "TICKETED"]).count()
-    active_bookings += hotels.filter(status__in=["CONFIRMED"]).count()
 
     # Pending transport requests
     pending_transport_requests = transports.filter(status__icontains="Pending").count()
@@ -429,19 +422,11 @@ def booking_analytics(request):
     else:
         flights = FlightBooking.objects.filter(user=user)
 
-    # Hotels are tied to accommodation admin
-    if user.is_superuser or can_view_all(user, "accommodation"):
-        hotels = HotelBooking.objects.all()
-    else:
-        hotels = HotelBooking.objects.filter(user=user)
-
     # Counts
     total_flight_bookings = flights.count()
-    total_hotel_bookings = hotels.count()
 
     # Costs
     flight_cost = flights.aggregate(total=Sum("cost"))["total"] or Decimal("0.00")
-    hotel_cost = hotels.aggregate(total=Sum("total_cost"))["total"] or Decimal("0.00")
 
     # Average booking lead time (days between booking and departure)
     average_booking_lead_time = 14.0  # Default
@@ -454,14 +439,6 @@ def booking_analytics(request):
         .values_list("airline", flat=True)
     )
 
-    # Preferred hotels
-    preferred_hotels = list(
-        hotels.values("hotel_name")
-        .annotate(count=Count("id"))
-        .order_by("-count")[:5]
-        .values_list("hotel_name", flat=True)
-    )
-
     # Booking class distribution
     booking_class_distribution = dict(
         flights.values("booking_class")
@@ -471,12 +448,9 @@ def booking_analytics(request):
 
     data = {
         "total_flight_bookings": total_flight_bookings,
-        "total_hotel_bookings": total_hotel_bookings,
         "flight_cost": flight_cost,
-        "hotel_cost": hotel_cost,
         "average_booking_lead_time": average_booking_lead_time,
         "preferred_airlines": preferred_airlines,
-        "preferred_hotels": preferred_hotels,
         "booking_class_distribution": booking_class_distribution,
     }
 

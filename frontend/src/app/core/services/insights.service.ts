@@ -75,12 +75,9 @@ export interface FrequentTraveler {
 // Booking Analytics Interface
 export interface BookingAnalytics {
   total_flight_bookings: number;
-  total_hotel_bookings: number;
   flight_cost: number;
-  hotel_cost: number;
   average_booking_lead_time: number;
   preferred_airlines: string[];
-  preferred_hotels: string[];
   booking_class_distribution: { [key: string]: number };
 }
 

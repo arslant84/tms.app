@@ -273,14 +273,13 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             )
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
-        # For admin booking actions (book_flight, book_hotel), allow access if user has booking permissions
-        if self.action in ["book_flight", "book_hotel"]:
+        # For the admin book_flight action, allow access if user has booking permissions
+        if self.action == "book_flight":
             logger.info(f" Booking action detected: {self.action} by user {user.email}")
             # Statuses that allow booking operations
             bookable_statuses = [
                 "Approved",
                 "Flight Booked",
-                "Hotel Booked",
                 "Processing",
                 "Ready for Booking",
             ]

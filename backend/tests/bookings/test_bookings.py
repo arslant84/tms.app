@@ -1,6 +1,6 @@
 """
 Tests for booking functionality.
-Tests flight and hotel booking CRUD operations.
+Tests flight booking CRUD operations.
 """
 
 import pytest
@@ -20,23 +20,6 @@ class TestFlightBookingList:
     def test_list_flight_bookings_unauthenticated(self, api_client):
         """Test listing flight bookings without authentication."""
         response = api_client.get("/api/bookings/flights/")
-
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-
-@pytest.mark.django_db
-class TestHotelBookingList:
-    """Test cases for listing hotel bookings."""
-
-    def test_list_hotel_bookings_authenticated(self, authenticated_client):
-        """Test listing hotel bookings as authenticated user."""
-        response = authenticated_client.get("/api/bookings/hotels/")
-
-        assert response.status_code == status.HTTP_200_OK
-
-    def test_list_hotel_bookings_unauthenticated(self, api_client):
-        """Test listing hotel bookings without authentication."""
-        response = api_client.get("/api/bookings/hotels/")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
