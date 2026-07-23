@@ -146,20 +146,15 @@ class FlightBookingCreateSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        """Create flight booking with current user"""
+        """
+        Create flight booking on behalf of the TRF owner. Only reached by
+        booking/TRF admins - FlightBookingViewSet.perform_create rejects
+        everyone else before this runs.
+        """
         user = self.context["request"].user
-
-        # If user has booking admin permissions, they can book for TRF owner
         trf = validated_data["trf"]
-        if (
-            user.is_superuser
-            or is_module_admin(user, "booking")
-            or is_module_admin(user, "trf")
-        ):
-            validated_data["user"] = trf.created_by
-            validated_data["booked_by"] = user
-        else:
-            validated_data["user"] = user
+        validated_data["user"] = trf.created_by
+        validated_data["booked_by"] = user
 
         return FlightBooking.objects.create(**validated_data)
 
@@ -368,20 +363,15 @@ class HotelBookingCreateSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        """Create hotel booking with current user"""
+        """
+        Create hotel booking on behalf of the TRF owner. Only reached by
+        booking/accommodation admins - HotelBookingViewSet.perform_create
+        rejects everyone else before this runs.
+        """
         user = self.context["request"].user
-
-        # If user has booking admin permissions, they can book for TRF owner
         trf = validated_data["trf"]
-        if (
-            user.is_superuser
-            or is_module_admin(user, "booking")
-            or is_module_admin(user, "accommodation")
-        ):
-            validated_data["user"] = trf.created_by
-            validated_data["booked_by"] = user
-        else:
-            validated_data["user"] = user
+        validated_data["user"] = trf.created_by
+        validated_data["booked_by"] = user
 
         return HotelBooking.objects.create(**validated_data)
 
