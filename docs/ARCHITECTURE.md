@@ -397,7 +397,7 @@ flowchart TD
     NS["NotificationService.create_notification<br/>notifications/services.py:24"]
     PREF{"UserNotificationPreference<br/>in_app_notifications_enabled?"}
     ROW[("UserNotification row<br/>created synchronously, in-request")]
-    THREAD["send_email_async<br/>raw threading.Thread (daemon)<br/>— no Celery anywhere in this codebase"]
+    THREAD["send_email_async<br/>bounded ThreadPoolExecutor (max 8 workers)<br/>+ BoundedSemaphore(200) backpressure<br/>— no Celery anywhere in this codebase"]
     EMAIL["send_email_notification<br/>renders NotificationTemplate (markdown to HTML)<br/>Django send_mail()"]
     KILL["ApplicationSetting: enable_email_notifications<br/>global kill switch"]
     CFG["core.email_settings_loader<br/>loads SMTP config from ApplicationSetting into settings at runtime"]
@@ -414,9 +414,12 @@ flowchart TD
 Key facts:
 
 - The `UserNotification` DB write is synchronous, inline in the request/response cycle.
-- Email is asynchronous, but via a **raw background `threading.Thread`**, not a task queue — there is no Celery anywhere in this codebase. The thread explicitly closes its own DB connection in a `finally` block afterward, since it falls outside Django's `request_finished` signal.
+- Email is asynchronous, via a **bounded, in-process `ThreadPoolExecutor`** (`notifications/services.py` — `EMAIL_EXECUTOR_MAX_WORKERS = 8`, `EMAIL_QUEUE_MAX_SIZE = 200`), not a task queue — there is no Celery anywhere in this codebase, and this is a deliberate choice, not an oversight (see the "Notification concurrency" note below). Each pool thread closes its own DB connection in a `finally` block afterward, since it falls outside Django's `request_finished` signal.
+- Submission is gated by a `threading.BoundedSemaphore(200)`: if 200 email sends are already in flight or queued, a new submission is **rejected immediately** (never blocks the calling HTTP request) and the notification is marked with `email_error = 'Email queue saturated - send dropped'` instead of silently spawning another thread.
 - SMTP configuration is DB-backed (`core.email_settings_loader`), not static `settings.py` — editable via admin without an app restart.
 - `WorkflowNotifications` (used throughout §7.1) is just a caller into this same `NotificationService` API — there's no separate delivery mechanism for workflow notifications specifically.
+
+**Notification concurrency (fixed 2026-07-23, see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 7):** `send_email_async` used to spawn one raw, uncapped `threading.Thread` per email. `NotificationService.notify_role`/`notify_users` loop over recipients and call this per-user — `notify_role('HOD', ...)` with N HODs fired N concurrent unbounded threads all opening SMTP connections at once, with no backpressure and no bound. Replaced with the bounded executor + semaphore described above. This is a lighter-weight fix than adopting a full task queue (Celery/RQ/Django-Q) — deliberately, since this deployment has no broker or worker-process infrastructure today (§6), and adding one is a real infrastructure investment that should be a deliberate choice, not an inferred one. If email volume grows enough that a 200-item bounded queue starts rejecting sends regularly, that's the signal to revisit and adopt a real task queue instead of raising the constants further.
 
 ### 7.4 Reports & Insights (Read-Only Analytics)
 
