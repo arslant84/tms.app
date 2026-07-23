@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
+from accounts.models import AdminActionLog
 from accounts.utils import can_approve, has_permission
 from utils.request_id_generator import generate_request_id
 from workflows.router import WorkflowRouter
@@ -721,6 +722,18 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 accommodation_request.status = "Approved"
                 accommodation_request.save()
 
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="workflow_step_approved",
+                    description=(
+                        f"Approved accommodation request #{accommodation_request.id} "
+                        "(legacy fallback - no active WorkflowTemplate)"
+                    ),
+                    entity_type="accommodation",
+                    entity_id=accommodation_request.id,
+                    request=request,
+                )
+
                 serializer = self.get_serializer(accommodation_request)
                 return Response(serializer.data)
 
@@ -796,6 +809,18 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
                 accommodation_request.status = "Rejected"
                 accommodation_request.save()
+
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="workflow_step_rejected",
+                    description=(
+                        f"Rejected accommodation request #{accommodation_request.id} "
+                        "(legacy fallback - no active WorkflowTemplate)"
+                    ),
+                    entity_type="accommodation",
+                    entity_id=accommodation_request.id,
+                    request=request,
+                )
 
                 serializer = self.get_serializer(accommodation_request)
                 return Response(serializer.data)

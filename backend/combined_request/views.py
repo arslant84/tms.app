@@ -17,6 +17,7 @@ from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 
+from accounts.models import AdminActionLog
 from accounts.utils import can_approve, can_view_all, has_permission
 from django.contrib.contenttypes.models import ContentType
 from utils.api_response import (
@@ -576,6 +577,18 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
                 combined_request.status = "Approved"
                 combined_request.save()
 
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="workflow_step_approved",
+                    description=(
+                        f"Approved combined request #{combined_request.id} "
+                        "(legacy fallback - no active WorkflowTemplate)"
+                    ),
+                    entity_type="combinedrequest",
+                    entity_id=combined_request.id,
+                    request=request,
+                )
+
                 serializer = CombinedRequestDetailSerializer(combined_request)
                 return success_response(
                     data=serializer.data,
@@ -678,6 +691,18 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
 
                 combined_request.status = "Rejected"
                 combined_request.save()
+
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="workflow_step_rejected",
+                    description=(
+                        f"Rejected combined request #{combined_request.id} "
+                        "(legacy fallback - no active WorkflowTemplate)"
+                    ),
+                    entity_type="combinedrequest",
+                    entity_id=combined_request.id,
+                    request=request,
+                )
 
                 serializer = CombinedRequestDetailSerializer(combined_request)
                 return success_response(

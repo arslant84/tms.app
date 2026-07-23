@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from utils.viewset_mixins import StandardResultsPagination
 
 logger = logging.getLogger(__name__)
+from accounts.models import AdminActionLog
 from accounts.utils import can_approve, can_view_all, has_permission
 from utils.api_response import (
     created_response,
@@ -690,6 +691,18 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                             },
                         )
 
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="workflow_step_approved",
+                    description=(
+                        f"Approved TRF #{trf.id} at step '{step_role}' "
+                        "(legacy fallback - no active WorkflowTemplate)"
+                    ),
+                    entity_type="travelrequest",
+                    entity_id=trf.id,
+                    request=request,
+                )
+
                 trf_serializer = TravelRequestDetailSerializer(trf)
                 return success_response(
                     data=trf_serializer.data,
@@ -812,6 +825,18 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 # Update TRF status
                 trf.status = "Rejected"
                 trf.save()
+
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="workflow_step_rejected",
+                    description=(
+                        f"Rejected TRF #{trf.id} at step '{step_role}' "
+                        "(legacy fallback - no active WorkflowTemplate)"
+                    ),
+                    entity_type="travelrequest",
+                    entity_id=trf.id,
+                    request=request,
+                )
 
                 trf_serializer = TravelRequestDetailSerializer(trf)
                 return success_response(

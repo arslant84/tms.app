@@ -270,3 +270,304 @@ class TestCombinedRequestLegacyFallbackAuthorization:
         )
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestLegacyFallbackAuditLogging:
+    """
+    Regression tests for the 2026-07-23 follow-up: the legacy-fallback
+    approve()/reject() branches enforced authorization (above) but wrote
+    zero AdminActionLog entries anywhere - only the WorkflowEngine.process_action
+    path (real WorkflowTemplate) logged. These tests assert every one of
+    the 10 fallback branches (5 apps x approve/reject) now writes an entry.
+    """
+
+    def test_trf_approve_fallback_writes_audit_log(self, api_client, make_approver):
+        from accounts.models import AdminActionLog
+        from trf.models import TravelRequest
+
+        approver = make_approver("approve_trf", "trf-audit-approver@example.com")
+        trf = TravelRequest.objects.create(
+            requestor_name="Someone",
+            travel_type="Domestic",
+            status="Pending",
+            created_by=approver,
+        )
+        api_client.force_authenticate(user=approver)
+
+        response = api_client.post(
+            f"/api/trf/travel-requests/{trf.id}/approve/",
+            {"step_role": "Department Focal", "comments": "looks good"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert AdminActionLog.objects.filter(
+            action_type="workflow_step_approved",
+            entity_type="travelrequest",
+            entity_id=str(trf.id),
+        ).exists()
+
+    def test_trf_reject_fallback_writes_audit_log(self, api_client, make_approver):
+        from accounts.models import AdminActionLog
+        from trf.models import TravelRequest
+
+        approver = make_approver("approve_trf", "trf-audit-rejecter@example.com")
+        trf = TravelRequest.objects.create(
+            requestor_name="Someone",
+            travel_type="Domestic",
+            status="Pending",
+            created_by=approver,
+        )
+        api_client.force_authenticate(user=approver)
+
+        response = api_client.post(
+            f"/api/trf/travel-requests/{trf.id}/reject/",
+            {"step_role": "Department Focal", "comments": "not eligible"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert AdminActionLog.objects.filter(
+            action_type="workflow_step_rejected",
+            entity_type="travelrequest",
+            entity_id=str(trf.id),
+        ).exists()
+
+    def test_visa_approve_fallback_writes_audit_log(self, api_client, make_approver):
+        from accounts.models import AdminActionLog
+        from visa.models import VisaApplication
+
+        approver = make_approver("approve_visa", "visa-audit-approver@example.com")
+        visa = VisaApplication.objects.create(
+            requestor_name="Someone",
+            destination="Test",
+            travel_purpose="Business",
+            visa_type="Business",
+            status="Pending",
+            user=approver,
+        )
+        api_client.force_authenticate(user=approver)
+
+        response = api_client.post(
+            f"/api/visa/applications/{visa.id}/approve/",
+            {"step_role": "Department Focal", "comments": ""},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert AdminActionLog.objects.filter(
+            action_type="workflow_step_approved",
+            entity_type="visaapplication",
+            entity_id=str(visa.id),
+        ).exists()
+
+    def test_visa_reject_fallback_writes_audit_log(self, api_client, make_approver):
+        from accounts.models import AdminActionLog
+        from visa.models import VisaApplication
+
+        approver = make_approver("approve_visa", "visa-audit-rejecter@example.com")
+        visa = VisaApplication.objects.create(
+            requestor_name="Someone",
+            destination="Test",
+            travel_purpose="Business",
+            visa_type="Business",
+            status="Pending",
+            user=approver,
+        )
+        api_client.force_authenticate(user=approver)
+
+        response = api_client.post(
+            f"/api/visa/applications/{visa.id}/reject/",
+            {"step_role": "Department Focal", "comments": "missing docs"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert AdminActionLog.objects.filter(
+            action_type="workflow_step_rejected",
+            entity_type="visaapplication",
+            entity_id=str(visa.id),
+        ).exists()
+
+    def test_transport_approve_fallback_writes_audit_log(
+        self, api_client, make_approver
+    ):
+        from accounts.models import AdminActionLog
+        from transport.models import TransportApprovalStep, TransportRequest
+
+        approver = make_approver(
+            "approve_transport", "transport-audit-approver@example.com"
+        )
+        transport_request = TransportRequest.objects.create(
+            requestor_name="Someone",
+            staff_id="S1",
+            department="IT",
+            position="Engineer",
+            purpose="Business",
+            status="Pending",
+            requestor=approver,
+        )
+        TransportApprovalStep.objects.create(
+            transport_request=transport_request,
+            step_role="Department Focal",
+            status="Pending",
+        )
+        api_client.force_authenticate(user=approver)
+
+        response = api_client.post(
+            f"/api/transport/requests/{transport_request.id}/approve/",
+            {"comments": ""},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert AdminActionLog.objects.filter(
+            action_type="workflow_step_approved",
+            entity_type="transportrequest",
+            entity_id=str(transport_request.id),
+        ).exists()
+
+    def test_transport_reject_fallback_writes_audit_log(
+        self, api_client, make_approver
+    ):
+        from accounts.models import AdminActionLog
+        from transport.models import TransportApprovalStep, TransportRequest
+
+        approver = make_approver(
+            "approve_transport", "transport-audit-rejecter@example.com"
+        )
+        transport_request = TransportRequest.objects.create(
+            requestor_name="Someone",
+            staff_id="S1",
+            department="IT",
+            position="Engineer",
+            purpose="Business",
+            status="Pending",
+            requestor=approver,
+        )
+        TransportApprovalStep.objects.create(
+            transport_request=transport_request,
+            step_role="Department Focal",
+            status="Pending",
+        )
+        api_client.force_authenticate(user=approver)
+
+        response = api_client.post(
+            f"/api/transport/requests/{transport_request.id}/reject/",
+            {"comments": "not needed"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert AdminActionLog.objects.filter(
+            action_type="workflow_step_rejected",
+            entity_type="transportrequest",
+            entity_id=str(transport_request.id),
+        ).exists()
+
+    def test_accommodation_approve_fallback_writes_audit_log(
+        self, api_client, make_approver
+    ):
+        from accommodation.models import AccommodationRequest
+        from accounts.models import AdminActionLog
+
+        approver = make_approver(
+            "approve_accommodation", "accommodation-audit-approver@example.com"
+        )
+        accommodation_request = AccommodationRequest.objects.create(
+            requestor_name="Someone",
+            status="Pending",
+        )
+        api_client.force_authenticate(user=approver)
+
+        response = api_client.post(
+            f"/api/accommodation/requests/{accommodation_request.id}/approve/",
+            {"comments": ""},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert AdminActionLog.objects.filter(
+            action_type="workflow_step_approved",
+            entity_type="accommodation",
+            entity_id=str(accommodation_request.id),
+        ).exists()
+
+    def test_accommodation_reject_fallback_writes_audit_log(
+        self, api_client, make_approver
+    ):
+        from accommodation.models import AccommodationRequest
+        from accounts.models import AdminActionLog
+
+        approver = make_approver(
+            "approve_accommodation", "accommodation-audit-rejecter@example.com"
+        )
+        accommodation_request = AccommodationRequest.objects.create(
+            requestor_name="Someone",
+            status="Pending",
+        )
+        api_client.force_authenticate(user=approver)
+
+        response = api_client.post(
+            f"/api/accommodation/requests/{accommodation_request.id}/reject/",
+            {"comments": "not needed"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert AdminActionLog.objects.filter(
+            action_type="workflow_step_rejected",
+            entity_type="accommodation",
+            entity_id=str(accommodation_request.id),
+        ).exists()
+
+    def test_combined_request_approve_fallback_writes_audit_log(
+        self, api_client, make_approver
+    ):
+        from accounts.models import AdminActionLog
+        from combined_request.models import CombinedRequest
+
+        approver = make_approver(
+            "approve_combined", "combined-audit-approver@example.com"
+        )
+        combined_request = CombinedRequest.objects.create(
+            requestor_name="Someone",
+            travel_type="Domestic",
+            status="Pending",
+            requestor=approver,
+        )
+        api_client.force_authenticate(user=approver)
+
+        response = api_client.post(
+            f"/api/combined/combined-requests/{combined_request.id}/approve/",
+            {"step_role": "", "comments": ""},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert AdminActionLog.objects.filter(
+            action_type="workflow_step_approved",
+            entity_type="combinedrequest",
+            entity_id=str(combined_request.id),
+        ).exists()
+
+    def test_combined_request_reject_fallback_writes_audit_log(
+        self, api_client, make_approver
+    ):
+        from accounts.models import AdminActionLog
+        from combined_request.models import CombinedRequest
+
+        approver = make_approver(
+            "approve_combined", "combined-audit-rejecter@example.com"
+        )
+        combined_request = CombinedRequest.objects.create(
+            requestor_name="Someone",
+            travel_type="Domestic",
+            status="Pending",
+            requestor=approver,
+        )
+        api_client.force_authenticate(user=approver)
+
+        response = api_client.post(
+            f"/api/combined/combined-requests/{combined_request.id}/reject/",
+            {"step_role": "", "comments": "not viable"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert AdminActionLog.objects.filter(
+            action_type="workflow_step_rejected",
+            entity_type="combinedrequest",
+            entity_id=str(combined_request.id),
+        ).exists()
