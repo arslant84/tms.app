@@ -117,7 +117,6 @@ export interface UserActivity {
   email: string;
   total_trfs: number;
   total_bookings: number;
-  total_claims: number;
   total_spend: number;
   last_activity: string;
 }
