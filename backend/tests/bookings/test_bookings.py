@@ -133,6 +133,83 @@ class TestBookingCreation:
         # raise AttributeError for any admin-created booking.
         assert booking.user_id == regular_user.id
 
+    def test_create_flight_booking_forbidden_for_non_admin_user(
+        self, api_client, regular_user
+    ):
+        """
+        Regression test: FlightBookingViewSet had no check on WHO could
+        create a booking, only IsAuthenticated at the class level. Any
+        authenticated user could create a FlightBooking against any other
+        user's approved TRF, with themselves attributed as the traveler.
+        Booking is an admin/travel-desk function (matching book_flight's own
+        admin/book-flight naming) - regular users must be rejected.
+        """
+        from accounts.models import User
+        from trf.models import TravelRequest
+
+        trf_owner = User.objects.create_user(
+            email="trf-owner@example.com",
+            password="testpass123",
+            name="TRF Owner",
+        )
+        trf = TravelRequest.objects.create(
+            requestor_name=trf_owner.name,
+            travel_type="Domestic",
+            status="Approved",
+            created_by=trf_owner,
+        )
+
+        api_client.force_authenticate(user=regular_user)
+        response = api_client.post(
+            "/api/bookings/flights/",
+            self._flight_payload(trf.id, "PNR-UNAUTHORIZED-1"),
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_create_flight_booking_succeeds_for_booking_admin(self, api_client):
+        """A user with a real manage_bookings permission (not just
+        superuser) must still be able to create bookings for others."""
+        from accounts.models import Permission, Role, RolePermission, User
+        from bookings.models import FlightBooking
+        from trf.models import TravelRequest
+
+        permission, _ = Permission.objects.get_or_create(
+            name="manage_bookings",
+            defaults={"description": "Manage Flight and Hotel Bookings"},
+        )
+        role = Role.objects.create(name="Booking Admin Test")
+        RolePermission.objects.create(role=role, permission=permission)
+        booking_admin = User.objects.create_user(
+            email="booking-admin-2@example.com",
+            password="testpass123",
+            name="Booking Admin",
+            role=role,
+        )
+
+        trf_owner = User.objects.create_user(
+            email="trf-owner-2@example.com",
+            password="testpass123",
+            name="TRF Owner 2",
+        )
+        trf = TravelRequest.objects.create(
+            requestor_name=trf_owner.name,
+            travel_type="Domestic",
+            status="Approved",
+            created_by=trf_owner,
+        )
+
+        api_client.force_authenticate(user=booking_admin)
+        response = api_client.post(
+            "/api/bookings/flights/",
+            self._flight_payload(trf.id, "PNR-BOOKING-ADMIN-1"),
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        booking = FlightBooking.objects.get(trf=trf)
+        assert booking.user_id == trf_owner.id
+        assert booking.booked_by_id == booking_admin.id
+
 
 @pytest.mark.django_db
 class TestBookingStatistics:

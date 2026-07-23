@@ -372,7 +372,7 @@ All three approval entry points (single-item `approve`/`reject`, `bulk_approve`,
 flowchart TD
     TRF3["TravelRequest<br/>status in Approved / Flight Booked / Hotel Booked / Processing / Ready for Booking"]
     BF["Admin: book_flight action<br/>trf/views.py:985 — admin/book-flight<br/>gated on TRF status<br/>upserts FlightBooking(trf=trf)<br/>force-sets trf.status = 'Flight Booked'"]
-    DIRECT["FlightBookingViewSet / HotelBookingViewSet<br/>bookings/views.py<br/>independent create — IsAuthenticated only,<br/>NOT gated on TRF approval status"]
+    DIRECT["FlightBookingViewSet / HotelBookingViewSet<br/>bookings/views.py<br/>independent create — gated on TRF status<br/>and booking/TRF or booking/accommodation admin"]
     FB[("FlightBooking<br/>PENDING to REQUESTED to CONFIRMED to TICKETED / CANCELLED / REFUNDED / NO_SHOW")]
     HB[("HotelBooking<br/>PENDING to CONFIRMED / CANCELLED")]
     ADMIN3["confirm_booking / issue_ticket / cancel_booking<br/>bookings/models.py instance methods<br/>gated on is_module_admin(user, 'booking'/'trf'/'accommodation')"]
@@ -387,7 +387,7 @@ flowchart TD
 Two things worth knowing that aren't obvious from the model layer alone:
 
 - **No `book_hotel` action exists.** `trf/views.py` has a permission check referencing a `book_hotel` action name (line 270), but grep confirms no `@action def book_hotel` was ever implemented — hotel bookings can only be created through `bookings`' own endpoint, with no TRF-approval linkage at all.
-- **Gap:** `book_flight` enforces the TRF's status before creating/updating a `FlightBooking`. The `bookings` app's own `POST /api/bookings/flights/` and `/hotels/` do not — they only require `IsAuthenticated`, with no check that the referenced TRF is even approved. Any authenticated user can create a booking against any `trf` id directly, bypassing `book_flight`'s gating entirely. This is a real, currently-undocumented inconsistency, not a deliberate design choice as far as the code shows.
+- ~~Gap: `bookings`' own create endpoints weren't gated on TRF status or caller identity~~ — **fixed 2026-07-23** (`docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 1 for the status check, Fix 8 for the authorization check). `FlightBookingCreateSerializer.validate_trf`/`HotelBookingCreateSerializer.validate_trf` now check `BOOKABLE_STATUSES`, and `FlightBookingViewSet.perform_create`/`HotelBookingViewSet.perform_create` now reject anyone who isn't a superuser or booking/TRF (flights) or booking/accommodation (hotels) admin — booking is an admin/travel-desk function throughout this app (matching `book_flight`'s own `admin/book-flight` naming), confirmed via the frontend: every real caller of booking creation lives under `features/admin/flights/`, no self-service booking UI exists anywhere.
 
 ### 7.3 Notifications Delivery Pipeline
 
