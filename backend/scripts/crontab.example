@@ -1,13 +1,16 @@
 # TMS backend maintenance schedule — example crontab
 #
-# None of these are scheduled automatically anywhere in this repository or by
-# the application itself. This file exists so the intended schedule is
-# documented and versioned, matching what docs/ARCHITECTURE.md's deployment
-# diagram already describes (backup_db daily, cleanup_expired_data monthly).
-# An operator must install this on the actual deployment host — see
-# instructions below.
+# This file documents the intended schedule and doubles as a manual
+# fallback. The preferred install method is the self-installing management
+# command, which writes this same schedule into the crontab directly and is
+# safe to re-run (idempotent, tagged entries):
 #
-# Install with:
+#   python manage.py install_cron
+#   python manage.py install_cron --dry-run   # preview without writing
+#   python manage.py install_cron --remove    # uninstall
+#
+# Manual install (only if the deploying user can't run manage.py commands
+# directly on the host):
 #   crontab -e
 #   # then paste the lines below, adjusting REPO_PATH and VENV_PATH for your
 #   # deployment, or:

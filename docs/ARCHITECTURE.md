@@ -263,7 +263,7 @@ graph LR
     ANG -->|deploy| FS
 ```
 
-None of the three `CRON` jobs above are scheduled by this repository or the application itself — they're real, tested Django management commands (`backend/accounts/management/commands/`), but installing them on a schedule is an operational step outside what a code commit can do. `backend/scripts/crontab.example` documents the exact schedule shown here so it's versioned and not just tribal knowledge; an operator still has to run `crontab backend/scripts/crontab.example` (with paths adjusted) on the actual deployment host.
+The three `CRON` jobs above are real, tested Django management commands (`backend/accounts/management/commands/`). `python manage.py install_cron` (added 2026-07-23, same app) installs the schedule shown here directly into the current user's crontab — idempotent (re-running updates rather than duplicates the entries, via a comment tag) and safe to re-run after re-deploying the repo. `backend/scripts/crontab.example` still documents the exact schedule as a manual fallback (`crontab backend/scripts/crontab.example`, paths adjusted) for hosts where running Django management commands directly isn't an option. Installing either still has to happen once per deployment host — a code commit can't reach into the host's crontab on its own — but the previous state (`crontab.example` was the *only* path, requiring a manual copy-paste an operator could simply forget) is closed.
 
 ---
 
@@ -453,11 +453,11 @@ flowchart TD
     REG --> ROLE --> LOG1
     ADMINC --> LOG1
     PWRESET --> PWCONFIRM
-    INACTIVE -.->|"external cron / Task Scheduler — not configured in this repo"| LOG1
-    CLEANUP -.->|"external cron / Task Scheduler — not configured in this repo"| DBX
+    INACTIVE -.->|"cron — python manage.py install_cron"| LOG1
+    CLEANUP -.->|"cron — python manage.py install_cron"| DBX
 ```
 
-Notable: **self-registration has no approval gate at all** — a new account is active immediately, distinguished only by an auto-assigned low-privilege "Registered User" role (users cannot set their own role — it's forced server-side). `disable_inactive_accounts` and `cleanup_expired_data` are both real, tested management commands; their intended schedule is now documented and versioned at `backend/scripts/crontab.example` (§6), though an operator still has to install it on the actual deployment host — no code commit can do that step.
+Notable: **self-registration has no approval gate at all** — a new account is active immediately, distinguished only by an auto-assigned low-privilege "Registered User" role (users cannot set their own role — it's forced server-side). `disable_inactive_accounts` and `cleanup_expired_data` are both real, tested management commands, tied to compliance controls CTRL-0000001019 and CTRL-0000001517 respectively; `python manage.py install_cron` (§6) installs their schedule directly, so a fresh deployment no longer silently skips them if an operator forgets a manual crontab copy-paste step.
 
 ### 7.6 Audit Trail Signals
 
