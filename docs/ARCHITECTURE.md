@@ -85,10 +85,11 @@ sequenceDiagram
     end
 
     alt MFA enrolled
-        API-->>SPA: 200 { mfa_required: true, temp_token }
+        API-->>SPA: 200 { mfa_required: true, challenge_token }
         SPA-->>U: Show TOTP prompt
         U->>SPA: Enter 6-digit TOTP code
-        SPA->>API: POST /api/auth/mfa/verify/ { temp_token, code }
+        SPA->>API: POST /api/auth/mfa/verify/ { challenge_token, otp }
+        API->>API: signing.loads(challenge_token, max_age=300)
         API->>OTP: Validate TOTP code
         OTP-->>API: Valid / Invalid
     end
@@ -108,6 +109,14 @@ sequenceDiagram
     API->>DB: Blacklist refresh token
     API-->>SPA: 200 OK
 ```
+
+**MFA challenge token mechanism** (the diagram's `challenge_token` above — named `temp_token` in an earlier draft of this doc, which caused confusion about whether it was actually specified anywhere):
+
+- **Not server-side state.** `LoginView` (`accounts/views.py:125`) issues it via `django.core.signing.dumps({"user_id": ...}, salt="mfa-login-challenge")` — a stateless, HMAC-signed token keyed off `SECRET_KEY`. No Redis/cache/DB row is created for it; there's nothing to clean up or for storage capacity to run out of.
+- **Expiry:** `MFAVerifyView` (`accounts/views.py:1507`) decodes it via `signing.loads(challenge_token, salt="mfa-login-challenge", max_age=300)` — a hard 5-minute TTL enforced server-side; an expired token raises `SignatureExpired` and is rejected with 401.
+- **Tamper protection:** the signature is verified on every decode; a modified or forged token raises `BadSignature` and is rejected with 401. `MFAVerifyView` also re-checks `user.mfa_enabled`/`user.mfa_secret` server-side before accepting an OTP, so the token alone (even genuine) can't grant access without a currently-valid MFA-enrolled account.
+- **Client-side storage:** the Angular `AuthService` (`core/services/auth.service.ts`) holds it in a private in-memory field only — never written to `localStorage`/`sessionStorage` — and clears it to `null` immediately after a verification attempt. It's returned in the login response JSON body, not a cookie, since it isn't a session credential (it grants no access by itself).
+- **Not single-use.** It's a stateless signed token, so nothing server-side tracks whether it's already been consumed — the same `challenge_token` could be replayed with different OTP guesses within its 5-minute window. Mitigated in practice by `MFAVerifyView`'s rate limit (5/min/IP) and TOTP's own `valid_window=1`, but this is a real (low-severity) gap relative to a true single-use/nonce design, noted here rather than fixed, since the current design's actual risk is low.
 
 ---
 
