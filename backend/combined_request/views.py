@@ -267,6 +267,14 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """Override to log validation errors clearly"""
+        if not request.user.is_superuser and not has_permission(
+            request.user, "create_combined"
+        ):
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied(
+                "You do not have permission to create combined requests."
+            )
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             logger.error(
@@ -335,6 +343,7 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Set requestor and auto-populate info, optionally start workflow if submitted"""
         user = self.request.user
+
         validated_data = serializer.validated_data
 
         # Auto-populate requestor information if not provided

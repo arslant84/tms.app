@@ -34,9 +34,17 @@ from workflows.models import WorkflowInstance, WorkflowStepExecution
 
 def _require_admin_reports_permission(request):
     """Shared gate for the admin reports/analytics endpoints below.
-    Returns a 403 response if the user lacks generate_admin_reports, else None."""
-    if request.user.is_superuser or has_permission(
-        request.user, "generate_admin_reports"
+    Returns a 403 response if the user lacks generate_admin_reports, else None.
+
+    export_data holders are also let through: ReportExportView (below) calls
+    straight into these same view classes to fetch the underlying report
+    data before exporting it, so an export_data-only user (e.g. Line
+    Manager) needs to pass this gate too, not just the export endpoint's
+    own check."""
+    if (
+        request.user.is_superuser
+        or has_permission(request.user, "generate_admin_reports")
+        or has_permission(request.user, "export_data")
     ):
         return None
     return forbidden_response(

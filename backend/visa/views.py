@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 from datetime import datetime
 
-from accounts.utils import can_approve, can_view_all
+from accounts.utils import can_approve, can_view_all, has_permission
 from utils import error_response, not_found_response, success_response
 from utils.request_id_generator import generate_request_id
 from workflows.router import WorkflowRouter
@@ -229,6 +229,18 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         elif self.action in ["create", "update", "partial_update"]:
             return VisaApplicationCreateUpdateSerializer
         return VisaApplicationDetailSerializer
+
+    def create(self, request, *args, **kwargs):
+        """Create a new visa application"""
+        if not request.user.is_superuser and not has_permission(
+            request.user, "create_visa"
+        ):
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied(
+                "You do not have permission to create visa applications."
+            )
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         """Set user and submitted_date when creating visa application"""
