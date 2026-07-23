@@ -428,9 +428,11 @@ Both apps are almost entirely **live, read-only aggregation** — no ETL, no sch
 | App | Backing data | Notes |
 |---|---|---|
 | `reports` | `TravelRequest`, `FlightBooking`/`HotelBooking`, `TransportRequest`, `VisaApplication`, `AccommodationRequest`, `WorkflowInstance`/`WorkflowStepExecution`, `User`/`Department` | No `models.py` at all — every endpoint computes stats on the fly per-request. `ReportExportView` re-runs the same query and serializes to CSV / Excel (`openpyxl`) / PDF (`reportlab`) synchronously in the request. |
-| `insights` | Same models as `reports`, plus its own `TravelInsight`/`DestinationStat`/`CategorySpend`/`MonthlyTrend`/`TravelAnalytics` models | `dashboard_summary`, `travel_spend_analytics`, `booking_analytics`, etc. are live queries exactly like `reports`. **But** the dedicated analytics models (`DestinationStat`, `CategorySpend`, `MonthlyTrend`, `TravelAnalytics`) have no population pipeline anywhere in the codebase — no management command, signal, or scheduled task writes to them. `TravelInsight` rows are created directly by users via the API, not computed. Treat this half of `insights` as a **dormant, unwired stub**, not a working analytics pipeline. |
+| `insights` | Same models as `reports` — nothing else | `dashboard_summary`, `travel_spend_analytics`, `booking_analytics`, etc. are live queries, same pattern as `reports`. `insights/models.py` is now empty (see note below) — this app has no models of its own at all, same as `approvals` (§1). |
 
 `reports`' 5 endpoints previously required only `IsAuthenticated` despite a `generate_admin_reports` permission existing specifically for them — any authenticated user could hit every reports endpoint. Fixed 2026-07-23 (see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 5) with a shared permission gate; `insights`' live-query endpoints were not part of that audit and remain `IsAuthenticated`-only.
+
+~~`insights`' `TravelInsight`/`DestinationStat`/`CategorySpend`/`MonthlyTrend`/`TravelAnalytics` models had no population pipeline~~ — **removed entirely 2026-07-22** (see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 2), not left as dead schema. Confirmed zero rows in the DB and zero frontend callers before deleting — this wasn't "population pipeline missing," it was genuinely dead code end-to-end (backend models + viewsets + serializers, frontend service methods that were never invoked from any component). Dropped via migration rather than converted to database views or left for a future ETL, since nothing was reading or writing them.
 
 ### 7.5 Account Lifecycle
 
