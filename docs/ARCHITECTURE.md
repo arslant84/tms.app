@@ -94,15 +94,14 @@ sequenceDiagram
         OTP-->>API: Valid / Invalid
     end
 
-    API->>DB: Create JWT (access + refresh)
-    API-->>SPA: 200 { access_token, refresh_token }
-    SPA->>SPA: Store tokens (memory / httpOnly cookie)
+    API->>DB: Create JWT (access + refresh, tracked in OutstandingToken)
+    API-->>SPA: 200 { user data } + Set-Cookie: access_token, refresh_token, auth_token (all HttpOnly)
 
-    Note over SPA,API: All subsequent requests: Authorization: Bearer <access_token>
+    Note over SPA,API: Cookies are HttpOnly - never readable by JS. All subsequent requests ride the cookie automatically (no Authorization header).
 
-    SPA->>API: POST /api/auth/token/refresh/
-    API->>DB: Check refresh token not blacklisted
-    API-->>SPA: 200 { access_token }
+    SPA->>API: POST /api/auth/token/refresh/ (refresh_token cookie sent automatically)
+    API->>DB: Validate refresh_token, check not blacklisted, rotate it
+    API-->>SPA: 200 + Set-Cookie: new access_token, new refresh_token
 
     U->>SPA: Logout
     SPA->>API: POST /api/auth/logout/
@@ -195,7 +194,7 @@ graph TD
     TRV --> DATA
 ```
 
-This diagram simplifies to 4 abstract role categories for readability — the real system is more granular: `accounts.Role` ↔ `accounts.Permission` via a `RolePermission` join table, 65 named permissions as of 2026-07-23 (`approve_trf`, `manage_bookings`, `view_all_visa`, etc.), checked via helpers in `accounts/utils.py` (`has_permission`, `can_approve`, `can_view_all`, `can_manage`, `is_module_admin`).
+This diagram simplifies to 4 abstract role categories for readability — the real system is more granular: `accounts.Role` ↔ `accounts.Permission` via a `RolePermission` join table, 57 named permissions as of 2026-07-23 (down from 65 earlier the same day — Fix 9 deleted 7: 5 duplicates consolidated into existing permissions, plus `access_debug_endpoints`/`manage_document_templates` as dead code) (`approve_trf`, `manage_bookings`, `view_all_visa`, etc.), checked via helpers in `accounts/utils.py` (`has_permission`, `can_approve`, `can_view_all`, `can_manage`, `is_module_admin`).
 
 **Permission-system audit history (2026-07-23, see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fixes 5-6, 9):**
 - ~~5 orphaned `combined_request` permissions~~ — `approve_combined`, `manage_combined_requests`, `process_combined_requests`, `view_admin_combined`, `view_all_combined` had **0 roles assigned**. Fixed (Fix 6, migration `0037`): `approve_combined` now follows the identical pattern used by `approve_trf`/`approve_visa`/`approve_transport`/`approve_accommodation` (`Department Focal`, `Line Manager`, `HOD`, `System Administrator`); the other 4 go to `System Administrator` only, since there's no single existing "combined admin" role the way each other module has one.
@@ -436,7 +435,7 @@ Both apps are almost entirely **live, read-only aggregation** — no ETL, no sch
 | `reports` | `TravelRequest`, `FlightBooking`, `TransportRequest`, `VisaApplication`, `AccommodationRequest`, `WorkflowInstance`/`WorkflowStepExecution`, `User`/`Department` | No `models.py` at all — every endpoint computes stats on the fly per-request. `ReportExportView` re-runs the same query and serializes to CSV / Excel (`openpyxl`) / PDF (`reportlab`) synchronously in the request. |
 | `insights` | Same models as `reports` — nothing else | `dashboard_summary`, `travel_spend_analytics`, `booking_analytics`, etc. are live queries, same pattern as `reports`. `insights/models.py` is now empty (see note below) — this app has no models of its own at all, same as `approvals` (§1). |
 
-`reports`' 5 endpoints previously required only `IsAuthenticated` despite a `generate_admin_reports` permission existing specifically for them — any authenticated user could hit every reports endpoint. Fixed 2026-07-23 (see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 5) with a shared permission gate; `insights`' live-query endpoints were not part of that audit and remain `IsAuthenticated`-only.
+`reports`' 5 endpoints previously required only `IsAuthenticated` despite a `generate_admin_reports` permission existing specifically for them — any authenticated user could hit every reports endpoint. Fixed 2026-07-23 (see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 5) with a shared `_require_admin_reports_permission()` gate. Fix 9 later widened that same shared gate to also accept `export_data` (not just `generate_admin_reports`), since `ReportExportView` calls straight into the other 4 endpoints to fetch data before exporting it — an `export_data`-only holder (e.g. `Line Manager`) needs to pass the shared gate too, not just the export endpoint's own check. `insights`' live-query endpoints were not part of either audit and remain `IsAuthenticated`-only.
 
 ~~`insights`' `TravelInsight`/`DestinationStat`/`CategorySpend`/`MonthlyTrend`/`TravelAnalytics` models had no population pipeline~~ — **removed entirely 2026-07-22** (see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 2), not left as dead schema. Confirmed zero rows in the DB and zero frontend callers before deleting — this wasn't "population pipeline missing," it was genuinely dead code end-to-end (backend models + viewsets + serializers, frontend service methods that were never invoked from any component). Dropped via migration rather than converted to database views or left for a future ETL, since nothing was reading or writing them.
 
@@ -495,6 +494,7 @@ The four dead signal modules that used to exist in `trf`, `accommodation`, `tran
 | Backend | drf-spectacular | OpenAPI schema |
 | Backend | whitenoise | Static file serving |
 | Backend | psycopg2 | PostgreSQL driver |
+| Backend | python-crontab | Self-installing maintenance-job schedule (`manage.py install_cron`, §6) |
 | Database | PostgreSQL 15 | Primary datastore |
 | DevSecOps | black + isort | Python formatting |
 | DevSecOps | flake8 | Python linting |
