@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 from datetime import datetime
 
+from accounts.models import AdminActionLog
 from accounts.utils import can_approve, can_view_all, has_permission
 from utils import error_response, not_found_response, success_response
 from utils.request_id_generator import generate_request_id
@@ -465,6 +466,18 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 visa.status = status_map.get(step_role, visa.status)
                 visa.save()
 
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="workflow_step_approved",
+                    description=(
+                        f"Approved visa application #{visa.id} at step '{step_role}' "
+                        "(legacy fallback - no active WorkflowTemplate)"
+                    ),
+                    entity_type="visaapplication",
+                    entity_id=visa.id,
+                    request=request,
+                )
+
                 serializer = VisaApplicationDetailSerializer(visa)
                 return Response(serializer.data)
 
@@ -555,6 +568,18 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
 
                 visa.status = "Rejected"
                 visa.save()
+
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="workflow_step_rejected",
+                    description=(
+                        f"Rejected visa application #{visa.id} at step '{step_role}' "
+                        "(legacy fallback - no active WorkflowTemplate)"
+                    ),
+                    entity_type="visaapplication",
+                    entity_id=visa.id,
+                    request=request,
+                )
 
                 serializer = VisaApplicationDetailSerializer(visa)
                 return Response(serializer.data)

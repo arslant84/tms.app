@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+from accounts.models import AdminActionLog
 from accounts.utils import can_approve, can_view_all, has_permission, is_module_admin
 from django.db.models import Q
 from django.utils import timezone
@@ -679,6 +680,18 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                     transport_request.status = next_status
                     transport_request.save()
 
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="workflow_step_approved",
+                    description=(
+                        f"Approved transport request #{transport_request.id} at step "
+                        f"'{current_step.step_role}' (legacy fallback - no active WorkflowTemplate)"
+                    ),
+                    entity_type="transportrequest",
+                    entity_id=transport_request.id,
+                    request=request,
+                )
+
                 serializer = TransportRequestDetailSerializer(transport_request)
                 return Response(serializer.data)
 
@@ -766,6 +779,18 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
 
                 transport_request.status = "Rejected"
                 transport_request.save()
+
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="workflow_step_rejected",
+                    description=(
+                        f"Rejected transport request #{transport_request.id} "
+                        "(legacy fallback - no active WorkflowTemplate)"
+                    ),
+                    entity_type="transportrequest",
+                    entity_id=transport_request.id,
+                    request=request,
+                )
 
                 serializer = TransportRequestDetailSerializer(transport_request)
                 return Response(serializer.data)
