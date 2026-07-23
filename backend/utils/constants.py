@@ -20,35 +20,35 @@ class RequestStatus:
     Standard request statuses used across all entity types
     (TRF, Transport, Visa, Accommodation)
     """
+
     # Initial States
-    DRAFT = 'Draft'
+    DRAFT = "Draft"
 
     # Pending States (Workflow)
-    PENDING = 'Pending'
-    PENDING_DEPARTMENT_FOCAL = 'Pending Department Focal'
-    PENDING_LINE_MANAGER = 'Pending Line Manager'
-    PENDING_HOD = 'Pending HOD'
-    PENDING_TRAVEL_DESK = 'Pending Travel Desk'
-    PENDING_FINANCE = 'Pending Finance'
-    PENDING_VISA_CLERK = 'Pending Visa Clerk'
-    PENDING_TRANSPORT_ADMIN = 'Pending Transport Admin'
-    SUBMITTED = 'Submitted'
-    UNDER_REVIEW = 'Under Review'
+    PENDING = "Pending"
+    PENDING_DEPARTMENT_FOCAL = "Pending Department Focal"
+    PENDING_LINE_MANAGER = "Pending Line Manager"
+    PENDING_HOD = "Pending HOD"
+    PENDING_TRAVEL_DESK = "Pending Travel Desk"
+    PENDING_FINANCE = "Pending Finance"
+    PENDING_VISA_CLERK = "Pending Visa Clerk"
+    PENDING_TRANSPORT_ADMIN = "Pending Transport Admin"
+    SUBMITTED = "Submitted"
+    UNDER_REVIEW = "Under Review"
 
     # Processing States
-    PROCESSING = 'Processing'
-    PROCESSING_TRAVEL_DESK = 'Processing with Travel Desk'
-    PROCESSING_VISA_CLERK = 'Processing with Visa Clerk'
-    PROCESSING_TRANSPORT_ADMIN = 'Processing with Transport Admin'
-    READY_FOR_BOOKING = 'Ready for Booking'
-    FLIGHT_BOOKED = 'Flight Booked'
-    HOTEL_BOOKED = 'Hotel Booked'
+    PROCESSING = "Processing"
+    PROCESSING_TRAVEL_DESK = "Processing with Travel Desk"
+    PROCESSING_VISA_CLERK = "Processing with Visa Clerk"
+    PROCESSING_TRANSPORT_ADMIN = "Processing with Transport Admin"
+    READY_FOR_BOOKING = "Ready for Booking"
+    FLIGHT_BOOKED = "Flight Booked"
 
     # Final States
-    APPROVED = 'Approved'
-    REJECTED = 'Rejected'
-    CANCELLED = 'Cancelled'
-    COMPLETED = 'Completed'
+    APPROVED = "Approved"
+    REJECTED = "Rejected"
+    CANCELLED = "Cancelled"
+    COMPLETED = "Completed"
 
     @classmethod
     def draft_statuses(cls) -> list:
@@ -81,7 +81,6 @@ class RequestStatus:
             cls.PROCESSING_TRANSPORT_ADMIN,
             cls.READY_FOR_BOOKING,
             cls.FLIGHT_BOOKED,
-            cls.HOTEL_BOOKED,
         ]
 
     @classmethod
@@ -90,7 +89,6 @@ class RequestStatus:
         return [
             cls.APPROVED,
             cls.FLIGHT_BOOKED,
-            cls.HOTEL_BOOKED,
             cls.PROCESSING,
             cls.READY_FOR_BOOKING,
         ]
@@ -105,10 +103,10 @@ class RequestStatus:
         """Statuses from which a request can be cancelled"""
         # All except completed and already cancelled
         return (
-            cls.draft_statuses() +
-            cls.pending_statuses() +
-            cls.processing_statuses() +
-            [cls.APPROVED]
+            cls.draft_statuses()
+            + cls.pending_statuses()
+            + cls.processing_statuses()
+            + [cls.APPROVED]
         )
 
     @classmethod
@@ -119,37 +117,40 @@ class RequestStatus:
 
 class WorkflowAction:
     """Actions that can be performed on workflow steps"""
-    APPROVE = 'approve'
-    REJECT = 'reject'
-    DELEGATE = 'delegate'
-    REQUEST_INFO = 'request_info'
-    ESCALATE = 'escalate'
+
+    APPROVE = "approve"
+    REJECT = "reject"
+    DELEGATE = "delegate"
+    REQUEST_INFO = "request_info"
+    ESCALATE = "escalate"
 
 
 class WorkflowStatus:
     """Workflow instance statuses"""
-    PENDING = 'pending'
-    IN_PROGRESS = 'in_progress'
-    APPROVED = 'approved'
-    REJECTED = 'rejected'
-    CANCELLED = 'cancelled'
-    COMPLETED = 'completed'
+
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+    COMPLETED = "completed"
 
 
 class ApprovalStepStatus:
     """Approval step statuses"""
-    PENDING = 'Pending'
-    APPROVED = 'Approved'
-    REJECTED = 'Rejected'
-    SKIPPED = 'Skipped'
+
+    PENDING = "Pending"
+    APPROVED = "Approved"
+    REJECTED = "Rejected"
+    SKIPPED = "Skipped"
 
 
 # Legacy approval progression mapping (for fallback when workflow not configured)
 LEGACY_STATUS_PROGRESSION = {
-    'Department Focal': 'Pending HOD',
-    'HOD': 'Pending Travel Desk',
-    'Travel Desk': 'Pending Finance',
-    'Finance': 'Approved',
+    "Department Focal": "Pending HOD",
+    "HOD": "Pending Travel Desk",
+    "Travel Desk": "Pending Finance",
+    "Finance": "Approved",
 }
 
 # Shortcut lists for common checks

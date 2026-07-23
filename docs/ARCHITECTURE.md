@@ -21,7 +21,7 @@ graph TD
         subgraph Apps["Domain Apps"]
             ACC["accounts<br/>Users · RBAC · MFA · Audit"]
             TRF["trf<br/>Travel Request Forms"]
-            BK["bookings<br/>Flight & Hotel Bookings"]
+            BK["bookings<br/>Flight Bookings"]
             VISA["visa<br/>Visa Applications"]
             ACC2["accommodation<br/>Hotel/Housing"]
             TRANS["transport<br/>Ground Transport"]
@@ -285,7 +285,7 @@ flowchart TD
     WF["workflows<br/>WorkflowRouter + WorkflowEngine<br/>§7.1"]
     APR["approvals<br/>bulk actions, read-aggregation<br/>§7.1"]
     NOTIF["notifications<br/>NotificationService<br/>§7.3"]
-    BOOK["bookings<br/>FlightBooking / HotelBooking<br/>§7.2"]
+    BOOK["bookings<br/>FlightBooking<br/>§7.2"]
     ACCTS["accounts<br/>User, Role, AdminActionLog<br/>§7.5 / §7.6"]
     ANALYTICS["reports + insights<br/>read-only aggregation<br/>§7.4"]
     DB[("PostgreSQL")]
@@ -366,28 +366,25 @@ All three approval entry points (single-item `approve`/`reject`, `bulk_approve`,
 
 - **Downstream requests are not auto-created on approval** — bookings, visa, accommodation, and transport records are still submitted independently by the traveller/admin after TRF approval; the only system-linked exception is the manual `book_flight` admin action. This wasn't fixed because it's a product decision (what should get prefilled, who owns the resulting draft, does the traveller review before submit), not a bug — see Fix 4 in `docs/APPROVAL_WORKFLOW_FIX_ROADMAP.md`.
 
-### 7.2 Downstream Bookings (Flight & Hotel)
+### 7.2 Downstream Bookings (Flight)
 
 ```mermaid
 flowchart TD
-    TRF3["TravelRequest<br/>status in Approved / Flight Booked / Hotel Booked / Processing / Ready for Booking"]
+    TRF3["TravelRequest<br/>status in Approved / Flight Booked / Processing / Ready for Booking"]
     BF["Admin: book_flight action<br/>trf/views.py:985 — admin/book-flight<br/>gated on TRF status<br/>upserts FlightBooking(trf=trf)<br/>force-sets trf.status = 'Flight Booked'"]
-    DIRECT["FlightBookingViewSet / HotelBookingViewSet<br/>bookings/views.py<br/>independent create — gated on TRF status<br/>and booking/TRF or booking/accommodation admin"]
+    DIRECT["FlightBookingViewSet<br/>bookings/views.py<br/>independent create — gated on TRF status<br/>and booking/TRF admin"]
     FB[("FlightBooking<br/>PENDING to REQUESTED to CONFIRMED to TICKETED / CANCELLED / REFUNDED / NO_SHOW")]
-    HB[("HotelBooking<br/>PENDING to CONFIRMED / CANCELLED")]
-    ADMIN3["confirm_booking / issue_ticket / cancel_booking<br/>bookings/models.py instance methods<br/>gated on is_module_admin(user, 'booking'/'trf'/'accommodation')"]
+    ADMIN3["confirm_booking / issue_ticket / cancel_booking<br/>bookings/models.py instance methods<br/>gated on is_module_admin(user, 'booking'/'trf')"]
 
     TRF3 -->|"book_flight"| BF --> FB
     DIRECT --> FB
-    DIRECT --> HB
     FB --> ADMIN3
-    HB --> ADMIN3
 ```
 
-Two things worth knowing that aren't obvious from the model layer alone:
+Hotel/accommodation needs are handled entirely by the `accommodation` app (staff houses, `AccommodationRequest` — see §1), not by `bookings`. This wasn't always documented correctly:
 
-- **No `book_hotel` action exists.** `trf/views.py` has a permission check referencing a `book_hotel` action name (line 270), but grep confirms no `@action def book_hotel` was ever implemented — hotel bookings can only be created through `bookings`' own endpoint, with no TRF-approval linkage at all.
-- ~~Gap: `bookings`' own create endpoints weren't gated on TRF status or caller identity~~ — **fixed 2026-07-23** (`docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 1 for the status check, Fix 8 for the authorization check). `FlightBookingCreateSerializer.validate_trf`/`HotelBookingCreateSerializer.validate_trf` now check `BOOKABLE_STATUSES`, and `FlightBookingViewSet.perform_create`/`HotelBookingViewSet.perform_create` now reject anyone who isn't a superuser or booking/TRF (flights) or booking/accommodation (hotels) admin — booking is an admin/travel-desk function throughout this app (matching `book_flight`'s own `admin/book-flight` naming), confirmed via the frontend: every real caller of booking creation lives under `features/admin/flights/`, no self-service booking UI exists anywhere.
+- ~~`bookings.HotelBooking` model, `HotelBookingViewSet`, and a `book_hotel` permission-check reference with no implementing action~~ — **removed 2026-07-23** (`docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 10). `HotelBooking` had a `trf` ForeignKey (so an earlier draft of this doc claiming "no TRF-approval linkage at all" was wrong), but the model had **0 rows ever created** and its ViewSet/serializers/frontend service methods (`createHotelBooking`, `getAllHotelBookings`, etc.) had **0 real callers** — confirmed via DB query and a full frontend grep before touching anything, same standard as the `insights` cleanup (§7.4). Real accommodation bookings go through `accommodation.AccommodationRequest` (14 rows in this environment vs. `HotelBooking`'s 0). Removed the model, ViewSet, serializers, URL registration, admin registration, the dead `book_hotel` action-name reference and unreachable `'Hotel Booked'` status in `trf/views.py`/`utils/constants.py`, the now-always-zero hotel cost/count terms in `reports`/`insights`, and the dead frontend interfaces/methods.
+- ~~Gap: `bookings`' own create endpoint wasn't gated on TRF status or caller identity~~ — **fixed 2026-07-23** (`docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 1 for the status check, Fix 8 for the authorization check). `FlightBookingCreateSerializer.validate_trf` now checks `BOOKABLE_STATUSES`, and `FlightBookingViewSet.perform_create` now rejects anyone who isn't a superuser or booking/TRF admin — booking is an admin/travel-desk function throughout this app (matching `book_flight`'s own `admin/book-flight` naming), confirmed via the frontend: every real caller of booking creation lives under `features/admin/flights/`, no self-service booking UI exists anywhere.
 
 ### 7.3 Notifications Delivery Pipeline
 
@@ -427,7 +424,7 @@ Both apps are almost entirely **live, read-only aggregation** — no ETL, no sch
 
 | App | Backing data | Notes |
 |---|---|---|
-| `reports` | `TravelRequest`, `FlightBooking`/`HotelBooking`, `TransportRequest`, `VisaApplication`, `AccommodationRequest`, `WorkflowInstance`/`WorkflowStepExecution`, `User`/`Department` | No `models.py` at all — every endpoint computes stats on the fly per-request. `ReportExportView` re-runs the same query and serializes to CSV / Excel (`openpyxl`) / PDF (`reportlab`) synchronously in the request. |
+| `reports` | `TravelRequest`, `FlightBooking`, `TransportRequest`, `VisaApplication`, `AccommodationRequest`, `WorkflowInstance`/`WorkflowStepExecution`, `User`/`Department` | No `models.py` at all — every endpoint computes stats on the fly per-request. `ReportExportView` re-runs the same query and serializes to CSV / Excel (`openpyxl`) / PDF (`reportlab`) synchronously in the request. |
 | `insights` | Same models as `reports` — nothing else | `dashboard_summary`, `travel_spend_analytics`, `booking_analytics`, etc. are live queries, same pattern as `reports`. `insights/models.py` is now empty (see note below) — this app has no models of its own at all, same as `approvals` (§1). |
 
 `reports`' 5 endpoints previously required only `IsAuthenticated` despite a `generate_admin_reports` permission existing specifically for them — any authenticated user could hit every reports endpoint. Fixed 2026-07-23 (see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 5) with a shared permission gate; `insights`' live-query endpoints were not part of that audit and remain `IsAuthenticated`-only.

@@ -10,7 +10,7 @@ from datetime import timedelta
 from accommodation.models import AccommodationRequest
 from accounts.models import User
 from accounts.utils import has_permission
-from bookings.models import FlightBooking, HotelBooking
+from bookings.models import FlightBooking
 from django.db.models import Avg, Count, F, Q, Sum
 from django.db.models.functions import TruncDate, TruncMonth
 from django.http import HttpResponse
@@ -970,13 +970,6 @@ class FinancialSummaryReportsView(APIView):
 
         flight_cost = flight_query.aggregate(total=Sum("cost"))["total"] or 0
 
-        # Hotel bookings costs
-        hotel_query = HotelBooking.objects.filter(created_at__gte=start_date)
-        if dept_users:
-            hotel_query = hotel_query.filter(trf__in=dept_trfs)
-
-        hotel_cost = hotel_query.aggregate(total=Sum("cost_per_night"))["total"] or 0
-
         # Transport requests (estimated costs)
         transport_query = TransportRequest.objects.filter(created_at__gte=start_date)
         if dept_users:
@@ -1015,7 +1008,6 @@ class FinancialSummaryReportsView(APIView):
         # Total costs
         total_cost = (
             flight_cost
-            + hotel_cost
             + estimated_transport_cost
             + estimated_visa_cost
             + accommodation_cost
@@ -1048,13 +1040,6 @@ class FinancialSummaryReportsView(APIView):
                 or 0
             )
 
-            dept_hotels = (
-                HotelBooking.objects.filter(
-                    trf__in=dept_trfs, created_at__gte=start_date
-                ).aggregate(total=Sum("cost_per_night"))["total"]
-                or 0
-            )
-
             dept_transport = (
                 TransportRequest.objects.filter(
                     requestor__in=dept_users, created_at__gte=start_date
@@ -1076,13 +1061,7 @@ class FinancialSummaryReportsView(APIView):
                 * 300
             )  # Simplified estimate
 
-            dept_total = (
-                dept_flights
-                + dept_hotels
-                + dept_transport
-                + dept_visa
-                + dept_accommodation
-            )
+            dept_total = dept_flights + dept_transport + dept_visa + dept_accommodation
 
             if dept_total > 0:
                 department_breakdown.append(
@@ -1091,7 +1070,6 @@ class FinancialSummaryReportsView(APIView):
                         "totalCost": round(dept_total, 2),
                         "breakdown": {
                             "flights": round(dept_flights, 2),
-                            "hotels": round(dept_hotels, 2),
                             "transport": round(dept_transport, 2),
                             "visa": round(dept_visa, 2),
                             "accommodation": round(dept_accommodation, 2),
@@ -1116,17 +1094,10 @@ class FinancialSummaryReportsView(APIView):
                 or 0
             )
 
-            month_hotels = (
-                HotelBooking.objects.filter(
-                    created_at__gte=month_start, created_at__lt=month_end
-                ).aggregate(total=Sum("cost_per_night"))["total"]
-                or 0
-            )
-
             monthly_costs.append(
                 {
                     "month": month_start.strftime("%b %Y"),
-                    "cost": round(month_flights + month_hotels, 2),
+                    "cost": round(month_flights, 2),
                 }
             )
 
@@ -1136,7 +1107,6 @@ class FinancialSummaryReportsView(APIView):
                     "totalCost": round(total_cost, 2),
                     "breakdown": {
                         "flights": round(flight_cost, 2),
-                        "hotels": round(hotel_cost, 2),
                         "transport": round(estimated_transport_cost, 2),
                         "visa": round(estimated_visa_cost, 2),
                         "accommodation": round(accommodation_cost, 2),
