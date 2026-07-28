@@ -176,7 +176,7 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
 
         # For retrieve, check view_all permission or pending approvals
         if self.action == "retrieve":
-            if can_view_all(user, "combined"):
+            if user.is_superuser or can_view_all(user, "combined"):
                 logger.info(
                     "Retrieve: User has view_all_combined - allowing full access"
                 )
@@ -196,8 +196,8 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
             self.request.query_params.get("admin_view", "false").lower() == "true"
         )
 
-        if admin_view and user.role:
-            if can_view_all(user, "combined"):
+        if admin_view and (user.is_superuser or user.role):
+            if user.is_superuser or can_view_all(user, "combined"):
                 logger.info("Admin view: User has view_all_combined permission")
                 pass  # No filtering
             elif has_permission(user, "approve_combined") or has_permission(

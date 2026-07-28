@@ -118,7 +118,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         # For retrieve (viewing details), check view_all permission first, then pending approvals
         if self.action == "retrieve":
             # Users with view_all_visa permission can access any application detail (e.g. from Recent Activity)
-            if can_view_all(user, "visa"):
+            if user.is_superuser or can_view_all(user, "visa"):
                 logger.info(
                     " Retrieve action: User has view_all_visa - allowing full access"
                 )
@@ -140,11 +140,11 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         )
 
         # Permission-based filtering
-        if admin_view and user.role:
+        if admin_view and (user.is_superuser or user.role):
             # Admin module context - check permissions
-            if can_view_all(user, "visa"):
+            if user.is_superuser or can_view_all(user, "visa"):
                 logger.info(
-                    f" Admin view: User {user.email or user.username} (role: {user.role.name}) has 'view_all_visa' permission - showing all visa applications"
+                    f" Admin view: User {user.email or user.username} (role: {user.role.name if user.role else None}) has 'view_all_visa' permission - showing all visa applications"
                 )
                 pass  # No filtering - show all
             elif user.role.permissions.filter(
