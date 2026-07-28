@@ -191,7 +191,6 @@ class WorkflowStepSerializer(serializers.ModelSerializer):
             "can_skip",
             "requires_comments",
             "sla_hours",
-            "escalation_hours",
             "conditions",
             "notification_configs",
             "created_at",
@@ -208,15 +207,6 @@ class WorkflowStepSerializer(serializers.ModelSerializer):
         # Validate SLA hours
         if data.get("sla_hours") and data["sla_hours"] < 1:
             raise serializers.ValidationError("SLA hours must be at least 1")
-
-        # Validate escalation hours
-        if data.get("escalation_hours"):
-            if data["escalation_hours"] < 1:
-                raise serializers.ValidationError("Escalation hours must be at least 1")
-            if data.get("sla_hours") and data["escalation_hours"] >= data["sla_hours"]:
-                raise serializers.ValidationError(
-                    "Escalation hours must be less than SLA hours"
-                )
 
         return data
 
@@ -371,7 +361,6 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                 can_skip=step_data.get("can_skip", False),
                 requires_comments=step_data.get("requires_comments", False),
                 sla_hours=step_data.get("sla_hours"),
-                escalation_hours=step_data.get("escalation_hours"),
             )
 
             # Create notification configs for this step (CREATE always gets defaults if none provided)
@@ -440,7 +429,6 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                         can_skip=step_data.get("can_skip", False),
                         requires_comments=step_data.get("requires_comments", False),
                         sla_hours=step_data.get("sla_hours"),
-                        escalation_hours=step_data.get("escalation_hours"),
                     )
 
                     # On UPDATE: Use exactly what frontend sends (respect user's changes)
@@ -495,9 +483,7 @@ class WorkflowStepExecutionSerializer(serializers.ModelSerializer):
             "comments",
             "action_date",
             "sla_due_date",
-            "escalation_date",
             "is_overdue",
-            "is_escalated",
             "created_at",
             "updated_at",
         ]
@@ -506,7 +492,6 @@ class WorkflowStepExecutionSerializer(serializers.ModelSerializer):
             "actioned_by",
             "action_date",
             "is_overdue",
-            "is_escalated",
             "created_at",
             "updated_at",
         ]

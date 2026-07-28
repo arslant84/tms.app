@@ -1,8 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing loose typing against raw API responses, unrelated to this change */
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { TmsApp_Core_Services_WorkflowsService, TmsApp_Workflows_WorkflowModuleWithSteps, TmsApp_Workflows_WorkflowStepFormValues, TmsApp_Workflows_WorkflowStep } from '../../../../core/services/workflows.service';
+import {
+  TmsApp_Core_Services_WorkflowsService,
+  TmsApp_Workflows_WorkflowModuleWithSteps,
+  TmsApp_Workflows_WorkflowStepFormValues,
+  TmsApp_Workflows_WorkflowStep,
+} from '../../../../core/services/workflows.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
@@ -12,7 +18,7 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './workflow-configuration.component.html',
-  styleUrls: ['./workflow-configuration.component.scss']
+  styleUrls: ['./workflow-configuration.component.scss'],
 })
 export class TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent implements OnInit {
   isLoading = true;
@@ -25,9 +31,7 @@ export class TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent implemen
   form: TmsApp_Workflows_WorkflowStepFormValues = {
     name: '',
     approverRoleId: '',
-    escalationRoleId: null,
-    escalationHours: null,
-    order: null
+    order: null,
   };
 
   constructor(
@@ -49,11 +53,11 @@ export class TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent implemen
   loadModules(): void {
     this.isLoading = true;
     this.workflowsService.getModulesWithSteps().subscribe({
-      next: (resp) => {
+      next: resp => {
         this.modules = this.unwrapModules(resp);
       },
       error: () => this.toast.error('Failed to load workflows'),
-      complete: () => this.isLoading = false
+      complete: () => (this.isLoading = false),
     });
   }
 
@@ -61,7 +65,7 @@ export class TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent implemen
     this.showForm = true;
     this.currentModuleId = moduleId;
     this.editStepId = null;
-    this.form = { name: '', approverRoleId: '', escalationRoleId: null, escalationHours: null, order: null };
+    this.form = { name: '', approverRoleId: '', order: null };
   }
 
   openEdit(moduleId: string, step: TmsApp_Workflows_WorkflowStep): void {
@@ -71,9 +75,7 @@ export class TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent implemen
     this.form = {
       name: step.name,
       approverRoleId: step.approverRoleId || '',
-      escalationRoleId: step.escalationRoleId || null,
-      escalationHours: step.escalationHours || null,
-      order: step.order || null
+      order: step.order || null,
     };
   }
 
@@ -100,7 +102,7 @@ export class TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent implemen
         this.loadModules();
       },
       error: () => this.toast.error('Failed to save workflow step'),
-      complete: () => this.isSaving = false
+      complete: () => (this.isSaving = false),
     });
   }
 
@@ -112,7 +114,7 @@ export class TmsApp_Admin_SystemSettings_WorkflowConfigurationComponent implemen
           this.toast.success('Workflow step deleted');
           this.loadModules();
         },
-        error: () => this.toast.error('Failed to delete workflow step')
+        error: () => this.toast.error('Failed to delete workflow step'),
       });
     });
   }

@@ -5,7 +5,7 @@ Provides CRUD operations and helper endpoints.
 
 import logging
 
-from rest_framework import status, viewsets
+from rest_framework import viewsets
 
 logger = logging.getLogger(__name__)
 from accounts.models import Role, User

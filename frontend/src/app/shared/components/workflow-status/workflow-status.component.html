@@ -25,16 +25,22 @@
       </div>
 
       <!-- Progress Bar -->
-      <div class="progress mb-3" style="height: 8px;">
+      <div class="progress mb-3" style="height: 8px">
         <div
           class="progress-bar"
-          [ngClass]="workflow.status === 'approved' ? 'bg-success' : (workflow.status === 'rejected' ? 'bg-danger' : 'bg-warning')"
+          [ngClass]="
+            workflow.status === 'approved'
+              ? 'bg-success'
+              : workflow.status === 'rejected'
+                ? 'bg-danger'
+                : 'bg-warning'
+          "
           role="progressbar"
           [style.width.%]="progressPercentage"
           [attr.aria-valuenow]="progressPercentage"
           aria-valuemin="0"
-          aria-valuemax="100">
-        </div>
+          aria-valuemax="100"
+        ></div>
       </div>
 
       <p class="text-muted small mb-3">
@@ -52,12 +58,12 @@
         <span class="text-muted small">
           Step {{ workflow.current_step_order }} of {{ sortedSteps.length }}
         </span>
-        <div class="progress flex-grow-1" style="height: 4px;">
+        <div class="progress flex-grow-1" style="height: 4px">
           <div
             class="progress-bar bg-primary"
             role="progressbar"
-            [style.width.%]="progressPercentage">
-          </div>
+            [style.width.%]="progressPercentage"
+          ></div>
         </div>
       </div>
     </div>
@@ -67,8 +73,8 @@
       <div
         *ngFor="let step of sortedSteps; let i = index; let isLast = last"
         class="timeline-item"
-        [ngClass]="getStepClass(step)">
-
+        [ngClass]="getStepClass(step)"
+      >
         <!-- Timeline connector -->
         <div class="timeline-connector" *ngIf="!isLast"></div>
 
@@ -84,7 +90,8 @@
           <div class="d-flex justify-content-between align-items-start mb-1">
             <div>
               <h6 class="step-title mb-0">
-                Step {{ step.workflow_step_detail?.step_order }}: {{ step.workflow_step_detail?.step_name }}
+                Step {{ step.workflow_step_detail?.step_order }}:
+                {{ step.workflow_step_detail?.step_name }}
               </h6>
               <span class="badge badge-sm mt-1" [ngClass]="getStepStatusBadge(step)">
                 {{ step.status | titlecase }}
@@ -113,17 +120,11 @@
 
             <!-- SLA Due Date (for pending steps) -->
             <div class="detail-row" *ngIf="step.status === 'pending' && step.sla_due_date">
-              <i class="bi bi-clock" [ngClass]="{'text-danger': isOverdue(step)}"></i>
+              <i class="bi bi-clock" [ngClass]="{ 'text-danger': isOverdue(step) }"></i>
               <span class="detail-label">Due:</span>
-              <span class="detail-value" [ngClass]="{'text-danger fw-bold': isOverdue(step)}">
+              <span class="detail-value" [ngClass]="{ 'text-danger fw-bold': isOverdue(step) }">
                 {{ getTimeRemaining(step) }}
               </span>
-            </div>
-
-            <!-- Escalation Warning -->
-            <div class="detail-row" *ngIf="step.is_escalated">
-              <i class="bi bi-exclamation-triangle text-warning"></i>
-              <span class="text-warning fw-bold">Escalated</span>
             </div>
 
             <!-- Comments -->
@@ -134,11 +135,12 @@
             </div>
 
             <!-- Delegation Info -->
-            <div class="detail-row" *ngIf="step.status === 'delegated' && step.delegations && step.delegations.length > 0">
+            <div
+              class="detail-row"
+              *ngIf="step.status === 'delegated' && step.delegations && step.delegations.length > 0"
+            >
               <i class="bi bi-arrow-right-circle text-info"></i>
-              <span class="text-info">
-                Delegated to {{ getDelegatedUserName(step) }}
-              </span>
+              <span class="text-info"> Delegated to {{ getDelegatedUserName(step) }} </span>
             </div>
 
             <!-- Current Step Indicator -->
