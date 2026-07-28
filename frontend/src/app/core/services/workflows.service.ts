@@ -41,23 +41,37 @@ export interface TmsApp_Workflows_WorkflowStepFormValues {
  */
 @Injectable({ providedIn: 'root' })
 export class TmsApp_Core_Services_WorkflowsService {
-  private base = `${environment.apiUrl}/workflows/templates`;
+  private base = `${environment.apiUrl}/workflows/templates/`;
 
   constructor(private http: HttpClient) {}
 
-  getModulesWithSteps(): Observable<{ success?: boolean; data?: TmsApp_Workflows_WorkflowModuleWithSteps[] } | TmsApp_Workflows_WorkflowModuleWithSteps[]> {
-    return this.http.get<{ success?: boolean; data?: TmsApp_Workflows_WorkflowModuleWithSteps[] } | TmsApp_Workflows_WorkflowModuleWithSteps[]>(this.base);
+  getModulesWithSteps(): Observable<
+    | { success?: boolean; data?: TmsApp_Workflows_WorkflowModuleWithSteps[] }
+    | TmsApp_Workflows_WorkflowModuleWithSteps[]
+  > {
+    return this.http.get<
+      | { success?: boolean; data?: TmsApp_Workflows_WorkflowModuleWithSteps[] }
+      | TmsApp_Workflows_WorkflowModuleWithSteps[]
+    >(this.base);
   }
 
-  createStep(moduleId: string, stepData: TmsApp_Workflows_WorkflowStepFormValues): Observable<TmsApp_Workflows_WorkflowStep> {
+  createStep(
+    moduleId: string,
+    stepData: TmsApp_Workflows_WorkflowStepFormValues
+  ): Observable<TmsApp_Workflows_WorkflowStep> {
     return this.http.post<TmsApp_Workflows_WorkflowStep>(this.base, { moduleId, stepData });
   }
 
-  updateStep(stepId: string, stepData: TmsApp_Workflows_WorkflowStepFormValues): Observable<TmsApp_Workflows_WorkflowStep> {
+  updateStep(
+    stepId: string,
+    stepData: TmsApp_Workflows_WorkflowStepFormValues
+  ): Observable<TmsApp_Workflows_WorkflowStep> {
     return this.http.put<TmsApp_Workflows_WorkflowStep>(this.base, { stepId, stepData });
   }
 
   deleteStep(stepId: string): Observable<{ success: boolean }> {
-    return this.http.delete<{ success: boolean }>(`${this.base}?stepId=${encodeURIComponent(stepId)}`);
+    return this.http.delete<{ success: boolean }>(
+      `${this.base}?stepId=${encodeURIComponent(stepId)}`
+    );
   }
 }

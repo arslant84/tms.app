@@ -59,8 +59,8 @@ export interface TmsApp_Notifications_NotificationTemplateFormValues {
  */
 @Injectable({ providedIn: 'root' })
 export class TmsApp_Core_Services_NotificationsService {
-  private templatesUrl = `${environment.apiUrl}/notifications/templates`;
-  private eventTypesUrl = `${environment.apiUrl}/notifications/event-types`;
+  private templatesUrl = `${environment.apiUrl}/notifications/templates/`;
+  private eventTypesUrl = `${environment.apiUrl}/notifications/event-types/`;
 
   constructor(private http: HttpClient) {}
 
@@ -71,7 +71,7 @@ export class TmsApp_Core_Services_NotificationsService {
 
   /** Get single notification template by ID */
   getTemplate(id: string): Observable<TmsApp_Notifications_NotificationTemplate> {
-    return this.http.get<TmsApp_Notifications_NotificationTemplate>(`${this.templatesUrl}/${id}/`);
+    return this.http.get<TmsApp_Notifications_NotificationTemplate>(`${this.templatesUrl}${id}/`);
   }
 
   /** Get all notification event types */
@@ -80,17 +80,25 @@ export class TmsApp_Core_Services_NotificationsService {
   }
 
   /** Create new notification template */
-  createTemplate(data: TmsApp_Notifications_NotificationTemplateFormValues): Observable<TmsApp_Notifications_NotificationTemplate> {
+  createTemplate(
+    data: TmsApp_Notifications_NotificationTemplateFormValues
+  ): Observable<TmsApp_Notifications_NotificationTemplate> {
     return this.http.post<TmsApp_Notifications_NotificationTemplate>(this.templatesUrl, data);
   }
 
   /** Update notification template */
-  updateTemplate(templateId: string, data: TmsApp_Notifications_NotificationTemplateFormValues): Observable<TmsApp_Notifications_NotificationTemplate> {
-    return this.http.put<TmsApp_Notifications_NotificationTemplate>(`${this.templatesUrl}/${templateId}/`, data);
+  updateTemplate(
+    templateId: string,
+    data: TmsApp_Notifications_NotificationTemplateFormValues
+  ): Observable<TmsApp_Notifications_NotificationTemplate> {
+    return this.http.put<TmsApp_Notifications_NotificationTemplate>(
+      `${this.templatesUrl}${templateId}/`,
+      data
+    );
   }
 
   /** Delete notification template */
   deleteTemplate(templateId: string): Observable<void> {
-    return this.http.delete<void>(`${this.templatesUrl}/${templateId}/`);
+    return this.http.delete<void>(`${this.templatesUrl}${templateId}/`);
   }
 }
