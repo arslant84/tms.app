@@ -163,3 +163,38 @@ class TestNotificationConfigConsistencyAcrossApps:
             f"These entity types have no WorkflowStepNotificationConfig rows "
             f"at all, inconsistent with the others: {missing}"
         )
+
+    def test_every_active_step_has_all_seven_event_types_configured(self):
+        """Regression test for Fix 19: workflow_completed/workflow_cancelled/
+        reminder previously had zero configs for every app (not just a
+        travelrequest/combinedrequest gap) since nothing ever populated
+        them - only assignment/approval/rejection/delegation were covered.
+        Every active WorkflowStep should now have one config per event type."""
+        from workflows.models import WorkflowStep, WorkflowStepNotificationConfig
+
+        all_event_types = {
+            choice[0] for choice in WorkflowStepNotificationConfig.EVENT_TYPE_CHOICES
+        }
+        assert all_event_types == {
+            "assignment",
+            "approval",
+            "rejection",
+            "reminder",
+            "delegation",
+            "workflow_completed",
+            "workflow_cancelled",
+        }
+
+        for step in WorkflowStep.objects.filter(
+            workflow_template__is_active=True
+        ).select_related("workflow_template"):
+            configured = set(
+                WorkflowStepNotificationConfig.objects.filter(
+                    workflow_step=step
+                ).values_list("event_type", flat=True)
+            )
+            missing = all_event_types - configured
+            assert missing == set(), (
+                f"Step '{step.step_name}' on "
+                f"'{step.workflow_template.name}' is missing configs for: {missing}"
+            )

@@ -31,3 +31,6 @@ VENV_PATH=/path/to/tms-app/backend/venv
 # Monthly data retention cleanup (7-year default, or ApplicationSetting
 # 'data_retention_days') — 1st of the month, 04:00
 0 4 1 * * cd $REPO_PATH && $VENV_PATH/bin/python manage.py cleanup_expired_data >> logs/cron_cleanup_expired_data.log 2>&1
+
+# Hourly workflow step reminder notifications (due within 24h, one-shot) — top of every hour
+0 * * * * cd $REPO_PATH && $VENV_PATH/bin/python manage.py send_step_reminders >> logs/cron_send_step_reminders.log 2>&1

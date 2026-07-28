@@ -6,10 +6,13 @@ backend/scripts/crontab.example previously required an operator to
 manually copy its contents into `crontab -e` on every new deployment; if
 that step was skipped, disable_inactive_accounts (90-day inactivity) and
 cleanup_expired_data (7-year retention) - both tied to compliance controls
-- would silently never run. This command writes the same three jobs
-directly into the current user's crontab via python-crontab, tagged with a
-comment so re-running it updates the existing entries instead of
-duplicating them.
+- would silently never run. This command writes the same jobs directly
+into the current user's crontab via python-crontab, tagged with a comment
+so re-running it updates the existing entries instead of duplicating them.
+
+Also installs send_step_reminders (hourly) - the periodic check that fires
+the workflow 'reminder' notification event type, which previously existed
+in the schema and admin UI but had no scheduled trigger anywhere.
 
 Run once per deployment (or after moving/re-deploying the repo):
 
@@ -40,6 +43,12 @@ JOBS = [
         "0 4 1 * *",
         "cleanup_expired_data",
         "cron_cleanup_expired_data.log",
+    ),
+    (
+        "send_step_reminders",
+        "0 * * * *",
+        "send_step_reminders",
+        "cron_send_step_reminders.log",
     ),
 ]
 
