@@ -6,11 +6,11 @@ import {
   WorkflowStepNotificationConfig,
   Role,
   NotificationTemplate,
-  WorkflowUser
+  WorkflowUser,
 } from '../models/workflow.models';
 
 export interface NotificationConfigOptions {
-  trigger_events: Array<{ value: string; display: string }>;
+  event_types: Array<{ value: string; display: string }>;
   recipient_types: Array<{ value: string; display: string }>;
   priorities: Array<{ value: string; display: string }>;
   roles: Role[];
@@ -31,7 +31,7 @@ export interface NotificationConfigListResponse {
  */
 @Injectable({ providedIn: 'root' })
 export class NotificationConfigService {
-  private baseUrl = `${environment.apiUrl}/workflows/notification-configs`;
+  private baseUrl = `${environment.apiUrl}/workflows/notification-configs/`;
 
   constructor(private http: HttpClient) {}
 
@@ -41,7 +41,7 @@ export class NotificationConfigService {
    */
   getConfigs(params?: {
     workflow_step?: string;
-    trigger_event?: string;
+    event_type?: string;
     entity_type?: string;
     is_active?: boolean;
   }): Observable<NotificationConfigListResponse> {
@@ -61,7 +61,7 @@ export class NotificationConfigService {
    * @param id Configuration ID
    */
   getConfig(id: string): Observable<WorkflowStepNotificationConfig> {
-    return this.http.get<WorkflowStepNotificationConfig>(`${this.baseUrl}/${id}/`);
+    return this.http.get<WorkflowStepNotificationConfig>(`${this.baseUrl}${id}/`);
   }
 
   /**
@@ -69,7 +69,7 @@ export class NotificationConfigService {
    * @param stepId Workflow step ID
    */
   getConfigsByStep(stepId: string): Observable<WorkflowStepNotificationConfig[]> {
-    return this.http.get<WorkflowStepNotificationConfig[]>(`${this.baseUrl}/by_step/${stepId}/`);
+    return this.http.get<WorkflowStepNotificationConfig[]>(`${this.baseUrl}by_step/${stepId}/`);
   }
 
   /**
@@ -77,7 +77,7 @@ export class NotificationConfigService {
    * @param config Notification configuration data
    */
   createConfig(config: WorkflowStepNotificationConfig): Observable<WorkflowStepNotificationConfig> {
-    return this.http.post<WorkflowStepNotificationConfig>(this.baseUrl + '/', config);
+    return this.http.post<WorkflowStepNotificationConfig>(this.baseUrl, config);
   }
 
   /**
@@ -85,8 +85,11 @@ export class NotificationConfigService {
    * @param id Configuration ID
    * @param config Updated configuration data
    */
-  updateConfig(id: string, config: Partial<WorkflowStepNotificationConfig>): Observable<WorkflowStepNotificationConfig> {
-    return this.http.put<WorkflowStepNotificationConfig>(`${this.baseUrl}/${id}/`, config);
+  updateConfig(
+    id: string,
+    config: Partial<WorkflowStepNotificationConfig>
+  ): Observable<WorkflowStepNotificationConfig> {
+    return this.http.put<WorkflowStepNotificationConfig>(`${this.baseUrl}${id}/`, config);
   }
 
   /**
@@ -94,8 +97,11 @@ export class NotificationConfigService {
    * @param id Configuration ID
    * @param config Partial configuration data
    */
-  patchConfig(id: string, config: Partial<WorkflowStepNotificationConfig>): Observable<WorkflowStepNotificationConfig> {
-    return this.http.patch<WorkflowStepNotificationConfig>(`${this.baseUrl}/${id}/`, config);
+  patchConfig(
+    id: string,
+    config: Partial<WorkflowStepNotificationConfig>
+  ): Observable<WorkflowStepNotificationConfig> {
+    return this.http.patch<WorkflowStepNotificationConfig>(`${this.baseUrl}${id}/`, config);
   }
 
   /**
@@ -103,15 +109,15 @@ export class NotificationConfigService {
    * @param id Configuration ID
    */
   deleteConfig(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}/`);
+    return this.http.delete<void>(`${this.baseUrl}${id}/`);
   }
 
   /**
    * Get dropdown options for notification configuration form
-   * Returns trigger events, recipient types, priorities, roles, users, and templates
+   * Returns event types, recipient types, priorities, roles, users, and templates
    */
   getOptions(): Observable<NotificationConfigOptions> {
-    return this.http.get<NotificationConfigOptions>(`${this.baseUrl}/options/`);
+    return this.http.get<NotificationConfigOptions>(`${this.baseUrl}options/`);
   }
 
   /**
@@ -127,6 +133,6 @@ export class NotificationConfigService {
       to: WorkflowUser[];
       cc: WorkflowUser[];
       bcc: WorkflowUser[];
-    }>(`${this.baseUrl}/preview/`, config);
+    }>(`${this.baseUrl}preview/`, config);
   }
 }

@@ -11,14 +11,7 @@ from .views import (
     WorkflowTemplateViewSet,
     get_eligible_approvers,
 )
-
-# NOTE: WorkflowStepNotificationConfigViewSet (views_notification_config.py) is
-# NOT registered here - it has 4 missing serializer imports
-# (WorkflowStepNotificationConfigListSerializer, RoleSimpleSerializer,
-# UserSimpleSerializer, NotificationTemplateSimpleSerializer don't exist in
-# serializers.py) and would crash the app at import time if wired in as-is.
-# See docs/APP_WIDE_GAPS_FIX_ROADMAP.md for the finding - needs a real
-# implementation decision before registering, not a mechanical fix.
+from .views_notification_config import WorkflowStepNotificationConfigViewSet
 
 router = DefaultRouter()
 router.register(r"templates", WorkflowTemplateViewSet, basename="workflow-template")
@@ -32,6 +25,11 @@ router.register(
     r"delegations", WorkflowDelegationViewSet, basename="workflow-delegation"
 )
 router.register(r"audit-logs", WorkflowAuditLogViewSet, basename="workflow-audit-log")
+router.register(
+    r"notification-configs",
+    WorkflowStepNotificationConfigViewSet,
+    basename="workflow-step-notification-config",
+)
 
 urlpatterns = [
     path("", include(router.urls)),
