@@ -304,6 +304,24 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
             "recipient_types": ["current_approver"],
             "priority": "high",
         },
+        {
+            "event_type": "workflow_completed",
+            "template_name": "workflow_completed",
+            "recipient_types": ["requester"],
+            "priority": "high",
+        },
+        {
+            "event_type": "workflow_cancelled",
+            "template_name": "workflow_cancelled",
+            "recipient_types": ["requester"],
+            "priority": "normal",
+        },
+        {
+            "event_type": "reminder",
+            "template_name": "approval_reminder",
+            "recipient_types": ["current_approver"],
+            "priority": "high",
+        },
     ]
 
     def _create_default_notification_configs(self, step):
@@ -484,6 +502,7 @@ class WorkflowStepExecutionSerializer(serializers.ModelSerializer):
             "action_date",
             "sla_due_date",
             "is_overdue",
+            "reminder_sent_at",
             "created_at",
             "updated_at",
         ]
@@ -492,6 +511,7 @@ class WorkflowStepExecutionSerializer(serializers.ModelSerializer):
             "actioned_by",
             "action_date",
             "is_overdue",
+            "reminder_sent_at",
             "created_at",
             "updated_at",
         ]

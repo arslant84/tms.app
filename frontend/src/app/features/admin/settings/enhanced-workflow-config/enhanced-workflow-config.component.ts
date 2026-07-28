@@ -304,6 +304,16 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
             can_skip: step.can_skip,
             requires_comments: step.requires_comments,
             sla_hours: step.sla_hours,
+            notification_configs: (step.notification_configs || []).map((config: any) => ({
+              event_type: config.event_type,
+              notification_template: config.notification_template,
+              recipient_types: config.recipient_types,
+              custom_recipients: config.custom_recipients,
+              is_active: config.is_active,
+              send_email: config.send_email,
+              send_system_notification: config.send_system_notification,
+              priority: config.priority,
+            })),
           })),
         };
 

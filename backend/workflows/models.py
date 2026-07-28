@@ -382,6 +382,13 @@ class WorkflowStepExecution(models.Model):
     # SLA tracking
     sla_due_date = models.DateTimeField(null=True, blank=True)
     is_overdue = models.BooleanField(default=False)
+    reminder_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the one-shot 'reminder' notification was sent for this step "
+        "execution's SLA window (send_step_reminders management command). Null if "
+        "not yet sent.",
+    )
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

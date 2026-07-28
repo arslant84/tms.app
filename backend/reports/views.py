@@ -989,29 +989,12 @@ class FinancialSummaryReportsView(APIView):
         visa_count = visa_query.count()
         estimated_visa_cost = visa_count * 200  # $200 per visa estimate
 
-        # Accommodation requests (estimated costs)
-        accommodation_query = AccommodationRequest.objects.filter(
-            created_at__gte=start_date
-        )
-        if dept_users:
-            accommodation_query = accommodation_query.filter(
-                trf__created_by__in=dept_users
-            )
-
-        # Calculate nights and cost
-        accommodation_cost = 0
-        for acc in accommodation_query:
-            if acc.check_in_date and acc.check_out_date:
-                nights = (acc.check_out_date - acc.check_in_date).days
-                accommodation_cost += nights * 100  # $100 per night estimate
+        # Accommodation has no cost estimate: all accommodation is company-provided
+        # (staff houses/rooms managed directly, not billed per booking), unlike
+        # flights/transport/visa which are real or estimated third-party spend.
 
         # Total costs
-        total_cost = (
-            flight_cost
-            + estimated_transport_cost
-            + estimated_visa_cost
-            + accommodation_cost
-        )
+        total_cost = flight_cost + estimated_transport_cost + estimated_visa_cost
 
         # Get breakdown by department
         from accounts.models import Department
@@ -1109,7 +1092,6 @@ class FinancialSummaryReportsView(APIView):
                         "flights": round(flight_cost, 2),
                         "transport": round(estimated_transport_cost, 2),
                         "visa": round(estimated_visa_cost, 2),
-                        "accommodation": round(accommodation_cost, 2),
                     },
                     "currency": "USD",  # Placeholder
                 },

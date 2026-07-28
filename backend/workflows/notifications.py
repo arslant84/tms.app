@@ -666,6 +666,33 @@ class WorkflowNotifications:
                         send_email=True,
                     )
 
+            elif event_type == "reminder":
+                # Notify the assigned approver their pending step is due soon
+                if step_execution.assigned_to:
+                    NotificationService.create_notification(
+                        user=step_execution.assigned_to,
+                        title=f"Reminder: Approval Due Soon - {step_execution.workflow_step.step_name}",
+                        message=f"{step_execution.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request from {workflow_instance.initiated_by.get_full_name()} is due soon. Please review and take action.",
+                        event_type=_get_event_type("APPROVAL_REMINDER"),
+                        priority="high",
+                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        additional_data={
+                            "approverName": step_execution.assigned_to.get_full_name(),
+                            "requestType": workflow_instance.workflow_template.entity_type.title(),
+                            "entityId": entity_id,
+                            "requestorName": workflow_instance.initiated_by.get_full_name(),
+                            "dueDate": (
+                                step_execution.sla_due_date.strftime(
+                                    "%B %d, %Y at %I:%M %p"
+                                )
+                                if step_execution.sla_due_date
+                                else "Not specified"
+                            ),
+                            "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        },
+                        send_email=True,
+                    )
+
             logger.info(
                 f" Sent default notification for event '{event_type}' on step '{step_execution.workflow_step.step_name}'"
             )
