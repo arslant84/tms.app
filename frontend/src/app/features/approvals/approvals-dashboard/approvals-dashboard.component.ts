@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing loose typing against raw API responses, unrelated to this change */
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -32,7 +33,6 @@ interface PendingApproval {
   assignedTo: any;
   createdAt: string;
   slaDueDate: string | null;
-  escalationDate: string | null;
   isOverdue: boolean;
 }
 
@@ -41,7 +41,7 @@ interface PendingApproval {
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './approvals-dashboard.component.html',
-  styleUrls: ['./approvals-dashboard.component.scss']
+  styleUrls: ['./approvals-dashboard.component.scss'],
 })
 export class ApprovalsDashboardComponent implements OnInit {
   pendingApprovals: PendingApproval[] = [];
@@ -55,7 +55,7 @@ export class ApprovalsDashboardComponent implements OnInit {
     { value: 'travelrequest', label: 'Travel Service Request' },
     { value: 'transportrequest', label: 'Transport Request' },
     { value: 'visaapplication', label: 'Visa Application' },
-    { value: 'accommodation', label: 'Accommodation' }
+    { value: 'accommodation', label: 'Accommodation' },
   ];
 
   selectedApproval: PendingApproval | null = null;
@@ -74,17 +74,19 @@ export class ApprovalsDashboardComponent implements OnInit {
 
   loadPendingApprovals(): void {
     this.isLoading = true;
-    this.http.get<PendingApproval[]>(`${environment.apiUrl}/workflows/executions/my-pending/`).subscribe({
-      next: (approvals) => {
-        this.pendingApprovals = approvals;
-        this.applyFilters();
-        this.isLoading = false;
-      },
-      error: () => {
-        this.toast.error('Failed to load pending approvals');
-        this.isLoading = false;
-      }
-    });
+    this.http
+      .get<PendingApproval[]>(`${environment.apiUrl}/workflows/executions/my-pending/`)
+      .subscribe({
+        next: approvals => {
+          this.pendingApprovals = approvals;
+          this.applyFilters();
+          this.isLoading = false;
+        },
+        error: () => {
+          this.toast.error('Failed to load pending approvals');
+          this.isLoading = false;
+        },
+      });
   }
 
   applyFilters(): void {
@@ -96,11 +98,12 @@ export class ApprovalsDashboardComponent implements OnInit {
 
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase();
-      filtered = filtered.filter(a =>
-        a.workflowStep.stepName.toLowerCase().includes(query) ||
-        a.workflowInstance.initiatedBy.email.toLowerCase().includes(query) ||
-        a.workflowInstance.initiatedBy.first_name.toLowerCase().includes(query) ||
-        a.workflowInstance.initiatedBy.last_name.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        a =>
+          a.workflowStep.stepName.toLowerCase().includes(query) ||
+          a.workflowInstance.initiatedBy.email.toLowerCase().includes(query) ||
+          a.workflowInstance.initiatedBy.first_name.toLowerCase().includes(query) ||
+          a.workflowInstance.initiatedBy.last_name.toLowerCase().includes(query)
       );
     }
 
@@ -114,11 +117,11 @@ export class ApprovalsDashboardComponent implements OnInit {
 
   getModuleColor(entityType: string): string {
     const colors: any = {
-      'travelrequest': 'primary',
-      'transportrequest': 'success',
-      'visaapplication': 'warning',
-      'accommodation': 'info',
-      'expenseclaim': 'danger'
+      travelrequest: 'primary',
+      transportrequest: 'success',
+      visaapplication: 'warning',
+      accommodation: 'info',
+      expenseclaim: 'danger',
     };
     return colors[entityType] || 'secondary';
   }
@@ -147,22 +150,29 @@ export class ApprovalsDashboardComponent implements OnInit {
 
     const payload = {
       action,
-      comments: this.actionComments.trim()
+      comments: this.actionComments.trim(),
     };
 
-    this.http.post(`${environment.apiUrl}/workflows/executions/${this.selectedApproval.id}/take-action/`, payload).subscribe({
-      next: () => {
-        this.toast.success(`Request ${action === 'approve' ? 'approved' : 'rejected'} successfully`);
-        this.closeModal();
-        this.loadPendingApprovals();
-      },
-      error: (error) => {
-        console.error('Error taking action:', error);
-        this.toast.error(error.error?.error || 'Failed to process action');
-        this.isProcessing = false;
-      },
-      complete: () => this.isProcessing = false
-    });
+    this.http
+      .post(
+        `${environment.apiUrl}/workflows/executions/${this.selectedApproval.id}/take-action/`,
+        payload
+      )
+      .subscribe({
+        next: () => {
+          this.toast.success(
+            `Request ${action === 'approve' ? 'approved' : 'rejected'} successfully`
+          );
+          this.closeModal();
+          this.loadPendingApprovals();
+        },
+        error: error => {
+          console.error('Error taking action:', error);
+          this.toast.error(error.error?.error || 'Failed to process action');
+          this.isProcessing = false;
+        },
+        complete: () => (this.isProcessing = false),
+      });
   }
 
   viewRequestDetails(approval: PendingApproval): void {
@@ -170,11 +180,11 @@ export class ApprovalsDashboardComponent implements OnInit {
     const entityId = approval.workflowInstance.entityId;
 
     const routes: any = {
-      'travelrequest': `/trf/details/${entityId}`,
-      'transportrequest': `/transport/details/${entityId}`,
-      'visaapplication': `/visa/${entityId}`,
-      'accommodation': `/accommodation/${entityId}`,
-      'expenseclaim': `/expense-claims/${entityId}`
+      travelrequest: `/trf/details/${entityId}`,
+      transportrequest: `/transport/details/${entityId}`,
+      visaapplication: `/visa/${entityId}`,
+      accommodation: `/accommodation/${entityId}`,
+      expenseclaim: `/expense-claims/${entityId}`,
     };
 
     const route = routes[entityType];

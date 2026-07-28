@@ -1,6 +1,6 @@
 """
 Workflow Engine - Core business logic for workflow execution
-Handles workflow lifecycle: start, process actions, escalate, complete
+Handles workflow lifecycle: start, process actions, complete
 """
 
 import logging
@@ -552,15 +552,11 @@ class WorkflowEngine:
                 ),
             )
 
-        # Calculate SLA and escalation dates
+        # Calculate SLA due date
         sla_due_date = None
-        escalation_date = None
 
         if step.sla_hours:
             sla_due_date = timezone.now() + timedelta(hours=step.sla_hours)
-
-        if step.escalation_hours:
-            escalation_date = timezone.now() + timedelta(hours=step.escalation_hours)
 
         if existing_execution:
             # If step already exists and is pending, it's a race condition - skip
@@ -578,7 +574,6 @@ class WorkflowEngine:
                 existing_execution.status = "pending"
                 existing_execution.assigned_to = assigned_user
                 existing_execution.sla_due_date = sla_due_date
-                existing_execution.escalation_date = escalation_date
                 existing_execution.save()
                 step_execution = existing_execution
                 created = True  # Treat as newly created for logging/notifications
@@ -597,7 +592,6 @@ class WorkflowEngine:
                     "assigned_to": assigned_user,
                     "status": "pending",
                     "sla_due_date": sla_due_date,
-                    "escalation_date": escalation_date,
                 },
             )
 
@@ -945,38 +939,3 @@ class WorkflowEngine:
             logger.warning(
                 f"Could not update entity status - entity: {entity}, has_status: {hasattr(entity, 'status') if entity else 'N/A'}"
             )
-
-    @staticmethod
-    def check_and_escalate_overdue_steps():
-        """
-        Background task to check for overdue steps and escalate them.
-        Should be run periodically (e.g., hourly via Celery)
-        """
-        now = timezone.now()
-
-        # Find overdue steps
-        overdue_steps = WorkflowStepExecution.objects.filter(
-            status="pending",
-            escalation_date__isnull=False,
-            escalation_date__lte=now,
-            is_escalated=False,
-        ).select_related("workflow_instance", "workflow_step")
-
-        for step_execution in overdue_steps:
-            # Mark as escalated
-            step_execution.is_escalated = True
-            step_execution.is_overdue = True
-            step_execution.save()
-
-            # Log escalation
-            WorkflowAuditLog.objects.create(
-                workflow_instance=step_execution.workflow_instance,
-                action_type="escalated",
-                action_description=f"Step '{step_execution.workflow_step.step_name}' escalated due to timeout",
-                performed_by=None,
-            )
-
-            # TODO: Send escalation notification
-            # NotificationService.send_escalation_notification(step_execution)
-
-        return len(overdue_steps)

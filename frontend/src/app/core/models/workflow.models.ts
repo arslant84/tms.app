@@ -41,7 +41,7 @@ export interface WorkflowCondition {
 export interface WorkflowStepNotificationConfig {
   id?: string;
   workflow_step?: string;
-  event_type: 'assignment' | 'approval' | 'rejection' | 'escalation' | 'reminder' | 'delegation';
+  event_type: 'assignment' | 'approval' | 'rejection' | 'reminder' | 'delegation';
   event_type_display?: string;
   notification_template: string;
   notification_template_name?: string;
@@ -71,7 +71,6 @@ export const EVENT_TYPE_OPTIONS = [
   { value: 'assignment', label: 'On Step Assignment' },
   { value: 'approval', label: 'On Step Approval' },
   { value: 'rejection', label: 'On Step Rejection' },
-  { value: 'escalation', label: 'On Step Escalation' },
   { value: 'reminder', label: 'Reminder Notification' },
   { value: 'delegation', label: 'On Step Delegation' },
 
@@ -93,7 +92,6 @@ export interface WorkflowStep {
   can_skip: boolean;
   requires_comments: boolean;
   sla_hours?: number;
-  escalation_hours?: number;
   conditions?: WorkflowCondition[];
   notification_configs?: WorkflowStepNotificationConfig[];
   created_at: string;
@@ -142,9 +140,7 @@ export interface WorkflowStepExecution {
   comments?: string;
   action_date?: string;
   sla_due_date?: string;
-  escalation_date?: string;
   is_overdue: boolean;
-  is_escalated: boolean;
   delegations?: WorkflowDelegation[];
   can_action?: boolean;
   created_at: string;
@@ -163,8 +159,7 @@ export interface WorkflowAuditLog {
     | 'delegated'
     | 'cancelled'
     | 'on_hold'
-    | 'resumed'
-    | 'escalated';
+    | 'resumed';
   action_description: string;
   performed_by?: string;
   performed_by_user?: WorkflowUser;
@@ -228,7 +223,6 @@ export interface PendingApproval {
   assigned_to: string;
   sla_due_date?: string;
   is_overdue: boolean;
-  is_escalated: boolean;
   initiated_by: string;
   initiated_at: string;
 }

@@ -1,7 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing loose typing against raw API responses, unrelated to this change */
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TmsApp_Core_Services_RolesService, TmsApp_Roles_RoleWithPermissions } from '../../../../core/services/roles.service';
+import {
+  TmsApp_Core_Services_RolesService,
+  TmsApp_Roles_RoleWithPermissions,
+} from '../../../../core/services/roles.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
@@ -13,15 +17,8 @@ interface WorkflowStepConfig {
   order: number;
   roleId: string;
   roleName?: string;
-  escalationHours: number;
   slaHours: number;
   notification_configs?: WorkflowStepNotificationConfig[];
-}
-
-interface ModuleWorkflowConfig {
-  module: string;
-  moduleName: string;
-  steps: WorkflowStepConfig[];
 }
 
 @Component({
@@ -29,7 +26,7 @@ interface ModuleWorkflowConfig {
   standalone: true,
   imports: [CommonModule, FormsModule, StepNotificationConfigComponent, LoadingSpinnerComponent],
   templateUrl: './enhanced-workflow-config.component.html',
-  styleUrls: ['./enhanced-workflow-config.component.scss']
+  styleUrls: ['./enhanced-workflow-config.component.scss'],
 })
 export class EnhancedWorkflowConfigComponent implements OnInit {
   // Available modules
@@ -38,7 +35,10 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
     { value: 'transportrequest', label: 'Transport Request' },
     { value: 'visaapplication', label: 'Visa Application' },
     { value: 'accommodation', label: 'Accommodation Request' },
-    { value: 'combinedrequest', label: 'Combined Request (TSR + Transport + Accommodation + Visa)' }
+    {
+      value: 'combinedrequest',
+      label: 'Combined Request (TSR + Transport + Accommodation + Visa)',
+    },
   ];
 
   // Available roles
@@ -85,17 +85,17 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
 
   loadRoles(): void {
     this.rolesService.getRoles().subscribe({
-      next: (roles) => {
+      next: roles => {
         this.availableRoles = roles;
       },
-      error: () => this.toast.error('Failed to load roles')
+      error: () => this.toast.error('Failed to load roles'),
     });
   }
 
   loadExistingWorkflows(): void {
     this.isLoading = true;
     this.http.get<any>(`${environment.apiUrl}/workflows/templates/`).subscribe({
-      next: (response) => {
+      next: response => {
         // Handle paginated response
         this.existingWorkflows = response.results || response;
         this.isLoading = false;
@@ -103,7 +103,7 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
       error: () => {
         this.toast.error('Failed to load existing workflows');
         this.isLoading = false;
-      }
+      },
     });
   }
 
@@ -137,8 +137,7 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
       this.steps.push({
         order: i,
         roleId: '',
-        escalationHours: 48,
-        slaHours: 72
+        slaHours: 72,
       });
     }
   }
@@ -198,34 +197,38 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
         can_skip: false,
         requires_comments: false,
         sla_hours: step.slaHours,
-        escalation_hours: step.escalationHours,
-        notification_configs: step.notification_configs || []
-      }))
+        notification_configs: step.notification_configs || [],
+      })),
     };
 
     const request = this.editingWorkflowId
-      ? this.http.put(`${environment.apiUrl}/workflows/templates/${this.editingWorkflowId}/`, workflowData)
+      ? this.http.put(
+          `${environment.apiUrl}/workflows/templates/${this.editingWorkflowId}/`,
+          workflowData
+        )
       : this.http.post(`${environment.apiUrl}/workflows/templates/`, workflowData);
 
     request.subscribe({
       next: () => {
-        this.toast.success(this.editingWorkflowId ? 'Workflow updated successfully' : 'Workflow created successfully');
+        this.toast.success(
+          this.editingWorkflowId ? 'Workflow updated successfully' : 'Workflow created successfully'
+        );
         this.resetForm();
         this.loadExistingWorkflows();
       },
-      error: (error) => {
+      error: error => {
         console.error('Error saving workflow:', error);
         this.toast.error('Failed to save workflow');
         this.isSaving = false;
       },
-      complete: () => this.isSaving = false
+      complete: () => (this.isSaving = false),
     });
   }
 
   editWorkflow(workflow: any): void {
     // Fetch full workflow details with steps
     this.http.get<any>(`${environment.apiUrl}/workflows/templates/${workflow.id}/`).subscribe({
-      next: (fullWorkflow) => {
+      next: fullWorkflow => {
         this.editingWorkflowId = fullWorkflow.id;
         this.selectedModule = fullWorkflow.entity_type;
         this.workflowName = fullWorkflow.name;
@@ -235,9 +238,8 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
         this.steps = (fullWorkflow.steps || []).map((step: any) => ({
           order: step.step_order,
           roleId: step.approver_role || '',
-          escalationHours: step.escalation_hours || 48,
           slaHours: step.sla_hours || 72,
-          notification_configs: step.notification_configs || []
+          notification_configs: step.notification_configs || [],
         }));
 
         // Show steps configuration when editing
@@ -248,7 +250,7 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
       },
       error: () => {
         this.toast.error('Failed to load workflow details');
-      }
+      },
     });
   }
 
@@ -256,24 +258,26 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
     // Show confirmation by setting the workflow to delete
     this.workflowToDelete = {
       id: workflow.id,
-      name: workflow.name
+      name: workflow.name,
     };
   }
 
   confirmDelete(): void {
     if (!this.workflowToDelete) return;
 
-    this.http.delete(`${environment.apiUrl}/workflows/templates/${this.workflowToDelete.id}/`).subscribe({
-      next: () => {
-        this.toast.success('Workflow deleted successfully');
-        this.workflowToDelete = null;
-        this.loadExistingWorkflows();
-      },
-      error: () => {
-        this.toast.error('Failed to delete workflow');
-        this.workflowToDelete = null;
-      }
-    });
+    this.http
+      .delete(`${environment.apiUrl}/workflows/templates/${this.workflowToDelete.id}/`)
+      .subscribe({
+        next: () => {
+          this.toast.success('Workflow deleted successfully');
+          this.workflowToDelete = null;
+          this.loadExistingWorkflows();
+        },
+        error: () => {
+          this.toast.error('Failed to delete workflow');
+          this.workflowToDelete = null;
+        },
+      });
   }
 
   cancelDelete(): void {
@@ -283,7 +287,7 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
   toggleWorkflowStatus(workflow: any): void {
     // First fetch the full workflow details
     this.http.get<any>(`${environment.apiUrl}/workflows/templates/${workflow.id}/`).subscribe({
-      next: (fullWorkflow) => {
+      next: fullWorkflow => {
         const updatedData = {
           name: fullWorkflow.name,
           description: fullWorkflow.description,
@@ -300,19 +304,22 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
             can_skip: step.can_skip,
             requires_comments: step.requires_comments,
             sla_hours: step.sla_hours,
-            escalation_hours: step.escalation_hours
-          }))
+          })),
         };
 
-        this.http.put(`${environment.apiUrl}/workflows/templates/${workflow.id}/`, updatedData).subscribe({
-          next: () => {
-            this.toast.success(`Workflow ${workflow.is_active ? 'deactivated' : 'activated'} successfully`);
-            this.loadExistingWorkflows();
-          },
-          error: () => this.toast.error('Failed to update workflow status')
-        });
+        this.http
+          .put(`${environment.apiUrl}/workflows/templates/${workflow.id}/`, updatedData)
+          .subscribe({
+            next: () => {
+              this.toast.success(
+                `Workflow ${workflow.is_active ? 'deactivated' : 'activated'} successfully`
+              );
+              this.loadExistingWorkflows();
+            },
+            error: () => this.toast.error('Failed to update workflow status'),
+          });
       },
-      error: () => this.toast.error('Failed to load workflow details')
+      error: () => this.toast.error('Failed to load workflow details'),
     });
   }
 

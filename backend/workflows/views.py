@@ -97,7 +97,6 @@ class WorkflowTemplateViewSet(viewsets.ModelViewSet):
                 can_skip=step.can_skip,
                 requires_comments=step.requires_comments,
                 sla_hours=step.sla_hours,
-                escalation_hours=step.escalation_hours,
             )
 
             # Duplicate conditions

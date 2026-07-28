@@ -122,7 +122,6 @@ class WorkflowAction:
     REJECT = "reject"
     DELEGATE = "delegate"
     REQUEST_INFO = "request_info"
-    ESCALATE = "escalate"
 
 
 class WorkflowStatus:

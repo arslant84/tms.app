@@ -9,9 +9,6 @@ export interface TmsApp_Workflows_WorkflowStep {
   order: number;
   approverRoleId?: string;
   approverRole?: string;
-  escalationRoleId?: string | null;
-  escalationRole?: string | null;
-  escalationHours?: number | null;
   moduleId: string;
 }
 
@@ -27,8 +24,6 @@ export interface TmsApp_Workflows_WorkflowModuleWithSteps {
 export interface TmsApp_Workflows_WorkflowStepFormValues {
   name: string;
   approverRoleId: string;
-  escalationRoleId?: string | null;
-  escalationHours?: number | null;
   order?: number | null;
 }
 
