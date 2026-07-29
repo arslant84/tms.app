@@ -38,19 +38,12 @@ from .models import (
     CombinedRequest,
     CombinedRequestApprovalStep,
     CombinedRequestDocument,
-    CombinedRequestItinerary,
-    CombinedRequestPassport,
-    CombinedRequestTransportSegment,
 )
 from .serializers import (
     CombinedRequestApprovalStepSerializer,
     CombinedRequestCreateSerializer,
     CombinedRequestDetailSerializer,
-    CombinedRequestDocumentSerializer,
-    CombinedRequestItinerarySerializer,
     CombinedRequestListSerializer,
-    CombinedRequestPassportSerializer,
-    CombinedRequestTransportSegmentSerializer,
     CombinedRequestUpdateSerializer,
 )
 
@@ -979,70 +972,3 @@ class CombinedRequestViewSet(viewsets.ModelViewSet):
             message=f"Retrieved {queryset.count()} pending approval(s)",
             status_code=status.HTTP_200_OK,
         )
-
-
-# Nested ViewSets for related resources
-
-
-class CombinedRequestPassportViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing passport details"""
-
-    serializer_class = CombinedRequestPassportSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        combined_request_id = self.request.query_params.get("combined_request", None)
-        if combined_request_id:
-            return CombinedRequestPassport.objects.filter(
-                combined_request_id=combined_request_id
-            )
-        return CombinedRequestPassport.objects.all()
-
-
-class CombinedRequestItineraryViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing itinerary segments"""
-
-    serializer_class = CombinedRequestItinerarySerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        combined_request_id = self.request.query_params.get("combined_request", None)
-        if combined_request_id:
-            return CombinedRequestItinerary.objects.filter(
-                combined_request_id=combined_request_id
-            )
-        return CombinedRequestItinerary.objects.all().order_by("segment_order")
-
-
-class CombinedRequestTransportSegmentViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing transport segments"""
-
-    serializer_class = CombinedRequestTransportSegmentSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        combined_request_id = self.request.query_params.get("combined_request", None)
-        if combined_request_id:
-            return CombinedRequestTransportSegment.objects.filter(
-                combined_request_id=combined_request_id
-            )
-        return CombinedRequestTransportSegment.objects.all().order_by("segment_order")
-
-
-class CombinedRequestDocumentViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing documents"""
-
-    serializer_class = CombinedRequestDocumentSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        combined_request_id = self.request.query_params.get("combined_request", None)
-        if combined_request_id:
-            return CombinedRequestDocument.objects.filter(
-                combined_request_id=combined_request_id
-            )
-        return CombinedRequestDocument.objects.all()
-
-    def perform_create(self, serializer):
-        """Set uploaded_by on document creation"""
-        serializer.save(uploaded_by=self.request.user)

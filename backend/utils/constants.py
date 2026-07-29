@@ -144,14 +144,6 @@ class ApprovalStepStatus:
     SKIPPED = "Skipped"
 
 
-# Legacy approval progression mapping (for fallback when workflow not configured)
-LEGACY_STATUS_PROGRESSION = {
-    "Department Focal": "Pending HOD",
-    "HOD": "Pending Travel Desk",
-    "Travel Desk": "Pending Finance",
-    "Finance": "Approved",
-}
-
 # Shortcut lists for common checks
 PENDING_STATUSES = RequestStatus.pending_statuses()
 DRAFT_STATUSES = RequestStatus.draft_statuses()

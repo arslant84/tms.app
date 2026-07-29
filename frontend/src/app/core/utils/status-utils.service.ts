@@ -4,10 +4,9 @@ import { Injectable } from '@angular/core';
  * Shared utility service for status badge styling
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class StatusUtilsService {
-
   /**
    * Get the unified badge class for a given status. This is the single
    * source of truth for status -> color across the whole app (TRF,
@@ -18,64 +17,65 @@ export class StatusUtilsService {
    * @param status The status string to get badge class for
    * @returns Unified badge class name (see styles.scss "Unified Badge Styles")
    */
+  // Ordered list of (badge class -> matching keywords). Order matters:
+  // the first category with a matching keyword wins, mirroring the
+  // original if-chain's precedence (success > danger > info > warning > secondary).
+  private static readonly STATUS_BADGE_KEYWORDS: ReadonlyArray<{
+    badgeClass: string;
+    keywords: readonly string[];
+  }> = [
+    {
+      // Success states - the request/booking has reached a finalized, positive state
+      badgeClass: 'badge-success',
+      keywords: [
+        'approved',
+        'completed',
+        'processed',
+        'booked',
+        'active',
+        'confirmed',
+        'checked-out',
+        'assigned',
+      ],
+    },
+    {
+      // Danger/Error states - terminal negative outcome
+      badgeClass: 'badge-danger',
+      keywords: ['rejected', 'cancelled', 'canceled', 'failed', 'inactive', 'blocked', 'expired'],
+    },
+    {
+      // Info states - actively being worked on (distinct from "pending", which means waiting on someone else to act)
+      badgeClass: 'badge-info',
+      keywords: [
+        'processing',
+        'in progress',
+        'in_progress',
+        'checked-in',
+        'delegated',
+        'under review',
+      ],
+    },
+    {
+      // Warning states - awaiting action from an approver/admin
+      badgeClass: 'badge-warning',
+      keywords: ['pending', 'awaiting', 'submitted', 'on hold', 'on_hold'],
+    },
+    {
+      // Secondary states - not yet started / no action taken
+      badgeClass: 'badge-secondary',
+      keywords: ['draft', 'new', 'not started'],
+    },
+  ];
+
   getStatusBadgeClass(status: string | null | undefined): string {
     if (!status) return 'badge-secondary';
 
     const statusLower = status.toLowerCase();
+    const match = StatusUtilsService.STATUS_BADGE_KEYWORDS.find(({ keywords }) =>
+      keywords.some(keyword => statusLower.includes(keyword))
+    );
 
-    // Success states - the request/booking has reached a finalized,
-    // positive state
-    if (statusLower.includes('approved') ||
-        statusLower.includes('completed') ||
-        statusLower.includes('processed') ||
-        statusLower.includes('booked') ||
-        statusLower.includes('active') ||
-        statusLower.includes('confirmed') ||
-        statusLower.includes('checked-out') ||
-        statusLower.includes('assigned')) {
-      return 'badge-success';
-    }
-
-    // Danger/Error states - terminal negative outcome
-    if (statusLower.includes('rejected') ||
-        statusLower.includes('cancelled') ||
-        statusLower.includes('canceled') ||
-        statusLower.includes('failed') ||
-        statusLower.includes('inactive') ||
-        statusLower.includes('blocked') ||
-        statusLower.includes('expired')) {
-      return 'badge-danger';
-    }
-
-    // Info states - actively being worked on (distinct from "pending",
-    // which means waiting on someone else to act)
-    if (statusLower.includes('processing') ||
-        statusLower.includes('in progress') ||
-        statusLower.includes('in_progress') ||
-        statusLower.includes('checked-in') ||
-        statusLower.includes('delegated') ||
-        statusLower.includes('under review')) {
-      return 'badge-info';
-    }
-
-    // Warning states - awaiting action from an approver/admin
-    if (statusLower.includes('pending') ||
-        statusLower.includes('awaiting') ||
-        statusLower.includes('submitted') ||
-        statusLower.includes('on hold') ||
-        statusLower.includes('on_hold')) {
-      return 'badge-warning';
-    }
-
-    // Secondary states - not yet started / no action taken
-    if (statusLower.includes('draft') ||
-        statusLower.includes('new') ||
-        statusLower.includes('not started')) {
-      return 'badge-secondary';
-    }
-
-    // Default
-    return 'badge-secondary';
+    return match?.badgeClass || 'badge-secondary';
   }
 
   /**
@@ -102,24 +102,6 @@ export class StatusUtilsService {
     if (typeLower.includes('work')) return 'badge-success';
     if (typeLower.includes('student')) return 'badge-warning';
     if (typeLower.includes('diplomatic') || typeLower.includes('official')) return 'badge-danger';
-
-    return 'badge-secondary';
-  }
-
-  /**
-   * Get user role badge class
-   * @param role The user role
-   * @returns Bootstrap badge class name
-   */
-  getUserRoleBadgeClass(role: string | null | undefined): string {
-    if (!role) return 'badge-secondary';
-
-    const roleLower = role.toLowerCase();
-
-    if (roleLower.includes('admin') || roleLower.includes('administrator')) return 'badge-danger';
-    if (roleLower.includes('manager') || roleLower.includes('supervisor')) return 'badge-warning';
-    if (roleLower.includes('approver')) return 'badge-primary';
-    if (roleLower.includes('user') || roleLower.includes('employee')) return 'badge-info';
 
     return 'badge-secondary';
   }

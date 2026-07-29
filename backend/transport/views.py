@@ -1345,37 +1345,6 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         return response
 
 
-# Deprecated - TransportSegment model replaced with JSON field transport_details
-# class TransportSegmentViewSet(viewsets.ModelViewSet):
-#     """
-#     ViewSet for managing transport segments
-#     """
-#     queryset = TransportSegment.objects.all()
-#     serializer_class = TransportSegmentSerializer
-#     permission_classes = [IsAuthenticated]
-#
-#     def get_queryset(self):
-#         """Filter segments by transport request if specified"""
-#         queryset = super().get_queryset()
-#         transport_request_id = self.request.query_params.get('transport_request', None)
-#
-#         if transport_request_id:
-#             queryset = queryset.filter(transport_request_id=transport_request_id)
-#
-#         return queryset.select_related('transport_request', 'transport_request__requestor')
-#
-#     def perform_create(self, serializer):
-#         """Validate transport request is in Draft status"""
-#         transport_request = serializer.validated_data['transport_request']
-#
-#         if transport_request.status not in ['Draft', 'Rejected']:
-#             raise serializers.ValidationError(
-#                 f'Cannot add segments to transport request with status {transport_request.status}'
-#             )
-#
-#         serializer.save()
-
-
 class TransportApprovalStepViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Read-only ViewSet for transport approval steps

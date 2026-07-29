@@ -202,20 +202,6 @@
   padding: 0;
 }
 
-// Right Panel (if needed)
-.right-panel {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 350px;
-  height: 100%;
-  background-color: vars.$bg-primary;
-  box-shadow: vars.$shadow-lg;
-  z-index: vars.$z-modal;
-  overflow-y: auto;
-  transition: transform vars.$transition-base;
-}
-
 // Mobile Sidebar Overlay
 .sidebar-overlay {
   display: none;
