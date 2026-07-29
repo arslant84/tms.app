@@ -2,7 +2,7 @@
 @use '../../../../../styles/variables' as vars;
 
 .notification-config-section {
-  margin-top: 1rem;
+  margin-top: vars.$spacing-4;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-md;
   background: vars.$white;
@@ -11,7 +11,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: vars.$spacing-3 1rem;
+    padding: vars.$spacing-3 vars.$spacing-4;
     background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
     border-radius: vars.$radius-md vars.$radius-md 0 0;
     cursor: pointer;
@@ -153,10 +153,10 @@
       .config-actions {
         display: flex;
         gap: 0.375rem;
-        margin-left: 1rem;
+        margin-left: vars.$spacing-4;
 
         .btn {
-          padding: vars.$spacing-1 0.5rem;
+          padding: vars.$spacing-1 vars.$spacing-2;
         }
       }
     }
@@ -165,17 +165,17 @@
   // Empty State
   .empty-state {
     text-align: center;
-    padding: vars.$spacing-8 1rem;
+    padding: vars.$spacing-8 vars.$spacing-4;
     color: vars.$gray-500;
 
     i {
       font-size: 3rem;
       color: vars.$gray-300;
-      margin-bottom: 0.75rem;
+      margin-bottom: vars.$spacing-3;
     }
 
     p {
-      margin-bottom: 1rem;
+      margin-bottom: vars.$spacing-4;
       font-size: 0.9375rem;
     }
   }
@@ -188,11 +188,11 @@
     background: vars.$white;
 
     .form-title {
-      margin-bottom: 1rem;
+      margin-bottom: vars.$spacing-4;
       font-size: vars.$font-size-base;
       font-weight: vars.$font-weight-semibold;
       color: vars.$gray-800;
-      padding-bottom: 0.5rem;
+      padding-bottom: vars.$spacing-2;
       border-bottom: 2px solid vars.$gray-200;
     }
 
@@ -220,7 +220,7 @@
 
     .form-text {
       font-size: vars.$font-size-xs;
-      margin-top: 0.25rem;
+      margin-top: vars.$spacing-1;
     }
 
     // Recipient Checkboxes
@@ -231,7 +231,7 @@
       border-radius: vars.$radius-md;
 
       .recipient-category {
-        margin-bottom: 1rem;
+        margin-bottom: vars.$spacing-4;
 
         &:last-child {
           margin-bottom: 0;
@@ -243,7 +243,7 @@
           color: vars.$primary-color;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          margin-bottom: 0.5rem;
+          margin-bottom: vars.$spacing-2;
           padding-bottom: 0.375rem;
           border-bottom: 1px solid vars.$gray-200;
         }
@@ -314,8 +314,8 @@
       display: flex;
       justify-content: flex-end;
       gap: 0.5rem;
-      margin-top: 1.5rem;
-      padding-top: 1rem;
+      margin-top: vars.$spacing-6;
+      padding-top: vars.$spacing-4;
       border-top: 1px solid vars.$gray-200;
     }
   }
