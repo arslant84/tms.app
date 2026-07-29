@@ -5,41 +5,28 @@ import { User } from '../../../core/models/user.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { RbacService } from '../../../core/services/rbac.service';
 import { Permission } from '../../../core/models/permission.models';
-import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.scss'
+  styleUrl: './sidebar.component.scss',
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-  pendingApprovals: number = 0;
   currentUser: User | null = null;
   private userSubscription: Subscription | null = null;
-  private approvalsSubscription: Subscription | null = null;
-  private apiUrl = environment.apiUrl;
 
   constructor(
     private authService: AuthService,
-    private rbacService: RbacService,
-    private http: HttpClient
+    private rbacService: RbacService
   ) {}
 
   ngOnInit(): void {
     // Fetch the current user from the auth service (using Observable for reactive updates)
     this.userSubscription = this.authService.getCurrentUser$Obs().subscribe(user => {
       this.currentUser = user;
-      if (user) {
-
-        // Fetch pending approvals only if user has approval permissions
-        if (this.hasApprovalPermissions) {
-          this.fetchPendingApprovals();
-        }
-      }
     });
   }
 
@@ -48,25 +35,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
-    if (this.approvalsSubscription) {
-      this.approvalsSubscription.unsubscribe();
-    }
-  }
-
-  private fetchPendingApprovals(): void {
-    // Fetch the actual pending approvals count from the unified admin endpoint
-    // This matches the endpoint used by the pending approvals page
-    const url = `${this.apiUrl}/admin/approvals/?page=1&limit=100`;
-
-    this.approvalsSubscription = this.http.get<any>(url, { withCredentials: true }).subscribe({
-      next: (response) => {
-        this.pendingApprovals = response.meta?.pagination?.total_count || response.data?.length || 0;
-      },
-      error: (error) => {
-        console.error('Error fetching pending approvals count:', error);
-        this.pendingApprovals = 0;
-      }
-    });
   }
 
   // Check if user has approval permissions
@@ -78,10 +46,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   // Check if user has system administrator permissions (for User Management and System Settings)
   get hasAdminPermissions(): boolean {
     // Only system administrators and users with manage_users permission can access these features
-    return this.rbacService.hasAnyPermission([
-      Permission.SYSTEM_ADMIN,
-      Permission.MANAGE_USERS
-    ]);
+    return this.rbacService.hasAnyPermission([Permission.SYSTEM_ADMIN, Permission.MANAGE_USERS]);
   }
 
   // Check if user has any admin module access (for showing admin-related UI elements)
@@ -93,7 +58,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       Permission.VIEW_ADMIN_ACCOMMODATION,
       Permission.VIEW_ADMIN_VISA,
       Permission.VIEW_ADMIN_TRANSPORT,
-      Permission.VIEW_ADMIN_COMBINED
+      Permission.VIEW_ADMIN_COMBINED,
     ]);
   }
 
