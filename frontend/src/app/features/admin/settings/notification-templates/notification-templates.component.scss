@@ -15,7 +15,7 @@
 
   // Page Header
   .page-header {
-    margin-bottom: 2rem;
+    margin-bottom: vars.$spacing-8;
 
     .header-content {
       display: flex;
@@ -34,7 +34,7 @@
       .page-title {
         font-size: vars.$font-size-2xl;
         font-weight: vars.$font-weight-bold;
-        margin: 0 0 0.5rem;
+        margin: 0 0 vars.$spacing-2;
         letter-spacing: -0.025em;
         color: vars.$gray-800;
       }
@@ -59,10 +59,10 @@
     box-shadow: vars.$shadow-lg;
     overflow: hidden;
     border: 1px solid vars.$gray-200;
-    margin-bottom: 1.5rem;
+    margin-bottom: vars.$spacing-6;
 
     .card-header {
-      padding: vars.$spacing-5 1.5rem;
+      padding: vars.$spacing-5 vars.$spacing-6;
       background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
       border-bottom: none;
 
@@ -76,7 +76,7 @@
 
         i {
           font-size: vars.$font-size-lg;
-          margin-right: 0.5rem;
+          margin-right: vars.$spacing-2;
         }
       }
 
@@ -96,7 +96,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 3rem 0;
+        padding: vars.$spacing-12 0;
 
         .spinner-border {
           width: 2rem;
@@ -116,7 +116,7 @@
             th {
               font-weight: vars.$font-weight-semibold;
               font-size: vars.$font-size-sm;
-              padding: vars.$spacing-4 1.5rem;
+              padding: vars.$spacing-4 vars.$spacing-6;
               border-bottom: 2px solid vars.$gray-200;
               color: vars.$gray-700;
             }
@@ -135,7 +135,7 @@
               }
 
               td {
-                padding: vars.$spacing-4 1.5rem;
+                padding: vars.$spacing-4 vars.$spacing-6;
                 vertical-align: middle;
 
                 .template-name {
@@ -146,7 +146,7 @@
                 .template-description {
                   font-size: vars.$font-size-sm;
                   color: vars.$gray-500;
-                  margin-top: 0.25rem;
+                  margin-top: vars.$spacing-1;
                 }
 
                 .action-buttons {
@@ -277,7 +277,7 @@
 
       .form-label {
         font-weight: vars.$font-weight-medium;
-        margin-bottom: 0.5rem;
+        margin-bottom: vars.$spacing-2;
         font-size: vars.$font-size-sm;
         color: vars.$gray-900;
       }
@@ -285,7 +285,7 @@
       .form-control,
       .form-select {
         font-size: vars.$font-size-sm;
-        padding: 0.625rem 0.75rem;
+        padding: 0.625rem vars.$spacing-3;
         border: 1px solid vars.$gray-300;
         background-color: vars.$white;
         color: vars.$gray-900;
@@ -307,8 +307,8 @@
 
       // Event Type Info Box
       .event-type-info {
-        margin-top: 0.75rem;
-        padding: vars.$spacing-3 1rem;
+        margin-top: vars.$spacing-3;
+        padding: vars.$spacing-3 vars.$spacing-4;
         background-color: vars.$info-light;
         border: 1px solid vars.$info-light;
         border-radius: 0.375rem;
@@ -328,17 +328,17 @@
           .info-title {
             font-weight: vars.$font-weight-medium;
             color: vars.$info-dark;
-            margin-bottom: 0.5rem;
+            margin-bottom: vars.$spacing-2;
           }
 
           .info-badges {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 0.5rem;
+            margin-bottom: vars.$spacing-2;
 
             .badge {
               font-size: vars.$font-size-xs;
-              padding: vars.$spacing-1 0.5rem;
+              padding: vars.$spacing-1 vars.$spacing-2;
             }
 
             .badge-outline {
@@ -357,25 +357,25 @@
 
       // Variables Section
       .variables-section {
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
+        margin-top: vars.$spacing-3;
+        padding-top: vars.$spacing-3;
         border-top: 1px solid vars.$gray-200;
 
         .variables-label {
           font-size: vars.$font-size-xs;
           color: vars.$gray-500;
-          margin-bottom: 0.5rem;
+          margin-bottom: vars.$spacing-2;
         }
 
         .variables-badges {
           display: flex;
           flex-wrap: wrap;
           gap: 0.375rem;
-          margin-bottom: 0.5rem;
+          margin-bottom: vars.$spacing-2;
 
           .variable-badge {
             display: inline-block;
-            padding: vars.$spacing-1 0.5rem;
+            padding: vars.$spacing-1 vars.$spacing-2;
             font-size: vars.$font-size-xs;
             font-family: vars.$font-mono;
             background-color: vars.$gray-100;
@@ -394,7 +394,7 @@
     }
 
     .modal-footer {
-      padding: vars.$spacing-4 1.5rem;
+      padding: vars.$spacing-4 vars.$spacing-6;
       border-top: 1px solid vars.$gray-200;
       background-color: vars.$gray-50;
       display: flex;

@@ -34,7 +34,7 @@ $gray-900:      vars.$gray-800;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
+  margin-bottom: vars.$spacing-8;
   gap: 1rem;
   flex-wrap: wrap;
 
@@ -46,7 +46,7 @@ $gray-900:      vars.$gray-800;
       font-weight: vars.$font-weight-bold;
       color: $gray-900;
       letter-spacing: -0.025em;
-      margin: 0 0 0.5rem;
+      margin: 0 0 vars.$spacing-2;
       display: flex;
       align-items: center;
       flex-wrap: wrap;
@@ -82,7 +82,7 @@ $gray-900:      vars.$gray-800;
   @media (width <= 640px) {
     flex-direction: column;
     align-items: stretch;
-    margin-bottom: 1.5rem;
+    margin-bottom: vars.$spacing-6;
 
     .header-actions .btn { width: 100%; }
   }
@@ -93,7 +93,7 @@ $gray-900:      vars.$gray-800;
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(4, 1fr);
-  margin-bottom: 2rem;
+  margin-bottom: vars.$spacing-8;
 
   @media (width <= 1024px) { grid-template-columns: repeat(2, 1fr); }
   @media (width <= 480px)  { grid-template-columns: repeat(1, 1fr); gap: 0.75rem; }
@@ -117,7 +117,7 @@ $gray-900:      vars.$gray-800;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: vars.$spacing-4 1.25rem 0.5rem;
+    padding: vars.$spacing-4 vars.$spacing-5 vars.$spacing-2;
 
     .stat-card-title {
       font-size: vars.$font-size-sm;
@@ -137,14 +137,14 @@ $gray-900:      vars.$gray-800;
   }
 
   .stat-card-content {
-    padding: 0 1.25rem 1rem;
+    padding: 0 vars.$spacing-5 vars.$spacing-4;
 
     .stat-value {
       font-size: vars.$font-size-2xl;
       font-weight: vars.$font-weight-bold;
       color: $gray-900;
       line-height: 1;
-      margin-bottom: 0.25rem;
+      margin-bottom: vars.$spacing-1;
     }
 
     .stat-description {
@@ -179,7 +179,7 @@ $gray-900:      vars.$gray-800;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        margin-bottom: 0.25rem;
+        margin-bottom: vars.$spacing-1;
         flex-wrap: wrap;
 
         .card-title {
@@ -217,9 +217,9 @@ $gray-900:      vars.$gray-800;
   .card-footer {
     background-color: vars.$gray-50;
     border-top: 1px solid $border;
-    padding: 0.75rem vars.$spacing-6;
+    padding: vars.$spacing-3 vars.$spacing-6;
 
-    @media (width <= 640px) { padding: 0.75rem vars.$spacing-4; }
+    @media (width <= 640px) { padding: vars.$spacing-3 vars.$spacing-4; }
   }
 }
 
@@ -273,7 +273,7 @@ $gray-900:      vars.$gray-800;
       max-width: 220px;
 
       @media (width <= 768px) {
-        padding: 0.5rem 0.75rem;
+        padding: vars.$spacing-2 vars.$spacing-3;
         font-size: vars.$font-size-xs;
       }
     }
@@ -391,7 +391,7 @@ $gray-900:      vars.$gray-800;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 3rem;
+  padding: vars.$spacing-12;
 }
 
 .empty-state {
@@ -399,22 +399,22 @@ $gray-900:      vars.$gray-800;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem vars.$spacing-4;
+  padding: vars.$spacing-10 vars.$spacing-4;
   color: $gray-600;
   text-align: center;
 
-  i { font-size: 2.5rem; margin-bottom: 1rem; color: $gray-400; }
+  i { font-size: 2.5rem; margin-bottom: vars.$spacing-4; color: $gray-400; }
 
   p {
     margin: 0;
     font-size: vars.$font-size-sm;
-    &.text-sm { font-size: vars.$font-size-xs; color: $gray-400; margin-top: 0.25rem; }
+    &.text-sm { font-size: vars.$font-size-xs; color: $gray-400; margin-top: vars.$spacing-1; }
   }
 }
 
 // ========== PAGINATION ==========
 .pagination-container {
-  padding: 1rem vars.$spacing-6;
+  padding: vars.$spacing-4 vars.$spacing-6;
   border-top: 1px solid $border;
 
   .pagination-info { color: $gray-600; }
