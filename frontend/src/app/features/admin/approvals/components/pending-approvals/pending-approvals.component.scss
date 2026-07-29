@@ -14,18 +14,6 @@
 }
 
 // ========== COLORS (Petronas Green Theme) ==========
-$primary: vars.$primary-color; // Petronas Green
-$primary-dark: vars.$primary-hover; // Darker Petronas Green
-$primary-light: vars.$primary-lightest; // Light Petronas Green tint
-$background: vars.$gray-100; // Light Gray Background
-$foreground: vars.$gray-700; // Dark Gray Text
-$border: vars.$gray-200; // Border color
-$gray-50: vars.$gray-50; // Very light gray
-$gray-100: vars.$gray-100; // Muted background
-$gray-500: vars.$gray-500; // Medium gray (icons)
-$gray-600: vars.$gray-500; // Muted foreground
-$gray-700: vars.$gray-700; // Dark text
-$gray-900: vars.$gray-800; // Darkest text
 
 // ========== CONTAINER ==========
 .approvals-container {
@@ -34,7 +22,7 @@ $gray-900: vars.$gray-800; // Darkest text
   margin: 0;
   padding: vars.$spacing-8;
   box-sizing: border-box;
-  background-color: $background;
+  background-color: vars.$gray-100;
   min-height: calc(100vh - 100px);
 }
 
@@ -46,19 +34,19 @@ $gray-900: vars.$gray-800; // Darkest text
     .page-title {
       font-size: vars.$font-size-3xl;
       font-weight: vars.$font-weight-bold;
-      color: $gray-900;
+      color: vars.$gray-800;
       letter-spacing: -0.025em;
       margin: 0 0 vars.$spacing-2;
       display: flex;
       align-items: center;
 
       i {
-        color: $primary;
+        color: vars.$primary-color;
       }
     }
 
     .page-subtitle {
-      color: $gray-600;
+      color: vars.$gray-500;
       font-size: vars.$font-size-sm;
       margin: 0;
     }
@@ -70,7 +58,7 @@ $gray-900: vars.$gray-800; // Darkest text
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
-  border-bottom: 2px solid $border;
+  border-bottom: 2px solid vars.$gray-200;
   padding-bottom: 0;
   margin-bottom: vars.$spacing-8;
 
@@ -82,7 +70,7 @@ $gray-900: vars.$gray-800; // Darkest text
     cursor: pointer;
     font-weight: vars.$font-weight-medium;
     font-size: vars.$font-size-sm;
-    color: $gray-600;
+    color: vars.$gray-500;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -98,13 +86,13 @@ $gray-900: vars.$gray-800; // Darkest text
     }
 
     &:hover:not(.active) {
-      color: $primary;
-      border-bottom-color: $primary-light;
+      color: vars.$primary-color;
+      border-bottom-color: vars.$primary-lightest;
     }
 
     &.active {
-      color: $primary;
-      border-bottom-color: $primary;
+      color: vars.$primary-color;
+      border-bottom-color: vars.$primary-color;
       font-weight: vars.$font-weight-semibold;
     }
   }
@@ -113,14 +101,14 @@ $gray-900: vars.$gray-800; // Darkest text
 // ========== CARD ==========
 .card {
   background: vars.$white;
-  border: 1px solid $border;
+  border: 1px solid vars.$gray-200;
   border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-base;
   overflow: hidden;
 
   .card-header {
     padding: vars.$spacing-6;
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid vars.$gray-200;
     background-color: vars.$white;
 
     .card-header-content {
@@ -133,19 +121,19 @@ $gray-900: vars.$gray-800; // Darkest text
         .card-title {
           font-size: vars.$font-size-md;
           font-weight: vars.$font-weight-semibold;
-          color: $gray-900;
+          color: vars.$gray-800;
           margin: 0;
         }
 
         i {
-          color: $gray-600;
+          color: vars.$gray-500;
           font-size: vars.$font-size-md;
         }
       }
 
       .card-description {
         font-size: vars.$font-size-sm;
-        color: $gray-600;
+        color: vars.$gray-500;
         margin: 0;
       }
     }
@@ -161,20 +149,22 @@ $gray-900: vars.$gray-800; // Darkest text
 .form-control,
 .form-select {
   border-radius: vars.$radius-md;
-  border: 1px solid $border;
+  border: 1px solid vars.$gray-200;
   padding: 0.625rem vars.$spacing-3;
   font-size: vars.$font-size-sm;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   background: vars.$white;
 
   &:focus {
     outline: none;
-    border-color: $primary;
+    border-color: vars.$primary-color;
     box-shadow: vars.$input-focus-shadow;
   }
 
   &::placeholder {
-    color: $gray-500;
+    color: vars.$gray-500;
   }
 }
 
@@ -186,8 +176,8 @@ $gray-900: vars.$gray-800; // Darkest text
     border-collapse: collapse;
 
     thead {
-      background-color: $gray-50;
-      border-bottom: 1px solid $border;
+      background-color: vars.$gray-50;
+      border-bottom: 1px solid vars.$gray-200;
 
       th {
         padding: vars.$spacing-3 vars.$spacing-4;
@@ -196,7 +186,7 @@ $gray-900: vars.$gray-800; // Darkest text
         font-weight: vars.$font-weight-semibold;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: $gray-500;
+        color: vars.$gray-500;
         border: none;
         white-space: nowrap;
       }
@@ -204,7 +194,7 @@ $gray-900: vars.$gray-800; // Darkest text
 
     tbody {
       tr {
-        border-bottom: 1px solid $border;
+        border-bottom: 1px solid vars.$gray-200;
         transition: background-color 0.15s ease;
 
         &:last-child {
@@ -212,13 +202,13 @@ $gray-900: vars.$gray-800; // Darkest text
         }
 
         &:hover {
-          background-color: $gray-50;
+          background-color: vars.$gray-50;
         }
 
         td {
           padding: vars.$spacing-4;
           font-size: vars.$font-size-sm;
-          color: $gray-700;
+          color: vars.$gray-700;
           border: none;
           vertical-align: middle;
         }
@@ -232,11 +222,11 @@ $gray-900: vars.$gray-800; // Darkest text
   align-items: center;
   gap: 0.5rem;
   padding: 0.375rem vars.$spacing-3;
-  background: $gray-50;
+  background: vars.$gray-50;
   border-radius: vars.$radius-md;
   font-weight: vars.$font-weight-medium;
   font-size: vars.$font-size-xs;
-  color: $gray-700;
+  color: vars.$gray-700;
   white-space: nowrap;
 
   i {
@@ -260,13 +250,13 @@ $gray-900: vars.$gray-800; // Darkest text
 .staff-cell {
   .staff-name {
     font-weight: vars.$font-weight-medium;
-    color: $gray-900;
+    color: vars.$gray-800;
   }
 
   .staff-id {
     display: block;
     font-size: vars.$font-size-xs;
-    color: $gray-600;
+    color: vars.$gray-500;
     margin-top: 2px;
   }
 }
@@ -277,13 +267,13 @@ $gray-900: vars.$gray-800; // Darkest text
   .purpose-text {
     font-weight: vars.$font-weight-medium;
     font-size: vars.$font-size-sm;
-    color: $gray-900;
+    color: vars.$gray-800;
     margin-bottom: vars.$spacing-1;
   }
 
   .purpose-details {
     font-size: vars.$font-size-xs;
-    color: $gray-600;
+    color: vars.$gray-500;
 
     span {
       &:not(:last-child)::after {
@@ -352,7 +342,7 @@ $gray-900: vars.$gray-800; // Darkest text
 
 .loading-state {
   i {
-    color: $primary;
+    color: vars.$primary-color;
   }
 }
 
@@ -368,24 +358,24 @@ $gray-900: vars.$gray-800; // Darkest text
   }
 
   .error-message {
-    color: $gray-600;
+    color: vars.$gray-500;
     font-size: vars.$font-size-sm;
   }
 }
 
 .empty-state {
   .empty-icon {
-    color: $gray-500;
+    color: vars.$gray-500;
   }
 
   .empty-message {
-    color: $gray-900;
+    color: vars.$gray-800;
     font-weight: vars.$font-weight-semibold;
     font-size: vars.$font-size-md;
   }
 
   .empty-subtitle {
-    color: $gray-600;
+    color: vars.$gray-500;
     font-size: vars.$font-size-sm;
   }
 }
@@ -393,7 +383,7 @@ $gray-900: vars.$gray-800; // Darkest text
 // ========== PAGINATION ==========
 .pagination-container {
   padding: vars.$spacing-6;
-  border-top: 1px solid $border;
+  border-top: 1px solid vars.$gray-200;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -404,7 +394,7 @@ $gray-900: vars.$gray-800; // Darkest text
   }
 
   .pagination-info {
-    color: $gray-600;
+    color: vars.$gray-500;
     font-size: vars.$font-size-sm;
   }
 
@@ -416,9 +406,9 @@ $gray-900: vars.$gray-800; // Darkest text
     .btn {
       padding: vars.$spacing-2 vars.$spacing-4;
       border-radius: vars.$radius-md;
-      border: 1px solid $border;
+      border: 1px solid vars.$gray-200;
       background: vars.$white;
-      color: $gray-700;
+      color: vars.$gray-700;
       font-size: vars.$font-size-sm;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -427,8 +417,8 @@ $gray-900: vars.$gray-800; // Darkest text
       gap: 0.5rem;
 
       &:hover:not(:disabled) {
-        background: $gray-50;
-        border-color: $gray-600;
+        background: vars.$gray-50;
+        border-color: vars.$gray-500;
       }
 
       &:disabled {
@@ -440,7 +430,7 @@ $gray-900: vars.$gray-800; // Darkest text
     .page-indicator {
       font-weight: vars.$font-weight-medium;
       font-size: vars.$font-size-sm;
-      color: $gray-700;
+      color: vars.$gray-700;
       min-width: 120px;
       text-align: center;
     }
@@ -451,10 +441,7 @@ $gray-900: vars.$gray-800; // Darkest text
 .modal {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
   z-index: 1050;
@@ -483,7 +470,7 @@ $gray-900: vars.$gray-800; // Darkest text
   .modal-content {
     .modal-header {
       padding: vars.$spacing-6;
-      border-bottom: 1px solid $border;
+      border-bottom: 1px solid vars.$gray-200;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -491,7 +478,7 @@ $gray-900: vars.$gray-800; // Darkest text
       .modal-title {
         font-size: vars.$font-size-md;
         font-weight: vars.$font-weight-semibold;
-        color: $gray-900;
+        color: vars.$gray-800;
         margin: 0;
       }
 
@@ -500,7 +487,7 @@ $gray-900: vars.$gray-800; // Darkest text
         border: none;
         font-size: vars.$font-size-xl;
         cursor: pointer;
-        color: $gray-600;
+        color: vars.$gray-500;
         padding: 0;
         width: 30px;
         height: 30px;
@@ -509,7 +496,7 @@ $gray-900: vars.$gray-800; // Darkest text
         justify-content: center;
 
         &:hover {
-          color: $gray-900;
+          color: vars.$gray-800;
         }
 
         &::before {
@@ -526,7 +513,7 @@ $gray-900: vars.$gray-800; // Darkest text
         font-size: vars.$font-size-sm;
 
         strong {
-          color: $gray-900;
+          color: vars.$gray-800;
           margin-right: vars.$spacing-2;
         }
       }
@@ -539,7 +526,7 @@ $gray-900: vars.$gray-800; // Darkest text
           margin-bottom: vars.$spacing-2;
           font-weight: vars.$font-weight-medium;
           font-size: vars.$font-size-sm;
-          color: $gray-900;
+          color: vars.$gray-800;
 
           .text-danger {
             color: vars.$error-hover;
@@ -549,7 +536,7 @@ $gray-900: vars.$gray-800; // Darkest text
         .form-control {
           width: 100%;
           padding: vars.$spacing-3;
-          border: 1px solid $border;
+          border: 1px solid vars.$gray-200;
           border-radius: vars.$radius-md;
           font-size: vars.$font-size-sm;
           font-family: inherit;
@@ -558,7 +545,7 @@ $gray-900: vars.$gray-800; // Darkest text
 
           &:focus {
             outline: none;
-            border-color: $primary;
+            border-color: vars.$primary-color;
             box-shadow: vars.$input-focus-shadow;
           }
         }
@@ -567,7 +554,7 @@ $gray-900: vars.$gray-800; // Darkest text
 
     .modal-footer {
       padding: vars.$spacing-6;
-      border-top: 1px solid $border;
+      border-top: 1px solid vars.$gray-200;
       display: flex;
       justify-content: flex-end;
       gap: 1rem;
@@ -585,11 +572,11 @@ $gray-900: vars.$gray-800; // Darkest text
         gap: 0.5rem;
 
         &.btn-secondary {
-          background: $gray-600;
+          background: vars.$gray-500;
           color: vars.$white;
 
           &:hover:not(:disabled) {
-            background: $gray-700;
+            background: vars.$gray-700;
           }
         }
 
@@ -622,10 +609,7 @@ $gray-900: vars.$gray-800; // Darkest text
 
 .modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
   background: rgb(0 0 0 / 50%);
@@ -648,7 +632,7 @@ $gray-900: vars.$gray-800; // Darkest text
 
 // ========== UTILITY CLASSES ==========
 .text-muted {
-  color: $gray-600 !important;
+  color: vars.$gray-500 !important;
 }
 
 .small {
