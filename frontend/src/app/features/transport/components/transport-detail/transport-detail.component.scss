@@ -41,20 +41,7 @@
   gap: vars.$spacing-2;
 }
 
-.btn-back {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-2;
-  background: transparent;
-  border: none;
-  color: vars.$primary-color;
-  cursor: pointer;
-  padding: vars.$spacing-2 0;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
+// .btn-back removed - see global .btn-back in buttons.scss
 
 .page-title {
   display: flex;
@@ -74,19 +61,6 @@
   display: flex;
   gap: vars.$spacing-2;
   flex-wrap: wrap;
-
-  .btn {
-    display: flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    padding: vars.$spacing-2 vars.$spacing-md;
-    font-size: vars.$font-size-sm;
-    border-radius: vars.$radius-base;
-
-    i {
-      font-size: vars.$font-size-base;
-    }
-  }
 }
 
 .status-bar {

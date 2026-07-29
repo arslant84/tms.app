@@ -74,57 +74,7 @@
   margin-top: vars.$spacing-1;
 }
 
-.btn {
-  border-radius: vars.$radius-base;
-  padding: vars.$spacing-2 vars.$spacing-5;
-  font-weight: vars.$font-weight-medium;
-  transition: all 0.2s ease;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: vars.$shadow-sm;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  i {
-    font-size: vars.$font-size-base;
-  }
-}
-
-.btn-primary {
-  background-color: vars.$primary-color;
-  border-color: vars.$primary-color;
-
-  &:hover:not(:disabled) {
-    background-color: vars.$primary-hover;
-    border-color: vars.$primary-hover;
-  }
-}
-
-.btn-warning {
-  background-color: vars.$warning-color;
-  border-color: vars.$warning-color;
-  color: vars.$black;
-
-  &:hover:not(:disabled) {
-    background-color: vars.$warning-color;
-    border-color: vars.$warning-color;
-  }
-}
-
-.btn-outline-secondary {
-  border-color: vars.$gray-600;
-  color: vars.$gray-600;
-
-  &:hover:not(:disabled) {
-    background-color: vars.$gray-600;
-    color: vars.$white;
-  }
-}
+// Buttons: see global .btn/.btn-primary/.btn-warning/.btn-outline-secondary in buttons.scss
 
 .spinner-border {
   width: 3rem;

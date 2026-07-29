@@ -252,7 +252,9 @@
   }
 }
 
-.action-buttons {
+// Not .action-buttons - that class is reserved app-wide for 28px circular
+// table-row icon buttons (see buttons.scss); these are full-text buttons.
+.form-footer-actions {
   display: flex;
   gap: vars.$spacing-4;
 }

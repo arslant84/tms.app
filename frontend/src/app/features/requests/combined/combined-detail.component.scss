@@ -70,22 +70,7 @@
   gap: vars.$spacing-2;
 }
 
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: vars.$spacing-2;
-  background: none;
-  border: none;
-  color: vars.$primary-color;
-  font-size: vars.$font-size-sm;
-  font-weight: vars.$font-weight-medium;
-  padding: 0;
-  cursor: pointer;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
+// .btn-back removed - see global .btn-back in buttons.scss
 
 .page-title {
   font-size: vars.$font-size-2xl;

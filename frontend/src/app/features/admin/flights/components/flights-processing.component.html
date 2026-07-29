@@ -134,7 +134,7 @@
                     </td>
                     <td>{{ dateUtils.formatDate(trf.requestedDate) }}</td>
                     <td>
-                      <div class="d-flex gap-2 justify-content-center">
+                      <div class="action-buttons justify-content-center">
                         <button
                           class="btn btn-sm btn-icon"
                           [class.btn-outline-primary]="selectedTrf?.id !== trf.id"
@@ -426,7 +426,7 @@
                   <span class="badge" [class]="getStatusClass(flight.status)">{{ flight.status }}</span>
                 </td>
                 <td>
-                  <div class="d-flex gap-2 justify-content-center">
+                  <div class="action-buttons justify-content-center">
                     <button
                       class="btn btn-sm btn-outline-primary btn-icon"
                       (click)="viewTrf(flight.trfId)"

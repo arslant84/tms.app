@@ -404,26 +404,15 @@
 // overrides here so this matches every other admin/list/detail screen.
 
 // ========== ACTION BUTTONS ==========
+// Sizing/shape: see global .action-buttons/.btn-icon in buttons.scss.
+// Tighter gap + nowrap here because this table's action column is denser
+// than other admin lists (up to 4-5 icon buttons per row).
 .action-buttons {
-  display: flex;
   gap: 0.3rem;
-  justify-content: flex-end;
   flex-wrap: nowrap;
 
   .btn-icon {
-    width: 28px;
-    height: 28px;
-    min-height: 28px;
-    padding: 0;
-    border-radius: vars.$radius-full !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     flex-shrink: 0;
-
-    i {
-      font-size: vars.$font-size-sm;
-    }
   }
 }
 

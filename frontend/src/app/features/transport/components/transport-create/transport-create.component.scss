@@ -44,21 +44,7 @@
     gap: vars.$spacing-2;
   }
 
-  .btn-back {
-    display: flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    background: transparent;
-    border: none;
-    color: vars.$primary-color;
-    cursor: pointer;
-    padding: vars.$spacing-2 0;
-    font-size: vars.$font-size-base;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+  // .btn-back removed - see global .btn-back in buttons.scss
 
   .page-title {
     display: flex;
@@ -285,52 +271,18 @@
   border-top: 1px solid vars.$border-light;
   flex-wrap: wrap;
 
-  .btn {
-    display: flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    padding: vars.$spacing-2 vars.$spacing-5;
-    font-size: vars.$font-size-sm;
-    font-weight: vars.$font-weight-semibold;
-    border-radius: vars.$radius-base;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    i {
-      font-size: vars.$font-size-base;
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-
-  .btn-cancel {
-    background-color: vars.$error-color;
-    color: vars.$white;
-
-    &:hover:not(:disabled) {
-      background-color: vars.$error-hover;
-    }
-  }
-
-  .btn-draft {
+  // .btn-danger/.btn-primary come from global buttons.scss.
+  // .btn-secondary is kept as a solid-dark variant (canonical .btn-secondary
+  // is light/white) - this page's "Save Draft" action deliberately uses the
+  // darker treatment, matching the same convention on the *-detail pages.
+  .btn-secondary {
     background-color: vars.$gray-600;
     color: vars.$white;
+    border-color: vars.$gray-600;
 
     &:hover:not(:disabled) {
-      background-color: vars.$gray-600;
-    }
-  }
-
-  .btn-submit {
-    background-color: vars.$primary-color;
-    color: vars.$white;
-
-    &:hover:not(:disabled) {
-      background-color: vars.$primary-hover;
+      background-color: vars.$gray-700;
+      border-color: vars.$gray-700;
     }
   }
 }

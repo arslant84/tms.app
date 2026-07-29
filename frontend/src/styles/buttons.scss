@@ -1,4 +1,5 @@
 // Use colors and variables
+@use 'sass:color';
 @use './variables' as vars;
 @use './colors' as colors;
 
@@ -97,6 +98,38 @@
   &.active {
     background-color: colors.$primary-teal-active;
     border-color: colors.$primary-teal-active;
+  }
+}
+
+// Gradient CTA modifier - opt-in on top of .btn-primary, for prominent
+// full-width calls to action (e.g. auth-page submit buttons). Composes
+// with size classes (.btn-lg etc.) rather than setting its own sizing.
+.btn-primary.btn-gradient {
+  background: linear-gradient(
+    135deg,
+    colors.$primary-teal 0%,
+    color.adjust(colors.$primary-teal, $lightness: -5%) 100%
+  );
+  border: none;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(
+      135deg,
+      colors.$primary-teal-hover 0%,
+      color.adjust(colors.$primary-teal-hover, $lightness: -5%) 100%
+    );
+  }
+
+  &:active:not(:disabled) {
+    background: linear-gradient(
+      135deg,
+      colors.$primary-teal-active 0%,
+      color.adjust(colors.$primary-teal-active, $lightness: -5%) 100%
+    );
+  }
+
+  &:disabled {
+    background: vars.$gray-400;
   }
 }
 
@@ -332,6 +365,32 @@
 }
 
 // ============================================================================
+// BACK LINK - "‹ Back to list" navigation on detail pages
+// Not a full .btn - used standalone as <button class="btn-back">
+// ============================================================================
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: vars.$spacing-2;
+  background: transparent;
+  border: none;
+  color: colors.$primary-teal;
+  cursor: pointer;
+  padding: vars.$spacing-2 0;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  i {
+    font-size: vars.$font-size-base;
+  }
+}
+
+// ============================================================================
 // BUTTON SIZES - Fluent 2 specifications
 // ============================================================================
 
@@ -389,6 +448,71 @@
   // Circular variant (opt-in)
   &.btn-icon-circle {
     border-radius: vars.$radius-full;
+  }
+}
+
+// Outline icon-color modifiers - white/transparent background with a
+// semantic border+text color, tinted background on hover. Composes with
+// .btn-icon for table/list row action buttons (view/approve/reject/edit/etc.)
+// so every screen shares one color-per-action convention instead of each
+// component hand-rolling its own .btn-view/.btn-edit/.btn-delete classes.
+.btn-icon-info {
+  color: vars.$info-color;
+  border-color: vars.$info-color;
+  background: vars.$white;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$info-light;
+    border-color: vars.$info-hover;
+    color: vars.$info-hover;
+  }
+}
+
+.btn-icon-success {
+  color: vars.$success-color;
+  border-color: vars.$success-color;
+  background: vars.$white;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$success-lightest;
+    border-color: vars.$success-hover;
+    color: vars.$success-hover;
+  }
+}
+
+.btn-icon-danger {
+  color: vars.$error-color;
+  border-color: vars.$error-color;
+  background: vars.$white;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$error-light;
+    border-color: vars.$error-hover;
+    color: vars.$error-hover;
+  }
+}
+
+.btn-icon-warning {
+  color: vars.$warning-color;
+  border-color: vars.$warning-color;
+  background: vars.$white;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$warning-lightest;
+    border-color: vars.$warning-hover;
+    color: vars.$warning-hover;
+  }
+}
+
+.btn-icon-purple {
+  color: vars.$purple-color;
+  border-color: vars.$purple-color;
+  background: vars.$white;
+
+  &:hover:not(:disabled) {
+    background-color: vars.$purple-light;
+    border-color: vars.$purple-hover;
+    color: vars.$purple-hover;
   }
 }
 

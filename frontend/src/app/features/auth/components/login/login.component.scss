@@ -168,42 +168,7 @@
     }
   }
 
-  .btn-primary {
-    background: linear-gradient(
-      135deg,
-      vars.$primary-color 0%,
-      color.adjust(vars.$primary-color, $lightness: -5%) 100%
-    );
-    border: none;
-    padding: vars.$spacing-3 vars.$spacing-4;
-    font-size: vars.$font-size-base;
-    font-weight: vars.$font-weight-semibold;
-    border-radius: vars.$radius-base;
-    transition: background 0.1s ease;  // Fluent 2: Faster transitions
-
-    // Fluent 2: Flat hover, no lift or shadow
-    &:hover:not(:disabled) {
-      background: linear-gradient(
-        135deg,
-        vars.$primary-hover 0%,
-        color.adjust(vars.$primary-hover, $lightness: -5%) 100%
-      );
-    }
-
-    &:active:not(:disabled) {
-      background: linear-gradient(
-        135deg,
-        vars.$primary-active 0%,
-        color.adjust(vars.$primary-active, $lightness: -5%) 100%
-      );
-    }
-
-    &:disabled {
-      background: vars.$gray-400;
-      cursor: not-allowed;
-      opacity: 0.4;  // Fluent 2 disabled style
-    }
-  }
+  // Gradient CTA: see global .btn-primary.btn-gradient in buttons.scss
 
   .invalid-feedback {
     font-size: vars.$font-size-xs;

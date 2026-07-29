@@ -289,15 +289,15 @@
 
     <!-- Form Actions -->
     <div class="form-actions">
-      <button type="button" class="btn btn-cancel" (click)="onCancel()" [disabled]="submitting">
+      <button type="button" class="btn btn-danger" (click)="onCancel()" [disabled]="submitting">
         <i class="bi bi-x-circle"></i>
         Cancel
       </button>
-      <button type="button" class="btn btn-draft" (click)="onSaveDraft()" [disabled]="submitting">
+      <button type="button" class="btn btn-secondary" (click)="onSaveDraft()" [disabled]="submitting">
         <i class="bi bi-save"></i>
         {{ submitting ? 'Saving...' : 'Save Draft' }}
       </button>
-      <button type="button" class="btn btn-submit" (click)="onSubmit()" [disabled]="submitting">
+      <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="submitting">
         <i class="bi bi-send"></i>
         {{ submitting ? 'Submitting...' : 'Submit Request' }}
       </button>

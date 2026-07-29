@@ -86,28 +86,7 @@
   gap: vars.$spacing-2;
 }
 
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: vars.$spacing-2;
-  background: transparent;
-  border: none;
-  color: vars.$primary-color;
-  cursor: pointer;
-  padding: vars.$spacing-1 0;
-  font-size: vars.$font-size-sm;
-  font-weight: vars.$font-weight-medium;
-  transition: all 0.2s;
-
-  &:hover {
-    color: vars.$primary-hover;
-    text-decoration: underline;
-  }
-
-  i {
-    font-size: vars.$font-size-base;
-  }
-}
+// .btn-back removed - see global .btn-back in buttons.scss
 
 .page-title {
   display: flex;
@@ -129,67 +108,15 @@
   gap: vars.$spacing-3;
   flex-wrap: wrap;
 
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    padding: vars.$spacing-2 vars.$spacing-5;
-    font-size: vars.$font-size-sm;
-    font-weight: vars.$font-weight-medium;
-    border-radius: vars.$radius-md;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    i {
-      font-size: vars.$font-size-base;
-    }
-  }
-
-  .btn-outline {
-    background: vars.$white;
-    color: vars.$gray-700;
-    border-color: vars.$gray-300;
-
-    &:hover {
-      background: vars.$gray-50;
-      border-color: vars.$gray-600;
-    }
-  }
-
+  // .btn-outline-secondary/.btn-warning/.btn-danger/.btn-primary come from global buttons.scss.
+  // .btn-secondary is kept as a solid-dark variant (canonical .btn-secondary is
+  // light/white) - this page's "Edit" action deliberately uses the darker treatment.
   .btn-secondary {
     background: vars.$gray-600;
     color: vars.$white;
 
     &:hover {
       background: color.adjust(vars.$gray-600, $lightness: -10%);
-    }
-  }
-
-  .btn-warning {
-    background: vars.$warning-color;
-    color: vars.$white;
-
-    &:hover {
-      background: color.adjust(vars.$warning-color, $lightness: -10%);
-    }
-  }
-
-  .btn-danger {
-    background: vars.$error-color;
-    color: vars.$white;
-
-    &:hover {
-      background: color.adjust(vars.$error-color, $lightness: -10%);
-    }
-  }
-
-  .btn-primary {
-    background: vars.$primary-color;
-    color: vars.$white;
-
-    &:hover {
-      background: vars.$primary-hover;
     }
   }
 }

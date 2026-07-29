@@ -351,7 +351,10 @@
   .approval-actions {
     margin-top: vars.$spacing-6;
 
-    .action-buttons {
+    // Not .action-buttons - that class is reserved app-wide for 28px
+    // circular table-row icon buttons (see buttons.scss); these are
+    // full-width, full-text Reject/Approve buttons in a modal footer.
+    .modal-footer-actions {
       display: flex;
       gap: vars.$spacing-md;
 

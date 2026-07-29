@@ -183,9 +183,11 @@
               </td>
               <td>{{ dateUtils.formatDate(application.submittedAt) }}</td>
               <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewTrf(application.id)" title="View Details">
-                  <i class="bi bi-eye"></i>
-                </button>
+                <div class="action-buttons">
+                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewTrf(application.id)" title="View Details">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>

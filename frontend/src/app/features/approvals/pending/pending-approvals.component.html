@@ -341,7 +341,7 @@
                      [(ngModel)]="approvalComment"></textarea>
           </div>
           
-          <div class="action-buttons">
+          <div class="modal-footer-actions">
             <button class="btn btn-danger" (click)="rejectRequest()" [disabled]="isProcessing">
               <i class="bi bi-x-circle"></i>
               <span *ngIf="!isProcessing">Reject</span>
