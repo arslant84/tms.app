@@ -303,6 +303,16 @@ $border: vars.$gray-200;
   border-radius: vars.$radius-sm;
 }
 
+// Completed-tab count badge - was Bootstrap's raw bg-primary (#0d6efd,
+// stock blue/indigo), inconsistent with the app's teal design system and
+// with the green already used for "Completed" everywhere else (see
+// .badge-completed above, and badge-success in transport/combined admin
+// list tables).
+.badge-tab-completed {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
 .module-summary {
   padding: 0 vars.$spacing-5 vars.$spacing-3;
   font-size: vars.$font-size-sm;

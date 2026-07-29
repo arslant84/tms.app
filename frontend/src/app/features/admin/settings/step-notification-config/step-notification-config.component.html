@@ -9,7 +9,7 @@
     <div class="header-actions" (click)="$event.stopPropagation()">
       <button
         type="button"
-        class="btn btn-sm btn-outline-secondary me-2"
+        class="btn btn-sm header-action-btn me-2"
         (click)="restoreDefaults()"
         *ngIf="!isAddingNew"
         title="Restore default notification settings">
@@ -17,7 +17,7 @@
       </button>
       <button
         type="button"
-        class="btn btn-sm btn-outline-primary"
+        class="btn btn-sm header-action-btn"
         (click)="startAddNew()"
         *ngIf="!isAddingNew">
         <i class="bi bi-plus-circle"></i> Add Notification

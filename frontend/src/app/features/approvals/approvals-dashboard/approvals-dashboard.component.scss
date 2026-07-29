@@ -167,4 +167,39 @@
       width: 95%;
     }
   }
+
+  // Soft pastel palette, matching the unified badge system used across
+  // admin list/detail screens (see transport-admin.component.scss) - was
+  // raw, saturated Bootstrap bg-* utility classes.
+  .badge {
+    &.bg-primary {
+      background-color: vars.$primary-lightest !important;
+      color: vars.$primary-hover !important;
+    }
+
+    &.bg-success {
+      background-color: vars.$success-light !important;
+      color: #065f46 !important;
+    }
+
+    &.bg-warning {
+      background-color: vars.$warning-light !important;
+      color: #92400e !important;
+    }
+
+    &.bg-info {
+      background-color: vars.$info-light !important;
+      color: #1e40af !important;
+    }
+
+    &.bg-danger {
+      background-color: vars.$error-light !important;
+      color: #991b1b !important;
+    }
+
+    &.bg-secondary {
+      background-color: vars.$gray-100 !important;
+      color: vars.$gray-700 !important;
+    }
+  }
 }

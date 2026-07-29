@@ -161,11 +161,22 @@
   }
 }
 
-// Badge styling
+// Badge styling - soft pastel palette, matching the unified badge system
+// used across admin list/detail screens (see transport-admin.component.scss).
 .badge {
   font-size: vars.$font-size-xs;
   font-weight: vars.$font-weight-medium;
   padding: vars.$spacing-1 vars.$spacing-2;
+
+  &.bg-success {
+    background-color: vars.$success-light !important;
+    color: #065f46 !important;
+  }
+
+  &.bg-secondary {
+    background-color: vars.$gray-100 !important;
+    color: vars.$gray-700 !important;
+  }
 }
 
 // Text utilities

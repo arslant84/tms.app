@@ -26,7 +26,7 @@
                     <span *ngIf="dept.code" class="badge bg-secondary">{{ dept.code }}</span>
                     <span
                       class="badge"
-                      [ngClass]="dept.is_active ? 'bg-success' : 'bg-warning'">
+                      [ngClass]="dept.is_active ? 'bg-success' : 'bg-secondary'">
                       {{ dept.is_active ? 'Active' : 'Inactive' }}
                     </span>
                   </div>
