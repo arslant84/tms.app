@@ -495,7 +495,7 @@
             <div class="timeline-content">
               <h6>{{ step.step_name }}</h6>
               <p class="text-muted mb-1">Role: {{ step.step_role }}</p>
-              <p class="mb-1"><span class="badge bg-info">{{ step.status }}</span></p>
+              <p class="mb-1"><span class="badge badge-info">{{ step.status }}</span></p>
               <small class="text-muted">{{ dateUtils.formatDateTime(step.step_date) }}</small>
               <p class="mt-2" *ngIf="step.comments">{{ step.comments }}</p>
             </div>

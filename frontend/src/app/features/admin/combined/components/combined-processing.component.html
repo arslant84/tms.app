@@ -48,7 +48,7 @@
             <button class="nav-link" [class.active]="activeTab === 'completed'" (click)="activeTab = 'completed'">
               <i class="bi bi-check2-all"></i>
               <span class="tab-label">Completed</span>
-              <span class="badge bg-primary ms-2">{{ completedRequests.length }}</span>
+              <span class="badge badge-tab-completed ms-2">{{ completedRequests.length }}</span>
             </button>
           </li>
         </ul>

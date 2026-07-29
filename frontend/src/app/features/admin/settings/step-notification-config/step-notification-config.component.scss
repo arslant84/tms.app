@@ -3,22 +3,22 @@
 
 .notification-config-section {
   margin-top: 1rem;
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  background: #ffffff;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-md;
+  background: vars.$white;
 
   .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: vars.$spacing-3 1rem;
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    border-radius: 0.375rem 0.375rem 0 0;
+    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
+    border-radius: vars.$radius-md vars.$radius-md 0 0;
     cursor: pointer;
     transition: background 0.3s ease;
 
     &:hover {
-      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+      background: linear-gradient(135deg, vars.$primary-hover 0%, vars.$primary-active 100%);
     }
 
     .header-left {
@@ -40,6 +40,8 @@
       .badge {
         font-size: vars.$font-size-xs;
         font-weight: vars.$font-weight-medium;
+        background-color: rgb(255 255 255 / 20%) !important;
+        color: vars.$white;
       }
     }
 
@@ -47,12 +49,34 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+
+      // Deliberately not btn-outline-secondary/btn-outline-primary here -
+      // their default text/border colors (Bootstrap gray/blue) are too
+      // low-contrast against this teal gradient header to read reliably.
+      // Matches the app header's own on-dark-surface button pattern
+      // instead (see shared/components/header/header.component.scss).
+      .header-action-btn {
+        background-color: rgb(255 255 255 / 10%) !important;
+        border: 1px solid rgb(255 255 255 / 40%) !important;
+        color: vars.$white !important;
+
+        i {
+          color: vars.$white !important;
+        }
+
+        &:hover,
+        &:focus {
+          background-color: rgb(255 255 255 / 20%) !important;
+          border-color: rgb(255 255 255 / 60%) !important;
+          color: vars.$white !important;
+        }
+      }
     }
   }
 
   .section-content {
     padding: vars.$spacing-4;
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid vars.$border-light;
   }
 
   // Config List
@@ -67,12 +91,12 @@
       align-items: flex-start;
       padding: 0.875rem;
       border: 1px solid vars.$gray-200;
-      border-radius: 0.375rem;
+      border-radius: vars.$radius-md;
       background: vars.$gray-50;
       transition: border-color 0.2s ease;
 
       &:hover {
-        border-color: #6366f1;
+        border-color: vars.$primary-color;
       }
 
       .config-details {
@@ -97,8 +121,31 @@
             color: vars.$gray-800;
           }
 
+          // Soft pastel palette, matching the unified badge system used
+          // across admin list/detail screens (see transport-admin.component.scss) -
+          // was raw Bootstrap bg-danger/bg-warning/bg-info/bg-secondary (bold, off-brand).
           .badge {
             font-size: vars.$font-size-xs;
+
+            &.bg-danger {
+              background-color: vars.$error-light !important;
+              color: #991b1b !important;
+            }
+
+            &.bg-warning {
+              background-color: vars.$warning-light !important;
+              color: #92400e !important;
+            }
+
+            &.bg-info {
+              background-color: vars.$info-light !important;
+              color: #1e40af !important;
+            }
+
+            &.bg-secondary {
+              background-color: vars.$gray-100 !important;
+              color: vars.$gray-700 !important;
+            }
           }
         }
       }
@@ -137,8 +184,8 @@
   .config-form {
     padding: vars.$spacing-4;
     border: 1px solid vars.$gray-200;
-    border-radius: 0.375rem;
-    background: #ffffff;
+    border-radius: vars.$radius-md;
+    background: vars.$white;
 
     .form-title {
       margin-bottom: 1rem;
@@ -166,8 +213,8 @@
       border-color: vars.$gray-300;
 
       &:focus {
-        border-color: #6366f1;
-        box-shadow: 0 0 0 0.25rem rgb(99 102 241 / 15%);
+        border-color: vars.$primary-color;
+        box-shadow: vars.$focus-shadow;
       }
     }
 
@@ -181,7 +228,7 @@
       padding: vars.$spacing-3;
       background: vars.$gray-50;
       border: 1px solid vars.$gray-200;
-      border-radius: 0.375rem;
+      border-radius: vars.$radius-md;
 
       .recipient-category {
         margin-bottom: 1rem;
@@ -193,7 +240,7 @@
         .category-label {
           font-size: vars.$font-size-xs;
           font-weight: vars.$font-weight-semibold;
-          color: #6366f1;
+          color: vars.$primary-color;
           text-transform: uppercase;
           letter-spacing: 0.5px;
           margin-bottom: 0.5rem;
@@ -206,13 +253,13 @@
 
           .form-check-input {
             &:checked {
-              background-color: #6366f1;
-              border-color: #6366f1;
+              background-color: vars.$primary-color;
+              border-color: vars.$primary-color;
             }
 
             &:focus {
-              border-color: #6366f1;
-              box-shadow: 0 0 0 0.25rem rgb(99 102 241 / 15%);
+              border-color: vars.$primary-color;
+              box-shadow: vars.$focus-shadow;
             }
           }
 
@@ -232,16 +279,16 @@
       padding: vars.$spacing-3;
       background: vars.$gray-50;
       border: 1px solid vars.$gray-200;
-      border-radius: 0.375rem;
+      border-radius: vars.$radius-md;
 
       .email-tag {
         display: inline-flex;
         align-items: center;
         gap: 0.375rem;
         padding: vars.$spacing-1 0.625rem;
-        background: #6366f1;
+        background: vars.$primary-color;
         color: vars.$white;
-        border-radius: 0.25rem;
+        border-radius: vars.$radius-base;
         font-size: 0.8125rem;
 
         .btn-remove {

@@ -19,13 +19,13 @@
   height: 60px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 vars.$spacing-md;
 }
 
 // Left Section: Mobile Menu + Logo
 .header-left {
-  position: absolute;
-  left: 0;
+  flex-shrink: 0;
   height: 100%;
   display: flex;
   align-items: center;
@@ -75,16 +75,19 @@
 
   @include vars.media-md {
     display: flex;
-    position: absolute;
-    left: 50%;
-    top: 0;
+    flex: 1 1 auto;
+    min-width: 0;
     height: 100%;
-    transform: translateX(-50%);
     align-items: center;
     justify-content: center;
-    gap: vars.$spacing-8;
+    gap: vars.$spacing-2;
     font-size: vars.$font-size-sm;
     font-weight: vars.$font-weight-medium;
+    overflow: hidden;
+  }
+
+  @include vars.media-lg {
+    gap: vars.$spacing-8;
   }
 
   .nav-link {
@@ -96,6 +99,7 @@
     transition: vars.$transition-base;
     padding: vars.$spacing-2 vars.$spacing-3;
     border-radius: vars.$radius-base;
+    white-space: nowrap;
 
     &:hover {
       color: vars.$text-inverse;
@@ -114,14 +118,22 @@
 
     span {
       font-size: vars.$font-size-sm;
+
+      // Between md and lg there isn't room for icon + label on all 5
+      // links plus the logo and user name without colliding - show
+      // icons only until there's enough width for full labels.
+      display: none;
+
+      @include vars.media-lg {
+        display: inline;
+      }
     }
   }
 }
 
 // Right Section: Notifications + User Menu
 .header-right {
-  position: absolute;
-  right: 0;
+  flex-shrink: 0;
   height: 100%;
   display: flex;
   align-items: center;

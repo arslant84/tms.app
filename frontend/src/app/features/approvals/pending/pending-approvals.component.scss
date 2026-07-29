@@ -383,3 +383,23 @@
     max-width: none;
   }
 }
+
+// Soft pastel palette, matching the unified badge system used across
+// admin list/detail screens (see transport-admin.component.scss) - was
+// raw, saturated Bootstrap bg-danger/bg-success/bg-warning.
+.badge {
+  &.bg-danger {
+    background-color: vars.$error-light !important;
+    color: #991b1b !important;
+  }
+
+  &.bg-success {
+    background-color: vars.$success-light !important;
+    color: #065f46 !important;
+  }
+
+  &.bg-warning {
+    background-color: vars.$warning-light !important;
+    color: #92400e !important;
+  }
+}

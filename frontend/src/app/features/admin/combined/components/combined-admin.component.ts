@@ -345,16 +345,16 @@ export class CombinedAdminComponent implements OnInit {
    * Get CSS class for status badge
    */
   getStatusClass(status: string): string {
-    if (!status) return 'bg-secondary';
+    if (!status) return 'badge-gray';
 
     const statusLower = status.toLowerCase();
-    if (statusLower === 'draft') return 'bg-secondary';
-    if (statusLower.includes('pending') || statusLower === 'submitted') return 'bg-warning text-dark';
-    if (statusLower === 'approved') return 'bg-success';
-    if (statusLower === 'processing') return 'bg-info';
-    if (statusLower === 'completed') return 'bg-primary';
-    if (statusLower === 'rejected' || statusLower === 'cancelled') return 'bg-danger';
-    return 'bg-secondary';
+    if (statusLower === 'draft') return 'badge-gray';
+    if (statusLower.includes('pending') || statusLower === 'submitted') return 'badge-warning';
+    if (statusLower === 'approved') return 'badge-green';
+    if (statusLower === 'processing') return 'badge-info';
+    if (statusLower === 'completed') return 'badge-success';
+    if (statusLower === 'rejected' || statusLower === 'cancelled') return 'badge-red';
+    return 'badge-gray';
   }
 
   /**
