@@ -5,6 +5,7 @@ import { Router } from "@angular/router";
 import { DepartmentNamePipe } from "../../../../core/pipes/department-name.pipe";
 import { ToastService } from "../../../../core/services/toast.service";
 import { DateUtilsService } from "../../../../core/utils/date-utils.service";
+import { StatusUtilsService } from "../../../../core/utils/status-utils.service";
 import { LoadingSpinnerComponent } from "../../../../shared/components/loading-spinner/loading-spinner.component";
 import { TrfService } from "../../../trf-management/services/trf.service";
 
@@ -95,6 +96,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
 	private toastService = inject(ToastService);
 	private router = inject(Router);
 	dateUtils = inject(DateUtilsService);
+	private statusUtils = inject(StatusUtilsService);
 
 	ngOnInit(): void {
 		this.fetchFlightApplications();
@@ -263,17 +265,11 @@ export class FlightsAdminOverviewComponent implements OnInit {
 	}
 
 	/**
-	 * Get status badge class
+	 * Get status badge class - delegates to StatusUtilsService so the same
+	 * status renders the same color everywhere in the app.
 	 */
 	getStatusClass(status: string): string {
-		const statusLower = status.toLowerCase();
-		if (statusLower === "approved") return "badge-success";
-		if (statusLower.includes("awaiting")) return "badge-warning";
-		if (statusLower.includes("processed")) return "badge-info";
-		if (statusLower.includes("pending")) return "badge-warning";
-		if (statusLower === "rejected") return "badge-red";
-		if (statusLower === "completed") return "badge-green";
-		return "badge-gray";
+		return this.statusUtils.getStatusBadgeClass(status);
 	}
 
 	/**

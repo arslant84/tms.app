@@ -4,6 +4,7 @@ import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, tap, shareReplay, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { extractData } from '../utils/api-response.handler';
+import { StatusUtilsService } from '../utils/status-utils.service';
 import {
   WorkflowTemplate,
   WorkflowStep,
@@ -56,7 +57,7 @@ export interface ApproverSelection {
 export class WorkflowService {
   private apiUrl = `${environment.apiUrl}/workflows`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private statusUtils: StatusUtilsService) {}
 
   // ==================== Workflow Templates ====================
 
@@ -356,33 +357,21 @@ export class WorkflowService {
   }
 
   /**
-   * Get status badge class for workflow instance
+   * Get status badge class for workflow instance - delegates to
+   * StatusUtilsService so the same status renders the same color
+   * everywhere in the app.
    */
   getStatusClass(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'pending': 'badge-secondary',
-      'in_progress': 'badge-warning',
-      'approved': 'badge-success',
-      'completed': 'badge-success',
-      'rejected': 'badge-danger',
-      'cancelled': 'badge-secondary',
-      'on_hold': 'badge-info'
-    };
-    return statusMap[status] || 'badge-secondary';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   /**
-   * Get status badge class for step execution
+   * Get status badge class for step execution - delegates to
+   * StatusUtilsService so the same status renders the same color
+   * everywhere in the app.
    */
   getStepStatusClass(status: string): string {
-    const statusMap: { [key: string]: string } = {
-      'pending': 'badge-warning',
-      'approved': 'badge-success',
-      'rejected': 'badge-danger',
-      'skipped': 'badge-secondary',
-      'delegated': 'badge-info'
-    };
-    return statusMap[status] || 'badge-secondary';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   /**

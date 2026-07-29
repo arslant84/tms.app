@@ -286,17 +286,18 @@ $border: vars.$gray-200;
 }
 
 .badge-completed {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: vars.$success-light;
+  color: vars.$success-dark;
   font-size: vars.$font-size-xs;
   font-weight: vars.$font-weight-medium;
   padding: 0.25rem 0.55rem;
   border-radius: vars.$radius-sm;
 }
 
+// badge-pending's colors come from the global "Unified Badge Styles" in
+// styles.scss (aliased there to badge-warning/amber) - this only adds
+// the shape to match .badge-completed above.
 .badge-pending {
-  background-color: vars.$gray-100;
-  color: vars.$gray-500;
   font-size: vars.$font-size-xs;
   font-weight: vars.$font-weight-medium;
   padding: 0.25rem 0.55rem;
@@ -309,8 +310,8 @@ $border: vars.$gray-200;
 // .badge-completed above, and badge-success in transport/combined admin
 // list tables).
 .badge-tab-completed {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: vars.$success-light;
+  color: vars.$success-dark;
 }
 
 .module-summary {

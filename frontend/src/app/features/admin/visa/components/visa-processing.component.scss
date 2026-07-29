@@ -262,17 +262,11 @@
   letter-spacing: 0.025em;
   white-space: nowrap;
 
-  &.badge-success {
-    background-color: vars.$success-color;
-    color: vars.$white;
-    border: none;
-  }
-
-  &.badge-warning {
-    background-color: transparent;
-    color: color.adjust(vars.$warning-color, $lightness: -10%);
-    border: 1px solid vars.$warning-color;
-  }
+  // badge-success/warning/danger/info/secondary colors come from the
+  // global "Unified Badge Styles" in styles.scss - no local overrides
+  // here so status colors match every other admin/list/detail screen.
+  // badge-blue/green/amber/purple below are for getDestinationBadgeClass
+  // (a decorative, non-status categorical color), not for status pills.
 
   &.badge-blue {
     background-color: #cfe2ff;
@@ -295,18 +289,6 @@
   &.badge-purple {
     background-color: #e2d9f3;
     color: #432874;
-    border: none;
-  }
-
-  &.badge-gray {
-    background-color: vars.$gray-200;
-    color: vars.$gray-700;
-    border: none;
-  }
-
-  &.badge-secondary {
-    background-color: vars.$gray-200;
-    color: vars.$gray-700;
     border: none;
   }
 }

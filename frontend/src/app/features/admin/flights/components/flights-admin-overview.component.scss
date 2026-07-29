@@ -323,30 +323,9 @@ a.fw-medium {
   color: vars.$gray-700;
 }
 
-.badge-success {
-  background-color: vars.$success-light;
-  color: #065F46;
-}
-
-.badge-red {
-  background-color: vars.$error-light;
-  color: #991B1B;
-}
-
-.badge-warning {
-  background-color: vars.$warning-light;
-  color: #92400E;
-}
-
-.badge-info {
-  background-color: vars.$info-light;
-  color: #1E40AF;
-}
-
-.badge-secondary {
-  background-color: vars.$gray-100;
-  color: vars.$gray-700;
-}
+// Status badge colors (badge-success/warning/danger/info/secondary) come
+// from the global "Unified Badge Styles" in styles.scss - no local
+// overrides here so this matches every other admin/list/detail screen.
 
 // Action buttons - circular icon buttons
 .action-buttons {

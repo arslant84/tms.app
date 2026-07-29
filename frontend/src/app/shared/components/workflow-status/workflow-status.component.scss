@@ -198,30 +198,10 @@
   padding: vars.$spacing-1 vars.$spacing-2;
 }
 
-.badge-success {
-  background-color: vars.$success-color;
-  color: vars.$text-inverse;
-}
-
-.badge-warning {
-  background-color: vars.$warning-color;
-  color: vars.$gray-900;
-}
-
-.badge-danger {
-  background-color: vars.$error-color;
-  color: vars.$text-inverse;
-}
-
-.badge-info {
-  background-color: vars.$info-color;
-  color: vars.$text-inverse;
-}
-
-.badge-secondary {
-  background-color: vars.$gray-600;
-  color: vars.$text-inverse;
-}
+// Status badge colors (badge-success/warning/danger/info/secondary) come
+// from the global "Unified Badge Styles" in styles.scss - no local
+// overrides here so this shared component (embedded in every request
+// type's detail page) matches every other status badge in the app.
 
 // ==================== Footer ====================
 

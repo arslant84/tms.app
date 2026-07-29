@@ -348,30 +348,9 @@ $gray-900:      #1f2937;
   white-space: nowrap;
 }
 
-.badge-success {
-  background-color: vars.$success-light;
-  color: #065f46;
-}
-
-.badge-green {
-  background-color: vars.$success-light;
-  color: #065f46;
-}
-
-.badge-warning {
-  background-color: vars.$warning-light;
-  color: #92400e;
-}
-
-.badge-red {
-  background-color: vars.$error-light;
-  color: #991b1b;
-}
-
-.badge-info {
-  background-color: vars.$info-light;
-  color: #1e40af;
-}
+// Status badge colors (badge-success/warning/danger/info/secondary) come
+// from the global "Unified Badge Styles" in styles.scss - no local
+// overrides here so this matches every other admin/list/detail screen.
 
 // ========== ACTION BUTTONS ==========
 .action-buttons {

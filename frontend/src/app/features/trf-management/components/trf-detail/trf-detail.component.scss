@@ -607,7 +607,9 @@
   }
 }
 
-// Badge Styles
+// Badge Styles - colors come from the global "Unified Badge Styles" in
+// styles.scss (same badge-success/warning/danger/info/secondary classes
+// everywhere in the app); this file only adds shape/typography on top.
 .badge {
   display: inline-flex;
   align-items: center;
@@ -617,31 +619,6 @@
   font-weight: vars.$font-weight-semibold;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-
-  &.badge-success {
-    background: vars.$success-color;
-    color: vars.$text-inverse;
-  }
-
-  &.badge-danger {
-    background: vars.$error-color;
-    color: vars.$text-inverse;
-  }
-
-  &.badge-warning {
-    background: vars.$warning-color;
-    color: vars.$text-inverse;
-  }
-
-  &.badge-secondary {
-    background: vars.$gray-600;
-    color: vars.$text-inverse;
-  }
-
-  &.badge-info {
-    background: vars.$info-color;
-    color: vars.$text-inverse;
-  }
 }
 
 // Responsive Design

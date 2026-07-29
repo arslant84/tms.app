@@ -8,6 +8,7 @@ import { DepartmentNamePipe } from "../../../../../core/pipes/department-name.pi
 import { AppSettingsService } from "../../../../../core/services/app-settings.service";
 import { ToastService } from "../../../../../core/services/toast.service";
 import { DateUtilsService } from "../../../../../core/utils/date-utils.service";
+import { StatusUtilsService } from "../../../../../core/utils/status-utils.service";
 import { LoadingSpinnerComponent } from "../../../../../shared/components/loading-spinner/loading-spinner.component";
 import { NotificationService } from "../../../../notifications/services/notification.service";
 
@@ -91,6 +92,7 @@ export class PendingApprovalsComponent implements OnInit {
 	private appSettingsService = inject(AppSettingsService);
 	dateUtils = inject(DateUtilsService);
 	private toastService = inject(ToastService);
+	private statusUtils = inject(StatusUtilsService);
 
 	ngOnInit(): void {
 		// Check for query params (from notification click)
@@ -262,21 +264,12 @@ export class PendingApprovalsComponent implements OnInit {
 		return icons[itemType] || "bi-file-text";
 	}
 
+	/**
+	 * Get status badge class - delegates to StatusUtilsService so the same
+	 * status renders the same color everywhere in the app.
+	 */
 	getStatusClass(status: string): string {
-		const statusMap: { [key: string]: string } = {
-			Pending: "badge-warning",
-			"Pending Department Focal": "badge-warning",
-			"Pending HOD": "badge-info",
-			"Pending Travel Desk": "badge-info",
-			"Pending Finance": "badge-info",
-			"Pending Line Manager": "badge-warning",
-			Approved: "badge-success",
-			Rejected: "badge-danger",
-			Draft: "badge-secondary",
-			Submitted: "badge-primary",
-			"Under Review": "badge-info",
-		};
-		return statusMap[status] || "badge-secondary";
+		return this.statusUtils.getStatusBadgeClass(status);
 	}
 
 	viewItem(item: ApprovableItem): void {

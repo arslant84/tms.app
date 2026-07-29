@@ -623,37 +623,40 @@ tmsapp-admin-systemsettings-workflow-configuration,
   justify-content: center;
 }
 
-// Status badge colors - unified across all modules
+// Status badge colors - unified across all modules (TRF/Transport/Visa/
+// Accommodation/Combined, Approvals, and every admin screen). Pastel
+// background + dark text, no border - matches StatusUtilsService's
+// getStatusBadgeClass(), the single source of truth for status->class.
 .badge-pending,
 .badge-warning {
-  background-color: vars.$warning-lightest;
+  background-color: vars.$warning-light;
   color: vars.$warning-dark;
-  border: 1px solid vars.$warning-color;
 }
 
 .badge-info {
-  background-color: vars.$info-lightest;
+  background-color: vars.$info-light;
   color: vars.$info-dark;
-  border: 1px solid vars.$info-color;
 }
 
 .badge-success {
-  background-color: vars.$success-lightest;
+  background-color: vars.$success-light;
   color: vars.$success-dark;
-  border: 1px solid vars.$success-color;
 }
 
 .badge-danger {
-  background-color: vars.$error-lightest;
+  background-color: vars.$error-light;
   color: vars.$error-dark;
-  border: 1px solid vars.$error-color;
 }
 
 .badge-secondary,
 .badge-draft {
   background-color: vars.$gray-100;
-  color: vars.$gray-500;
-  border: 1px solid vars.$gray-300;
+  color: vars.$gray-700;
+}
+
+.badge-primary {
+  background-color: vars.$primary-lightest;
+  color: vars.$primary-hover;
 }
 
 .badge-processing {

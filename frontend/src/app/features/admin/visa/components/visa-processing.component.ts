@@ -6,6 +6,7 @@ import { VisaService, VisaApplication } from '../../../visa/services/visa.servic
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface PendingVisa {
@@ -73,7 +74,8 @@ export class VisaProcessingComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private router: Router,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    private statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -375,14 +377,11 @@ export class VisaProcessingComponent implements OnInit {
   }
 
   /**
-   * Get status badge class
+   * Get status badge class - delegates to StatusUtilsService so the same
+   * status renders the same color everywhere in the app.
    */
   getStatusClass(status: string): string {
-    const statusLower = status.toLowerCase();
-    if (statusLower === 'approved') return 'badge-success';
-    if (statusLower === 'completed') return 'badge-success';
-    if (statusLower === 'processing') return 'badge-warning';
-    return 'badge-secondary';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   /**
