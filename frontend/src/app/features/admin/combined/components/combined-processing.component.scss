@@ -353,7 +353,7 @@ $border: vars.$gray-200;
 
       &:focus {
         border-color: vars.$primary-color;
-        box-shadow: 0 0 0 2px rgba(vars.$primary-color, 0.15);
+        box-shadow: vars.$focus-shadow;
       }
     }
   }

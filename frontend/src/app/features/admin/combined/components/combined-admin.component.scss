@@ -103,12 +103,12 @@ $gray-900:      vars.$gray-800;
   background: vars.$white;
   border: 1px solid $border;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
+  box-shadow: vars.$shadow-base;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
   min-width: 0;
 
   &:hover {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 6%);
+    box-shadow: vars.$shadow-md;
     transform: translateY(-1px);
   }
 
@@ -160,7 +160,7 @@ $gray-900:      vars.$gray-800;
   background: vars.$white;
   border: 1px solid $border;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
+  box-shadow: vars.$shadow-base;
   overflow: hidden;
   width: 100%;
   min-width: 0;
@@ -234,7 +234,7 @@ $gray-900:      vars.$gray-800;
 
   &:focus {
     border-color: $primary;
-    box-shadow: 0 0 0 3px rgb(0 177 169 / 15%);
+    box-shadow: 0 0 0 3px rgba(vars.$primary-color, 0.15);
     outline: none;
   }
 }

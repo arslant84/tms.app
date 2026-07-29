@@ -195,7 +195,7 @@
       &:focus {
         outline: none;
         border-color: vars.$primary-color;
-        box-shadow: 0 0 0 3px rgb(0 177 169 / 10%);
+        box-shadow: vars.$input-focus-shadow;
       }
     }
   }
@@ -212,7 +212,7 @@
     &:focus {
       outline: none;
       border-color: vars.$primary-color;
-      box-shadow: 0 0 0 3px rgb(0 177 169 / 10%);
+      box-shadow: vars.$input-focus-shadow;
     }
   }
 }
@@ -541,7 +541,7 @@
       &:focus {
         outline: none;
         border-color: vars.$primary-color;
-        box-shadow: 0 0 0 3px rgb(0 177 169 / 10%);
+        box-shadow: vars.$input-focus-shadow;
       }
 
       &:disabled {
@@ -607,7 +607,7 @@
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(0 177 169 / 25%);
+    box-shadow: vars.$focus-shadow;
   }
 
   &:disabled {

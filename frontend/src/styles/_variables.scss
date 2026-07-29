@@ -248,6 +248,12 @@ $input-border: 1px solid $border-light;
 $input-border-radius: $radius-md;
 $input-focus-border: $primary-color;
 $input-focus-shadow: 0 0 0 3px rgb(13 148 136 / 10%);
+// Same shape as $input-focus-shadow/$focus-shadow, error-tinted - for
+// invalid-field focus rings, which were previously hardcoded per-file
+// with drifting red shades instead of one shared token.
+$error-focus-shadow: 0 0 0 3px rgb(239 68 68 / 10%);
+$error-focus-shadow-lg: 0 0 0 0.2rem rgb(239 68 68 / 25%);
+$info-focus-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
 
 // Tables
 $table-cell-padding-y: $spacing-3;

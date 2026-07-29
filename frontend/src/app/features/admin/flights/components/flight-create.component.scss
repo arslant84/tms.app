@@ -63,7 +63,7 @@
     border-color: vars.$error-color;
 
     &:focus {
-      box-shadow: 0 0 0 0.2rem rgb(220 53 69 / 15%);
+      box-shadow: vars.$error-focus-shadow-lg;
     }
   }
 }
@@ -82,7 +82,7 @@
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+    box-shadow: vars.$shadow-sm;
   }
 
   &:disabled {

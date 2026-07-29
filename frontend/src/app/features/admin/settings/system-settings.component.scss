@@ -39,7 +39,7 @@
 .settings-card {
   background: vars.$white;
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%);
+  box-shadow: vars.$shadow-lg;
   overflow: hidden;
   border: 1px solid vars.$gray-200;
   margin-bottom: 1.5rem;
@@ -137,7 +137,7 @@
     &:focus {
       outline: none;
       border-color: vars.$primary-color;
-      box-shadow: 0 0 0 3px rgb(13 148 136 / 10%);
+      box-shadow: vars.$input-focus-shadow;
     }
 
     &:disabled {
@@ -170,7 +170,7 @@
       }
 
       &:focus {
-        box-shadow: 0 0 0 3px rgb(13 148 136 / 10%);
+        box-shadow: vars.$input-focus-shadow;
       }
     }
 

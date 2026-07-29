@@ -592,7 +592,7 @@
   &:focus {
     outline: none;
     border-color: vars.$primary-color;
-    box-shadow: 0 0 0 3px rgb(13 148 136 / 10%);
+    box-shadow: vars.$input-focus-shadow;
   }
 }
 
