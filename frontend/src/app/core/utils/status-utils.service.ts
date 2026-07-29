@@ -9,52 +9,68 @@ import { Injectable } from '@angular/core';
 export class StatusUtilsService {
 
   /**
-   * Get Bootstrap badge class for a given status
+   * Get the unified badge class for a given status. This is the single
+   * source of truth for status -> color across the whole app (TRF,
+   * Transport, Visa, Accommodation, Combined, Approvals, and every admin
+   * screen) - every component should call this instead of maintaining its
+   * own local status->class mapping, so the same status always renders
+   * the same color everywhere.
    * @param status The status string to get badge class for
-   * @returns Bootstrap badge class name
+   * @returns Unified badge class name (see styles.scss "Unified Badge Styles")
    */
   getStatusBadgeClass(status: string | null | undefined): string {
     if (!status) return 'badge-secondary';
 
     const statusLower = status.toLowerCase();
 
-    // Success states
+    // Success states - the request/booking has reached a finalized,
+    // positive state
     if (statusLower.includes('approved') ||
         statusLower.includes('completed') ||
+        statusLower.includes('processed') ||
+        statusLower.includes('booked') ||
         statusLower.includes('active') ||
         statusLower.includes('confirmed') ||
+        statusLower.includes('checked-out') ||
         statusLower.includes('assigned')) {
       return 'badge-success';
     }
 
-    // Danger/Error states
+    // Danger/Error states - terminal negative outcome
     if (statusLower.includes('rejected') ||
         statusLower.includes('cancelled') ||
         statusLower.includes('canceled') ||
         statusLower.includes('failed') ||
         statusLower.includes('inactive') ||
+        statusLower.includes('blocked') ||
         statusLower.includes('expired')) {
       return 'badge-danger';
     }
 
-    // Warning states
-    if (statusLower.includes('pending') ||
+    // Info states - actively being worked on (distinct from "pending",
+    // which means waiting on someone else to act)
+    if (statusLower.includes('processing') ||
         statusLower.includes('in progress') ||
         statusLower.includes('in_progress') ||
-        statusLower.includes('processing')) {
-      return 'badge-warning';
-    }
-
-    // Info states
-    if (statusLower.includes('draft') ||
-        statusLower.includes('submitted') ||
-        statusLower.includes('new')) {
+        statusLower.includes('checked-in') ||
+        statusLower.includes('delegated') ||
+        statusLower.includes('under review')) {
       return 'badge-info';
     }
 
-    // Secondary states
-    if (statusLower.includes('not started') ||
-        statusLower.includes('on hold')) {
+    // Warning states - awaiting action from an approver/admin
+    if (statusLower.includes('pending') ||
+        statusLower.includes('awaiting') ||
+        statusLower.includes('submitted') ||
+        statusLower.includes('on hold') ||
+        statusLower.includes('on_hold')) {
+      return 'badge-warning';
+    }
+
+    // Secondary states - not yet started / no action taken
+    if (statusLower.includes('draft') ||
+        statusLower.includes('new') ||
+        statusLower.includes('not started')) {
       return 'badge-secondary';
     }
 
@@ -65,19 +81,10 @@ export class StatusUtilsService {
   /**
    * Get workflow-specific badge class
    * @param status The workflow status
-   * @returns Bootstrap badge class name
+   * @returns Unified badge class name
    */
   getWorkflowStatusClass(status: string | null | undefined): string {
-    if (!status) return 'badge-secondary';
-
-    const statusLower = status.toLowerCase();
-
-    if (statusLower === 'approved') return 'badge-success';
-    if (statusLower === 'rejected') return 'badge-danger';
-    if (statusLower === 'cancelled' || statusLower === 'canceled') return 'badge-secondary';
-    if (statusLower === 'in_progress' || statusLower === 'pending') return 'badge-warning';
-
-    return 'badge-info';
+    return this.getStatusBadgeClass(status);
   }
 
   /**
@@ -147,23 +154,8 @@ export class StatusUtilsService {
    */
   getAccommodationStatusBadgeClass(status: string | null | undefined): string {
     if (!status) return 'badge-secondary';
-
-    const statusLower = status.toLowerCase();
-
-    if (statusLower.includes('approved') ||
-        statusLower.includes('confirmed') ||
-        statusLower.includes('assigned') ||
-        statusLower.includes('checked-in')) {
-      return 'badge-success';
-    }
-    if (statusLower.includes('pending') || statusLower.includes('requested')) {
-      return 'badge-warning';
-    }
-    if (statusLower.includes('cancelled') || statusLower.includes('canceled') || statusLower.includes('checked-out')) {
-      return 'badge-secondary';
-    }
-
-    return 'badge-info';
+    if (status.toLowerCase().includes('requested')) return 'badge-warning';
+    return this.getStatusBadgeClass(status);
   }
 
   /**
@@ -173,19 +165,7 @@ export class StatusUtilsService {
    */
   getFlightStatusBadgeClass(status: string | null | undefined): string {
     if (!status) return 'badge-secondary';
-
-    const statusLower = status.toLowerCase();
-
-    if (statusLower.includes('booked') || statusLower.includes('confirmed')) {
-      return 'badge-success';
-    }
-    if (statusLower.includes('pending') || statusLower.includes('requested')) {
-      return 'badge-warning';
-    }
-    if (statusLower.includes('cancelled') || statusLower.includes('canceled')) {
-      return 'badge-danger';
-    }
-
-    return 'badge-info';
+    if (status.toLowerCase().includes('booked')) return 'badge-success';
+    return this.getStatusBadgeClass(status);
   }
 }

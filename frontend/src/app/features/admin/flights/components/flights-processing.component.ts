@@ -6,6 +6,7 @@ import { TrfService } from '../../../trf-management/services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
@@ -98,7 +99,8 @@ export class FlightsProcessingComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private router: Router,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    private statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -453,13 +455,11 @@ export class FlightsProcessingComponent implements OnInit {
   }
 
   /**
-   * Get status badge class
+   * Get status badge class - delegates to StatusUtilsService so the same
+   * status renders the same color everywhere in the app.
    */
   getStatusClass(status: string): string {
-    const statusLower = status.toLowerCase();
-    if (statusLower === 'approved') return 'badge-success';
-    if (statusLower === 'booked') return 'badge-success';
-    return 'badge-secondary';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   /**

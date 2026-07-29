@@ -202,7 +202,9 @@ $border-light: #dee2e6;
   margin-right: 0.25rem;
 }
 
-// Badge Styles (matching StatusBadge from reference)
+// Badge shape - colors come from the global "Unified Badge Styles" in
+// styles.scss (same badge-success/warning/danger/info/secondary classes
+// everywhere in the app).
 .badge {
   display: inline-flex;
   align-items: center;
@@ -213,54 +215,6 @@ $border-light: #dee2e6;
   text-transform: capitalize;
   letter-spacing: 0.025em;
   white-space: nowrap;
-
-  &.badge-success {
-    background-color: vars.$success-color;
-    color: vars.$white;
-    border: none;
-  }
-
-  &.badge-warning {
-    background-color: transparent;
-    color: vars.$warning-hover;
-    border: 1px solid vars.$warning-color;
-  }
-
-  &.badge-blue {
-    background-color: #cfe2ff;
-    color: #084298;
-    border: none;
-  }
-
-  &.badge-green {
-    background-color: #d1e7dd;
-    color: #0f5132;
-    border: none;
-  }
-
-  &.badge-amber {
-    background-color: vars.$warning-light;
-    color: #664d03;
-    border: none;
-  }
-
-  &.badge-purple {
-    background-color: #e2d9f3;
-    color: #432874;
-    border: none;
-  }
-
-  &.badge-gray {
-    background-color: #e2e3e5;
-    color: #41464b;
-    border: none;
-  }
-
-  &.badge-secondary {
-    background-color: #e2e3e5;
-    color: #41464b;
-    border: none;
-  }
 }
 
 // Primary Custom Button (Petronas Green)

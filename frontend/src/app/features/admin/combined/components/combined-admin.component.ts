@@ -15,6 +15,7 @@ import { CombinedRequest } from '../../../requests/combined/models/combined-requ
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 
 interface FilterCriteria {
   status: string;
@@ -99,7 +100,8 @@ export class CombinedAdminComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private router: Router,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    private statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -342,19 +344,11 @@ export class CombinedAdminComponent implements OnInit {
   // ===== UTILITY METHODS =====
 
   /**
-   * Get CSS class for status badge
+   * Get CSS class for status badge - delegates to StatusUtilsService so
+   * the same status renders the same color everywhere in the app.
    */
   getStatusClass(status: string): string {
-    if (!status) return 'badge-gray';
-
-    const statusLower = status.toLowerCase();
-    if (statusLower === 'draft') return 'badge-gray';
-    if (statusLower.includes('pending') || statusLower === 'submitted') return 'badge-warning';
-    if (statusLower === 'approved') return 'badge-green';
-    if (statusLower === 'processing') return 'badge-info';
-    if (statusLower === 'completed') return 'badge-success';
-    if (statusLower === 'rejected' || statusLower === 'cancelled') return 'badge-red';
-    return 'badge-gray';
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   /**
@@ -398,7 +392,7 @@ export class CombinedAdminComponent implements OnInit {
     const pages: number[] = [];
     const maxVisible = 5;
     let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
-    let end = Math.min(this.totalPages, start + maxVisible - 1);
+    const end = Math.min(this.totalPages, start + maxVisible - 1);
 
     if (end - start + 1 < maxVisible) {
       start = Math.max(1, end - maxVisible + 1);

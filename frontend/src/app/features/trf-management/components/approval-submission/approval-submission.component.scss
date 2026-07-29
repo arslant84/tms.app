@@ -118,40 +118,14 @@
   text-transform: uppercase;
   letter-spacing: 0.025em;
 
-  &.badge-primary {
-    background-color: vars.$info-light;
-    color: vars.$info-dark;
-  }
-
-  &.badge-success {
-    background-color: vars.$success-light;
-    color: vars.$success-dark;
-  }
-
-  &.badge-warning {
-    background-color: vars.$warning-light;
-    color: vars.$warning-dark;
-  }
-
-  &.badge-danger {
-    background-color: vars.$error-light;
-    color: vars.$error-dark;
-  }
-
-  &.badge-secondary {
-    background-color: vars.$gray-50;
-    color: vars.$gray-600;
-  }
+  // badge-success/warning/danger/info/secondary/primary colors come from
+  // the global "Unified Badge Styles" in styles.scss - no local overrides
+  // here so status colors match every other admin/list/detail screen.
 
   &.badge-light {
     background-color: vars.$gray-50;
     color: vars.$gray-600;
     border: 1px solid vars.$border-light;
-  }
-
-  &.badge-info {
-    background-color: vars.$info-lightest;
-    color: vars.$info-dark;
   }
 }
 

@@ -283,11 +283,9 @@
   border-radius: vars.$radius-base;
 }
 
-.badge-secondary { background-color: vars.$gray-600; color: vars.$white; }
-.badge-warning { background-color: vars.$warning-color; color: vars.$white; }
-.badge-success { background-color: vars.$success-color; color: vars.$white; }
-.badge-danger { background-color: vars.$error-color; color: vars.$white; }
-.badge-info { background-color: vars.$info-color; color: vars.$white; }
+// Status badge colors (badge-success/warning/danger/info/secondary) come
+// from the global "Unified Badge Styles" in styles.scss - no local
+// overrides here so this matches every other admin/list/detail screen.
 
 // Action buttons - circular icon buttons
 .action-buttons {

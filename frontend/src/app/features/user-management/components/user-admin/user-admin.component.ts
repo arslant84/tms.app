@@ -408,7 +408,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
   }
 
   getStatusBadgeClass(user: User): string {
-    return user.is_active ? 'bg-success' : 'bg-secondary';
+    return user.is_active ? 'badge-success' : 'badge-secondary';
   }
 
   getStatusText(user: User): string {

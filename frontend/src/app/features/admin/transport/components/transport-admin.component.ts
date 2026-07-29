@@ -7,6 +7,7 @@ import { AppSettingsService } from "../../../../core/services/app-settings.servi
 import { ConfirmationService } from "../../../../core/services/confirmation.service";
 import { ToastService } from "../../../../core/services/toast.service";
 import { DateUtilsService } from "../../../../core/utils/date-utils.service";
+import { StatusUtilsService } from "../../../../core/utils/status-utils.service";
 
 import { LoadingSpinnerComponent } from "../../../../shared/components/loading-spinner/loading-spinner.component";
 import type {
@@ -81,6 +82,7 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 	private toastService = inject(ToastService);
 	private confirmationService = inject(ConfirmationService);
 	private appSettingsService = inject(AppSettingsService);
+	private statusUtils = inject(StatusUtilsService);
 	router = inject(Router);
 	dateUtils = inject(DateUtilsService);
 
@@ -357,17 +359,11 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Get status badge class
+	 * Get status badge class - delegates to StatusUtilsService so the same
+	 * status renders the same color everywhere in the app.
 	 */
 	getStatusClass(status: string): string {
-		const statusLower = status.toLowerCase();
-		if (statusLower.includes("completed")) return "badge-success";
-		if (statusLower.includes("approved")) return "badge-green";
-		if (statusLower.includes("progress")) return "badge-info";
-		if (statusLower.includes("rejected")) return "badge-red";
-		if (statusLower.includes("cancelled")) return "badge-gray";
-		if (statusLower.includes("pending")) return "badge-warning";
-		return "badge-gray";
+		return this.statusUtils.getStatusBadgeClass(status);
 	}
 
 	/**

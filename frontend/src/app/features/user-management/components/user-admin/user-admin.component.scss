@@ -184,6 +184,9 @@
   box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
 }
 
+// Status badge colors (badge-success/warning/danger/info/secondary/primary)
+// come from the global "Unified Badge Styles" in styles.scss - no local
+// overrides here so this matches every other admin/list/detail screen.
 .badge {
   display: inline-flex;
   align-items: center;
@@ -193,39 +196,6 @@
   font-weight: vars.$font-weight-medium;
   border-radius: vars.$radius-base;
   white-space: nowrap;
-
-  &.bg-primary,
-  &.badge-primary {
-    background-color: #e6f7f6 !important;
-    color: vars.$primary-hover !important;
-  }
-
-  &.bg-success,
-  &.badge-success {
-    background-color: vars.$success-light !important;
-    color: #065F46 !important;
-  }
-
-  &.bg-secondary,
-  &.badge-secondary {
-    background-color: vars.$gray-100 !important;
-    color: vars.$gray-700 !important;
-  }
-
-  &.badge-warning {
-    background-color: vars.$warning-light !important;
-    color: #92400E !important;
-  }
-
-  &.badge-info {
-    background-color: vars.$info-light !important;
-    color: #1E40AF !important;
-  }
-
-  &.badge-danger {
-    background-color: vars.$error-light !important;
-    color: #991B1B !important;
-  }
 }
 
 // Action buttons - circular icon buttons

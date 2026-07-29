@@ -346,16 +346,9 @@
   letter-spacing: 0.025em;
   white-space: nowrap;
 
-  &.badge-success {
-    background-color: vars.$success-color;
-    color: vars.$white;
-  }
-
-  &.badge-warning {
-    background-color: transparent;
-    color: vars.$warning-hover;
-    border: 1px solid vars.$warning-color;
-  }
+  // badge-success/warning/danger/info/secondary colors come from the
+  // global "Unified Badge Styles" in styles.scss - no local overrides
+  // here so status colors match every other admin/list/detail screen.
 
   &.badge-blue {
     background-color: #cfe2ff;
@@ -377,8 +370,7 @@
     color: #432874;
   }
 
-  &.badge-gray,
-  &.badge-secondary {
+  &.badge-gray {
     background-color: #e2e3e5;
     color: #41464b;
   }

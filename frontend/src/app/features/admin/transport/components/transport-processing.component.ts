@@ -6,6 +6,7 @@ import { TransportService, TransportRequest } from '../../../transport/services/
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
@@ -65,7 +66,8 @@ export class TransportProcessingComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private router: Router,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    private statusUtils: StatusUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -251,15 +253,11 @@ export class TransportProcessingComponent implements OnInit {
   }
 
   /**
-   * Get status color class
+   * Get status badge class - delegates to StatusUtilsService so the same
+   * status renders the same color everywhere in the app.
    */
   getStatusColor(status: string): string {
-    switch (status) {
-      case 'Approved': return 'badge bg-primary';
-      case 'Processing with Transport Admin': return 'badge bg-warning';
-      case 'Completed': return 'badge bg-success';
-      default: return 'badge bg-secondary';
-    }
+    return this.statusUtils.getStatusBadgeClass(status);
   }
 
   /**

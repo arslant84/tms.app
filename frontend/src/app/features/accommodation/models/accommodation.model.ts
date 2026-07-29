@@ -524,18 +524,22 @@ export function calculateNights(checkIn: Date | string, checkOut: Date | string)
 }
 
 /**
- * Get status badge class based on booking status
+ * Get status badge class based on booking status. Matches the canonical
+ * mapping in StatusUtilsService.getStatusBadgeClass() so the same status
+ * renders the same color everywhere in the app (this is a plain function,
+ * not a component/service, so it can't inject StatusUtilsService - kept
+ * in sync manually).
  */
 export function getStatusBadgeClass(status: BookingStatus): string {
   const statusMap: Record<BookingStatus, string> = {
     'Draft': 'badge-secondary',
     'Pending': 'badge-warning',
-    'Confirmed': 'badge-info',
-    'Checked-in': 'badge-primary',
+    'Confirmed': 'badge-success',
+    'Checked-in': 'badge-info',
     'Checked-out': 'badge-success',
-    'Cancelled': 'badge-secondary',
+    'Cancelled': 'badge-danger',
     'Rejected': 'badge-danger',
-    'Blocked': 'badge-dark'
+    'Blocked': 'badge-danger'
   };
 
   return statusMap[status] || 'badge-secondary';

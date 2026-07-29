@@ -251,6 +251,8 @@
     line-height: 1.5;
   }
 
+  // badge-danger/warning/info/secondary colors come from the global
+  // "Unified Badge Styles" in styles.scss - no local overrides here.
   .badge {
     flex-shrink: 0;
     padding: vars.$spacing-1 vars.$spacing-3;
@@ -258,26 +260,6 @@
     font-weight: vars.$font-weight-semibold;
     border-radius: vars.$radius-base;
     text-transform: uppercase;
-
-    &.badge-danger {
-      background: vars.$error-light;
-      color: #991b1b;
-    }
-
-    &.badge-warning {
-      background: vars.$warning-light;
-      color: #92400e;
-    }
-
-    &.badge-info {
-      background: vars.$info-light;
-      color: #1e40af;
-    }
-
-    &.badge-secondary {
-      background: vars.$gray-100;
-      color: vars.$gray-700;
-    }
   }
 
   .notification-message {
