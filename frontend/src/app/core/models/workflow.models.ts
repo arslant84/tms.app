@@ -202,6 +202,7 @@ export interface WorkflowInstance {
 export interface WorkflowInstanceList {
   id: string;
   workflow_template_name: string;
+  object_id?: number;
   entity_info?: EntityInfo;
   status: string;
   current_step_order: number;

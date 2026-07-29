@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AccommodationService } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -9,6 +10,7 @@ import { WorkflowStatusComponent } from '../../../../shared/components/workflow-
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
 import {
+  AccommodationRequestBackend,
   AccommodationRequestDetails,
   DailyBooking,
   ApprovalStep,
@@ -18,7 +20,7 @@ import {
   isEditable,
   isCancellable,
   isDeletable,
-  formatTime12Hour
+  formatTime12Hour,
 } from '../../models/accommodation.model';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
@@ -28,9 +30,16 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
 @Component({
   selector: 'app-accommodation-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, WorkflowStatusComponent, ApprovalActionsComponent, DepartmentNamePipe, LoadingSpinnerComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    WorkflowStatusComponent,
+    ApprovalActionsComponent,
+    DepartmentNamePipe,
+    LoadingSpinnerComponent,
+  ],
   templateUrl: './accommodation-detail.component.html',
-  styleUrls: ['./accommodation-detail.component.scss']
+  styleUrls: ['./accommodation-detail.component.scss'],
 })
 export class AccommodationDetailComponent implements OnInit {
   request: AccommodationRequestDetails | null = null;
@@ -79,16 +88,18 @@ export class AccommodationDetailComponent implements OnInit {
     this.error = '';
 
     this.accommodationService.getRequestById(this.requestId).subscribe({
-      next: (data) => {
+      next: data => {
         // Convert backend format to frontend format
-        this.request = accommodationToFrontend(data as any);
+        this.request = accommodationToFrontend(data as unknown as AccommodationRequestBackend);
         this.calculateDerivedValues();
         this.loading = false;
       },
-      error: (err) => {
-        this.error = 'Failed to load accommodation request: ' + (err.error?.message || err.message || 'Unknown error');
+      error: err => {
+        this.error =
+          'Failed to load accommodation request: ' +
+          (err.error?.message || err.message || 'Unknown error');
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -111,8 +122,7 @@ export class AccommodationDetailComponent implements OnInit {
 
     // Check if has booking records
     this.hasBookingRecords = !!(
-      this.request.dailyBookings &&
-      this.request.dailyBookings.length > 0
+      this.request.dailyBookings && this.request.dailyBookings.length > 0
     );
 
     // Check if rejected
@@ -137,19 +147,19 @@ export class AccommodationDetailComponent implements OnInit {
 
     // Fetch room details from the backend
     this.accommodationService.getRoomById(firstBooking.roomId).subscribe({
-      next: (room) => {
+      next: room => {
         this.roomDetails = {
           type: room.room_type || 'Single',
-          capacity: room.capacity || 1
+          capacity: room.capacity || 1,
         };
       },
-      error: (err) => {
+      error: () => {
         // Silently fail and use defaults if room details can't be fetched
         this.roomDetails = {
           type: 'Single',
-          capacity: 1
+          capacity: 1,
         };
-      }
+      },
     });
   }
 
@@ -178,7 +188,7 @@ export class AccommodationDetailComponent implements OnInit {
     if (!this.canEdit()) {
       this.toastService.error(
         'This accommodation request cannot be edited because it has been approved. ' +
-        'Approved requests can only be viewed, not modified.'
+          'Approved requests can only be viewed, not modified.'
       );
       return;
     }
@@ -187,19 +197,23 @@ export class AccommodationDetailComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.confirmationService.confirmDestructive('Cancel', 'this accommodation request').subscribe(confirmed => {
-      if (confirmed) {
-        this.accommodationService.cancelRequest(this.requestId).subscribe({
-          next: () => {
-            this.toastService.success('Accommodation request cancelled successfully');
-            this.router.navigate(['/accommodation']);
-          },
-          error: (err) => {
-            this.toastService.error('Failed to cancel request: ' + (err.error?.message || err.message));
-          }
-        });
-      }
-    });
+    this.confirmationService
+      .confirmDestructive('Cancel', 'this accommodation request')
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.accommodationService.cancelRequest(this.requestId).subscribe({
+            next: () => {
+              this.toastService.success('Accommodation request cancelled successfully');
+              this.router.navigate(['/accommodation']);
+            },
+            error: err => {
+              this.toastService.error(
+                'Failed to cancel request: ' + (err.error?.message || err.message)
+              );
+            },
+          });
+        }
+      });
   }
 
   onDelete(): void {
@@ -210,9 +224,11 @@ export class AccommodationDetailComponent implements OnInit {
             this.toastService.success('Accommodation request deleted successfully');
             this.router.navigate(['/accommodation']);
           },
-          error: (err) => {
-            this.toastService.error('Failed to delete request: ' + (err.error?.message || err.message));
-          }
+          error: err => {
+            this.toastService.error(
+              'Failed to delete request: ' + (err.error?.message || err.message)
+            );
+          },
         });
       }
     });
@@ -231,9 +247,11 @@ export class AccommodationDetailComponent implements OnInit {
         window.URL.revokeObjectURL(url);
         this.toastService.success('PDF exported successfully');
       },
-      error: (err: any) => {
-        this.toastService.error('Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error'));
-      }
+      error: (err: HttpErrorResponse) => {
+        this.toastService.error(
+          'Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error')
+        );
+      },
     });
   }
 
@@ -247,7 +265,7 @@ export class AccommodationDetailComponent implements OnInit {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   }
 
@@ -258,7 +276,6 @@ export class AccommodationDetailComponent implements OnInit {
 
     const day = date.getDate();
     const ordinal = this.getOrdinal(day);
-    const monthYear = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 
     return `${date.toLocaleDateString('en-US', { month: 'long' })} ${day}${ordinal}, ${date.getFullYear()}`;
   }
@@ -266,10 +283,14 @@ export class AccommodationDetailComponent implements OnInit {
   getOrdinal(day: number): string {
     if (day > 3 && day < 21) return 'th';
     switch (day % 10) {
-      case 1: return 'st';
-      case 2: return 'nd';
-      case 3: return 'rd';
-      default: return 'th';
+      case 1:
+        return 'st';
+      case 2:
+        return 'nd';
+      case 3:
+        return 'rd';
+      default:
+        return 'th';
     }
   }
 
@@ -303,7 +324,7 @@ export class AccommodationDetailComponent implements OnInit {
       // Fall back to requested dates if no bookings exist yet
       return {
         checkIn: this.request?.requestedCheckInDate || null,
-        checkOut: this.request?.requestedCheckOutDate || null
+        checkOut: this.request?.requestedCheckOutDate || null,
       };
     }
 
@@ -321,11 +342,17 @@ export class AccommodationDetailComponent implements OnInit {
 
     return {
       checkIn: sortedBookings[0].date,
-      checkOut: checkOutDate
+      checkOut: checkOutDate,
     };
   }
 
-  getRoomInfo(): { name: string; type: string; capacity: number; location: string; gender: string } | null {
+  getRoomInfo(): {
+    name: string;
+    type: string;
+    capacity: number;
+    location: string;
+    gender: string;
+  } | null {
     if (!this.request?.dailyBookings || this.request.dailyBookings.length === 0) {
       return null;
     }
@@ -336,7 +363,7 @@ export class AccommodationDetailComponent implements OnInit {
       type: this.roomDetails?.type || 'Single',
       capacity: this.roomDetails?.capacity || 1,
       location: this.request.location,
-      gender: this.request.requestorGender
+      gender: this.request.requestorGender,
     };
   }
 
@@ -347,18 +374,18 @@ export class AccommodationDetailComponent implements OnInit {
       .filter(b => b.notes && b.notes.trim().length > 0)
       .map(b => ({
         date: this.dateUtils.formatDate(b.date),
-        note: b.notes!
+        note: b.notes!,
       }));
   }
 
   getBookingStatus(booking: DailyBooking): { text: string; class: string } {
     const statusMap: Record<string, { text: string; class: string }> = {
-      'Confirmed': { text: 'Confirmed', class: 'badge-success' },
-      'Pending': { text: 'Pending', class: 'badge-warning' },
+      Confirmed: { text: 'Confirmed', class: 'badge-success' },
+      Pending: { text: 'Pending', class: 'badge-warning' },
       'Checked-in': { text: 'Checked In', class: 'badge-info' },
       'Checked-out': { text: 'Checked Out', class: 'badge-secondary' },
-      'Cancelled': { text: 'Cancelled', class: 'badge-danger' },
-      'Blocked': { text: 'Blocked', class: 'badge-dark' }
+      Cancelled: { text: 'Cancelled', class: 'badge-danger' },
+      Blocked: { text: 'Blocked', class: 'badge-dark' },
     };
 
     return statusMap[booking.status] || { text: booking.status, class: 'badge-secondary' };
@@ -372,7 +399,6 @@ export class AccommodationDetailComponent implements OnInit {
     return { text: 'Not Ready', class: 'badge-secondary' };
   }
 
-
   formatTime(timeStr: string | null | undefined): string {
     return formatTime12Hour(timeStr || undefined);
   }
@@ -381,12 +407,12 @@ export class AccommodationDetailComponent implements OnInit {
     if (booking.status === 'Checked-in' || booking.status === 'Checked-out') {
       return {
         label: 'Checked In',
-        class: 'status-checked-in'
+        class: 'status-checked-in',
       };
     }
     return {
       label: 'Not Checked In',
-      class: 'status-not-checked-in'
+      class: 'status-not-checked-in',
     };
   }
 
@@ -394,12 +420,12 @@ export class AccommodationDetailComponent implements OnInit {
     if (booking.status === 'Checked-out') {
       return {
         label: 'Checked Out',
-        class: 'status-checked-out'
+        class: 'status-checked-out',
       };
     }
     return {
       label: 'Not Checked Out',
-      class: 'status-not-checked-out'
+      class: 'status-not-checked-out',
     };
   }
 
@@ -421,13 +447,13 @@ export class AccommodationDetailComponent implements OnInit {
 
     return {
       text: this.request.status,
-      class: getStatusBadgeClass(this.request.status)
+      class: getStatusBadgeClass(this.request.status),
     };
   }
 
   // Check if there's a TRF link to display
   hasTrfLink(): boolean {
-    return !!(this.request?.trfId);
+    return !!this.request?.trfId;
   }
 
   getTrfLink(): string {
@@ -439,9 +465,9 @@ export class AccommodationDetailComponent implements OnInit {
     if (!this.request) return 'bi-geo-alt';
 
     const locationIcons: Record<string, string> = {
-      'Ashgabat': 'bi-building',
-      'Kiyanly': 'bi-house',
-      'Turkmenbashy': 'bi-bank'
+      Ashgabat: 'bi-building',
+      Kiyanly: 'bi-house',
+      Turkmenbashy: 'bi-bank',
     };
 
     return locationIcons[this.request.location] || 'bi-geo-alt';
@@ -452,10 +478,10 @@ export class AccommodationDetailComponent implements OnInit {
     if (!roomType) return 'bi-door-open';
 
     const roomTypeIcons: Record<string, string> = {
-      'Single': 'bi-person',
-      'Double': 'bi-people',
-      'Suite': 'bi-house-door',
-      'Tent': 'bi-triangle'
+      Single: 'bi-person',
+      Double: 'bi-people',
+      Suite: 'bi-house-door',
+      Tent: 'bi-triangle',
     };
 
     return roomTypeIcons[roomType] || 'bi-door-open';
@@ -477,7 +503,7 @@ export class AccommodationDetailComponent implements OnInit {
 
     return Array.from(grouped.entries()).map(([date, bookings]) => ({
       date,
-      bookings
+      bookings,
     }));
   }
 
@@ -493,40 +519,38 @@ export class AccommodationDetailComponent implements OnInit {
     this.workflowLoading = true;
 
     // Try to get workflow for this accommodation request
-    this.workflowService.getInstances({
-      entity_type: 'accommodation'
-    }).subscribe({
-      next: (response: any) => {
-        // Check if response is an array or paginated object
-        const instances = Array.isArray(response) ? response : (response.results || []);
+    this.workflowService
+      .getInstances({
+        entity_type: 'accommodation',
+        object_id: this.requestId,
+      })
+      .subscribe({
+        next: instances => {
+          // Find workflow instance for this specific request
+          const instance = instances.find(
+            i => i.object_id === this.requestId || i.entity_info?.id === this.requestId
+          );
 
-        // Find workflow instance for this specific request
-        const instance = instances.find((i: any) =>
-          i.object_id === this.requestId ||
-          i.entity_info?.id === this.requestId ||
-          i.entity_id === this.requestId
-        );
-
-        if (instance && instance.id) {
-          // Load full workflow details
-          this.workflowService.getInstance(instance.id).subscribe({
-            next: (workflow) => {
-              this.workflow = workflow;
-              this.updateCurrentStepExecution();
-              this.workflowLoading = false;
-            },
-            error: (err) => {
-              this.workflowLoading = false;
-            }
-          });
-        } else {
+          if (instance && instance.id) {
+            // Load full workflow details
+            this.workflowService.getInstance(instance.id).subscribe({
+              next: workflow => {
+                this.workflow = workflow;
+                this.updateCurrentStepExecution();
+                this.workflowLoading = false;
+              },
+              error: () => {
+                this.workflowLoading = false;
+              },
+            });
+          } else {
+            this.workflowLoading = false;
+          }
+        },
+        error: () => {
           this.workflowLoading = false;
-        }
-      },
-      error: (err) => {
-        this.workflowLoading = false;
-      }
-    });
+        },
+      });
   }
 
   updateCurrentStepExecution(): void {
@@ -535,11 +559,13 @@ export class AccommodationDetailComponent implements OnInit {
       return;
     }
 
-    this.currentStepExecution = this.workflow.step_executions.find(
-      step => step.status === 'pending' &&
-              step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
-              step.can_action === true
-    ) || null;
+    this.currentStepExecution =
+      this.workflow.step_executions.find(
+        step =>
+          step.status === 'pending' &&
+          step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
+          step.can_action === true
+      ) || null;
   }
 
   onWorkflowApproved(): void {

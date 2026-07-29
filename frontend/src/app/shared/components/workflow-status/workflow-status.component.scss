@@ -116,7 +116,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgb(255 193 7 / 70%);
   }
@@ -231,6 +232,14 @@
     font-size: vars.$font-size-2xl;
     color: vars.$gray-600;
     margin-right: vars.$spacing-2;
+  }
+}
+
+.step-history-unavailable {
+  margin: vars.$spacing-3 0;
+
+  i {
+    font-size: vars.$font-size-base;
   }
 }
 
