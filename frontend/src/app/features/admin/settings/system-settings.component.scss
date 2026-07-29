@@ -38,7 +38,7 @@
 // Settings Card with Gradient Header
 .settings-card {
   background: vars.$white;
-  border-radius: 0.5rem;
+  border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-lg;
   overflow: hidden;
   border: 1px solid vars.$gray-200;
@@ -131,7 +131,7 @@
     color: vars.$gray-800;
     background-color: vars.$white;
     border: 1px solid vars.$gray-200;
-    border-radius: 0.375rem;
+    border-radius: vars.$radius-md;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
     &:focus {

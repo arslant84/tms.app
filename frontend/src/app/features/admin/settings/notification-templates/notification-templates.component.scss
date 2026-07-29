@@ -55,7 +55,7 @@
   // Card Styles (matching settings page with gradient header)
   .templates-card {
     background: vars.$white;
-    border-radius: 0.5rem;
+    border-radius: vars.$radius-lg;
     box-shadow: vars.$shadow-lg;
     overflow: hidden;
     border: 1px solid vars.$gray-200;
@@ -224,7 +224,7 @@
     .modal-content {
       background-color: vars.$white;
       border: 1px solid vars.$gray-200;
-      border-radius: 0.5rem;
+      border-radius: vars.$radius-lg;
       box-shadow: vars.$shadow-xl;
       max-height: calc(100vh - 3.5rem);
       overflow: hidden;
@@ -311,7 +311,7 @@
         padding: vars.$spacing-3 vars.$spacing-4;
         background-color: vars.$info-light;
         border: 1px solid vars.$info-light;
-        border-radius: 0.375rem;
+        border-radius: vars.$radius-md;
         display: flex;
         gap: 0.75rem;
 
@@ -380,7 +380,7 @@
             font-family: vars.$font-mono;
             background-color: vars.$gray-100;
             border: 1px solid vars.$gray-300;
-            border-radius: 0.25rem;
+            border-radius: vars.$radius-base;
             color: vars.$gray-700;
           }
         }
@@ -414,7 +414,7 @@
   text-align: center;
   white-space: nowrap;
   vertical-align: baseline;
-  border-radius: 0.25rem;
+  border-radius: vars.$radius-base;
 
   &.bg-info {
     background-color: vars.$info-light;

@@ -88,7 +88,7 @@
     .badge {
       background-color: rgb(255 255 255 / 20%);
       padding: 0.125rem vars.$spacing-2;
-      border-radius: 1rem;
+      border-radius: vars.$radius-2xl;
       font-size: clamp(0.65rem, 0.75vw, 0.75rem);
     }
   }
@@ -275,8 +275,8 @@
 
     // Make scrollbar thinner on smaller screens
     &::-webkit-scrollbar { height: clamp(6px, 0.8vh, 8px); }
-    &::-webkit-scrollbar-track { background: vars.$gray-100; border-radius: 4px; }
-    &::-webkit-scrollbar-thumb { background: vars.$gray-300; border-radius: 4px; }
+    &::-webkit-scrollbar-track { background: vars.$gray-100; border-radius: vars.$radius-base; }
+    &::-webkit-scrollbar-thumb { background: vars.$gray-300; border-radius: vars.$radius-base; }
   }
 
   .calendar-grid {

@@ -100,7 +100,7 @@ $gray-900: vars.$gray-800; // Darkest text
 .stat-card {
   background: vars.$white;
   border: 1px solid $border;
-  border-radius: 0.5rem;
+  border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-base;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 
@@ -157,7 +157,7 @@ $gray-900: vars.$gray-800; // Darkest text
   display: inline-flex;
   padding: vars.$spacing-1;
   background-color: $gray-100;
-  border-radius: 0.375rem;
+  border-radius: vars.$radius-md;
   margin-bottom: vars.$spacing-4;
 }
 
@@ -168,7 +168,7 @@ $gray-900: vars.$gray-800; // Darkest text
   color: $gray-700;
   background: transparent;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: vars.$radius-base;
   cursor: pointer;
   transition: all 0.15s ease;
 
@@ -200,7 +200,7 @@ $gray-900: vars.$gray-800; // Darkest text
 .card {
   background: vars.$white;
   border: 1px solid $border;
-  border-radius: 0.5rem;
+  border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-base;
   overflow: hidden;
 
@@ -372,7 +372,7 @@ $gray-900: vars.$gray-800; // Darkest text
   padding: vars.$spacing-1 0.625rem;
   font-size: vars.$font-size-xs;
   font-weight: vars.$font-weight-medium;
-  border-radius: 0.375rem;
+  border-radius: vars.$radius-md;
   white-space: nowrap;
 
   i {

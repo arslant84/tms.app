@@ -231,12 +231,12 @@
 
   &::-webkit-scrollbar-track {
     background: vars.$gray-100;
-    border-radius: 4px;
+    border-radius: vars.$radius-base;
   }
 
   &::-webkit-scrollbar-thumb {
     background: vars.$gray-400;
-    border-radius: 4px;
+    border-radius: vars.$radius-base;
 
     &:hover {
       background: vars.$gray-400;

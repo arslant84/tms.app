@@ -61,7 +61,7 @@
 .enhanced-workflow-config {
   .approval-steps-container {
     background: vars.$gray-50;
-    border-radius: 8px;
+    border-radius: vars.$radius-lg;
     padding: vars.$spacing-6;
     margin-top: 1rem;
   }
@@ -200,7 +200,7 @@
       padding: vars.$spacing-6;
 
       .alert {
-        border-radius: 8px;
+        border-radius: vars.$radius-lg;
       }
     }
 
