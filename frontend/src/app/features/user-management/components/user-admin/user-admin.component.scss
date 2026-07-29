@@ -313,7 +313,7 @@
     color: vars.$warning-color;
 
     &:hover:not(:disabled) {
-      background-color: #fffbeb;
+      background-color: vars.$warning-lightest;
       border-color: vars.$warning-hover;
       color: vars.$warning-hover;
     }

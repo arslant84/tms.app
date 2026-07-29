@@ -398,7 +398,7 @@
   background: vars.$white;
 
   &:hover {
-    background-color: #f0fdf4;
+    background-color: vars.$success-lightest;
     border-color: color.adjust(vars.$success-color, $lightness: -10%);
     color: color.adjust(vars.$success-color, $lightness: -10%);
   }
@@ -417,14 +417,14 @@
 }
 
 .btn-process {
-  color: #8b5cf6;
-  border-color: #8b5cf6;
+  color: vars.$purple-color;
+  border-color: vars.$purple-color;
   background: vars.$white;
 
   &:hover {
-    background-color: #faf5ff;
-    border-color: #7c3aed;
-    color: #7c3aed;
+    background-color: vars.$purple-light;
+    border-color: vars.$purple-hover;
+    color: vars.$purple-hover;
   }
 }
 
@@ -434,7 +434,7 @@
   background: vars.$white;
 
   &:hover {
-    background-color: #f0fdf4;
+    background-color: vars.$success-lightest;
     border-color: color.adjust(vars.$success-color, $lightness: -10%);
     color: color.adjust(vars.$success-color, $lightness: -10%);
   }
@@ -446,7 +446,7 @@
   background: vars.$white;
 
   &:hover {
-    background-color: #fffbeb;
+    background-color: vars.$warning-lightest;
     border-color: color.adjust(vars.$warning-color, $lightness: -10%);
     color: color.adjust(vars.$warning-color, $lightness: -10%);
   }
@@ -536,7 +536,7 @@
         cursor: pointer;
 
         &:hover {
-          background-color: #f0fdfa;
+          background-color: vars.$primary-lightest;
           border-color: vars.$primary-color;
         }
       }

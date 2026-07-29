@@ -113,7 +113,7 @@ label.small {
 .btn-warning {
   background-color: vars.$warning-color;
   border-color: vars.$warning-color;
-  color: #000000;
+  color: vars.$black;
 
   &:hover {
     background-color: vars.$warning-color;

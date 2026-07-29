@@ -5,13 +5,13 @@
 $primary:       vars.$primary-color;
 $primary-dark:  vars.$primary-hover;
 $primary-light: vars.$primary-lightest;
-$background:    #f2f4f3;
-$border:        #dedede;
+$background:    vars.$gray-100;
+$border:        vars.$gray-200;
 $gray-400:      vars.$gray-400;
 $gray-500:      vars.$gray-500;
-$gray-600:      #666;
-$gray-700:      #333;
-$gray-900:      #1f2937;
+$gray-600:      vars.$gray-500;
+$gray-700:      vars.$gray-700;
+$gray-900:      vars.$gray-800;
 
 // =========== CONTAINER ==========
 .combined-admin-container {
@@ -269,7 +269,7 @@ $gray-900:      #1f2937;
       padding: 0.625rem 0.875rem;
       font-size: vars.$font-size-sm;
       color: $gray-700;
-      border-bottom: 1px solid #f3f4f6;
+      border-bottom: 1px solid vars.$gray-100;
       max-width: 220px;
 
       @media (width <= 768px) {

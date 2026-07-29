@@ -471,7 +471,7 @@
     transition: vars.$transition-base;
 
     &.completed {
-      background: #f0fdf4;
+      background: vars.$success-lightest;
       border-left-color: vars.$success-color;
     }
 
@@ -481,7 +481,7 @@
     }
 
     &.pending {
-      background: #fffbeb;
+      background: vars.$warning-lightest;
       border-left-color: vars.$warning-color;
     }
 

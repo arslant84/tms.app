@@ -43,6 +43,20 @@ $info-light: #dbeafe;
 $info-lightest: #eff6ff;              // Very light info background
 $info-dark: #1e40af;                  // Dark info text
 
+// Categorical accent colors (purple/indigo) - used for visual
+// differentiation (module/category badges, role pills), not for status.
+// Formalized from ~10 near-duplicate hardcoded hex values found reused
+// across transport-admin/visa-admin/flights-admin-overview/dashboard-home/
+// right-panel during the Fix 22 design-token audit.
+$purple-color: #8b5cf6;
+$purple-hover: #7c3aed;
+$purple-light: #ede9fe;
+$purple-dark: #5b21b6;
+$indigo-color: #6366f1;
+$indigo-hover: #4f46e5;
+$indigo-light: #e0e7ff;
+$indigo-dark: #3730a3;
+
 // Neutral/Gray Scale
 $gray-50: #f9fafb;
 $gray-100: #f3f4f6;

@@ -170,7 +170,7 @@
 
   &.bg-success {
     background-color: vars.$success-light !important;
-    color: #065f46 !important;
+    color: vars.$success-dark !important;
   }
 
   &.bg-secondary {

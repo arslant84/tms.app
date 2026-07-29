@@ -8,18 +8,18 @@
  */
 
 // ========== COLORS (Petronas Green Theme) ==========
-$primary: #00B1A9; // Petronas Green
-$primary-dark: #009991; // Darker Petronas Green
-$primary-light: #e6f7f6; // Light Petronas Green tint
-$background: #F2F4F3; // Light Gray Background
-$foreground: #333333; // Dark Gray Text
-$border: #DEDEDE; // Border color
+$primary: vars.$primary-color; // Petronas Green
+$primary-dark: vars.$primary-hover; // Darker Petronas Green
+$primary-light: vars.$primary-lightest; // Light Petronas Green tint
+$background: vars.$gray-100; // Light Gray Background
+$foreground: vars.$gray-700; // Dark Gray Text
+$border: vars.$gray-200; // Border color
 $gray-50: vars.$gray-50; // Very light gray
-$gray-100: #E6E6E6; // Muted background
+$gray-100: vars.$gray-100; // Muted background
 $gray-500: vars.$gray-500; // Medium gray (icons)
-$gray-600: #666666; // Muted foreground
-$gray-700: #333333; // Dark text
-$gray-900: #1F2937; // Darkest text
+$gray-600: vars.$gray-500; // Muted foreground
+$gray-700: vars.$gray-700; // Dark text
+$gray-900: vars.$gray-800; // Darkest text
 
 // =========== CONTAINER ==========
 .transport-admin-container {
@@ -426,7 +426,7 @@ $gray-900: #1F2937; // Darkest text
   background: vars.$white;
 
   &:hover {
-    background-color: #f0fdf4;
+    background-color: vars.$success-lightest;
     border-color: vars.$success-hover;
     color: vars.$success-hover;
   }
@@ -445,14 +445,14 @@ $gray-900: #1F2937; // Darkest text
 }
 
 .btn-process {
-  color: #8b5cf6;
-  border-color: #8b5cf6;
+  color: vars.$purple-color;
+  border-color: vars.$purple-color;
   background: vars.$white;
 
   &:hover {
-    background-color: #faf5ff;
-    border-color: #7c3aed;
-    color: #7c3aed;
+    background-color: vars.$purple-light;
+    border-color: vars.$purple-hover;
+    color: vars.$purple-hover;
   }
 }
 
@@ -462,7 +462,7 @@ $gray-900: #1F2937; // Darkest text
   background: vars.$white;
 
   &:hover {
-    background-color: #f0fdf4;
+    background-color: vars.$success-lightest;
     border-color: vars.$success-hover;
     color: vars.$success-hover;
   }
@@ -474,7 +474,7 @@ $gray-900: #1F2937; // Darkest text
   background: vars.$white;
 
   &:hover {
-    background-color: #fffbeb;
+    background-color: vars.$warning-lightest;
     border-color: vars.$warning-hover;
     color: vars.$warning-hover;
   }
@@ -564,7 +564,7 @@ $gray-900: #1F2937; // Darkest text
         cursor: pointer;
 
         &:hover {
-          background-color: #f0fdfa;
+          background-color: vars.$primary-lightest;
           border-color: $primary;
         }
       }

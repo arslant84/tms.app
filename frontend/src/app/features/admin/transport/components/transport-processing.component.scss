@@ -3,13 +3,13 @@
 @use '../../../../../styles/variables' as vars;
 
 // Petronas Green Color Scheme (from pctsb.syntra reference)
-$primary-green: #00B1A9;
-$primary-green-hover: #009991;
-$primary-green-light: #e6f7f6;
-$text-dark: #333333;
-$text-muted: #6c757d;
-$bg-light: #F2F4F3;
-$border-light: #dee2e6;
+$primary-green: vars.$primary-color;
+$primary-green-hover: vars.$primary-hover;
+$primary-green-light: vars.$primary-lightest;
+$text-dark: vars.$gray-700;
+$text-muted: vars.$gray-500;
+$bg-light: vars.$gray-100;
+$border-light: vars.$gray-200;
 
 // Container
 .transport-processing-container {
@@ -283,7 +283,7 @@ $border-light: #dee2e6;
 .spinner {
   width: 3rem;
   height: 3rem;
-  border: 4px solid #f3f3f3;
+  border: 4px solid vars.$gray-100;
   border-top: 4px solid $primary-green;
   border-radius: vars.$radius-full;
   animation: spin 1s linear infinite;
@@ -362,7 +362,7 @@ $border-light: #dee2e6;
     }
 
     .form-control[readonly] {
-      background-color: #e9ecef;
+      background-color: vars.$gray-200;
     }
   }
 

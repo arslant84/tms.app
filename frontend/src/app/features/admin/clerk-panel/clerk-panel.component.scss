@@ -110,7 +110,7 @@
   }
 
   &.selected {
-    background-color: #e7f5ff;
+    background-color: vars.$info-lightest;
     border-left-color: vars.$info-color;
   }
 

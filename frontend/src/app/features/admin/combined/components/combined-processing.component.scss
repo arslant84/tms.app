@@ -188,7 +188,7 @@ $border: vars.$gray-200;
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    background-color: #e7f3ff;
+    background-color: vars.$info-lightest;
     color: vars.$primary-color;
     font-size: vars.$font-size-xs;
     font-weight: vars.$font-weight-medium;
@@ -304,7 +304,7 @@ $border: vars.$gray-200;
   border-radius: vars.$radius-sm;
 }
 
-// Completed-tab count badge - was Bootstrap's raw bg-primary (#0d6efd,
+// Completed-tab count badge - was Bootstrap's raw bg-primary (vars.$info-color,
 // stock blue/indigo), inconsistent with the app's teal design system and
 // with the green already used for "Completed" everywhere else (see
 // .badge-completed above, and badge-success in transport/combined admin
@@ -370,9 +370,9 @@ $border: vars.$gray-200;
 // ===== COMPLETED BANNER =====
 .completed-banner {
   margin-top: vars.$spacing-4;
-  background-color: #d1fae5;
-  color: #065f46;
-  border: 1px solid #6ee7b7;
+  background-color: vars.$success-light;
+  color: vars.$success-dark;
+  border: 1px solid vars.$success-light;
   border-radius: vars.$radius-lg;
   padding: vars.$spacing-4 vars.$spacing-5;
   font-size: vars.$font-size-sm;

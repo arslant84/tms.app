@@ -295,27 +295,27 @@ a.fw-medium {
 
 .badge-blue {
   background-color: vars.$info-light;
-  color: #1E40AF;
+  color: vars.$info-dark;
 }
 
 .badge-green {
   background-color: vars.$success-light;
-  color: #065F46;
+  color: vars.$success-dark;
 }
 
 .badge-amber {
   background-color: vars.$warning-light;
-  color: #92400E;
+  color: vars.$warning-dark;
 }
 
 .badge-purple {
-  background-color: #EDE9FE;
-  color: #5B21B6;
+  background-color: vars.$purple-light;
+  color: vars.$purple-dark;
 }
 
 .badge-indigo {
-  background-color: #E0E7FF;
-  color: #3730A3;
+  background-color: vars.$indigo-light;
+  color: vars.$indigo-dark;
 }
 
 .badge-gray {
@@ -369,7 +369,7 @@ a.fw-medium {
   background: vars.$white;
 
   &:hover {
-    background-color: #fffbeb;
+    background-color: vars.$warning-lightest;
     border-color: vars.$warning-hover;
     color: vars.$warning-hover;
   }
