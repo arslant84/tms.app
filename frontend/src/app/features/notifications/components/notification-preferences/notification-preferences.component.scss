@@ -225,7 +225,7 @@
       width: 3rem;
       height: 1.5rem;
       cursor: pointer;
-      border-radius: 1rem;
+      border-radius: vars.$radius-2xl;
 
       &:checked {
         background-color: vars.$primary-color;
@@ -327,7 +327,7 @@
         height: 1.25rem;
         cursor: pointer;
         margin: 0;
-        border-radius: 0.75rem;
+        border-radius: vars.$radius-xl;
 
         &:checked {
           background-color: vars.$primary-color;

@@ -102,7 +102,7 @@ $gray-900:      vars.$gray-800;
 .stat-card {
   background: vars.$white;
   border: 1px solid $border;
-  border-radius: 0.5rem;
+  border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-base;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
   min-width: 0;
@@ -159,7 +159,7 @@ $gray-900:      vars.$gray-800;
 .card {
   background: vars.$white;
   border: 1px solid $border;
-  border-radius: 0.5rem;
+  border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-base;
   overflow: hidden;
   width: 100%;
@@ -344,7 +344,7 @@ $gray-900:      vars.$gray-800;
   padding: vars.$spacing-1 0.625rem;
   font-size: vars.$font-size-xs;
   font-weight: vars.$font-weight-medium;
-  border-radius: 0.375rem;
+  border-radius: vars.$radius-md;
   white-space: nowrap;
 }
 
