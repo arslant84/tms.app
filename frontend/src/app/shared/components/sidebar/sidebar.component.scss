@@ -127,22 +127,6 @@
     color: vars.$info-color;
     font-weight: vars.$font-weight-semibold;
   }
-
-  // Badge for pending counts
-  .nav-badge {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: vars.$spacing-5;
-    height: vars.$spacing-5;
-    padding: 0 vars.$spacing-1;
-    font-size: vars.$font-size-xs;
-    font-weight: vars.$font-weight-semibold;
-    border-radius: vars.$radius-full;
-    background-color: vars.$primary-color;
-    color: vars.$text-inverse;
-  }
 }
 
 // Mobile responsive (for collapsed state if needed)
