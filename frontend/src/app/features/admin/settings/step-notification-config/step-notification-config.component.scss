@@ -129,17 +129,17 @@
 
             &.bg-danger {
               background-color: vars.$error-light !important;
-              color: #991b1b !important;
+              color: vars.$error-dark !important;
             }
 
             &.bg-warning {
               background-color: vars.$warning-light !important;
-              color: #92400e !important;
+              color: vars.$warning-dark !important;
             }
 
             &.bg-info {
               background-color: vars.$info-light !important;
-              color: #1e40af !important;
+              color: vars.$info-dark !important;
             }
 
             &.bg-secondary {

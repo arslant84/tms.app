@@ -38,7 +38,7 @@
 .card-title {
   font-weight: vars.$font-weight-semibold;
   font-size: vars.$font-size-lg;
-  color: #1a202c;
+  color: vars.$gray-900;
 }
 
 .card-body {
@@ -56,16 +56,16 @@
   }
 
   &::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: vars.$gray-100;
     border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
+    background: vars.$gray-300;
     border-radius: 4px;
 
     &:hover {
-      background: #a0aec0;
+      background: vars.$gray-400;
     }
   }
 }
@@ -80,16 +80,16 @@
   }
 
   &::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: vars.$gray-100;
     border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
+    background: vars.$gray-300;
     border-radius: 4px;
 
     &:hover {
-      background: #a0aec0;
+      background: vars.$gray-400;
     }
   }
 }
@@ -97,34 +97,34 @@
 .permissions-form-scroll {
   max-height: 192px;
   overflow-y: auto;
-  background-color: #ffffff;
+  background-color: vars.$white;
 
   &::-webkit-scrollbar {
     width: 8px;
   }
 
   &::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: vars.$gray-100;
     border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
+    background: vars.$gray-300;
     border-radius: 4px;
 
     &:hover {
-      background: #a0aec0;
+      background: vars.$gray-400;
     }
   }
 }
 
 // Role item styling
 .role-item {
-  background-color: #ffffff;
+  background-color: vars.$white;
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #f7fafc;
+    background-color: vars.$gray-50;
   }
 
   &:last-child {

@@ -70,8 +70,8 @@
     border-color: vars.$success-color;
 
     &:hover:not(:disabled) {
-      background-color: #218838;
-      border-color: #1e7e34;
+      background-color: vars.$success-hover;
+      border-color: vars.$success-hover;
     }
   }
 
@@ -80,8 +80,8 @@
     border-color: vars.$error-color;
 
     &:hover:not(:disabled) {
-      background-color: #c82333;
-      border-color: #bd2130;
+      background-color: vars.$error-hover;
+      border-color: vars.$error-dark;
     }
   }
 
@@ -91,8 +91,8 @@
     color: vars.$text-inverse;
 
     &:hover:not(:disabled) {
-      background-color: #138496;
-      border-color: #117a8b;
+      background-color: vars.$info-hover;
+      border-color: vars.$info-dark;
     }
   }
 
@@ -101,8 +101,8 @@
     border-color: vars.$gray-600;
 
     &:hover:not(:disabled) {
-      background-color: #5a6268;
-      border-color: #545b62;
+      background-color: vars.$gray-600;
+      border-color: vars.$gray-600;
     }
   }
 }
@@ -215,7 +215,7 @@
         transition: border-color 0.2s ease;
 
         &:focus {
-          border-color: #80bdff;
+          border-color: vars.$info-light;
           outline: 0;
           box-shadow: vars.$input-focus-shadow;
         }
@@ -249,9 +249,9 @@
     }
 
     .alert-info {
-      background-color: #d1ecf1;
-      border-color: #bee5eb;
-      color: #0c5460;
+      background-color: vars.$info-light;
+      border-color: vars.$info-light;
+      color: vars.$info-dark;
     }
   }
 
@@ -301,7 +301,7 @@
     }
 
     strong {
-      color: #856404;
+      color: vars.$warning-dark;
     }
   }
 }

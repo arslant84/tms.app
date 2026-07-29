@@ -68,7 +68,7 @@
     padding: vars.$spacing-md;
     margin-top: vars.$spacing-md;
     background-color: vars.$error-light;
-    border: 1px solid #fecaca;
+    border: 1px solid vars.$error-light;
     border-radius: vars.$radius-lg;
     color: vars.$error-color;
 

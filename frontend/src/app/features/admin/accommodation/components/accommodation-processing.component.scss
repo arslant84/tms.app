@@ -143,10 +143,10 @@
 
   .calendar-header {
     padding: clamp(0.75rem, 1vw, 1rem);
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid vars.$gray-200;
 
     h2 { font-size: clamp(0.95rem, 1.1vw, 1.15rem); font-weight: vars.$font-weight-semibold; margin: 0 0 0.2rem; }
-    .calendar-description { color: #718096; font-size: clamp(0.7rem, 0.8vw, 0.85rem); margin: 0; }
+    .calendar-description { color: vars.$gray-500; font-size: clamp(0.7rem, 0.8vw, 0.85rem); margin: 0; }
   }
 
   .calendar-controls {
@@ -155,8 +155,8 @@
     flex-wrap: wrap;
     gap: vars.$spacing-2;
     padding: vars.$spacing-2 clamp(0.5rem, 1vw, 1rem);
-    background-color: #f7fafc;
-    border-bottom: 1px solid #e2e8f0;
+    background-color: vars.$gray-50;
+    border-bottom: 1px solid vars.$gray-200;
 
     .month-nav {
       display: flex;
@@ -167,7 +167,7 @@
         width: clamp(1.75rem, 2vw, 2rem);
         height: clamp(1.75rem, 2vw, 2rem);
         background: vars.$white;
-        border: 1px solid #cbd5e0;
+        border: 1px solid vars.$gray-300;
         border-radius: vars.$radius-sm;
         cursor: pointer;
         display: flex;
@@ -175,7 +175,7 @@
         justify-content: center;
         font-size: clamp(0.75rem, 0.85vw, 0.875rem);
 
-        &:hover { background-color: #edf2f7; }
+        &:hover { background-color: vars.$gray-100; }
       }
 
       .current-month {
@@ -189,7 +189,7 @@
 
     .location-select {
       padding: vars.$spacing-2 vars.$spacing-3;
-      border: 1px solid #cbd5e0;
+      border: 1px solid vars.$gray-300;
       border-radius: vars.$radius-sm;
       background: vars.$white;
       cursor: pointer;
@@ -205,7 +205,7 @@
       background: vars.$white;
       padding: vars.$spacing-2 vars.$spacing-3;
       border-radius: vars.$radius-sm;
-      border: 1px solid #cbd5e0;
+      border: 1px solid vars.$gray-300;
 
       .btn-slider {
         padding: vars.$spacing-2 vars.$spacing-3;
@@ -228,7 +228,7 @@
       .slider-info {
         font-size: clamp(0.7rem, 0.8vw, 0.8rem);
         font-weight: vars.$font-weight-medium;
-        color: #4a5568;
+        color: vars.$gray-600;
         white-space: nowrap;
       }
     }
@@ -238,8 +238,8 @@
     display: flex;
     gap: clamp(0.5rem, 1vw, 1rem);
     padding: vars.$spacing-2 clamp(0.5rem, 1vw, 1rem);
-    background-color: #f7fafc;
-    border-bottom: 1px solid #e2e8f0;
+    background-color: vars.$gray-50;
+    border-bottom: 1px solid vars.$gray-200;
     font-size: clamp(0.65rem, 0.75vw, 0.8rem);
     flex-wrap: wrap;
 
@@ -252,18 +252,18 @@
         width: clamp(0.75rem, 1vw, 1rem);
         height: clamp(0.75rem, 1vw, 1rem);
         border-radius: vars.$radius-sm;
-        border: 1px solid #cbd5e0;
+        border: 1px solid vars.$gray-300;
         flex-shrink: 0;
 
         &.available { background-color: vars.$white; }
-        &.occupied { background-color: #48bb78; border-color: #38a169; }
-        &.blocked { background-color: #f56565; border-color: #e53e3e; }
+        &.occupied { background-color: vars.$success-color; border-color: vars.$success-color; }
+        &.blocked { background-color: vars.$error-color; border-color: vars.$error-color; }
       }
     }
 
     .legend-hint {
       margin-left: auto;
-      color: #718096;
+      color: vars.$gray-500;
       font-size: clamp(0.65rem, 0.75vw, 0.75rem);
       font-style: italic;
     }
@@ -275,8 +275,8 @@
 
     // Make scrollbar thinner on smaller screens
     &::-webkit-scrollbar { height: clamp(6px, 0.8vh, 8px); }
-    &::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-    &::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+    &::-webkit-scrollbar-track { background: vars.$gray-100; border-radius: 4px; }
+    &::-webkit-scrollbar-thumb { background: vars.$gray-300; border-radius: 4px; }
   }
 
   .calendar-grid {
@@ -310,10 +310,10 @@
           font-size: clamp(0.55rem, 0.65vw, 0.7rem);
           padding: clamp(0.2rem, 0.35vw, 0.4rem) 0.1rem;
           border-radius: 0.3rem;
-          background-color: #f7fafc;
-          border: 1px solid #e2e8f0;
+          background-color: vars.$gray-50;
+          border: 1px solid vars.$gray-200;
 
-          &.weekend { background-color: #ebf8ff; }
+          &.weekend { background-color: vars.$info-lightest; }
           .day-name { font-weight: vars.$font-weight-semibold; margin-bottom: 0.1rem; font-size: clamp(0.5rem, 0.6vw, 0.65rem); }
           .day-number { font-size: clamp(0.5rem, 0.6vw, 0.65rem); }
         }
@@ -324,7 +324,7 @@
       margin-bottom: vars.$spacing-3;
 
       .staff-house-header {
-        background: linear-gradient(135deg, #e6f7f6 0%, vars.$primary-color 100%);
+        background: linear-gradient(135deg, vars.$primary-lightest 0%, vars.$primary-color 100%);
         color: vars.$gray-900;
         padding: clamp(0.5rem, 0.625vw, 0.625rem) clamp(0.75rem, 1vw, 1rem);
         border-radius: vars.$radius-base;
@@ -344,7 +344,7 @@
 
         .room-name {
           background: vars.$white;
-          border: 1px solid #e2e8f0;
+          border: 1px solid vars.$gray-200;
           border-radius: vars.$radius-base;
           padding: clamp(0.375rem, 0.5vw, 0.5rem) clamp(0.5rem, 0.75vw, 0.75rem);
           display: flex;
@@ -362,7 +362,7 @@
           .date-cell {
             height: clamp(1.3rem, 1.6vw, 1.8rem);
             border-radius: vars.$radius-sm;
-            border: 1px solid #e2e8f0;
+            border: 1px solid vars.$gray-200;
             background: vars.$white;
             display: flex;
             align-items: center;
@@ -371,18 +371,18 @@
             transition: all 0.2s;
             font-size: clamp(0.6rem, 0.75vw, 0.75rem);
 
-            &:hover { background-color: #f7fafc; transform: scale(1.05); }
+            &:hover { background-color: vars.$gray-50; transform: scale(1.05); }
 
             &.occupied {
-              background-color: #c6f6d5;
-              border-color: #9ae6b4;
-              &:hover { background-color: #9ae6b4; }
+              background-color: vars.$success-light;
+              border-color: vars.$success-light;
+              &:hover { background-color: vars.$success-light; }
             }
 
             &.blocked {
-              background-color: #fed7d7;
-              border-color: #fc8181;
-              &:hover { background-color: #fc8181; }
+              background-color: vars.$error-light;
+              border-color: vars.$error-color;
+              &:hover { background-color: vars.$error-color; }
             }
           }
         }
@@ -420,10 +420,10 @@
 
 .requests-header, .booking-details-header, .booked-header {
   padding: clamp(0.75rem, 1vw, 1rem);
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid vars.$gray-200;
 
   h2 { font-size: clamp(0.95rem, 1.1vw, 1.15rem); font-weight: vars.$font-weight-semibold; margin: 0 0 0.2rem; }
-  p { font-size: clamp(0.7rem, 0.8vw, 0.85rem); margin: 0; color: #718096; }
+  p { font-size: clamp(0.7rem, 0.8vw, 0.85rem); margin: 0; color: vars.$gray-500; }
 }
 
 .booking-details-header {
@@ -456,7 +456,7 @@
     border-bottom: 1px solid vars.$gray-200;
     transition: background-color 0.15s ease;
     &:hover { background-color: vars.$gray-50; }
-    &.selected { background-color: #e6f7f6; }
+    &.selected { background-color: vars.$primary-lightest; }
 
     td {
       padding: vars.$spacing-md vars.$spacing-3;
@@ -508,7 +508,7 @@
 .no-selection {
   padding: clamp(2rem, 3vw, 3rem) clamp(1rem, 1.5vw, 1.5rem);
   text-align: center;
-  color: #718096;
+  color: vars.$gray-500;
 
   flex: 1 1 auto;
   display: flex;
@@ -530,10 +530,10 @@
     justify-content: space-between;
     padding: 0.4rem 0;
     font-size: clamp(0.7rem, 0.8vw, 0.85rem);
-    &:not(:last-child) { border-bottom: 1px solid #f7fafc; }
+    &:not(:last-child) { border-bottom: 1px solid vars.$gray-50; }
   }
 
-  .divider { height: 1px; background-color: #e2e8f0; margin: clamp(0.75rem, 1vw, 1rem) 0; }
+  .divider { height: 1px; background-color: vars.$gray-200; margin: clamp(0.75rem, 1vw, 1rem) 0; }
 
   .form-group {
     margin-bottom: vars.$spacing-3;
@@ -543,13 +543,13 @@
     .form-select, .form-textarea {
       width: 100%;
       padding: clamp(0.4rem, 0.5vw, 0.5rem) clamp(0.5rem, 0.7vw, 0.75rem);
-      border: 1px solid #cbd5e0;
+      border: 1px solid vars.$gray-300;
       border-radius: vars.$radius-sm;
       transition: all 0.2s;
       font-size: clamp(0.7rem, 0.8vw, 0.85rem);
 
       &:focus { outline: none; border-color: vars.$primary-color; box-shadow: 0 0 0 3px rgb(0 177 169 / 10%); }
-      &:disabled { background-color: #f7fafc; cursor: not-allowed; }
+      &:disabled { background-color: vars.$gray-50; cursor: not-allowed; }
     }
 
     .date-range-display {
@@ -557,9 +557,9 @@
       align-items: center;
       gap: vars.$spacing-3;
       padding: clamp(0.5rem, 0.625vw, 0.625rem) clamp(0.625rem, 0.875vw, 0.875rem);
-      border: 1px solid #cbd5e0;
+      border: 1px solid vars.$gray-300;
       border-radius: vars.$radius-sm;
-      background-color: #f7fafc;
+      background-color: vars.$gray-50;
       font-size: clamp(0.75rem, 0.85vw, 0.875rem);
     }
   }
@@ -591,12 +591,12 @@
 
   i { font-size: clamp(2rem, 3vw, 3rem); opacity: 0.5; margin-bottom: vars.$spacing-md; }
   h3 { font-size: clamp(0.95rem, 1.1vw, 1.125rem); font-weight: vars.$font-weight-semibold; margin: 0 0 vars.$spacing-2 0; }
-  p { color: #718096; font-size: clamp(0.75rem, 0.85vw, 0.875rem); margin: 0; }
+  p { color: vars.$gray-500; font-size: clamp(0.75rem, 0.85vw, 0.875rem); margin: 0; }
 
   .spinner {
     width: clamp(2rem, 2.5vw, 2.5rem);
     height: clamp(2rem, 2.5vw, 2.5rem);
-    border: 3px solid #e2e8f0;
+    border: 3px solid vars.$gray-200;
     border-top-color: vars.$primary-color;
     border-radius: vars.$radius-full;
     animation: spin 0.8s linear infinite;
@@ -631,9 +631,9 @@
   // badge-success/warning/danger/info/secondary colors come from the
   // global "Unified Badge Styles" in styles.scss - no local overrides
   // here so status colors match every other admin/list/detail screen.
-  &.badge-blue { background-color: vars.$info-light; color: #1E40AF; }
-  &.badge-green { background-color: vars.$success-light; color: #065F46; }
-  &.badge-amber { background-color: vars.$warning-light; color: #92400E; }
+  &.badge-blue { background-color: vars.$info-light; color: vars.$info-dark; }
+  &.badge-green { background-color: vars.$success-light; color: vars.$success-dark; }
+  &.badge-amber { background-color: vars.$warning-light; color: vars.$warning-dark; }
   &.badge-gray { background-color: vars.$gray-100; color: vars.$gray-700; }
 }
 
@@ -641,8 +641,8 @@
 
 // TSR Date Info Section
 .tsr-date-info {
-  background: linear-gradient(135deg, #e6f7f6 0%, #f0faf9 100%);
-  border: 1px solid #b3e5e1;
+  background: linear-gradient(135deg, vars.$primary-lightest 0%, vars.$primary-lightest 100%);
+  border: 1px solid vars.$primary-light;
   border-left: 4px solid vars.$primary-color;
   border-radius: vars.$radius-base;
   padding: vars.$spacing-md;

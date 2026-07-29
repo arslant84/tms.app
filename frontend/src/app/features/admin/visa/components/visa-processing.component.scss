@@ -269,26 +269,26 @@
   // (a decorative, non-status categorical color), not for status pills.
 
   &.badge-blue {
-    background-color: #cfe2ff;
-    color: #084298;
+    background-color: vars.$info-light;
+    color: vars.$info-dark;
     border: none;
   }
 
   &.badge-green {
-    background-color: #d1e7dd;
-    color: #0f5132;
+    background-color: vars.$success-light;
+    color: vars.$success-dark;
     border: none;
   }
 
   &.badge-amber {
     background-color: vars.$warning-light;
-    color: #664d03;
+    color: vars.$warning-dark;
     border: none;
   }
 
   &.badge-purple {
-    background-color: #e2d9f3;
-    color: #432874;
+    background-color: vars.$purple-light;
+    color: vars.$purple-dark;
     border: none;
   }
 }

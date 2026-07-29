@@ -108,7 +108,7 @@
 .btn-warning {
   background-color: vars.$warning-color;
   border-color: vars.$warning-color;
-  color: #000000;
+  color: vars.$black;
 
   &:hover:not(:disabled) {
     background-color: vars.$warning-color;

@@ -287,7 +287,7 @@
   border: 1px solid vars.$border-light;
 
   &.completed {
-    background: #f0fdf4;
+    background: vars.$success-lightest;
     border-color: vars.$success-color;
   }
 
@@ -297,7 +297,7 @@
   }
 
   &.pending {
-    background: #fffbeb;
+    background: vars.$warning-lightest;
     border-color: vars.$warning-color;
   }
 

@@ -375,7 +375,7 @@
   background: vars.$white;
 
   &:hover {
-    background-color: #fffbeb;
+    background-color: vars.$warning-lightest;
     border-color: vars.$warning-hover;
     color: vars.$warning-hover;
   }

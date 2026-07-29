@@ -27,7 +27,7 @@
 .workflow-compact {
   padding: vars.$spacing-2 0;
 
-  // Was raw Bootstrap bg-primary (#0d6efd, off-brand blue) - align with
+  // Was raw Bootstrap bg-primary (vars.$info-color, off-brand blue) - align with
   // the app's teal design system.
   .progress-bar.bg-primary {
     background-color: vars.$primary-color !important;

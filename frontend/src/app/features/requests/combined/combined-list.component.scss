@@ -337,7 +337,7 @@
         cursor: pointer;
 
         &:hover {
-          background-color: #f0fdfa;
+          background-color: vars.$primary-lightest;
           border-color: vars.$primary-color;
         }
       }

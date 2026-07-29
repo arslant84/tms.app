@@ -240,8 +240,8 @@ hr {
   align-items: center;
   gap: vars.$spacing-md;
   padding: vars.$spacing-md vars.$spacing-6;
-  background-color: #f0fdfa;
-  border: 1px solid #99f6e4;
+  background-color: vars.$primary-lightest;
+  border: 1px solid vars.$primary-light;
   border-radius: vars.$radius-lg;
 
   .info-icon {
@@ -276,7 +276,7 @@ hr {
   border: 1px solid;
   display: flex;
   align-items: center;
-  &.alert-info { background-color: vars.$info-light; border-color: #93c5fd; color: #1e40af; }
+  &.alert-info { background-color: vars.$info-light; border-color: vars.$info-light; color: vars.$info-dark; }
 }
 
 .quick-actions {
@@ -360,8 +360,8 @@ hr {
 
 .meal-summary {
   padding: vars.$spacing-md;
-  background-color: #f0fdfa;
-  border: 1px solid #99f6e4;
+  background-color: vars.$primary-lightest;
+  border: 1px solid vars.$primary-light;
   border-radius: vars.$radius-lg;
 
   .summary-header {

@@ -14,18 +14,18 @@
 }
 
 // ========== COLORS (Petronas Green Theme) ==========
-$primary: #00B1A9; // Petronas Green
-$primary-dark: #009991; // Darker Petronas Green
-$primary-light: #e6f7f6; // Light Petronas Green tint
-$background: #F2F4F3; // Light Gray Background
-$foreground: #333333; // Dark Gray Text
-$border: #DEDEDE; // Border color
+$primary: vars.$primary-color; // Petronas Green
+$primary-dark: vars.$primary-hover; // Darker Petronas Green
+$primary-light: vars.$primary-lightest; // Light Petronas Green tint
+$background: vars.$gray-100; // Light Gray Background
+$foreground: vars.$gray-700; // Dark Gray Text
+$border: vars.$gray-200; // Border color
 $gray-50: vars.$gray-50; // Very light gray
-$gray-100: #E6E6E6; // Muted background
+$gray-100: vars.$gray-100; // Muted background
 $gray-500: vars.$gray-500; // Medium gray (icons)
-$gray-600: #666666; // Muted foreground
-$gray-700: #333333; // Dark text
-$gray-900: #1F2937; // Darkest text
+$gray-600: vars.$gray-500; // Muted foreground
+$gray-700: vars.$gray-700; // Dark text
+$gray-900: vars.$gray-800; // Darkest text
 
 // ========== CONTAINER ==========
 .approvals-container {
@@ -362,7 +362,7 @@ $gray-900: #1F2937; // Darkest text
   }
 
   .error-title {
-    color: #721c24;
+    color: vars.$error-dark;
     font-weight: vars.$font-weight-semibold;
     font-size: vars.$font-size-md;
   }

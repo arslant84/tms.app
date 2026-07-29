@@ -169,14 +169,14 @@ textarea.form-control { min-height: 3rem; height: auto; }
 
 // File Upload Area
 .border.rounded.p-4.text-center.bg-light {
-  background-color: #f0fdfa !important;
-  border: 2px dashed #99f6e4 !important;
+  background-color: vars.$primary-lightest !important;
+  border: 2px dashed vars.$primary-light !important;
   border-radius: vars.$radius-lg !important;
   transition: border-color 0.15s, background-color 0.15s;
 
   &:hover {
     border-color: vars.$primary-color !important;
-    background-color: #ccfbf1 !important;
+    background-color: vars.$primary-lightest !important;
   }
 
   i.bi-cloud-arrow-up {
@@ -186,8 +186,8 @@ textarea.form-control { min-height: 3rem; height: auto; }
 
 // File Preview
 .p-3.border.rounded.bg-light {
-  background-color: #f0fdfa !important;
-  border: 1px solid #99f6e4 !important;
+  background-color: vars.$primary-lightest !important;
+  border: 1px solid vars.$primary-light !important;
   border-radius: vars.$radius-lg !important;
 }
 
@@ -200,22 +200,22 @@ textarea.form-control { min-height: 3rem; height: auto; }
   align-items: center;
 
   &.alert-danger {
-    background-color: #fef2f2;
-    border-color: #fecaca;
-    color: #991b1b;
+    background-color: vars.$error-lightest;
+    border-color: vars.$error-light;
+    color: vars.$error-dark;
   }
 }
 
 // Read-only field styling (for Day field)
 input[readonly].form-control {
-  background-color: #f0fdfa;
-  border: 1px solid #99f6e4;
+  background-color: vars.$primary-lightest;
+  border: 1px solid vars.$primary-light;
   color: vars.$primary-hover;
   font-weight: vars.$font-weight-medium;
   cursor: default;
 
   &:focus {
-    border-color: #99f6e4;
+    border-color: vars.$primary-light;
     box-shadow: none;
   }
 }
