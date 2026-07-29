@@ -481,48 +481,6 @@ class NotificationService:
         return notifications
 
     @staticmethod
-    def notify_role(
-        role_name,
-        title,
-        message,
-        event_type_name=None,
-        priority="normal",
-        action_url=None,
-        action_text="View",
-        content_object=None,
-        additional_data=None,
-        send_email=False,
-    ):
-        """
-        Send notifications to all users with a specific role
-
-        Args:
-            role_name: Role name to notify
-            (other args same as notify_users)
-
-        Returns:
-            List of created notifications
-        """
-        from accounts.models import User
-
-        # Get users with this role
-        users = User.objects.filter(role__name=role_name)
-        user_ids = list(users.values_list("id", flat=True))
-
-        return NotificationService.notify_users(
-            user_ids=user_ids,
-            title=title,
-            message=message,
-            event_type_name=event_type_name,
-            priority=priority,
-            action_url=action_url,
-            action_text=action_text,
-            content_object=content_object,
-            additional_data=additional_data,
-            send_email=send_email,
-        )
-
-    @staticmethod
     def mark_all_as_read(user):
         """
         Mark all notifications as read for a user
@@ -536,26 +494,5 @@ class NotificationService:
         count = UserNotification.objects.filter(user=user, is_read=False).update(
             is_read=True, read_at=timezone.now()
         )
-
-        return count
-
-    @staticmethod
-    def delete_old_notifications(days=30):
-        """
-        Delete old read notifications
-
-        Args:
-            days: Number of days to keep notifications
-
-        Returns:
-            Number of notifications deleted
-        """
-        from datetime import timedelta
-
-        cutoff_date = timezone.now() - timedelta(days=days)
-
-        count, _ = UserNotification.objects.filter(
-            is_read=True, read_at__lt=cutoff_date
-        ).delete()
 
         return count

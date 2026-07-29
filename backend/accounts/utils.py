@@ -42,26 +42,6 @@ def has_any_permission(user, permission_names):
     return user.role.permissions.filter(name__in=permission_names).exists()
 
 
-def has_all_permissions(user, permission_names):
-    """
-    Check if user has all of the specified permissions.
-
-    Args:
-        user: The user object to check
-        permission_names: List of permission names to check
-
-    Returns:
-        True if user has all of the permissions, False otherwise.
-    """
-    if not user or not user.is_authenticated:
-        return False
-    if not user.role:
-        return False
-    return user.role.permissions.filter(name__in=permission_names).count() == len(
-        permission_names
-    )
-
-
 def can_view_all(user, module):
     """
     Check if user can view all records for a specific module.
@@ -177,23 +157,3 @@ def can_approve(user, module=None):
         "view_pending_approvals",
     ]
     return has_any_permission(user, approval_permissions)
-
-
-def get_user_admin_modules(user):
-    """
-    Get list of modules the user has admin access to.
-
-    Args:
-        user: The user object to check
-
-    Returns:
-        List of module names the user can administer.
-    """
-    modules = []
-    module_list = ["trf", "accommodation", "transport", "visa", "booking"]
-
-    for module in module_list:
-        if is_module_admin(user, module):
-            modules.append(module)
-
-    return modules

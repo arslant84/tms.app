@@ -1,23 +1,17 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, BehaviorSubject } from 'rxjs';
-import { map, tap, shareReplay, catchError } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { extractData } from '../utils/api-response.handler';
 import { StatusUtilsService } from '../utils/status-utils.service';
 import {
   WorkflowTemplate,
-  WorkflowStep,
   WorkflowInstance,
   WorkflowInstanceList,
   WorkflowStepExecution,
-  WorkflowDelegation,
-  WorkflowAuditLog,
-  PendingApproval,
-  ApprovalAction,
-  DelegationAction,
   WorkflowActionRequest,
-  WorkflowUser
+  WorkflowUser,
 } from '../models/workflow.models';
 
 // Eligible Approvers Interfaces
@@ -48,23 +42,29 @@ export interface EligibleApproversResponse {
 }
 
 export interface ApproverSelection {
-  [stepOrder: number]: number;  // step_order -> user_id
+  [stepOrder: number]: number; // step_order -> user_id
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class WorkflowService {
   private apiUrl = `${environment.apiUrl}/workflows`;
 
-  constructor(private http: HttpClient, private statusUtils: StatusUtilsService) {}
+  constructor(
+    private http: HttpClient,
+    private statusUtils: StatusUtilsService
+  ) {}
 
   // ==================== Workflow Templates ====================
 
   /**
    * Get all workflow templates (Admin only)
    */
-  getTemplates(filters?: { entity_type?: string; is_active?: boolean }): Observable<WorkflowTemplate[]> {
+  getTemplates(filters?: {
+    entity_type?: string;
+    is_active?: boolean;
+  }): Observable<WorkflowTemplate[]> {
     let params = new HttpParams();
     if (filters?.entity_type) {
       params = params.set('entity_type', filters.entity_type);
@@ -94,13 +94,6 @@ export class WorkflowService {
    */
   updateTemplate(id: string, template: Partial<WorkflowTemplate>): Observable<WorkflowTemplate> {
     return this.http.put<WorkflowTemplate>(`${this.apiUrl}/templates/${id}/`, template);
-  }
-
-  /**
-   * Duplicate a workflow template (Admin only)
-   */
-  duplicateTemplate(id: string): Observable<WorkflowTemplate> {
-    return this.http.post<WorkflowTemplate>(`${this.apiUrl}/templates/${id}/duplicate/`, {});
   }
 
   /**
@@ -134,9 +127,11 @@ export class WorkflowService {
     if (filters?.object_id) {
       params = params.set('object_id', filters.object_id.toString());
     }
-    return this.http.get<any>(`${this.apiUrl}/instances/`, { params }).pipe(
-      map(response => Array.isArray(response) ? response : (response.results || []))
-    );
+    return this.http
+      .get<
+        WorkflowInstanceList[] | { results: WorkflowInstanceList[] }
+      >(`${this.apiUrl}/instances/`, { params })
+      .pipe(map(response => (Array.isArray(response) ? response : response.results || [])));
   }
 
   /**
@@ -146,72 +141,15 @@ export class WorkflowService {
     return this.http.get<WorkflowInstance>(`${this.apiUrl}/instances/${id}/`);
   }
 
-  /**
-   * Create a new workflow instance
-   */
-  createInstance(data: {
-    workflow_template_id: number;
-    entity_type: string;
-    entity_id: number;
-    additional_data?: Record<string, unknown>;
-  }): Observable<WorkflowInstance> {
-    return this.http.post<WorkflowInstance>(`${this.apiUrl}/instances/`, data);
-  }
-
-  /**
-   * Start a workflow instance (transition from pending to in_progress)
-   */
-  startInstance(id: string): Observable<WorkflowInstance> {
-    return this.http.post<WorkflowInstance>(`${this.apiUrl}/instances/${id}/start/`, {});
-  }
-
-  /**
-   * Cancel a workflow instance
-   */
-  cancelInstance(id: string, reason?: string): Observable<WorkflowInstance> {
-    return this.http.post<WorkflowInstance>(`${this.apiUrl}/instances/${id}/cancel/`, { reason });
-  }
-
-  /**
-   * Get current user's pending approvals
-   */
-  getMyPendingApprovals(): Observable<WorkflowInstanceList[]> {
-    return this.http.get<WorkflowInstanceList[]>(`${this.apiUrl}/instances/my_pending_approvals/`);
-  }
-
-  /**
-   * Get workflow status for a specific entity
-   */
-  getWorkflowForEntity(entityType: string, entityId: number): Observable<WorkflowInstance | null> {
-    return this.http.get<WorkflowInstance>(`${this.apiUrl}/instances/`, {
-      params: new HttpParams()
-        .set('entity_type', entityType)
-        .set('entity_id', entityId.toString())
-    });
-  }
-
   // ==================== Step Executions ====================
-
-  /**
-   * Get step executions for an instance
-   */
-  getStepExecutions(instanceId: string): Observable<WorkflowStepExecution[]> {
-    return this.http.get<WorkflowStepExecution[]>(`${this.apiUrl}/executions/`, {
-      params: new HttpParams().set('instance', instanceId)
-    });
-  }
-
-  /**
-   * Get a specific step execution
-   */
-  getStepExecution(id: string): Observable<WorkflowStepExecution> {
-    return this.http.get<WorkflowStepExecution>(`${this.apiUrl}/executions/${id}/`);
-  }
 
   /**
    * Take action on a workflow step (approve/reject/skip/delegate)
    */
-  takeAction(executionId: string, action: WorkflowActionRequest): Observable<WorkflowStepExecution> {
+  takeAction(
+    executionId: string,
+    action: WorkflowActionRequest
+  ): Observable<WorkflowStepExecution> {
     return this.http.post<WorkflowStepExecution>(
       `${this.apiUrl}/executions/${executionId}/take_action/`,
       action
@@ -224,7 +162,7 @@ export class WorkflowService {
   approveStep(executionId: string, comments?: string): Observable<WorkflowStepExecution> {
     return this.takeAction(executionId, {
       action: 'approve',
-      comments
+      comments,
     });
   }
 
@@ -234,7 +172,7 @@ export class WorkflowService {
   rejectStep(executionId: string, comments: string): Observable<WorkflowStepExecution> {
     return this.takeAction(executionId, {
       action: 'reject',
-      comments
+      comments,
     });
   }
 
@@ -244,7 +182,7 @@ export class WorkflowService {
   skipStep(executionId: string, comments?: string): Observable<WorkflowStepExecution> {
     return this.takeAction(executionId, {
       action: 'skip',
-      comments
+      comments,
     });
   }
 
@@ -259,42 +197,8 @@ export class WorkflowService {
     return this.takeAction(executionId, {
       action: 'delegate',
       comments: reason,
-      delegated_to_id: delegatedToId
+      delegated_to_id: delegatedToId,
     });
-  }
-
-  // ==================== Delegations ====================
-
-  /**
-   * Get delegations (filtered by user)
-   */
-  getDelegations(): Observable<WorkflowDelegation[]> {
-    return this.http.get<WorkflowDelegation[]>(`${this.apiUrl}/delegations/`);
-  }
-
-  /**
-   * Get a specific delegation
-   */
-  getDelegation(id: string): Observable<WorkflowDelegation> {
-    return this.http.get<WorkflowDelegation>(`${this.apiUrl}/delegations/${id}/`);
-  }
-
-  // ==================== Audit Logs ====================
-
-  /**
-   * Get audit logs for a workflow instance
-   */
-  getAuditLogs(instanceId: string): Observable<WorkflowAuditLog[]> {
-    return this.http.get<WorkflowAuditLog[]>(`${this.apiUrl}/audit-logs/`, {
-      params: new HttpParams().set('instance', instanceId)
-    });
-  }
-
-  /**
-   * Get a specific audit log entry
-   */
-  getAuditLog(id: string): Observable<WorkflowAuditLog> {
-    return this.http.get<WorkflowAuditLog>(`${this.apiUrl}/audit-logs/${id}/`);
   }
 
   // ==================== Approver Selection ====================
@@ -323,7 +227,10 @@ export class WorkflowService {
    * this.workflowService.getEligibleApprovers('accommodation', { staffId: 'EMP001' }).subscribe({...});
    * ```
    */
-  getEligibleApprovers(entityType: string, options?: { requesterId?: number; staffId?: string }): Observable<EligibleApproversResponse | null> {
+  getEligibleApprovers(
+    entityType: string,
+    options?: { requesterId?: number; staffId?: string }
+  ): Observable<EligibleApproversResponse | null> {
     let url = `${this.apiUrl}/eligible-approvers/${entityType}/`;
     const params: string[] = [];
 
@@ -338,7 +245,7 @@ export class WorkflowService {
       url += `?${params.join('&')}`;
     }
 
-    return this.http.get<any>(url).pipe(
+    return this.http.get<unknown>(url).pipe(
       map(response => extractData<EligibleApproversResponse>(response)),
       catchError(error => {
         console.error('Error fetching eligible approvers:', error);
@@ -348,13 +255,6 @@ export class WorkflowService {
   }
 
   // ==================== Helper Methods ====================
-
-  /**
-   * Check if current user can action a specific step
-   */
-  canActionStep(stepExecution: WorkflowStepExecution): boolean {
-    return stepExecution.can_action === true && stepExecution.status === 'pending';
-  }
 
   /**
    * Get status badge class for workflow instance - delegates to
@@ -379,7 +279,12 @@ export class WorkflowService {
    */
   formatUserName(user: WorkflowUser | undefined): string {
     if (!user) return 'N/A';
-    return user.full_name || user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email;
+    return (
+      user.full_name ||
+      user.name ||
+      `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
+      user.email
+    );
   }
 
   /**
@@ -445,90 +350,5 @@ export class WorkflowService {
   getWorkflowStatusClass(workflow: WorkflowInstance | WorkflowInstanceList | null): string {
     if (!workflow) return 'badge-secondary';
     return this.getStatusClass(workflow.status);
-  }
-
-  // ==================== Workflow Status Loading ====================
-
-  // Cache for workflow statuses by entity type
-  private statusCache = new Map<string, Observable<string[]>>();
-
-  // Base statuses that don't come from workflow
-  private readonly BASE_STATUSES = ['Draft', 'Approved', 'Rejected', 'Cancelled', 'Completed'];
-
-  /**
-   * Load workflow statuses for an entity type.
-   * Results are cached and shared across subscribers.
-   *
-   * @param entityType The workflow entity type (e.g., 'travelrequest', 'visaapplication')
-   * @returns Observable of status strings
-   *
-   * Usage:
-   * ```typescript
-   * this.workflowService.loadWorkflowStatuses('travelrequest')
-   *   .subscribe(statuses => this.trfStatuses = statuses);
-   * ```
-   */
-  loadWorkflowStatuses(entityType: string): Observable<string[]> {
-    // Return cached observable if available
-    if (this.statusCache.has(entityType)) {
-      return this.statusCache.get(entityType)!;
-    }
-
-    // Create and cache the observable
-    const statusObservable = this.getTemplates({ entity_type: entityType, is_active: true }).pipe(
-      map(templates => this.extractStatusesFromTemplates(templates)),
-      catchError(err => {
-        console.error(`Error loading workflow statuses for ${entityType}:`, err);
-        return of([...this.BASE_STATUSES]);
-      }),
-      shareReplay(1)
-    );
-
-    this.statusCache.set(entityType, statusObservable);
-    return statusObservable;
-  }
-
-  /**
-   * Extract statuses from workflow templates.
-   * Builds "Pending {step_name}" statuses from workflow steps.
-   */
-  private extractStatusesFromTemplates(templates: WorkflowTemplate[]): string[] {
-    if (!templates || templates.length === 0) {
-      return [...this.BASE_STATUSES];
-    }
-
-    const template = templates[0];
-    const statuses: string[] = ['Draft'];
-
-    if (template.steps && template.steps.length > 0) {
-      // Sort steps by order and create "Pending {step_name}" statuses
-      const sortedSteps = [...template.steps].sort((a, b) => a.step_order - b.step_order);
-      for (const step of sortedSteps) {
-        statuses.push(`Pending ${step.step_name}`);
-      }
-    }
-
-    // Add terminal statuses
-    statuses.push('Approved', 'Rejected', 'Cancelled', 'Completed');
-    return statuses;
-  }
-
-  /**
-   * Clear the status cache for a specific entity type or all.
-   * Call this when workflow templates are modified.
-   */
-  clearStatusCache(entityType?: string): void {
-    if (entityType) {
-      this.statusCache.delete(entityType);
-    } else {
-      this.statusCache.clear();
-    }
-  }
-
-  /**
-   * Get base statuses (statuses that don't come from workflow).
-   */
-  getBaseStatuses(): string[] {
-    return [...this.BASE_STATUSES];
   }
 }

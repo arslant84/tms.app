@@ -27,12 +27,12 @@ class MarkdownToHTMLConverter:
 
     # Design system colors for inline styles
     COLORS = {
-        'primary': '#0d9488',
-        'primary_hover': '#0f766e',
-        'text_primary': '#1f2937',
-        'text_secondary': '#374151',
-        'text_muted': '#6b7280',
-        'gray_200': '#e5e7eb',
+        "primary": "#0d9488",
+        "primary_hover": "#0f766e",
+        "text_primary": "#1f2937",
+        "text_secondary": "#374151",
+        "text_muted": "#6b7280",
+        "gray_200": "#e5e7eb",
     }
 
     @classmethod
@@ -47,7 +47,7 @@ class MarkdownToHTMLConverter:
             str: HTML with inline CSS
         """
         if not markdown_text:
-            return ''
+            return ""
 
         html = markdown_text
 
@@ -68,26 +68,29 @@ class MarkdownToHTMLConverter:
     @classmethod
     def _convert_bold(cls, text):
         """Convert **bold** to <strong> tags with styling."""
-        pattern = r'\*\*(.*?)\*\*'
-        replacement = r'<strong style="font-weight: 600; color: {color};">\1</strong>'.format(
-            color=cls.COLORS['text_primary']
+        pattern = r"\*\*(.*?)\*\*"
+        replacement = (
+            r'<strong style="font-weight: 600; color: {color};">\1</strong>'.format(
+                color=cls.COLORS["text_primary"]
+            )
         )
         return re.sub(pattern, replacement, text)
 
     @classmethod
     def _convert_links(cls, text):
         """Convert [text](url) to <a> tags with styling."""
-        pattern = r'\[([^\]]+)\]\(([^\)]+)\)'
+        pattern = r"\[([^\]]+)\]\(([^\)]+)\)"
 
         def replace_link(match):
             link_text = match.group(1)
             url = match.group(2)
 
             # Add base URL if it's a relative path
-            if url.startswith('/'):
+            if url.startswith("/"):
                 # Get FRONTEND_URL from Django settings
                 from django.conf import settings
-                base_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:4200')
+
+                base_url = getattr(settings, "FRONTEND_URL", "http://localhost:4200")
                 full_url = f"{base_url.rstrip('/')}{url}"
             else:
                 full_url = url
@@ -96,8 +99,8 @@ class MarkdownToHTMLConverter:
                 f'<a href="{full_url}" '
                 f'style="color: {cls.COLORS["primary"]}; text-decoration: none; font-weight: 600;" '
                 f'target="_blank">'
-                f'{link_text}'
-                f'</a>'
+                f"{link_text}"
+                f"</a>"
             )
 
         return re.sub(pattern, replace_link, text)
@@ -106,7 +109,7 @@ class MarkdownToHTMLConverter:
     def _convert_bullets(cls, text):
         """Convert *   item to <li> tags within <ul>."""
         # Find all bullet point lines
-        lines = text.split('\n')
+        lines = text.split("\n")
         result_lines = []
         in_list = False
 
@@ -114,9 +117,9 @@ class MarkdownToHTMLConverter:
             stripped = line.strip()
 
             # Check if line starts with *   (bullet point)
-            if stripped.startswith('*   ') or stripped.startswith('* '):
+            if stripped.startswith("*   ") or stripped.startswith("* "):
                 # Extract the bullet content
-                bullet_content = stripped.lstrip('*').strip()
+                bullet_content = stripped.lstrip("*").strip()
 
                 if not in_list:
                     # Start a new list
@@ -133,7 +136,7 @@ class MarkdownToHTMLConverter:
                 # Not a bullet point
                 if in_list:
                     # Close the list
-                    result_lines.append('</ul>')
+                    result_lines.append("</ul>")
                     in_list = False
 
                 # Add the line as-is
@@ -142,15 +145,15 @@ class MarkdownToHTMLConverter:
 
         # Close list if still open
         if in_list:
-            result_lines.append('</ul>')
+            result_lines.append("</ul>")
 
-        return '\n'.join(result_lines)
+        return "\n".join(result_lines)
 
     @classmethod
     def _convert_paragraphs(cls, text):
         """Convert double line breaks to paragraphs."""
         # Split by double newlines (paragraph breaks)
-        paragraphs = re.split(r'\n\s*\n', text)
+        paragraphs = re.split(r"\n\s*\n", text)
 
         result = []
         for para in paragraphs:
@@ -159,54 +162,25 @@ class MarkdownToHTMLConverter:
                 continue
 
             # Check if paragraph is already wrapped in HTML tags
-            if para.startswith('<') and para.endswith('>'):
+            if para.startswith("<") and para.endswith(">"):
                 # Already HTML (like <ul> or <strong>)
                 result.append(para)
-            elif para.startswith('<ul'):
+            elif para.startswith("<ul"):
                 # Bullet list - don't wrap
                 result.append(para)
             else:
                 # Wrap in paragraph tag
                 result.append(
                     f'<p style="margin: 0 0 16px 0; color: {cls.COLORS["text_secondary"]}; font-size: 15px; line-height: 1.6;">'
-                    f'{para}'
-                    f'</p>'
+                    f"{para}"
+                    f"</p>"
                 )
 
-        return '\n\n'.join(result)
-
-    @classmethod
-    def convert_greeting(cls, text, user_name=None):
-        """
-        Handle greeting line specially (e.g., "Hi {{userName}},").
-
-        Args:
-            text (str): Text that may contain greeting
-            user_name (str, optional): User's name to insert
-
-        Returns:
-            str: HTML with greeting styled
-        """
-        if user_name:
-            # Replace greeting placeholder
-            text = text.replace('{{userName}}', user_name)
-            text = text.replace('{{requestorName}}', user_name)
-
-        # Style greeting line (Hi Name,)
-        greeting_pattern = r'^(Hi [^,]+,)\s*'
-        if re.match(greeting_pattern, text):
-            text = re.sub(
-                greeting_pattern,
-                r'<p style="margin: 0 0 20px 0; color: {color}; font-size: 15px; font-weight: 500;">\1</p>\n\n'.format(
-                    color=cls.COLORS['text_primary']
-                ),
-                text
-            )
-
-        return text
+        return "\n\n".join(result)
 
 
 # Convenience functions
+
 
 def markdown_to_html(text):
     """
@@ -223,30 +197,8 @@ def markdown_to_html(text):
     return MarkdownToHTMLConverter.convert(text)
 
 
-def convert_template_body(body_text, context=None):
-    """
-    Convert template body with variable substitution and markdown conversion.
-
-    Args:
-        body_text (str): Template body with markdown and {{variables}}
-        context (dict, optional): Context dictionary for variable substitution
-
-    Returns:
-        str: HTML-formatted body
-    """
-    # First, substitute variables if context provided
-    if context:
-        for key, value in context.items():
-            body_text = body_text.replace(f'{{{{{key}}}}}', str(value))
-
-    # Then convert markdown to HTML
-    html_body = markdown_to_html(body_text)
-
-    return html_body
-
-
 # Example usage:
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Test markdown conversion
     test_markdown = """
 Hi John Doe,
