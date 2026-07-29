@@ -1,7 +1,4 @@
 @use '../../../../../styles/variables' as vars;
-
-$border: vars.$gray-200;
-
 .combined-processing-container {
   padding: vars.$spacing-6;
   background-color: vars.$gray-50;
@@ -23,7 +20,9 @@ $border: vars.$gray-200;
     font-size: vars.$font-size-lg;
     color: vars.$gray-500;
     text-decoration: none;
-    &:hover { color: vars.$primary-color; }
+    &:hover {
+      color: vars.$primary-color;
+    }
   }
 
   .page-title {
@@ -52,10 +51,12 @@ $border: vars.$gray-200;
   margin-bottom: vars.$spacing-5;
 
   .nav-tabs {
-    border-bottom: 2px solid $border;
+    border-bottom: 2px solid vars.$gray-200;
     gap: vars.$spacing-1;
 
-    .nav-item { margin-bottom: -2px; }
+    .nav-item {
+      margin-bottom: -2px;
+    }
 
     .nav-link {
       display: flex;
@@ -70,12 +71,23 @@ $border: vars.$gray-200;
       transition: all 0.15s;
       cursor: pointer;
 
-      &:hover { color: vars.$primary-color; border-bottom-color: rgba(vars.$primary-color, 0.3); }
-      &.active { color: vars.$primary-color; border-bottom-color: vars.$primary-color; }
+      &:hover {
+        color: vars.$primary-color;
+        border-bottom-color: rgba(vars.$primary-color, 0.3);
+      }
+      &.active {
+        color: vars.$primary-color;
+        border-bottom-color: vars.$primary-color;
+      }
 
-      i { font-size: vars.$font-size-base; }
+      i {
+        font-size: vars.$font-size-base;
+      }
 
-      .badge { font-size: vars.$font-size-xs; padding: 0.2rem 0.45rem; }
+      .badge {
+        font-size: vars.$font-size-xs;
+        padding: 0.2rem 0.45rem;
+      }
     }
   }
 }
@@ -84,13 +96,24 @@ $border: vars.$gray-200;
 .empty-state {
   text-align: center;
   padding: vars.$spacing-16 vars.$spacing-8;
-  background: white;
+  background: vars.$white;
   border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-sm;
 
-  i { font-size: 4rem; color: $border; margin-bottom: vars.$spacing-3; display: block; }
-  h5 { color: vars.$gray-700; margin-bottom: vars.$spacing-2; }
-  p  { color: vars.$gray-500; margin-bottom: 0; }
+  i {
+    font-size: 4rem;
+    color: vars.$gray-200;
+    margin-bottom: vars.$spacing-3;
+    display: block;
+  }
+  h5 {
+    color: vars.$gray-700;
+    margin-bottom: vars.$spacing-2;
+  }
+  p {
+    color: vars.$gray-500;
+    margin-bottom: 0;
+  }
 }
 
 // ===== LIST MODE CARDS =====
@@ -101,11 +124,13 @@ $border: vars.$gray-200;
 }
 
 .request-card {
-  background: white;
+  background: vars.$white;
   border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-sm;
   overflow: hidden;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
 
   &:hover {
     transform: translateY(-2px);
@@ -118,13 +143,15 @@ $border: vars.$gray-200;
     align-items: center;
     padding: vars.$spacing-3 vars.$spacing-4;
     background-color: vars.$gray-50;
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid vars.$gray-200;
 
     .request-id {
       display: flex;
       align-items: center;
       gap: vars.$spacing-2;
-      strong { font-size: vars.$font-size-sm; }
+      strong {
+        font-size: vars.$font-size-sm;
+      }
     }
 
     .request-date {
@@ -133,7 +160,9 @@ $border: vars.$gray-200;
     }
   }
 
-  .card-body { padding: vars.$spacing-4; }
+  .card-body {
+    padding: vars.$spacing-4;
+  }
 
   .request-info {
     margin-bottom: vars.$spacing-3;
@@ -161,7 +190,7 @@ $border: vars.$gray-200;
     align-items: center;
     gap: vars.$spacing-2;
     padding-top: vars.$spacing-3;
-    border-top: 1px solid $border;
+    border-top: 1px solid vars.$gray-200;
     flex-wrap: wrap;
 
     .modules-label {
@@ -175,7 +204,7 @@ $border: vars.$gray-200;
     gap: vars.$spacing-2;
     padding: vars.$spacing-3 vars.$spacing-4;
     background-color: vars.$gray-50;
-    border-top: 1px solid $border;
+    border-top: 1px solid vars.$gray-200;
   }
 }
 
@@ -194,14 +223,16 @@ $border: vars.$gray-200;
     font-weight: vars.$font-weight-medium;
     padding: vars.$spacing-1 vars.$spacing-2;
     border-radius: vars.$radius-sm;
-    i { font-size: vars.$font-size-xs; }
+    i {
+      font-size: vars.$font-size-xs;
+    }
   }
 }
 
 // ===== DETAIL MODE =====
 
 .progress-card {
-  background: white;
+  background: vars.$white;
   border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-sm;
   padding: vars.$spacing-4 vars.$spacing-5;
@@ -240,11 +271,11 @@ $border: vars.$gray-200;
 }
 
 .module-card {
-  background: white;
+  background: vars.$white;
   border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-sm;
   overflow: hidden;
-  border: 1px solid $border;
+  border: 1px solid vars.$gray-200;
 }
 
 .module-header {
@@ -256,7 +287,9 @@ $border: vars.$gray-200;
   user-select: none;
   transition: background 0.15s;
 
-  &:hover { background-color: vars.$gray-50; }
+  &:hover {
+    background-color: vars.$gray-50;
+  }
 
   .module-title {
     display: flex;
@@ -322,7 +355,7 @@ $border: vars.$gray-200;
 
 .module-form {
   padding: vars.$spacing-4 vars.$spacing-5;
-  border-top: 1px solid $border;
+  border-top: 1px solid vars.$gray-200;
   background-color: vars.$gray-50;
 }
 
@@ -335,7 +368,9 @@ $border: vars.$gray-200;
     display: flex;
     flex-direction: column;
 
-    &.full-width { grid-column: 1 / -1; }
+    &.full-width {
+      grid-column: 1 / -1;
+    }
 
     label {
       font-size: vars.$font-size-xs;
@@ -349,7 +384,7 @@ $border: vars.$gray-200;
     .form-control {
       font-size: vars.$font-size-sm;
       border-radius: vars.$radius-base;
-      border: 1px solid $border;
+      border: 1px solid vars.$gray-200;
 
       &:focus {
         border-color: vars.$primary-color;
@@ -364,7 +399,7 @@ $border: vars.$gray-200;
   justify-content: flex-end;
   padding-top: vars.$spacing-3;
   margin-top: vars.$spacing-3;
-  border-top: 1px solid $border;
+  border-top: 1px solid vars.$gray-200;
 }
 
 // ===== COMPLETED BANNER =====
@@ -380,11 +415,13 @@ $border: vars.$gray-200;
   display: flex;
   align-items: center;
 
-  i { font-size: vars.$font-size-lg; }
+  i {
+    font-size: vars.$font-size-lg;
+  }
 }
 
 // ===== RESPONSIVE =====
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .combined-processing-container {
     padding: vars.$spacing-4;
   }
@@ -395,12 +432,16 @@ $border: vars.$gray-200;
 
   .form-grid {
     grid-template-columns: 1fr;
-    .form-group.full-width { grid-column: 1; }
+    .form-group.full-width {
+      grid-column: 1;
+    }
   }
 
   .tabs-container .nav-tabs {
     flex-wrap: nowrap;
     overflow-x: auto;
-    .nav-link .tab-label { display: none; }
+    .nav-link .tab-label {
+      display: none;
+    }
   }
 }

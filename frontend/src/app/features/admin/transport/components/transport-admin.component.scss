@@ -8,18 +8,6 @@
  */
 
 // ========== COLORS (Petronas Green Theme) ==========
-$primary: vars.$primary-color; // Petronas Green
-$primary-dark: vars.$primary-hover; // Darker Petronas Green
-$primary-light: vars.$primary-lightest; // Light Petronas Green tint
-$background: vars.$gray-100; // Light Gray Background
-$foreground: vars.$gray-700; // Dark Gray Text
-$border: vars.$gray-200; // Border color
-$gray-50: vars.$gray-50; // Very light gray
-$gray-100: vars.$gray-100; // Muted background
-$gray-500: vars.$gray-500; // Medium gray (icons)
-$gray-600: vars.$gray-500; // Muted foreground
-$gray-700: vars.$gray-700; // Dark text
-$gray-900: vars.$gray-800; // Darkest text
 
 // =========== CONTAINER ==========
 .transport-admin-container {
@@ -28,7 +16,7 @@ $gray-900: vars.$gray-800; // Darkest text
   margin: 0;
   padding: vars.$spacing-8;
   box-sizing: border-box;
-  background-color: $background;
+  background-color: vars.$gray-100;
   min-height: calc(100vh - 100px);
 }
 
@@ -50,19 +38,19 @@ $gray-900: vars.$gray-800; // Darkest text
     .page-title {
       font-size: vars.$font-size-3xl;
       font-weight: vars.$font-weight-bold;
-      color: $gray-900;
+      color: vars.$gray-800;
       letter-spacing: -0.025em;
       margin: 0 0 vars.$spacing-2;
       display: flex;
       align-items: center;
 
       i {
-        color: $primary;
+        color: vars.$primary-color;
       }
     }
 
     .page-subtitle {
-      color: $gray-600;
+      color: vars.$gray-500;
       font-size: vars.$font-size-sm;
       margin: 0;
     }
@@ -70,12 +58,12 @@ $gray-900: vars.$gray-800; // Darkest text
 
   .header-actions {
     .btn-primary {
-      background-color: $primary;
-      border-color: $primary;
+      background-color: vars.$primary-color;
+      border-color: vars.$primary-color;
 
       &:hover {
-        background-color: $primary-dark;
-        border-color: $primary-dark;
+        background-color: vars.$primary-hover;
+        border-color: vars.$primary-hover;
       }
     }
   }
@@ -99,10 +87,12 @@ $gray-900: vars.$gray-800; // Darkest text
 
 .stat-card {
   background: vars.$white;
-  border: 1px solid $border;
+  border: 1px solid vars.$gray-200;
   border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-base;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
     box-shadow: vars.$shadow-md;
@@ -119,13 +109,13 @@ $gray-900: vars.$gray-800; // Darkest text
     .stat-card-title {
       font-size: vars.$font-size-sm;
       font-weight: vars.$font-weight-medium;
-      color: $gray-700;
+      color: vars.$gray-700;
     }
 
     .stat-icon {
       width: 1rem;
       height: 1rem;
-      color: $gray-500;
+      color: vars.$gray-500;
     }
   }
 
@@ -135,14 +125,14 @@ $gray-900: vars.$gray-800; // Darkest text
     .stat-value {
       font-size: vars.$font-size-xl;
       font-weight: vars.$font-weight-bold;
-      color: $gray-900;
+      color: vars.$gray-800;
       line-height: 1;
       margin-bottom: vars.$spacing-1;
     }
 
     .stat-description {
       font-size: vars.$font-size-xs;
-      color: $gray-600;
+      color: vars.$gray-500;
       margin: 0;
     }
   }
@@ -156,7 +146,7 @@ $gray-900: vars.$gray-800; // Darkest text
 .tabs-list {
   display: inline-flex;
   padding: vars.$spacing-1;
-  background-color: $gray-100;
+  background-color: vars.$gray-100;
   border-radius: vars.$radius-md;
   margin-bottom: vars.$spacing-4;
 }
@@ -165,7 +155,7 @@ $gray-900: vars.$gray-800; // Darkest text
   padding: vars.$spacing-2 vars.$spacing-4;
   font-size: vars.$font-size-sm;
   font-weight: vars.$font-weight-medium;
-  color: $gray-700;
+  color: vars.$gray-700;
   background: transparent;
   border: none;
   border-radius: vars.$radius-base;
@@ -173,12 +163,12 @@ $gray-900: vars.$gray-800; // Darkest text
   transition: all 0.15s ease;
 
   &:hover {
-    color: $gray-900;
+    color: vars.$gray-800;
   }
 
   &.active {
     background: vars.$white;
-    color: $gray-900;
+    color: vars.$gray-800;
     box-shadow: vars.$shadow-base;
   }
 }
@@ -199,14 +189,14 @@ $gray-900: vars.$gray-800; // Darkest text
 // ========== CARD ==========
 .card {
   background: vars.$white;
-  border: 1px solid $border;
+  border: 1px solid vars.$gray-200;
   border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-base;
   overflow: hidden;
 
   .card-header {
     padding: vars.$spacing-6;
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid vars.$gray-200;
     background-color: vars.$white;
 
     .card-header-content {
@@ -219,19 +209,19 @@ $gray-900: vars.$gray-800; // Darkest text
         .card-title {
           font-size: vars.$font-size-md;
           font-weight: vars.$font-weight-semibold;
-          color: $gray-900;
+          color: vars.$gray-800;
           margin: 0;
         }
 
         i {
-          color: $gray-600;
+          color: vars.$gray-500;
           font-size: vars.$font-size-md;
         }
       }
 
       .card-description {
         font-size: vars.$font-size-sm;
-        color: $gray-600;
+        color: vars.$gray-500;
         margin: 0;
       }
     }
@@ -256,7 +246,7 @@ $gray-900: vars.$gray-800; // Darkest text
     .management-title {
       font-size: vars.$font-size-md;
       font-weight: vars.$font-weight-semibold;
-      color: $gray-900;
+      color: vars.$gray-800;
       margin: 0;
     }
 
@@ -271,10 +261,10 @@ $gray-900: vars.$gray-800; // Darkest text
         align-items: center;
         font-size: vars.$font-size-sm;
         font-weight: vars.$font-weight-medium;
-        color: $gray-700;
+        color: vars.$gray-700;
 
         i {
-          color: $gray-500;
+          color: vars.$gray-500;
         }
       }
 
@@ -295,8 +285,8 @@ $gray-900: vars.$gray-800; // Darkest text
     border-collapse: collapse;
 
     thead {
-      background-color: $gray-50;
-      border-bottom: 1px solid $border;
+      background-color: vars.$gray-50;
+      border-bottom: 1px solid vars.$gray-200;
 
       th {
         padding: vars.$spacing-3 vars.$spacing-4;
@@ -305,7 +295,7 @@ $gray-900: vars.$gray-800; // Darkest text
         font-weight: vars.$font-weight-semibold;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: $gray-500;
+        color: vars.$gray-500;
         border: none;
         white-space: nowrap;
       }
@@ -313,7 +303,7 @@ $gray-900: vars.$gray-800; // Darkest text
 
     tbody {
       tr {
-        border-bottom: 1px solid $border;
+        border-bottom: 1px solid vars.$gray-200;
         transition: background-color 0.15s ease;
 
         &:last-child {
@@ -321,13 +311,13 @@ $gray-900: vars.$gray-800; // Darkest text
         }
 
         &:hover {
-          background-color: $gray-50;
+          background-color: vars.$gray-50;
         }
 
         td {
           padding: vars.$spacing-4;
           font-size: vars.$font-size-sm;
-          color: $gray-700;
+          color: vars.$gray-700;
           border: none;
           vertical-align: middle;
         }
@@ -337,11 +327,11 @@ $gray-900: vars.$gray-800; // Darkest text
         a.fw-medium {
           font-family: vars.$font-mono;
           font-weight: vars.$font-weight-semibold;
-          color: $primary;
+          color: vars.$primary-color;
           cursor: pointer;
 
           &:hover {
-            color: color.adjust($primary, $lightness: -10%);
+            color: color.adjust(vars.$primary-color, $lightness: -10%);
           }
         }
       }
@@ -503,12 +493,12 @@ $gray-900: vars.$gray-800; // Darkest text
 
   i {
     font-size: 2rem;
-    color: $primary;
+    color: vars.$primary-color;
     margin-bottom: vars.$spacing-4;
   }
 
   p {
-    color: $gray-600;
+    color: vars.$gray-500;
     margin: 0;
   }
 }
@@ -537,12 +527,12 @@ $gray-900: vars.$gray-800; // Darkest text
 
   i {
     font-size: 3rem;
-    color: $gray-500;
+    color: vars.$gray-500;
     margin-bottom: vars.$spacing-4;
   }
 
   p {
-    color: $gray-600;
+    color: vars.$gray-500;
     margin: 0;
   }
 }
@@ -550,33 +540,33 @@ $gray-900: vars.$gray-800; // Darkest text
 // ========== PAGINATION ==========
 .pagination-container {
   padding: vars.$spacing-6;
-  border-top: 1px solid $border;
+  border-top: 1px solid vars.$gray-200;
 
   .pagination {
     margin-bottom: 0;
 
     .page-item {
       .page-link {
-        color: $primary;
-        border-color: $border;
+        color: vars.$primary-color;
+        border-color: vars.$gray-200;
         padding: vars.$spacing-2 vars.$spacing-3;
         font-size: vars.$font-size-sm;
         cursor: pointer;
 
         &:hover {
           background-color: vars.$primary-lightest;
-          border-color: $primary;
+          border-color: vars.$primary-color;
         }
       }
 
       &.active .page-link {
-        background-color: $primary;
-        border-color: $primary;
+        background-color: vars.$primary-color;
+        border-color: vars.$primary-color;
         color: vars.$white;
 
         &:hover {
-          background-color: $primary-dark;
-          border-color: $primary-dark;
+          background-color: vars.$primary-hover;
+          border-color: vars.$primary-hover;
         }
       }
 

@@ -2,31 +2,27 @@
 @use '../../../../../styles/variables' as vars;
 
 // ========== LOCAL COLOR ALIASES ==========
-$primary:       vars.$primary-color;
-$primary-dark:  vars.$primary-hover;
-$primary-light: vars.$primary-lightest;
-$background:    vars.$gray-100;
-$border:        vars.$gray-200;
-$gray-400:      vars.$gray-400;
-$gray-500:      vars.$gray-500;
-$gray-600:      vars.$gray-500;
-$gray-700:      vars.$gray-700;
-$gray-900:      vars.$gray-800;
-
-// =========== CONTAINER ==========
 .combined-admin-container {
   width: 100%;
   max-width: 100%;
   margin: 0;
   padding: vars.$spacing-8;
   box-sizing: border-box;
-  background-color: $background;
+  background-color: vars.$gray-100;
   min-height: calc(100vh - 100px);
   overflow-x: hidden; // prevent any child from blowing out the page
 
-  @media (width <= 1024px) { padding: vars.$spacing-6; }
-  @media (width <= 768px)  { padding: vars.$spacing-4; }
-  @media (width <= 480px)  { padding: vars.$spacing-3; }
+  @media (width <= 1024px) {
+    padding: vars.$spacing-6;
+  }
+
+  @media (width <= 768px) {
+    padding: vars.$spacing-4;
+  }
+
+  @media (width <= 480px) {
+    padding: vars.$spacing-3;
+  }
 }
 
 // ========== PAGE HEADER ==========
@@ -44,26 +40,34 @@ $gray-900:      vars.$gray-800;
     .page-title {
       font-size: vars.$font-size-3xl;
       font-weight: vars.$font-weight-bold;
-      color: $gray-900;
+      color: vars.$gray-800;
       letter-spacing: -0.025em;
       margin: 0 0 vars.$spacing-2;
       display: flex;
       align-items: center;
       flex-wrap: wrap;
       gap: 0.5rem;
-      word-break: break-word;
+      overflow-wrap: break-word;
 
-      i { color: $primary; flex-shrink: 0; }
+      i {
+        color: vars.$primary-color;
+        flex-shrink: 0;
+      }
 
-      @media (width <= 768px)  { font-size: vars.$font-size-xl; }
-      @media (width <= 480px)  { font-size: vars.$font-size-lg; }
+      @media (width <= 768px) {
+        font-size: vars.$font-size-xl;
+      }
+
+      @media (width <= 480px) {
+        font-size: vars.$font-size-lg;
+      }
     }
 
     .page-subtitle {
-      color: $gray-600;
+      color: vars.$gray-500;
       font-size: vars.$font-size-sm;
       margin: 0;
-      word-break: break-word;
+      overflow-wrap: break-word;
     }
   }
 
@@ -71,11 +75,14 @@ $gray-900:      vars.$gray-800;
     flex-shrink: 0;
 
     .btn-primary {
-      background-color: $primary;
-      border-color: $primary;
+      background-color: vars.$primary-color;
+      border-color: vars.$primary-color;
       white-space: nowrap;
 
-      &:hover { background-color: $primary-dark; border-color: $primary-dark; }
+      &:hover {
+        background-color: vars.$primary-hover;
+        border-color: vars.$primary-hover;
+      }
     }
   }
 
@@ -84,7 +91,9 @@ $gray-900:      vars.$gray-800;
     align-items: stretch;
     margin-bottom: vars.$spacing-6;
 
-    .header-actions .btn { width: 100%; }
+    .header-actions .btn {
+      width: 100%;
+    }
   }
 }
 
@@ -95,16 +104,24 @@ $gray-900:      vars.$gray-800;
   grid-template-columns: repeat(4, 1fr);
   margin-bottom: vars.$spacing-8;
 
-  @media (width <= 1024px) { grid-template-columns: repeat(2, 1fr); }
-  @media (width <= 480px)  { grid-template-columns: repeat(1, 1fr); gap: 0.75rem; }
+  @media (width <= 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (width <= 480px) {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 0.75rem;
+  }
 }
 
 .stat-card {
   background: vars.$white;
-  border: 1px solid $border;
+  border: 1px solid vars.$gray-200;
   border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-base;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   min-width: 0;
 
   &:hover {
@@ -122,7 +139,7 @@ $gray-900:      vars.$gray-800;
     .stat-card-title {
       font-size: vars.$font-size-sm;
       font-weight: vars.$font-weight-medium;
-      color: $gray-700;
+      color: vars.$gray-700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -131,7 +148,7 @@ $gray-900:      vars.$gray-800;
     .stat-icon {
       width: 1rem;
       height: 1rem;
-      color: $gray-500;
+      color: vars.$gray-500;
       flex-shrink: 0;
     }
   }
@@ -142,14 +159,14 @@ $gray-900:      vars.$gray-800;
     .stat-value {
       font-size: vars.$font-size-2xl;
       font-weight: vars.$font-weight-bold;
-      color: $gray-900;
+      color: vars.$gray-800;
       line-height: 1;
       margin-bottom: vars.$spacing-1;
     }
 
     .stat-description {
       font-size: vars.$font-size-xs;
-      color: $gray-600;
+      color: vars.$gray-500;
       margin: 0;
     }
   }
@@ -158,7 +175,7 @@ $gray-900:      vars.$gray-800;
 // ========== CARD ==========
 .card {
   background: vars.$white;
-  border: 1px solid $border;
+  border: 1px solid vars.$gray-200;
   border-radius: vars.$radius-lg;
   box-shadow: vars.$shadow-base;
   overflow: hidden;
@@ -167,10 +184,12 @@ $gray-900:      vars.$gray-800;
 
   .card-header {
     padding: vars.$spacing-5 vars.$spacing-6;
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid vars.$gray-200;
     background-color: vars.$white;
 
-    @media (width <= 640px) { padding: vars.$spacing-4; }
+    @media (width <= 640px) {
+      padding: vars.$spacing-4;
+    }
 
     .card-header-content {
       min-width: 0;
@@ -185,21 +204,27 @@ $gray-900:      vars.$gray-800;
         .card-title {
           font-size: vars.$font-size-md;
           font-weight: vars.$font-weight-semibold;
-          color: $gray-900;
+          color: vars.$gray-800;
           margin: 0;
-          word-break: break-word;
+          overflow-wrap: break-word;
 
-          @media (width <= 480px) { font-size: vars.$font-size-base; }
+          @media (width <= 480px) {
+            font-size: vars.$font-size-base;
+          }
         }
 
-        i { color: $gray-600; font-size: vars.$font-size-md; flex-shrink: 0; }
+        i {
+          color: vars.$gray-500;
+          font-size: vars.$font-size-md;
+          flex-shrink: 0;
+        }
       }
 
       .card-description {
         font-size: vars.$font-size-sm;
-        color: $gray-600;
+        color: vars.$gray-500;
         margin: 0;
-        word-break: break-word;
+        overflow-wrap: break-word;
       }
     }
   }
@@ -208,18 +233,33 @@ $gray-900:      vars.$gray-800;
     padding: vars.$spacing-5 vars.$spacing-6;
     background-color: vars.$white;
 
-    &.p-0 { padding: 0; }
+    &.p-0 {
+      padding: 0;
+    }
 
-    @media (width <= 640px) { padding: vars.$spacing-4; &.p-0 { padding: 0; } }
-    @media (width <= 480px) { padding: vars.$spacing-3; &.p-0 { padding: 0; } }
+    @media (width <= 640px) {
+      padding: vars.$spacing-4;
+      &.p-0 {
+        padding: 0;
+      }
+    }
+
+    @media (width <= 480px) {
+      padding: vars.$spacing-3;
+      &.p-0 {
+        padding: 0;
+      }
+    }
   }
 
   .card-footer {
     background-color: vars.$gray-50;
-    border-top: 1px solid $border;
+    border-top: 1px solid vars.$gray-200;
     padding: vars.$spacing-3 vars.$spacing-6;
 
-    @media (width <= 640px) { padding: vars.$spacing-3 vars.$spacing-4; }
+    @media (width <= 640px) {
+      padding: vars.$spacing-3 vars.$spacing-4;
+    }
   }
 }
 
@@ -227,13 +267,13 @@ $gray-900:      vars.$gray-800;
 .form-control,
 .form-select {
   border-radius: vars.$radius-base;
-  border-color: $border;
+  border-color: vars.$gray-200;
   font-size: vars.$font-size-sm;
   width: 100%;
   min-width: 0;
 
   &:focus {
-    border-color: $primary;
+    border-color: vars.$primary-color;
     box-shadow: 0 0 0 3px rgba(vars.$primary-color, 0.15);
     outline: none;
   }
@@ -254,11 +294,11 @@ $gray-900:      vars.$gray-800;
   thead tr th {
     font-size: vars.$font-size-xs;
     font-weight: vars.$font-weight-semibold;
-    color: $gray-600;
+    color: vars.$gray-500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     background-color: vars.$gray-50;
-    border-bottom: 2px solid $border;
+    border-bottom: 2px solid vars.$gray-200;
     white-space: nowrap;
     padding: 0.625rem 0.875rem;
   }
@@ -268,7 +308,7 @@ $gray-900:      vars.$gray-800;
       vertical-align: middle;
       padding: 0.625rem 0.875rem;
       font-size: vars.$font-size-sm;
-      color: $gray-700;
+      color: vars.$gray-700;
       border-bottom: 1px solid vars.$gray-100;
       max-width: 220px;
 
@@ -278,21 +318,32 @@ $gray-900:      vars.$gray-800;
       }
     }
 
-    &:last-child td { border-bottom: none; }
-    &:hover td { background-color: rgb(0 177 169 / 3%); }
+    &:last-child td {
+      border-bottom: none;
+    }
+    &:hover td {
+      background-color: rgb(0 177 169 / 3%);
+    }
   }
 }
 
 // Column width hints
-.col-request-num { min-width: 120px; }
-.col-dates       { min-width: 180px; white-space: nowrap; }
+.col-request-num {
+  min-width: 120px;
+}
+.col-dates {
+  min-width: 180px;
+  white-space: nowrap;
+}
 
 .request-number {
   font-weight: vars.$font-weight-semibold;
-  color: $primary;
+  color: vars.$primary-color;
   white-space: nowrap;
 
-  &:hover { text-decoration: underline !important; }
+  &:hover {
+    text-decoration: underline !important;
+  }
 }
 
 .requestor-info {
@@ -318,8 +369,8 @@ $gray-900:      vars.$gray-800;
     font-weight: vars.$font-weight-medium;
     padding: 0.2rem 0.45rem;
     background-color: vars.$gray-100 !important;
-    color: $gray-700 !important;
-    border: 1px solid $border;
+    color: vars.$gray-700 !important;
+    border: 1px solid vars.$gray-200;
     border-radius: vars.$radius-base;
     white-space: nowrap;
   }
@@ -370,7 +421,9 @@ $gray-900:      vars.$gray-800;
     justify-content: center;
     flex-shrink: 0;
 
-    i { font-size: vars.$font-size-sm; }
+    i {
+      font-size: vars.$font-size-sm;
+    }
   }
 }
 
@@ -381,7 +434,7 @@ $gray-900:      vars.$gray-800;
   font-size: vars.$font-size-xs;
   font-weight: vars.$font-weight-medium;
   padding: 0.2rem 0.45rem;
-  border: 1px solid $border;
+  border: 1px solid vars.$gray-200;
   border-radius: vars.$radius-base;
   white-space: nowrap;
 }
@@ -400,24 +453,34 @@ $gray-900:      vars.$gray-800;
   align-items: center;
   justify-content: center;
   padding: vars.$spacing-10 vars.$spacing-4;
-  color: $gray-600;
+  color: vars.$gray-500;
   text-align: center;
 
-  i { font-size: 2.5rem; margin-bottom: vars.$spacing-4; color: $gray-400; }
+  i {
+    font-size: 2.5rem;
+    margin-bottom: vars.$spacing-4;
+    color: vars.$gray-400;
+  }
 
   p {
     margin: 0;
     font-size: vars.$font-size-sm;
-    &.text-sm { font-size: vars.$font-size-xs; color: $gray-400; margin-top: vars.$spacing-1; }
+    &.text-sm {
+      font-size: vars.$font-size-xs;
+      color: vars.$gray-400;
+      margin-top: vars.$spacing-1;
+    }
   }
 }
 
 // ========== PAGINATION ==========
 .pagination-container {
   padding: vars.$spacing-4 vars.$spacing-6;
-  border-top: 1px solid $border;
+  border-top: 1px solid vars.$gray-200;
 
-  .pagination-info { color: $gray-600; }
+  .pagination-info {
+    color: vars.$gray-500;
+  }
 }
 
 .pagination {
@@ -427,14 +490,22 @@ $gray-900:      vars.$gray-800;
   .page-link {
     border-radius: vars.$radius-base;
     margin: 0 1px;
-    color: $primary;
-    border-color: $border;
+    color: vars.$primary-color;
+    border-color: vars.$gray-200;
     font-size: vars.$font-size-sm;
     padding: 0.375rem 0.625rem;
 
-    &:hover { background-color: $primary-light; border-color: $primary; }
+    &:hover {
+      background-color: vars.$primary-lightest;
+      border-color: vars.$primary-color;
+    }
   }
 
-  .page-item.active .page-link  { background-color: $primary; border-color: $primary; }
-  .page-item.disabled .page-link { color: $gray-500; }
+  .page-item.active .page-link {
+    background-color: vars.$primary-color;
+    border-color: vars.$primary-color;
+  }
+  .page-item.disabled .page-link {
+    color: vars.$gray-500;
+  }
 }
