@@ -299,28 +299,7 @@
   white-space: nowrap;
 }
 
-// Action buttons - circular icon buttons (override any component .btn border-radius)
-.action-buttons {
-  display: flex;
-  gap: vars.$spacing-2;
-  justify-content: flex-end;
-}
-
-// Standalone btn-icon for circular buttons
-.btn-icon {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  padding: 0;
-  border-radius: vars.$radius-full !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  i {
-    font-size: vars.$font-size-sm;
-  }
-}
+// Action buttons: see global .action-buttons in buttons.scss
 
 // ========== STATES ==========
 .loading-state,

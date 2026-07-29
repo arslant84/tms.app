@@ -308,7 +308,7 @@
                   <label class="form-label">Remarks</label>
                   <div class="remarks-input-wrapper">
                     <input type="text" class="form-control" formControlName="remarks">
-                    <button type="button" class="btn btn-danger btn-remove"
+                    <button type="button" class="btn btn-danger btn-icon btn-lg"
                             *ngIf="itinerarySegments.length > 1"
                             (click)="removeItinerarySegment(i)">
                       <i class="bi bi-trash"></i>
@@ -510,7 +510,7 @@
               <div><input type="number" class="form-control form-control-sm" formControlName="usd" readonly></div>
               <div><input type="text" class="form-control form-control-sm" formControlName="remarks"></div>
               <div class="text-center">
-                <button type="button" class="btn btn-remove-sm" (click)="removeAdvanceAmountItem(j)">
+                <button type="button" class="btn btn-danger btn-icon" (click)="removeAdvanceAmountItem(j)">
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
@@ -641,7 +641,7 @@
                  class="segment-card mb-3" [formGroupName]="i">
               <div class="segment-card-header">
                 <span>Journey {{ i + 1 }}</span>
-                <button type="button" class="btn btn-remove-sm"
+                <button type="button" class="btn btn-danger btn-icon"
                         *ngIf="transportSegments.length > 1"
                         (click)="removeTransportSegment(i)">
                   <i class="bi bi-trash"></i>
@@ -1121,20 +1121,20 @@
 
       <!-- ── Action Buttons ─────────────────────────────────────────── -->
       <div class="form-actions">
-        <button type="button" class="btn btn-cancel" (click)="cancel()" [disabled]="isSubmitting">
+        <button type="button" class="btn btn-danger" (click)="cancel()" [disabled]="isSubmitting">
           <i class="bi bi-x-circle"></i>
           Cancel
         </button>
-        <button type="button" class="btn btn-draft" *ngIf="!editMode" (click)="clearDraft()" [disabled]="isSubmitting">
+        <button type="button" class="btn btn-secondary" *ngIf="!editMode" (click)="clearDraft()" [disabled]="isSubmitting">
           <i class="bi bi-arrow-counterclockwise"></i>
           Reset
         </button>
-        <button type="button" class="btn btn-draft" (click)="saveAsDraft()"
+        <button type="button" class="btn btn-secondary" (click)="saveAsDraft()"
                 [disabled]="isSubmitting || !isAtLeastOneModuleSelected()">
           <i class="bi bi-save"></i>
           {{ isSubmitting ? 'Saving...' : 'Save as Draft' }}
         </button>
-        <button type="submit" class="btn btn-submit"
+        <button type="submit" class="btn btn-primary"
                 [disabled]="isSubmitting || !isAtLeastOneModuleSelected() || !approverSelectionValid">
           <i class="bi bi-send"></i>
           {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}

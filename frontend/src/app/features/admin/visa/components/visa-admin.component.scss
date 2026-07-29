@@ -356,113 +356,12 @@
 // from the global "Unified Badge Styles" in styles.scss - no local
 // overrides here so this matches every other admin/list/detail screen.
 
-// Action buttons - circular icon buttons
-.action-buttons {
-  display: flex;
-  gap: vars.$spacing-2;
-  justify-content: flex-end;
-}
+// Action buttons: see global .action-buttons/.btn-icon in buttons.scss
 
-// Standalone btn-icon for circular buttons (used with Bootstrap d-flex)
-.btn-icon {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  padding: 0;
-  border-radius: vars.$radius-full !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  i {
-    font-size: vars.$font-size-sm;
-  }
-}
-
-// Component-specific button variants:
-.btn-view {
-  color: vars.$info-color;
-  border-color: vars.$info-color;
-  background: vars.$white;
-
-  &:hover {
-    background-color: vars.$info-light;
-    border-color: vars.$info-hover;
-    color: vars.$info-hover;
-  }
-}
-
-.btn-approve {
-  color: vars.$success-color;
-  border-color: vars.$success-color;
-  background: vars.$white;
-
-  &:hover {
-    background-color: vars.$success-lightest;
-    border-color: color.adjust(vars.$success-color, $lightness: -10%);
-    color: color.adjust(vars.$success-color, $lightness: -10%);
-  }
-}
-
-.btn-reject {
-  color: vars.$error-color;
-  border-color: vars.$error-color;
-  background: vars.$white;
-
-  &:hover {
-    background-color: vars.$error-light;
-    border-color: color.adjust(vars.$error-color, $lightness: -10%);
-    color: color.adjust(vars.$error-color, $lightness: -10%);
-  }
-}
-
-.btn-process {
-  color: vars.$purple-color;
-  border-color: vars.$purple-color;
-  background: vars.$white;
-
-  &:hover {
-    background-color: vars.$purple-light;
-    border-color: vars.$purple-hover;
-    color: vars.$purple-hover;
-  }
-}
-
-.btn-complete {
-  color: vars.$success-color;
-  border-color: vars.$success-color;
-  background: vars.$white;
-
-  &:hover {
-    background-color: vars.$success-lightest;
-    border-color: color.adjust(vars.$success-color, $lightness: -10%);
-    color: color.adjust(vars.$success-color, $lightness: -10%);
-  }
-}
-
-.btn-edit {
-  color: vars.$warning-color;
-  border-color: vars.$warning-color;
-  background: vars.$white;
-
-  &:hover {
-    background-color: vars.$warning-lightest;
-    border-color: color.adjust(vars.$warning-color, $lightness: -10%);
-    color: color.adjust(vars.$warning-color, $lightness: -10%);
-  }
-}
-
-.btn-delete {
-  color: vars.$error-color;
-  border-color: vars.$error-color;
-  background: vars.$white;
-
-  &:hover {
-    background-color: vars.$error-light;
-    border-color: color.adjust(vars.$error-color, $lightness: -10%);
-    color: color.adjust(vars.$error-color, $lightness: -10%);
-  }
-}
+// .btn-view/.btn-approve/.btn-reject/.btn-process/.btn-complete/.btn-edit/.btn-delete
+// removed - none were referenced by this template (it uses .btn-outline-primary/
+// .btn-outline-danger + .btn-icon instead). Canonical .btn-icon-{info,success,
+// danger,warning,purple} exist in buttons.scss if per-action colors are wanted later.
 
 // ========== LOADING STATE ==========
 .loading-state {

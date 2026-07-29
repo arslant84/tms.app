@@ -149,21 +149,7 @@
                   margin-top: vars.$spacing-1;
                 }
 
-                .action-buttons {
-                  display: flex;
-                  gap: 0.5rem;
-                  justify-content: flex-end;
-
-                  .btn,
-                  .btn-icon {
-                    width: 28px;
-                    height: 28px;
-                    min-height: 28px;
-                    padding: 0;
-                    border-radius: vars.$radius-full !important;
-                    font-size: vars.$font-size-xs;
-                  }
-                }
+                // Action buttons: see global .action-buttons in buttons.scss
               }
             }
           }

@@ -52,25 +52,7 @@
   margin: 0 0 0 2.75rem;
 }
 
-.btn-create {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-2;
-  padding: vars.$spacing-2 vars.$spacing-md;
-  font-size: vars.$font-size-base;
-  background-color: vars.$primary-color;
-  border-color: vars.$primary-color;
-  color: vars.$white;
-
-  &:hover {
-    background-color: vars.$primary-hover;
-    border-color: vars.$primary-hover;
-  }
-
-  i {
-    font-size: vars.$font-size-lg;
-  }
-}
+// .btn-create removed - HTML now uses canonical .btn .btn-lg .btn-primary
 
 // Filters and Cards
 .filters-card, .bookings-list-card {
@@ -287,46 +269,9 @@
 // from the global "Unified Badge Styles" in styles.scss - no local
 // overrides here so this matches every other admin/list/detail screen.
 
-// Action buttons - circular icon buttons
-.action-buttons {
-  display: flex;
-  gap: vars.$spacing-2;
-  justify-content: flex-end;
-}
+// Action buttons: see global .action-buttons/.btn-icon in buttons.scss
 
-// Standalone btn-icon for circular buttons
-.btn-icon {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  padding: 0;
-  border-radius: vars.$radius-full !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  i {
-    font-size: vars.$font-size-sm;
-  }
-}
-
-// Component-specific button variants:
-.btn-view {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-2;
-  padding: vars.$spacing-1 vars.$spacing-3;
-  font-size: vars.$font-size-sm;
-  border: 1px solid vars.$gray-300;
-  color: vars.$primary-color;
-  background: vars.$white;
-  border-radius: vars.$radius-base;
-
-  &:hover {
-    background-color: vars.$primary-lightest;
-    border-color: vars.$primary-color;
-  }
-}
+// .btn-view removed - not referenced by this template
 
 // Pagination
 .pagination-section {

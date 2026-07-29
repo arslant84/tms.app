@@ -8,7 +8,7 @@
       </div>
       <p class="page-subtitle">Manage your accommodation bookings and requests</p>
     </div>
-    <button class="btn btn-primary btn-create" (click)="navigateToCreate()">
+    <button class="btn btn-lg btn-primary" (click)="navigateToCreate()">
       <i class="bi bi-plus-circle me-2"></i>Accommodation Request
     </button>
   </div>
@@ -122,7 +122,7 @@
               </span>
             </td>
             <td>{{ dateUtils.formatDate(request.created_at) }}</td>
-            <td>
+            <td class="text-end">
               <div class="action-buttons">
                 <button
                   class="btn btn-sm btn-outline-primary btn-icon"

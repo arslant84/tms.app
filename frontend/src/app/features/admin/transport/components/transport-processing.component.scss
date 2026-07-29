@@ -208,28 +208,6 @@
   white-space: nowrap;
 }
 
-// Primary Custom Button (Petronas Green)
-.btn-primary-custom {
-  background-color: vars.$primary-color;
-  border-color: vars.$primary-color;
-  color: vars.$white;
-  font-weight: vars.$font-weight-medium;
-
-  &:hover:not(:disabled) {
-    background-color: vars.$primary-hover;
-    border-color: vars.$primary-hover;
-    color: vars.$white;
-  }
-
-  &:focus {
-    box-shadow: vars.$focus-shadow;
-  }
-
-  &:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-  }
-}
 
 // Loading States
 .loading-container,
@@ -375,28 +353,8 @@
   }
 }
 
-// Action buttons - circular icon buttons
-.action-buttons {
-  display: flex;
-  gap: vars.$spacing-2;
-  justify-content: flex-end;
-}
-
-// Standalone btn-icon for circular buttons (used with Bootstrap d-flex)
-.btn-icon {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  padding: 0;
-  border-radius: vars.$radius-full !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  i {
-    font-size: vars.$font-size-sm;
-  }
-}
+// Action buttons: see global .action-buttons/.btn-icon in buttons.scss
+// (this file's action row uses .request-actions instead, styled below)
 
 // Responsive Design
 @media (width <= 768px) {

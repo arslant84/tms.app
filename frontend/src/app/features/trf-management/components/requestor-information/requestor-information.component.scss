@@ -134,30 +134,7 @@
   }
 }
 
-.btn {
-  padding: vars.$spacing-2 vars.$spacing-md;
-  font-size: vars.$font-size-sm;
-  font-weight: vars.$font-weight-medium;
-  border-radius: vars.$radius-md;
-  transition: background-color 0.15s, border-color 0.15s;
-  cursor: pointer;
-
-  &.btn-primary {
-    background-color: vars.$primary-color;
-    color: vars.$text-inverse;
-    border: 1px solid vars.$primary-color;
-
-    &:hover {
-      background-color: vars.$primary-hover;
-      border-color: vars.$primary-hover;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
-}
+// Buttons: see global .btn/.btn-primary in buttons.scss
 
 // Description text below title (if added)
 .card-description {

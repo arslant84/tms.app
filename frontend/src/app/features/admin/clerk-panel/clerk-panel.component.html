@@ -418,9 +418,9 @@
               [(ngModel)]="processingNotes"></textarea>
           </div>
           
-          <div class="action-buttons">
-            <button 
-              class="btn btn-primary" 
+          <div class="form-footer-actions">
+            <button
+              class="btn btn-primary"
               [disabled]="selectedTask.status === 'in_progress' || selectedTask.status === 'completed' || isProcessing"
               (click)="startProcessing()">
               <i class="bi bi-play-fill"></i> Start Processing

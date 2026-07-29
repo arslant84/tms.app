@@ -560,55 +560,14 @@ tmsapp-admin-systemsettings-workflow-configuration,
     }
   }
 
-  // Standard action group alignment and spacing in Action column
-  .action-buttons {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem; // ~8px consistent spacing
-  }
-
-  // Fluent 2 icon button sizing (28px for table actions)
-  .action-buttons .btn,
-  .action-buttons .btn-icon,
-  .action-buttons .action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border-radius: vars.$radius-base !important; // 4px - Fluent rounded square (force override)
-    font-size: 0.875rem;
-    border-width: 1px;
-    transition: background-color 0.1s ease, border-color 0.1s ease; // Fluent fast transition
-
-    i {
-      font-size: 0.875rem;
-    }
-
-    // Fluent 2: No lift or shadow on hover
-    &:focus-visible {
-      outline: 2px solid vars.$black;
-      outline-offset: 2px;
-    }
-  }
-}
-
-// Override any component-specific button styles to ensure consistency
-// Fluent 2 large button sizing
-.btn-create {
-  height: 40px !important;
-  min-height: 40px !important;
-  padding: 0 vars.$spacing-5 !important; // 0 20px
-  font-size: 1rem !important; // 16px
-  font-weight: 600 !important; // semibold
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: vars.$spacing-2 !important; // 8px
-  min-width: 180px !important;
-  border-radius: vars.$radius-base !important; // 4px
+  // Action buttons (view/edit/delete icons in the Action column): sizing,
+  // shape and alignment come from the global .action-buttons/.btn-icon in
+  // buttons.scss - no local override here, so every list page (this group
+  // and Combined Requests) renders identically. A local override used to
+  // live here (28px, radius-base "square" buttons, centered) and it was
+  // masking a real bug: it fought buttons.scss's canonical .action-buttons
+  // circular 28px sizing, so any page NOT in this container list (e.g.
+  // Combined Requests) rendered differently from these five.
 }
 
 // ==================== Unified Badge Styles ====================

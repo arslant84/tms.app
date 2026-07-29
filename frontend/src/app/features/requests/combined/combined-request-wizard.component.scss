@@ -154,26 +154,7 @@
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
-// Small inline remove button for table rows / segment cards
-.btn-remove-sm {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  background-color: vars.$error-color;
-  color: vars.$white;
-  border: none;
-  border-radius: vars.$radius-md;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background-color vars.$transition-fast;
-
-  i { font-size: vars.$font-size-sm; }
-
-  &:hover { background-color: vars.$error-hover; }
-}
+// .btn-remove-sm removed - HTML now uses canonical .btn-icon .btn-danger
 
 // Inline info hint (replaces alert-info for static guidance messages)
 .info-hint {
@@ -347,25 +328,19 @@
   }
 }
 
-.btn-cancel {
-  background-color: vars.$error-color;
-  color: vars.$white;
-
-  &:hover:not(:disabled) { background-color: vars.$error-hover; }
-}
-
-.btn-draft {
+// .btn-danger/.btn-primary come from global buttons.scss.
+// .btn-secondary is kept as a solid-dark variant (canonical .btn-secondary
+// is light/white) - this page's "Reset"/"Save as Draft" actions deliberately
+// use the darker treatment, matching the same convention on the *-detail pages.
+.btn-secondary {
   background-color: vars.$gray-600;
   color: vars.$white;
+  border-color: vars.$gray-600;
 
-  &:hover:not(:disabled) { background-color: vars.$gray-700; }
-}
-
-.btn-submit {
-  background-color: vars.$primary-color;
-  color: vars.$white;
-
-  &:hover:not(:disabled) { background-color: vars.$primary-hover; }
+  &:hover:not(:disabled) {
+    background-color: vars.$gray-700;
+    border-color: vars.$gray-700;
+  }
 }
 
 // ============================================================
@@ -536,21 +511,7 @@ textarea.form-control {
 }
 
 
-// ============================================================
-// BUTTONS (base — Bootstrap overrides)
-// ============================================================
-
-.btn {
-  border-radius: vars.$radius-lg;
-  padding: vars.$btn-padding-y vars.$btn-padding-x;
-  font-weight: vars.$font-weight-semibold;
-  font-size: vars.$font-size-sm;
-  transition: all vars.$transition-base;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-}
+// Buttons: see global .btn in buttons.scss
 
 // ============================================================
 // ALERTS
@@ -709,23 +670,7 @@ textarea.form-control {
   .form-control { flex: 1; }
 }
 
-.btn-remove {
-  flex-shrink: 0;
-  width: 2.5rem;
-  height: 2.5rem;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: vars.$error-color;
-  color: vars.$white;
-  border: 1px solid vars.$error-color;
-  border-radius: vars.$radius-md;
-  cursor: pointer;
-
-  &:hover { background-color: vars.$error-hover; border-color: vars.$error-hover; }
-  i { font-size: vars.$font-size-base; }
-}
+// .btn-remove removed - HTML now uses canonical .btn-icon .btn-lg .btn-danger
 
 // ============================================================
 // MEAL PROVISION — exact match to TSR domestic

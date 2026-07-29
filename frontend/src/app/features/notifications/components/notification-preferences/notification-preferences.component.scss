@@ -380,8 +380,9 @@
   }
 }
 
-// Action Buttons
-.action-buttons {
+// Action Buttons - not .action-buttons (reserved app-wide for 28px
+// circular table-row icon buttons, see buttons.scss); these are full-text.
+.form-footer-actions {
   display: flex;
   justify-content: flex-end;
   gap: vars.$spacing-3;
@@ -420,7 +421,7 @@
     }
   }
 
-  .action-buttons {
+  .form-footer-actions {
     flex-direction: column;
 
     .btn {

@@ -104,55 +104,7 @@ textarea.form-control { min-height: 3rem; height: auto; }
   border: 1px solid vars.$border-light;
 }
 
-// Buttons
-.btn {
-  padding: vars.$spacing-2 vars.$spacing-md;
-  font-size: vars.$font-size-sm;
-  font-weight: vars.$font-weight-medium;
-  border-radius: vars.$radius-md;
-  transition: background-color 0.15s, border-color 0.15s;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: vars.$spacing-2;
-}
-
-.btn-primary {
-  background-color: vars.$primary-color;
-  color: vars.$text-inverse;
-  border: 1px solid vars.$primary-color;
-  &:hover { background-color: vars.$primary-hover; border-color: vars.$primary-hover; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-.btn-outline-primary {
-  background-color: transparent;
-  color: vars.$primary-color;
-  border: 1px solid vars.$primary-color;
-  &:hover { background-color: vars.$primary-color; color: vars.$text-inverse; }
-  i { font-size: vars.$font-size-base; }
-}
-
-.btn-outline-secondary {
-  background-color: transparent;
-  color: vars.$gray-600;
-  border: 1px solid vars.$gray-300;
-  &:hover { background-color: vars.$gray-50; border-color: vars.$gray-400; }
-}
-
-.btn-outline-danger {
-  background-color: transparent;
-  color: vars.$error-color;
-  border: 1px solid vars.$error-color;
-  &:hover { background-color: vars.$error-color; color: vars.$text-inverse; }
-}
-
-.btn-sm {
-  padding: vars.$spacing-2 vars.$spacing-3;
-  font-size: vars.$font-size-xs;
-  font-weight: vars.$font-weight-medium;
-  border-radius: vars.$radius-md;
-}
+// Buttons: see global .btn/.btn-primary/.btn-outline-primary/.btn-outline-secondary/.btn-outline-danger/.btn-sm in buttons.scss
 
 // Utility Classes
 .mt-3 { margin-top: vars.$spacing-3; }
