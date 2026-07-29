@@ -422,32 +422,54 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
 
             # Update steps if provided
             if steps_data is not None:
-                # Delete existing steps (and their notification configs due to CASCADE)
-                instance.steps.all().delete()
+                # Match incoming steps to existing ones by step_order and update
+                # them in place. WorkflowStepExecution.workflow_step cascades on
+                # delete, so wholesale delete-and-recreate here would wipe out the
+                # approval history of every past instance run against this
+                # template. Steps no longer present are only removed if they
+                # have no execution history to preserve.
+                existing_steps_by_order = {
+                    step.step_order: step for step in instance.steps.all()
+                }
+                incoming_orders = set()
 
-                # Create new steps
                 for step_data in steps_data:
                     notification_configs_data = step_data.pop(
                         "notification_configs", []
                     )
+                    step_order = step_data.get("step_order")
+                    incoming_orders.add(step_order)
+                    approver_user_id = step_data.get("approver_user") or None
 
-                    step = WorkflowStep.objects.create(
-                        workflow_template=instance,
-                        step_order=step_data.get("step_order"),
-                        step_name=step_data.get("step_name"),
-                        step_description=step_data.get("step_description", ""),
-                        approver_role=step_data.get("approver_role"),
-                        approver_permission=step_data.get("approver_permission"),
-                        approver_user_id=(
-                            step_data.get("approver_user")
-                            if step_data.get("approver_user")
-                            else None
-                        ),
-                        is_required=step_data.get("is_required", True),
-                        can_skip=step_data.get("can_skip", False),
-                        requires_comments=step_data.get("requires_comments", False),
-                        sla_hours=step_data.get("sla_hours"),
-                    )
+                    step = existing_steps_by_order.get(step_order)
+                    if step:
+                        step.step_name = step_data.get("step_name")
+                        step.step_description = step_data.get("step_description", "")
+                        step.approver_role = step_data.get("approver_role")
+                        step.approver_permission = step_data.get("approver_permission")
+                        step.approver_user_id = approver_user_id
+                        step.is_required = step_data.get("is_required", True)
+                        step.can_skip = step_data.get("can_skip", False)
+                        step.requires_comments = step_data.get(
+                            "requires_comments", False
+                        )
+                        step.sla_hours = step_data.get("sla_hours")
+                        step.save()
+                        step.notification_configs.all().delete()
+                    else:
+                        step = WorkflowStep.objects.create(
+                            workflow_template=instance,
+                            step_order=step_order,
+                            step_name=step_data.get("step_name"),
+                            step_description=step_data.get("step_description", ""),
+                            approver_role=step_data.get("approver_role"),
+                            approver_permission=step_data.get("approver_permission"),
+                            approver_user_id=approver_user_id,
+                            is_required=step_data.get("is_required", True),
+                            can_skip=step_data.get("can_skip", False),
+                            requires_comments=step_data.get("requires_comments", False),
+                            sla_hours=step_data.get("sla_hours"),
+                        )
 
                     # On UPDATE: Use exactly what frontend sends (respect user's changes)
                     # If user deleted all configs, they get none. If user added/modified, those are used.
@@ -467,6 +489,15 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                             ),
                             priority=config_data.get("priority", "normal"),
                         )
+
+                # Remove steps that are no longer part of the template, as long
+                # as they have no execution history to lose.
+                for step_order, step in existing_steps_by_order.items():
+                    if (
+                        step_order not in incoming_orders
+                        and not step.executions.exists()
+                    ):
+                        step.delete()
 
             return instance
         except Exception as e:

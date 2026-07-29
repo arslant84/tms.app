@@ -68,8 +68,14 @@
       </div>
     </div>
 
+    <!-- Step history unavailable (workflow exists but has no step records) -->
+    <div *ngIf="!compact && sortedSteps.length === 0" class="no-workflow step-history-unavailable">
+      <i class="bi bi-info-circle"></i>
+      Step-by-step history is unavailable for this workflow.
+    </div>
+
     <!-- Full View (Timeline) -->
-    <div *ngIf="!compact" class="workflow-timeline">
+    <div *ngIf="!compact && sortedSteps.length > 0" class="workflow-timeline">
       <div
         *ngFor="let step of sortedSteps; let i = index; let isLast = last"
         class="timeline-item"

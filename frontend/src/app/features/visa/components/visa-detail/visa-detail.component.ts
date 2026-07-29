@@ -1,7 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { VisaService, VisaApplication, VisaApprovalStep, VisaDocument } from '../../services/visa.service';
+import {
+  VisaService,
+  VisaApplication,
+  VisaApprovalStep,
+  VisaDocument,
+} from '../../services/visa.service';
 import { WorkflowService } from '../../../../core/services/workflow.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
@@ -16,9 +22,15 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
 @Component({
   selector: 'app-visa-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ApprovalActionsComponent, WorkflowStatusComponent, LoadingSpinnerComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ApprovalActionsComponent,
+    WorkflowStatusComponent,
+    LoadingSpinnerComponent,
+  ],
   templateUrl: './visa-detail.component.html',
-  styleUrl: './visa-detail.component.scss'
+  styleUrl: './visa-detail.component.scss',
 })
 export class VisaDetailComponent implements OnInit {
   application!: VisaApplication;
@@ -63,61 +75,59 @@ export class VisaDetailComponent implements OnInit {
   loadApplicationDetails(): void {
     this.isLoading = true;
     // Check if user has admin view permissions for visa module
-    const hasAdminView = this.rbacService.hasPermission('view_all_visa') ||
-                         this.rbacService.hasPermission('approve_visa');
+    const hasAdminView =
+      this.rbacService.hasPermission('view_all_visa') ||
+      this.rbacService.hasPermission('approve_visa');
     this.visaService.getApplicationById(this.applicationId, hasAdminView).subscribe({
-      next: (application) => {
+      next: application => {
         this.application = application;
         this.isLoading = false;
         this.loadApprovalSteps();
         this.loadDocuments();
       },
-      error: (error) => {
+      error: () => {
         this.isLoading = false;
         this.toastService.error('Failed to load visa application details');
-      }
+      },
     });
   }
-
 
   loadWorkflow(): void {
     this.workflowLoading = true;
 
     // Try to get workflow for this visa application
-    this.workflowService.getInstances({
-      entity_type: 'visaapplication'
-    }).subscribe({
-      next: (response: any) => {
-        // Check if response is an array or paginated object
-        const instances = Array.isArray(response) ? response : (response.results || []);
+    this.workflowService
+      .getInstances({
+        entity_type: 'visaapplication',
+        object_id: this.applicationId,
+      })
+      .subscribe({
+        next: instances => {
+          // Find workflow instance for this specific request
+          const instance = instances.find(
+            i => i.object_id === this.applicationId || i.entity_info?.id === this.applicationId
+          );
 
-        // Find workflow instance for this specific request
-        const instance = instances.find((i: any) =>
-          i.object_id === this.applicationId ||
-          i.entity_info?.id === this.applicationId ||
-          i.entity_id === this.applicationId
-        );
-
-        if (instance && instance.id) {
-          // Load full workflow details
-          this.workflowService.getInstance(instance.id).subscribe({
-            next: (workflow) => {
-              this.workflow = workflow;
-              this.updateCurrentStepExecution();
-              this.workflowLoading = false;
-            },
-            error: (err) => {
-              this.workflowLoading = false;
-            }
-          });
-        } else {
+          if (instance && instance.id) {
+            // Load full workflow details
+            this.workflowService.getInstance(instance.id).subscribe({
+              next: workflow => {
+                this.workflow = workflow;
+                this.updateCurrentStepExecution();
+                this.workflowLoading = false;
+              },
+              error: () => {
+                this.workflowLoading = false;
+              },
+            });
+          } else {
+            this.workflowLoading = false;
+          }
+        },
+        error: () => {
           this.workflowLoading = false;
-        }
-      },
-      error: (err) => {
-        this.workflowLoading = false;
-      }
-    });
+        },
+      });
   }
 
   updateCurrentStepExecution(): void {
@@ -127,11 +137,13 @@ export class VisaDetailComponent implements OnInit {
     }
 
     // Find the current pending step that the user can action
-    this.currentStepExecution = this.workflow.step_executions.find(
-      step => step.status === 'pending' &&
-              step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
-              step.can_action === true
-    ) || null;
+    this.currentStepExecution =
+      this.workflow.step_executions.find(
+        step =>
+          step.status === 'pending' &&
+          step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
+          step.can_action === true
+      ) || null;
   }
 
   onWorkflowApproved(): void {
@@ -153,21 +165,17 @@ export class VisaDetailComponent implements OnInit {
 
   loadApprovalSteps(): void {
     this.visaService.getApprovalSteps(this.applicationId).subscribe({
-      next: (steps) => {
+      next: steps => {
         this.approvalSteps = steps;
       },
-      error: (error) => {
-      }
     });
   }
 
   loadDocuments(): void {
     this.visaService.getDocuments(this.applicationId).subscribe({
-      next: (documents) => {
+      next: documents => {
         this.documents = documents;
       },
-      error: (error) => {
-      }
     });
   }
 
@@ -208,7 +216,9 @@ export class VisaDetailComponent implements OnInit {
   onEdit(): void {
     // Check if request can be edited
     if (!this.canEdit()) {
-      this.toastService.warning('This visa application cannot be edited because it has been approved. Approved requests can only be viewed, not modified.');
+      this.toastService.warning(
+        'This visa application cannot be edited because it has been approved. Approved requests can only be viewed, not modified.'
+      );
       return;
     }
 
@@ -216,24 +226,26 @@ export class VisaDetailComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.confirmationService.confirm({
-      title: 'Cancel Application',
-      message: 'Are you sure you want to cancel this visa application?',
-      confirmText: 'Cancel Application',
-      type: 'warning'
-    }).subscribe(confirmed => {
-      if (confirmed) {
-        this.visaService.cancelApplication(this.applicationId).subscribe({
-          next: () => {
-            this.toastService.success('Visa application cancelled successfully');
-            this.loadApplicationDetails();
-          },
-          error: (error) => {
-            this.toastService.error('Failed to cancel visa application');
-          }
-        });
-      }
-    });
+    this.confirmationService
+      .confirm({
+        title: 'Cancel Application',
+        message: 'Are you sure you want to cancel this visa application?',
+        confirmText: 'Cancel Application',
+        type: 'warning',
+      })
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.visaService.cancelApplication(this.applicationId).subscribe({
+            next: () => {
+              this.toastService.success('Visa application cancelled successfully');
+              this.loadApplicationDetails();
+            },
+            error: () => {
+              this.toastService.error('Failed to cancel visa application');
+            },
+          });
+        }
+      });
   }
 
   onExportPdf(): void {
@@ -249,9 +261,11 @@ export class VisaDetailComponent implements OnInit {
         window.URL.revokeObjectURL(url);
         this.toastService.success('PDF exported successfully');
       },
-      error: (err: any) => {
-        this.toastService.error('Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error'));
-      }
+      error: (err: HttpErrorResponse) => {
+        this.toastService.error(
+          'Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error')
+        );
+      },
     });
   }
 
@@ -263,14 +277,13 @@ export class VisaDetailComponent implements OnInit {
             this.toastService.success('Visa application deleted successfully');
             this.router.navigate(['/visa']);
           },
-          error: (error) => {
+          error: () => {
             this.toastService.error('Failed to delete visa application');
-          }
+          },
         });
       }
     });
   }
-
 
   getStatusBadgeClass(status: string): string {
     return this.statusUtils.getStatusBadgeClass(status);
@@ -300,5 +313,4 @@ export class VisaDetailComponent implements OnInit {
   getWorkflowStatusClass(): string {
     return this.statusUtils.getWorkflowStatusClass(this.workflow?.status);
   }
-
 }
