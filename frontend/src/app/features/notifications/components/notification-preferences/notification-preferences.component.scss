@@ -233,7 +233,7 @@
       }
 
       &:focus {
-        box-shadow: 0 0 0 0.25rem rgba(vars.$primary-color, 0.25);
+        box-shadow: vars.$focus-shadow;
       }
     }
   }
@@ -344,7 +344,7 @@
         }
 
         &:focus {
-          box-shadow: 0 0 0 0.2rem rgba(vars.$primary-color, 0.2);
+          box-shadow: vars.$focus-shadow;
         }
       }
     }

@@ -185,12 +185,12 @@
     background-color: vars.$primary-color;
     border: 3px solid vars.$white;
     border-radius: vars.$radius-full;
-    box-shadow: 0 0 0 3px rgb(13 148 136 / 20%);
+    box-shadow: vars.$focus-shadow;
     transition: all 0.3s ease;
 
     &:hover {
       transform: scale(1.2);
-      box-shadow: 0 0 0 4px rgb(13 148 136 / 30%);
+      box-shadow: vars.$focus-shadow;
     }
   }
 

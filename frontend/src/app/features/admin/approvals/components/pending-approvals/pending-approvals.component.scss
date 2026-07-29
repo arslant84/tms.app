@@ -115,7 +115,7 @@ $gray-900: vars.$gray-800; // Darkest text
   background: vars.$white;
   border: 1px solid $border;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
+  box-shadow: vars.$shadow-base;
   overflow: hidden;
 
   .card-header {
@@ -170,7 +170,7 @@ $gray-900: vars.$gray-800; // Darkest text
   &:focus {
     outline: none;
     border-color: $primary;
-    box-shadow: 0 0 0 3px rgb(0 177 169 / 10%);
+    box-shadow: vars.$input-focus-shadow;
   }
 
   &::placeholder {
@@ -475,7 +475,7 @@ $gray-900: vars.$gray-800; // Darkest text
     max-width: 500px;
     max-height: calc(100vh - 2rem);
     overflow-y: auto;
-    box-shadow: 0 10px 40px rgb(0 0 0 / 30%);
+    box-shadow: vars.$shadow-2xl;
     z-index: 1051;
     margin: auto;
   }
@@ -559,7 +559,7 @@ $gray-900: vars.$gray-800; // Darkest text
           &:focus {
             outline: none;
             border-color: $primary;
-            box-shadow: 0 0 0 3px rgb(0 177 169 / 10%);
+            box-shadow: vars.$input-focus-shadow;
           }
         }
       }

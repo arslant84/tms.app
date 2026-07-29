@@ -8,9 +8,9 @@
   &:hover,
   &:focus {
     transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%) !important;
+    box-shadow: vars.$shadow-md !important;
     border-color: vars.$primary-color;
-    background-color: rgb(13 148 136 / 3%);
+    background-color: rgba(vars.$primary-color, 0.03);
   }
 
   &:focus {

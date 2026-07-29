@@ -29,7 +29,7 @@
     justify-content: center;
     width: 3rem;
     height: 3rem;
-    background-color: rgb(13 148 136 / 10%);
+    background-color: rgba(vars.$primary-color, 0.1);
     border-radius: vars.$radius-base;
 
     svg {
@@ -166,7 +166,7 @@
 
   &:hover {
     color: vars.$primary-color;
-    background-color: rgb(13 148 136 / 5%);
+    background-color: rgba(vars.$primary-color, 0.05);
   }
 
   &.active {
@@ -307,7 +307,7 @@
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
+    box-shadow: vars.$focus-shadow;
   }
 
   &:disabled {
@@ -434,7 +434,7 @@
 
       &:focus {
         border-color: vars.$primary-color;
-        box-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
+        box-shadow: vars.$focus-shadow;
       }
     }
 

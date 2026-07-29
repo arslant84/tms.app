@@ -228,7 +228,7 @@
   text-transform: uppercase;
 
   &.priority-high {
-    background-color: rgb(220 53 69 / 10%);
+    background-color: rgba(vars.$error-color, 0.1);
     color: vars.$error-color;
   }
 
@@ -238,7 +238,7 @@
   }
 
   &.priority-low {
-    background-color: rgb(40 167 69 / 10%);
+    background-color: rgba(vars.$success-color, 0.1);
     color: vars.$success-color;
   }
 }
@@ -250,7 +250,7 @@
   font-weight: vars.$font-weight-semibold;
 
   &.type-travel {
-    background-color: rgb(52 152 219 / 10%);
+    background-color: rgba(vars.$info-color, 0.1);
     color: vars.$primary-color;
   }
 
@@ -260,7 +260,7 @@
   }
 
   &.type-transport {
-    background-color: rgb(46 204 113 / 10%);
+    background-color: rgba(vars.$success-color, 0.1);
     color: vars.$success-color;
   }
 
@@ -270,7 +270,7 @@
   }
 
   &.type-expense {
-    background-color: rgb(52 73 94 / 10%);
+    background-color: rgba(vars.$gray-700, 0.1);
     color: vars.$gray-700;
   }
 }

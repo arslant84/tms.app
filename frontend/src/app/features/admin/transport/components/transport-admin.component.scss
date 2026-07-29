@@ -101,11 +101,11 @@ $gray-900: vars.$gray-800; // Darkest text
   background: vars.$white;
   border: 1px solid $border;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
+  box-shadow: vars.$shadow-base;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 
   &:hover {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 6%);
+    box-shadow: vars.$shadow-md;
     transform: translateY(-1px);
   }
 
@@ -179,7 +179,7 @@ $gray-900: vars.$gray-800; // Darkest text
   &.active {
     background: vars.$white;
     color: $gray-900;
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%);
+    box-shadow: vars.$shadow-base;
   }
 }
 
@@ -201,7 +201,7 @@ $gray-900: vars.$gray-800; // Darkest text
   background: vars.$white;
   border: 1px solid $border;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
+  box-shadow: vars.$shadow-base;
   overflow: hidden;
 
   .card-header {

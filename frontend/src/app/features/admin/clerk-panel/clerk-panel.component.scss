@@ -286,7 +286,7 @@
 
 /* Status and Priority Colors */
 .priority-high {
-  background-color: rgb(239 68 68 / 10%);
+  background-color: rgba(vars.$error-color, 0.1);
   color: vars.$error-color;
 }
 
@@ -296,27 +296,27 @@
 }
 
 .priority-low {
-  background-color: rgb(16 185 129 / 10%);
+  background-color: rgba(vars.$success-color, 0.1);
   color: vars.$success-color;
 }
 
 .status-pending {
-  background-color: rgb(107 114 128 / 10%);
+  background-color: rgba(vars.$gray-500, 0.1);
   color: vars.$gray-600;
 }
 
 .status-in-progress {
-  background-color: rgb(59 130 246 / 10%);
+  background-color: rgba(vars.$info-color, 0.1);
   color: vars.$info-color;
 }
 
 .status-completed {
-  background-color: rgb(16 185 129 / 10%);
+  background-color: rgba(vars.$success-color, 0.1);
   color: vars.$success-color;
 }
 
 .status-cancelled {
-  background-color: rgb(239 68 68 / 10%);
+  background-color: rgba(vars.$error-color, 0.1);
   color: vars.$error-color;
 }
 

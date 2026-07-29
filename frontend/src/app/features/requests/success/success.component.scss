@@ -25,7 +25,7 @@
   margin-bottom: vars.$spacing-6;
 
   i {
-    filter: drop-shadow(0 4px 6px rgb(46 204 113 / 30%));
+    filter: drop-shadow(0 4px 6px rgba(vars.$success-color, 0.3));
   }
 }
 

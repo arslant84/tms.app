@@ -70,7 +70,7 @@ $border-light: vars.$gray-200;
   background: vars.$white;
   border: 1px solid $border-light;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+  box-shadow: vars.$shadow-base;
   overflow: hidden;
 
   .card-header {
@@ -231,7 +231,7 @@ $border-light: vars.$gray-200;
   }
 
   &:focus {
-    box-shadow: 0 0 0 0.2rem rgba($primary-green, 0.25);
+    box-shadow: vars.$focus-shadow;
   }
 
   &:disabled {
@@ -357,7 +357,7 @@ $border-light: vars.$gray-200;
 
       &:focus {
         border-color: $primary-green;
-        box-shadow: 0 0 0 0.2rem rgba($primary-green, 0.25);
+        box-shadow: vars.$focus-shadow;
       }
     }
 

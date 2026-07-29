@@ -76,7 +76,7 @@
 
     &:hover {
       border-color: vars.$primary-color;
-      box-shadow: 0 2px 8px rgb(13 148 136 / 10%);
+      box-shadow: 0 2px 8px rgba(vars.$primary-color, 0.1);
     }
   }
 

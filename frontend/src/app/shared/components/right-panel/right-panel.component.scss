@@ -339,7 +339,7 @@
 }
 
 .role-hod {
-  background-color: rgb(220 53 69 / 10%);
+  background-color: rgba(vars.$error-color, 0.1);
   color: vars.$error-color;
 }
 

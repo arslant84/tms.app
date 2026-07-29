@@ -168,7 +168,7 @@
       border-color: vars.$error-color;
 
       &:focus {
-        box-shadow: 0 0 0 3px rgb(239 68 68 / 10%);
+        box-shadow: vars.$error-focus-shadow;
       }
     }
   }

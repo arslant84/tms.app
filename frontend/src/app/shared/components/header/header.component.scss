@@ -518,7 +518,7 @@
         height: 8px;
         background-color: vars.$primary-color;
         border-radius: vars.$radius-full;
-        box-shadow: 0 0 0 2px rgb(13 148 136 / 20%);
+        box-shadow: vars.$focus-shadow;
       }
     }
 
