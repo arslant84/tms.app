@@ -152,36 +152,9 @@
   }
 }
 
-// Collapsed sidebar state (optional, for icon-only mode)
-.sidebar-collapsed {
-  .sidebar-container {
-    width: 4rem;
-  }
-
-  .nav-item {
-    justify-content: center;
-    padding: vars.$spacing-3;
-
-    .nav-label {
-      display: none;
-    }
-
-    i {
-      font-size: vars.$font-size-lg;
-    }
-
-    .nav-badge {
-      position: absolute;
-      top: vars.$spacing-1;
-      right: vars.$spacing-1;
-      min-width: vars.$spacing-md;
-      height: vars.$spacing-md;
-      padding: 0 vars.$spacing-1;
-      font-size: vars.$font-size-xs;
-    }
-  }
-
-  .nav-divider {
-    margin: vars.$spacing-2 vars.$spacing-2;
-  }
-}
+// Note: the collapsed sidebar state is NOT styled here. `.sidebar-collapsed`
+// is applied on main-layout's `.layout-container` (an ancestor outside this
+// component's own template), so a `.sidebar-collapsed { ... }` selector in
+// this file's view-encapsulated styles can never match - that state is
+// handled by main-layout.component.scss's `::ng-deep .nav-item` block
+// instead. A dead, unreachable copy of these rules used to live here.
