@@ -209,6 +209,7 @@ def unified_approvals(request):
             "id": str(obj.id),  # Keep numeric ID for API calls
             "requestNumber": request_identifier,  # Display formatted request number
             "requestorName": requestor_name,
+            "staffId": getattr(obj, "staff_id", "") or "",
             "itemType": item_type_name,
             "purpose": purpose,
             "status": obj.status,

@@ -156,6 +156,7 @@
             </td>
             <td class="staff-cell">
               <div class="staff-name">{{ item.requestorName }}</div>
+              <small class="staff-id" *ngIf="item.staffId">{{ item.staffId }}</small>
             </td>
             <td class="purpose-cell">
               <div class="purpose-text">{{ item.purpose }}</div>

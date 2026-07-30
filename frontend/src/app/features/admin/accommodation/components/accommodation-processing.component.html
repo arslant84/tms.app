@@ -238,6 +238,7 @@
                   </td>
                   <td class="staff-cell">
                     <div class="staff-name">{{ request.requestorName }}</div>
+                    <small class="staff-id" *ngIf="request.staffId && request.staffId !== 'N/A'">{{ request.staffId }}</small>
                   </td>
                   <td>{{ request.department | departmentName }}</td>
                   <td>
@@ -507,6 +508,7 @@
               </td>
               <td class="staff-cell">
                 <div class="staff-name">{{ booking.requestorName }}</div>
+                <small class="staff-id" *ngIf="booking.staffId && booking.staffId !== 'N/A'">{{ booking.staffId }}</small>
               </td>
               <td>{{ booking.location }}</td>
               <td>
