@@ -165,11 +165,9 @@
     }
   }
 
-  .request-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-shrink: 0;
-
+  // .action-buttons: sizing/shape/gap come from the global .action-buttons
+  // in buttons.scss - only the mobile full-width stacking stays local.
+  .action-buttons {
     @media (width <= 768px) {
       width: 100%;
 
@@ -207,7 +205,6 @@
   letter-spacing: 0.025em;
   white-space: nowrap;
 }
-
 
 // Loading States
 .loading-container,
