@@ -2,207 +2,304 @@
   <form [formGroup]="overseasForm" (ngSubmit)="onSubmit()">
     <!-- Purpose of Travel Section -->
     <app-form-section-card icon="bi-file-text" title="Purpose of Travel / Цель поездки">
-        <div class="form-group mb-3">
-          <label for="purpose" class="form-label">Please describe the purpose of your travel <span class="text-danger">*</span></label>
-          <textarea
-            class="form-control"
-            id="purpose"
-            formControlName="purpose"
-            rows="3"
-            placeholder="Describe the purpose of your travel"
-            [ngClass]="{'is-invalid': overseasForm.get('purpose')?.invalid && overseasForm.get('purpose')?.touched}"></textarea>
-          <div class="invalid-feedback" *ngIf="overseasForm.get('purpose')?.errors?.['required'] && overseasForm.get('purpose')?.touched">
-            Purpose of travel is required
-          </div>
-          <div class="invalid-feedback" *ngIf="overseasForm.get('purpose')?.errors?.['minlength'] && overseasForm.get('purpose')?.touched">
-            Purpose must be at least 10 characters
-          </div>
+      <div class="form-group mb-3">
+        <label for="purpose" class="form-label"
+          >Please describe the purpose of your travel <span class="text-danger">*</span></label
+        >
+        <textarea
+          class="form-control"
+          id="purpose"
+          formControlName="purpose"
+          rows="3"
+          placeholder="Describe the purpose of your travel"
+          [ngClass]="{
+            'is-invalid':
+              overseasForm.get('purpose')?.invalid && overseasForm.get('purpose')?.touched,
+          }"
+        ></textarea>
+        <div
+          class="invalid-feedback"
+          *ngIf="
+            overseasForm.get('purpose')?.errors?.['required'] &&
+            overseasForm.get('purpose')?.touched
+          "
+        >
+          Purpose of travel is required
         </div>
+        <div
+          class="invalid-feedback"
+          *ngIf="
+            overseasForm.get('purpose')?.errors?.['minlength'] &&
+            overseasForm.get('purpose')?.touched
+          "
+        >
+          Purpose must be at least 10 characters
+        </div>
+      </div>
 
-        <div class="form-group">
-          <label for="tripType" class="form-label d-flex align-items-center gap-2">
-            <i class="bi bi-card-checklist"></i>
-            Trip Type / Тип поездки <span class="text-danger">*</span>
-          </label>
-          <select
-            id="tripType"
-            formControlName="tripType"
-            class="form-select"
-            [ngClass]="{'is-invalid': overseasForm.get('tripType')?.invalid && overseasForm.get('tripType')?.touched}"
-          >
-            <option value="One Way">One Way</option>
-            <option value="Round Trip">Round Trip</option>
-          </select>
-          <div class="invalid-feedback" *ngIf="overseasForm.get('tripType')?.errors?.['required'] && overseasForm.get('tripType')?.touched">
-            Trip type is required
-          </div>
+      <div class="form-group">
+        <label for="tripType" class="form-label d-flex align-items-center gap-2">
+          <i class="bi bi-card-checklist"></i>
+          Trip Type / Тип поездки <span class="text-danger">*</span>
+        </label>
+        <select
+          id="tripType"
+          formControlName="tripType"
+          class="form-select"
+          [ngClass]="{
+            'is-invalid':
+              overseasForm.get('tripType')?.invalid && overseasForm.get('tripType')?.touched,
+          }"
+        >
+          <option value="One Way">One Way</option>
+          <option value="Round Trip">Round Trip</option>
+        </select>
+        <div
+          class="invalid-feedback"
+          *ngIf="
+            overseasForm.get('tripType')?.errors?.['required'] &&
+            overseasForm.get('tripType')?.touched
+          "
+        >
+          Trip type is required
         </div>
+      </div>
     </app-form-section-card>
 
     <!-- Itinerary Section -->
     <app-form-section-card icon="bi-map" title="Itinerary / Маршрут">
-        <app-itinerary-editor
-          [fields]="itineraryFields"
-          [initialSegments]="initialData.itinerary || []"
-          [tripType]="tripTypeValue"
-          (segmentsChange)="onItinerarySegmentsChange($event)">
-        </app-itinerary-editor>
+      <app-itinerary-editor
+        [fields]="itineraryFields"
+        [initialSegments]="initialData.itinerary || []"
+        [tripType]="tripTypeValue"
+        (segmentsChange)="onItinerarySegmentsChange($event)"
+      >
+      </app-itinerary-editor>
     </app-form-section-card>
 
     <!-- Advance Bank Details Section -->
-    <app-form-section-card icon="bi-bank" title="Advance Bank Details / Банковские реквизиты для аванса">
-        <div formGroupName="advanceBankDetails">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Account Name / Имя владельца счета</label>
-              <input type="text" formControlName="accountName" placeholder="Enter account holder name" class="form-control" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Bank Name / Название банка <span class="text-danger">*</span></label>
-              <input
-                type="text"
-                formControlName="bankName"
-                placeholder="Enter bank name"
-                class="form-control"
-                [ngClass]="{'is-invalid': overseasForm.get('advanceBankDetails.bankName')?.invalid && overseasForm.get('advanceBankDetails.bankName')?.touched}"
-              />
-              <div class="invalid-feedback" *ngIf="overseasForm.get('advanceBankDetails.bankName')?.errors?.['required'] && overseasForm.get('advanceBankDetails.bankName')?.touched">
-                Bank name is required
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Account Number / Номер счета <span class="text-danger">*</span></label>
-              <input
-                type="text"
-                formControlName="accountNumber"
-                placeholder="Enter account number"
-                class="form-control"
-                [ngClass]="{'is-invalid': overseasForm.get('advanceBankDetails.accountNumber')?.invalid && overseasForm.get('advanceBankDetails.accountNumber')?.touched}"
-              />
-              <div class="invalid-feedback" *ngIf="overseasForm.get('advanceBankDetails.accountNumber')?.errors?.['required'] && overseasForm.get('advanceBankDetails.accountNumber')?.touched">
-                Account number is required
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Currency / Валюта</label>
-              <select formControlName="currency" class="form-select">
-                <option value="USD">USD - US Dollar</option>
-                <option value="EUR">EUR - Euro</option>
-                <option value="GBP">GBP - British Pound</option>
-                <option value="TMT">TMT - Turkmen Manat</option>
-                <option value="RUB">RUB - Russian Ruble</option>
-              </select>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Remarks / Примечания</label>
-              <textarea formControlName="branchAddress" rows="2" placeholder="Enter any additional remarks" class="form-control"></textarea>
+    <app-form-section-card
+      icon="bi-bank"
+      title="Advance Bank Details / Банковские реквизиты для аванса"
+    >
+      <div formGroupName="advanceBankDetails">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Account Name / Имя владельца счета</label>
+            <input
+              type="text"
+              formControlName="accountName"
+              placeholder="Enter account holder name"
+              class="form-control"
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label"
+              >Bank Name / Название банка <span class="text-danger">*</span></label
+            >
+            <input
+              type="text"
+              formControlName="bankName"
+              placeholder="Enter bank name"
+              class="form-control"
+              [ngClass]="{
+                'is-invalid':
+                  overseasForm.get('advanceBankDetails.bankName')?.invalid &&
+                  overseasForm.get('advanceBankDetails.bankName')?.touched,
+              }"
+            />
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                overseasForm.get('advanceBankDetails.bankName')?.errors?.['required'] &&
+                overseasForm.get('advanceBankDetails.bankName')?.touched
+              "
+            >
+              Bank name is required
             </div>
           </div>
+          <div class="col-md-6">
+            <label class="form-label"
+              >Account Number / Номер счета <span class="text-danger">*</span></label
+            >
+            <input
+              type="text"
+              formControlName="accountNumber"
+              placeholder="Enter account number"
+              class="form-control"
+              [ngClass]="{
+                'is-invalid':
+                  overseasForm.get('advanceBankDetails.accountNumber')?.invalid &&
+                  overseasForm.get('advanceBankDetails.accountNumber')?.touched,
+              }"
+            />
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                overseasForm.get('advanceBankDetails.accountNumber')?.errors?.['required'] &&
+                overseasForm.get('advanceBankDetails.accountNumber')?.touched
+              "
+            >
+              Account number is required
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Currency / Валюта</label>
+            <select formControlName="currency" class="form-select">
+              <option value="USD">USD - US Dollar</option>
+              <option value="EUR">EUR - Euro</option>
+              <option value="GBP">GBP - British Pound</option>
+              <option value="TMT">TMT - Turkmen Manat</option>
+              <option value="RUB">RUB - Russian Ruble</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Remarks / Примечания</label>
+            <textarea
+              formControlName="branchAddress"
+              rows="2"
+              placeholder="Enter any additional remarks"
+              class="form-control"
+            ></textarea>
+          </div>
         </div>
+      </div>
     </app-form-section-card>
 
     <!-- Advance Amount Requested Section -->
-    <app-form-section-card icon="bi-cash-stack" title="Details for the Amount Requested / Детали по запрашиваемой сумме">
-        <div formArrayName="advanceAmountRequested">
-          <div *ngFor="let item of advanceAmountRequested.controls; let i = index" [formGroupName]="i" class="position-relative border rounded bg-light p-3 mb-3">
-            <!-- Date From and Date To -->
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Date From / Дата с <span class="text-danger">*</span></label>
-                <input
-                  type="date"
-                  formControlName="dateFrom"
-                  class="form-control"
-                  [ngClass]="{'is-invalid': item.get('dateFrom')?.invalid && item.get('dateFrom')?.touched}"
-                />
-                <div class="invalid-feedback" *ngIf="item.get('dateFrom')?.errors?.['required'] && item.get('dateFrom')?.touched">
-                  Date from is required
-                </div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Date To / Дата по <span class="text-danger">*</span></label>
-                <input
-                  type="date"
-                  formControlName="dateTo"
-                  class="form-control"
-                  [ngClass]="{'is-invalid': item.get('dateTo')?.invalid && item.get('dateTo')?.touched}"
-                />
-                <div class="invalid-feedback" *ngIf="item.get('dateTo')?.errors?.['required'] && item.get('dateTo')?.touched">
-                  Date to is required
-                </div>
-              </div>
-            </div>
-
-            <!-- Amount Fields -->
-            <div class="row g-3 mb-3">
-              <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label">LH</label>
-                <input type="number" formControlName="lh" min="0" class="form-control" />
-              </div>
-              <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label">MA</label>
-                <input type="number" formControlName="ma" min="0" class="form-control" />
-              </div>
-              <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label">OA</label>
-                <input type="number" formControlName="oa" min="0" class="form-control" />
-              </div>
-              <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label">TR</label>
-                <input type="number" formControlName="tr" min="0" class="form-control" />
-              </div>
-              <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label">OE</label>
-                <input type="number" formControlName="oe" min="0" class="form-control" />
-              </div>
-              <div class="col-6 col-md-4 col-lg-2">
-                <label class="form-label">USD</label>
-                <input type="number" formControlName="usd" step="0.01" readonly class="form-control bg-light" />
+    <app-form-section-card
+      icon="bi-cash-stack"
+      title="Details for the Amount Requested / Детали по запрашиваемой сумме"
+    >
+      <div formArrayName="advanceAmountRequested">
+        <div
+          *ngFor="let item of advanceAmountRequested.controls; let i = index"
+          [formGroupName]="i"
+          class="advance-amount-item position-relative"
+        >
+          <!-- Date From and Date To -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label"
+                >Date From / Дата с <span class="text-danger">*</span></label
+              >
+              <input
+                type="date"
+                formControlName="dateFrom"
+                class="form-control"
+                [ngClass]="{
+                  'is-invalid': item.get('dateFrom')?.invalid && item.get('dateFrom')?.touched,
+                }"
+              />
+              <div
+                class="invalid-feedback"
+                *ngIf="item.get('dateFrom')?.errors?.['required'] && item.get('dateFrom')?.touched"
+              >
+                Date from is required
               </div>
             </div>
-
-            <!-- Remarks -->
-            <div class="form-group">
-              <label class="form-label">Remarks / Примечания</label>
-              <input type="text" formControlName="remarks" placeholder="Remarks for this advance item" class="form-control" />
+            <div class="col-md-6">
+              <label class="form-label">Date To / Дата по <span class="text-danger">*</span></label>
+              <input
+                type="date"
+                formControlName="dateTo"
+                class="form-control"
+                [ngClass]="{
+                  'is-invalid': item.get('dateTo')?.invalid && item.get('dateTo')?.touched,
+                }"
+              />
+              <div
+                class="invalid-feedback"
+                *ngIf="item.get('dateTo')?.errors?.['required'] && item.get('dateTo')?.touched"
+              >
+                Date to is required
+              </div>
             </div>
-
-            <!-- Remove Button -->
-            <button
-              *ngIf="advanceAmountRequested.length > 1"
-              type="button"
-              (click)="removeAdvanceAmountItem(i)"
-              class="position-absolute top-0 end-0 m-2 btn btn-sm btn-outline-danger"
-            >
-              <i class="bi bi-trash"></i>
-            </button>
           </div>
-        </div>
 
-        <div class="mt-3">
-          <button type="button" class="btn btn-outline-primary" (click)="addAdvanceAmountItem()">
-            <i class="bi bi-plus-circle me-1"></i> Add Advance Item
+          <!-- Amount Fields -->
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label">LH</label>
+              <input type="number" formControlName="lh" min="0" class="form-control" />
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label">MA</label>
+              <input type="number" formControlName="ma" min="0" class="form-control" />
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label">OA</label>
+              <input type="number" formControlName="oa" min="0" class="form-control" />
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label">TR</label>
+              <input type="number" formControlName="tr" min="0" class="form-control" />
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label">OE</label>
+              <input type="number" formControlName="oe" min="0" class="form-control" />
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+              <label class="form-label">USD</label>
+              <input
+                type="number"
+                formControlName="usd"
+                step="0.01"
+                class="form-control bg-light"
+              />
+            </div>
+          </div>
+
+          <!-- Remarks -->
+          <div class="form-group">
+            <label class="form-label">Remarks / Примечания</label>
+            <input
+              type="text"
+              formControlName="remarks"
+              placeholder="Remarks for this advance item"
+              class="form-control"
+            />
+          </div>
+
+          <!-- Remove Button -->
+          <button
+            *ngIf="advanceAmountRequested.length > 1"
+            type="button"
+            (click)="removeAdvanceAmountItem(i)"
+            class="position-absolute top-0 end-0 m-2 btn btn-sm btn-outline-danger"
+          >
+            <i class="bi bi-trash"></i>
           </button>
         </div>
-        <p class="mt-2 text-muted small">
-          LH: Lodging/Hotel. MA: Meal Allowance. OA: Other Allowances. TR: Transportation. OE: Other Expenses.
-        </p>
+      </div>
+
+      <div class="mt-3">
+        <button type="button" class="btn btn-outline-primary" (click)="addAdvanceAmountItem()">
+          <i class="bi bi-plus-circle me-1"></i> Add Advance Item
+        </button>
+      </div>
+      <p class="mt-2 text-muted small">
+        LH: Lodging/Hotel. MA: Meal Allowance. OA: Other Allowances. TR: Transportation. OE: Other
+        Expenses.
+      </p>
     </app-form-section-card>
 
     <!-- Passport Details Section -->
     <app-form-section-card icon="bi-file-earmark-text" title="Passport Details (Optional)">
-        <p class="text-muted small mb-3">
-          Upload a copy of your passport for flight booking purposes. This helps the flight admin process your booking faster.
-        </p>
+      <p class="text-muted small mb-3">
+        Upload a copy of your passport for flight booking purposes. This helps the flight admin
+        process your booking faster.
+      </p>
 
-        <!-- File Input -->
-        <app-passport-upload
-          inputId="passportFileOverseas"
-          [fileName]="initialData.passportUpload?.fileName || ''"
-          [fileUrl]="initialData.passportUpload?.fileUrl || ''"
-          (fileSelected)="onPassportFileSelected($event)"
-          (fileRemoved)="onPassportFileRemoved()">
-        </app-passport-upload>
+      <!-- File Input -->
+      <app-passport-upload
+        inputId="passportFileOverseas"
+        [fileName]="initialData.passportUpload?.fileName || ''"
+        [fileUrl]="initialData.passportUpload?.fileUrl || ''"
+        (fileSelected)="onPassportFileSelected($event)"
+        (fileRemoved)="onPassportFileRemoved()"
+      >
+      </app-passport-upload>
     </app-form-section-card>
 
     <!-- Navigation Buttons -->
