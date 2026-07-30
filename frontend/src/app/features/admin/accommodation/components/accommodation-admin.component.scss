@@ -287,11 +287,13 @@
       border-bottom: 1px solid vars.$border-light;
 
       th {
-        padding: vars.$spacing-3 vars.$spacing-md;
+        padding: vars.$spacing-3 vars.$spacing-4;
         text-align: left;
-        font-size: vars.$font-size-sm;
+        font-size: vars.$font-size-xs;
         font-weight: vars.$font-weight-semibold;
-        color: vars.$gray-700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: vars.$gray-500;
         border: none;
         white-space: nowrap;
       }
