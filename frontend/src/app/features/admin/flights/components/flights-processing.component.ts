@@ -50,6 +50,7 @@ interface BookedFlight {
   status: string;
   remarks?: string;
   requestorName: string;
+  staffId: string;
   travelType: string;
   department: string;
 }
@@ -214,6 +215,7 @@ export class FlightsProcessingComponent implements OnInit {
           status: trf.flight_details.status || 'Booked',
           remarks: trf.flight_details.remarks,
           requestorName: trf.requestor_name || 'N/A',
+          staffId: trf.staff_id || 'N/A',
           travelType: trf.travel_type,
           department: trf.department || 'N/A',
         }));
