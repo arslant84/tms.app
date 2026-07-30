@@ -281,21 +281,9 @@
     width: 100%;
     border-collapse: collapse;
 
-    thead {
-      background-color: vars.$gray-50;
-      border-bottom: 1px solid vars.$border-light;
-
-      th {
-        padding: vars.$spacing-3 vars.$spacing-4;
-        text-align: left;
-        font-size: vars.$font-size-xs;
-        font-weight: vars.$font-weight-semibold;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: vars.$gray-500;
-        border: none;
-        white-space: nowrap;
-      }
+    // thead th: see global canonical rule in styles/tables.scss (color/uppercase/etc.)
+    thead th {
+      padding: vars.$spacing-3 vars.$spacing-4;
     }
 
     tbody {
@@ -349,6 +337,38 @@
 // Status badge colors (badge-success/warning/danger/info/secondary) come
 // from the global "Unified Badge Styles" in styles.scss - no local
 // overrides here so this matches every other admin/list/detail screen.
+// badge-blue/green/amber/purple/indigo/gray below are for
+// getDestinationBadgeClass (decorative, categorical colors), not status pills.
+
+.badge-blue {
+  background-color: vars.$info-light;
+  color: vars.$info-dark;
+}
+
+.badge-green {
+  background-color: vars.$success-light;
+  color: vars.$success-dark;
+}
+
+.badge-amber {
+  background-color: vars.$warning-light;
+  color: vars.$warning-dark;
+}
+
+.badge-purple {
+  background-color: vars.$purple-light;
+  color: vars.$purple-dark;
+}
+
+.badge-indigo {
+  background-color: vars.$indigo-light;
+  color: vars.$indigo-dark;
+}
+
+.badge-gray {
+  background-color: vars.$gray-100;
+  color: vars.$gray-700;
+}
 
 // Action buttons: see global .action-buttons/.btn-icon in buttons.scss
 

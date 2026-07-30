@@ -282,16 +282,8 @@
     width: 100%;
     border-collapse: collapse;
 
-    thead tr th {
-      text-align: left;
-      font-size: vars.$font-size-xs;
-      font-weight: vars.$font-weight-semibold;
-      color: vars.$gray-500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      background-color: vars.$gray-50;
-      border-bottom: 2px solid vars.$gray-200;
-      white-space: nowrap;
+    // thead th: see global canonical rule in styles/tables.scss (color/uppercase/etc.)
+    thead th {
       padding: 0.625rem 0.875rem;
     }
 

@@ -1,5 +1,4 @@
 <div class="combined-detail-container">
-
   <!-- Loading -->
   <div *ngIf="loading" class="loading-state">
     <app-loading-spinner size="md" message="Loading request details..."></app-loading-spinner>
@@ -15,16 +14,13 @@
 
   <!-- Content -->
   <div *ngIf="request && !loading" class="detail-content">
-
     <!-- Page Header -->
     <div class="page-header">
       <div class="header-left">
         <button class="btn-back" routerLink="/combined">
           <i class="bi bi-arrow-left"></i> Back to List
         </button>
-        <h1 class="page-title">
-          <i class="bi bi-layers me-2"></i>Combined Request
-        </h1>
+        <h1 class="page-title"><i class="bi bi-layers me-2"></i>Combined Request</h1>
       </div>
       <div class="header-actions">
         <button class="btn btn-outline-secondary" (click)="onExportPdf()">
@@ -80,7 +76,9 @@
           <span *ngFor="let mod of getIncludedModules()" class="module-badge">
             <i [class]="'bi ' + mod.icon + ' me-1'"></i>{{ mod.label }}
           </span>
-          <span *ngIf="getIncludedModules().length === 0" class="text-muted">No modules selected</span>
+          <span *ngIf="getIncludedModules().length === 0" class="text-muted"
+            >No modules selected</span
+          >
         </div>
       </div>
     </div>
@@ -135,7 +133,6 @@
         </span>
       </div>
       <div class="card-body">
-
         <!-- Core fields — always shown -->
         <div class="detail-grid">
           <div class="detail-item">
@@ -168,7 +165,9 @@
           </ng-container>
 
           <!-- International / home_leave: country + city -->
-          <ng-container *ngIf="request.travelType === 'international' || request.travelType === 'home_leave'">
+          <ng-container
+            *ngIf="request.travelType === 'international' || request.travelType === 'home_leave'"
+          >
             <div class="detail-item">
               <label>Destination Country</label>
               <span class="value">{{ request.destinationCountry || 'N/A' }}</span>
@@ -193,7 +192,12 @@
         </div>
 
         <!-- External Party Information -->
-        <ng-container *ngIf="request.travelType === 'external' && (request.externalFullName || request.externalOrganization)">
+        <ng-container
+          *ngIf="
+            request.travelType === 'external' &&
+            (request.externalFullName || request.externalOrganization)
+          "
+        >
           <h4 class="sub-title mt-3">External Party Information</h4>
           <div class="detail-grid">
             <div class="detail-item" *ngIf="request.externalFullName">
@@ -216,7 +220,12 @@
         </ng-container>
 
         <!-- Bank / Advance Details (international + home_leave) -->
-        <ng-container *ngIf="(request.travelType === 'international' || request.travelType === 'home_leave') && request.advanceBankAccountName">
+        <ng-container
+          *ngIf="
+            (request.travelType === 'international' || request.travelType === 'home_leave') &&
+            request.advanceBankAccountName
+          "
+        >
           <h4 class="sub-title mt-3">Advance Payment Bank Details</h4>
           <div class="detail-grid">
             <div class="detail-item">
@@ -243,14 +252,22 @@
         </ng-container>
 
         <!-- Advance Amount Items (international only) -->
-        <ng-container *ngIf="request.travelType === 'international' && getAdvanceAmountItems().length > 0">
+        <ng-container
+          *ngIf="request.travelType === 'international' && getAdvanceAmountItems().length > 0"
+        >
           <h4 class="sub-title mt-3">Advance Amount</h4>
-          <div class="table-container">
+          <div class="table-container table-responsive">
             <table class="detail-table">
               <thead>
                 <tr>
-                  <th>From</th><th>To</th>
-                  <th>LH</th><th>MA</th><th>OA</th><th>TR</th><th>OE</th><th>USD</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>LH</th>
+                  <th>MA</th>
+                  <th>OA</th>
+                  <th>TR</th>
+                  <th>OE</th>
+                  <th>USD</th>
                   <th>Remarks</th>
                 </tr>
               </thead>
@@ -272,9 +289,12 @@
         </ng-container>
 
         <!-- Itinerary -->
-        <div *ngIf="request.itinerarySegments && request.itinerarySegments.length > 0" class="sub-section">
+        <div
+          *ngIf="request.itinerarySegments && request.itinerarySegments.length > 0"
+          class="sub-section"
+        >
           <h4 class="sub-title">Itinerary</h4>
-          <div class="table-container">
+          <div class="table-container table-responsive">
             <table class="detail-table">
               <thead>
                 <tr>
@@ -338,11 +358,15 @@
                 </div>
                 <div class="detail-item" *ngIf="tr['departureDate']">
                   <label>Departure</label>
-                  <span class="value">{{ dateUtils.formatDate(tr['departureDate']) }} {{ tr['departureTime'] }}</span>
+                  <span class="value"
+                    >{{ dateUtils.formatDate(tr['departureDate']) }} {{ tr['departureTime'] }}</span
+                  >
                 </div>
                 <div class="detail-item" *ngIf="tr['arrivalDate']">
                   <label>Arrival</label>
-                  <span class="value">{{ dateUtils.formatDate(tr['arrivalDate']) }} {{ tr['arrivalTime'] }}</span>
+                  <span class="value"
+                    >{{ dateUtils.formatDate(tr['arrivalDate']) }} {{ tr['arrivalTime'] }}</span
+                  >
                 </div>
                 <div class="detail-item full-width" *ngIf="tr['notes']">
                   <label>Notes</label>
@@ -351,7 +375,9 @@
               </div>
               <div class="processing-result-meta" *ngIf="tr['completed_by']">
                 Processed by {{ tr['completed_by'] }}
-                <span *ngIf="tr['completed_at']"> on {{ dateUtils.formatDate(tr['completed_at']) }}</span>
+                <span *ngIf="tr['completed_at']">
+                  on {{ dateUtils.formatDate(tr['completed_at']) }}</span
+                >
               </div>
             </div>
           </ng-container>
@@ -360,7 +386,7 @@
         <!-- Meal Provision (domestic only) -->
         <ng-container *ngIf="request.travelType === 'domestic' && getMealSelections().length > 0">
           <h4 class="sub-title mt-3">Meal Provision</h4>
-          <div class="table-container">
+          <div class="table-container table-responsive">
             <table class="detail-table">
               <thead>
                 <tr>
@@ -375,17 +401,51 @@
               <tbody>
                 <tr *ngFor="let row of getMealSelections()">
                   <td>{{ dateUtils.formatDate(row.date) || '—' }}</td>
-                  <td><i class="bi" [ngClass]="row.breakfast ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'"></i></td>
-                  <td><i class="bi" [ngClass]="row.lunch    ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'"></i></td>
-                  <td><i class="bi" [ngClass]="row.dinner   ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'"></i></td>
-                  <td><i class="bi" [ngClass]="row.supper   ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'"></i></td>
-                  <td><i class="bi" [ngClass]="row.refreshment ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'"></i></td>
+                  <td>
+                    <i
+                      class="bi"
+                      [ngClass]="
+                        row.breakfast ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'
+                      "
+                    ></i>
+                  </td>
+                  <td>
+                    <i
+                      class="bi"
+                      [ngClass]="
+                        row.lunch ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'
+                      "
+                    ></i>
+                  </td>
+                  <td>
+                    <i
+                      class="bi"
+                      [ngClass]="
+                        row.dinner ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'
+                      "
+                    ></i>
+                  </td>
+                  <td>
+                    <i
+                      class="bi"
+                      [ngClass]="
+                        row.supper ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'
+                      "
+                    ></i>
+                  </td>
+                  <td>
+                    <i
+                      class="bi"
+                      [ngClass]="
+                        row.refreshment ? 'bi-check-circle-fill text-success' : 'bi-dash text-muted'
+                      "
+                    ></i>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
         </ng-container>
-
       </div>
     </div>
 
@@ -411,9 +471,12 @@
         </div>
 
         <!-- Transport Segments -->
-        <div *ngIf="request.transportSegments && request.transportSegments.length > 0" class="sub-section">
+        <div
+          *ngIf="request.transportSegments && request.transportSegments.length > 0"
+          class="sub-section"
+        >
           <h4 class="sub-title">Journey Segments</h4>
-          <div class="table-container">
+          <div class="table-container table-responsive">
             <table class="detail-table">
               <thead>
                 <tr>
@@ -491,7 +554,9 @@
               </div>
               <div class="processing-result-meta" *ngIf="tp['completed_by']">
                 Processed by {{ tp['completed_by'] }}
-                <span *ngIf="tp['completed_at']"> on {{ dateUtils.formatDate(tp['completed_at']) }}</span>
+                <span *ngIf="tp['completed_at']">
+                  on {{ dateUtils.formatDate(tp['completed_at']) }}</span
+                >
               </div>
             </div>
           </ng-container>
@@ -516,11 +581,15 @@
           </div>
           <div class="detail-item">
             <label>Check-in Date</label>
-            <span class="value">{{ dateUtils.formatDate(request.accommodationCheckin) || 'N/A' }}</span>
+            <span class="value">{{
+              dateUtils.formatDate(request.accommodationCheckin) || 'N/A'
+            }}</span>
           </div>
           <div class="detail-item">
             <label>Check-out Date</label>
-            <span class="value">{{ dateUtils.formatDate(request.accommodationCheckout) || 'N/A' }}</span>
+            <span class="value">{{
+              dateUtils.formatDate(request.accommodationCheckout) || 'N/A'
+            }}</span>
           </div>
           <div class="detail-item">
             <label>Location</label>
@@ -575,7 +644,9 @@
               </div>
               <div class="processing-result-meta" *ngIf="ac['completed_by']">
                 Processed by {{ ac['completed_by'] }}
-                <span *ngIf="ac['completed_at']"> on {{ dateUtils.formatDate(ac['completed_at']) }}</span>
+                <span *ngIf="ac['completed_at']">
+                  on {{ dateUtils.formatDate(ac['completed_at']) }}</span
+                >
               </div>
             </div>
           </ng-container>
@@ -593,7 +664,6 @@
         </span>
       </div>
       <div class="card-body">
-
         <!-- Visa Application Summary -->
         <div class="detail-grid">
           <div class="detail-item">
@@ -622,15 +692,21 @@
           </div>
           <div class="detail-item">
             <label>Trip Start Date</label>
-            <span class="value">{{ dateUtils.formatDate(request.visa_trip_start_date) || 'N/A' }}</span>
+            <span class="value">{{
+              dateUtils.formatDate(request.visa_trip_start_date) || 'N/A'
+            }}</span>
           </div>
           <div class="detail-item">
             <label>Trip End Date</label>
-            <span class="value">{{ dateUtils.formatDate(request.visa_trip_end_date) || 'N/A' }}</span>
+            <span class="value">{{
+              dateUtils.formatDate(request.visa_trip_end_date) || 'N/A'
+            }}</span>
           </div>
           <div class="detail-item">
             <label>Approx. Arrival Date</label>
-            <span class="value">{{ dateUtils.formatDate(request.visa_approximately_arrival_date) || 'N/A' }}</span>
+            <span class="value">{{
+              dateUtils.formatDate(request.visa_approximately_arrival_date) || 'N/A'
+            }}</span>
           </div>
           <div class="detail-item">
             <label>Duration of Stay</label>
@@ -660,11 +736,15 @@
           <div class="detail-grid">
             <div class="detail-item">
               <label>Passport Number</label>
-              <span class="value">{{ request.visa_passport_number || request.passportNumber || 'N/A' }}</span>
+              <span class="value">{{
+                request.visa_passport_number || request.passportNumber || 'N/A'
+              }}</span>
             </div>
             <div class="detail-item">
               <label>Passport Expiry</label>
-              <span class="value">{{ dateUtils.formatDate(request.visa_passport_expiry_date || request.passportExpiry) }}</span>
+              <span class="value">{{
+                dateUtils.formatDate(request.visa_passport_expiry_date || request.passportExpiry)
+              }}</span>
             </div>
             <div class="detail-item">
               <label>Place of Issuance</label>
@@ -672,7 +752,9 @@
             </div>
             <div class="detail-item">
               <label>Date of Issuance</label>
-              <span class="value">{{ dateUtils.formatDate(request.visa_passport_date_of_issuance) || 'N/A' }}</span>
+              <span class="value">{{
+                dateUtils.formatDate(request.visa_passport_date_of_issuance) || 'N/A'
+              }}</span>
             </div>
           </div>
         </div>
@@ -683,7 +765,9 @@
           <div class="detail-grid">
             <div class="detail-item">
               <label>Date of Birth</label>
-              <span class="value">{{ dateUtils.formatDate(request.visa_date_of_birth) || 'N/A' }}</span>
+              <span class="value">{{
+                dateUtils.formatDate(request.visa_date_of_birth) || 'N/A'
+              }}</span>
             </div>
             <div class="detail-item">
               <label>Place of Birth</label>
@@ -717,7 +801,10 @@
         </div>
 
         <!-- Employment Information -->
-        <div class="sub-section" *ngIf="request.visa_current_employer_name || request.visa_current_employer_address">
+        <div
+          class="sub-section"
+          *ngIf="request.visa_current_employer_name || request.visa_current_employer_address"
+        >
           <h4 class="sub-title">Employment Information</h4>
           <div class="detail-grid">
             <div class="detail-item" *ngIf="request.visa_current_employer_name">
@@ -732,7 +819,10 @@
         </div>
 
         <!-- Additional Notes -->
-        <div class="sub-section" *ngIf="request.visa_additional_comments || request.visa_supporting_documents_notes">
+        <div
+          class="sub-section"
+          *ngIf="request.visa_additional_comments || request.visa_supporting_documents_notes"
+        >
           <h4 class="sub-title">Additional Notes</h4>
           <div class="detail-grid">
             <div class="detail-item full-width" *ngIf="request.visa_additional_comments">
@@ -749,7 +839,7 @@
         <!-- Supporting Documents -->
         <div *ngIf="request.documents && request.documents.length > 0" class="sub-section">
           <h4 class="sub-title"><i class="bi bi-paperclip me-2"></i>Supporting Documents</h4>
-          <div class="table-container">
+          <div class="table-container table-responsive">
             <table class="detail-table">
               <thead>
                 <tr>
@@ -777,7 +867,7 @@
         <!-- Passport holders -->
         <div *ngIf="request.passports && request.passports.length > 0" class="sub-section">
           <h4 class="sub-title">Passport Holders</h4>
-          <div class="table-container">
+          <div class="table-container table-responsive">
             <table class="detail-table">
               <thead>
                 <tr>
@@ -801,7 +891,8 @@
               </tbody>
             </table>
           </div>
-        </div><!-- /sub-section passport holders -->
+        </div>
+        <!-- /sub-section passport holders -->
 
         <!-- Admin Visa Processing Result -->
         <ng-container *ngIf="request.additionalData?.['processing']?.['visa'] as vi">
@@ -830,13 +921,17 @@
               </div>
               <div class="processing-result-meta" *ngIf="vi['completed_by']">
                 Processed by {{ vi['completed_by'] }}
-                <span *ngIf="vi['completed_at']"> on {{ dateUtils.formatDate(vi['completed_at']) }}</span>
+                <span *ngIf="vi['completed_at']">
+                  on {{ dateUtils.formatDate(vi['completed_at']) }}</span
+                >
               </div>
             </div>
           </ng-container>
         </ng-container>
-      </div><!-- /card-body -->
-    </div><!-- /detail-card visa -->
+      </div>
+      <!-- /card-body -->
+    </div>
+    <!-- /detail-card visa -->
 
     <!-- Additional Comments -->
     <div class="detail-card" *ngIf="request.additionalComments">
@@ -860,7 +955,9 @@
           <div class="detail-item">
             <label>Request Number</label>
             <span class="value" *ngIf="request.requestNumber">{{ request.requestNumber }}</span>
-            <span class="value text-muted" *ngIf="!request.requestNumber">CR-{{ request.id }} (Not submitted)</span>
+            <span class="value text-muted" *ngIf="!request.requestNumber"
+              >CR-{{ request.id }} (Not submitted)</span
+            >
           </div>
           <div class="detail-item">
             <label>Current Status</label>
@@ -868,7 +965,9 @@
           </div>
           <div class="detail-item">
             <label>Submitted At</label>
-            <span class="value">{{ dateUtils.formatDate(request.submittedAt) || 'Not yet submitted' }}</span>
+            <span class="value">{{
+              dateUtils.formatDate(request.submittedAt) || 'Not yet submitted'
+            }}</span>
           </div>
           <div class="detail-item">
             <label>Created At</label>
@@ -894,9 +993,7 @@
         </div>
       </div>
 
-      <app-workflow-status
-        *ngIf="workflow && !workflowLoading"
-        [workflowInstance]="workflow">
+      <app-workflow-status *ngIf="workflow && !workflowLoading" [workflowInstance]="workflow">
       </app-workflow-status>
 
       <app-approval-actions
@@ -904,7 +1001,8 @@
         [stepExecution]="currentStepExecution"
         (approved)="onWorkflowApproved()"
         (rejected)="onWorkflowRejected()"
-        (delegated)="onWorkflowDelegated()">
+        (delegated)="onWorkflowDelegated()"
+      >
       </app-approval-actions>
     </div>
 
@@ -920,6 +1018,5 @@
         </div>
       </div>
     </div>
-
   </div>
 </div>

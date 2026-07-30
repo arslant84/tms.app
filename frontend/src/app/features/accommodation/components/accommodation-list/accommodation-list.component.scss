@@ -210,19 +210,9 @@
   margin-bottom: 0;
   font-size: vars.$font-size-sm;
 
-  thead {
-    background-color: vars.$gray-50;
-
-    th {
-      font-weight: vars.$font-weight-semibold;
-      font-size: vars.$font-size-xs;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: vars.$gray-600;
-      border-bottom: 1px solid vars.$border-light;
-      padding: vars.$spacing-3;
-      white-space: nowrap;
-    }
+  // thead th: see global canonical rule in styles/tables.scss (color/uppercase/etc.)
+  thead th {
+    padding: vars.$spacing-3;
   }
 
   tbody {
