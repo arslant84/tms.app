@@ -16,6 +16,7 @@ interface ApprovableItem {
 	id: string;
 	requestNumber: string;
 	requestorName: string;
+	staffId?: string;
 	itemType: "TSR" | "Visa" | "Accommodation" | "Transport" | "Combined";
 	purpose: string;
 	status: string;

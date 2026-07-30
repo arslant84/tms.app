@@ -34,6 +34,7 @@ interface BookedAccommodation {
   id: number;
   requestNumber: string;
   requestorName: string;
+  staffId: string;
   staffHouseName: string;
   roomName: string;
   location: string;
@@ -189,6 +190,7 @@ export class AccommodationProcessingComponent implements OnInit {
               id: req.id,
               requestNumber: req.request_number || `ACC-${req.id}`,
               requestorName: req.requestor_name || 'N/A',
+              staffId: req.staff_id || 'N/A',
               staffHouseName: 'Not assigned',
               roomName: 'Not assigned',
               location: firstAccom.location || additionalData.location || 'N/A',
