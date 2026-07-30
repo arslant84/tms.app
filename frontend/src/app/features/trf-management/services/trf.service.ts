@@ -245,7 +245,7 @@ export class TrfService {
 
   // Cancel flight booking
   cancelFlightBooking(flightId: string): Observable<any> {
-    return this.http.delete<any>(`${environment.apiUrl}/flights/bookings/${flightId}/`)
+    return this.http.post<any>(`${environment.apiUrl}/bookings/flights/${flightId}/cancel/`, {})
       .pipe(
         catchError(this.handleError)
       );
