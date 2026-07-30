@@ -11,7 +11,6 @@ import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe'
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 interface BookingDetails {
-  vehicleType: string;
   vehicleNumber: string;
   driverName: string;
   driverContact?: string;
@@ -50,7 +49,6 @@ export class TransportProcessingComponent implements OnInit {
 
   // Booking form state
   bookingForm: BookingDetails = {
-    vehicleType: '',
     vehicleNumber: '',
     driverName: '',
     driverContact: '',
@@ -156,8 +154,8 @@ export class TransportProcessingComponent implements OnInit {
     if (!this.selectedRequest) return;
 
     // Validate required fields
-    if (!this.bookingForm.vehicleType || !this.bookingForm.vehicleNumber || !this.bookingForm.driverName) {
-      this.toastService.error('Please fill in vehicle type, vehicle number, and driver name');
+    if (!this.bookingForm.vehicleNumber || !this.bookingForm.driverName) {
+      this.toastService.error('Please fill in vehicle number and driver name');
       return;
     }
 
@@ -165,7 +163,6 @@ export class TransportProcessingComponent implements OnInit {
 
     // Prepare booking details to save to transport request
     const bookingDetails = {
-      vehicle_type: this.bookingForm.vehicleType,
       vehicle_number: this.bookingForm.vehicleNumber,
       driver_name: this.bookingForm.driverName,
       driver_contact: this.bookingForm.driverContact || '',
@@ -178,7 +175,6 @@ export class TransportProcessingComponent implements OnInit {
 
     // Prepare vehicle assignment data (for VehicleAssignment model)
     const vehicleData = {
-      vehicle_type: this.bookingForm.vehicleType,
       vehicle_number: this.bookingForm.vehicleNumber,
       driver_name: this.bookingForm.driverName,
       driver_contact: this.bookingForm.driverContact || '',
@@ -227,7 +223,6 @@ export class TransportProcessingComponent implements OnInit {
    */
   resetBookingForm(): void {
     this.bookingForm = {
-      vehicleType: '',
       vehicleNumber: '',
       driverName: '',
       driverContact: '',

@@ -1,5 +1,5 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from trf.models import TravelRequest
 
 
@@ -18,19 +18,19 @@ class TransportRequest(models.Model):
         unique=True,
         blank=True,
         null=True,
-        help_text="Auto-generated request number (e.g., TRN-20251102-1423-ASH-PCYX)"
+        help_text="Auto-generated request number (e.g., TRN-20251102-1423-ASH-PCYX)",
     )
     requestor = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='transport_requests'
+        related_name="transport_requests",
     )
     trf = models.ForeignKey(
         TravelRequest,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='transport_requests'
+        related_name="transport_requests",
     )
 
     # Requestor information (embedded for display)
@@ -41,12 +41,23 @@ class TransportRequest(models.Model):
 
     # Request details
     purpose = models.TextField()
-    tsr_reference = models.CharField(max_length=100, blank=True, null=True, help_text="TSR Reference if created from TSR")
-    status = models.CharField(max_length=100, default='Draft', help_text="Dynamic status set by workflow engine")
+    tsr_reference = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="TSR Reference if created from TSR",
+    )
+    status = models.CharField(
+        max_length=100,
+        default="Draft",
+        help_text="Dynamic status set by workflow engine",
+    )
 
     # Transport details array (stored as JSON)
     # Each item has: date, day, from, to, departureTime, transportType, numberOfPassengers
-    transport_details = models.JSONField(default=list, help_text="Array of transport detail objects")
+    transport_details = models.JSONField(
+        default=list, help_text="Array of transport detail objects"
+    )
 
     # Approval submission data
     additional_comments = models.TextField(blank=True, null=True)
@@ -55,7 +66,9 @@ class TransportRequest(models.Model):
     confirm_terms_and_conditions = models.BooleanField(default=False)
 
     # Booking details (filled by transport admin)
-    booking_details = models.JSONField(blank=True, null=True, help_text="Booking details filled by transport admin")
+    booking_details = models.JSONField(
+        blank=True, null=True, help_text="Booking details filled by transport admin"
+    )
 
     # Timestamps
     submitted_at = models.DateTimeField(blank=True, null=True)
@@ -63,7 +76,7 @@ class TransportRequest(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.requestor_name} - {self.purpose[:50]}"
@@ -73,9 +86,7 @@ class TransportSegment(models.Model):
     """Individual transport segment/leg within a transport request"""
 
     transport_request = models.ForeignKey(
-        TransportRequest,
-        on_delete=models.CASCADE,
-        related_name='segments'
+        TransportRequest, on_delete=models.CASCADE, related_name="segments"
     )
 
     # Journey details
@@ -87,8 +98,12 @@ class TransportSegment(models.Model):
     arrival_time = models.TimeField(blank=True, null=True)
 
     # Route information
-    distance_km = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
-    estimated_duration_hours = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    distance_km = models.DecimalField(
+        max_digits=8, decimal_places=2, blank=True, null=True
+    )
+    estimated_duration_hours = models.DecimalField(
+        max_digits=5, decimal_places=2, blank=True, null=True
+    )
     route_description = models.TextField(blank=True, null=True)
 
     # Vehicle assignment (for company vehicles)
@@ -105,7 +120,7 @@ class TransportSegment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['departure_date', 'departure_time']
+        ordering = ["departure_date", "departure_time"]
 
     def __str__(self):
         return f"{self.from_location} → {self.to_location} on {self.departure_date}"
@@ -115,14 +130,12 @@ class TransportApprovalStep(models.Model):
     """Approval workflow tracking for transport requests"""
 
     transport_request = models.ForeignKey(
-        TransportRequest,
-        on_delete=models.CASCADE,
-        related_name='approval_steps'
+        TransportRequest, on_delete=models.CASCADE, related_name="approval_steps"
     )
 
     step_role = models.CharField(max_length=255)
     step_name = models.CharField(max_length=255, blank=True, null=True)
-    status = models.CharField(max_length=255, default='Pending')
+    status = models.CharField(max_length=255, default="Pending")
     step_date = models.DateTimeField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
 
@@ -130,7 +143,7 @@ class TransportApprovalStep(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.transport_request.title} - {self.step_role}: {self.status}"
@@ -140,21 +153,19 @@ class VehicleAssignment(models.Model):
     """Track vehicle assignments to transport requests"""
 
     STATUS_CHOICES = [
-        ('Assigned', 'Assigned'),
-        ('In Progress', 'In Progress'),
-        ('Completed', 'Completed'),
-        ('Cancelled', 'Cancelled'),
+        ("Assigned", "Assigned"),
+        ("In Progress", "In Progress"),
+        ("Completed", "Completed"),
+        ("Cancelled", "Cancelled"),
     ]
 
     transport_request = models.ForeignKey(
-        TransportRequest,
-        on_delete=models.CASCADE,
-        related_name='vehicle_assignments'
+        TransportRequest, on_delete=models.CASCADE, related_name="vehicle_assignments"
     )
 
     # Vehicle details
     vehicle_number = models.CharField(max_length=50)
-    vehicle_type = models.CharField(max_length=100)
+    vehicle_type = models.CharField(max_length=100, blank=True, null=True)
     vehicle_capacity = models.IntegerField(default=4)
 
     # Driver details
@@ -167,14 +178,20 @@ class VehicleAssignment(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='vehicle_assignments_made'
+        related_name="vehicle_assignments_made",
     )
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Assigned')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Assigned")
 
     # Tracking
-    odometer_start = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    odometer_end = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    fuel_used_liters = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+    odometer_start = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True
+    )
+    odometer_end = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True
+    )
+    fuel_used_liters = models.DecimalField(
+        max_digits=8, decimal_places=2, blank=True, null=True
+    )
 
     # Timestamps
     assignment_date = models.DateTimeField(auto_now_add=True)

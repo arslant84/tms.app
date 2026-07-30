@@ -403,16 +403,6 @@
         <!-- Booking Form -->
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label">Vehicle Type *</label>
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="bookingForm.vehicleType"
-              placeholder="e.g., Van, Bus, Car"
-              required
-            />
-          </div>
-          <div class="col-md-6">
             <label class="form-label">Vehicle Number *</label>
             <input
               type="text"
@@ -503,7 +493,6 @@
           (click)="handleCompleteProcessing()"
           [disabled]="
             isLoading ||
-            !bookingForm.vehicleType ||
             !bookingForm.vehicleNumber ||
             !bookingForm.driverName
           "
