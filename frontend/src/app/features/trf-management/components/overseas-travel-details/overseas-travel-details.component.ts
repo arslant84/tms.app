@@ -214,8 +214,8 @@ export class OverseasTravelDetailsComponent
 			day: [data?.day || ""],
 			from: [data?.from || "", Validators.required],
 			to: [data?.to || "", Validators.required],
-			etd: [data?.etd || "", Validators.pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)],
-			eta: [data?.eta || "", Validators.pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)],
+			etd: [data?.etd || ""],
+			eta: [data?.eta || ""],
 			flightNumber: [data?.flightNumber || ""],
 			remarks: [data?.remarks || ""],
 		});

@@ -111,11 +111,7 @@
                   class="form-control"
                   [id]="'etd-' + i"
                   formControlName="etd"
-                  placeholder="HH:mm"
-                  [ngClass]="{'is-invalid': segment.get('etd')?.invalid && segment.get('etd')?.touched}">
-                <div class="invalid-feedback" *ngIf="segment.get('etd')?.errors?.['pattern'] && segment.get('etd')?.touched">
-                  Invalid format
-                </div>
+                  placeholder="e.g. 14:30 or Morning">
               </div>
               <div class="form-group">
                 <label [for]="'eta-' + i" class="form-label">ETA</label>
@@ -124,11 +120,7 @@
                   class="form-control"
                   [id]="'eta-' + i"
                   formControlName="eta"
-                  placeholder="HH:mm"
-                  [ngClass]="{'is-invalid': segment.get('eta')?.invalid && segment.get('eta')?.touched}">
-                <div class="invalid-feedback" *ngIf="segment.get('eta')?.errors?.['pattern'] && segment.get('eta')?.touched">
-                  Invalid format
-                </div>
+                  placeholder="e.g. 14:30 or Morning">
               </div>
               <div class="form-group">
                 <label [for]="'flightNumber-' + i" class="form-label">Flight</label>
