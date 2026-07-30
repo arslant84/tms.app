@@ -2,11 +2,25 @@ import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Outpu
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 
 export interface PassportUploadDetails {
   file: File | null;
   fileName: string;
   fileUrl: string;
+}
+
+export interface DailyMealSelection {
+  date: Date | string;
+  breakfast: boolean;
+  lunch: boolean;
+  dinner: boolean;
+  supper: boolean;
+  refreshment: boolean;
+}
+
+export interface MealProvisionDetails {
+  dailySelections: DailyMealSelection[];
 }
 
 export interface ExternalPartiesDetails {
@@ -17,6 +31,7 @@ export interface ExternalPartiesDetails {
   externalRefToAuthorityLetter?: string;
   externalCostCenter: string;
   itinerary: any[];
+  mealProvisions: MealProvisionDetails;
   passportUpload?: PassportUploadDetails;
 }
 
@@ -35,6 +50,15 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   externalForm!: FormGroup;
   weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+  dailyMealDates: Date[] = [];
+  mealSummary = {
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+    supper: 0,
+    refreshment: 0
+  };
+
   // Passport upload
   passportFile: File | null = null;
   passportFileName: string = '';
@@ -45,7 +69,8 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
 
   constructor(
     private fb: FormBuilder,
-    private formUtils: FormUtilsService
+    private formUtils: FormUtilsService,
+    public dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -73,7 +98,14 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
       externalOrganization: [this.initialData.externalOrganization || '', Validators.required],
       externalRefToAuthorityLetter: [this.initialData.externalRefToAuthorityLetter || ''],
       externalCostCenter: [this.initialData.externalCostCenter || '', Validators.required],
-      itinerary: this.fb.array([])
+      itinerary: this.fb.array([]),
+      mealProvisions: this.fb.group({
+        dailySelections: this.fb.array(
+          this.initialData.mealProvisions?.dailySelections?.length
+            ? this.initialData.mealProvisions.dailySelections.map(item => this.createDailyMealSelection(item))
+            : []
+        )
+      })
     });
 
     // Watch trip type changes to manage itinerary segments
@@ -93,10 +125,22 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
     } else {
       this.addItinerarySegment();
     }
+
+    // Watch itinerary changes to auto-generate meal dates
+    this.itinerary.valueChanges.subscribe(() => {
+      this.updateMealDatesFromItinerary();
+    });
+
+    // Initial meal dates generation
+    this.updateMealDatesFromItinerary();
   }
 
   get itinerary(): FormArray {
     return this.externalForm.get('itinerary') as FormArray;
+  }
+
+  get dailyMealSelectionsArray(): FormArray {
+    return this.externalForm.get('mealProvisions.dailySelections') as FormArray;
   }
 
   private createItinerarySegment(data?: any): FormGroup {
@@ -146,6 +190,110 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
     if (this.itinerary.length > 1) {
       this.itinerary.removeAt(index);
     }
+  }
+
+  // Meal provisions logic
+  createDailyMealSelection(data?: Partial<DailyMealSelection>): FormGroup {
+    const formGroup = this.fb.group({
+      date: [data?.date || null, Validators.required],
+      breakfast: [data?.breakfast || false],
+      lunch: [data?.lunch || false],
+      dinner: [data?.dinner || false],
+      supper: [data?.supper || false],
+      refreshment: [data?.refreshment || false]
+    });
+
+    // Watch changes to update summary
+    formGroup.valueChanges.subscribe(() => {
+      this.updateMealSummary();
+    });
+
+    return formGroup;
+  }
+
+  private updateMealDatesFromItinerary(): void {
+    const itinerary = this.itinerary.value;
+    if (!itinerary || itinerary.length === 0) {
+      this.dailyMealDates = [];
+      this.dailyMealSelectionsArray.clear();
+      this.updateMealSummary();
+      return;
+    }
+
+    // Extract dates from itinerary
+    const dates: Date[] = [];
+    itinerary.forEach((segment: any) => {
+      if (segment.departureDate) {
+        const date = new Date(segment.departureDate);
+        if (!isNaN(date.getTime())) {
+          dates.push(date);
+        }
+      }
+    });
+
+    if (dates.length === 0) {
+      this.dailyMealDates = [];
+      this.dailyMealSelectionsArray.clear();
+      this.updateMealSummary();
+      return;
+    }
+
+    // Sort dates
+    dates.sort((a, b) => a.getTime() - b.getTime());
+
+    // Generate all dates between first and last date (inclusive)
+    const startDate = dates[0];
+    const endDate = dates[dates.length - 1];
+    const allDates: Date[] = [];
+
+    for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+      allDates.push(new Date(date));
+    }
+
+    this.dailyMealDates = allDates;
+
+    // Update form array to match dates
+    const currentSelections = this.dailyMealSelectionsArray.value;
+    this.dailyMealSelectionsArray.clear();
+
+    allDates.forEach(date => {
+      // Check if we have existing selection for this date
+      const existing = currentSelections.find((sel: DailyMealSelection) => {
+        const selDate = new Date(sel.date);
+        return selDate.toDateString() === date.toDateString();
+      });
+
+      if (existing) {
+        this.dailyMealSelectionsArray.push(this.createDailyMealSelection(existing));
+      } else {
+        this.dailyMealSelectionsArray.push(this.createDailyMealSelection({ date: date.toISOString() }));
+      }
+    });
+
+    this.updateMealSummary();
+  }
+
+  private updateMealSummary(): void {
+    const selections = this.dailyMealSelectionsArray.value;
+    this.mealSummary = {
+      breakfast: selections.filter((s: DailyMealSelection) => s.breakfast).length,
+      lunch: selections.filter((s: DailyMealSelection) => s.lunch).length,
+      dinner: selections.filter((s: DailyMealSelection) => s.dinner).length,
+      supper: selections.filter((s: DailyMealSelection) => s.supper).length,
+      refreshment: selections.filter((s: DailyMealSelection) => s.refreshment).length
+    };
+  }
+
+  selectAllMealType(mealType: 'breakfast' | 'lunch' | 'dinner' | 'supper' | 'refreshment'): void {
+    this.dailyMealSelectionsArray.controls.forEach(control => {
+      control.patchValue({ [mealType]: true });
+    });
+  }
+
+  resetMealType(mealType: 'breakfast' | 'lunch' | 'dinner' | 'supper' | 'refreshment'): void {
+    this.dailyMealSelectionsArray.controls.forEach(control => {
+      control.patchValue({ [mealType]: false });
+    });
   }
 
   onSubmit(): void {

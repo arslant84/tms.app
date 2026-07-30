@@ -162,6 +162,170 @@
       </div>
     </div>
 
+    <!-- Meal Provisions Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-cup-hot me-2"></i>
+          <h5 class="mb-0">Meal Provision</h5>
+        </div>
+      </div>
+      <div class="card-body" formGroupName="mealProvisions">
+        <!-- Travel Period Info -->
+        <div *ngIf="dailyMealDates.length > 0" class="travel-period-info mb-4">
+          <div class="info-icon">
+            <i class="bi bi-cup-hot-fill"></i>
+          </div>
+          <div class="info-content">
+            <div class="period-header">Travel Period</div>
+            <div class="period-details">
+              <span class="days-count">{{ dailyMealDates.length }} {{ dailyMealDates.length === 1 ? 'day' : 'days' }}</span>
+              <span class="date-range">{{ dateUtils.formatDate(dailyMealDates[0]) }} → {{ dateUtils.formatDate(dailyMealDates[dailyMealDates.length - 1]) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- No itinerary dates message -->
+        <div *ngIf="dailyMealDates.length === 0" class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>
+          Please add itinerary dates to enable meal selection
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div *ngIf="dailyMealDates.length > 0" class="quick-actions mb-3">
+          <div class="quick-action-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('breakfast')">
+              All Breakfast
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('breakfast')">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
+          <div class="quick-action-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('lunch')">
+              All Lunch
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('lunch')">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
+          <div class="quick-action-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('dinner')">
+              All Dinner
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('dinner')">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
+          <div class="quick-action-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('supper')">
+              All Supper
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('supper')">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
+          <div class="quick-action-group">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectAllMealType('refreshment')">
+              All Refreshment
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" (click)="resetMealType('refreshment')">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Daily Meal Selection Grid -->
+        <div *ngIf="dailyMealDates.length > 0" class="meal-selection-grid" formArrayName="dailySelections">
+          <!-- Grid Header -->
+          <div class="meal-grid-header">
+            <div class="grid-cell grid-header-cell">Date</div>
+            <div class="grid-cell grid-header-cell text-center">Breakfast</div>
+            <div class="grid-cell grid-header-cell text-center">Lunch</div>
+            <div class="grid-cell grid-header-cell text-center">Dinner</div>
+            <div class="grid-cell grid-header-cell text-center">Supper</div>
+            <div class="grid-cell grid-header-cell text-center">Refreshment</div>
+          </div>
+
+          <!-- Grid Rows -->
+          <div *ngFor="let selection of dailyMealSelectionsArray.controls; let i = index"
+               [formGroupName]="i"
+               class="meal-grid-row">
+            <div class="grid-cell date-cell">
+              {{ dateUtils.formatDate(selection.get('date')?.value) }}
+            </div>
+            <div class="grid-cell checkbox-cell">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                formControlName="breakfast"
+                [id]="'ext-breakfast-' + i">
+              <label [for]="'ext-breakfast-' + i" class="visually-hidden">Breakfast</label>
+            </div>
+            <div class="grid-cell checkbox-cell">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                formControlName="lunch"
+                [id]="'ext-lunch-' + i">
+              <label [for]="'ext-lunch-' + i" class="visually-hidden">Lunch</label>
+            </div>
+            <div class="grid-cell checkbox-cell">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                formControlName="dinner"
+                [id]="'ext-dinner-' + i">
+              <label [for]="'ext-dinner-' + i" class="visually-hidden">Dinner</label>
+            </div>
+            <div class="grid-cell checkbox-cell">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                formControlName="supper"
+                [id]="'ext-supper-' + i">
+              <label [for]="'ext-supper-' + i" class="visually-hidden">Supper</label>
+            </div>
+            <div class="grid-cell checkbox-cell">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                formControlName="refreshment"
+                [id]="'ext-refreshment-' + i">
+              <label [for]="'ext-refreshment-' + i" class="visually-hidden">Refreshment</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div *ngIf="dailyMealDates.length > 0" class="meal-summary mt-4">
+          <div class="summary-header">Summary Totals:</div>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="summary-label">Breakfast</div>
+              <div class="summary-value">{{ mealSummary.breakfast }}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Lunch</div>
+              <div class="summary-value">{{ mealSummary.lunch }}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Dinner</div>
+              <div class="summary-value">{{ mealSummary.dinner }}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Supper</div>
+              <div class="summary-value">{{ mealSummary.supper }}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Refreshment</div>
+              <div class="summary-value">{{ mealSummary.refreshment }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- External Party Information Section -->
     <div class="card mb-4">
       <div class="card-header bg-light">
