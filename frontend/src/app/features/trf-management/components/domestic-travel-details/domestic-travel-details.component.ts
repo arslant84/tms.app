@@ -55,7 +55,6 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   @Output() backClick = new EventEmitter<void>();
 
   travelForm!: FormGroup;
-  timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
   weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   dailyMealDates: Date[] = [];
@@ -157,8 +156,8 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
       day: [data?.day || '', Validators.required],
       from: [data?.from || '', Validators.required],
       to: [data?.to || '', Validators.required],
-      etd: [data?.etd || '', Validators.pattern(this.timeRegex)],
-      eta: [data?.eta || '', Validators.pattern(this.timeRegex)],
+      etd: [data?.etd || ''],
+      eta: [data?.eta || ''],
       flightNumber: [data?.flightNumber || ''],
       remarks: [data?.remarks || '']
     });
