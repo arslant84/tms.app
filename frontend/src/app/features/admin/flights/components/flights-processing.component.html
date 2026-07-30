@@ -206,6 +206,9 @@
                     </td>
                     <td class="staff-cell">
                       <div class="staff-name">{{ trf.requestorName }}</div>
+                      <small class="staff-id" *ngIf="trf.staffId && trf.staffId !== 'N/A'">{{
+                        trf.staffId
+                      }}</small>
                     </td>
                     <td>
                       <span class="badge" [class]="getTravelTypeBadgeClass(trf.travelType)">
@@ -554,6 +557,9 @@
                 <td class="request-number">{{ flight.trfRequestNumber }}</td>
                 <td class="staff-cell">
                   <div class="staff-name">{{ flight.requestorName }}</div>
+                  <small class="staff-id" *ngIf="flight.staffId && flight.staffId !== 'N/A'">{{
+                    flight.staffId
+                  }}</small>
                 </td>
                 <td>{{ flight.airline }}</td>
                 <td>{{ flight.flightNumber }}</td>

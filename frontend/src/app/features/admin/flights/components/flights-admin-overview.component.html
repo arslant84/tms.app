@@ -6,7 +6,9 @@
         <i class="bi bi-airplane"></i>
         Flight Administration
       </h1>
-      <p class="page-subtitle">Manage flight bookings and processing for overseas travel requests.</p>
+      <p class="page-subtitle">
+        Manage flight bookings and processing for overseas travel requests.
+      </p>
     </div>
     <div class="header-actions">
       <button class="btn btn-primary" (click)="goToProcessingDashboard()">
@@ -90,14 +92,24 @@
         </div>
 
         <div class="col-md-3">
-          <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="onStatusFilterChange()">
+          <select
+            class="form-select"
+            [(ngModel)]="statusFilter"
+            (ngModelChange)="onStatusFilterChange()"
+          >
             <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
           </select>
         </div>
 
         <div class="col-md-3">
-          <select class="form-select" [(ngModel)]="travelTypeFilter" (ngModelChange)="onTravelTypeFilterChange()">
-            <option *ngFor="let opt of travelTypeOptions" [value]="opt.value">{{ opt.label }}</option>
+          <select
+            class="form-select"
+            [(ngModel)]="travelTypeFilter"
+            (ngModelChange)="onTravelTypeFilterChange()"
+          >
+            <option *ngFor="let opt of travelTypeOptions" [value]="opt.value">
+              {{ opt.label }}
+            </option>
           </select>
         </div>
       </div>
@@ -112,7 +124,9 @@
           <i class="bi bi-airplane me-2"></i>
           <h3 class="card-title">Flight-Related Travel Requests</h3>
         </div>
-        <p class="card-description">Travel requests requiring flight bookings (Overseas and Home Leave Passage)</p>
+        <p class="card-description">
+          Travel requests requiring flight bookings (Overseas and Home Leave Passage)
+        </p>
       </div>
     </div>
     <div class="card-body">
@@ -158,12 +172,21 @@
           <tbody>
             <tr *ngFor="let application of filteredApplications">
               <td>
-                <a href="javascript:void(0)" (click)="viewTrf(application.id)" class="text-decoration-none fw-medium request-number">
+                <a
+                  href="javascript:void(0)"
+                  (click)="viewTrf(application.id)"
+                  class="text-decoration-none fw-medium request-number"
+                >
                   {{ application.requestNumber }}
                 </a>
               </td>
               <td class="staff-cell">
                 <div class="staff-name">{{ application.requestorName }}</div>
+                <small
+                  class="staff-id"
+                  *ngIf="application.staffId && application.staffId !== 'N/A'"
+                  >{{ application.staffId }}</small
+                >
               </td>
               <td>{{ application.department | departmentName }}</td>
               <td>
@@ -184,7 +207,11 @@
               <td>{{ dateUtils.formatDate(application.submittedAt) }}</td>
               <td class="text-end">
                 <div class="action-buttons">
-                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewTrf(application.id)" title="View Details">
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="viewTrf(application.id)"
+                    title="View Details"
+                  >
                     <i class="bi bi-eye"></i>
                   </button>
                 </div>
