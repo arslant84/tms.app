@@ -73,15 +73,6 @@ textarea.form-control { min-height: 3rem; height: auto; }
   color: vars.$error-color;
 }
 
-// Itinerary Segment Styling
-.itinerary-segment {
-  padding: vars.$spacing-md;
-  background-color: vars.$gray-50;
-  border-radius: vars.$radius-lg;
-  margin-bottom: vars.$spacing-md;
-  border: 1px solid vars.$border-light;
-}
-
 // Buttons: see global .btn/.btn-primary/.btn-outline-primary/.btn-outline-secondary/.btn-outline-danger/.btn-sm in buttons.scss
 
 // Utility Classes
@@ -95,18 +86,4 @@ textarea.form-control { min-height: 3rem; height: auto; }
 .row.g-3 {
   --bs-gutter-x: #{vars.$spacing-3};
   --bs-gutter-y: #{vars.$spacing-3};
-}
-
-// Read-only field styling (for Day field)
-input[readonly].form-control {
-  background-color: vars.$primary-lightest;
-  border: 1px solid vars.$primary-light;
-  color: vars.$primary-hover;
-  font-weight: vars.$font-weight-medium;
-  cursor: default;
-
-  &:focus {
-    border-color: vars.$primary-light;
-    box-shadow: none;
-  }
 }

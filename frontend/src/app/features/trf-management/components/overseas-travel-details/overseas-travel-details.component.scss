@@ -73,15 +73,6 @@ textarea.form-control { min-height: 3rem; height: auto; }
   color: vars.$error-color;
 }
 
-// Itinerary Segment Styling
-.itinerary-segment {
-  padding: vars.$spacing-md;
-  background-color: vars.$gray-50;
-  border-radius: vars.$radius-lg;
-  margin-bottom: vars.$spacing-md;
-  border: 1px solid vars.$border-light;
-}
-
 // Buttons: see global .btn/.btn-primary/.btn-outline-primary/.btn-outline-secondary/.btn-outline-danger/.btn-sm in buttons.scss
 
 // Utility Classes

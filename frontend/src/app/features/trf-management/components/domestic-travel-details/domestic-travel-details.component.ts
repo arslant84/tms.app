@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
 import { MealProvisionComponent, DailyMealSelection } from '../../../../shared/components/meal-provision/meal-provision.component';
 import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
+import { ItineraryEditorComponent, ItineraryFieldConfig } from '../../../../shared/components/itinerary-editor/itinerary-editor.component';
 
 export interface ItinerarySegment {
   date: Date | null;
@@ -39,7 +40,7 @@ export interface DomesticTravelSpecificDetails {
 @Component({
   selector: 'app-domestic-travel-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, MealProvisionComponent, PassportUploadComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, MealProvisionComponent, PassportUploadComponent, ItineraryEditorComponent],
   templateUrl: './domestic-travel-details.component.html',
   styleUrls: ['./domestic-travel-details.component.scss']
 })
@@ -50,6 +51,18 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
 
   travelForm!: FormGroup;
 
+  itineraryFields: ItineraryFieldConfig[] = [
+    { key: 'date', label: 'Date', type: 'date', required: true, requiredErrorMessage: 'Date is required', isPrimaryDate: true },
+    { key: 'day', label: 'Day', type: 'readonly-text' },
+    { key: 'from', label: 'From', type: 'text', required: true, requiredErrorMessage: 'Origin is required' },
+    { key: 'to', label: 'To', type: 'text', required: true, requiredErrorMessage: 'Destination is required' },
+    { key: 'etd', label: 'ETD', type: 'text', placeholder: 'e.g. 14:30 or Morning' },
+    { key: 'eta', label: 'ETA', type: 'text', placeholder: 'e.g. 14:30 or Morning' },
+    { key: 'flightNumber', label: 'Flight', type: 'text' },
+    { key: 'remarks', label: 'Remarks', type: 'text', colSpan: 8 }
+  ];
+  tripTypeValue: 'One Way' | 'Round Trip' = 'Round Trip';
+  itinerarySegments: Record<string, any>[] = [];
   itineraryDates: (string | null)[] = [];
   mealSelections: DailyMealSelection[] = [];
 
@@ -84,82 +97,25 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   private initForm(): void {
     this.travelForm = this.fb.group({
       purposeOfTravel: [this.initialData.purposeOfTravel || '', Validators.required],
-      tripType: [this.initialData.tripType || 'Round Trip', Validators.required],
-      itinerary: this.fb.array(
-        this.initialData.itinerary?.length
-          ? this.initialData.itinerary.map(item => this.createItinerarySegment(item))
-          : [this.createItinerarySegment()]
-      )
+      tripType: [this.initialData.tripType || 'Round Trip', Validators.required]
     });
 
-    // Watch trip type changes to manage itinerary segments
+    this.tripTypeValue = this.initialData.tripType || 'Round Trip';
+
+    // Watch trip type changes to drive the itinerary editor's add/remove gating
     this.travelForm.get('tripType')?.valueChanges.subscribe(tripType => {
-      const itineraryArray = this.itineraryArray;
-      if (tripType === 'One Way' && itineraryArray.length > 1) {
-        // Keep only first segment for one way
-        while (itineraryArray.length > 1) {
-          itineraryArray.removeAt(itineraryArray.length - 1);
-        }
-      }
+      this.tripTypeValue = tripType;
     });
 
-    // Watch itinerary changes to keep the meal-provision component's dates in sync
-    this.itineraryArray.valueChanges.subscribe(() => {
-      this.updateItineraryDates();
-    });
-
-    // Initial itinerary dates
-    this.updateItineraryDates();
     this.mealSelections = this.initialData.mealProvisions?.dailySelections || [];
   }
 
-  // Form array getters
-  get itineraryArray(): FormArray {
-    return this.travelForm.get('itinerary') as FormArray;
+  onItinerarySegmentsChange(segments: Record<string, any>[]): void {
+    this.itinerarySegments = segments;
   }
 
-  // Check if trip type allows adding itinerary segments (only Round Trip)
-  get canAddItinerarySegment(): boolean {
-    return this.travelForm.get('tripType')?.value === 'Round Trip';
-  }
-
-  // Form group creators
-  createItinerarySegment(data?: Partial<ItinerarySegment>): FormGroup {
-    return this.fb.group({
-      date: [data?.date || null, Validators.required],
-      day: [data?.day || '', Validators.required],
-      from: [data?.from || '', Validators.required],
-      to: [data?.to || '', Validators.required],
-      etd: [data?.etd || ''],
-      eta: [data?.eta || ''],
-      flightNumber: [data?.flightNumber || ''],
-      remarks: [data?.remarks || '']
-    });
-  }
-
-  // Array manipulation methods
-  addItinerarySegment(): void {
-    this.itineraryArray.push(this.createItinerarySegment());
-  }
-
-  removeItinerarySegment(index: number): void {
-    if (this.itineraryArray.length > 1) {
-      this.itineraryArray.removeAt(index);
-    }
-  }
-
-  // Date change handlers to auto-fill day of week
-  onItineraryDateChange(index: number, event: any): void {
-    const dateValue = event.target.value;
-    if (dateValue) {
-      const dayName = this.dateUtils.getDayOfWeek(dateValue);
-      this.itineraryArray.at(index).get('day')?.setValue(dayName);
-    }
-  }
-
-  // Meal provisions logic
-  private updateItineraryDates(): void {
-    this.itineraryDates = this.itineraryArray.value.map((segment: ItinerarySegment) => segment.date as unknown as string);
+  onItineraryDatesChange(dates: (string | null)[]): void {
+    this.itineraryDates = dates;
   }
 
   onMealSelectionsChange(selections: DailyMealSelection[]): void {
@@ -171,6 +127,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     if (this.travelForm.valid) {
       this.formSubmit.emit({
         ...this.travelForm.value,
+        itinerary: this.itinerarySegments,
         mealProvisions: { dailySelections: this.mealSelections }
       });
     } else {
@@ -199,6 +156,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   getFormData(): DomesticTravelSpecificDetails {
     return {
       ...this.travelForm.value,
+      itinerary: this.itinerarySegments,
       mealProvisions: { dailySelections: this.mealSelections },
       passportUpload: {
         file: this.passportFile,

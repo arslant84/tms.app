@@ -1,9 +1,5 @@
-// Domestic Travel Details Component - Using Unified Design System
-@use '../../../../../styles/variables' as vars;
+@use '../../../../styles/variables' as vars;
 
-.travel-form-container { margin-bottom: vars.$spacing-8; }
-
-// Form Elements
 .form-group {
   display: flex;
   flex-direction: column;
@@ -18,11 +14,11 @@
   margin: 0;
 }
 
-.form-control, textarea.form-control {
+.form-control {
   padding: 0.625rem 0.875rem;
   font-size: 0.9375rem;
   min-height: 2.5rem;
-  height: 2.5rem; // Fixed height for consistent alignment
+  height: 2.5rem;
   border: 1px solid vars.$gray-300;
   border-radius: vars.$radius-md;
   background-color: vars.$bg-primary;
@@ -46,7 +42,18 @@
   }
 }
 
-textarea.form-control { min-height: 3rem; height: auto; }
+input[readonly].form-control {
+  background-color: vars.$primary-lightest;
+  border: 1px solid vars.$primary-light;
+  color: vars.$primary-hover;
+  font-weight: vars.$font-weight-medium;
+  cursor: default;
+
+  &:focus {
+    border-color: vars.$primary-light;
+    box-shadow: none;
+  }
+}
 
 .invalid-feedback {
   display: block;
@@ -56,63 +63,26 @@ textarea.form-control { min-height: 3rem; height: auto; }
   color: vars.$error-color;
 }
 
-// Transport Grid - 4 column layout
-.transport-grid {
+// Itinerary Grid - config-driven column span, 8-column grid at desktop
+.itinerary-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: vars.$spacing-md;
 
   @include vars.media-md {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (width >= 1024px) {
     grid-template-columns: repeat(4, 1fr);
   }
 
-  .transport-address {
-    @media (width >= 1024px) {
-      grid-column: span 2;
-    }
+  @media (width >= 1280px) {
+    grid-template-columns: repeat(8, 1fr);
   }
 }
 
-// Repeating Sections
-.transportation-detail {
+.itinerary-segment {
+  position: relative;
   padding: vars.$spacing-md;
   background-color: vars.$gray-50;
   border-radius: vars.$radius-lg;
   margin-bottom: vars.$spacing-md;
   border: 1px solid vars.$border-light;
 }
-
-// Radio Buttons
-.form-check {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-2;
-  margin-right: vars.$spacing-md;
-
-  .form-check-input {
-    width: vars.$spacing-md;
-    height: vars.$spacing-md;
-    border: 1px solid vars.$gray-300;
-    cursor: pointer;
-    &:checked { background-color: vars.$primary-color; border-color: vars.$primary-color; }
-    &:focus { outline: none; box-shadow: vars.$input-focus-shadow; }
-  }
-  .form-check-label { font-size: vars.$font-size-sm; color: vars.$gray-800; cursor: pointer; }
-}
-
-.flex-wrap { flex-wrap: wrap; }
-.gap-3 { gap: vars.$spacing-3; }
-
-// Buttons: see global .btn/.btn-primary/.btn-outline-primary/.btn-danger/.btn-sm/.btn-outline-secondary/.btn-icon in buttons.scss
-
-// Utility Classes
-.mt-3 { margin-top: vars.$spacing-3; }
-.mt-4 { margin-top: vars.$spacing-md; }
-.mb-3 { margin-bottom: vars.$spacing-3; }
-.mb-4 { margin-bottom: vars.$spacing-md; }
-.ms-2 { margin-left: vars.$spacing-2; }
-.d-flex { display: flex; &.justify-content-end { justify-content: flex-end; } }
