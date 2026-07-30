@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
-import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
 import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
+import { ItineraryEditorComponent, ItineraryFieldConfig } from '../../../../shared/components/itinerary-editor/itinerary-editor.component';
 
 export interface PassportUploadDetails {
   file: File | null;
@@ -23,7 +23,7 @@ export interface HomeLeaveDetails {
 @Component({
   selector: 'app-home-leave-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, PassportUploadComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, PassportUploadComponent, ItineraryEditorComponent],
   templateUrl: './home-leave-details.component.html',
   styleUrls: ['./home-leave-details.component.scss']
 })
@@ -34,6 +34,17 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
 
   homeLeaveForm!: FormGroup;
 
+  itineraryFields: ItineraryFieldConfig[] = [
+    { key: 'date', label: 'Date / Дата', type: 'date', required: true, requiredErrorMessage: 'Date is required', isPrimaryDate: true },
+    { key: 'day', label: 'Day / День', type: 'readonly-text' },
+    { key: 'from', label: 'From / Откуда', type: 'text', required: true, placeholder: 'Origin city/airport', requiredErrorMessage: 'Origin is required' },
+    { key: 'to', label: 'To / Куда', type: 'text', required: true, placeholder: 'Destination city/airport', requiredErrorMessage: 'Destination is required' },
+    { key: 'flightNumber', label: 'Flight/Transport Number', type: 'text', placeholder: 'e.g., LH1234, Train 45' },
+    { key: 'remarks', label: 'Remarks / Примечания', type: 'text', placeholder: 'Any additional information', colSpan: 8 }
+  ];
+  tripTypeValue: 'One Way' | 'Round Trip' = 'Round Trip';
+  itinerarySegments: Record<string, any>[] = [];
+
   // Passport upload
   passportFile: File | null = null;
   passportFileName: string = '';
@@ -41,8 +52,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
 
   constructor(
     private fb: FormBuilder,
-    private formUtils: FormUtilsService,
-    private dateUtils: DateUtilsService
+    private formUtils: FormUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -66,7 +76,6 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     this.homeLeaveForm = this.fb.group({
       purpose: [this.initialData.purpose || '', [Validators.required, Validators.minLength(10)]],
       tripType: [this.initialData.tripType || 'Round Trip', Validators.required],
-      itinerary: this.fb.array([]),
       advanceBankDetails: this.fb.group({
         bankName: [''],
         accountNumber: [''],
@@ -76,23 +85,12 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
       })
     });
 
-    // Watch trip type changes to manage itinerary segments
-    this.homeLeaveForm.get('tripType')?.valueChanges.subscribe(tripType => {
-      const itineraryArray = this.itinerary;
-      if (tripType === 'One Way' && itineraryArray.length > 1) {
-        // Keep only first segment for one way
-        while (itineraryArray.length > 1) {
-          itineraryArray.removeAt(itineraryArray.length - 1);
-        }
-      }
-    });
+    this.tripTypeValue = this.initialData.tripType || 'Round Trip';
 
-    // Initialize with one itinerary segment
-    if (this.initialData.itinerary && this.initialData.itinerary.length > 0) {
-      this.initialData.itinerary.forEach(segment => this.addItinerarySegment(segment));
-    } else {
-      this.addItinerarySegment();
-    }
+    // Watch trip type changes to drive the itinerary editor's add/remove gating
+    this.homeLeaveForm.get('tripType')?.valueChanges.subscribe(tripType => {
+      this.tripTypeValue = tripType;
+    });
 
     // Set bank details if provided
     if (this.initialData.advanceBankDetails) {
@@ -106,44 +104,17 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     }
   }
 
-  get itinerary(): FormArray {
-    return this.homeLeaveForm.get('itinerary') as FormArray;
-  }
-
-  private createItinerarySegment(data?: any): FormGroup {
-    return this.fb.group({
-      date: [data?.date || '', Validators.required],
-      day: [data?.day || ''],
-      from: [data?.from || '', Validators.required],
-      to: [data?.to || '', Validators.required],
-      flightNumber: [data?.flightNumber || ''],
-      remarks: [data?.remarks || '']
-    });
-  }
-
-  addItinerarySegment(data?: any): void {
-    const tripType = this.homeLeaveForm.get('tripType')?.value;
-    if (tripType === 'One Way' && this.itinerary.length >= 1) {
-      return; // Don't allow more than 1 segment for one way
-    }
-    this.itinerary.push(this.createItinerarySegment(data));
-  }
-
-  onDateChange(index: number, event: any): void {
-    const dayName = this.dateUtils.getDayOfWeek(event.target.value);
-    this.itinerary.at(index).get('day')?.setValue(dayName);
-  }
-
-  removeItinerarySegment(index: number): void {
-    if (this.itinerary.length > 1) {
-      this.itinerary.removeAt(index);
-    }
+  onItinerarySegmentsChange(segments: Record<string, any>[]): void {
+    this.itinerarySegments = segments;
   }
 
   onSubmit(): void {
     if (this.homeLeaveForm.valid) {
       const formValue = this.homeLeaveForm.getRawValue();
-      this.formSubmit.emit(formValue);
+      this.formSubmit.emit({
+        ...formValue,
+        itinerary: this.itinerarySegments
+      });
     } else {
       this.formUtils.markFormGroupTouched(this.homeLeaveForm);
     }
@@ -165,6 +136,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   getFormData(): HomeLeaveDetails {
     return {
       ...this.homeLeaveForm.getRawValue(),
+      itinerary: this.itinerarySegments,
       passportUpload: {
         file: this.passportFile,
         fileName: this.passportFileName,

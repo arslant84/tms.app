@@ -19,9 +19,9 @@ import {
 } from "@angular/forms";
 import { Subject, takeUntil } from "rxjs";
 import { FormUtilsService } from "../../../../core/utils/form-utils.service";
-import { DateUtilsService } from "../../../../core/utils/date-utils.service";
 import { FormSectionCardComponent } from "../../../../shared/components/form-section-card/form-section-card.component";
 import { PassportUploadComponent } from "../../../../shared/components/passport-upload/passport-upload.component";
+import { ItineraryEditorComponent, type ItineraryFieldConfig } from "../../../../shared/components/itinerary-editor/itinerary-editor.component";
 
 export interface ItinerarySegment {
 	date: string;
@@ -72,7 +72,7 @@ export interface OverseasTravelDetails {
 @Component({
 	selector: "app-overseas-travel-details",
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, PassportUploadComponent],
+	imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, PassportUploadComponent, ItineraryEditorComponent],
 	templateUrl: "./overseas-travel-details.component.html",
 	styleUrls: ["./overseas-travel-details.component.scss"],
 })
@@ -87,6 +87,19 @@ export class OverseasTravelDetailsComponent
 
 	overseasForm!: FormGroup;
 
+	itineraryFields: ItineraryFieldConfig[] = [
+		{ key: "date", label: "Date / Дата", type: "date", required: true, requiredErrorMessage: "Date is required", isPrimaryDate: true },
+		{ key: "day", label: "Day / День", type: "readonly-text" },
+		{ key: "from", label: "From / Откуда", type: "text", required: true, placeholder: "Origin city/airport", requiredErrorMessage: "Origin is required" },
+		{ key: "to", label: "To / Куда", type: "text", required: true, placeholder: "Destination city/airport", requiredErrorMessage: "Destination is required" },
+		{ key: "etd", label: "ETD / Вылет", type: "text", placeholder: "e.g. 14:30 or Morning" },
+		{ key: "eta", label: "ETA / Прилет", type: "text", placeholder: "e.g. 14:30 or Morning" },
+		{ key: "flightNumber", label: "Flight", type: "text", placeholder: "e.g., LH1234" },
+		{ key: "remarks", label: "Remarks / Примечания", type: "text", placeholder: "Any additional information", colSpan: 8 },
+	];
+	tripTypeValue: "One Way" | "Round Trip" = "One Way";
+	itinerarySegments: Record<string, any>[] = [];
+
 	// Passport upload
 	passportFile: File | null = null;
 	passportFileName: string = "";
@@ -94,7 +107,6 @@ export class OverseasTravelDetailsComponent
 
 	private fb = inject(FormBuilder);
 	private formUtils = inject(FormUtilsService);
-	private dateUtils = inject(DateUtilsService);
 
 	ngOnInit(): void {
 		this.initForm();
@@ -129,7 +141,6 @@ export class OverseasTravelDetailsComponent
 				[Validators.required, Validators.minLength(10)],
 			],
 			tripType: [this.initialData.tripType || "One Way", Validators.required],
-			itinerary: this.fb.array([]),
 			advanceBankDetails: this.fb.group({
 				bankName: ["", Validators.required],
 				accountNumber: ["", Validators.required],
@@ -140,14 +151,7 @@ export class OverseasTravelDetailsComponent
 			advanceAmountRequested: this.fb.array([]),
 		});
 
-		// Initialize with one itinerary segment
-		if (this.initialData.itinerary && this.initialData.itinerary.length > 0) {
-			this.initialData.itinerary.forEach((segment) =>
-				this.addItinerarySegment(segment),
-			);
-		} else {
-			this.addItinerarySegment();
-		}
+		this.tripTypeValue = this.initialData.tripType || "One Way";
 
 		// Initialize with one advance amount item
 		if (
@@ -172,40 +176,17 @@ export class OverseasTravelDetailsComponent
 			});
 		}
 
-		// Watch trip type changes
+		// Watch trip type changes to drive the itinerary editor's add/remove gating
 		this.overseasForm
 			.get("tripType")
 			?.valueChanges.pipe(takeUntil(this.destroy$))
 			.subscribe((tripType) => {
-				const itineraryArray = this.itinerary;
-				if (tripType === "One Way" && itineraryArray.length > 1) {
-					// Keep only first segment for one way
-					while (itineraryArray.length > 1) {
-						itineraryArray.removeAt(itineraryArray.length - 1);
-					}
-				}
+				this.tripTypeValue = tripType;
 			});
-	}
-
-	get itinerary(): FormArray {
-		return this.overseasForm.get("itinerary") as FormArray;
 	}
 
 	get advanceAmountRequested(): FormArray {
 		return this.overseasForm.get("advanceAmountRequested") as FormArray;
-	}
-
-	private createItinerarySegment(data?: Partial<ItinerarySegment>): FormGroup {
-		return this.fb.group({
-			date: [data?.date || "", Validators.required],
-			day: [data?.day || ""],
-			from: [data?.from || "", Validators.required],
-			to: [data?.to || "", Validators.required],
-			etd: [data?.etd || ""],
-			eta: [data?.eta || ""],
-			flightNumber: [data?.flightNumber || ""],
-			remarks: [data?.remarks || ""],
-		});
 	}
 
 	private createAdvanceAmountItem(
@@ -243,20 +224,6 @@ export class OverseasTravelDetailsComponent
 		formGroup.get("usd")?.setValue(total, { emitEvent: false });
 	}
 
-	addItinerarySegment(data?: Partial<ItinerarySegment>): void {
-		const tripType = this.overseasForm.get("tripType")?.value;
-		if (tripType === "One Way" && this.itinerary.length >= 1) {
-			return; // Don't allow more than 1 segment for one way
-		}
-		this.itinerary.push(this.createItinerarySegment(data));
-	}
-
-	removeItinerarySegment(index: number): void {
-		if (this.itinerary.length > 1) {
-			this.itinerary.removeAt(index);
-		}
-	}
-
 	addAdvanceAmountItem(data?: Partial<AdvanceAmountItem>): void {
 		this.advanceAmountRequested.push(this.createAdvanceAmountItem(data));
 	}
@@ -267,15 +234,17 @@ export class OverseasTravelDetailsComponent
 		}
 	}
 
-	onDateChange(index: number, event: Event): void {
-		const dayName = this.dateUtils.getDayOfWeek((event.target as HTMLInputElement).value);
-		this.itinerary.at(index).get("day")?.setValue(dayName);
+	onItinerarySegmentsChange(segments: Record<string, any>[]): void {
+		this.itinerarySegments = segments;
 	}
 
 	onSubmit(): void {
 		if (this.overseasForm.valid) {
 			const formValue = this.overseasForm.getRawValue();
-			this.formSubmit.emit(formValue);
+			this.formSubmit.emit({
+				...formValue,
+				itinerary: this.itinerarySegments,
+			});
 		} else {
 			this.formUtils.markFormGroupTouched(this.overseasForm);
 		}
@@ -297,6 +266,7 @@ export class OverseasTravelDetailsComponent
 	getFormData(): OverseasTravelDetails {
 		return {
 			...this.overseasForm.getRawValue(),
+			itinerary: this.itinerarySegments,
 			passportUpload: {
 				file: this.passportFile,
 				fileName: this.passportFileName,

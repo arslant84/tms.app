@@ -41,101 +41,12 @@
 
     <!-- Itinerary Section -->
     <app-form-section-card icon="bi-map" title="Travel Itinerary / Маршрут">
-        <div formArrayName="itinerary">
-          <div *ngFor="let segment of itinerary.controls; let i = index" [formGroupName]="i" class="itinerary-segment position-relative border rounded bg-light p-3 mb-3">
-            <!-- Date and Day -->
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Date / Дата <span class="text-danger">*</span></label>
-                <input
-                  type="date"
-                  formControlName="date"
-                  (change)="onDateChange(i, $event)"
-                  class="form-control"
-                  [ngClass]="{'is-invalid': segment.get('date')?.invalid && segment.get('date')?.touched}"
-                />
-                <div class="invalid-feedback" *ngIf="segment.get('date')?.errors?.['required'] && segment.get('date')?.touched">
-                  Date is required
-                </div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Day / День</label>
-                <input type="text" class="form-control" formControlName="day" readonly>
-              </div>
-            </div>
-
-            <!-- From and To -->
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label">From / Откуда <span class="text-danger">*</span></label>
-                <input
-                  type="text"
-                  formControlName="from"
-                  placeholder="Origin city/airport"
-                  class="form-control"
-                  [ngClass]="{'is-invalid': segment.get('from')?.invalid && segment.get('from')?.touched}"
-                />
-                <div class="invalid-feedback" *ngIf="segment.get('from')?.errors?.['required'] && segment.get('from')?.touched">
-                  Origin is required
-                </div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">To / Куда <span class="text-danger">*</span></label>
-                <input
-                  type="text"
-                  formControlName="to"
-                  placeholder="Destination city/airport"
-                  class="form-control"
-                  [ngClass]="{'is-invalid': segment.get('to')?.invalid && segment.get('to')?.touched}"
-                />
-                <div class="invalid-feedback" *ngIf="segment.get('to')?.errors?.['required'] && segment.get('to')?.touched">
-                  Destination is required
-                </div>
-              </div>
-            </div>
-
-            <!-- Flight Number -->
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Flight/Transport Number</label>
-                <input
-                  type="text"
-                  formControlName="flightNumber"
-                  placeholder="e.g., LH1234, Train 45"
-                  class="form-control"
-                />
-              </div>
-            </div>
-
-            <!-- Remarks -->
-            <div class="form-group">
-              <label class="form-label">Remarks / Примечания</label>
-              <input type="text" formControlName="remarks" placeholder="Any additional information" class="form-control" />
-            </div>
-
-            <!-- Remove Button -->
-            <button
-              *ngIf="itinerary.length > 1 && homeLeaveForm.get('tripType')?.value === 'Round Trip'"
-              type="button"
-              (click)="removeItinerarySegment(i)"
-              class="position-absolute top-0 end-0 m-2 btn btn-sm btn-outline-danger"
-            >
-              <i class="bi bi-trash"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="mt-3" *ngIf="homeLeaveForm.get('tripType')?.value === 'Round Trip'">
-          <button type="button" class="btn btn-outline-primary" (click)="addItinerarySegment()">
-            <i class="bi bi-plus-circle me-1"></i> Add Itinerary Segment
-          </button>
-        </div>
-        <div class="mt-3" *ngIf="homeLeaveForm.get('tripType')?.value === 'One Way'">
-          <small class="text-muted">
-            <i class="bi bi-info-circle me-1"></i>
-            Additional itinerary segments are only available for Round Trip
-          </small>
-        </div>
+        <app-itinerary-editor
+          [fields]="itineraryFields"
+          [initialSegments]="initialData.itinerary || []"
+          [tripType]="tripTypeValue"
+          (segmentsChange)="onItinerarySegmentsChange($event)">
+        </app-itinerary-editor>
     </app-form-section-card>
 
     <!-- Bank Details Section -->

@@ -6,6 +6,7 @@ import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
 import { MealProvisionComponent, DailyMealSelection } from '../../../../shared/components/meal-provision/meal-provision.component';
 import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
+import { ItineraryEditorComponent, ItineraryFieldConfig } from '../../../../shared/components/itinerary-editor/itinerary-editor.component';
 
 export interface PassportUploadDetails {
   file: File | null;
@@ -32,7 +33,7 @@ export interface ExternalPartiesDetails {
 @Component({
   selector: 'app-external-parties-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, MealProvisionComponent, PassportUploadComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, MealProvisionComponent, PassportUploadComponent, ItineraryEditorComponent],
   templateUrl: './external-parties-details.component.html',
   styleUrls: ['./external-parties-details.component.scss']
 })
@@ -43,6 +44,19 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
 
   externalForm!: FormGroup;
 
+  itineraryFields: ItineraryFieldConfig[] = [
+    { key: 'departureDate', label: 'Date', type: 'date', required: true, requiredErrorMessage: 'Date is required', isPrimaryDate: true },
+    { key: 'day', label: 'Day', type: 'readonly-text' },
+    { key: 'departureTime', label: 'Departure Time', type: 'time' },
+    { key: 'departureLocation', label: 'From', type: 'text', required: true, placeholder: 'Origin city/airport', requiredErrorMessage: 'Origin location is required' },
+    { key: 'arrivalDate', label: 'Arrival Date', type: 'text', hidden: true },
+    { key: 'arrivalTime', label: 'Arrival Time', type: 'time' },
+    { key: 'arrivalLocation', label: 'To', type: 'text', required: true, placeholder: 'Destination city/airport', requiredErrorMessage: 'Destination location is required' },
+    { key: 'modeOfTransport', label: 'Mode of Transport', type: 'text', required: true, placeholder: 'e.g., Flight, Train, Car', requiredErrorMessage: 'Mode of transport is required' },
+    { key: 'remarks', label: 'Remarks', type: 'text', placeholder: 'Any additional information', colSpan: 8 }
+  ];
+  tripTypeValue: 'One Way' | 'Round Trip' = 'One Way';
+  itinerarySegments: Record<string, any>[] = [];
   itineraryDates: (string | null)[] = [];
   mealSelections: DailyMealSelection[] = [];
 
@@ -81,89 +95,25 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
       externalFullName: [this.initialData.externalFullName || '', Validators.required],
       externalOrganization: [this.initialData.externalOrganization || '', Validators.required],
       externalRefToAuthorityLetter: [this.initialData.externalRefToAuthorityLetter || ''],
-      externalCostCenter: [this.initialData.externalCostCenter || '', Validators.required],
-      itinerary: this.fb.array([])
+      externalCostCenter: [this.initialData.externalCostCenter || '', Validators.required]
     });
 
-    // Watch trip type changes to manage itinerary segments
+    this.tripTypeValue = this.initialData.tripType || 'One Way';
+
+    // Watch trip type changes to drive the itinerary editor's add/remove gating
     this.externalForm.get('tripType')?.valueChanges.subscribe(tripType => {
-      const itineraryArray = this.itinerary;
-      if (tripType === 'One Way' && itineraryArray.length > 1) {
-        // Keep only first segment for one way
-        while (itineraryArray.length > 1) {
-          itineraryArray.removeAt(itineraryArray.length - 1);
-        }
-      }
+      this.tripTypeValue = tripType;
     });
 
-    // Initialize itinerary from initialData or add one empty entry
-    if (this.initialData.itinerary && this.initialData.itinerary.length > 0) {
-      this.initialData.itinerary.forEach(segment => this.addItinerarySegment(segment));
-    } else {
-      this.addItinerarySegment();
-    }
-
-    // Watch itinerary changes to keep the meal-provision component's dates in sync
-    this.itinerary.valueChanges.subscribe(() => {
-      this.updateItineraryDates();
-    });
-
-    // Initial itinerary dates
-    this.updateItineraryDates();
     this.mealSelections = this.initialData.mealProvisions?.dailySelections || [];
   }
 
-  get itinerary(): FormArray {
-    return this.externalForm.get('itinerary') as FormArray;
+  onItinerarySegmentsChange(segments: Record<string, any>[]): void {
+    this.itinerarySegments = segments;
   }
 
-  private createItinerarySegment(data?: any): FormGroup {
-    // Auto-calculate day from departureDate if available
-    let dayValue = data?.day || '';
-    if (!dayValue && data?.departureDate) {
-      dayValue = this.dateUtils.getDayOfWeek(data.departureDate);
-    }
-
-    return this.fb.group({
-      departureDate: [data?.departureDate || '', Validators.required],
-      day: [dayValue],
-      departureTime: [data?.departureTime || ''],
-      departureLocation: [data?.departureLocation || '', Validators.required],
-      arrivalDate: [data?.arrivalDate || ''],  // Optional - not displayed in UI
-      arrivalTime: [data?.arrivalTime || ''],
-      arrivalLocation: [data?.arrivalLocation || '', Validators.required],
-      modeOfTransport: [data?.modeOfTransport || '', Validators.required],
-      remarks: [data?.remarks || '']
-    });
-  }
-
-  addItinerarySegment(data?: any): void {
-    const tripType = this.externalForm.get('tripType')?.value;
-    if (tripType === 'One Way' && this.itinerary.length >= 1) {
-      return; // Don't allow more than 1 segment for one way
-    }
-    this.itinerary.push(this.createItinerarySegment(data));
-  }
-
-  onDateChange(index: number, event: any): void {
-    const dateValue = event.target.value;
-    if (dateValue) {
-      const dayName = this.dateUtils.getDayOfWeek(dateValue);
-      if (dayName) {
-        this.itinerary.at(index).get('day')?.setValue(dayName);
-      }
-    }
-  }
-
-  removeItinerarySegment(index: number): void {
-    if (this.itinerary.length > 1) {
-      this.itinerary.removeAt(index);
-    }
-  }
-
-  // Meal provisions logic
-  private updateItineraryDates(): void {
-    this.itineraryDates = this.itinerary.value.map((segment: any) => segment.departureDate);
+  onItineraryDatesChange(dates: (string | null)[]): void {
+    this.itineraryDates = dates;
   }
 
   onMealSelectionsChange(selections: DailyMealSelection[]): void {
@@ -176,6 +126,7 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
       const formValue = this.externalForm.getRawValue();
       this.formSubmit.emit({
         ...formValue,
+        itinerary: this.itinerarySegments,
         mealProvisions: { dailySelections: this.mealSelections }
       });
     } else {
@@ -212,6 +163,7 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   getFormData(): ExternalPartiesDetails {
     return {
       ...this.externalForm.getRawValue(),
+      itinerary: this.itinerarySegments,
       mealProvisions: { dailySelections: this.mealSelections },
       passportUpload: {
         file: this.passportFile,
