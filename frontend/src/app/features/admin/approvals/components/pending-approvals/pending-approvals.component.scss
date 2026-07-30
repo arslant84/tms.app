@@ -1,5 +1,4 @@
 // Using Unified Design System
-@use 'sass:color';
 @use '../../../../../../styles/variables' as vars;
 
 /**
@@ -234,17 +233,7 @@
   }
 }
 
-.id-cell .request-number,
-.request-number {
-  font-family: vars.$font-mono;
-  font-weight: vars.$font-weight-semibold;
-  font-size: vars.$font-size-sm;
-  color: vars.$primary-color;
-
-  &:hover {
-    color: color.adjust(vars.$primary-color, $lightness: -10%);
-  }
-}
+// .request-number: see global canonical rule in styles/tables.scss
 
 // ========== STAFF NAME CELL ==========
 .staff-cell {

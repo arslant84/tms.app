@@ -47,7 +47,7 @@
 
 .page-subtitle {
   font-size: vars.$font-size-sm;
-  color: vars.$gray-800;  // Dark color for high visibility on header
+  color: vars.$gray-800; // Dark color for high visibility on header
   font-weight: vars.$font-weight-medium;
   margin: 0 0 0 2.75rem;
 }
@@ -125,7 +125,9 @@
   font-size: vars.$font-size-sm;
   border: 1px solid vars.$gray-300;
   border-radius: vars.$radius-base;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 
   &:focus {
     outline: none;
@@ -226,9 +228,7 @@
 }
 
 // Table Styling
-.table-responsive {
-  overflow-x: auto;
-}
+// .table-responsive: see global canonical rule in styles/tables.scss
 
 .applications-table {
   margin-bottom: 0;
@@ -271,11 +271,7 @@
     }
   }
 
-  .request-number {
-    font-family: vars.$font-mono;
-    color: vars.$primary-color;
-    font-weight: vars.$font-weight-semibold;
-  }
+  // .request-number: see global canonical rule in styles/tables.scss
 
   .applicant-info {
     strong {
@@ -350,20 +346,7 @@
   }
 }
 
-// Loading overlay for pagination navigation
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgb(255 255 255 / 85%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  border-radius: vars.$radius-lg;
-}
+// .loading-overlay: see global canonical rule in styles/tables.scss
 
 // Animation
 @keyframes spin {

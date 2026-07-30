@@ -1,7 +1,6 @@
 /**
  * Flights Processing - Using Unified Design System
  */
-@use 'sass:color';
 @use '../../../../../styles/variables' as vars;
 
 // Container
@@ -59,7 +58,6 @@
       margin: 0;
     }
   }
-
 }
 
 // Main Card
@@ -307,25 +305,7 @@
   }
 }
 
-// Primary Custom Color (Request Numbers)
-.text-primary-custom {
-  font-family: vars.$font-mono;
-  font-weight: vars.$font-weight-semibold;
-  color: vars.$primary-color !important;
-}
-
-// Request ID cell styling
-.request-id {
-  a.fw-medium {
-    font-family: vars.$font-mono;
-    font-weight: vars.$font-weight-semibold;
-    color: vars.$primary-color;
-
-    &:hover {
-      color: color.adjust(vars.$primary-color, $lightness: -10%);
-    }
-  }
-}
+// .request-number: see global canonical rule in styles/tables.scss
 
 // Icon Styles
 .icon-sm {
@@ -552,7 +532,8 @@
   }
 
   .action-buttons-group {
-    margin: vars.$spacing-5 calc(-1 * vars.$spacing-5) calc(-1 * vars.$spacing-5) calc(-1 * vars.$spacing-5);
+    margin: vars.$spacing-5 calc(-1 * vars.$spacing-5) calc(-1 * vars.$spacing-5)
+      calc(-1 * vars.$spacing-5);
     padding: vars.$spacing-5 vars.$spacing-5 vars.$spacing-5 vars.$spacing-5;
     border-top: 1px solid vars.$border-light;
     display: flex;
@@ -604,7 +585,6 @@
     margin: vars.$spacing-2 0 0 0;
     font-size: vars.$font-size-base;
   }
-
 }
 
 .error-container svg {
@@ -640,7 +620,6 @@
     flex-direction: column;
     gap: vars.$spacing-md;
     align-items: stretch;
-
   }
 
   .tab-panel {
@@ -696,7 +675,6 @@
         font-size: 0.8125rem;
       }
     }
-
   }
 
   .search-filter-section {

@@ -46,7 +46,7 @@
     }
 
     .page-subtitle {
-  // Using darker color for better contrast
+      // Using darker color for better contrast
       color: vars.$text-secondary;
       font-size: vars.$font-size-sm;
       margin: 0;
@@ -87,7 +87,9 @@
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
     box-shadow: vars.$shadow-md;
@@ -187,7 +189,9 @@
   padding: vars.$spacing-2 vars.$spacing-3;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:focus {
     outline: none;
@@ -202,7 +206,7 @@
 }
 
 // ========== REQUEST NUMBER LINKS ==========
-.request-number,
+// .request-number: see global canonical rule in styles/tables.scss
 a.fw-medium {
   font-family: vars.$font-mono;
   color: vars.$primary-color;

@@ -77,9 +77,16 @@
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-6">
-          <input type="text" class="form-control" id="visaAdminSearch" name="visaAdminSearch"
-                 autocomplete="off" placeholder="Search by request number, staff name, destination..."
-                 [(ngModel)]="filterCriteria.search" (keyup.enter)="applyFilters()">
+          <input
+            type="text"
+            class="form-control"
+            id="visaAdminSearch"
+            name="visaAdminSearch"
+            autocomplete="off"
+            placeholder="Search by request number, staff name, destination..."
+            [(ngModel)]="filterCriteria.search"
+            (keyup.enter)="applyFilters()"
+          />
         </div>
         <div class="col-md-2">
           <select class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
@@ -87,12 +94,20 @@
           </select>
         </div>
         <div class="col-md-2">
-          <select class="form-select" [(ngModel)]="filterCriteria.visaType" (change)="applyFilters()">
+          <select
+            class="form-select"
+            [(ngModel)]="filterCriteria.visaType"
+            (change)="applyFilters()"
+          >
             <option *ngFor="let opt of visaTypeOptions" [value]="opt.value">{{ opt.label }}</option>
           </select>
         </div>
         <div class="col-md-2">
-          <select class="form-select" [(ngModel)]="filterCriteria.destination" (change)="applyClientSideFilters()">
+          <select
+            class="form-select"
+            [(ngModel)]="filterCriteria.destination"
+            (change)="applyClientSideFilters()"
+          >
             <option value="all">All Destinations</option>
             <option *ngFor="let dest of uniqueDestinations" [value]="dest">{{ dest }}</option>
           </select>
@@ -109,11 +124,12 @@
           <i class="bi bi-passport me-2"></i>
           <h3 class="card-title">All Visa Applications</h3>
         </div>
-        <p class="card-description">Complete list of visa applications from all departments. Total: {{ totalApplications }}</p>
+        <p class="card-description">
+          Complete list of visa applications from all departments. Total: {{ totalApplications }}
+        </p>
       </div>
     </div>
     <div class="card-body p-0">
-
       <!-- Loading State -->
       <div *ngIf="loadingApplications" class="loading-state">
         <app-loading-spinner size="md" message="Loading applications..."></app-loading-spinner>
@@ -128,13 +144,25 @@
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!loadingApplications && !error && filteredApplications.length === 0" class="empty-state">
+      <div
+        *ngIf="!loadingApplications && !error && filteredApplications.length === 0"
+        class="empty-state"
+      >
         <i class="bi bi-inbox"></i>
-        <p>{{ applications.length === 0 ? 'No visa applications found.' : 'No applications match the current filters.' }}</p>
+        <p>
+          {{
+            applications.length === 0
+              ? 'No visa applications found.'
+              : 'No applications match the current filters.'
+          }}
+        </p>
       </div>
 
       <!-- Applications Table -->
-      <div *ngIf="!loadingApplications && !error && filteredApplications.length > 0" class="table-responsive">
+      <div
+        *ngIf="!loadingApplications && !error && filteredApplications.length > 0"
+        class="table-responsive"
+      >
         <table class="table">
           <thead>
             <tr>
@@ -151,7 +179,11 @@
           <tbody>
             <tr *ngFor="let app of filteredApplications">
               <td>
-                <a href="javascript:void(0)" (click)="viewApplication(app)" class="text-decoration-none fw-medium">
+                <a
+                  href="javascript:void(0)"
+                  (click)="viewApplication(app)"
+                  class="text-decoration-none request-number"
+                >
                   {{ app.request_number || '#' + app.id }}
                 </a>
               </td>
@@ -181,38 +213,58 @@
               <td>{{ dateUtils.formatDate(app.submitted_date) }}</td>
               <td class="text-end">
                 <div class="action-buttons">
-                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewApplication(app)" title="View">
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="viewApplication(app)"
+                    title="View"
+                  >
                     <i class="bi bi-eye"></i>
                   </button>
 
-                  <button *ngIf="canApprove(app)" class="btn btn-sm btn-outline-primary btn-icon"
-                          (click)="openProcessModal(app, 'approve')"
-                          [disabled]="isProcessing(app.id)"
-                          title="Approve">
+                  <button
+                    *ngIf="canApprove(app)"
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="openProcessModal(app, 'approve')"
+                    [disabled]="isProcessing(app.id)"
+                    title="Approve"
+                  >
                     <span *ngIf="!isProcessing(app.id)">
                       <i class="bi bi-check-circle"></i>
                     </span>
-                    <app-loading-spinner *ngIf="isProcessing(app.id)" size="sm" class="d-inline-block"></app-loading-spinner>
+                    <app-loading-spinner
+                      *ngIf="isProcessing(app.id)"
+                      size="sm"
+                      class="d-inline-block"
+                    ></app-loading-spinner>
                   </button>
 
-                  <button *ngIf="canReject(app)" class="btn btn-sm btn-outline-danger btn-icon"
-                          (click)="openProcessModal(app, 'reject')"
-                          [disabled]="isProcessing(app.id)"
-                          title="Reject">
+                  <button
+                    *ngIf="canReject(app)"
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    (click)="openProcessModal(app, 'reject')"
+                    [disabled]="isProcessing(app.id)"
+                    title="Reject"
+                  >
                     <i class="bi bi-x-circle"></i>
                   </button>
 
-                  <button *ngIf="canStartProcessing(app)" class="btn btn-sm btn-outline-primary btn-icon"
-                          (click)="startProcessing(app)"
-                          [disabled]="isProcessing(app.id)"
-                          title="Start Processing">
+                  <button
+                    *ngIf="canStartProcessing(app)"
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="startProcessing(app)"
+                    [disabled]="isProcessing(app.id)"
+                    title="Start Processing"
+                  >
                     <i class="bi bi-play-circle"></i>
                   </button>
 
-                  <button *ngIf="canComplete(app)" class="btn btn-sm btn-outline-primary btn-icon"
-                          (click)="openProcessModal(app, 'complete')"
-                          [disabled]="isProcessing(app.id)"
-                          title="Mark as Completed">
+                  <button
+                    *ngIf="canComplete(app)"
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="openProcessModal(app, 'complete')"
+                    [disabled]="isProcessing(app.id)"
+                    title="Mark as Completed"
+                  >
                     <i class="bi bi-check2-all"></i>
                   </button>
                 </div>
@@ -231,7 +283,11 @@
                 <span aria-hidden="true">&laquo;</span>
               </a>
             </li>
-            <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+            <li
+              class="page-item"
+              *ngFor="let page of getPageNumbers()"
+              [class.active]="page === currentPage"
+            >
               <a class="page-link" (click)="changePage(page)">{{ page }}</a>
             </li>
             <li class="page-item" [class.disabled]="currentPage === totalPages">
@@ -244,7 +300,12 @@
         <div class="text-center mt-3 pagination-info">
           <small>
             Showing {{ (currentPage - 1) * pageSize + 1 }} -
-            {{ currentPage * pageSize > totalApplications ? totalApplications : currentPage * pageSize }} of {{ totalApplications }} applications
+            {{
+              currentPage * pageSize > totalApplications
+                ? totalApplications
+                : currentPage * pageSize
+            }}
+            of {{ totalApplications }} applications
           </small>
         </div>
       </div>
@@ -253,8 +314,14 @@
 </div>
 
 <!-- Process Application Modal -->
-<div class="modal fade" [class.show]="showProcessModal" [style.display]="showProcessModal ? 'flex' : 'none'"
-     tabindex="-1" role="dialog" *ngIf="showProcessModal">
+<div
+  class="modal fade"
+  [class.show]="showProcessModal"
+  [style.display]="showProcessModal ? 'flex' : 'none'"
+  tabindex="-1"
+  role="dialog"
+  *ngIf="showProcessModal"
+>
   <div class="modal-dialog" [class.modal-lg]="processAction === 'complete'" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -263,9 +330,12 @@
       </div>
       <div class="modal-body">
         <div *ngIf="selectedApplication" class="alert alert-info">
-          <strong>{{ selectedApplication.request_number || 'Application #' + selectedApplication.id }}</strong><br>
-          <strong>Staff Name:</strong> {{ selectedApplication.requestor_name }}<br>
-          <strong>Destination:</strong> {{ selectedApplication.destination }}<br>
+          <strong>{{
+            selectedApplication.request_number || 'Application #' + selectedApplication.id
+          }}</strong
+          ><br />
+          <strong>Staff Name:</strong> {{ selectedApplication.requestor_name }}<br />
+          <strong>Destination:</strong> {{ selectedApplication.destination }}<br />
           <strong>Visa Type:</strong> {{ selectedApplication.visa_type }}
         </div>
 
@@ -275,22 +345,29 @@
 
           <div class="mb-3">
             <label for="visaNumber" class="form-label">Visa Number</label>
-            <input type="text" id="visaNumber" class="form-control"
-                   [(ngModel)]="visaNumber"
-                   placeholder="Enter visa number">
+            <input
+              type="text"
+              id="visaNumber"
+              class="form-control"
+              [(ngModel)]="visaNumber"
+              placeholder="Enter visa number"
+            />
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
               <label for="visaValidFrom" class="form-label">Visa Valid From</label>
-              <input type="date" id="visaValidFrom" class="form-control"
-                     [(ngModel)]="visaValidFrom">
+              <input
+                type="date"
+                id="visaValidFrom"
+                class="form-control"
+                [(ngModel)]="visaValidFrom"
+              />
             </div>
 
             <div class="col-md-6 mb-3">
               <label for="visaValidTo" class="form-label">Visa Valid To</label>
-              <input type="date" id="visaValidTo" class="form-control"
-                     [(ngModel)]="visaValidTo">
+              <input type="date" id="visaValidTo" class="form-control" [(ngModel)]="visaValidTo" />
             </div>
           </div>
         </div>
@@ -300,26 +377,51 @@
             {{ processAction === 'complete' ? 'Processing Notes' : 'Comments' }}
             <span class="text-danger" *ngIf="processAction === 'reject'">*</span>
           </label>
-          <textarea id="processComments" class="form-control" rows="4"
-                    [(ngModel)]="processComments"
-                    [placeholder]="processAction === 'reject' ? 'Please provide rejection reason (required)' :
-                                   processAction === 'complete' ? 'Enter any processing notes or comments (optional)' :
-                                   'Additional comments (optional)'"
-                    [required]="processAction === 'reject'"></textarea>
+          <textarea
+            id="processComments"
+            class="form-control"
+            rows="4"
+            [(ngModel)]="processComments"
+            [placeholder]="
+              processAction === 'reject'
+                ? 'Please provide rejection reason (required)'
+                : processAction === 'complete'
+                  ? 'Enter any processing notes or comments (optional)'
+                  : 'Additional comments (optional)'
+            "
+            [required]="processAction === 'reject'"
+          ></textarea>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeProcessModal()">Cancel</button>
-        <button type="button"
-                [class]="processAction === 'reject' ? 'btn btn-danger' : 'btn btn-primary'"
-                (click)="processApplication()"
-                [disabled]="processingId !== null || (processAction === 'reject' && !processComments.trim())">
+        <button type="button" class="btn btn-secondary" (click)="closeProcessModal()">
+          Cancel
+        </button>
+        <button
+          type="button"
+          [class]="processAction === 'reject' ? 'btn btn-danger' : 'btn btn-primary'"
+          (click)="processApplication()"
+          [disabled]="
+            processingId !== null || (processAction === 'reject' && !processComments.trim())
+          "
+        >
           <span *ngIf="processingId === null">
-            <i [class]="processAction === 'approve' ? 'bi bi-check-circle' :
-                        processAction === 'reject' ? 'bi bi-x-circle' : 'bi bi-check2-all'"></i>
+            <i
+              [class]="
+                processAction === 'approve'
+                  ? 'bi bi-check-circle'
+                  : processAction === 'reject'
+                    ? 'bi bi-x-circle'
+                    : 'bi bi-check2-all'
+              "
+            ></i>
             {{ getActionLabel() }}
           </span>
-          <app-loading-spinner *ngIf="processingId !== null" size="sm" class="d-inline-block"></app-loading-spinner>
+          <app-loading-spinner
+            *ngIf="processingId !== null"
+            size="sm"
+            class="d-inline-block"
+          ></app-loading-spinner>
         </button>
       </div>
     </div>
