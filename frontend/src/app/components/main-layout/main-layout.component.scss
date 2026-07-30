@@ -173,8 +173,9 @@
 // Content Area - fills available space with proper scrolling
 .content-area {
   flex: 1;
+  min-width: 0;
   padding: vars.$spacing-4;
-  overflow-y: auto;
+  overflow: auto;
   background-color: rgb(248 249 250 / 85%);
 
   // Note: backdrop-filter removed because it creates a new containing block
