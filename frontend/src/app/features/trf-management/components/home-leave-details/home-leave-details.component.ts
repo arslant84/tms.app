@@ -2,6 +2,9 @@ import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Outpu
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
+import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
 
 export interface PassportUploadDetails {
   file: File | null;
@@ -20,7 +23,7 @@ export interface HomeLeaveDetails {
 @Component({
   selector: 'app-home-leave-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, PassportUploadComponent],
   templateUrl: './home-leave-details.component.html',
   styleUrls: ['./home-leave-details.component.scss']
 })
@@ -30,17 +33,17 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   @Output() backClick = new EventEmitter<void>();
 
   homeLeaveForm!: FormGroup;
-  weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Passport upload
   passportFile: File | null = null;
   passportFileName: string = '';
   passportFileUrl: string = '';
-  passportFileError: string = '';
-  allowedFileTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-  maxFileSize = 10 * 1024 * 1024; // 10MB
 
-  constructor(private fb: FormBuilder, private formUtils: FormUtilsService) {}
+  constructor(
+    private fb: FormBuilder,
+    private formUtils: FormUtilsService,
+    private dateUtils: DateUtilsService
+  ) {}
 
   ngOnInit(): void {
     this.initForm();
@@ -127,9 +130,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   }
 
   onDateChange(index: number, event: any): void {
-    const date = new Date(event.target.value);
-    const dayIndex = date.getDay();
-    const dayName = this.weekdays[dayIndex];
+    const dayName = this.dateUtils.getDayOfWeek(event.target.value);
     this.itinerary.at(index).get('day')?.setValue(dayName);
   }
 
@@ -149,38 +150,15 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   }
 
   // Passport file handling
-  onPassportFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-
-      // Validate file type
-      if (!this.allowedFileTypes.includes(file.type)) {
-        this.passportFileError = 'Please upload a PDF, JPG, or PNG file.';
-        this.passportFile = null;
-        this.passportFileName = '';
-        return;
-      }
-
-      // Validate file size
-      if (file.size > this.maxFileSize) {
-        this.passportFileError = 'File size must not exceed 10MB.';
-        this.passportFile = null;
-        this.passportFileName = '';
-        return;
-      }
-
-      this.passportFileError = '';
-      this.passportFile = file;
-      this.passportFileName = file.name;
-    }
+  onPassportFileSelected(file: File): void {
+    this.passportFile = file;
+    this.passportFileName = file.name;
   }
 
-  removePassportFile(): void {
+  onPassportFileRemoved(): void {
     this.passportFile = null;
     this.passportFileName = '';
     this.passportFileUrl = '';
-    this.passportFileError = '';
   }
 
   // Public methods for wizard integration

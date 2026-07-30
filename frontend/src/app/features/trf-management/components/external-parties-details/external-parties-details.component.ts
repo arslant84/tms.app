@@ -3,20 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
+import { MealProvisionComponent, DailyMealSelection } from '../../../../shared/components/meal-provision/meal-provision.component';
+import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
 
 export interface PassportUploadDetails {
   file: File | null;
   fileName: string;
   fileUrl: string;
-}
-
-export interface DailyMealSelection {
-  date: Date | string;
-  breakfast: boolean;
-  lunch: boolean;
-  dinner: boolean;
-  supper: boolean;
-  refreshment: boolean;
 }
 
 export interface MealProvisionDetails {
@@ -38,7 +32,7 @@ export interface ExternalPartiesDetails {
 @Component({
   selector: 'app-external-parties-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, MealProvisionComponent, PassportUploadComponent],
   templateUrl: './external-parties-details.component.html',
   styleUrls: ['./external-parties-details.component.scss']
 })
@@ -48,24 +42,14 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   @Output() backClick = new EventEmitter<void>();
 
   externalForm!: FormGroup;
-  weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  dailyMealDates: Date[] = [];
-  mealSummary = {
-    breakfast: 0,
-    lunch: 0,
-    dinner: 0,
-    supper: 0,
-    refreshment: 0
-  };
+  itineraryDates: (string | null)[] = [];
+  mealSelections: DailyMealSelection[] = [];
 
   // Passport upload
   passportFile: File | null = null;
   passportFileName: string = '';
   passportFileUrl: string = '';
-  passportFileError: string = '';
-  allowedFileTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-  maxFileSize = 10 * 1024 * 1024; // 10MB
 
   constructor(
     private fb: FormBuilder,
@@ -98,14 +82,7 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
       externalOrganization: [this.initialData.externalOrganization || '', Validators.required],
       externalRefToAuthorityLetter: [this.initialData.externalRefToAuthorityLetter || ''],
       externalCostCenter: [this.initialData.externalCostCenter || '', Validators.required],
-      itinerary: this.fb.array([]),
-      mealProvisions: this.fb.group({
-        dailySelections: this.fb.array(
-          this.initialData.mealProvisions?.dailySelections?.length
-            ? this.initialData.mealProvisions.dailySelections.map(item => this.createDailyMealSelection(item))
-            : []
-        )
-      })
+      itinerary: this.fb.array([])
     });
 
     // Watch trip type changes to manage itinerary segments
@@ -126,31 +103,25 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
       this.addItinerarySegment();
     }
 
-    // Watch itinerary changes to auto-generate meal dates
+    // Watch itinerary changes to keep the meal-provision component's dates in sync
     this.itinerary.valueChanges.subscribe(() => {
-      this.updateMealDatesFromItinerary();
+      this.updateItineraryDates();
     });
 
-    // Initial meal dates generation
-    this.updateMealDatesFromItinerary();
+    // Initial itinerary dates
+    this.updateItineraryDates();
+    this.mealSelections = this.initialData.mealProvisions?.dailySelections || [];
   }
 
   get itinerary(): FormArray {
     return this.externalForm.get('itinerary') as FormArray;
   }
 
-  get dailyMealSelectionsArray(): FormArray {
-    return this.externalForm.get('mealProvisions.dailySelections') as FormArray;
-  }
-
   private createItinerarySegment(data?: any): FormGroup {
     // Auto-calculate day from departureDate if available
     let dayValue = data?.day || '';
     if (!dayValue && data?.departureDate) {
-      const date = new Date(data.departureDate);
-      if (!isNaN(date.getTime())) {
-        dayValue = this.weekdays[date.getDay()];
-      }
+      dayValue = this.dateUtils.getDayOfWeek(data.departureDate);
     }
 
     return this.fb.group({
@@ -177,10 +148,8 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   onDateChange(index: number, event: any): void {
     const dateValue = event.target.value;
     if (dateValue) {
-      const date = new Date(dateValue);
-      if (!isNaN(date.getTime())) {
-        const dayIndex = date.getDay();
-        const dayName = this.weekdays[dayIndex];
+      const dayName = this.dateUtils.getDayOfWeek(dateValue);
+      if (dayName) {
         this.itinerary.at(index).get('day')?.setValue(dayName);
       }
     }
@@ -193,114 +162,22 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   }
 
   // Meal provisions logic
-  createDailyMealSelection(data?: Partial<DailyMealSelection>): FormGroup {
-    const formGroup = this.fb.group({
-      date: [data?.date || null, Validators.required],
-      breakfast: [data?.breakfast || false],
-      lunch: [data?.lunch || false],
-      dinner: [data?.dinner || false],
-      supper: [data?.supper || false],
-      refreshment: [data?.refreshment || false]
-    });
-
-    // Watch changes to update summary
-    formGroup.valueChanges.subscribe(() => {
-      this.updateMealSummary();
-    });
-
-    return formGroup;
+  private updateItineraryDates(): void {
+    this.itineraryDates = this.itinerary.value.map((segment: any) => segment.departureDate);
   }
 
-  private updateMealDatesFromItinerary(): void {
-    const itinerary = this.itinerary.value;
-    if (!itinerary || itinerary.length === 0) {
-      this.dailyMealDates = [];
-      this.dailyMealSelectionsArray.clear();
-      this.updateMealSummary();
-      return;
-    }
-
-    // Extract dates from itinerary
-    const dates: Date[] = [];
-    itinerary.forEach((segment: any) => {
-      if (segment.departureDate) {
-        const date = new Date(segment.departureDate);
-        if (!isNaN(date.getTime())) {
-          dates.push(date);
-        }
-      }
-    });
-
-    if (dates.length === 0) {
-      this.dailyMealDates = [];
-      this.dailyMealSelectionsArray.clear();
-      this.updateMealSummary();
-      return;
-    }
-
-    // Sort dates
-    dates.sort((a, b) => a.getTime() - b.getTime());
-
-    // Generate all dates between first and last date (inclusive)
-    const startDate = dates[0];
-    const endDate = dates[dates.length - 1];
-    const allDates: Date[] = [];
-
-    for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
-      allDates.push(new Date(date));
-    }
-
-    this.dailyMealDates = allDates;
-
-    // Update form array to match dates
-    const currentSelections = this.dailyMealSelectionsArray.value;
-    this.dailyMealSelectionsArray.clear();
-
-    allDates.forEach(date => {
-      // Check if we have existing selection for this date
-      const existing = currentSelections.find((sel: DailyMealSelection) => {
-        const selDate = new Date(sel.date);
-        return selDate.toDateString() === date.toDateString();
-      });
-
-      if (existing) {
-        this.dailyMealSelectionsArray.push(this.createDailyMealSelection(existing));
-      } else {
-        this.dailyMealSelectionsArray.push(this.createDailyMealSelection({ date: date.toISOString() }));
-      }
-    });
-
-    this.updateMealSummary();
-  }
-
-  private updateMealSummary(): void {
-    const selections = this.dailyMealSelectionsArray.value;
-    this.mealSummary = {
-      breakfast: selections.filter((s: DailyMealSelection) => s.breakfast).length,
-      lunch: selections.filter((s: DailyMealSelection) => s.lunch).length,
-      dinner: selections.filter((s: DailyMealSelection) => s.dinner).length,
-      supper: selections.filter((s: DailyMealSelection) => s.supper).length,
-      refreshment: selections.filter((s: DailyMealSelection) => s.refreshment).length
-    };
-  }
-
-  selectAllMealType(mealType: 'breakfast' | 'lunch' | 'dinner' | 'supper' | 'refreshment'): void {
-    this.dailyMealSelectionsArray.controls.forEach(control => {
-      control.patchValue({ [mealType]: true });
-    });
-  }
-
-  resetMealType(mealType: 'breakfast' | 'lunch' | 'dinner' | 'supper' | 'refreshment'): void {
-    this.dailyMealSelectionsArray.controls.forEach(control => {
-      control.patchValue({ [mealType]: false });
-    });
+  onMealSelectionsChange(selections: DailyMealSelection[]): void {
+    this.mealSelections = selections;
   }
 
   onSubmit(): void {
 
     if (this.externalForm.valid) {
       const formValue = this.externalForm.getRawValue();
-      this.formSubmit.emit(formValue);
+      this.formSubmit.emit({
+        ...formValue,
+        mealProvisions: { dailySelections: this.mealSelections }
+      });
     } else {
       this.logFormErrors(this.externalForm);
       this.formUtils.markFormGroupTouched(this.externalForm);
@@ -320,44 +197,22 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   }
 
   // Passport file handling
-  onPassportFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-
-      // Validate file type
-      if (!this.allowedFileTypes.includes(file.type)) {
-        this.passportFileError = 'Please upload a PDF, JPG, or PNG file.';
-        this.passportFile = null;
-        this.passportFileName = '';
-        return;
-      }
-
-      // Validate file size
-      if (file.size > this.maxFileSize) {
-        this.passportFileError = 'File size must not exceed 10MB.';
-        this.passportFile = null;
-        this.passportFileName = '';
-        return;
-      }
-
-      this.passportFileError = '';
-      this.passportFile = file;
-      this.passportFileName = file.name;
-    }
+  onPassportFileSelected(file: File): void {
+    this.passportFile = file;
+    this.passportFileName = file.name;
   }
 
-  removePassportFile(): void {
+  onPassportFileRemoved(): void {
     this.passportFile = null;
     this.passportFileName = '';
     this.passportFileUrl = '';
-    this.passportFileError = '';
   }
 
   // Public methods for wizard integration
   getFormData(): ExternalPartiesDetails {
     return {
       ...this.externalForm.getRawValue(),
+      mealProvisions: { dailySelections: this.mealSelections },
       passportUpload: {
         file: this.passportFile,
         fileName: this.passportFileName,
