@@ -322,8 +322,7 @@
           vertical-align: middle;
         }
 
-        // Request number links use monospace font
-        .request-number,
+        // .request-number: see global canonical rule in styles/tables.scss
         a.fw-medium {
           font-family: vars.$font-mono;
           font-weight: vars.$font-weight-semibold;

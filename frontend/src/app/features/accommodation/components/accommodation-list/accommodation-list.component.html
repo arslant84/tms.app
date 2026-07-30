@@ -34,7 +34,7 @@
             placeholder="Search by name, department, or location..."
             [value]="(listState.searchTerm | async) || ''"
             (input)="onSearchChange($any($event.target).value)"
-          >
+          />
         </div>
         <div class="filter-container">
           <select
@@ -62,7 +62,10 @@
 
     <!-- Loading State (Initial Load) -->
     <div *ngIf="(listState.loading | async) && requests.length === 0" class="loading-state">
-      <app-loading-spinner size="lg" message="Loading accommodation requests..."></app-loading-spinner>
+      <app-loading-spinner
+        size="lg"
+        message="Loading accommodation requests..."
+      ></app-loading-spinner>
     </div>
 
     <!-- Loading Overlay (Pagination Navigation) -->
@@ -78,80 +81,94 @@
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!(listState.loading | async) && !(listState.error | async) && requests.length === 0" class="empty-state">
+    <div
+      *ngIf="!(listState.loading | async) && !(listState.error | async) && requests.length === 0"
+      class="empty-state"
+    >
       <i class="bi bi-inbox empty-icon"></i>
       <h3 class="empty-message">No accommodation requests found</h3>
       <p class="empty-subtitle">Create your first accommodation request to get started</p>
     </div>
 
     <!-- Requests Table -->
-    <div *ngIf="!(listState.loading | async) && !(listState.error | async) && requests.length > 0" class="requests-card-content">
-      <table class="requests-table">
-        <thead>
-          <tr>
-            <th>REQUEST NUMBER</th>
-            <th>STAFF NAME</th>
-            <th>DEPARTMENT</th>
-            <th>CHECK-IN DATE</th>
-            <th>STATUS</th>
-            <th>CREATED</th>
-            <th class="text-end">ACTIONS</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let request of requests" [routerLink]="['/accommodation', request.id]" class="clickable-row">
-            <td>
-              <span class="request-number">{{ request.request_number || 'N/A' }}</span>
-            </td>
-            <td>
-              <div class="requestor-info">
-                <strong>{{ request.requestor_name }}</strong>
-                <small *ngIf="request.staff_id">{{ request.staff_id }}</small>
-              </div>
-            </td>
-            <td>{{ request.department || 'N/A' }}</td>
-            <td>
-              <div class="accommodation-info">
-                <span>{{ getCheckInDate(request) }}</span>
-                <span *ngIf="getLocation(request)" class="text-muted small">{{ getLocation(request) }}</span>
-              </div>
-            </td>
-            <td>
-              <span class="badge" [ngClass]="getStatusClass(request.status)">
-                {{ request.status }}
-              </span>
-            </td>
-            <td>{{ dateUtils.formatDate(request.created_at) }}</td>
-            <td class="text-end">
-              <div class="action-buttons">
-                <button
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  [routerLink]="['/accommodation', request.id]"
-                  (click)="$event.stopPropagation()"
-                  title="View Details"
-                >
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  [routerLink]="['/accommodation', 'edit', request.id]"
-                  (click)="$event.stopPropagation()"
-                  title="Edit Request"
-                >
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-danger btn-icon"
-                  (click)="deleteRequest(request.id, $event)"
-                  title="Delete Request"
-                >
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div
+      *ngIf="!(listState.loading | async) && !(listState.error | async) && requests.length > 0"
+      class="requests-card-content"
+    >
+      <div class="table-responsive">
+        <table class="requests-table">
+          <thead>
+            <tr>
+              <th>REQUEST NUMBER</th>
+              <th>STAFF NAME</th>
+              <th>DEPARTMENT</th>
+              <th>CHECK-IN DATE</th>
+              <th>STATUS</th>
+              <th>CREATED</th>
+              <th class="text-end">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let request of requests"
+              [routerLink]="['/accommodation', request.id]"
+              class="clickable-row"
+            >
+              <td>
+                <span class="request-number">{{ request.request_number || 'N/A' }}</span>
+              </td>
+              <td>
+                <div class="requestor-info">
+                  <strong>{{ request.requestor_name }}</strong>
+                  <small *ngIf="request.staff_id">{{ request.staff_id }}</small>
+                </div>
+              </td>
+              <td>{{ request.department || 'N/A' }}</td>
+              <td>
+                <div class="accommodation-info">
+                  <span>{{ getCheckInDate(request) }}</span>
+                  <span *ngIf="getLocation(request)" class="text-muted small">{{
+                    getLocation(request)
+                  }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(request.status)">
+                  {{ request.status }}
+                </span>
+              </td>
+              <td>{{ dateUtils.formatDate(request.created_at) }}</td>
+              <td class="text-end">
+                <div class="action-buttons">
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    [routerLink]="['/accommodation', request.id]"
+                    (click)="$event.stopPropagation()"
+                    title="View Details"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    [routerLink]="['/accommodation', 'edit', request.id]"
+                    (click)="$event.stopPropagation()"
+                    title="Edit Request"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    (click)="deleteRequest(request.id, $event)"
+                    title="Delete Request"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- Pagination -->
       <div *ngIf="listState.getTotalPages() > 1" class="pagination-container">

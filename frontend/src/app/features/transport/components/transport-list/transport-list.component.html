@@ -34,7 +34,7 @@
             placeholder="Search by requestor, purpose, or location..."
             [value]="(listState.searchTerm | async) || ''"
             (input)="onSearchChange($any($event.target).value)"
-          >
+          />
         </div>
         <div class="filter-container">
           <select
@@ -78,78 +78,94 @@
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!(listState.loading | async) && !(listState.error | async) && requests.length === 0" class="empty-state">
+    <div
+      *ngIf="!(listState.loading | async) && !(listState.error | async) && requests.length === 0"
+      class="empty-state"
+    >
       <i class="bi bi-inbox empty-icon"></i>
       <h3 class="empty-message">No transport requests found</h3>
       <p class="empty-subtitle">Create your first transport request to get started</p>
     </div>
 
     <!-- Requests Table -->
-    <div *ngIf="!(listState.loading | async) && !(listState.error | async) && requests.length > 0" class="requests-card-content">
-      <table class="requests-table">
-        <thead>
-          <tr>
-            <th>REQUEST NUMBER</th>
-            <th>STAFF NAME</th>
-            <th>PURPOSE</th>
-            <th>TRANSPORT TYPE</th>
-            <th class="text-center">PASSENGERS</th>
-            <th>DEPARTMENT</th>
-            <th>STATUS</th>
-            <th>SUBMITTED</th>
-            <th class="text-end">ACTIONS</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let request of requests" [routerLink]="['/transport', request.id]" class="clickable-row">
-            <td class="id-cell">
-              <span *ngIf="request.request_number" class="request-number">{{ request.request_number }}</span>
-              <span *ngIf="!request.request_number" class="text-muted">TRN-{{ request.id }}</span>
-            </td>
-            <td class="title-cell">
-              <div>{{ request.requestorName || 'N/A' }}</div>
-              <small class="text-muted d-block" *ngIf="request.staffId">{{ request.staffId }}</small>
-            </td>
-            <td class="purpose-cell">{{ request.purpose || 'N/A' }}</td>
-            <td>{{ getFirstTransportType(request) }}</td>
-            <td class="text-center">{{ getTotalPassengers(request) }}</td>
-            <td>{{ request.department || 'N/A' }}</td>
-            <td>
-              <span class="badge" [ngClass]="getStatusClass(request.status)">
-                {{ request.status }}
-              </span>
-            </td>
-            <td>{{ dateUtils.formatDate(request.submittedAt) }}</td>
-            <td class="text-end">
-              <div class="action-buttons">
-                <button
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  [routerLink]="['/transport', request.id]"
-                  (click)="$event.stopPropagation()"
-                  title="View Details"
-                >
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  [routerLink]="['/transport', 'edit', request.id]"
-                  (click)="$event.stopPropagation()"
-                  title="Edit Request"
-                >
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-danger btn-icon"
-                  (click)="deleteRequest(request.id, $event)"
-                  title="Delete Request"
-                >
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div
+      *ngIf="!(listState.loading | async) && !(listState.error | async) && requests.length > 0"
+      class="requests-card-content"
+    >
+      <div class="table-responsive">
+        <table class="requests-table">
+          <thead>
+            <tr>
+              <th>REQUEST NUMBER</th>
+              <th>STAFF NAME</th>
+              <th>PURPOSE</th>
+              <th>TRANSPORT TYPE</th>
+              <th class="text-center">PASSENGERS</th>
+              <th>DEPARTMENT</th>
+              <th>STATUS</th>
+              <th>SUBMITTED</th>
+              <th class="text-end">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let request of requests"
+              [routerLink]="['/transport', request.id]"
+              class="clickable-row"
+            >
+              <td class="id-cell">
+                <span *ngIf="request.request_number" class="request-number">{{
+                  request.request_number
+                }}</span>
+                <span *ngIf="!request.request_number" class="text-muted">TRN-{{ request.id }}</span>
+              </td>
+              <td class="title-cell">
+                <div>{{ request.requestorName || 'N/A' }}</div>
+                <small class="text-muted d-block" *ngIf="request.staffId">{{
+                  request.staffId
+                }}</small>
+              </td>
+              <td class="purpose-cell">{{ request.purpose || 'N/A' }}</td>
+              <td>{{ getFirstTransportType(request) }}</td>
+              <td class="text-center">{{ getTotalPassengers(request) }}</td>
+              <td>{{ request.department || 'N/A' }}</td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(request.status)">
+                  {{ request.status }}
+                </span>
+              </td>
+              <td>{{ dateUtils.formatDate(request.submittedAt) }}</td>
+              <td class="text-end">
+                <div class="action-buttons">
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    [routerLink]="['/transport', request.id]"
+                    (click)="$event.stopPropagation()"
+                    title="View Details"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    [routerLink]="['/transport', 'edit', request.id]"
+                    (click)="$event.stopPropagation()"
+                    title="Edit Request"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    (click)="deleteRequest(request.id, $event)"
+                    title="Delete Request"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- Pagination -->
       <div *ngIf="listState.getTotalPages() > 1" class="pagination-container">

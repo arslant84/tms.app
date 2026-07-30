@@ -45,7 +45,7 @@
     }
 
     .page-subtitle {
-  // Using darker color for better contrast
+      // Using darker color for better contrast
       color: vars.$text-secondary;
       font-size: vars.$font-size-sm;
       margin: 0;
@@ -85,7 +85,9 @@
   padding: vars.$spacing-2 vars.$spacing-3;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:focus {
     outline: none;
@@ -167,7 +169,7 @@
 }
 
 // Request Number Links - Clickable with monospace font
-.request-number,
+// .request-number: see global canonical rule in styles/tables.scss
 a.fw-medium {
   font-family: vars.$font-mono;
   color: vars.$primary-color;
@@ -280,8 +282,12 @@ a.fw-medium {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 // Modal Styling

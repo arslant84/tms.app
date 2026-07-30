@@ -1,5 +1,4 @@
 // Visa Processing Component - Using Unified Design System
-@use 'sass:color';
 @use '../../../../../styles/variables' as vars;
 
 // Container
@@ -77,7 +76,9 @@
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
     box-shadow: vars.$shadow-md;
@@ -223,16 +224,7 @@
         }
       }
 
-      // Request number links use monospace font
-      a.fw-medium {
-        font-family: vars.$font-mono;
-        font-weight: vars.$font-weight-semibold;
-        color: vars.$primary-color;
-
-        &:hover {
-          color: color.adjust(vars.$primary-color, $lightness: -10%);
-        }
-      }
+      // .request-number: see global canonical rule in styles/tables.scss
     }
   }
 }
@@ -293,7 +285,6 @@
   }
 }
 
-
 // Loading States
 .loading-container,
 .error-container,
@@ -326,7 +317,6 @@
     margin: vars.$spacing-2 0 0 0;
     font-size: vars.$font-size-base;
   }
-
 }
 
 .error-container svg {
@@ -344,8 +334,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 // Modal Styling

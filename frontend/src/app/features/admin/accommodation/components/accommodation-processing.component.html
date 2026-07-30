@@ -19,18 +19,24 @@
     <button
       class="tab-button"
       [class.active]="activeTab === 'pending'"
-      (click)="switchTab('pending')">
+      (click)="switchTab('pending')"
+    >
       <i class="bi bi-clock"></i>
       Pending Requests
-      <span class="badge" *ngIf="pendingAccommodations.length > 0">({{ pendingAccommodations.length }})</span>
+      <span class="badge" *ngIf="pendingAccommodations.length > 0"
+        >({{ pendingAccommodations.length }})</span
+      >
     </button>
     <button
       class="tab-button"
       [class.active]="activeTab === 'booked'"
-      (click)="switchTab('booked')">
+      (click)="switchTab('booked')"
+    >
       <i class="bi bi-check-circle"></i>
       Booked Accommodations
-      <span class="badge" *ngIf="bookedAccommodations.length > 0">({{ bookedAccommodations.length }})</span>
+      <span class="badge" *ngIf="bookedAccommodations.length > 0"
+        >({{ bookedAccommodations.length }})</span
+      >
     </button>
   </div>
 
@@ -58,7 +64,11 @@
               </button>
             </div>
             <div class="location-filter">
-              <select [(ngModel)]="selectedLocation" (change)="fetchBookings()" class="location-select">
+              <select
+                [(ngModel)]="selectedLocation"
+                (change)="fetchBookings()"
+                class="location-select"
+              >
                 <option value="Ashgabat">Ashgabat</option>
                 <option value="Kiyanly">Kiyanly</option>
                 <option value="Turkmenbashy">Turkmenbashy</option>
@@ -69,7 +79,9 @@
                 <i class="bi bi-chevron-left"></i>
                 Previous
               </button>
-              <span class="slider-info">Days {{ currentDateOffset + 1 }} - {{ currentDateOffset + daysToShow }}</span>
+              <span class="slider-info"
+                >Days {{ currentDateOffset + 1 }} - {{ currentDateOffset + daysToShow }}</span
+              >
               <button class="btn-slider" (click)="slideNext()" [disabled]="!canSlideNext()">
                 Next
                 <i class="bi bi-chevron-right"></i>
@@ -104,7 +116,8 @@
                   <div
                     *ngFor="let day of getVisibleDays()"
                     class="date-header"
-                    [class.weekend]="isWeekend(day)">
+                    [class.weekend]="isWeekend(day)"
+                  >
                     <div class="day-name">{{ getDayName(day) }}</div>
                     <div class="day-number">{{ day | date: 'dd' }}</div>
                   </div>
@@ -120,9 +133,7 @@
                   </div>
 
                   <!-- Rooms -->
-                  <div
-                    *ngFor="let room of allRooms"
-                    class="room-row">
+                  <div *ngFor="let room of allRooms" class="room-row">
                     <div *ngIf="room.staff_house === house.id" class="room-row-content">
                       <div class="room-name">
                         <i class="bi bi-door-closed"></i>
@@ -134,8 +145,20 @@
                           class="date-cell"
                           [class.occupied]="getDateBookingInfo(day, room.id).isOccupied"
                           [class.blocked]="getDateBookingInfo(day, room.id).status === 'Blocked'"
-                          [title]="getDateBookingInfo(day, room.id).isOccupied ? getDateBookingInfo(day, room.id).guestName + ' (' + getDateBookingInfo(day, room.id).status + ')' : 'Available'">
-                          <span *ngIf="getDateBookingInfo(day, room.id).isOccupied" class="occupied-dot">●</span>
+                          [title]="
+                            getDateBookingInfo(day, room.id).isOccupied
+                              ? getDateBookingInfo(day, room.id).guestName +
+                                ' (' +
+                                getDateBookingInfo(day, room.id).status +
+                                ')'
+                              : 'Available'
+                          "
+                        >
+                          <span
+                            *ngIf="getDateBookingInfo(day, room.id).isOccupied"
+                            class="occupied-dot"
+                            >●</span
+                          >
                         </div>
                       </div>
                     </div>
@@ -160,7 +183,10 @@
 
           <!-- Loading State -->
           <div *ngIf="isLoadingPending" class="loading-container">
-            <app-loading-spinner size="md" message="Loading pending accommodations..."></app-loading-spinner>
+            <app-loading-spinner
+              size="md"
+              message="Loading pending accommodations..."
+            ></app-loading-spinner>
           </div>
 
           <!-- Error State -->
@@ -171,14 +197,20 @@
           </div>
 
           <!-- Empty State -->
-          <div *ngIf="!isLoadingPending && !errorPending && pendingAccommodations.length === 0" class="empty-state">
+          <div
+            *ngIf="!isLoadingPending && !errorPending && pendingAccommodations.length === 0"
+            class="empty-state"
+          >
             <i class="bi bi-building"></i>
             <h3>No pending requests</h3>
             <p>All approved requests have been processed</p>
           </div>
 
           <!-- Requests Table -->
-          <div *ngIf="!isLoadingPending && !errorPending && pendingAccommodations.length > 0" class="requests-table-wrapper">
+          <div
+            *ngIf="!isLoadingPending && !errorPending && pendingAccommodations.length > 0"
+            class="requests-table-wrapper"
+          >
             <table class="requests-table">
               <thead>
                 <tr>
@@ -193,9 +225,14 @@
               <tbody>
                 <tr
                   *ngFor="let request of pendingAccommodations"
-                  [class.selected]="selectedRequest?.id === request.id">
+                  [class.selected]="selectedRequest?.id === request.id"
+                >
                   <td class="request-id">
-                    <a href="javascript:void(0)" (click)="viewRequest(request.id)" class="text-decoration-none">
+                    <a
+                      href="javascript:void(0)"
+                      (click)="viewRequest(request.id)"
+                      class="text-decoration-none request-number"
+                    >
                       {{ request.request_number }}
                     </a>
                   </td>
@@ -204,7 +241,9 @@
                   </td>
                   <td>{{ request.department | departmentName }}</td>
                   <td>
-                    <span class="badge" [class]="getStatusClass(request.status)">{{ request.status }}</span>
+                    <span class="badge" [class]="getStatusClass(request.status)">{{
+                      request.status
+                    }}</span>
                   </td>
                   <td>{{ dateUtils.formatDate(request.requestedDate) }}</td>
                   <td>
@@ -214,13 +253,17 @@
                         [class.btn-primary]="selectedRequest?.id === request.id"
                         [class.btn-outline-primary]="selectedRequest?.id !== request.id"
                         (click)="selectRequest(request)"
-                        title="{{ selectedRequest?.id === request.id ? 'Selected' : 'Select for processing' }}">
+                        title="{{
+                          selectedRequest?.id === request.id ? 'Selected' : 'Select for processing'
+                        }}"
+                      >
                         <i class="bi bi-check2-circle"></i>
                       </button>
                       <button
                         class="btn btn-sm btn-outline-primary btn-icon"
                         (click)="viewRequest(request.id)"
-                        title="View Details">
+                        title="View Details"
+                      >
                         <i class="bi bi-eye"></i>
                       </button>
                     </div>
@@ -236,9 +279,16 @@
       <div class="right-panel">
         <div class="booking-details-card">
           <div class="booking-details-header">
-            <h2>Booking Details {{ selectedRequest ? '(' + selectedRequest.request_number + ')' : '' }}</h2>
+            <h2>
+              Booking Details
+              {{ selectedRequest ? '(' + selectedRequest.request_number + ')' : '' }}
+            </h2>
             <p class="booking-details-description">
-              {{ selectedRequest ? 'Assign accommodation for selected request' : 'Select a request to process' }}
+              {{
+                selectedRequest
+                  ? 'Assign accommodation for selected request'
+                  : 'Select a request to process'
+              }}
             </p>
           </div>
 
@@ -262,7 +312,9 @@
               </div>
               <div class="info-row">
                 <span class="info-label">Status:</span>
-                <span class="badge" [class]="getStatusClass(selectedRequest.status)">{{ selectedRequest.status }}</span>
+                <span class="badge" [class]="getStatusClass(selectedRequest.status)">{{
+                  selectedRequest.status
+                }}</span>
               </div>
             </div>
 
@@ -279,7 +331,8 @@
                   [(ngModel)]="selectedStaffHouse"
                   name="staffHouse"
                   (change)="onStaffHouseChange()"
-                  class="form-select">
+                  class="form-select"
+                >
                   <option [ngValue]="null">Select staff house</option>
                   <option *ngFor="let house of availableStaffHouses" [ngValue]="house.id">
                     {{ house.name }}
@@ -295,7 +348,8 @@
                   [(ngModel)]="selectedRoom"
                   name="room"
                   [disabled]="!selectedStaffHouse || availableRooms.length === 0"
-                  class="form-select">
+                  class="form-select"
+                >
                   <option [ngValue]="null">Select room</option>
                   <option *ngFor="let room of availableRooms" [ngValue]="room.id">
                     {{ room.name }} - {{ room.room_type }} (Capacity: {{ room.capacity }})
@@ -307,10 +361,16 @@
               </div>
 
               <!-- TSR Date Info (if TSR reference exists) -->
-              <div class="tsr-date-info" *ngIf="hasTsrReference && tsrDepartureDate && tsrReturnDate">
+              <div
+                class="tsr-date-info"
+                *ngIf="hasTsrReference && tsrDepartureDate && tsrReturnDate"
+              >
                 <div class="info-badge">
                   <i class="bi bi-info-circle"></i>
-                  <span>TSR Travel Dates: {{ formatDateForDisplay(tsrDepartureDate) }} - {{ formatDateForDisplay(tsrReturnDate) }}</span>
+                  <span
+                    >TSR Travel Dates: {{ formatDateForDisplay(tsrDepartureDate) }} -
+                    {{ formatDateForDisplay(tsrReturnDate) }}</span
+                  >
                 </div>
                 <p class="info-text">Accommodation dates must be within TSR travel period</p>
               </div>
@@ -327,7 +387,8 @@
                   [min]="hasTsrReference ? tsrMinDate : ''"
                   [max]="hasTsrReference ? tsrMaxDate : ''"
                   (change)="onDateChange()"
-                  required>
+                  required
+                />
                 <p class="helper-text" *ngIf="hasTsrReference">
                   Must be between TSR departure and return dates
                 </p>
@@ -344,7 +405,8 @@
                   [min]="checkInDate || (hasTsrReference ? tsrMinDate : '')"
                   [max]="hasTsrReference ? tsrMaxDate : ''"
                   (change)="onDateChange()"
-                  required>
+                  required
+                />
                 <p class="helper-text" *ngIf="hasTsrReference">
                   Must be between TSR departure and return dates
                 </p>
@@ -368,7 +430,8 @@
                   name="notes"
                   rows="3"
                   class="form-textarea"
-                  placeholder="Add any additional notes about this assignment..."></textarea>
+                  placeholder="Add any additional notes about this assignment..."
+                ></textarea>
               </div>
             </div>
 
@@ -377,7 +440,14 @@
               <button
                 class="btn-primary"
                 (click)="assignRoom()"
-                [disabled]="!selectedStaffHouse || !selectedRoom || isProcessing || !checkInDate || !checkOutDate">
+                [disabled]="
+                  !selectedStaffHouse ||
+                  !selectedRoom ||
+                  isProcessing ||
+                  !checkInDate ||
+                  !checkOutDate
+                "
+              >
                 <i class="bi bi-home"></i>
                 <span *ngIf="!isProcessing">Book Accommodation</span>
                 <span *ngIf="isProcessing">
@@ -402,7 +472,10 @@
 
       <!-- Loading State -->
       <div *ngIf="isLoadingBooked" class="loading-container">
-        <app-loading-spinner size="md" message="Loading booked accommodations..."></app-loading-spinner>
+        <app-loading-spinner
+          size="md"
+          message="Loading booked accommodations..."
+        ></app-loading-spinner>
       </div>
 
       <!-- Empty State -->
@@ -429,7 +502,9 @@
           </thead>
           <tbody>
             <tr *ngFor="let booking of bookedAccommodations">
-              <td class="request-id">{{ booking.requestNumber }}</td>
+              <td class="request-id">
+                <span class="request-number">{{ booking.requestNumber }}</span>
+              </td>
               <td class="staff-cell">
                 <div class="staff-name">{{ booking.requestorName }}</div>
               </td>
@@ -445,21 +520,25 @@
               <td>{{ dateUtils.formatDate(booking.checkInDate) }}</td>
               <td>{{ dateUtils.formatDate(booking.checkOutDate) }}</td>
               <td>
-                <span class="badge" [class]="getStatusClass(booking.status)">{{ booking.status }}</span>
+                <span class="badge" [class]="getStatusClass(booking.status)">{{
+                  booking.status
+                }}</span>
               </td>
               <td>
                 <div class="action-buttons">
                   <button
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="viewRequest(booking.id)"
-                    title="View Details">
+                    title="View Details"
+                  >
                     <i class="bi bi-eye"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="cancelBooking(booking)"
                     [disabled]="isProcessing || booking.status === 'Completed'"
-                    title="Cancel Booking">
+                    title="Cancel Booking"
+                  >
                     <i class="bi bi-x-circle"></i>
                   </button>
                 </div>

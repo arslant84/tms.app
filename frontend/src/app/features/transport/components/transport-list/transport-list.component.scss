@@ -47,7 +47,7 @@
 
 .page-subtitle {
   font-size: vars.$font-size-sm;
-  color: vars.$gray-800;  // Dark color for high visibility on header
+  color: vars.$gray-800; // Dark color for high visibility on header
   font-weight: vars.$font-weight-medium;
   margin: 0 0 0 2.75rem;
 }
@@ -55,14 +55,16 @@
 // .btn-create removed - HTML now uses canonical .btn .btn-lg .btn-primary
 
 // Filters and Cards
-.filters-card, .requests-list-card {
+.filters-card,
+.requests-list-card {
   background: vars.$white;
   border-radius: vars.$radius-md;
   border: 1px solid vars.$border-light;
   box-shadow: vars.$shadow-lg;
 }
 
-.filters-card-header, .requests-card-header {
+.filters-card-header,
+.requests-card-header {
   padding: vars.$spacing-6;
 }
 
@@ -108,7 +110,8 @@
   }
 }
 
-.search-input, .filter-select {
+.search-input,
+.filter-select {
   padding: vars.$spacing-2 vars.$spacing-3;
   font-size: vars.$font-size-sm;
   border: 1px solid vars.$gray-300;
@@ -146,8 +149,12 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-state {
@@ -200,6 +207,8 @@
 }
 
 // Table - Matching Visa List Design
+// .table-responsive: see global canonical rule in styles/tables.scss
+
 .requests-table {
   width: 100%;
   margin-bottom: 0;
@@ -243,12 +252,7 @@
   }
 }
 
-// Request Number Styling
-.request-number {
-  font-family: vars.$font-mono;
-  color: vars.$primary-color;
-  font-weight: vars.$font-weight-semibold;
-}
+// .request-number: see global canonical rule in styles/tables.scss
 
 .title-cell {
   font-weight: vars.$font-weight-medium;
@@ -323,20 +327,7 @@
   }
 }
 
-// Loading overlay for pagination navigation
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgb(255 255 255 / 85%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  border-radius: vars.$radius-lg;
-}
+// .loading-overlay: see global canonical rule in styles/tables.scss
 
 @media (width <= 768px) {
   .transport-list-container {

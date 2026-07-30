@@ -3,8 +3,18 @@
   <div class="processing-header">
     <div class="header-content">
       <div class="header-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"
+          />
         </svg>
       </div>
       <div class="header-text">
@@ -56,19 +66,22 @@
         <button
           class="tab-nav-button"
           [class.active]="activeTab === 'pending'"
-          (click)="switchTab('pending')">
+          (click)="switchTab('pending')"
+        >
           Ready for Processing ({{ pendingVisas.length }})
         </button>
         <button
           class="tab-nav-button"
           [class.active]="activeTab === 'processing'"
-          (click)="switchTab('processing')">
+          (click)="switchTab('processing')"
+        >
           Processing (0)
         </button>
         <button
           class="tab-nav-button"
           [class.active]="activeTab === 'completed'"
-          (click)="switchTab('completed')">
+          (click)="switchTab('completed')"
+        >
           Completed ({{ completedVisas.length }})
         </button>
       </div>
@@ -78,93 +91,166 @@
     <div class="card-body">
       <!-- Pending Tab Content -->
       <div *ngIf="activeTab === 'pending'" class="tab-panel">
-    <!-- Loading State -->
-    <div *ngIf="isLoadingPending" class="loading-container">
-      <app-loading-spinner size="md" message="Loading pending visa applications..."></app-loading-spinner>
-    </div>
+        <!-- Loading State -->
+        <div *ngIf="isLoadingPending" class="loading-container">
+          <app-loading-spinner
+            size="md"
+            message="Loading pending visa applications..."
+          ></app-loading-spinner>
+        </div>
 
-    <!-- Error State -->
-    <div *ngIf="errorPending && !isLoadingPending" class="error-container">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-      </svg>
-      <p>{{ errorPending }}</p>
-      <button class="btn btn-primary retry" (click)="retryPending()">Retry</button>
-    </div>
+        <!-- Error State -->
+        <div *ngIf="errorPending && !isLoadingPending" class="error-container">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+            />
+          </svg>
+          <p>{{ errorPending }}</p>
+          <button class="btn btn-primary retry" (click)="retryPending()">Retry</button>
+        </div>
 
-    <!-- Empty State -->
-    <div *ngIf="!isLoadingPending && !errorPending && pendingVisas.length === 0" class="empty-state">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <h3>All caught up!</h3>
-      <p>No pending visa applications require processing at this time.</p>
-    </div>
+        <!-- Empty State -->
+        <div
+          *ngIf="!isLoadingPending && !errorPending && pendingVisas.length === 0"
+          class="empty-state"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <h3>All caught up!</h3>
+          <p>No pending visa applications require processing at this time.</p>
+        </div>
 
-    <!-- Pending Visas Table -->
-    <div *ngIf="!isLoadingPending && !errorPending && pendingVisas.length > 0" class="table-responsive">
-      <table class="table table-hover visa-table">
-        <thead>
-          <tr>
-            <th>VISA ID</th>
-            <th>APPLICANT</th>
-            <th>DESTINATION</th>
-            <th>PURPOSE</th>
-            <th>STATUS</th>
-            <th>SUBMITTED</th>
-            <th class="text-center">ACTIONS</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let app of pendingVisas">
-            <td>
-              <a href="javascript:void(0)" (click)="viewApplication(app.id)" class="text-decoration-none fw-medium">
-                {{ app.request_number }}
-              </a>
-            </td>
-            <td>
-              <div class="fw-medium">{{ app.requestorName }}</div>
-              <small class="text-muted" *ngIf="app.staffId">{{ app.staffId }}</small>
-            </td>
-            <td>
-              <div class="d-flex align-items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm text-muted">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                </svg>
-                {{ app.destination }}
-              </div>
-            </td>
-            <td>{{ app.travelPurpose }}</td>
-            <td>
-              <span class="badge" [class]="getStatusClass(app.status)">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="badge-icon">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {{ app.status }}
-              </span>
-            </td>
-            <td>{{ dateUtils.formatDate(app.submittedDate) }}</td>
-            <td>
-              <div class="action-buttons justify-content-center">
-                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewApplication(app.id)" title="View Details">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="openProcessingDialog(app)" title="Complete Processing">
-                  <i class="bi bi-check-circle"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+        <!-- Pending Visas Table -->
+        <div
+          *ngIf="!isLoadingPending && !errorPending && pendingVisas.length > 0"
+          class="table-responsive"
+        >
+          <table class="table table-hover visa-table">
+            <thead>
+              <tr>
+                <th>VISA ID</th>
+                <th>APPLICANT</th>
+                <th>DESTINATION</th>
+                <th>PURPOSE</th>
+                <th>STATUS</th>
+                <th>SUBMITTED</th>
+                <th class="text-center">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let app of pendingVisas">
+                <td>
+                  <a
+                    href="javascript:void(0)"
+                    (click)="viewApplication(app.id)"
+                    class="text-decoration-none request-number"
+                  >
+                    {{ app.request_number }}
+                  </a>
+                </td>
+                <td>
+                  <div class="fw-medium">{{ app.requestorName }}</div>
+                  <small class="text-muted" *ngIf="app.staffId">{{ app.staffId }}</small>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center gap-1">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="icon-sm text-muted"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"
+                      />
+                    </svg>
+                    {{ app.destination }}
+                  </div>
+                </td>
+                <td>{{ app.travelPurpose }}</td>
+                <td>
+                  <span class="badge" [class]="getStatusClass(app.status)">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="badge-icon"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {{ app.status }}
+                  </span>
+                </td>
+                <td>{{ dateUtils.formatDate(app.submittedDate) }}</td>
+                <td>
+                  <div class="action-buttons justify-content-center">
+                    <button
+                      class="btn btn-sm btn-outline-primary btn-icon"
+                      (click)="viewApplication(app.id)"
+                      title="View Details"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-primary btn-icon"
+                      (click)="openProcessingDialog(app)"
+                      title="Complete Processing"
+                    >
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Processing Tab Content -->
       <div *ngIf="activeTab === 'processing'" class="tab-panel">
         <div class="empty-state">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <h3>No visa applications in processing</h3>
           <p>All processing is completed immediately.</p>
@@ -175,13 +261,26 @@
       <div *ngIf="activeTab === 'completed'" class="tab-panel">
         <!-- Loading State -->
         <div *ngIf="isLoadingCompleted" class="loading-container">
-          <app-loading-spinner size="md" message="Loading completed visa applications..."></app-loading-spinner>
+          <app-loading-spinner
+            size="md"
+            message="Loading completed visa applications..."
+          ></app-loading-spinner>
         </div>
 
         <!-- Empty State -->
         <div *ngIf="!isLoadingCompleted && completedVisas.length === 0" class="empty-state">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"
+            />
           </svg>
           <h3>No Completed Visas</h3>
           <p>There are no completed visa applications at this time.</p>
@@ -206,7 +305,11 @@
             <tbody>
               <tr *ngFor="let visa of completedVisas">
                 <td>
-                  <a href="javascript:void(0)" (click)="viewApplication(visa.id)" class="text-decoration-none fw-medium">
+                  <a
+                    href="javascript:void(0)"
+                    (click)="viewApplication(visa.id)"
+                    class="text-decoration-none request-number"
+                  >
                     {{ visa.request_number }}
                   </a>
                 </td>
@@ -215,22 +318,39 @@
                   <small class="text-muted" *ngIf="visa.staffId">{{ visa.staffId }}</small>
                 </td>
                 <td>
-                  <span class="badge" [class]="getDestinationBadgeClass(visa.destination)">{{ visa.destination }}</span>
+                  <span class="badge" [class]="getDestinationBadgeClass(visa.destination)">{{
+                    visa.destination
+                  }}</span>
                 </td>
                 <td>
-                  <span class="badge" [class]="getVisaTypeBadgeClass(visa.visaType)">{{ visa.visaType }}</span>
+                  <span class="badge" [class]="getVisaTypeBadgeClass(visa.visaType)">{{
+                    visa.visaType
+                  }}</span>
                 </td>
                 <td>
-                  <span *ngIf="visa.processing_details?.visa_number" class="fw-medium">{{ visa.processing_details.visa_number }}</span>
+                  <span *ngIf="visa.processing_details?.visa_number" class="fw-medium">{{
+                    visa.processing_details.visa_number
+                  }}</span>
                   <span *ngIf="!visa.processing_details?.visa_number" class="text-muted">N/A</span>
                 </td>
                 <td>
-                  <div *ngIf="visa.processing_details?.visa_valid_from && visa.processing_details?.visa_valid_to">
-                    <span class="fw-medium">{{ dateUtils.formatDate(visa.processing_details.visa_valid_from) }}</span>
+                  <div
+                    *ngIf="
+                      visa.processing_details?.visa_valid_from &&
+                      visa.processing_details?.visa_valid_to
+                    "
+                  >
+                    <span class="fw-medium">{{
+                      dateUtils.formatDate(visa.processing_details.visa_valid_from)
+                    }}</span>
                     <span class="text-muted"> to </span>
-                    <span class="fw-medium">{{ dateUtils.formatDate(visa.processing_details.visa_valid_to) }}</span>
+                    <span class="fw-medium">{{
+                      dateUtils.formatDate(visa.processing_details.visa_valid_to)
+                    }}</span>
                   </div>
-                  <span *ngIf="!visa.processing_details?.visa_valid_from" class="text-muted">N/A</span>
+                  <span *ngIf="!visa.processing_details?.visa_valid_from" class="text-muted"
+                    >N/A</span
+                  >
                 </td>
                 <td>
                   <span class="badge" [class]="getStatusClass(visa.status)">{{ visa.status }}</span>
@@ -238,7 +358,11 @@
                 <td>{{ dateUtils.formatDate(visa.completedDate) }}</td>
                 <td>
                   <div class="action-buttons justify-content-center">
-                    <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewApplication(visa.id)" title="View Details">
+                    <button
+                      class="btn btn-sm btn-outline-primary btn-icon"
+                      (click)="viewApplication(visa.id)"
+                      title="View Details"
+                    >
                       <i class="bi bi-eye"></i>
                     </button>
                   </div>
@@ -252,7 +376,13 @@
   </div>
 
   <!-- Processing Dialog Modal -->
-  <div class="modal fade" id="processingModal" tabindex="-1" [class.show]="showProcessingDialog" [style.display]="showProcessingDialog ? 'block' : 'none'">
+  <div
+    class="modal fade"
+    id="processingModal"
+    tabindex="-1"
+    [class.show]="showProcessingDialog"
+    [style.display]="showProcessingDialog ? 'block' : 'none'"
+  >
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
       <div class="modal-content" *ngIf="selectedApplication">
         <div class="modal-header">
@@ -290,32 +420,66 @@
               <!-- Visa Number -->
               <div class="col-md-12">
                 <label for="visaNumber" class="form-label">Visa Number</label>
-                <input type="text" id="visaNumber" class="form-control" [(ngModel)]="visaNumber" placeholder="Enter visa number">
+                <input
+                  type="text"
+                  id="visaNumber"
+                  class="form-control"
+                  [(ngModel)]="visaNumber"
+                  placeholder="Enter visa number"
+                />
               </div>
 
               <!-- Visa Valid From -->
               <div class="col-md-6">
                 <label for="visaValidFrom" class="form-label">Visa Valid From</label>
-                <input type="date" id="visaValidFrom" class="form-control" [(ngModel)]="visaIssueDate">
+                <input
+                  type="date"
+                  id="visaValidFrom"
+                  class="form-control"
+                  [(ngModel)]="visaIssueDate"
+                />
               </div>
 
               <!-- Visa Valid To -->
               <div class="col-md-6">
                 <label for="visaValidTo" class="form-label">Visa Valid To</label>
-                <input type="date" id="visaValidTo" class="form-control" [(ngModel)]="visaExpiryDate">
+                <input
+                  type="date"
+                  id="visaValidTo"
+                  class="form-control"
+                  [(ngModel)]="visaExpiryDate"
+                />
               </div>
 
               <!-- Processing Notes -->
               <div class="col-12">
                 <label for="processingNotes" class="form-label">Processing Notes</label>
-                <textarea id="processingNotes" class="form-control" rows="4" [(ngModel)]="processingNotes" placeholder="Enter any processing notes or comments (optional)"></textarea>
+                <textarea
+                  id="processingNotes"
+                  class="form-control"
+                  rows="4"
+                  [(ngModel)]="processingNotes"
+                  placeholder="Enter any processing notes or comments (optional)"
+                ></textarea>
               </div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeProcessingDialog()" [disabled]="isProcessing">Cancel</button>
-          <button type="button" class="btn btn-primary" (click)="completeProcessingFromDialog()" [disabled]="isProcessing">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeProcessingDialog()"
+            [disabled]="isProcessing"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="completeProcessingFromDialog()"
+            [disabled]="isProcessing"
+          >
             <span *ngIf="!isProcessing">Complete Processing</span>
             <span *ngIf="isProcessing">
               <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
@@ -326,5 +490,10 @@
       </div>
     </div>
   </div>
-  <div class="modal-backdrop fade" [class.show]="showProcessingDialog" *ngIf="showProcessingDialog" (click)="closeProcessingDialog()"></div>
+  <div
+    class="modal-backdrop fade"
+    [class.show]="showProcessingDialog"
+    *ngIf="showProcessingDialog"
+    (click)="closeProcessingDialog()"
+  ></div>
 </div>

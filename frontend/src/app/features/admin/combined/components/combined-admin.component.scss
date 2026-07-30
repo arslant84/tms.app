@@ -336,15 +336,7 @@
   white-space: nowrap;
 }
 
-.request-number {
-  font-weight: vars.$font-weight-semibold;
-  color: vars.$primary-color;
-  white-space: nowrap;
-
-  &:hover {
-    text-decoration: underline !important;
-  }
-}
+// .request-number: see global canonical rule in styles/tables.scss
 
 .requestor-info {
   min-width: 120px;
