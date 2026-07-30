@@ -1,7 +1,9 @@
 // Combined Detail Component - Using Unified Design System
 @use '../../../../styles/variables' as vars;
 
-.pre-line { white-space: pre-line; }
+.pre-line {
+  white-space: pre-line;
+}
 
 :host {
   display: block;
@@ -134,9 +136,9 @@
     // Right-side status badge inside card header
     .module-status-badge {
       margin-left: auto;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgb(255 255 255 / 20%);
       color: vars.$text-inverse;
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid rgb(255 255 255 / 40%);
     }
   }
 
@@ -154,12 +156,30 @@
   border-radius: vars.$radius-full;
   text-transform: capitalize;
 
-  &.status-not_requested { background: vars.$gray-100; color: vars.$gray-600; }
-  &.status-pending        { background: vars.$warning-lightest; color: vars.$warning-dark; }
-  &.status-approved       { background: vars.$success-lightest; color: vars.$success-dark; }
-  &.status-processing     { background: vars.$info-lightest; color: vars.$info-dark; }
-  &.status-completed      { background: vars.$success-lightest; color: vars.$success-dark; }
-  &.status-rejected       { background: vars.$error-lightest; color: vars.$error-dark; }
+  &.status-not_requested {
+    background: vars.$gray-100;
+    color: vars.$gray-600;
+  }
+  &.status-pending {
+    background: vars.$warning-lightest;
+    color: vars.$warning-dark;
+  }
+  &.status-approved {
+    background: vars.$success-lightest;
+    color: vars.$success-dark;
+  }
+  &.status-processing {
+    background: vars.$info-lightest;
+    color: vars.$info-dark;
+  }
+  &.status-completed {
+    background: vars.$success-lightest;
+    color: vars.$success-dark;
+  }
+  &.status-rejected {
+    background: vars.$error-lightest;
+    color: vars.$error-dark;
+  }
 }
 
 // ── Module Badges (included modules) ────────────────────────
@@ -266,27 +286,21 @@
   font-size: vars.$font-size-sm;
   border-collapse: collapse;
 
-  thead {
-    background-color: vars.$gray-50;
-
-    th {
-      padding: vars.$spacing-2 vars.$spacing-3;
-      font-size: vars.$font-size-xs;
-      font-weight: vars.$font-weight-semibold;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: vars.$gray-600;
-      border-bottom: 1px solid vars.$border-light;
-      white-space: nowrap;
-    }
+  // thead th: see global canonical rule in styles/tables.scss (color/uppercase/etc.)
+  thead th {
+    padding: vars.$spacing-2 vars.$spacing-3;
   }
 
   tbody {
     tr {
       border-bottom: 1px solid vars.$border-light;
 
-      &:last-child { border-bottom: none; }
-      &:hover { background-color: vars.$gray-50; }
+      &:last-child {
+        border-bottom: none;
+      }
+      &:hover {
+        background-color: vars.$gray-50;
+      }
 
       td {
         padding: vars.$spacing-3;

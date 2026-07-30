@@ -47,8 +47,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-icon {
@@ -186,11 +190,19 @@
   }
 
   &.assignment-header {
-    background: linear-gradient(135deg, vars.$success-color 0%, color.adjust(vars.$success-color, $lightness: -10%) 100%);
+    background: linear-gradient(
+      135deg,
+      vars.$success-color 0%,
+      color.adjust(vars.$success-color, $lightness: -10%) 100%
+    );
   }
 
   &.rejection-header {
-    background: linear-gradient(135deg, vars.$error-color 0%, color.adjust(vars.$error-color, $lightness: -10%) 100%);
+    background: linear-gradient(
+      135deg,
+      vars.$error-color 0%,
+      color.adjust(vars.$error-color, $lightness: -10%) 100%
+    );
   }
 }
 
@@ -339,18 +351,7 @@
   border-collapse: collapse;
   font-size: vars.$font-size-sm;
 
-  thead {
-    background: vars.$gray-50;
-
-    th {
-      padding: vars.$spacing-3;
-      text-align: left;
-      font-weight: vars.$font-weight-semibold;
-      color: vars.$gray-700;
-      border-bottom: 2px solid vars.$gray-300;
-      white-space: nowrap;
-    }
-  }
+  // thead th: see global canonical rule in styles/tables.scss
 
   tbody {
     tr {

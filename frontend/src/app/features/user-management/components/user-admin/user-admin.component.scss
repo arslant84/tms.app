@@ -31,7 +31,7 @@
     }
 
     .page-subtitle {
-  // Using darker color for better contrast
+      // Using darker color for better contrast
       color: vars.$text-secondary;
       font-size: vars.$font-size-sm;
       margin: 0;
@@ -70,7 +70,9 @@
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   overflow: hidden;
 
   &:hover {
@@ -127,22 +129,9 @@
   width: 100%;
   border-collapse: collapse;
 
-  thead {
-    background-color: vars.$gray-50;
-    border-bottom: 1px solid vars.$border-light;
-
-    th {
-      font-weight: vars.$font-weight-semibold;
-      color: vars.$gray-500;
-      border-bottom: 1px solid vars.$border-light;
-      padding: vars.$spacing-3 vars.$spacing-md;
-      font-size: vars.$font-size-xs;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border: none;
-      white-space: nowrap;
-      text-align: left;
-    }
+  // thead th: see global canonical rule in styles/tables.scss (color/uppercase/etc.)
+  thead th {
+    padding: vars.$spacing-3 vars.$spacing-md;
   }
 
   tbody {
@@ -237,7 +226,9 @@
   border: 1px solid vars.$border-light;
   padding: vars.$spacing-2 vars.$spacing-3;
   font-size: vars.$font-size-sm;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   background: vars.$white;
 
   &:focus {
@@ -360,7 +351,9 @@
 
     .strength-fill {
       height: 100%;
-      transition: width 0.3s ease, background-color 0.3s ease;
+      transition:
+        width 0.3s ease,
+        background-color 0.3s ease;
       border-radius: vars.$radius-sm;
     }
   }

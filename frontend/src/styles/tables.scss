@@ -41,3 +41,21 @@
   z-index: 10;
   border-radius: vars.$radius-lg;
 }
+
+// Canonical table header row (every list/admin table's <thead><th>).
+// Scoped to .table-responsive so it only affects the tables opted into the
+// shared scroll container, not arbitrary Bootstrap tables elsewhere.
+// Padding is intentionally NOT unified here - each table declares its own
+// th padding locally, matching that table's own td padding, so right-aligned
+// columns (e.g. th.text-end ACTIONS) stay lined up with their row content.
+.table-responsive thead th {
+  text-align: left;
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-semibold;
+  color: vars.$gray-500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: vars.$gray-50;
+  border-bottom: 2px solid vars.$gray-200;
+  white-space: nowrap;
+}
