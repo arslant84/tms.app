@@ -19,6 +19,9 @@ import {
 } from "@angular/forms";
 import { Subject, takeUntil } from "rxjs";
 import { FormUtilsService } from "../../../../core/utils/form-utils.service";
+import { DateUtilsService } from "../../../../core/utils/date-utils.service";
+import { FormSectionCardComponent } from "../../../../shared/components/form-section-card/form-section-card.component";
+import { PassportUploadComponent } from "../../../../shared/components/passport-upload/passport-upload.component";
 
 export interface ItinerarySegment {
 	date: string;
@@ -69,7 +72,7 @@ export interface OverseasTravelDetails {
 @Component({
 	selector: "app-overseas-travel-details",
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule],
+	imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, PassportUploadComponent],
 	templateUrl: "./overseas-travel-details.component.html",
 	styleUrls: ["./overseas-travel-details.component.scss"],
 })
@@ -83,31 +86,15 @@ export class OverseasTravelDetailsComponent
 	@Output() backClick = new EventEmitter<void>();
 
 	overseasForm!: FormGroup;
-	weekdays = [
-		"Sunday",
-		"Monday",
-		"Tuesday",
-		"Wednesday",
-		"Thursday",
-		"Friday",
-		"Saturday",
-	];
 
 	// Passport upload
 	passportFile: File | null = null;
 	passportFileName: string = "";
 	passportFileUrl: string = "";
-	passportFileError: string = "";
-	allowedFileTypes = [
-		"application/pdf",
-		"image/jpeg",
-		"image/jpg",
-		"image/png",
-	];
-	maxFileSize = 10 * 1024 * 1024; // 10MB
 
 	private fb = inject(FormBuilder);
 	private formUtils = inject(FormUtilsService);
+	private dateUtils = inject(DateUtilsService);
 
 	ngOnInit(): void {
 		this.initForm();
@@ -281,9 +268,7 @@ export class OverseasTravelDetailsComponent
 	}
 
 	onDateChange(index: number, event: Event): void {
-		const date = new Date((event.target as HTMLInputElement).value);
-		const dayIndex = date.getDay();
-		const dayName = this.weekdays[dayIndex];
+		const dayName = this.dateUtils.getDayOfWeek((event.target as HTMLInputElement).value);
 		this.itinerary.at(index).get("day")?.setValue(dayName);
 	}
 
@@ -297,38 +282,15 @@ export class OverseasTravelDetailsComponent
 	}
 
 	// Passport file handling
-	onPassportFileSelected(event: Event): void {
-		const input = event.target as HTMLInputElement;
-		if (input.files && input.files.length > 0) {
-			const file = input.files[0];
-
-			// Validate file type
-			if (!this.allowedFileTypes.includes(file.type)) {
-				this.passportFileError = "Please upload a PDF, JPG, or PNG file.";
-				this.passportFile = null;
-				this.passportFileName = "";
-				return;
-			}
-
-			// Validate file size
-			if (file.size > this.maxFileSize) {
-				this.passportFileError = "File size must not exceed 10MB.";
-				this.passportFile = null;
-				this.passportFileName = "";
-				return;
-			}
-
-			this.passportFileError = "";
-			this.passportFile = file;
-			this.passportFileName = file.name;
-		}
+	onPassportFileSelected(file: File): void {
+		this.passportFile = file;
+		this.passportFileName = file.name;
 	}
 
-	removePassportFile(): void {
+	onPassportFileRemoved(): void {
 		this.passportFile = null;
 		this.passportFileName = "";
 		this.passportFileUrl = "";
-		this.passportFileError = "";
 	}
 
 	// Public methods for wizard integration

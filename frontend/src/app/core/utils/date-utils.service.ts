@@ -150,6 +150,23 @@ export class DateUtilsService {
   }
 
   /**
+   * Gets the weekday name for a date (e.g., "Monday")
+   * @param dateString The date to check
+   * @returns Weekday name, or empty string if invalid
+   */
+  getDayOfWeek(dateString: string | Date): string {
+    const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+
+      return weekdays[date.getDay()];
+    } catch {
+      return '';
+    }
+  }
+
+  /**
    * Gets a relative time string (e.g., "2 days ago", "in 3 hours")
    * @param dateString The date to compare
    * @returns Relative time string

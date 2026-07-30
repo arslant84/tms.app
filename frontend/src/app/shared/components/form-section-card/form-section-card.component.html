@@ -1,0 +1,11 @@
+<div class="card mb-4">
+  <div class="card-header bg-light">
+    <div class="d-flex align-items-center">
+      <i *ngIf="icon" [class]="'bi ' + icon + ' me-2'"></i>
+      <h5 class="mb-0">{{ title }}</h5>
+    </div>
+  </div>
+  <div class="card-body">
+    <ng-content></ng-content>
+  </div>
+</div>

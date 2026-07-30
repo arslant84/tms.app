@@ -1,0 +1,40 @@
+@use '../../../../styles/variables' as vars;
+
+// File Upload Area
+.border.rounded.p-4.text-center.bg-light {
+  background-color: vars.$primary-lightest !important;
+  border: 2px dashed vars.$primary-light !important;
+  border-radius: vars.$radius-lg !important;
+  transition: border-color 0.15s, background-color 0.15s;
+
+  &:hover {
+    border-color: vars.$primary-color !important;
+    background-color: vars.$primary-lightest !important;
+  }
+
+  i.bi-cloud-arrow-up {
+    color: vars.$primary-color;
+  }
+}
+
+// File Preview
+.p-3.border.rounded.bg-light {
+  background-color: vars.$primary-lightest !important;
+  border: 1px solid vars.$primary-light !important;
+  border-radius: vars.$radius-lg !important;
+}
+
+// Alert Styling
+.alert {
+  padding: vars.$spacing-md;
+  border-radius: vars.$radius-lg;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+
+  &.alert-danger {
+    background-color: vars.$error-lightest;
+    border-color: vars.$error-light;
+    color: vars.$error-dark;
+  }
+}

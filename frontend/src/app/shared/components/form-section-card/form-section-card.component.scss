@@ -1,0 +1,22 @@
+@use '../../../../styles/variables' as vars;
+
+.card {
+  background: vars.$bg-primary;
+  border-radius: vars.$radius-lg;
+  border: 1px solid vars.$border-light;
+  box-shadow: vars.$shadow-lg;
+  margin-bottom: vars.$spacing-6;
+}
+
+.card-header {
+  padding: vars.$spacing-6;
+  border-bottom: 1px solid vars.$border-light;
+  border-top-left-radius: vars.$radius-lg;
+  border-top-right-radius: vars.$radius-lg;
+
+  .d-flex { display: flex; align-items: center; gap: vars.$spacing-2; }
+  i { font-size: vars.$font-size-lg; color: vars.$primary-color; }
+  h5 { font-size: vars.$font-size-base; font-weight: vars.$font-weight-semibold; color: vars.$gray-800; margin: 0; }
+}
+
+.card-body { padding: vars.$spacing-6; }
