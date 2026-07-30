@@ -3,8 +3,18 @@
   <div class="processing-header">
     <div class="header-content">
       <div class="header-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.113-.504 1.113-1.125v-9.75m-17.25 0h.008v.008H3.375v-.008zm0 3h.008v.008H3.375V9.75zm0 3.75h.008v.008H3.375v-.008zM6.75 5.25h.008v.008H6.75V5.25zm0 3h.008v.008H6.75v-.008zm0 3.75h.008v.008H6.75v-.008zM9.75 5.25h.008v.008H9.75V5.25zm0 3h.008v.008H9.75v-.008zm0 3.75h.008v.008H9.75v-.008zm3-6h.008v.008h-.008V5.25zm0 3h.008v.008h-.008v-.008zm0 3.75h.008v.008h-.008v-.008zm3-6h.008v.008h-.008V5.25zM10.5 8.25h2.25v2.25H10.5V8.25z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.113-.504 1.113-1.125v-9.75m-17.25 0h.008v.008H3.375v-.008zm0 3h.008v.008H3.375V9.75zm0 3.75h.008v.008H3.375v-.008zM6.75 5.25h.008v.008H6.75V5.25zm0 3h.008v.008H6.75v-.008zm0 3.75h.008v.008H6.75v-.008zM9.75 5.25h.008v.008H9.75V5.25zm0 3h.008v.008H9.75v-.008zm0 3.75h.008v.008H9.75v-.008zm3-6h.008v.008h-.008V5.25zm0 3h.008v.008h-.008v-.008zm0 3.75h.008v.008h-.008v-.008zm3-6h.008v.008h-.008V5.25zM10.5 8.25h2.25v2.25H10.5V8.25z"
+          />
         </svg>
       </div>
       <div class="header-text">
@@ -22,19 +32,22 @@
         <button
           class="tab-nav-button"
           [class.active]="activeTab === 'approved'"
-          (click)="switchTab('approved')">
+          (click)="switchTab('approved')"
+        >
           Approved Requests ({{ approvedRequests.length }})
         </button>
         <button
           class="tab-nav-button"
           [class.active]="activeTab === 'processing'"
-          (click)="switchTab('processing')">
+          (click)="switchTab('processing')"
+        >
           Processing ({{ processingRequests.length }})
         </button>
         <button
           class="tab-nav-button"
           [class.active]="activeTab === 'completed'"
-          (click)="switchTab('completed')">
+          (click)="switchTab('completed')"
+        >
           Completed ({{ completedRequests.length }})
         </button>
       </div>
@@ -44,13 +57,26 @@
     <div class="card-body">
       <!-- Loading State -->
       <div *ngIf="isLoading" class="loading-container">
-        <app-loading-spinner size="md" message="Loading transport requests..."></app-loading-spinner>
+        <app-loading-spinner
+          size="md"
+          message="Loading transport requests..."
+        ></app-loading-spinner>
       </div>
 
       <!-- Error State -->
       <div *ngIf="error && !isLoading" class="error-container">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+          />
         </svg>
         <p>{{ error }}</p>
         <button class="btn btn-primary retry" (click)="fetchTransportRequests()">Retry</button>
@@ -60,8 +86,18 @@
       <div *ngIf="activeTab === 'approved' && !isLoading && !error" class="tab-panel">
         <!-- Empty State -->
         <div *ngIf="approvedRequests.length === 0" class="empty-state">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <h3>All caught up!</h3>
           <p>No approved transport requests awaiting processing.</p>
@@ -74,7 +110,13 @@
               <div class="request-main">
                 <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
                 <div class="text-muted small">
-                  {{ request.department || 'N/A' }} • ID: <a href="javascript:void(0)" (click)="viewRequest(request.id)" class="text-decoration-none">{{ request.request_number || request.id }}</a>
+                  {{ request.department || 'N/A' }} • ID:
+                  <a
+                    href="javascript:void(0)"
+                    (click)="viewRequest(request.id)"
+                    class="text-decoration-none"
+                    >{{ request.request_number || request.id }}</a
+                  >
                 </div>
                 <div class="text-muted small mt-1">
                   <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}
@@ -83,22 +125,42 @@
                   {{ formatTransportDetails(request) }}
                 </div>
                 <div class="text-muted small">
-                  <strong>Submitted:</strong> {{ dateUtils.formatDate(request.submittedAt || request.createdAt) }}
+                  <strong>Submitted:</strong>
+                  {{ dateUtils.formatDate(request.submittedAt || request.createdAt) }}
                 </div>
                 <div class="mt-2">
                   <span class="badge badge-success">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="badge-icon">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="badge-icon"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     {{ request.status }}
                   </span>
                 </div>
               </div>
               <div class="request-actions">
-                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="openDetailsDialog(request)" title="View Details">
+                <button
+                  class="btn btn-sm btn-outline-primary btn-icon"
+                  (click)="openDetailsDialog(request)"
+                  title="View Details"
+                >
                   <i class="bi bi-eye"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="openProcessingDialog(request)" title="Start Processing">
+                <button
+                  class="btn btn-sm btn-outline-primary btn-icon"
+                  (click)="openProcessingDialog(request)"
+                  title="Start Processing"
+                >
                   <i class="bi bi-play-circle"></i>
                 </button>
               </div>
@@ -111,8 +173,18 @@
       <div *ngIf="activeTab === 'processing' && !isLoading && !error" class="tab-panel">
         <!-- Empty State -->
         <div *ngIf="processingRequests.length === 0" class="empty-state">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
+            />
           </svg>
           <h3>No requests in processing</h3>
           <p>No transport requests currently being processed.</p>
@@ -125,7 +197,13 @@
               <div class="request-main">
                 <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
                 <div class="text-muted small">
-                  {{ request.department || 'N/A' }} • ID: <a href="javascript:void(0)" (click)="viewRequest(request.id)" class="text-decoration-none">{{ request.request_number || request.id }}</a>
+                  {{ request.department || 'N/A' }} • ID:
+                  <a
+                    href="javascript:void(0)"
+                    (click)="viewRequest(request.id)"
+                    class="text-decoration-none"
+                    >{{ request.request_number || request.id }}</a
+                  >
                 </div>
                 <div class="text-muted small mt-1">
                   <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}
@@ -135,20 +213,40 @@
                 </div>
                 <div class="mt-2">
                   <span class="badge badge-warning">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="badge-icon">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="badge-icon"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     {{ request.status }}
                   </span>
                 </div>
               </div>
               <div class="request-actions">
-                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="openDetailsDialog(request)" title="View Details">
+                <button
+                  class="btn btn-sm btn-outline-primary btn-icon"
+                  (click)="openDetailsDialog(request)"
+                  title="View Details"
+                >
                   <i class="bi bi-eye"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="completeTransport(request)" [disabled]="isProcessing" title="Complete Transport">
+                <button
+                  class="btn btn-sm btn-outline-primary btn-icon"
+                  (click)="completeTransport(request)"
+                  [disabled]="isProcessing"
+                  title="Complete Transport"
+                >
                   <i class="bi bi-check-circle" *ngIf="!isProcessing"></i>
-                  <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
+                  <app-loading-spinner size="sm" *ngIf="isProcessing"></app-loading-spinner>
                 </button>
               </div>
             </div>
@@ -160,8 +258,18 @@
       <div *ngIf="activeTab === 'completed' && !isLoading && !error" class="tab-panel">
         <!-- Empty State -->
         <div *ngIf="completedRequests.length === 0" class="empty-state">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"
+            />
           </svg>
           <h3>No completed requests</h3>
           <p>No transport requests have been completed yet.</p>
@@ -174,7 +282,13 @@
               <div class="request-main">
                 <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
                 <div class="text-muted small">
-                  {{ request.department || 'N/A' }} • ID: <a href="javascript:void(0)" (click)="viewRequest(request.id)" class="text-decoration-none">{{ request.request_number || request.id }}</a>
+                  {{ request.department || 'N/A' }} • ID:
+                  <a
+                    href="javascript:void(0)"
+                    (click)="viewRequest(request.id)"
+                    class="text-decoration-none"
+                    >{{ request.request_number || request.id }}</a
+                  >
                 </div>
                 <div class="text-muted small mt-1">
                   <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}
@@ -187,15 +301,30 @@
                 </div>
                 <div class="mt-2">
                   <span class="badge badge-success">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="badge-icon">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="badge-icon"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     {{ request.status }}
                   </span>
                 </div>
               </div>
               <div class="request-actions">
-                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="openDetailsDialog(request)" title="View Details">
+                <button
+                  class="btn btn-sm btn-outline-primary btn-icon"
+                  (click)="openDetailsDialog(request)"
+                  title="View Details"
+                >
                   <i class="bi bi-eye"></i>
                 </button>
               </div>
@@ -208,7 +337,11 @@
 </div>
 
 <!-- Start Processing Confirmation Dialog -->
-<div class="modal fade" [class.show]="showProcessingDialog" [style.display]="showProcessingDialog ? 'block' : 'none'">
+<div
+  class="modal fade"
+  [class.show]="showProcessingDialog"
+  [style.display]="showProcessingDialog ? 'block' : 'none'"
+>
   <div class="modal-dialog">
     <div class="modal-content" *ngIf="selectedRequest">
       <div class="modal-header">
@@ -216,11 +349,18 @@
         <button type="button" class="btn-close" (click)="closeDialogs()"></button>
       </div>
       <div class="modal-body">
-        <p class="mb-3">You are about to start processing this transport request. Please provide vehicle and booking details.</p>
+        <p class="mb-3">
+          You are about to start processing this transport request. Please provide vehicle and
+          booking details.
+        </p>
         <div class="info-panel">
           <div class="mb-2"><strong>Staff Name:</strong> {{ selectedRequest.requestorName }}</div>
-          <div class="mb-2"><strong>Department:</strong> {{ selectedRequest.department | departmentName }}</div>
-          <div class="mb-2"><strong>Request ID:</strong> {{ selectedRequest.request_number || selectedRequest.id }}</div>
+          <div class="mb-2">
+            <strong>Department:</strong> {{ selectedRequest.department | departmentName }}
+          </div>
+          <div class="mb-2">
+            <strong>Request ID:</strong> {{ selectedRequest.request_number || selectedRequest.id }}
+          </div>
           <div class="mb-0"><strong>Purpose:</strong> {{ selectedRequest.purpose }}</div>
         </div>
       </div>
@@ -236,7 +376,11 @@
 </div>
 
 <!-- Complete Processing Dialog with Booking Form -->
-<div class="modal fade" [class.show]="showCompletingDialog" [style.display]="showCompletingDialog ? 'block' : 'none'">
+<div
+  class="modal fade"
+  [class.show]="showCompletingDialog"
+  [style.display]="showCompletingDialog ? 'block' : 'none'"
+>
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content" *ngIf="selectedRequest">
       <div class="modal-header">
@@ -244,12 +388,15 @@
         <button type="button" class="btn-close" (click)="closeDialogs()"></button>
       </div>
       <div class="modal-body">
-        <p class="text-muted">Provide booking details to complete the transport request processing.</p>
+        <p class="text-muted">
+          Provide booking details to complete the transport request processing.
+        </p>
 
         <!-- Request Info -->
         <div class="info-panel mb-3">
-          <strong>{{ selectedRequest.requestorName }}</strong><br>
-          <strong>ID:</strong> {{ selectedRequest.request_number || selectedRequest.id }}<br>
+          <strong>{{ selectedRequest.requestorName }}</strong
+          ><br />
+          <strong>ID:</strong> {{ selectedRequest.request_number || selectedRequest.id }}<br />
           <strong>Purpose:</strong> {{ selectedRequest.purpose }}
         </div>
 
@@ -257,46 +404,110 @@
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label">Vehicle Type *</label>
-            <input type="text" class="form-control" [(ngModel)]="bookingForm.vehicleType" placeholder="e.g., Van, Bus, Car" required>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="bookingForm.vehicleType"
+              placeholder="e.g., Van, Bus, Car"
+              required
+            />
           </div>
           <div class="col-md-6">
             <label class="form-label">Vehicle Number *</label>
-            <input type="text" class="form-control" [(ngModel)]="bookingForm.vehicleNumber" placeholder="e.g., ABC-123" required>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="bookingForm.vehicleNumber"
+              placeholder="e.g., ABC-123"
+              required
+            />
           </div>
           <div class="col-md-6">
             <label class="form-label">Driver Name *</label>
-            <input type="text" class="form-control" [(ngModel)]="bookingForm.driverName" placeholder="Driver's full name" required>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="bookingForm.driverName"
+              placeholder="Driver's full name"
+              required
+            />
           </div>
           <div class="col-md-6">
             <label class="form-label">Driver Contact</label>
-            <input type="text" class="form-control" [(ngModel)]="bookingForm.driverContact" placeholder="Phone number">
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="bookingForm.driverContact"
+              placeholder="Phone number"
+            />
           </div>
           <div class="col-md-6">
             <label class="form-label">Pickup Time</label>
-            <input type="text" class="form-control" [(ngModel)]="bookingForm.pickupTime" placeholder="e.g., 09:00 AM">
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="bookingForm.pickupTime"
+              placeholder="e.g., 09:00 AM"
+            />
           </div>
           <div class="col-md-6">
             <label class="form-label">Dropoff Time</label>
-            <input type="text" class="form-control" [(ngModel)]="bookingForm.dropoffTime" placeholder="e.g., 05:00 PM">
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="bookingForm.dropoffTime"
+              placeholder="e.g., 05:00 PM"
+            />
           </div>
           <div class="col-12">
             <label class="form-label">Actual Route</label>
-            <input type="text" class="form-control" [(ngModel)]="bookingForm.actualRoute" placeholder="Actual route taken">
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="bookingForm.actualRoute"
+              placeholder="Actual route taken"
+            />
           </div>
           <div class="col-12">
             <label class="form-label">Booking Reference</label>
-            <input type="text" class="form-control" [(ngModel)]="bookingForm.bookingReference" placeholder="Internal booking reference">
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="bookingForm.bookingReference"
+              placeholder="Internal booking reference"
+            />
           </div>
           <div class="col-12">
             <label class="form-label">Additional Notes</label>
-            <textarea class="form-control" [(ngModel)]="bookingForm.additionalNotes" rows="3" placeholder="Any additional notes or special instructions"></textarea>
+            <textarea
+              class="form-control"
+              [(ngModel)]="bookingForm.additionalNotes"
+              rows="3"
+              placeholder="Any additional notes or special instructions"
+            ></textarea>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeDialogs()" [disabled]="isLoading">Cancel</button>
-        <button type="button" class="btn btn-primary" (click)="handleCompleteProcessing()"
-                [disabled]="isLoading || !bookingForm.vehicleType || !bookingForm.vehicleNumber || !bookingForm.driverName">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="closeDialogs()"
+          [disabled]="isLoading"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="handleCompleteProcessing()"
+          [disabled]="
+            isLoading ||
+            !bookingForm.vehicleType ||
+            !bookingForm.vehicleNumber ||
+            !bookingForm.driverName
+          "
+        >
           <span *ngIf="!isLoading">
             <i class="bi bi-check-circle me-1"></i>
             Assign Vehicle & Start Processing
@@ -312,7 +523,11 @@
 </div>
 
 <!-- Details Dialog -->
-<div class="modal fade" [class.show]="showDetailsDialog" [style.display]="showDetailsDialog ? 'block' : 'none'">
+<div
+  class="modal fade"
+  [class.show]="showDetailsDialog"
+  [style.display]="showDetailsDialog ? 'block' : 'none'"
+>
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content" *ngIf="selectedRequest">
       <div class="modal-header">
@@ -335,7 +550,11 @@
           </div>
           <div class="col-md-6">
             <span class="fw-medium text-muted">Status:</span>
-            <p><span class="badge" [class]="getStatusColor(selectedRequest.status)">{{ selectedRequest.status }}</span></p>
+            <p>
+              <span class="badge" [class]="getStatusColor(selectedRequest.status)">{{
+                selectedRequest.status
+              }}</span>
+            </p>
           </div>
           <div class="col-md-6">
             <span class="fw-medium text-muted">Submitted:</span>
@@ -343,7 +562,7 @@
           </div>
         </div>
 
-        <hr>
+        <hr />
 
         <div>
           <span class="fw-medium text-muted">Transport Details:</span>
@@ -351,11 +570,28 @@
         </div>
 
         <!-- Booking Details if available -->
-        <div *ngIf="selectedRequest.bookingDetails && (selectedRequest.status === 'Processing with Transport Admin' || selectedRequest.status === 'Completed')"
-             class="mt-3 p-3 rounded bg-success-subtle">
+        <div
+          *ngIf="
+            selectedRequest.bookingDetails &&
+            (selectedRequest.status === 'Processing with Transport Admin' ||
+              selectedRequest.status === 'Completed')
+          "
+          class="mt-3 p-3 rounded bg-success-subtle"
+        >
           <h6 class="fw-bold mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm me-1">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="icon-sm me-1"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             {{ selectedRequest.status === 'Completed' ? 'Booking Details' : 'Processing Details' }}
           </h6>
@@ -363,19 +599,25 @@
             <div class="col-md-6">
               <div class="detail-item">
                 <label class="text-muted small">Vehicle Type</label>
-                <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.vehicleType || 'N/A' }}</p>
+                <p class="mb-0 fw-medium">
+                  {{ selectedRequest.bookingDetails.vehicleType || 'N/A' }}
+                </p>
               </div>
             </div>
             <div class="col-md-6">
               <div class="detail-item">
                 <label class="text-muted small">Vehicle Number</label>
-                <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.vehicleNumber || 'N/A' }}</p>
+                <p class="mb-0 fw-medium">
+                  {{ selectedRequest.bookingDetails.vehicleNumber || 'N/A' }}
+                </p>
               </div>
             </div>
             <div class="col-md-6">
               <div class="detail-item">
                 <label class="text-muted small">Driver Name</label>
-                <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.driverName || 'N/A' }}</p>
+                <p class="mb-0 fw-medium">
+                  {{ selectedRequest.bookingDetails.driverName || 'N/A' }}
+                </p>
               </div>
             </div>
             <div class="col-md-6" *ngIf="selectedRequest.bookingDetails.driverContact">
@@ -425,5 +667,8 @@
 </div>
 
 <!-- Modal Backdrop -->
-<div class="modal-backdrop fade" [class.show]="showProcessingDialog || showCompletingDialog || showDetailsDialog"
-     *ngIf="showProcessingDialog || showCompletingDialog || showDetailsDialog"></div>
+<div
+  class="modal-backdrop fade"
+  [class.show]="showProcessingDialog || showCompletingDialog || showDetailsDialog"
+  *ngIf="showProcessingDialog || showCompletingDialog || showDetailsDialog"
+></div>
