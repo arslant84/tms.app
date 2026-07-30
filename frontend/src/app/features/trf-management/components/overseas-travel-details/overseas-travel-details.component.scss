@@ -1,7 +1,9 @@
 // Overseas Travel Details Component - Using Unified Design System
 @use '../../../../../styles/variables' as vars;
 
-.travel-form-container { margin-bottom: vars.$spacing-8; }
+.travel-form-container {
+  margin-bottom: vars.$spacing-8;
+}
 
 // Form Elements
 .form-group {
@@ -18,7 +20,8 @@
   margin: 0;
 }
 
-.form-control, textarea.form-control {
+.form-control,
+textarea.form-control {
   padding: 0.625rem 0.875rem;
   font-size: 0.9375rem;
   min-height: 2.5rem;
@@ -26,10 +29,14 @@
   border: 1px solid vars.$gray-300;
   border-radius: vars.$radius-md;
   background-color: vars.$bg-primary;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   width: 100%;
 
-  &::placeholder { color: vars.$gray-400; }
+  &::placeholder {
+    color: vars.$gray-400;
+  }
   &:focus {
     outline: none;
     border-color: vars.$primary-color;
@@ -42,11 +49,17 @@
     background-repeat: no-repeat;
     background-position: right calc(0.375em + 0.1875rem) center;
     background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-    &:focus { border-color: vars.$error-color; box-shadow: vars.$error-focus-shadow; }
+    &:focus {
+      border-color: vars.$error-color;
+      box-shadow: vars.$error-focus-shadow;
+    }
   }
 }
 
-textarea.form-control { min-height: 3rem; height: auto; }
+textarea.form-control {
+  min-height: 3rem;
+  height: auto;
+}
 
 .form-select {
   padding: 0.625rem 0.875rem;
@@ -56,7 +69,9 @@ textarea.form-control { min-height: 3rem; height: auto; }
   border: 1px solid vars.$gray-300;
   border-radius: vars.$radius-md;
   background-color: vars.$bg-primary;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 
   &:focus {
     outline: none;
@@ -76,11 +91,24 @@ textarea.form-control { min-height: 3rem; height: auto; }
 // Buttons: see global .btn/.btn-primary/.btn-outline-primary/.btn-outline-secondary/.btn-outline-danger/.btn-sm in buttons.scss
 
 // Utility Classes
-.mt-3 { margin-top: vars.$spacing-3; }
-.mt-4 { margin-top: vars.$spacing-md; }
-.mb-3 { margin-bottom: vars.$spacing-3; }
-.mb-4 { margin-bottom: vars.$spacing-md; }
-.d-flex { display: flex; &.justify-content-end { justify-content: flex-end; } }
+.mt-3 {
+  margin-top: vars.$spacing-3;
+}
+.mt-4 {
+  margin-top: vars.$spacing-md;
+}
+.mb-3 {
+  margin-bottom: vars.$spacing-3;
+}
+.mb-4 {
+  margin-bottom: vars.$spacing-md;
+}
+.d-flex {
+  display: flex;
+  &.justify-content-end {
+    justify-content: flex-end;
+  }
+}
 
 // Row and Grid Spacing
 .row.g-3 {
@@ -88,24 +116,11 @@ textarea.form-control { min-height: 3rem; height: auto; }
   --bs-gutter-y: #{vars.$spacing-3};
 }
 
-// Read-only field styling (for Day field)
-input[readonly].form-control {
-  background-color: vars.$primary-lightest;
-  border: 1px solid vars.$primary-light;
-  color: vars.$primary-hover;
-  font-weight: vars.$font-weight-medium;
-  cursor: default;
-
-  &:focus {
-    border-color: vars.$primary-light;
-    box-shadow: none;
-  }
-}
-
-// Amount field read-only styling
-input[readonly].bg-light {
-  background-color: vars.$primary-lightest !important;
-  border: 1px solid vars.$primary-light;
-  color: vars.$primary-hover;
-  font-weight: vars.$font-weight-medium;
+// Advance Amount Requested - repeating item row
+.advance-amount-item {
+  padding: vars.$spacing-md;
+  background-color: vars.$gray-50;
+  border-radius: vars.$radius-lg;
+  margin-bottom: vars.$spacing-md;
+  border: 1px solid vars.$border-light;
 }
