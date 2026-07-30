@@ -323,6 +323,7 @@ class AdminActionLog(models.Model):
         ("workflow_step_rejected", "Workflow Step Rejected"),
         ("workflow_bulk_approve", "Bulk Workflow Approval"),
         ("workflow_bulk_reject", "Bulk Workflow Rejection"),
+        ("booking_cancelled", "Flight Booking Cancelled"),
         ("other", "Other Action"),
     )
 

@@ -195,6 +195,87 @@ class TestBookingCreation:
 
 
 @pytest.mark.django_db
+class TestBookingCancellation:
+    """Fix 20 (docs/APP_WIDE_GAPS_FIX_ROADMAP.md): cancelling a flight booking
+    used to orphan the parent TRF — status never reverted, has_flight_booking
+    stayed True forever. cancel_booking() now reverts the TRF back to
+    Approved when it was the one that set it to Flight Booked."""
+
+    def _make_booked_trf(self, owner):
+        from bookings.models import BookingStatus, FlightBooking
+        from trf.models import TravelRequest
+
+        trf = TravelRequest.objects.create(
+            request_number="TSR-TEST-CANCEL-1",
+            requestor_name=owner.name,
+            travel_type="Domestic",
+            status="Flight Booked",
+            created_by=owner,
+        )
+        booking = FlightBooking.objects.create(
+            trf=trf,
+            user=owner,
+            airline="Test Airlines",
+            flight_number="TA123",
+            departure_airport="JFK",
+            arrival_airport="LAX",
+            departure_time="2026-08-01T10:00:00Z",
+            arrival_time="2026-08-01T18:00:00Z",
+            booking_reference="PNR-CANCEL-1",
+            status=BookingStatus.CONFIRMED,
+            cost="500.00",
+        )
+        return trf, booking
+
+    def test_cancel_reverts_trf_status_and_has_flight_booking(
+        self, admin_client, regular_user
+    ):
+        from trf.serializers import TravelRequestSerializer
+
+        trf, booking = self._make_booked_trf(regular_user)
+
+        response = admin_client.post(f"/api/bookings/flights/{booking.id}/cancel/")
+
+        assert response.status_code == status.HTTP_200_OK
+        trf.refresh_from_db()
+        assert trf.status == "Approved"
+        assert TravelRequestSerializer(trf).data["has_flight_booking"] is False
+
+    def test_cancel_does_not_clobber_unrelated_later_status(
+        self, admin_client, regular_user
+    ):
+        """Guard: only revert when the TRF is still in the exact status this
+        booking set. If something else already moved the TRF on, cancelling
+        an old booking must not overwrite that newer status."""
+        trf, booking = self._make_booked_trf(regular_user)
+        trf.status = "Completed"
+        trf.save(update_fields=["status"])
+
+        response = admin_client.post(f"/api/bookings/flights/{booking.id}/cancel/")
+
+        assert response.status_code == status.HTTP_200_OK
+        trf.refresh_from_db()
+        assert trf.status == "Completed"
+
+    def test_cancel_writes_audit_log_entry(
+        self, admin_client, admin_user, regular_user
+    ):
+        from accounts.models import AdminActionLog
+
+        trf, booking = self._make_booked_trf(regular_user)
+
+        response = admin_client.post(f"/api/bookings/flights/{booking.id}/cancel/")
+
+        assert response.status_code == status.HTTP_200_OK
+        log_entry = AdminActionLog.objects.filter(
+            action_type="booking_cancelled", entity_id=str(booking.id)
+        ).first()
+        assert log_entry is not None
+        assert log_entry.user_id == admin_user.id
+        assert trf.request_number in log_entry.description
+
+
+@pytest.mark.django_db
 class TestBookingStatistics:
     """Test cases for booking statistics."""
 

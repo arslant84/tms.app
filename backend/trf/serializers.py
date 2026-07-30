@@ -300,8 +300,10 @@ class TravelRequestSerializer(serializers.ModelSerializer):
         ]
 
     def get_has_flight_booking(self, obj):
-        """Check if TRF has any flight bookings from bookings app"""
-        return obj.flight_bookings.exists()
+        """Check if TRF has any non-cancelled flight bookings from bookings app"""
+        from bookings.models import BookingStatus
+
+        return obj.flight_bookings.exclude(status=BookingStatus.CANCELLED).exists()
 
     def get_flight_details(self, obj):
         """Get flight booking details if exists"""
