@@ -320,8 +320,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     user, TravelRequest
                 )
             )
-            from django.db.models import Q
-
             queryset = queryset.filter(
                 Q(created_by=user) | Q(id__in=pending_approval_ids)
             )
@@ -366,8 +364,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     )
                 )
                 if pending_approval_ids:
-                    from django.db.models import Q
-
                     queryset = queryset.filter(
                         Q(created_by=user) | Q(id__in=pending_approval_ids)
                     )
