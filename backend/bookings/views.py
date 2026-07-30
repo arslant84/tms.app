@@ -205,7 +205,19 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
             )
 
         reason = request.data.get("reason", "Cancelled by user")
+        trf_request_number = booking.trf.request_number
         booking.cancel_booking(reason)
+
+        from accounts.models import AdminActionLog
+
+        AdminActionLog.log_action(
+            user=request.user,
+            action_type="booking_cancelled",
+            description=f"Cancelled flight booking {booking.booking_reference} for TRF {trf_request_number}: {reason}",
+            entity_type="flightbooking",
+            entity_id=str(booking.id),
+            request=request,
+        )
 
         serializer = self.get_serializer(booking)
         return success_response(

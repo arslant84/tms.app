@@ -253,10 +253,16 @@ class FlightBooking(models.Model):
         self.save(update_fields=["status", "ticket_number", "ticketing_date"])
 
     def cancel_booking(self, reason=None):
-        """Cancel the booking"""
+        """Cancel the booking and revert the parent TRF's status if this
+        booking was what put it into Flight Booked."""
         from django.utils import timezone
+        from utils.constants import RequestStatus
 
         self.status = BookingStatus.CANCELLED
         self.cancellation_date = timezone.now()
         self.cancellation_reason = reason
         self.save(update_fields=["status", "cancellation_date", "cancellation_reason"])
+
+        if self.trf.status == RequestStatus.FLIGHT_BOOKED:
+            self.trf.status = RequestStatus.APPROVED
+            self.trf.save(update_fields=["status"])
