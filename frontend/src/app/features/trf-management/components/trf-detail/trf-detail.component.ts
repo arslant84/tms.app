@@ -239,22 +239,19 @@ export class TrfDetailComponent implements OnInit {
 
 
   /**
-   * Format time for display
+   * Format time for display. ETD/ETA are free-text fields (a requestor may write
+   * "Morning"/"Evening" instead of an exact time), so anything that isn't a
+   * recognizable HH:MM value is shown as entered rather than discarded as N/A.
    */
   formatTime(time: string | null | undefined): string {
     if (!time) return 'N/A';
-    try {
-      // Handle HH:MM or HH:MM:SS format
-      const timeMatch = time.match(/^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/);
-      if (!timeMatch) return 'N/A';
+    const timeMatch = time.match(/^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/);
+    if (!timeMatch) return time;
 
-      const [, hours, minutes] = timeMatch;
-      const date = new Date();
-      date.setHours(parseInt(hours), parseInt(minutes));
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return 'N/A';
-    }
+    const [, hours, minutes] = timeMatch;
+    const date = new Date();
+    date.setHours(parseInt(hours), parseInt(minutes));
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   }
 
   /**
