@@ -84,7 +84,9 @@
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
     box-shadow: vars.$shadow-md;
@@ -344,6 +346,39 @@
 // Status badge colors (badge-success/warning/danger/info/secondary) come
 // from the global "Unified Badge Styles" in styles.scss - no local
 // overrides here so this matches every other admin/list/detail screen.
+// badge-blue/green/amber/purple/indigo/gray below are for
+// getLocationBadgeClass/getRoomTypeBadgeClass (decorative, categorical
+// colors), not for status pills.
+
+.badge-blue {
+  background-color: vars.$info-light;
+  color: vars.$info-dark;
+}
+
+.badge-green {
+  background-color: vars.$success-light;
+  color: vars.$success-dark;
+}
+
+.badge-amber {
+  background-color: vars.$warning-light;
+  color: vars.$warning-dark;
+}
+
+.badge-purple {
+  background-color: vars.$purple-light;
+  color: vars.$purple-dark;
+}
+
+.badge-indigo {
+  background-color: vars.$indigo-light;
+  color: vars.$indigo-dark;
+}
+
+.badge-gray {
+  background-color: vars.$gray-100;
+  color: vars.$gray-700;
+}
 
 // Action buttons: see global .action-buttons/.btn-icon in buttons.scss
 
