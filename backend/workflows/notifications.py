@@ -19,6 +19,19 @@ def _get_event_type(event_name):
         return None
 
 
+def _get_display_request_type(entity_type):
+    """
+    Human-facing "request type" for notification text. TRF's entity_type may
+    be a per-travel-type sub-type (travelrequest_domestic, etc. - see
+    docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md) rather than the base
+    "travelrequest" string every other module uses as-is; collapse those back
+    to "travelrequest" before .title()-ing so notification text doesn't leak
+    the raw internal sub-type string (e.g. "Travelrequest_Overseas").
+    """
+    base_type = entity_type.split("_", 1)[0] if entity_type else entity_type
+    return base_type.title()
+
+
 class WorkflowNotifications:
     """
     Helper class for sending workflow-related notifications.
@@ -65,7 +78,9 @@ class WorkflowNotifications:
                 action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                 additional_data={
                     "requestorName": workflow_instance.initiated_by.get_full_name(),
-                    "requestType": workflow_instance.workflow_template.entity_type.title(),
+                    "requestType": _get_display_request_type(
+                        workflow_instance.workflow_template.entity_type
+                    ),
                     "entityId": entity_id,
                     "approverName": first_approver_name,
                     "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
@@ -169,7 +184,9 @@ class WorkflowNotifications:
                         action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                         additional_data={
                             "requestorName": workflow_instance.initiated_by.get_full_name(),
-                            "requestType": workflow_instance.workflow_template.entity_type.title(),
+                            "requestType": _get_display_request_type(
+                                workflow_instance.workflow_template.entity_type
+                            ),
                             "entityId": entity_id,
                             "processorName": processor_name,
                             "completionDate": completion_date,
@@ -379,7 +396,9 @@ class WorkflowNotifications:
                         action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                         additional_data={
                             "approverName": step_execution.assigned_to.get_full_name(),
-                            "requestType": workflow_instance.workflow_template.entity_type.title(),
+                            "requestType": _get_display_request_type(
+                                workflow_instance.workflow_template.entity_type
+                            ),
                             "entityId": entity_id,
                             "requestorName": workflow_instance.initiated_by.get_full_name(),
                             "dueDate": (
@@ -410,7 +429,9 @@ class WorkflowNotifications:
                     action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                     additional_data={
                         "requestorName": workflow_instance.initiated_by.get_full_name(),
-                        "requestType": workflow_instance.workflow_template.entity_type.title(),
+                        "requestType": _get_display_request_type(
+                            workflow_instance.workflow_template.entity_type
+                        ),
                         "entityId": entity_id,
                         "approverName": approver_name,
                         "stepName": step_execution.workflow_step.step_name,
@@ -435,7 +456,9 @@ class WorkflowNotifications:
                         action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                         additional_data={
                             "approverName": next_step.assigned_to.get_full_name(),
-                            "requestType": workflow_instance.workflow_template.entity_type.title(),
+                            "requestType": _get_display_request_type(
+                                workflow_instance.workflow_template.entity_type
+                            ),
                             "entityId": entity_id,
                             "requestorName": workflow_instance.initiated_by.get_full_name(),
                             "dueDate": (
@@ -464,7 +487,9 @@ class WorkflowNotifications:
                     action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                     additional_data={
                         "requestorName": workflow_instance.initiated_by.get_full_name(),
-                        "requestType": workflow_instance.workflow_template.entity_type.title(),
+                        "requestType": _get_display_request_type(
+                            workflow_instance.workflow_template.entity_type
+                        ),
                         "entityId": entity_id,
                         "approverName": approver_name,
                         "rejectionReason": step_execution.comments
@@ -486,7 +511,9 @@ class WorkflowNotifications:
                         action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                         additional_data={
                             "approverName": step_execution.assigned_to.get_full_name(),
-                            "requestType": workflow_instance.workflow_template.entity_type.title(),
+                            "requestType": _get_display_request_type(
+                                workflow_instance.workflow_template.entity_type
+                            ),
                             "entityId": entity_id,
                             "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                         },
@@ -505,7 +532,9 @@ class WorkflowNotifications:
                         action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
                         additional_data={
                             "approverName": step_execution.assigned_to.get_full_name(),
-                            "requestType": workflow_instance.workflow_template.entity_type.title(),
+                            "requestType": _get_display_request_type(
+                                workflow_instance.workflow_template.entity_type
+                            ),
                             "entityId": entity_id,
                             "requestorName": workflow_instance.initiated_by.get_full_name(),
                             "dueDate": (
@@ -650,8 +679,12 @@ class WorkflowNotifications:
             # Entity information (both snake_case and camelCase for compatibility)
             "entity_type": workflow_instance.workflow_template.entity_type,
             "entityType": workflow_instance.workflow_template.entity_type,
-            "request_type": workflow_instance.workflow_template.entity_type.title(),
-            "requestType": workflow_instance.workflow_template.entity_type.title(),
+            "request_type": _get_display_request_type(
+                workflow_instance.workflow_template.entity_type
+            ),
+            "requestType": _get_display_request_type(
+                workflow_instance.workflow_template.entity_type
+            ),
             "entity_id": entity_id,
             "entityId": entity_id,
             # Step information
