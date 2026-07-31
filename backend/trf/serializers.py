@@ -601,7 +601,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
 
     def get_overseasTravelDetails(self, obj):
         """Get overseas/home leave travel details with itinerary"""
-        if obj.travel_type in ["Overseas", "Home Leave Passage"]:
+        if obj.travel_type in ["Overseas", "Home Leave"]:
             itinerary_segments = obj.trfitinerarysegment_set.all()
             advance_amounts = obj.trfadvanceamountrequesteditem_set.all()
             try:
@@ -807,16 +807,6 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             pass
 
         return {}
-
-    def to_representation(self, instance):
-        """Exclude passport_details for Home Leave Passage"""
-        representation = super().to_representation(instance)
-
-        # Remove passport_details from Home Leave Passage TSRs
-        if instance.travel_type == "Home Leave Passage":
-            representation.pop("passport_details", None)
-
-        return representation
 
 
 class TravelRequestCreateSerializer(serializers.ModelSerializer):
