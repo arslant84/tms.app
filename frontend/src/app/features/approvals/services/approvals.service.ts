@@ -272,7 +272,7 @@ export class ApprovalsService {
     if (travelType === 'Domestic') {
       const domesticDetails = trf.domesticTravelDetails || {};
       itinerary = domesticDetails.itinerary || trf.itinerary_segments || trf.itinerary || [];
-    } else if (travelType === 'Overseas' || travelType === 'Home Leave Passage') {
+    } else if (travelType === 'Overseas' || travelType === 'Home Leave') {
       const overseasDetails = trf.overseasTravelDetails || {};
       itinerary = overseasDetails.itinerary || trf.itinerary_segments || trf.itinerary || [];
     } else if (travelType === 'External Parties') {

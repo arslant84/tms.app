@@ -124,7 +124,6 @@ export class FlightsProcessingComponent implements OnInit {
           if (trf.status !== 'Approved') return false;
           if (
             trf.travel_type === 'Overseas' ||
-            trf.travel_type === 'Home Leave Passage' ||
             trf.travel_type === 'Home Leave' ||
             trf.travel_type === 'External Parties'
           )
@@ -478,7 +477,6 @@ export class FlightsProcessingComponent implements OnInit {
     switch (travelType) {
       case 'Overseas':
         return 'badge-blue';
-      case 'Home Leave Passage':
       case 'Home Leave':
         return 'badge-purple';
       case 'Domestic':

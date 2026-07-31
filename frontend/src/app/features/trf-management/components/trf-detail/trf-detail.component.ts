@@ -106,7 +106,7 @@ export class TrfDetailComponent implements OnInit {
       itinerary = domesticDetails.itinerary || data.itinerary_segments || data.itinerary || [];
       mealSelections = domesticDetails.mealProvision?.dailyMealSelections || data.daily_meals || data.daily_meal_selections || data.mealSelections || [];
       purpose = domesticDetails.purpose || data.purpose || '';
-    } else if (travelType === 'Overseas' || travelType === 'Home Leave Passage') {
+    } else if (travelType === 'Overseas' || travelType === 'Home Leave') {
       const overseasDetails = data.overseasTravelDetails || {};
       itinerary = overseasDetails.itinerary || data.itinerary_segments || data.itinerary || [];
       bankDetails = overseasDetails.advanceBankDetails || data.advance_bank_details || data.bankDetails;
@@ -168,8 +168,7 @@ export class TrfDetailComponent implements OnInit {
    */
   get isOverseas(): boolean {
     return this.trfData?.travelType === 'Overseas' ||
-           this.trfData?.travelType === 'Home Leave' ||
-           this.trfData?.travelType === 'Home Leave Passage';
+           this.trfData?.travelType === 'Home Leave';
   }
 
   /**
