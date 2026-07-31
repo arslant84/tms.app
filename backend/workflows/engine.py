@@ -40,6 +40,7 @@ class WorkflowEngine:
         module_name: str,
         selected_approvers: Optional[Dict[int, int]] = None,
         skipped_steps: Optional[Dict[int, str]] = None,
+        fallback_module_name: Optional[str] = None,
     ) -> WorkflowInstance:
         """
         Start a new workflow for an entity (TRF, Visa, etc.)
@@ -51,6 +52,8 @@ class WorkflowEngine:
             selected_approvers: Optional dict mapping step_order to selected user_id
             skipped_steps: Optional dict mapping step_order to skip reason
                           (for steps where approver is not available)
+            fallback_module_name: Optional module to fall back to if no active
+                          template exists for module_name
 
         Returns:
             WorkflowInstance: The created workflow instance
@@ -58,11 +61,9 @@ class WorkflowEngine:
         Raises:
             ValueError: If no active workflow template found for module
         """
-        # Get active workflow template for the module
-        workflow_template = (
-            WorkflowTemplate.objects.filter(entity_type=module_name, is_active=True)
-            .prefetch_related("steps")
-            .first()
+        # Get active workflow template for the module (or its fallback)
+        workflow_template = WorkflowTemplate.get_active_for(
+            module_name, fallback_module_name
         )
 
         if not workflow_template:

@@ -250,15 +250,21 @@ class AdminReportsView(APIView):
             "data": [],
         }
 
-        # Calculate processing time for each type
-        for model, entity_type in [
-            (TravelRequest, "travelrequest"),
-            (TransportRequest, "transportrequest"),
-            (VisaApplication, "visaapplication"),
-            (AccommodationRequest, "accommodation"),
+        # Calculate processing time for each type. TravelRequest can route through
+        # either the shared "travelrequest" template or one of its per-travel-type
+        # templates (see docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md), so it's matched
+        # against all of those entity_types rather than a single literal.
+        travelrequest_entity_types = ["travelrequest"] + list(
+            TravelRequest.WORKFLOW_ENTITY_TYPE_MAP.values()
+        )
+        for model, entity_types in [
+            (TravelRequest, travelrequest_entity_types),
+            (TransportRequest, ["transportrequest"]),
+            (VisaApplication, ["visaapplication"]),
+            (AccommodationRequest, ["accommodation"]),
         ]:
             workflows = WorkflowInstance.objects.filter(
-                workflow_template__entity_type=entity_type,
+                workflow_template__entity_type__in=entity_types,
                 status="approved",
                 completed_at__gte=start_date,
             )

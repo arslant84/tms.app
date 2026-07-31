@@ -1,6 +1,7 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
 from utils.encryption import EncryptedTextField
+
 
 class TravelRequest(models.Model):
     """
@@ -16,7 +17,7 @@ class TravelRequest(models.Model):
         unique=True,
         blank=True,
         null=True,
-        help_text="Auto-generated request number (e.g., TSR-20250702-1423-NYC-PCYX)"
+        help_text="Auto-generated request number (e.g., TSR-20250702-1423-NYC-PCYX)",
     )
     requestor_name = models.CharField(max_length=255)
     staff_id = models.CharField(max_length=255, blank=True, null=True)
@@ -26,13 +27,19 @@ class TravelRequest(models.Model):
     tel_email = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     travel_type = models.CharField(max_length=255)
-    status = models.CharField(max_length=100, default='Draft', help_text="Dynamic status set by workflow engine")
+    status = models.CharField(
+        max_length=100,
+        default="Draft",
+        help_text="Dynamic status set by workflow engine",
+    )
     purpose = models.TextField(blank=True, null=True)
     estimated_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     additional_comments = models.TextField(blank=True, null=True)
     external_full_name = models.CharField(max_length=255, blank=True, null=True)
     external_organization = models.CharField(max_length=255, blank=True, null=True)
-    external_ref_to_authority_letter = models.CharField(max_length=255, blank=True, null=True)
+    external_ref_to_authority_letter = models.CharField(
+        max_length=255, blank=True, null=True
+    )
     external_cost_center = models.CharField(max_length=255, blank=True, null=True)
     submitted_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -43,13 +50,34 @@ class TravelRequest(models.Model):
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='travel_requests_created',
+        related_name="travel_requests_created",
         null=True,
-        blank=True
+        blank=True,
     )
 
     def __str__(self):
         return self.requestor_name
+
+    # Maps each canonical travel_type to its own workflow entity_type, so an
+    # admin can configure a distinct approval workflow per travel type via
+    # the Workflow Configuration screen. See docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md.
+    WORKFLOW_ENTITY_TYPE_MAP = {
+        "Domestic": "travelrequest_domestic",
+        "Overseas": "travelrequest_overseas",
+        "Home Leave": "travelrequest_homeleave",
+        "External Parties": "travelrequest_external",
+    }
+
+    @property
+    def workflow_entity_type(self) -> str:
+        """
+        The specific entity_type to look up a WorkflowTemplate for. Callers
+        should also pass entity_type="travelrequest" as a fallback so a
+        travel type with no dedicated template yet still routes through the
+        existing shared one.
+        """
+        return self.WORKFLOW_ENTITY_TYPE_MAP.get(self.travel_type, "travelrequest")
+
 
 class TrfAdvanceAmountRequestedItem(models.Model):
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
@@ -64,15 +92,21 @@ class TrfAdvanceAmountRequestedItem(models.Model):
     remarks = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
 class TrfAdvanceBankDetail(models.Model):
     trf = models.OneToOneField(TravelRequest, on_delete=models.CASCADE)
     bank_name = models.CharField(max_length=255, blank=True, null=True)
-    account_number = EncryptedTextField(blank=True, null=True)  # CTRL-0000001066: encrypted at rest
-    account_name = EncryptedTextField(blank=True, null=True)    # CTRL-0000001066: encrypted at rest
+    account_number = EncryptedTextField(
+        blank=True, null=True
+    )  # CTRL-0000001066: encrypted at rest
+    account_name = EncryptedTextField(
+        blank=True, null=True
+    )  # CTRL-0000001066: encrypted at rest
     branch_address = models.TextField(blank=True, null=True)
     currency = models.CharField(max_length=255, blank=True, null=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
 
 class TrfApprovalStep(models.Model):
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
@@ -82,6 +116,7 @@ class TrfApprovalStep(models.Model):
     step_date = models.DateTimeField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
 
 class TrfDailyMealSelection(models.Model):
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
@@ -95,7 +130,8 @@ class TrfDailyMealSelection(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('trf', 'meal_date')
+        unique_together = ("trf", "meal_date")
+
 
 class TrfFlightBooking(models.Model):
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
@@ -108,12 +144,13 @@ class TrfFlightBooking(models.Model):
     departure_time = models.TimeField()
     arrival_time = models.TimeField()
     booking_reference = models.CharField(max_length=50, blank=True, null=True)
-    status = models.CharField(max_length=20, default='Pending')
+    status = models.CharField(max_length=20, default="Pending")
     remarks = models.TextField(blank=True, null=True)
     created_by = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     airline = models.CharField(max_length=100, blank=True, null=True)
+
 
 class TrfItinerarySegment(models.Model):
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
@@ -129,6 +166,7 @@ class TrfItinerarySegment(models.Model):
     flight_class = models.CharField(max_length=255, blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
 
+
 class TrfMealProvision(models.Model):
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
     date_from_to = models.CharField(max_length=255, blank=True, null=True)
@@ -140,19 +178,22 @@ class TrfMealProvision(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+
 class TrfPassportDetail(models.Model):
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=255, blank=True, null=True)
-    passport_number = EncryptedTextField(blank=True, null=True)  # CTRL-0000001066: encrypted at rest
+    passport_number = EncryptedTextField(
+        blank=True, null=True
+    )  # CTRL-0000001066: encrypted at rest
     nationality = models.CharField(max_length=255, blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     place_of_birth = models.CharField(max_length=255, blank=True, null=True)
     passport_issue_date = models.DateField(blank=True, null=True)
     passport_expiry_date = models.DateField(blank=True, null=True)
     passport_file = models.FileField(
-        upload_to='trf/passports/',
+        upload_to="trf/passports/",
         blank=True,
         null=True,
-        help_text="Uploaded passport scan/photo"
+        help_text="Uploaded passport scan/photo",
     )
     created_at = models.DateTimeField(auto_now_add=True)

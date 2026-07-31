@@ -43,6 +43,28 @@ class WorkflowTemplate(models.Model):
     def __str__(self):
         return f"{self.name} ({self.entity_type})"
 
+    @staticmethod
+    def get_active_for(entity_type: str, fallback: str = None) -> "WorkflowTemplate":
+        """
+        Look up the active template for entity_type. If none exists and a
+        fallback entity_type is given, look up the active template for that
+        instead - lets a sub-type (e.g. travelrequest_domestic) fall through
+        to a shared parent template (travelrequest) until an admin creates a
+        dedicated one for that specific sub-type.
+        """
+        template = (
+            WorkflowTemplate.objects.filter(entity_type=entity_type, is_active=True)
+            .prefetch_related("steps")
+            .first()
+        )
+        if template is None and fallback and fallback != entity_type:
+            template = (
+                WorkflowTemplate.objects.filter(entity_type=fallback, is_active=True)
+                .prefetch_related("steps")
+                .first()
+            )
+        return template
+
 
 class WorkflowStep(models.Model):
     """

@@ -27,6 +27,7 @@ class WorkflowRouter:
         initiated_by: User,
         selected_approvers: Optional[Dict[int, int]] = None,
         skipped_steps: Optional[Dict[int, str]] = None,
+        fallback_entity_type: Optional[str] = None,
     ) -> Optional[WorkflowInstance]:
         """
         Start a workflow for a newly created request
@@ -38,15 +39,17 @@ class WorkflowRouter:
             selected_approvers: Optional dict mapping step_order to selected user_id
             skipped_steps: Optional dict mapping step_order to skip reason
                           (for steps where approver is not available)
+            fallback_entity_type: Optional entity_type to fall back to if no
+                          active template exists for entity_type - lets a
+                          sub-type route through a shared parent template
+                          until an admin creates a dedicated one
 
         Returns:
             WorkflowInstance if workflow started, None if no workflow configured
         """
-        # Get active workflow template for this entity type
-        workflow_template = (
-            WorkflowTemplate.objects.filter(entity_type=entity_type, is_active=True)
-            .prefetch_related("steps")
-            .first()
+        # Get active workflow template for this entity type (or its fallback)
+        workflow_template = WorkflowTemplate.get_active_for(
+            entity_type, fallback_entity_type
         )
 
         if not workflow_template:
@@ -66,6 +69,7 @@ class WorkflowRouter:
                 module_name=entity_type,
                 selected_approvers=selected_approvers,
                 skipped_steps=skipped_steps,
+                fallback_module_name=fallback_entity_type,
             )
 
             logger.info(
