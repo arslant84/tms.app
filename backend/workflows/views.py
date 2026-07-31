@@ -43,15 +43,32 @@ class WorkflowTemplateViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get_queryset(self):
-        """Filter templates by entity type and status"""
+        """
+        Filter templates by entity type and status. If entity_type matches
+        nothing and a fallback_entity_type is also given, retry with that
+        instead - mirrors WorkflowTemplate.get_active_for's two-tier lookup
+        (see docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md) so callers previewing a
+        sub-type's workflow (e.g. travelrequest_overseas) fall through to
+        the shared parent template until a dedicated one is configured.
+        """
         queryset = super().get_queryset()
 
         entity_type = self.request.query_params.get("entity_type", None)
-        if entity_type:
-            queryset = queryset.filter(entity_type__iexact=entity_type)
-
         is_active = self.request.query_params.get("is_active", None)
-        if is_active is not None:
+
+        if entity_type:
+            filtered = queryset.filter(entity_type__iexact=entity_type)
+            if is_active is not None:
+                filtered = filtered.filter(is_active=is_active.lower() == "true")
+
+            fallback_entity_type = self.request.query_params.get(
+                "fallback_entity_type", None
+            )
+            if not filtered.exists() and fallback_entity_type:
+                queryset = queryset.filter(entity_type__iexact=fallback_entity_type)
+            else:
+                queryset = filtered
+        elif is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == "true")
 
         return queryset.prefetch_related("steps", "steps__conditions")

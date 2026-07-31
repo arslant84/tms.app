@@ -89,15 +89,36 @@ export class ApprovalSubmissionComponent implements OnInit {
     });
   }
 
+  /**
+   * Maps travelType to its per-travel-type workflow entity_type. Must stay in
+   * sync with TravelRequest.WORKFLOW_ENTITY_TYPE_MAP (backend/trf/models.py) -
+   * see docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md.
+   */
+  private resolveWorkflowEntityType(): string {
+    const map: Record<string, string> = {
+      'Domestic': 'travelrequest_domestic',
+      'Overseas': 'travelrequest_overseas',
+      'Home Leave': 'travelrequest_homeleave',
+      'External Parties': 'travelrequest_external'
+    };
+    return (this.travelType && map[this.travelType]) || 'travelrequest';
+  }
+
   private initializeApprovalWorkflow(): void {
     // If workflow already provided (e.g., from existing TRF), use it
     if (this.approvalWorkflow && this.approvalWorkflow.length > 0) {
       return;
     }
 
-    // Fetch the active workflow template for travelrequest
+    // Fetch the active workflow template for this travel type, falling back
+    // to the shared "travelrequest" template if no sub-type-specific one is
+    // configured yet (see docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md).
     this.isLoadingWorkflow = true;
-    this.workflowService.getTemplates({ entity_type: 'travelrequest', is_active: true }).subscribe({
+    this.workflowService.getTemplates({
+      entity_type: this.resolveWorkflowEntityType(),
+      fallback_entity_type: 'travelrequest',
+      is_active: true
+    }).subscribe({
       next: (templates: WorkflowTemplate[]) => {
         this.isLoadingWorkflow = false;
         if (templates && templates.length > 0) {
