@@ -22,6 +22,7 @@ import { FormUtilsService } from "../../../../core/utils/form-utils.service";
 import { FormSectionCardComponent } from "../../../../shared/components/form-section-card/form-section-card.component";
 import { PassportUploadComponent } from "../../../../shared/components/passport-upload/passport-upload.component";
 import { ItineraryEditorComponent, type ItineraryFieldConfig } from "../../../../shared/components/itinerary-editor/itinerary-editor.component";
+import { AdvanceAmountEditorComponent } from "../../../../shared/components/advance-amount-editor/advance-amount-editor.component";
 
 export interface ItinerarySegment {
 	date: string;
@@ -72,7 +73,7 @@ export interface OverseasTravelDetails {
 @Component({
 	selector: "app-overseas-travel-details",
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, PassportUploadComponent, ItineraryEditorComponent],
+	imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, PassportUploadComponent, ItineraryEditorComponent, AdvanceAmountEditorComponent],
 	templateUrl: "./overseas-travel-details.component.html",
 	styleUrls: ["./overseas-travel-details.component.scss"],
 })
@@ -99,6 +100,7 @@ export class OverseasTravelDetailsComponent
 	];
 	tripTypeValue: "One Way" | "Round Trip" = "One Way";
 	itinerarySegments: Record<string, any>[] = [];
+	advanceAmounts: Record<string, any>[] = [];
 
 	// Passport upload
 	passportFile: File | null = null;
@@ -148,22 +150,9 @@ export class OverseasTravelDetailsComponent
 				branchAddress: [""],
 				currency: ["USD"],
 			}),
-			advanceAmountRequested: this.fb.array([]),
 		});
 
 		this.tripTypeValue = this.initialData.tripType || "One Way";
-
-		// Initialize with one advance amount item
-		if (
-			this.initialData.advanceAmountRequested &&
-			this.initialData.advanceAmountRequested.length > 0
-		) {
-			this.initialData.advanceAmountRequested.forEach((item) =>
-				this.addAdvanceAmountItem(item),
-			);
-		} else {
-			this.addAdvanceAmountItem();
-		}
 
 		// Set bank details if provided
 		if (this.initialData.advanceBankDetails) {
@@ -185,57 +174,12 @@ export class OverseasTravelDetailsComponent
 			});
 	}
 
-	get advanceAmountRequested(): FormArray {
-		return this.overseasForm.get("advanceAmountRequested") as FormArray;
-	}
-
-	private createAdvanceAmountItem(
-		data?: Partial<AdvanceAmountItem>,
-	): FormGroup {
-		const formGroup = this.fb.group({
-			dateFrom: [data?.dateFrom || "", Validators.required],
-			dateTo: [data?.dateTo || "", Validators.required],
-			lh: [data?.lh || 0, [Validators.min(0)]],
-			ma: [data?.ma || 0, [Validators.min(0)]],
-			oa: [data?.oa || 0, [Validators.min(0)]],
-			tr: [data?.tr || 0, [Validators.min(0)]],
-			oe: [data?.oe || 0, [Validators.min(0)]],
-			usd: [{ value: data?.usd || 0, disabled: true }],
-			remarks: [data?.remarks || ""],
-		});
-
-		// Calculate USD when amount fields change
-		["lh", "ma", "oa", "tr", "oe"].forEach((field) => {
-			formGroup.get(field)?.valueChanges.subscribe(() => {
-				this.calculateUSD(formGroup);
-			});
-		});
-
-		return formGroup;
-	}
-
-	private calculateUSD(formGroup: FormGroup): void {
-		const lh = Number(formGroup.get("lh")?.value) || 0;
-		const ma = Number(formGroup.get("ma")?.value) || 0;
-		const oa = Number(formGroup.get("oa")?.value) || 0;
-		const tr = Number(formGroup.get("tr")?.value) || 0;
-		const oe = Number(formGroup.get("oe")?.value) || 0;
-		const total = lh + ma + oa + tr + oe;
-		formGroup.get("usd")?.setValue(total, { emitEvent: false });
-	}
-
-	addAdvanceAmountItem(data?: Partial<AdvanceAmountItem>): void {
-		this.advanceAmountRequested.push(this.createAdvanceAmountItem(data));
-	}
-
-	removeAdvanceAmountItem(index: number): void {
-		if (this.advanceAmountRequested.length > 1) {
-			this.advanceAmountRequested.removeAt(index);
-		}
-	}
-
 	onItinerarySegmentsChange(segments: Record<string, any>[]): void {
 		this.itinerarySegments = segments;
+	}
+
+	onAdvanceAmountsChange(items: Record<string, any>[]): void {
+		this.advanceAmounts = items;
 	}
 
 	onSubmit(): void {
@@ -244,6 +188,7 @@ export class OverseasTravelDetailsComponent
 			this.formSubmit.emit({
 				...formValue,
 				itinerary: this.itinerarySegments,
+				advanceAmountRequested: this.advanceAmounts,
 			});
 		} else {
 			this.formUtils.markFormGroupTouched(this.overseasForm);
@@ -267,6 +212,7 @@ export class OverseasTravelDetailsComponent
 		return {
 			...this.overseasForm.getRawValue(),
 			itinerary: this.itinerarySegments,
+			advanceAmountRequested: this.advanceAmounts,
 			passportUpload: {
 				file: this.passportFile,
 				fileName: this.passportFileName,

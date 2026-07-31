@@ -210,6 +210,7 @@ export class TrfWizardComponent implements OnInit {
         const homeLeaveItinerary = homeLeaveDetails.itinerary || data.itinerary_segments || data.itinerary || [];
         const passportDetails = data.passport_details || data.passportDetails;
         const homeLeaveBank = homeLeaveDetails.advanceBankDetails || data.bank_detail || data.advance_bank_details || data.bankDetails;
+        const homeLeaveAdvanceAmounts = homeLeaveDetails.advanceAmountRequested || data.advance_amounts || data.advance_amount_items || data.advanceAmounts || [];
         const homeLeavePassport = this.extractPassportFileInfo(passportDetails);
 
         this.homeLeaveData = {
@@ -218,6 +219,7 @@ export class TrfWizardComponent implements OnInit {
           itinerary: this.transformItineraryData(homeLeaveItinerary),
           passportDetails: this.transformPassportDetails(passportDetails),
           advanceBankDetails: this.transformBankDetails(homeLeaveBank),
+          advanceAmountRequested: this.transformAdvanceAmounts(homeLeaveAdvanceAmounts),
           passportUpload: homeLeavePassport
         };
         break;
@@ -698,7 +700,7 @@ export class TrfWizardComponent implements OnInit {
       mealSelections: [],
       passportDetails: this.homeLeaveData?.passportDetails || null,
       bankDetails: this.homeLeaveData?.advanceBankDetails || null,
-      advanceAmounts: []
+      advanceAmounts: this.homeLeaveData?.advanceAmountRequested || []
     };
   }
 
@@ -894,7 +896,7 @@ export class TrfWizardComponent implements OnInit {
         );
       }
 
-      // Create advance amount items (Overseas)
+      // Create advance amount items (Overseas, Home Leave)
       if (data.advanceAmounts && data.advanceAmounts.length > 0) {
         data.advanceAmounts.forEach((amount: any) => {
           const advanceData = {
