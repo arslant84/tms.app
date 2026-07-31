@@ -39,8 +39,8 @@ export class ModalService {
 
     // Subscribe to a close event if the modal component has one
     if (this.componentRef.instance.close) {
-      this.componentRef.instance.close.subscribe(() => {
-        this.close();
+      this.componentRef.instance.close.subscribe((data?: any) => {
+        this.close(data);
       });
     }
 
