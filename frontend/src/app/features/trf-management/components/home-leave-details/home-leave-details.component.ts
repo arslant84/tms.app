@@ -5,6 +5,7 @@ import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
 import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
 import { ItineraryEditorComponent, ItineraryFieldConfig } from '../../../../shared/components/itinerary-editor/itinerary-editor.component';
+import { AdvanceAmountEditorComponent } from '../../../../shared/components/advance-amount-editor/advance-amount-editor.component';
 
 export interface PassportUploadDetails {
   file: File | null;
@@ -17,13 +18,14 @@ export interface HomeLeaveDetails {
   tripType: 'One Way' | 'Round Trip';
   itinerary: any[];
   advanceBankDetails?: any;
+  advanceAmountRequested?: any[];
   passportUpload?: PassportUploadDetails;
 }
 
 @Component({
   selector: 'app-home-leave-details',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, PassportUploadComponent, ItineraryEditorComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormSectionCardComponent, PassportUploadComponent, ItineraryEditorComponent, AdvanceAmountEditorComponent],
   templateUrl: './home-leave-details.component.html',
   styleUrls: ['./home-leave-details.component.scss']
 })
@@ -44,6 +46,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   ];
   tripTypeValue: 'One Way' | 'Round Trip' = 'Round Trip';
   itinerarySegments: Record<string, any>[] = [];
+  advanceAmounts: Record<string, any>[] = [];
 
   // Passport upload
   passportFile: File | null = null;
@@ -108,12 +111,17 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     this.itinerarySegments = segments;
   }
 
+  onAdvanceAmountsChange(items: Record<string, any>[]): void {
+    this.advanceAmounts = items;
+  }
+
   onSubmit(): void {
     if (this.homeLeaveForm.valid) {
       const formValue = this.homeLeaveForm.getRawValue();
       this.formSubmit.emit({
         ...formValue,
-        itinerary: this.itinerarySegments
+        itinerary: this.itinerarySegments,
+        advanceAmountRequested: this.advanceAmounts
       });
     } else {
       this.formUtils.markFormGroupTouched(this.homeLeaveForm);
@@ -137,6 +145,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     return {
       ...this.homeLeaveForm.getRawValue(),
       itinerary: this.itinerarySegments,
+      advanceAmountRequested: this.advanceAmounts,
       passportUpload: {
         file: this.passportFile,
         fileName: this.passportFileName,

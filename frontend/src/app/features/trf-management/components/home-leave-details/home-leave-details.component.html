@@ -83,6 +83,17 @@
         </div>
     </app-form-section-card>
 
+    <!-- Advance Amount Requested Section -->
+    <app-form-section-card icon="bi-cash-stack" title="Details for the Amount Requested / Детали по запрашиваемой сумме">
+        <app-advance-amount-editor
+          [initialItems]="initialData.advanceAmountRequested || []"
+          (itemsChange)="onAdvanceAmountsChange($event)">
+        </app-advance-amount-editor>
+        <p class="mt-2 text-muted small">
+          LH: Lodging/Hotel. MA: Meal Allowance. OA: Other Allowances. TR: Transportation. OE: Other Expenses.
+        </p>
+    </app-form-section-card>
+
     <!-- Passport Details Section -->
     <app-form-section-card icon="bi-file-earmark-text" title="Passport Details (Optional)">
         <p class="text-muted small mb-3">
