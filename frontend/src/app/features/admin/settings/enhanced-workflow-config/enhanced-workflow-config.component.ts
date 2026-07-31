@@ -198,7 +198,12 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
         step_description: `Approval by ${this.getRoleNameById(step.roleId)}`,
         approver_role: step.roleId,
         is_required: true,
-        can_skip: false,
+        // Every other module's steps are can_skip=true today (accommodation,
+        // transportrequest, visaapplication, combinedrequest, travelrequest -
+        // see workflows/migrations/0009,0011,0012,0015) - this form has no
+        // per-step toggle for it, so match that standard instead of forcing
+        // every newly created/edited step back to false.
+        can_skip: true,
         requires_comments: false,
         sla_hours: step.slaHours,
         notification_configs: step.notification_configs || [],
