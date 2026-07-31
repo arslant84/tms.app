@@ -64,6 +64,7 @@ export class WorkflowService {
   getTemplates(filters?: {
     entity_type?: string;
     is_active?: boolean;
+    fallback_entity_type?: string;
   }): Observable<WorkflowTemplate[]> {
     let params = new HttpParams();
     if (filters?.entity_type) {
@@ -71,6 +72,9 @@ export class WorkflowService {
     }
     if (filters?.is_active !== undefined) {
       params = params.set('is_active', filters.is_active.toString());
+    }
+    if (filters?.fallback_entity_type) {
+      params = params.set('fallback_entity_type', filters.fallback_entity_type);
     }
     return this.http.get<WorkflowTemplate[]>(`${this.apiUrl}/templates/`, { params });
   }
