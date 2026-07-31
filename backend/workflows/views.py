@@ -204,12 +204,27 @@ class WorkflowInstanceViewSet(viewsets.ModelViewSet):
         if status_filter:
             queryset = queryset.filter(status=status_filter)
 
-        # Filter by entity type
+        # Filter by entity type. A WorkflowInstance's own workflow_template
+        # may be the shared "travelrequest" one or one of its per-travel-type
+        # sub-types (travelrequest_domestic, etc. - see
+        # docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md), so a caller asking for
+        # "travelrequest" (e.g. the TRF detail page looking up its own
+        # instance) means "any TRF-related template", not the literal string.
         entity_type = self.request.query_params.get("entity_type", None)
         if entity_type:
-            queryset = queryset.filter(
-                workflow_template__entity_type__iexact=entity_type
-            )
+            if entity_type.lower() == "travelrequest":
+                from trf.models import TravelRequest
+
+                entity_types = ["travelrequest"] + list(
+                    TravelRequest.WORKFLOW_ENTITY_TYPE_MAP.values()
+                )
+                queryset = queryset.filter(
+                    workflow_template__entity_type__in=entity_types
+                )
+            else:
+                queryset = queryset.filter(
+                    workflow_template__entity_type__iexact=entity_type
+                )
 
         # Filter by template
         template_id = self.request.query_params.get("template", None)
@@ -638,19 +653,31 @@ def get_eligible_approvers(request, entity_type: str):
         ],
     }
 
-    # Get all possible aliases for this entity_type
-    search_values = entity_type_aliases.get(entity_type.lower(), [entity_type])
+    def _find_template(values):
+        query = Q()
+        for value in values:
+            query |= Q(entity_type__iexact=value)
+        return (
+            WorkflowTemplate.objects.filter(query, is_active=True)
+            .prefetch_related("steps")
+            .first()
+        )
 
-    # Build OR query for all possible values (case-insensitive)
-    query = Q()
-    for value in search_values:
-        query |= Q(entity_type__iexact=value)
+    # Per-travel-type TSR sub-types (travelrequest_domestic, etc. - see
+    # docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md): try the specific one first,
+    # falling back to the shared "travelrequest" template (with its own
+    # aliases) if no dedicated one is configured yet. Every other entity_type
+    # keeps its existing alias-only lookup, unchanged.
+    from trf.models import TravelRequest
 
-    template = (
-        WorkflowTemplate.objects.filter(query, is_active=True)
-        .prefetch_related("steps")
-        .first()
-    )
+    trf_sub_types = set(TravelRequest.WORKFLOW_ENTITY_TYPE_MAP.values())
+    if entity_type.lower() in trf_sub_types:
+        template = _find_template([entity_type]) or _find_template(
+            entity_type_aliases["travelrequest"]
+        )
+    else:
+        search_values = entity_type_aliases.get(entity_type.lower(), [entity_type])
+        template = _find_template(search_values)
 
     if not template:
         return error_response(

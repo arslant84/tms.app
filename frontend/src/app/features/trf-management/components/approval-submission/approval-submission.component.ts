@@ -65,6 +65,12 @@ export class ApprovalSubmissionComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Resolve the per-travel-type workflow entity_type (falls back to the
+    // generic 'travelrequest' default if travelType isn't set/recognized) -
+    // also drives the <app-approver-selection [entityType]> binding below,
+    // so the approver dropdowns match whichever workflow's steps are shown.
+    this.entityType = this.resolveWorkflowEntityType();
+
     // Determine if international travel
     this.isInternationalTravel =
       this.travelType === 'Overseas' || this.travelType === 'Home Leave';
@@ -115,7 +121,7 @@ export class ApprovalSubmissionComponent implements OnInit {
     // configured yet (see docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md).
     this.isLoadingWorkflow = true;
     this.workflowService.getTemplates({
-      entity_type: this.resolveWorkflowEntityType(),
+      entity_type: this.entityType,
       fallback_entity_type: 'travelrequest',
       is_active: true
     }).subscribe({
