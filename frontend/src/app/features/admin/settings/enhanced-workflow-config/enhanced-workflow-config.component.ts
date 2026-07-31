@@ -31,7 +31,11 @@ interface WorkflowStepConfig {
 export class EnhancedWorkflowConfigComponent implements OnInit {
   // Available modules
   modules = [
-    { value: 'travelrequest', label: 'Travel Service Request (TSR)' },
+    { value: 'travelrequest', label: 'Travel Service Request (TSR) - All Types' },
+    { value: 'travelrequest_domestic', label: 'TSR - Domestic' },
+    { value: 'travelrequest_overseas', label: 'TSR - Overseas' },
+    { value: 'travelrequest_homeleave', label: 'TSR - Home Leave' },
+    { value: 'travelrequest_external', label: 'TSR - External Parties' },
     { value: 'transportrequest', label: 'Transport Request' },
     { value: 'visaapplication', label: 'Visa Application' },
     { value: 'accommodation', label: 'Accommodation Request' },

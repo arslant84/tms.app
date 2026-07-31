@@ -224,10 +224,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             try:
                 workflow_instance = WorkflowRouter.start_workflow_for_request(
                     entity=trf,
-                    entity_type="travelrequest",
+                    entity_type=trf.workflow_entity_type,
                     initiated_by=user,
                     selected_approvers=selected_approvers,
                     skipped_steps=skipped_steps,
+                    fallback_entity_type="travelrequest",
                 )
 
                 if workflow_instance:
@@ -506,10 +507,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         try:
             workflow_instance = WorkflowRouter.start_workflow_for_request(
                 entity=trf,
-                entity_type="travelrequest",
+                entity_type=trf.workflow_entity_type,
                 initiated_by=request.user,
                 selected_approvers=selected_approvers,
                 skipped_steps=skipped_steps,
+                fallback_entity_type="travelrequest",
             )
 
             if workflow_instance:
