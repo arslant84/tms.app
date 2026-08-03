@@ -61,6 +61,7 @@ def can_view_all(user, module):
         "booking": "view_all_bookings",
         "bookings": "view_all_bookings",
         "flights": "view_all_trf",  # Flights are tied to TRF admin
+        "meal": "view_all_meal",
     }
     permission_name = permission_map.get(module)
     if not permission_name:
@@ -98,6 +99,7 @@ def can_manage(user, module):
         "notifications": ["manage_notifications", "send_notifications"],
         "approval": ["manage_approvals"],
         "approvals": ["manage_approvals"],
+        "meal": ["process_meal", "manage_meal"],
     }
     permissions = permission_map.get(module, [])
     if not permissions:

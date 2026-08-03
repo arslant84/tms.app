@@ -67,6 +67,19 @@
       <span class="nav-label">Transport Admin</span>
     </a>
 
+    <!-- Meal Admin -->
+    <a
+      *ngIf="hasMealAdminPermission"
+      routerLink="/admin/meal"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: false }"
+      class="nav-item"
+      [attr.title]="'Meal Admin'"
+    >
+      <i class="bi bi-cup-hot"></i>
+      <span class="nav-label">Meal Admin</span>
+    </a>
+
     <!-- Combined Admin -->
     <a
       *ngIf="hasCombinedAdminPermission"

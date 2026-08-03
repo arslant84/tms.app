@@ -45,6 +45,14 @@ class TravelRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     additional_data = models.JSONField(blank=True, null=True)
+    MEAL_PROCESSING_STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Arranged", "Arranged"),
+        ("Completed", "Completed"),
+    ]
+    meal_processing_status = models.CharField(
+        max_length=20, choices=MEAL_PROCESSING_STATUS_CHOICES, default="Pending"
+    )
 
     # ForeignKey to User who created the request
     created_by = models.ForeignKey(

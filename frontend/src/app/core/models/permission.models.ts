@@ -29,6 +29,10 @@ export enum Permission {
   MANAGE_COMBINED_REQUESTS = 'manage_combined_requests',
   PROCESS_COMBINED_REQUESTS = 'process_combined_requests',
 
+  VIEW_ADMIN_MEAL = 'view_admin_meal',
+  PROCESS_MEAL = 'process_meal',
+  MANAGE_MEAL = 'manage_meal',
+
   // ============================================================================
   // REQUEST CREATION
   // ============================================================================
@@ -152,6 +156,10 @@ export const PERMISSION_CATEGORIES: Record<Permission, PermissionCategory> = {
   [Permission.VIEW_SYSTEM_SETTINGS]: PermissionCategory.SYSTEM_ADMIN,
   [Permission.ACCESS_DEBUG_ENDPOINTS]: PermissionCategory.SYSTEM_ADMIN,
 
+  [Permission.VIEW_ADMIN_MEAL]: PermissionCategory.MODULE_ACCESS,
+  [Permission.PROCESS_MEAL]: PermissionCategory.MODULE_ACCESS,
+  [Permission.MANAGE_MEAL]: PermissionCategory.MODULE_ACCESS,
+
   // Reporting
   [Permission.VIEW_ALL_TRF]: PermissionCategory.REPORTING,
   [Permission.VIEW_ALL_TRANSPORT]: PermissionCategory.REPORTING,
@@ -242,6 +250,7 @@ export const PermissionGroups = {
     Permission.VIEW_ADMIN_VISA,
     Permission.VIEW_ADMIN_FLIGHTS,
     Permission.VIEW_ADMIN_COMBINED,
+    Permission.VIEW_ADMIN_MEAL,
   ],
 
   /**

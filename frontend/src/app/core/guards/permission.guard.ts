@@ -94,7 +94,7 @@ export const AdminMenuGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => 
   const authService = inject(AuthService);
 
   // Get admin module from route data
-  const adminModule = route.data['adminModule'] as 'accommodation' | 'transport' | 'visa' | 'flights' | 'combined' | undefined;
+  const adminModule = route.data['adminModule'] as 'accommodation' | 'transport' | 'visa' | 'flights' | 'combined' | 'meal' | undefined;
 
   // If no module specified, deny access
   if (!adminModule) {

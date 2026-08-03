@@ -118,6 +118,7 @@ export class TrfDetailComponent implements OnInit {
     } else if (travelType === 'External Parties') {
       const externalDetails = data.externalPartiesTravelDetails || {};
       itinerary = externalDetails.itinerary || data.itinerary_segments || data.itinerary || [];
+      mealSelections = externalDetails.mealProvision?.dailyMealSelections || data.daily_meals || data.daily_meal_selections || data.mealSelections || [];
       purpose = externalDetails.purpose || data.purpose || '';
     }
 
@@ -178,6 +179,14 @@ export class TrfDetailComponent implements OnInit {
    */
   get isDomestic(): boolean {
     return this.trfData?.travelType === 'Domestic';
+  }
+
+  /**
+   * Meal provisions are only captured for Domestic and External Parties
+   * travel types (not Overseas/Home Leave, by design).
+   */
+  get hasMealProvision(): boolean {
+    return !!this.trfData?.mealSelections?.length;
   }
 
   /**
