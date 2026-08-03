@@ -122,6 +122,20 @@ export class TrfService {
       );
   }
 
+  // Meal Admin: TRFs with requested meals, ready for processing
+  getMealQueue(params?: { status?: string; search?: string; page?: number; page_size?: number }): Observable<any> {
+    return this.getAllTrfs({ ...params, meal_queue: 'true' });
+  }
+
+  // Meal Admin: update a TRF's meal fulfillment status
+  updateMealStatus(id: number, mealProcessingStatus: string): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/trf/travel-requests/${id}/meal-status/`, {
+      meal_processing_status: mealProcessingStatus
+    }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   // Check TSR accommodation availability
   checkAccommodationAvailability(id: number): Observable<any> {
     return this.http.get<any>(`${environment.apiUrl}/trf/travel-requests/${id}/check-accommodation-availability/`)

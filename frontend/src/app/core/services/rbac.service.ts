@@ -55,7 +55,7 @@ export class RbacService {
    * Check if user can access admin menu for a specific module
    */
   canAccessAdminMenu(
-    module: 'accommodation' | 'transport' | 'visa' | 'flights' | 'combined'
+    module: 'accommodation' | 'transport' | 'visa' | 'flights' | 'combined' | 'meal'
   ): boolean {
     // System admins have access to all admin modules
     if (this.hasPermission(Permission.SYSTEM_ADMIN)) return true;
@@ -76,6 +76,7 @@ export class RbacService {
       transport: Permission.VIEW_ADMIN_TRANSPORT,
       visa: Permission.VIEW_ADMIN_VISA,
       flights: Permission.VIEW_ADMIN_FLIGHTS,
+      meal: Permission.VIEW_ADMIN_MEAL,
     };
     const requiredPermission = modulePermissionMap[module];
     return requiredPermission ? this.hasPermission(requiredPermission) : false;

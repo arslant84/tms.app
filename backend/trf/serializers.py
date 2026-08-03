@@ -255,6 +255,7 @@ class TravelRequestSerializer(serializers.ModelSerializer):
     """Main serializer for Travel Requests (list view)"""
 
     has_flight_booking = serializers.SerializerMethodField()
+    has_meal_provision = serializers.SerializerMethodField()
     flight_details = serializers.SerializerMethodField()
     overseas_travel_details = serializers.SerializerMethodField()
     home_leave_details = serializers.SerializerMethodField()
@@ -286,6 +287,8 @@ class TravelRequestSerializer(serializers.ModelSerializer):
             "updated_at",
             "additional_data",
             "has_flight_booking",
+            "has_meal_provision",
+            "meal_processing_status",
             "flight_details",
             "overseas_travel_details",
             "home_leave_details",
@@ -304,6 +307,10 @@ class TravelRequestSerializer(serializers.ModelSerializer):
         from bookings.models import BookingStatus
 
         return obj.flight_bookings.exclude(status=BookingStatus.CANCELLED).exists()
+
+    def get_has_meal_provision(self, obj):
+        """Check if TRF has any daily meal selections requested"""
+        return obj.trfdailymealselection_set.exists()
 
     def get_flight_details(self, obj):
         """Get flight booking details if exists"""
@@ -660,6 +667,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
         """Get external parties travel details with itinerary"""
         if obj.travel_type == "External Parties":
             itinerary_segments = obj.trfitinerarysegment_set.all()
+            daily_meals = obj.trfdailymealselection_set.all()
             return {
                 "purpose": obj.purpose,
                 "itinerary": [
@@ -678,6 +686,22 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
                     }
                     for seg in itinerary_segments
                 ],
+                "mealProvision": {
+                    "dailyMealSelections": [
+                        {
+                            "id": meal.id,
+                            "meal_date": (
+                                meal.meal_date.isoformat() if meal.meal_date else None
+                            ),
+                            "breakfast": meal.breakfast,
+                            "lunch": meal.lunch,
+                            "dinner": meal.dinner,
+                            "supper": meal.supper,
+                            "refreshment": meal.refreshment,
+                        }
+                        for meal in daily_meals
+                    ]
+                },
             }
         return None
 

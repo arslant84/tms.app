@@ -1,0 +1,212 @@
+<div class="meal-admin-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="bi bi-cup-hot me-2"></i>
+        Meal Administration
+      </h1>
+      <p class="page-subtitle">Arrange meals requested on Travel Service Requests</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-card-title">Total Requests</span>
+        <i class="bi bi-cup-hot stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ totalRequestsCount }}</div>
+        <p class="stat-description">TSRs with meals requested</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-card-title">Pending</span>
+        <i class="bi bi-clock stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ pendingCount }}</div>
+        <p class="stat-description">Not yet arranged</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-card-title">Arranged</span>
+        <i class="bi bi-check-circle stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ arrangedCount }}</div>
+        <p class="stat-description">Arranged, not yet completed</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-card-title">Completed</span>
+        <i class="bi bi-check2-all stat-icon"></i>
+      </div>
+      <div class="stat-card-content">
+        <div class="stat-value">{{ completedCount }}</div>
+        <p class="stat-description">Fully completed</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-funnel me-2"></i>
+          <h3 class="card-title">Filter & Search Meal Requests</h3>
+        </div>
+        <p class="card-description">Search and filter by requestor, department, or meal status.</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <input type="text" class="form-control" id="mealAdminSearch" name="mealAdminSearch"
+                 autocomplete="off" placeholder="Search by ID, Requestor, Purpose..."
+                 [(ngModel)]="filterCriteria.search" (keyup.enter)="applyFilters()">
+        </div>
+        <div class="col-md-4">
+          <select class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
+            <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Meal Requests List Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-content">
+        <div class="card-title-group">
+          <i class="bi bi-cup-hot me-2"></i>
+          <h3 class="card-title">TSRs With Requested Meals</h3>
+        </div>
+        <p class="card-description">Total: {{ totalRequests }}</p>
+      </div>
+    </div>
+    <div class="card-body p-0">
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="loading-state">
+        <app-loading-spinner size="md" message="Loading meal requests..."></app-loading-spinner>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error && !loading" class="alert alert-danger m-3" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> {{ error }}
+        <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadRequests()">
+          <i class="bi bi-arrow-clockwise"></i> Retry
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && !error && requests.length === 0" class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>No meal requests found.</p>
+        <p class="text-sm">TSRs with meal provisions requested will appear here once approved.</p>
+      </div>
+
+      <!-- Requests Table -->
+      <div *ngIf="!loading && !error && requests.length > 0" class="table-responsive">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>REQUEST NUMBER</th>
+              <th>REQUESTOR</th>
+              <th>DEPARTMENT</th>
+              <th>TRAVEL TYPE</th>
+              <th>TSR STATUS</th>
+              <th>MEAL STATUS</th>
+              <th class="text-end">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let request of requests">
+              <td>
+                <a href="javascript:void(0)" (click)="viewRequest(request)" class="text-decoration-none fw-medium request-number">
+                  {{ request.request_number || request.id }}
+                </a>
+              </td>
+              <td>{{ request.requestor_name || 'N/A' }}</td>
+              <td>{{ request.department || 'N/A' }}</td>
+              <td>{{ request.travel_type || 'N/A' }}</td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(request.status || '')">
+                  {{ request.status }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getMealStatusClass(request.meal_processing_status)">
+                  {{ request.meal_processing_status || 'Pending' }}
+                </span>
+              </td>
+              <td class="text-end">
+                <div class="action-buttons">
+                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewRequest(request)" title="View Details">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button
+                    *ngIf="request.meal_processing_status !== 'Arranged' && request.meal_processing_status !== 'Completed'"
+                    class="btn btn-sm btn-outline-info btn-icon"
+                    [disabled]="isProcessing(request.id)"
+                    (click)="markStatus(request, 'Arranged')"
+                    title="Mark Arranged"
+                  >
+                    <i class="bi bi-check-circle"></i>
+                  </button>
+                  <button
+                    *ngIf="request.meal_processing_status !== 'Completed'"
+                    class="btn btn-sm btn-outline-success btn-icon"
+                    [disabled]="isProcessing(request.id)"
+                    (click)="markStatus(request, 'Completed')"
+                    title="Mark Completed"
+                  >
+                    <i class="bi bi-check2-all"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="totalPages > 1 && !loading && !error" class="pagination-container">
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <a class="page-link" (click)="changePage(currentPage - 1)" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+              <a class="page-link" (click)="changePage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <a class="page-link" (click)="changePage(currentPage + 1)" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="text-center mt-3 pagination-info">
+          <small>
+            Showing {{ (currentPage - 1) * pageSize + 1 }} -
+            {{ currentPage * pageSize > totalRequests ? totalRequests : currentPage * pageSize }} of {{ totalRequests }} requests
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

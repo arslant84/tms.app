@@ -404,6 +404,21 @@ Hotel/accommodation needs are handled entirely by the `accommodation` app (staff
 
 Both are called from real frontend code (`accommodation.service.ts`, `transport.service.ts`, `transport-admin.component.ts`, `transport-processing.component.ts`) — not orphaned like the old `travel-request-wizard.component.ts` (§7.1) or `bookings.HotelBooking` above. If a future audit can't find these two model names by grepping this document, that's this document's gap to fix (as done here), not evidence the models don't exist — verify against `models.py`, migrations, and row counts directly before concluding otherwise.
 
+**Meal Admin** (`docs/MEAL_ADMIN_MODULE_ROADMAP.md`, added 2026-08-03) follows the same
+"downstream fulfillment, not a workflow step" pattern as `book_flight` above, at an even
+smaller scale — meals have no vendor/cost/ticket data to track, so there's no separate
+model, just a `meal_processing_status` field (Pending/Arranged/Completed) directly on
+`TravelRequest`. `TravelRequestSerializer.has_meal_provision` mirrors `has_flight_booking`
+exactly (`obj.trfdailymealselection_set.exists()`). The Meal Admin queue
+(`features/admin/meal/components/meal-admin.component.ts`) is `TravelRequestViewSet`'s
+existing list endpoint with `?meal_queue=true`, filtered server-side to TRFs with a
+non-empty `trfdailymealselection_set` and excluding `Draft`, gated on a new
+`process_meal`/`manage_meal`/`view_all_meal` permission set (migration
+`accounts/0041_add_meal_permissions.py`) via the same `can_manage`/`can_view_all` helpers
+every other module uses. Meal provisions are only captured for Domestic and External
+Parties travel types (`app-meal-provision` shared component) — Overseas/Home Leave
+genuinely have no meal provision by design, not a gap.
+
 ### 7.3 Notifications Delivery Pipeline
 
 ```mermaid

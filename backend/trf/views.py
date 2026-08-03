@@ -11,7 +11,7 @@ from utils.viewset_mixins import StandardResultsPagination
 
 logger = logging.getLogger(__name__)
 from accounts.models import AdminActionLog
-from accounts.utils import can_approve, can_view_all, has_permission
+from accounts.utils import can_approve, can_manage, can_view_all, has_permission
 from utils.api_response import (
     created_response,
     error_response,
@@ -318,6 +318,31 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     f" Booking action: User role '{user.role.name}' indicates booking capability - allowing access"
                 )
                 return queryset.filter(status__in=bookable_statuses)
+
+        # Meal Admin queue and status updates: not gated by ownership, only by
+        # the meal-admin permission (mirrors the "retrieve" special-case below)
+        meal_queue = (
+            self.request.query_params.get("meal_queue", "false").lower() == "true"
+        )
+        if meal_queue or self.action == "update_meal_status":
+            if not (
+                user.is_superuser
+                or can_manage(user, "meal")
+                or can_view_all(user, "meal")
+            ):
+                from rest_framework.exceptions import PermissionDenied
+
+                raise PermissionDenied(
+                    "You do not have permission to view the meal admin queue."
+                )
+            if self.action == "update_meal_status" and not meal_queue:
+                return queryset
+            return (
+                queryset.filter(trfdailymealselection__isnull=False)
+                .exclude(status="Draft")
+                .distinct()
+                .order_by("-created_at")
+            )
 
         # For retrieve (viewing details), check view_all permission first, then pending approvals
         if self.action == "retrieve":
@@ -957,6 +982,37 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         return success_response(
             data={"deleted": count},
             message=f"Deleted {count} meal selection(s)",
+            status_code=status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["post"], url_path="meal-status")
+    def update_meal_status(self, request, pk=None):
+        """Meal Admin: update the fulfillment status of a TRF's requested meals"""
+        user = request.user
+        if not (user.is_superuser or can_manage(user, "meal")):
+            return forbidden_response(
+                message="You do not have permission to process meal requests."
+            )
+
+        new_status = request.data.get("meal_processing_status")
+        valid_statuses = dict(TravelRequest.MEAL_PROCESSING_STATUS_CHOICES)
+        if new_status not in valid_statuses:
+            return validation_error_response(
+                {
+                    "meal_processing_status": [
+                        f"Must be one of: {', '.join(valid_statuses.keys())}"
+                    ]
+                }
+            )
+
+        trf = self.get_object()
+        trf.meal_processing_status = new_status
+        trf.save(update_fields=["meal_processing_status"])
+
+        serializer = self.get_serializer(trf)
+        return success_response(
+            data=serializer.data,
+            message=f"Meal status updated to {new_status}",
             status_code=status.HTTP_200_OK,
         )
 

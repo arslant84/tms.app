@@ -168,11 +168,11 @@
       </div>
     </div>
 
-    <!-- Meal Provision (Domestic) -->
-    <div class="detail-card" *ngIf="isDomestic && trfData.mealSelections && trfData.mealSelections.length > 0">
+    <!-- Meal Provision (Domestic / External Parties) -->
+    <div class="detail-card" *ngIf="hasMealProvision">
       <div class="card-header">
         <i class="bi bi-cup-straw"></i>
-        <h3>Meal Provision (Kiyanly)</h3>
+        <h3>Meal Provision{{ isDomestic ? ' (Kiyanly)' : '' }}</h3>
       </div>
       <div class="card-body">
         <div class="table-container">
