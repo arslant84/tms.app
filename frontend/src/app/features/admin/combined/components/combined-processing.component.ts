@@ -12,6 +12,7 @@ import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { AccommodationService } from '../../../accommodation/services/accommodation.service';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import type { AccommodationStaffHouse, AccommodationRoom } from '../../../accommodation/services/accommodation.service';
 
 interface FlightForm {
@@ -118,7 +119,8 @@ export class CombinedProcessingComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService,
-    public rbacService: RbacService
+    public rbacService: RbacService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -325,7 +327,7 @@ export class CombinedProcessingComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        this.toastService.error(`Failed to save ${module}: ` + (err.message || 'Unknown error'));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, `Failed to save ${module}`));
         this.savingModule = null;
       }
     });

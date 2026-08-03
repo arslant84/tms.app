@@ -9,6 +9,7 @@ import { ToastService } from "../../../../core/services/toast.service";
 import { DateUtilsService } from "../../../../core/utils/date-utils.service";
 import { StatusUtilsService } from "../../../../core/utils/status-utils.service";
 import { LoadingSpinnerComponent } from "../../../../shared/components/loading-spinner/loading-spinner.component";
+import { HttpErrorHandlerService } from "../../../../core/utils/http-error-handler.service";
 import type { VisaApplication } from "../../../visa/services/visa.service";
 import { VisaService } from "../../../visa/services/visa.service";
 
@@ -86,6 +87,7 @@ export class VisaAdminComponent implements OnInit, OnDestroy {
 	router = inject(Router);
 	dateUtils = inject(DateUtilsService);
 	statusUtils = inject(StatusUtilsService);
+	private errorHandler = inject(HttpErrorHandlerService);
 
 	ngOnInit(): void {
 		this.loadSummaryData();
@@ -327,10 +329,7 @@ export class VisaAdminComponent implements OnInit, OnDestroy {
 				this.loadApplications();
 			},
 			error: (err) => {
-				this.toastService.error(
-					"Failed to process application: " +
-						(err.error?.message || err.message || "Unknown error"),
-				);
+				this.toastService.error(this.errorHandler.getErrorMessage(err, "Failed to process application"));
 				this.processingId = null;
 			},
 		});
@@ -368,10 +367,7 @@ export class VisaAdminComponent implements OnInit, OnDestroy {
 					this.loadApplications();
 				},
 				error: (err) => {
-					this.toastService.error(
-						"Failed to start processing: " +
-							(err.error?.message || err.message || "Unknown error"),
-					);
+					this.toastService.error(this.errorHandler.getErrorMessage(err, "Failed to start processing"));
 					this.processingId = null;
 				},
 			});

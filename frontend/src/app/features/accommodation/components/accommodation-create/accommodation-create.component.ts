@@ -11,6 +11,7 @@ import { UserFormHelperService } from '../../../../core/utils/user-form-helper.s
 import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-accommodation-create',
@@ -51,7 +52,8 @@ export class AccommodationCreateComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private trfService: TrfService,
     private formUtils: FormUtilsService,
-    private userFormHelper: UserFormHelperService
+    private userFormHelper: UserFormHelperService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -333,18 +335,7 @@ export class AccommodationCreateComponent implements OnInit {
       error: (err) => {
         this.submitting = false;
         const action = this.isEditMode ? 'update' : 'create';
-
-        let errorMessage = `Failed to ${action} request`;
-        if (err.error && typeof err.error === 'object') {
-          const errors = Object.entries(err.error).map(([field, messages]) => {
-            return `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`;
-          }).join('; ');
-          if (errors) {
-            errorMessage += ': ' + errors;
-          }
-        }
-
-        this.toastService.error(errorMessage);
+        this.toastService.error(this.errorHandler.getErrorMessage(err, `Failed to ${action} request`));
       }
     });
   }

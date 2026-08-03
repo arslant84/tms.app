@@ -10,6 +10,7 @@ import { DateUtilsService } from "../../../../core/utils/date-utils.service";
 import { StatusUtilsService } from "../../../../core/utils/status-utils.service";
 
 import { LoadingSpinnerComponent } from "../../../../shared/components/loading-spinner/loading-spinner.component";
+import { HttpErrorHandlerService } from "../../../../core/utils/http-error-handler.service";
 import type {
 	TransportRequest,
 	VehicleAssignment,
@@ -83,6 +84,7 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 	private confirmationService = inject(ConfirmationService);
 	private appSettingsService = inject(AppSettingsService);
 	private statusUtils = inject(StatusUtilsService);
+	private errorHandler = inject(HttpErrorHandlerService);
 	router = inject(Router);
 	dateUtils = inject(DateUtilsService);
 
@@ -242,10 +244,7 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 					this.loadRequests();
 				},
 				error: (err) => {
-					this.toastService.error(
-						"Failed to assign vehicle: " +
-							(err.error?.message || err.message || "Unknown error"),
-					);
+					this.toastService.error(this.errorHandler.getErrorMessage(err, "Failed to assign vehicle"));
 					this.processingId = null;
 					console.error("Error assigning vehicle:", err);
 				},
@@ -281,10 +280,7 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 					this.loadRequests();
 				},
 				error: (err) => {
-					this.toastService.error(
-						"Failed to approve request: " +
-							(err.error?.message || err.message || "Unknown error"),
-					);
+					this.toastService.error(this.errorHandler.getErrorMessage(err, "Failed to approve request"));
 					this.processingId = null;
 					console.error("Error approving request:", err);
 				},
@@ -311,10 +307,7 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 				this.loadRequests();
 			},
 			error: (err) => {
-				this.toastService.error(
-					"Failed to reject request: " +
-						(err.error?.message || err.message || "Unknown error"),
-				);
+				this.toastService.error(this.errorHandler.getErrorMessage(err, "Failed to reject request"));
 				this.processingId = null;
 				console.error("Error rejecting request:", err);
 			},
@@ -348,10 +341,7 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 				this.loadRequests();
 			},
 			error: (err) => {
-				this.toastService.error(
-					"Failed to complete request: " +
-						(err.error?.message || err.message || "Unknown error"),
-				);
+				this.toastService.error(this.errorHandler.getErrorMessage(err, "Failed to complete request"));
 				this.processingId = null;
 				console.error("Error completing request:", err);
 			},

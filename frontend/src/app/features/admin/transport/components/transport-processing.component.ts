@@ -9,6 +9,7 @@ import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 interface BookingDetails {
   vehicleNumber: string;
@@ -65,7 +66,8 @@ export class TransportProcessingComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private router: Router,
     public dateUtils: DateUtilsService,
-    private statusUtils: StatusUtilsService
+    private statusUtils: StatusUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -204,7 +206,7 @@ export class TransportProcessingComponent implements OnInit {
           },
           error: (err) => {
             console.error('❌ Failed to save booking details:', err);
-            this.toastService.error('Vehicle assigned but failed to save booking details: ' + (err.error?.message || err.message));
+            this.toastService.error(this.errorHandler.getErrorMessage(err, 'Vehicle assigned but failed to save booking details'));
             this.isLoading = false;
             this.fetchTransportRequests(); // Still refresh to show vehicle assignment
           }
@@ -212,7 +214,7 @@ export class TransportProcessingComponent implements OnInit {
       },
       error: (err) => {
         console.error('❌ Failed to assign vehicle:', err);
-        this.toastService.error('Failed to assign vehicle: ' + (err.error?.message || err.message));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to assign vehicle'));
         this.isLoading = false;
       }
     });
@@ -343,7 +345,7 @@ export class TransportProcessingComponent implements OnInit {
         this.isProcessing = false;
       },
       error: (err) => {
-        this.toastService.error('Failed to complete request: ' + (err.error?.message || err.message));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to complete request'));
         this.isProcessing = false;
       }
     });

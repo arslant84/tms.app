@@ -12,6 +12,7 @@ import { StatusUtilsService } from '../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { WorkflowStatusComponent } from '../../../shared/components/workflow-status/workflow-status.component';
 import { ApprovalActionsComponent } from '../../../shared/components/approval-actions/approval-actions.component';
+import { HttpErrorHandlerService } from '../../../core/utils/http-error-handler.service';
 import { type WorkflowInstance, type WorkflowInstanceList, type WorkflowStepExecution } from '../../../core/models/workflow.models';
 
 @Component({
@@ -45,7 +46,8 @@ export class CombinedDetailComponent implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
     public dateUtils: DateUtilsService,
-    public statusUtils: StatusUtilsService
+    public statusUtils: StatusUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -223,7 +225,7 @@ export class CombinedDetailComponent implements OnInit, OnDestroy {
         window.URL.revokeObjectURL(url);
         this.toastService.success('PDF exported successfully');
       },
-      error: (err) => this.toastService.error('Failed to export PDF: ' + (err.message || 'Unknown error'))
+      error: (err) => this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to export PDF'))
     });
   }
 
@@ -241,7 +243,7 @@ export class CombinedDetailComponent implements OnInit, OnDestroy {
       if (!confirmed) return;
       this.combinedRequestService.cancel(this.requestId).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => { this.toastService.success('Request cancelled'); this.loadRequest(); },
-        error: (err) => this.toastService.error('Failed to cancel: ' + (err.message || 'Unknown error'))
+        error: (err) => this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to cancel'))
       });
     });
   }
@@ -251,7 +253,7 @@ export class CombinedDetailComponent implements OnInit, OnDestroy {
       if (!confirmed) return;
       this.combinedRequestService.delete(this.requestId).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => { this.toastService.success('Request deleted'); this.router.navigate(['/combined']); },
-        error: (err) => this.toastService.error('Failed to delete: ' + (err.message || 'Unknown error'))
+        error: (err) => this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to delete'))
       });
     });
   }

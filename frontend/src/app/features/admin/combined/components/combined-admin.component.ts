@@ -16,6 +16,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 interface FilterCriteria {
   status: string;
@@ -101,7 +102,8 @@ export class CombinedAdminComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private router: Router,
     public dateUtils: DateUtilsService,
-    private statusUtils: StatusUtilsService
+    private statusUtils: StatusUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -305,7 +307,7 @@ export class CombinedAdminComponent implements OnInit {
         this.loadRequests();
       },
       error: (err) => {
-        this.toastService.error('Failed to approve: ' + (err.message || 'Unknown error'));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to approve'));
         this.processingId = null;
       }
     });
@@ -335,7 +337,7 @@ export class CombinedAdminComponent implements OnInit {
         this.loadRequests();
       },
       error: (err) => {
-        this.toastService.error('Failed to reject: ' + (err.message || 'Unknown error'));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to reject'));
         this.processingId = null;
       }
     });

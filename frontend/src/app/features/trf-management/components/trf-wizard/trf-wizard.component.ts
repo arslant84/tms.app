@@ -14,6 +14,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-trf-wizard',
@@ -71,7 +72,8 @@ export class TrfWizardComponent implements OnInit {
     private route: ActivatedRoute,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
-    private rbacService: RbacService
+    private rbacService: RbacService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -537,38 +539,14 @@ export class TrfWizardComponent implements OnInit {
             },
             error: (error: any) => {
               this.isSubmitting = false;
-              this.submitError = 'Error updating nested resources: ' + (error.message || 'Unknown error');
+              this.submitError = this.errorHandler.getErrorMessage(error, 'Error updating nested resources');
               this.toastService.error(this.submitError);
             }
           });
         },
         error: (error: any) => {
           this.isSubmitting = false;
-
-          // Extract validation errors if available
-          let errorMessage = 'Error updating TRF: ';
-          if (error.error && typeof error.error === 'object') {
-            if (error.error.non_field_errors) {
-              errorMessage += error.error.non_field_errors.join(', ');
-            } else if (error.error.message) {
-              errorMessage += error.error.message;
-            } else {
-              // Flatten all field errors
-              const fieldErrors = Object.entries(error.error)
-                .map(([field, messages]: [string, any]) => {
-                  if (Array.isArray(messages)) {
-                    return `${field}: ${messages.join(', ')}`;
-                  }
-                  return `${field}: ${messages}`;
-                })
-                .join('; ');
-              errorMessage += fieldErrors || error.message || 'Unknown error';
-            }
-          } else {
-            errorMessage += error.message || 'Unknown error';
-          }
-
-          this.submitError = errorMessage;
+          this.submitError = this.errorHandler.getErrorMessage(error, 'Error updating TRF');
           this.toastService.error(this.submitError);
         }
       });
@@ -593,7 +571,7 @@ export class TrfWizardComponent implements OnInit {
                   },
                   error: (error: any) => {
                     this.isSubmitting = false;
-                    this.submitError = 'Error submitting TRF: ' + (error.error?.error || error.error?.message || error.message || 'Unknown error');
+                    this.submitError = this.errorHandler.getErrorMessage(error, 'Error submitting TRF');
                     this.toastService.error(this.submitError);
                   }
                 });
@@ -605,14 +583,14 @@ export class TrfWizardComponent implements OnInit {
             },
             error: (error: any) => {
               this.isSubmitting = false;
-              this.submitError = 'Error creating nested resources: ' + (error.message || 'Unknown error');
+              this.submitError = this.errorHandler.getErrorMessage(error, 'Error creating nested resources');
               this.toastService.error(this.submitError);
             }
           });
         },
         error: (error: any) => {
           this.isSubmitting = false;
-          this.submitError = 'Error creating TRF: ' + (error.error?.message || error.message || 'Unknown error');
+          this.submitError = this.errorHandler.getErrorMessage(error, 'Error creating TRF');
           this.toastService.error(this.submitError);
         }
       });
