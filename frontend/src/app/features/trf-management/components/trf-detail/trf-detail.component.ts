@@ -148,6 +148,7 @@ export class TrfDetailComponent implements OnInit {
       // Nested data extracted based on travel type
       itinerary: itinerary,
       mealSelections: mealSelections,
+      mealProcessingStatus: data.meal_processing_status || data.mealProcessingStatus,
       passportDetails: passportDetails,
       bankDetails: bankDetails,
       advanceAmounts: advanceAmounts,
