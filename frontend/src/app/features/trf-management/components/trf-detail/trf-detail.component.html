@@ -173,6 +173,9 @@
       <div class="card-header">
         <i class="bi bi-cup-straw"></i>
         <h3>Meal Provision{{ isDomestic ? ' (Kiyanly)' : '' }}</h3>
+        <span class="badge ms-auto" [ngClass]="statusUtils.getStatusBadgeClass(trfData.mealProcessingStatus || 'Pending')">
+          {{ trfData.mealProcessingStatus || 'Pending' }}
+        </span>
       </div>
       <div class="card-body">
         <div class="table-container">
