@@ -13,6 +13,7 @@ import { AppSettingsService } from '../../../../core/services/app-settings.servi
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-transport-detail',
@@ -49,7 +50,8 @@ export class TransportDetailComponent implements OnInit {
     public workflowService: WorkflowService,
     private appSettingsService: AppSettingsService,
     public dateUtils: DateUtilsService,
-    public statusUtils: StatusUtilsService
+    public statusUtils: StatusUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -238,7 +240,7 @@ export class TransportDetailComponent implements OnInit {
             this.router.navigate(['/transport']);
           },
           error: (err) => {
-            this.toastService.error('Failed to cancel request: ' + (err.error?.message || err.message));
+            this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to cancel request'));
           }
         });
       }
@@ -254,7 +256,7 @@ export class TransportDetailComponent implements OnInit {
             this.router.navigate(['/transport']);
           },
           error: (err) => {
-            this.toastService.error('Failed to delete request: ' + (err.error?.message || err.message));
+            this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to delete request'));
           }
         });
       }
@@ -275,7 +277,7 @@ export class TransportDetailComponent implements OnInit {
         this.toastService.success('PDF exported successfully');
       },
       error: (err: any) => {
-        this.toastService.error('Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to export PDF'));
       }
     });
   }

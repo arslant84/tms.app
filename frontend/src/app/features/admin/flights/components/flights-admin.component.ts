@@ -8,6 +8,7 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-flights-admin',
@@ -71,7 +72,8 @@ export class FlightsAdminComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private router: Router,
     private appSettingsService: AppSettingsService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -226,7 +228,7 @@ export class FlightsAdminComponent implements OnInit {
         this.loadBookings();
       },
       error: (err) => {
-        this.toastService.error('Failed to issue ticket: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to issue ticket'));
         this.processingId = null;
         console.error('Error issuing ticket:', err);
       }
@@ -258,7 +260,7 @@ export class FlightsAdminComponent implements OnInit {
         this.loadBookings();
       },
       error: (err) => {
-        this.toastService.error('Failed to confirm booking: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to confirm booking'));
         this.processingId = null;
         console.error('Error confirming booking:', err);
       }
@@ -285,7 +287,7 @@ export class FlightsAdminComponent implements OnInit {
         this.loadBookings();
       },
       error: (err) => {
-        this.toastService.error('Failed to cancel booking: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to cancel booking'));
         this.processingId = null;
         console.error('Error cancelling booking:', err);
       }

@@ -12,6 +12,7 @@ import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-trf-detail',
@@ -48,7 +49,8 @@ export class TrfDetailComponent implements OnInit {
     public workflowService: WorkflowService,
     private rbacService: RbacService,
     public dateUtils: DateUtilsService,
-    public statusUtils: StatusUtilsService
+    public statusUtils: StatusUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -324,7 +326,7 @@ export class TrfDetailComponent implements OnInit {
             this.router.navigate(['/trf']);
           },
           error: (err) => {
-            this.toastService.error('Failed to cancel TRF: ' + (err.message || 'Unknown error'));
+            this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to cancel TRF'));
           }
         });
       }
@@ -344,7 +346,7 @@ export class TrfDetailComponent implements OnInit {
             this.router.navigate(['/trf']);
           },
           error: (err) => {
-            this.toastService.error('Failed to delete TRF: ' + (err.message || 'Unknown error'));
+            this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to delete TRF'));
           }
         });
       }
@@ -366,7 +368,7 @@ export class TrfDetailComponent implements OnInit {
         this.toastService.success('PDF exported successfully');
       },
       error: (err: any) => {
-        this.toastService.error('Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to export PDF'));
       }
     });
   }

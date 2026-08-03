@@ -7,6 +7,7 @@ import { WorkflowService } from '../../../core/services/workflow.service';
 import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-approval-actions',
@@ -42,7 +43,8 @@ export class ApprovalActionsComponent implements OnInit, OnDestroy {
   constructor(
     public workflowService: WorkflowService,
     private confirmationService: ConfirmationService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -112,7 +114,7 @@ export class ApprovalActionsComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.processing = false;
-          this.toastService.error('Failed to approve step: ' + (err.error?.error || err.message));
+          this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to approve step'));
           console.error('Error approving step:', err);
         }
       });
@@ -143,7 +145,7 @@ export class ApprovalActionsComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.processing = false;
-          this.toastService.error('Failed to reject step: ' + (err.error?.error || err.message));
+          this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to reject step'));
           console.error('Error rejecting step:', err);
         }
       });
@@ -182,7 +184,7 @@ export class ApprovalActionsComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.processing = false;
-          this.toastService.error('Failed to skip step: ' + (err.error?.error || err.message));
+          this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to skip step'));
           console.error('Error skipping step:', err);
         }
       });
@@ -222,7 +224,7 @@ export class ApprovalActionsComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.processing = false;
-          this.toastService.error('Failed to delegate step: ' + (err.error?.error || err.message));
+          this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to delegate step'));
           console.error('Error delegating step:', err);
         }
       });

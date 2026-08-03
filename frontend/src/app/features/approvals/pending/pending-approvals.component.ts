@@ -8,6 +8,7 @@ import { ConfirmationService } from '../../../core/services/confirmation.service
 import { CurrencyFormatPipe } from '../../../core/pipes/currency-format.pipe';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-pending-approvals',
@@ -42,7 +43,8 @@ export class PendingApprovalsComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private router: Router,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -207,7 +209,7 @@ export class PendingApprovalsComponent implements OnInit {
         this.approvalComment = '';
       },
       error: (err) => {
-        this.toastService.error('Failed to approve request: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to approve request'));
         this.isProcessing = false;
         console.error('Error approving request:', err);
       }
@@ -261,7 +263,7 @@ export class PendingApprovalsComponent implements OnInit {
         this.approvalComment = '';
       },
       error: (err) => {
-        this.toastService.error('Failed to reject request: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to reject request'));
         this.isProcessing = false;
         console.error('Error rejecting request:', err);
       }

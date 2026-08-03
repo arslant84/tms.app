@@ -18,6 +18,7 @@ import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-visa-detail',
@@ -59,7 +60,8 @@ export class VisaDetailComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private rbacService: RbacService,
     public dateUtils: DateUtilsService,
-    public statusUtils: StatusUtilsService
+    public statusUtils: StatusUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -262,9 +264,7 @@ export class VisaDetailComponent implements OnInit {
         this.toastService.success('PDF exported successfully');
       },
       error: (err: HttpErrorResponse) => {
-        this.toastService.error(
-          'Failed to export PDF: ' + (err.error?.message || err.message || 'Unknown error')
-        );
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to export PDF'));
       },
     });
   }
