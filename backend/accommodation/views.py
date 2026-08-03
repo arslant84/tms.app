@@ -560,6 +560,18 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 # Don't fail the request update if workflow fails
                 pass
 
+    def perform_destroy(self, instance):
+        """Log deletion before removing the record, since nothing else audits this."""
+        AdminActionLog.log_action(
+            user=self.request.user,
+            action_type="entity_deleted",
+            description=f"Deleted Accommodation Request #{instance.id} ({instance.request_number or 'no request number'})",
+            entity_type="accommodation",
+            entity_id=str(instance.id),
+            request=self.request,
+        )
+        super().perform_destroy(instance)
+
     @action(detail=True, methods=["post"])
     def submit(self, request, pk=None):
         """

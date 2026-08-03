@@ -442,6 +442,18 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 logger.error(f" Error starting workflow: {str(e)}")
 
+    def perform_destroy(self, instance):
+        """Log deletion before removing the record, since nothing else audits this."""
+        AdminActionLog.log_action(
+            user=self.request.user,
+            action_type="entity_deleted",
+            description=f"Deleted Transport Request #{instance.id} ({instance.request_number or 'no request number'})",
+            entity_type="transportrequest",
+            entity_id=str(instance.id),
+            request=self.request,
+        )
+        super().perform_destroy(instance)
+
     @action(detail=True, methods=["post"])
     def submit(self, request, pk=None):
         """

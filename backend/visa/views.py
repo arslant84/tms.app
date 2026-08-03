@@ -946,6 +946,18 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 )
                 # Don't fail the update if workflow update fails
 
+    def perform_destroy(self, instance):
+        """Log deletion before removing the record, since nothing else audits this."""
+        AdminActionLog.log_action(
+            user=self.request.user,
+            action_type="entity_deleted",
+            description=f"Deleted Visa Application #{instance.id} ({instance.request_number or 'no request number'})",
+            entity_type="visaapplication",
+            entity_id=str(instance.id),
+            request=self.request,
+        )
+        super().perform_destroy(instance)
+
     @action(detail=True, methods=["get"], url_path="export-pdf")
     def export_pdf(self, request, pk=None):
         """
