@@ -322,7 +322,7 @@ export class VisaFormComponent implements OnInit {
 
           this.toastService.error(errorMessage, true, 10000);
         } else {
-          const errorMsg = error?.error?.message || error?.message || 'Failed to save visa application';
+          const errorMsg = error?.error?.message || error?.error?.detail || error?.message || 'Failed to save visa application';
           this.toastService.error(errorMsg);
         }
 
@@ -380,7 +380,7 @@ export class VisaFormComponent implements OnInit {
 
           this.toastService.error(errorMessage, true, 10000);
         } else {
-          const errorMsg = error?.error?.message || error?.message || 'Failed to save draft';
+          const errorMsg = error?.error?.message || error?.error?.detail || error?.message || 'Failed to save draft';
           this.toastService.error(errorMsg);
         }
 
