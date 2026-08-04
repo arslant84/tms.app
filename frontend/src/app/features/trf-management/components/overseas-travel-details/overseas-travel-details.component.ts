@@ -68,6 +68,7 @@ export interface OverseasTravelDetails {
 	itinerary: ItinerarySegment[];
 	advanceBankDetails?: AdvanceBankDetails;
 	advanceAmountRequested?: AdvanceAmountItem[];
+	advanceConsentAccepted?: boolean;
 	passportUpload?: PassportUploadDetails;
 }
 
@@ -103,6 +104,7 @@ export class OverseasTravelDetailsComponent
 	itinerarySegments: Record<string, any>[] = [];
 	advanceAmounts: Record<string, any>[] = [];
 	advanceAmountEditorValid = false;
+	advanceConsentAccepted = false;
 
 	@ViewChild(AdvanceAmountEditorComponent) advanceAmountEditor?: AdvanceAmountEditorComponent;
 
@@ -190,6 +192,10 @@ export class OverseasTravelDetailsComponent
 		this.advanceAmountEditorValid = valid;
 	}
 
+	onAdvanceConsentChange(accepted: boolean): void {
+		this.advanceConsentAccepted = accepted;
+	}
+
 	onSubmit(): void {
 		if (this.overseasForm.valid && this.advanceAmountEditorValid) {
 			const formValue = this.overseasForm.getRawValue();
@@ -197,6 +203,7 @@ export class OverseasTravelDetailsComponent
 				...formValue,
 				itinerary: this.itinerarySegments,
 				advanceAmountRequested: this.advanceAmounts,
+				advanceConsentAccepted: this.advanceConsentAccepted,
 			});
 		} else {
 			this.formUtils.markFormGroupTouched(this.overseasForm);
@@ -222,6 +229,7 @@ export class OverseasTravelDetailsComponent
 			...this.overseasForm.getRawValue(),
 			itinerary: this.itinerarySegments,
 			advanceAmountRequested: this.advanceAmounts,
+			advanceConsentAccepted: this.advanceConsentAccepted,
 			passportUpload: {
 				file: this.passportFile,
 				fileName: this.passportFileName,

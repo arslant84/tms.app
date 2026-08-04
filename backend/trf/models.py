@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from utils.encryption import EncryptedTextField
 
 
@@ -53,6 +54,11 @@ class TravelRequest(models.Model):
     meal_processing_status = models.CharField(
         max_length=20, choices=MEAL_PROCESSING_STATUS_CHOICES, default="Pending"
     )
+    advance_consent_accepted = models.BooleanField(
+        default=False,
+        help_text="Requestor acknowledged the advance amount refund/deduction Terms and Conditions (Overseas/Home Leave only).",
+    )
+    advance_consent_accepted_at = models.DateTimeField(blank=True, null=True)
 
     # ForeignKey to User who created the request
     created_by = models.ForeignKey(
@@ -65,6 +71,13 @@ class TravelRequest(models.Model):
 
     def __str__(self):
         return self.requestor_name
+
+    def save(self, *args, **kwargs):
+        # Stamp the acceptance time server-side the first time consent is given,
+        # rather than trusting a client-supplied timestamp.
+        if self.advance_consent_accepted and not self.advance_consent_accepted_at:
+            self.advance_consent_accepted_at = timezone.now()
+        super().save(*args, **kwargs)
 
     # Maps each canonical travel_type to its own workflow entity_type, so an
     # admin can configure a distinct approval workflow per travel type via

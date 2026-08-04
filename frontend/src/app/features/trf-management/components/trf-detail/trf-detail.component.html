@@ -337,6 +337,16 @@
           </div>
           <p class="table-legend">LH: Lodging & Hotel | MA: Meals Allowance | OA: Other Allowance | TR: Transportation | OE: Other Expenses</p>
         </div>
+
+        <div class="sub-section advance-consent-status" *ngIf="trfData.advanceAmounts && trfData.advanceAmounts.length > 0">
+          <span class="badge" [ngClass]="trfData.advanceConsentAccepted ? 'badge-success' : 'badge-warning'">
+            <i class="bi" [ngClass]="trfData.advanceConsentAccepted ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
+            {{ trfData.advanceConsentAccepted ? 'Refund/Deduction Terms & Conditions Acknowledged' : 'Terms & Conditions Not Yet Acknowledged' }}
+          </span>
+          <span class="text-sm text-muted ms-2" *ngIf="trfData.advanceConsentAccepted && trfData.advanceConsentAcceptedAt">
+            on {{ dateUtils.formatDate(trfData.advanceConsentAcceptedAt) }}
+          </span>
+        </div>
       </div>
     </div>
 
