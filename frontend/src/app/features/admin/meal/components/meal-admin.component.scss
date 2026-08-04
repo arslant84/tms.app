@@ -3,7 +3,7 @@
 @use '../../../../../styles/variables' as vars;
 
 // =========== CONTAINER ==========
-.meal-admin-container {
+.meal-admin-page {
   width: 100%;
   max-width: none;
   margin: 0;
@@ -321,7 +321,7 @@
 
 // ========== RESPONSIVE ==========
 @media (width <= 768px) {
-  .meal-admin-container {
+  .meal-admin-page {
     padding: vars.$spacing-4;
   }
 
