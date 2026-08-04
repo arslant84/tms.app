@@ -286,6 +286,8 @@ class TravelRequestSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "additional_data",
+            "advance_consent_accepted",
+            "advance_consent_accepted_at",
             "has_flight_booking",
             "has_meal_provision",
             "meal_processing_status",
@@ -541,6 +543,8 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             "updated_at",
             "additional_data",
             "meal_processing_status",
+            "advance_consent_accepted",
+            "advance_consent_accepted_at",
             "advance_amounts",
             "bank_detail",
             "approval_steps",
@@ -858,6 +862,7 @@ class TravelRequestCreateSerializer(serializers.ModelSerializer):
             "external_ref_to_authority_letter",
             "external_cost_center",
             "additional_data",
+            "advance_consent_accepted",
         ]
         read_only_fields = ["id"]
 
@@ -891,6 +896,7 @@ class TravelRequestUpdateSerializer(serializers.ModelSerializer):
             "external_cost_center",
             "additional_data",
             "status",
+            "advance_consent_accepted",
         ]
 
     def validate(self, attrs):

@@ -152,6 +152,8 @@ export class TrfDetailComponent implements OnInit {
       passportDetails: passportDetails,
       bankDetails: bankDetails,
       advanceAmounts: advanceAmounts,
+      advanceConsentAccepted: data.advance_consent_accepted ?? data.advanceConsentAccepted ?? false,
+      advanceConsentAcceptedAt: data.advance_consent_accepted_at || data.advanceConsentAcceptedAt,
       approvalSteps: data.approval_steps || data.approvalSteps || data.approvalWorkflow || [],
       createdAt: data.created_at || data.createdAt,
       updatedAt: data.updated_at || data.updatedAt,

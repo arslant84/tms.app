@@ -19,6 +19,7 @@ export interface HomeLeaveDetails {
   itinerary: any[];
   advanceBankDetails?: any;
   advanceAmountRequested?: any[];
+  advanceConsentAccepted?: boolean;
   passportUpload?: PassportUploadDetails;
 }
 
@@ -48,6 +49,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   itinerarySegments: Record<string, any>[] = [];
   advanceAmounts: Record<string, any>[] = [];
   advanceAmountEditorValid = false;
+  advanceConsentAccepted = false;
 
   @ViewChild(AdvanceAmountEditorComponent) advanceAmountEditor?: AdvanceAmountEditorComponent;
 
@@ -122,13 +124,18 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     this.advanceAmountEditorValid = valid;
   }
 
+  onAdvanceConsentChange(accepted: boolean): void {
+    this.advanceConsentAccepted = accepted;
+  }
+
   onSubmit(): void {
     if (this.homeLeaveForm.valid && this.advanceAmountEditorValid) {
       const formValue = this.homeLeaveForm.getRawValue();
       this.formSubmit.emit({
         ...formValue,
         itinerary: this.itinerarySegments,
-        advanceAmountRequested: this.advanceAmounts
+        advanceAmountRequested: this.advanceAmounts,
+        advanceConsentAccepted: this.advanceConsentAccepted
       });
     } else {
       this.formUtils.markFormGroupTouched(this.homeLeaveForm);
@@ -154,6 +161,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
       ...this.homeLeaveForm.getRawValue(),
       itinerary: this.itinerarySegments,
       advanceAmountRequested: this.advanceAmounts,
+      advanceConsentAccepted: this.advanceConsentAccepted,
       passportUpload: {
         file: this.passportFile,
         fileName: this.passportFileName,

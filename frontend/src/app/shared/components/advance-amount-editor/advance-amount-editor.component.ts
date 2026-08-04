@@ -36,6 +36,8 @@ export class AdvanceAmountEditorComponent implements OnInit, OnDestroy {
   @Output() itemsChange = new EventEmitter<Record<string, any>[]>();
   /** Emits this component's own form validity (items + the required consent checkbox) so the parent form can gate submission on it. */
   @Output() validityChange = new EventEmitter<boolean>();
+  /** Emits the consent checkbox's checked state so the parent can persist it with the TRF. */
+  @Output() consentChange = new EventEmitter<boolean>();
 
   form: FormGroup;
   requestorName = '';
@@ -85,6 +87,11 @@ export class AdvanceAmountEditorComponent implements OnInit, OnDestroy {
     this.itemsArray.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.emitItems();
     });
+
+    this.form.get('advanceConsent')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((checked) => {
+      this.consentChange.emit(!!checked);
+    });
+    this.consentChange.emit(!!this.form.get('advanceConsent')?.value);
 
     this.form.statusChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.validityChange.emit(this.form.valid);

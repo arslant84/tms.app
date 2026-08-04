@@ -202,6 +202,7 @@ export class TrfWizardComponent implements OnInit {
           itinerary: this.transformItineraryData(overseasItinerary),
           advanceBankDetails: this.transformBankDetails(bankDetails),
           advanceAmountRequested: this.transformAdvanceAmounts(advanceAmounts),
+          advanceConsentAccepted: data.advance_consent_accepted || false,
           passportUpload: overseasPassport
         };
         break;
@@ -222,6 +223,7 @@ export class TrfWizardComponent implements OnInit {
           passportDetails: this.transformPassportDetails(passportDetails),
           advanceBankDetails: this.transformBankDetails(homeLeaveBank),
           advanceAmountRequested: this.transformAdvanceAmounts(homeLeaveAdvanceAmounts),
+          advanceConsentAccepted: data.advance_consent_accepted || false,
           passportUpload: homeLeavePassport
         };
         break;
@@ -654,6 +656,7 @@ export class TrfWizardComponent implements OnInit {
   private prepareOverseasData(mainTrf: any, isDraft: boolean): any {
     mainTrf.purpose = this.overseasTravelData?.purpose || '';
     mainTrf.additional_comments = this.approvalForm?.getFormData()?.additionalComments || '';
+    mainTrf.advance_consent_accepted = this.overseasTravelData?.advanceConsentAccepted || false;
 
     return {
       mainTrf,
@@ -671,6 +674,7 @@ export class TrfWizardComponent implements OnInit {
   private prepareHomeLeaveData(mainTrf: any, isDraft: boolean): any {
     mainTrf.purpose = this.homeLeaveData?.purpose || '';
     mainTrf.additional_comments = this.approvalForm?.getFormData()?.additionalComments || '';
+    mainTrf.advance_consent_accepted = this.homeLeaveData?.advanceConsentAccepted || false;
 
     return {
       mainTrf,
