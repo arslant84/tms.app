@@ -75,7 +75,7 @@
         <div class="detail-grid">
           <div class="detail-item">
             <label>Request ID</label>
-            <span class="value">#{{ request.id }}</span>
+            <span class="value">{{ request.requestNumber || '#' + request.id }}</span>
           </div>
           <div class="detail-item" *ngIf="hasTrfLink()">
             <label>TSR Reference</label>
