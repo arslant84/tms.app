@@ -20,6 +20,9 @@ repos:
         files: ^backend/
       - id: check-yaml
       - id: check-json
+        # tsconfig*.json and .vscode/*.json are JSONC (allow comments), which
+        # standard JSON parsing rejects - not actually invalid JSON.
+        exclude: (^frontend/tsconfig.*\.json$|/\.vscode/.*\.json$)
       - id: check-merge-conflict
       - id: debug-statements
         files: ^backend/
