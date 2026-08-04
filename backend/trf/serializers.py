@@ -540,6 +540,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "additional_data",
+            "meal_processing_status",
             "advance_amounts",
             "bank_detail",
             "approval_steps",
