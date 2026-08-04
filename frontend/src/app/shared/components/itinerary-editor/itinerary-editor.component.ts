@@ -9,9 +9,11 @@ export interface ItineraryFieldConfig {
   key: string;
   /** Exact label text to render (bilingual labels included verbatim where the original had them). */
   label: string;
-  type: 'date' | 'time' | 'text' | 'readonly-text';
+  type: 'date' | 'time' | 'text' | 'readonly-text' | 'select';
   required?: boolean;
   placeholder?: string;
+  /** Options for type: 'select'. */
+  options?: string[];
   /** Custom required-error text; defaults to "<label> is required". */
   requiredErrorMessage?: string;
   /** Grid column span at the widest breakpoint (8-col grid). Defaults to 1. */

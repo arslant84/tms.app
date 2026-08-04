@@ -8,6 +8,8 @@ import { MealProvisionComponent, DailyMealSelection } from '../../../../shared/c
 import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
 import { ItineraryEditorComponent, ItineraryFieldConfig } from '../../../../shared/components/itinerary-editor/itinerary-editor.component';
 
+export const DOMESTIC_CITIES = ['Ashgabat', 'Turkmenbashi', 'Turkmenabat', 'Dashoguz', 'Mary'];
+
 export interface ItinerarySegment {
   date: Date | null;
   day: string;
@@ -54,8 +56,8 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   itineraryFields: ItineraryFieldConfig[] = [
     { key: 'date', label: 'Date', type: 'date', required: true, requiredErrorMessage: 'Date is required', isPrimaryDate: true },
     { key: 'day', label: 'Day', type: 'readonly-text' },
-    { key: 'from', label: 'From', type: 'text', required: true, requiredErrorMessage: 'Origin is required' },
-    { key: 'to', label: 'To', type: 'text', required: true, requiredErrorMessage: 'Destination is required' },
+    { key: 'from', label: 'From', type: 'select', options: DOMESTIC_CITIES, required: true, requiredErrorMessage: 'Origin is required' },
+    { key: 'to', label: 'To', type: 'select', options: DOMESTIC_CITIES, required: true, requiredErrorMessage: 'Destination is required' },
     { key: 'etd', label: 'ETD', type: 'text', placeholder: 'e.g. 14:30 or Morning' },
     { key: 'eta', label: 'ETA', type: 'text', placeholder: 'e.g. 14:30 or Morning' },
     { key: 'flightNumber', label: 'Flight', type: 'text' },
