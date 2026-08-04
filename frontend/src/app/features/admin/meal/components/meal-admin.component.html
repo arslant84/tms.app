@@ -1,4 +1,4 @@
-<div class="meal-admin-container">
+<div class="meal-admin-page">
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
@@ -71,9 +71,16 @@
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-8">
-          <input type="text" class="form-control" id="mealAdminSearch" name="mealAdminSearch"
-                 autocomplete="off" placeholder="Search by ID, Requestor, Purpose..."
-                 [(ngModel)]="filterCriteria.search" (keyup.enter)="applyFilters()">
+          <input
+            type="text"
+            class="form-control"
+            id="mealAdminSearch"
+            name="mealAdminSearch"
+            autocomplete="off"
+            placeholder="Search by ID, Requestor, Purpose..."
+            [(ngModel)]="filterCriteria.search"
+            (keyup.enter)="applyFilters()"
+          />
         </div>
         <div class="col-md-4">
           <select class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
@@ -96,7 +103,6 @@
       </div>
     </div>
     <div class="card-body p-0">
-
       <!-- Loading State -->
       <div *ngIf="loading" class="loading-state">
         <app-loading-spinner size="md" message="Loading meal requests..."></app-loading-spinner>
@@ -134,7 +140,11 @@
           <tbody>
             <tr *ngFor="let request of requests">
               <td>
-                <a href="javascript:void(0)" (click)="viewRequest(request)" class="text-decoration-none fw-medium request-number">
+                <a
+                  href="javascript:void(0)"
+                  (click)="viewRequest(request)"
+                  class="text-decoration-none fw-medium request-number"
+                >
                   {{ request.request_number || request.id }}
                 </a>
               </td>
@@ -153,11 +163,18 @@
               </td>
               <td class="text-end">
                 <div class="action-buttons">
-                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewRequest(request)" title="View Details">
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="viewRequest(request)"
+                    title="View Details"
+                  >
                     <i class="bi bi-eye"></i>
                   </button>
                   <button
-                    *ngIf="request.meal_processing_status !== 'Arranged' && request.meal_processing_status !== 'Completed'"
+                    *ngIf="
+                      request.meal_processing_status !== 'Arranged' &&
+                      request.meal_processing_status !== 'Completed'
+                    "
                     class="btn btn-sm btn-outline-info btn-icon"
                     [disabled]="isProcessing(request.id)"
                     (click)="markStatus(request, 'Arranged')"
@@ -190,7 +207,11 @@
                 <span aria-hidden="true">&laquo;</span>
               </a>
             </li>
-            <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
+            <li
+              class="page-item"
+              *ngFor="let page of getPageNumbers()"
+              [class.active]="page === currentPage"
+            >
               <a class="page-link" (click)="changePage(page)">{{ page }}</a>
             </li>
             <li class="page-item" [class.disabled]="currentPage === totalPages">
@@ -203,7 +224,8 @@
         <div class="text-center mt-3 pagination-info">
           <small>
             Showing {{ (currentPage - 1) * pageSize + 1 }} -
-            {{ currentPage * pageSize > totalRequests ? totalRequests : currentPage * pageSize }} of {{ totalRequests }} requests
+            {{ currentPage * pageSize > totalRequests ? totalRequests : currentPage * pageSize }} of
+            {{ totalRequests }} requests
           </small>
         </div>
       </div>
