@@ -3,6 +3,7 @@ import {
 	Component,
 	EventEmitter,
 	Input,
+	ViewChild,
 	inject,
 	type OnChanges,
 	type OnDestroy,
@@ -101,6 +102,9 @@ export class OverseasTravelDetailsComponent
 	tripTypeValue: "One Way" | "Round Trip" = "One Way";
 	itinerarySegments: Record<string, any>[] = [];
 	advanceAmounts: Record<string, any>[] = [];
+	advanceAmountEditorValid = false;
+
+	@ViewChild(AdvanceAmountEditorComponent) advanceAmountEditor?: AdvanceAmountEditorComponent;
 
 	// Passport upload
 	passportFile: File | null = null;
@@ -182,8 +186,12 @@ export class OverseasTravelDetailsComponent
 		this.advanceAmounts = items;
 	}
 
+	onAdvanceValidityChange(valid: boolean): void {
+		this.advanceAmountEditorValid = valid;
+	}
+
 	onSubmit(): void {
-		if (this.overseasForm.valid) {
+		if (this.overseasForm.valid && this.advanceAmountEditorValid) {
 			const formValue = this.overseasForm.getRawValue();
 			this.formSubmit.emit({
 				...formValue,
@@ -192,6 +200,7 @@ export class OverseasTravelDetailsComponent
 			});
 		} else {
 			this.formUtils.markFormGroupTouched(this.overseasForm);
+			this.advanceAmountEditor?.markConsentTouched();
 		}
 	}
 
@@ -226,11 +235,12 @@ export class OverseasTravelDetailsComponent
 	}
 
 	isValid(): boolean {
-		return this.overseasForm.valid;
+		return this.overseasForm.valid && this.advanceAmountEditorValid;
 	}
 
 	markAllAsTouched(): void {
 		this.formUtils.markFormGroupTouched(this.overseasForm);
+		this.advanceAmountEditor?.markConsentTouched();
 	}
 
 	onBack(): void {

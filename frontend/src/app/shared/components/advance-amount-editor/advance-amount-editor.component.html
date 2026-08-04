@@ -77,4 +77,37 @@
       <i class="bi bi-plus-circle me-1"></i> Add Advance Item
     </button>
   </div>
+
+  <div class="advance-consent">
+    <p>
+      I, {{ requestorName || '__________________' }}, hereby acknowledge the above Terms and Conditions and
+      express my willingness that should there be any excess from actual expenditure as per approved Staff
+      Expense Claim Form vs the advance of USD {{ totalUSD | number: '1.2-2' }} (advance amount) or in case of
+      non utilization of the advance amount which I received for my official travel or purpose from
+      {{ periodFrom ? dateUtils.formatDate(periodFrom) : '__________________' }} to
+      {{ periodTo ? dateUtils.formatDate(periodTo) : '__________________' }}, the excess or unutilized advanced
+      amount shall be refunded to PETRONAS Carigali (Turkmenistan) Sdn Bhd (&ldquo;PC(T)SB/Company&rdquo;) by way
+      of deduction from my salary. I also agree that the deduction of the excess advance or unutilized advance
+      amount may be made either in full or in part at PC(T)SB&rsquo;s discretion.
+    </p>
+    <p>
+      I also agree that PC(T)SB reserves the right to instruct me to refund in cash the excess advance or
+      unutilized advance amount either in full or in part.
+    </p>
+
+    <div class="form-check">
+      <input
+        type="checkbox"
+        id="advanceConsent"
+        formControlName="advanceConsent"
+        class="form-check-input"
+        [ngClass]="{'is-invalid': form.get('advanceConsent')?.invalid && form.get('advanceConsent')?.touched}">
+      <label class="form-check-label" for="advanceConsent">
+        I agree to the above Terms and Conditions <span class="text-danger">*</span>
+      </label>
+      <div class="invalid-feedback" *ngIf="form.get('advanceConsent')?.invalid && form.get('advanceConsent')?.touched">
+        You must agree to the above Terms and Conditions before submitting.
+      </div>
+    </div>
+  </div>
 </div>
