@@ -87,7 +87,8 @@
     <app-form-section-card icon="bi-cash-stack" title="Details for the Amount Requested / Детали по запрашиваемой сумме">
         <app-advance-amount-editor
           [initialItems]="initialData.advanceAmountRequested || []"
-          (itemsChange)="onAdvanceAmountsChange($event)">
+          (itemsChange)="onAdvanceAmountsChange($event)"
+          (validityChange)="onAdvanceValidityChange($event)">
         </app-advance-amount-editor>
         <p class="mt-2 text-muted small">
           LH: Lodging/Hotel. MA: Meal Allowance. OA: Other Allowances. TR: Transportation. OE: Other Expenses.

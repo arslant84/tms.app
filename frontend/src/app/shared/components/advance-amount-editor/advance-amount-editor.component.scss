@@ -62,3 +62,45 @@
   margin-bottom: vars.$spacing-md;
   border: 1px solid vars.$border-light;
 }
+
+.advance-consent {
+  margin-top: vars.$spacing-lg;
+  padding: vars.$spacing-md;
+  background-color: vars.$gray-50;
+  border-radius: vars.$radius-lg;
+  border: 1px solid vars.$border-light;
+
+  p {
+    font-size: vars.$font-size-sm;
+    color: vars.$gray-800;
+    text-align: justify;
+
+    &:last-of-type {
+      margin-bottom: vars.$spacing-md;
+    }
+  }
+
+  .form-check {
+    display: flex;
+    align-items: flex-start;
+    gap: vars.$spacing-2;
+    position: relative;
+  }
+
+  .form-check-input {
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+
+    &.is-invalid {
+      border-color: vars.$error-color;
+    }
+  }
+
+  .form-check-label {
+    font-weight: vars.$font-weight-medium;
+  }
+
+  .invalid-feedback {
+    flex-basis: 100%;
+  }
+}

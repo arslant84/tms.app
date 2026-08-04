@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
@@ -47,6 +47,9 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   tripTypeValue: 'One Way' | 'Round Trip' = 'Round Trip';
   itinerarySegments: Record<string, any>[] = [];
   advanceAmounts: Record<string, any>[] = [];
+  advanceAmountEditorValid = false;
+
+  @ViewChild(AdvanceAmountEditorComponent) advanceAmountEditor?: AdvanceAmountEditorComponent;
 
   // Passport upload
   passportFile: File | null = null;
@@ -115,8 +118,12 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     this.advanceAmounts = items;
   }
 
+  onAdvanceValidityChange(valid: boolean): void {
+    this.advanceAmountEditorValid = valid;
+  }
+
   onSubmit(): void {
-    if (this.homeLeaveForm.valid) {
+    if (this.homeLeaveForm.valid && this.advanceAmountEditorValid) {
       const formValue = this.homeLeaveForm.getRawValue();
       this.formSubmit.emit({
         ...formValue,
@@ -125,6 +132,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
       });
     } else {
       this.formUtils.markFormGroupTouched(this.homeLeaveForm);
+      this.advanceAmountEditor?.markConsentTouched();
     }
   }
 
@@ -159,11 +167,12 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   }
 
   isValid(): boolean {
-    return this.homeLeaveForm.valid;
+    return this.homeLeaveForm.valid && this.advanceAmountEditorValid;
   }
 
   markAllAsTouched(): void {
     this.formUtils.markFormGroupTouched(this.homeLeaveForm);
+    this.advanceAmountEditor?.markConsentTouched();
   }
 
   onBack(): void {

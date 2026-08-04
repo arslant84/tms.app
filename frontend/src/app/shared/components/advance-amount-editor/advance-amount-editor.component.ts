@@ -2,6 +2,8 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
+import { AuthService } from '../../../core/services/auth.service';
+import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
 export interface AdvanceAmountItem {
   dateFrom: string;
@@ -30,27 +32,64 @@ export interface AdvanceAmountItem {
 })
 export class AdvanceAmountEditorComponent implements OnInit, OnDestroy {
   @Input() initialItems: Partial<AdvanceAmountItem>[] = [];
+  @Input() initialConsent = false;
   @Output() itemsChange = new EventEmitter<Record<string, any>[]>();
+  /** Emits this component's own form validity (items + the required consent checkbox) so the parent form can gate submission on it. */
+  @Output() validityChange = new EventEmitter<boolean>();
 
   form: FormGroup;
+  requestorName = '';
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {
-    this.form = this.fb.group({ items: this.fb.array([]) });
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    public dateUtils: DateUtilsService
+  ) {
+    this.form = this.fb.group({
+      items: this.fb.array([]),
+      advanceConsent: [false, Validators.requiredTrue]
+    });
   }
 
   get itemsArray(): FormArray {
     return this.form.get('items') as FormArray;
   }
 
+  get totalUSD(): number {
+    return this.itemsArray.controls.reduce((sum, item) => sum + (Number(item.get('usd')?.value) || 0), 0);
+  }
+
+  get periodFrom(): string | null {
+    const dates = this.itemsArray.controls.map(item => item.get('dateFrom')?.value).filter(Boolean);
+    return dates.length ? dates.sort()[0] : null;
+  }
+
+  get periodTo(): string | null {
+    const dates = this.itemsArray.controls.map(item => item.get('dateTo')?.value).filter(Boolean);
+    return dates.length ? dates.sort().at(-1) ?? null : null;
+  }
+
+  markConsentTouched(): void {
+    this.form.get('advanceConsent')?.markAsTouched();
+  }
+
   ngOnInit(): void {
+    this.requestorName = this.authService.getCurrentUser()?.name || '';
+
     const seed = this.initialItems?.length ? this.initialItems : [{}];
     seed.forEach(item => this.itemsArray.push(this.createItem(item)));
+    this.form.get('advanceConsent')?.setValue(this.initialConsent);
     this.emitItems();
 
     this.itemsArray.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.emitItems();
     });
+
+    this.form.statusChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.validityChange.emit(this.form.valid);
+    });
+    this.validityChange.emit(this.form.valid);
   }
 
   ngOnDestroy(): void {
