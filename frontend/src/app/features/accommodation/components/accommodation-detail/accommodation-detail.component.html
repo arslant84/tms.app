@@ -1,7 +1,10 @@
 <div class="accommodation-detail-container">
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-state">
-    <app-loading-spinner size="md" message="Loading accommodation request details..."></app-loading-spinner>
+    <app-loading-spinner
+      size="md"
+      message="Loading accommodation request details..."
+    ></app-loading-spinner>
   </div>
 
   <!-- Error State -->
@@ -50,13 +53,15 @@
         {{ getWorkflowStatus() }}
       </span>
       <!-- Fallback to request status if no workflow -->
-      <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span>
+      <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">{{
+        request.status
+      }}</span>
       <!-- Loading state -->
       <span *ngIf="workflowLoading" class="badge bg-secondary">
         <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
         Loading workflow...
       </span>
-      <span class="text-muted">Request ID: #{{ request.id }}</span>
+      <span class="text-muted">Request ID: {{ request.requestNumber || '#' + request.id }}</span>
       <span class="text-muted">Submitted: {{ dateUtils.formatDate(request.submittedDate) }}</span>
     </div>
 
@@ -75,7 +80,8 @@
           <div class="detail-item" *ngIf="hasTrfLink()">
             <label>TSR Reference</label>
             <a [routerLink]="getTrfLink()" class="value link">
-              <i class="bi bi-file-text"></i> {{ request.trfRequestNumber || 'TSR-' + request.trfId }}
+              <i class="bi bi-file-text"></i>
+              {{ request.trfRequestNumber || 'TSR-' + request.trfId }}
             </a>
           </div>
           <div class="detail-item">
@@ -120,10 +126,15 @@
           </div>
           <div class="detail-item">
             <label>Number of Nights</label>
-            <span class="value highlight">{{ numberOfNights }} night{{ numberOfNights !== 1 ? 's' : '' }}</span>
+            <span class="value highlight"
+              >{{ numberOfNights }} night{{ numberOfNights !== 1 ? 's' : '' }}</span
+            >
           </div>
           <div class="detail-item" *ngIf="request.requestedRoomType">
-            <label><i [class]="getRoomTypeIcon(request.requestedRoomType)"></i> Requested Room Type</label>
+            <label
+              ><i [class]="getRoomTypeIcon(request.requestedRoomType)"></i> Requested Room
+              Type</label
+            >
             <span class="value">{{ request.requestedRoomType }}</span>
           </div>
           <div class="detail-item" *ngIf="request.flightArrivalTime">
@@ -207,7 +218,9 @@
             </div>
             <div class="summary-item">
               <label>Check-Out:</label>
-              <span class="value">{{ dateUtils.formatDate(getActualBookingDates().checkOut) }}</span>
+              <span class="value">{{
+                dateUtils.formatDate(getActualBookingDates().checkOut)
+              }}</span>
             </div>
           </div>
         </div>
@@ -220,7 +233,9 @@
               <div class="booking-number">{{ i + 1 }}</div>
               <div class="booking-content">
                 <div class="booking-date">{{ formatDateLong(booking.date) }}</div>
-                <div class="booking-room">{{ booking.roomName }} • {{ booking.staffHouseName }}</div>
+                <div class="booking-room">
+                  {{ booking.roomName }} • {{ booking.staffHouseName }}
+                </div>
               </div>
               <div class="booking-badges">
                 <span class="badge" [ngClass]="getBookingStatus(booking).class">
@@ -320,7 +335,9 @@
           </div>
           <div class="detail-item" *ngIf="request.rejectionDetails?.rejectedAt">
             <label>Rejected At</label>
-            <span class="value">{{ dateUtils.formatDateTime(request.rejectionDetails?.rejectedAt) }}</span>
+            <span class="value">{{
+              dateUtils.formatDateTime(request.rejectionDetails?.rejectedAt)
+            }}</span>
           </div>
           <div class="rejection-reason" *ngIf="request.rejectionDetails?.reason">
             <label>Reason</label>
@@ -366,7 +383,9 @@
           <div class="col-md-6">
             <div class="info-group">
               <label>Current Status</label>
-              <p><span class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span></p>
+              <p>
+                <span class="badge" [ngClass]="getStatusClass()">{{ request.status }}</span>
+              </p>
             </div>
           </div>
           <div class="col-md-6" *ngIf="request.createdAt">
@@ -405,9 +424,7 @@
         </div>
 
         <!-- Workflow Status Timeline -->
-        <app-workflow-status
-          *ngIf="workflow && !workflowLoading"
-          [workflowInstance]="workflow">
+        <app-workflow-status *ngIf="workflow && !workflowLoading" [workflowInstance]="workflow">
         </app-workflow-status>
 
         <!-- Approval Action Buttons -->
@@ -416,7 +433,8 @@
           [stepExecution]="currentStepExecution"
           (approved)="onWorkflowApproved()"
           (rejected)="onWorkflowRejected()"
-          (delegated)="onWorkflowDelegated()">
+          (delegated)="onWorkflowDelegated()"
+        >
         </app-approval-actions>
 
         <!-- No Workflow Message -->
@@ -428,7 +446,15 @@
     </section>
 
     <!-- Fallback: Old Approval Workflow (if no modern workflow exists) -->
-    <section class="detail-card" *ngIf="!workflow && !workflowLoading && request.approvalWorkflow && request.approvalWorkflow.length > 0">
+    <section
+      class="detail-card"
+      *ngIf="
+        !workflow &&
+        !workflowLoading &&
+        request.approvalWorkflow &&
+        request.approvalWorkflow.length > 0
+      "
+    >
       <div class="card-header">
         <i class="bi bi-check-circle"></i>
         <h3>Approval Workflow (Legacy)</h3>
