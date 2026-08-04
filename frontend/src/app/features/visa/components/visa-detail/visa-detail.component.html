@@ -5,7 +5,6 @@
   </div>
 
   <div *ngIf="!isLoading && application">
-
     <!-- Header -->
     <div class="page-header">
       <div class="header-left">
@@ -46,7 +45,11 @@
         {{ getWorkflowStatus() }}
       </span>
       <!-- Fallback to request status if no workflow -->
-      <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusBadgeClass(application.status)">
+      <span
+        *ngIf="!workflow && !workflowLoading"
+        class="badge"
+        [ngClass]="getStatusBadgeClass(application.status)"
+      >
         {{ application.status }}
       </span>
       <!-- Loading state -->
@@ -54,8 +57,12 @@
         <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
         Loading workflow...
       </span>
-      <span class="text-muted">Application ID: #{{ application.id }}</span>
-      <span class="text-muted" *ngIf="application.submitted_date">Submitted: {{ dateUtils.formatDate(application.submitted_date) }}</span>
+      <span class="text-muted"
+        >Application ID: {{ application.request_number || '#' + application.id }}</span
+      >
+      <span class="text-muted" *ngIf="application.submitted_date"
+        >Submitted: {{ dateUtils.formatDate(application.submitted_date) }}</span
+      >
     </div>
 
     <!-- Personal Information -->
@@ -174,7 +181,9 @@
           <div class="col-md-6">
             <div class="info-group">
               <label>Visa Type</label>
-              <p><span class="badge badge-visa-type">{{ application.visa_type }}</span></p>
+              <p>
+                <span class="badge badge-visa-type">{{ application.visa_type }}</span>
+              </p>
             </div>
           </div>
           <div class="col-md-6">
@@ -328,7 +337,9 @@
               <div>
                 <strong>{{ doc.document_name }}</strong>
                 <small class="text-muted d-block">{{ doc.document_type || 'Document' }}</small>
-                <small class="text-muted">Uploaded: {{ dateUtils.formatDateTime(doc.uploaded_at) }}</small>
+                <small class="text-muted"
+                  >Uploaded: {{ dateUtils.formatDateTime(doc.uploaded_at) }}</small
+                >
               </div>
               <a [href]="doc.document_path" target="_blank" class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-download"></i> Download
@@ -341,7 +352,6 @@
         </p>
       </div>
     </div>
-
 
     <!-- Additional Comments -->
     <div class="card mb-4" *ngIf="application.additional_comments">
@@ -363,7 +373,11 @@
           <div class="col-md-6">
             <div class="info-group">
               <label>Current Status</label>
-              <p><span class="badge" [ngClass]="getStatusBadgeClass(application.status)">{{ application.status }}</span></p>
+              <p>
+                <span class="badge" [ngClass]="getStatusBadgeClass(application.status)">{{
+                  application.status
+                }}</span>
+              </p>
             </div>
           </div>
           <div class="col-md-6">
@@ -401,7 +415,10 @@
     </div>
 
     <!-- Visa Processing Details (for completed visas) -->
-    <div class="card mb-4" *ngIf="application.processing_details && application.status === 'Completed'">
+    <div
+      class="card mb-4"
+      *ngIf="application.processing_details && application.status === 'Completed'"
+    >
       <div class="card-header">
         <h5><i class="bi bi-check-circle-fill me-2 text-success"></i> Visa Processing Details</h5>
       </div>
@@ -412,13 +429,17 @@
             <div class="col-md-6">
               <div class="processing-detail-item">
                 <label class="text-muted small d-block mb-1">Visa Number</label>
-                <p class="mb-0 fw-bold">{{ application.processing_details.visa_number || 'N/A' }}</p>
+                <p class="mb-0 fw-bold">
+                  {{ application.processing_details.visa_number || 'N/A' }}
+                </p>
               </div>
             </div>
             <div class="col-md-6">
               <div class="processing-detail-item">
                 <label class="text-muted small d-block mb-1">Completed By</label>
-                <p class="mb-0 fw-medium">{{ application.processing_details.completed_by_admin ? 'Admin' : 'System' }}</p>
+                <p class="mb-0 fw-medium">
+                  {{ application.processing_details.completed_by_admin ? 'Admin' : 'System' }}
+                </p>
               </div>
             </div>
 
@@ -426,13 +447,25 @@
             <div class="col-md-6">
               <div class="processing-detail-item">
                 <label class="text-muted small d-block mb-1">Visa Valid From</label>
-                <p class="mb-0 fw-medium">{{ application.processing_details.visa_valid_from ? dateUtils.formatDate(application.processing_details.visa_valid_from) : 'N/A' }}</p>
+                <p class="mb-0 fw-medium">
+                  {{
+                    application.processing_details.visa_valid_from
+                      ? dateUtils.formatDate(application.processing_details.visa_valid_from)
+                      : 'N/A'
+                  }}
+                </p>
               </div>
             </div>
             <div class="col-md-6">
               <div class="processing-detail-item">
                 <label class="text-muted small d-block mb-1">Visa Valid To</label>
-                <p class="mb-0 fw-medium">{{ application.processing_details.visa_valid_to ? dateUtils.formatDate(application.processing_details.visa_valid_to) : 'N/A' }}</p>
+                <p class="mb-0 fw-medium">
+                  {{
+                    application.processing_details.visa_valid_to
+                      ? dateUtils.formatDate(application.processing_details.visa_valid_to)
+                      : 'N/A'
+                  }}
+                </p>
               </div>
             </div>
 
@@ -461,9 +494,7 @@
         </div>
 
         <!-- Workflow Status Timeline -->
-        <app-workflow-status
-          *ngIf="workflow && !workflowLoading"
-          [workflowInstance]="workflow">
+        <app-workflow-status *ngIf="workflow && !workflowLoading" [workflowInstance]="workflow">
         </app-workflow-status>
 
         <!-- Approval Action Buttons -->
@@ -472,7 +503,8 @@
           [stepExecution]="currentStepExecution"
           (approved)="onWorkflowApproved()"
           (rejected)="onWorkflowRejected()"
-          (delegated)="onWorkflowDelegated()">
+          (delegated)="onWorkflowDelegated()"
+        >
         </app-approval-actions>
 
         <!-- No Workflow Message -->
@@ -495,7 +527,9 @@
             <div class="timeline-content">
               <h6>{{ step.step_name }}</h6>
               <p class="text-muted mb-1">Role: {{ step.step_role }}</p>
-              <p class="mb-1"><span class="badge badge-info">{{ step.status }}</span></p>
+              <p class="mb-1">
+                <span class="badge badge-info">{{ step.status }}</span>
+              </p>
               <small class="text-muted">{{ dateUtils.formatDateTime(step.step_date) }}</small>
               <p class="mt-2" *ngIf="step.comments">{{ step.comments }}</p>
             </div>
