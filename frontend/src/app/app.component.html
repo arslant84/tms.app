@@ -6,6 +6,12 @@
   message="Loading...">
 </app-loading-spinner>
 
+<!-- Connection lost - retrying in the background, current page stays as-is -->
+<div class="connection-issue-banner" *ngIf="connectionIssue$ | async">
+  <i class="bi bi-wifi-off"></i>
+  Connection lost. Retrying...
+</div>
+
 <!-- Toast notifications -->
 <app-toast-container></app-toast-container>
 
@@ -15,13 +21,16 @@
 
 <!-- Main application container -->
 <div class="app-container">
-  <!-- Show main layout with sidebar for authenticated users -->
-  <ng-container *ngIf="(isAuthenticated$ | async)">
+  <!-- Show main layout with sidebar for authenticated (or still-pending) users.
+       Defaulting the pending (not-yet-resolved) case here too - rather than to the
+       login container below - means a refresh mid connection-retry keeps the user's
+       current page/layout instead of flashing to the login screen while we wait. -->
+  <ng-container *ngIf="(isAuthenticated$ | async) !== false">
     <router-outlet></router-outlet>
   </ng-container>
 
   <!-- Clean login page for visitors (no sidebar/header/footer) -->
-  <ng-container *ngIf="!(isAuthenticated$ | async)">
+  <ng-container *ngIf="(isAuthenticated$ | async) === false">
     <div class="login-container">
       <router-outlet></router-outlet>
     </div>
