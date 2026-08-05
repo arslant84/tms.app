@@ -19,10 +19,30 @@ export class AuthService {
   private initializedSubject = new BehaviorSubject<boolean>(false);
   public initialized$ = this.initializedSubject.asObservable();
 
+  // True while the bootstrap /me check is failing due to a network error (not an
+  // actual "invalid session" response) and is being retried in the background.
+  private connectionIssueSubject = new BehaviorSubject<boolean>(false);
+  public connectionIssue$ = this.connectionIssueSubject.asObservable();
+  private connectionRetryCount = 0;
+  private readonly MAX_CONNECTION_RETRIES = 5;
+  private readonly CONNECTION_RETRY_DELAY_MS = 10000; // ~50s of timed retries total
+
   constructor(private http: HttpClient, private router: Router) {
     // SECURITY: Token now stored in HttpOnly cookie (not accessible to JavaScript)
     // Try to load user data from backend on init
     this.initializeUser();
+
+    // If a retry is pending when connectivity returns, don't wait for the next
+    // timed retry - try immediately and give it a fresh retry budget.
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        if (this.connectionIssueSubject.value) {
+          this.connectionRetryCount = 0;
+          this.initializationRequest$ = undefined;
+          this.runInitializeUserRequest();
+        }
+      });
+    }
   }
 
   /**
@@ -35,15 +55,38 @@ export class AuthService {
     if (this.initializationRequest$) {
       return;
     }
+    this.runInitializeUserRequest();
+  }
 
+  private runInitializeUserRequest(): void {
     // Create shared observable for initialization
     this.initializationRequest$ = this.http.get<User>(`${this.apiUrl}/api/users/me/`, { withCredentials: true }).pipe(
       tap((user) => {
+        this.connectionRetryCount = 0;
+        this.connectionIssueSubject.next(false);
         this.currentUserSubject.next(user);
         this.initializedSubject.next(true);
       }),
-      catchError(() => {
-        // No valid session, user not logged in
+      catchError((error) => {
+        // status 0 = no response reached the server at all (offline/DNS/timeout) -
+        // that tells us nothing about session validity, so don't treat it as a
+        // logout. A real 401/403 (or other server response) means the session
+        // genuinely is invalid/expired - no point retrying that.
+        const isNetworkError = error?.status === 0;
+
+        if (isNetworkError && this.connectionRetryCount < this.MAX_CONNECTION_RETRIES) {
+          this.connectionRetryCount++;
+          this.connectionIssueSubject.next(true);
+          this.initializationRequest$ = undefined; // allow the next attempt to run
+          setTimeout(() => this.runInitializeUserRequest(), this.CONNECTION_RETRY_DELAY_MS);
+          // Deliberately do NOT resolve initializedSubject yet - isAuthenticated()
+          // stays pending until we either succeed or give up below.
+          return of(null as any);
+        }
+
+        // Retries exhausted, or a genuine server-confirmed auth failure.
+        this.connectionRetryCount = 0;
+        this.connectionIssueSubject.next(false);
         this.currentUserSubject.next(null);
         this.initializedSubject.next(true);
         return of(null as any);

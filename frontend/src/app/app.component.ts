@@ -36,6 +36,7 @@ import { LoadingSpinnerComponent } from './shared/components/loading-spinner/loa
 export class AppComponent implements OnInit, OnDestroy {
   isAuthenticated$: Observable<boolean>;
   loading$: Observable<boolean>;
+  connectionIssue$: Observable<boolean>;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -47,6 +48,7 @@ export class AppComponent implements OnInit, OnDestroy {
   ) {
     this.isAuthenticated$ = this.authService.isAuthenticated();
     this.loading$ = this.globalLoading.loading$;
+    this.connectionIssue$ = this.authService.connectionIssue$;
     this.setupRouterLoading();
   }
 

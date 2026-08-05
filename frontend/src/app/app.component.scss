@@ -38,6 +38,25 @@
   background-attachment: fixed;
 }
 
+// Connection-lost banner - sits above everything, doesn't block the current page
+.connection-issue-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: vars.$z-modal + 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: vars.$spacing-2;
+  padding: vars.$spacing-2 vars.$spacing-4;
+  background-color: vars.$warning-color;
+  color: vars.$text-inverse;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
+  text-align: center;
+}
+
 // Login container styles - centered content for unauthenticated users
 .login-container {
   display: flex;
