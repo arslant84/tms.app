@@ -303,6 +303,17 @@ export class FlightsProcessingComponent implements OnInit {
       return;
     }
 
+    // Validate time fields — type="time" inputs can be bypassed via paste.
+    const timePattern = /^\d{2}:\d{2}(:\d{2})?$/;
+    if (this.departureTime && !timePattern.test(this.departureTime)) {
+      this.toastService.error('Invalid departure time. Please use HH:MM format.');
+      return;
+    }
+    if (this.arrivalTime && !timePattern.test(this.arrivalTime)) {
+      this.toastService.error('Invalid arrival time. Please use HH:MM format.');
+      return;
+    }
+
     this.isProcessing = true;
 
     const payload = {

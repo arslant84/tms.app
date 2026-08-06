@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { map, tap, catchError, shareReplay, filter, take, switchMap } from 'rxjs/operators';
+import { map, tap, catchError, shareReplay, filter, take, switchMap, finalize } from 'rxjs/operators';
 import { User, AuthResponse, LoginResult } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 
@@ -24,8 +24,8 @@ export class AuthService {
   private connectionIssueSubject = new BehaviorSubject<boolean>(false);
   public connectionIssue$ = this.connectionIssueSubject.asObservable();
   private connectionRetryCount = 0;
-  private readonly MAX_CONNECTION_RETRIES = 5;
-  private readonly CONNECTION_RETRY_DELAY_MS = 10000; // ~50s of timed retries total
+  private readonly MAX_CONNECTION_RETRIES = 15;
+  private readonly CONNECTION_RETRY_DELAY_MS = 3000; // 3s × 15 = 45s total retry budget
 
   constructor(private http: HttpClient, private router: Router) {
     // SECURITY: Token now stored in HttpOnly cookie (not accessible to JavaScript)
@@ -60,7 +60,11 @@ export class AuthService {
 
   private runInitializeUserRequest(): void {
     // Create shared observable for initialization
-    this.initializationRequest$ = this.http.get<User>(`${this.apiUrl}/api/users/me/`, { withCredentials: true }).pipe(
+    console.log('[AuthService] runInitializeUserRequest: sending GET /api/users/me/');
+    this.initializationRequest$ = this.http.get<User>(`${this.apiUrl}/api/users/me/?_t=${Date.now()}`, {
+      withCredentials: true,
+      headers: { 'Cache-Control': 'no-cache' },
+    }).pipe(
       tap((user) => {
         this.connectionRetryCount = 0;
         this.connectionIssueSubject.next(false);
@@ -68,11 +72,13 @@ export class AuthService {
         this.initializedSubject.next(true);
       }),
       catchError((error) => {
-        // status 0 = no response reached the server at all (offline/DNS/timeout) -
-        // that tells us nothing about session validity, so don't treat it as a
-        // logout. A real 401/403 (or other server response) means the session
-        // genuinely is invalid/expired - no point retrying that.
-        const isNetworkError = error?.status === 0;
+        // status 0   = no response at all (offline / DNS / TCP failure)
+        // status 5xx = server-side transient error (502 during gunicorn reload,
+        //              503 maintenance, 504 timeout) — tells us nothing about
+        //              session validity, so retry rather than treating as logout.
+        // A real 401/403 means the session is genuinely invalid; no point retrying.
+        console.log('[AuthService] /api/users/me/ error:', error?.status, error?.message);
+        const isNetworkError = error?.status === 0 || error?.status >= 500;
 
         if (isNetworkError && this.connectionRetryCount < this.MAX_CONNECTION_RETRIES) {
           this.connectionRetryCount++;
@@ -273,17 +279,34 @@ export class AuthService {
 
   /**
    * SECURITY: Refresh JWT access token using refresh token from HttpOnly cookie
-   * Called automatically when access token expires (401 error)
+   * Called automatically when access token expires (401 error).
+   *
+   * ROTATE_REFRESH_TOKENS=True means every successful refresh invalidates the
+   * previous refresh token. If multiple concurrent requests all get a 401 and
+   * each independently fires a refresh, the first one succeeds while the rest
+   * get 401 on the now-rotated token — triggering spurious logouts on page
+   * refresh. Sharing one in-flight observable via shareReplay(1) ensures all
+   * concurrent callers wait for the same single refresh request.
    */
+  private refreshInProgress$: Observable<boolean> | null = null;
+
   refreshToken(): Observable<boolean> {
+    if (this.refreshInProgress$) {
+      return this.refreshInProgress$;
+    }
+
     const url = `${this.apiUrl}/api/token/refresh/`;
-    return this.http.post(url, {}, { withCredentials: true }).pipe(
-      map(() => true),  // Refresh successful, new tokens set in cookies
+    this.refreshInProgress$ = this.http.post(url, {}, { withCredentials: true }).pipe(
+      map(() => true),
       catchError(error => {
         console.error('Token refresh failed', error);
-        return of(false);  // Refresh failed
-      })
+        return of(false);
+      }),
+      finalize(() => { this.refreshInProgress$ = null; }),
+      shareReplay(1),
     );
+
+    return this.refreshInProgress$;
   }
 
   isAuthenticated(): Observable<boolean> {

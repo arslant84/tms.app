@@ -59,6 +59,8 @@ export class NotificationService {
   private apiUrl = `${environment.apiUrl}/notifications`;
   private authService = inject(AuthService);
   private pollingSubscription?: Subscription;
+  private unreadCountInFlight = false;
+  private tabVisible = true;
 
   // Observable for unread count (used by header badge)
   private unreadCountSubject = new BehaviorSubject<number>(0);
@@ -69,6 +71,16 @@ export class NotificationService {
   public notifications$ = this.notificationsSubject.asObservable();
 
   constructor(private http: HttpClient) {
+    // Pause polling when the tab is hidden; resume (and fire immediately) when visible again.
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        this.tabVisible = document.visibilityState === 'visible';
+        if (this.tabVisible && this.pollingSubscription) {
+          this.refreshUnreadCount();
+        }
+      });
+    }
+
     // SECURITY: Only poll when user is authenticated
     this.authService.currentUser$.pipe(
       filter(user => user !== null)
@@ -91,9 +103,13 @@ export class NotificationService {
     }
     // Load initial notifications and unread count
     this.refreshNotifications();
-    // Then poll only the count every 30 seconds (notifications are heavier to fetch)
-    this.pollingSubscription = interval(30000).subscribe(() => {
-      this.refreshUnreadCount();
+    // Then poll only the count every 60 seconds (notifications are heavier to fetch).
+    // Skip ticks when the tab is hidden — the visibilitychange listener fires an
+    // immediate refresh when the user returns, so no data is lost.
+    this.pollingSubscription = interval(60000).subscribe(() => {
+      if (this.tabVisible) {
+        this.refreshUnreadCount();
+      }
     });
   }
 
@@ -156,9 +172,17 @@ export class NotificationService {
     );
   }
 
-  // Refresh unread count (used by polling)
+  // Refresh unread count (used by polling).
+  // Guard prevents a second request from firing if the previous one is still in flight.
   refreshUnreadCount(): void {
-    this.getUnreadCount().subscribe();
+    if (this.unreadCountInFlight) {
+      return;
+    }
+    this.unreadCountInFlight = true;
+    this.getUnreadCount().subscribe({
+      complete: () => { this.unreadCountInFlight = false; },
+      error: () => { this.unreadCountInFlight = false; },
+    });
   }
 
   // Get single notification

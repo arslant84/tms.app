@@ -35,12 +35,19 @@ from .serializers import (
 
 class WorkflowTemplateViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for managing workflow templates
-    Admin only - templates define reusable workflows
+    ViewSet for managing workflow templates.
+    Read (list/retrieve): any authenticated user — needed to render the workflow
+    preview when creating/editing a travel request.
+    Write (create/update/destroy/duplicate): admin only.
     """
 
     queryset = WorkflowTemplate.objects.all()
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser]  # default; overridden below
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [IsAuthenticated()]
+        return [IsAuthenticated(), IsAdminUser()]
 
     def get_queryset(self):
         """

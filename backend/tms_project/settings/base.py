@@ -70,6 +70,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "tms_project.middleware.DebugMeEndpointMiddleware",  # TEMP: remove after diagnosis
     "django.middleware.security.SecurityMiddleware",
     "tms_project.middleware.SecurityHeadersMiddleware",  # Before WhiteNoise to cover static file responses too
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve Angular SPA static assets at root URL
