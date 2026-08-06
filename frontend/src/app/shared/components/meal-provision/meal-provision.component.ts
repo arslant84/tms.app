@@ -136,7 +136,11 @@ export class MealProvisionComponent implements OnChanges {
   }
 
   private updateMealSummary(): void {
-    const selections = this.dailySelectionsArray.value;
+    // Read each control's own value rather than the FormArray's aggregated
+    // .value: a row's valueChanges fires with {onlySelf: true} on patchValue,
+    // which emits before the parent FormArray re-aggregates - so the FormArray's
+    // .value is still one change stale at that point.
+    const selections = this.dailySelectionsArray.controls.map(c => c.value as DailyMealSelection);
     this.mealSummary = {
       breakfast: selections.filter((s: DailyMealSelection) => s.breakfast).length,
       lunch: selections.filter((s: DailyMealSelection) => s.lunch).length,
