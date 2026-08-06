@@ -817,7 +817,11 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
   }
 
   private updateMealSummary(): void {
-    const sel = this.mealDailySelections.value as DailyMealRow[];
+    // Read each control's own value rather than the FormArray's aggregated
+    // .value: a row's valueChanges fires with {onlySelf: true} on patchValue,
+    // which emits before the parent FormArray re-aggregates - so the FormArray's
+    // .value is still one change stale at that point.
+    const sel = this.mealDailySelections.controls.map(c => c.value as DailyMealRow);
     this.mealSummary = {
       breakfast:   sel.filter(s => s.breakfast).length,
       lunch:       sel.filter(s => s.lunch).length,
