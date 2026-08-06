@@ -69,6 +69,7 @@ from .serializers import (
     RoleSerializer,
     UserAdminUpdateSerializer,
     UserCreateSerializer,
+    UserListSerializer,
     UserProfileUpdateSerializer,
     UserRegistrationSerializer,
     UserSerializer,
@@ -736,7 +737,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Apply filters for role, department, and is_active."""
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related(
+            "role", "department"
+        ).prefetch_related("role__permissions")
 
         # Filter by role (UUID)
         role = self.request.query_params.get("role")
@@ -758,6 +761,8 @@ class UserViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
+        if self.action == "list":
+            return UserListSerializer
         if self.action == "create":
             return UserCreateSerializer
         elif self.action in ["update", "partial_update"]:
@@ -853,7 +858,9 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request):
         """Get the current user's profile"""
         serializer = self.get_serializer(request.user)
-        return Response(serializer.data)
+        response = Response(serializer.data)
+        response['Cache-Control'] = 'no-store'
+        return response
 
     @action(
         detail=False,

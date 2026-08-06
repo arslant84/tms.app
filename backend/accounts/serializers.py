@@ -99,6 +99,50 @@ class RoleSerializer(serializers.ModelSerializer):
         return data
 
 
+class RoleSlimSerializer(serializers.ModelSerializer):
+    """Role representation for list views — id and name only, no nested permissions."""
+
+    class Meta:
+        model = Role
+        fields = ["id", "name"]
+
+
+class UserListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for user list views.
+
+    Intentionally omits ``profile_photo`` (stored as base64, up to 5 MB per user)
+    and replaces the full ``RoleSerializer`` (which nests all permissions) with a
+    slim id+name representation.  Use ``UserSerializer`` for single-user detail views.
+    """
+
+    role = RoleSlimSerializer(read_only=True)
+    department = DepartmentListSerializer(read_only=True)
+    permissions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "name",
+            "role",
+            "department",
+            "is_admin",
+            "is_active",
+            "staff_id",
+            "phone",
+            "last_login_at",
+            "permissions",
+            "password_change_required",
+        ]
+        read_only_fields = fields
+
+    def get_permissions(self, obj):
+        if obj.role_id:
+            return list(obj.role.permissions.values_list("name", flat=True))
+        return []
+
+
 class UserSerializer(serializers.ModelSerializer):
     role = RoleSerializer(
         read_only=True
