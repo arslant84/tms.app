@@ -1,0 +1,26 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Bulk Import Users (CSV){% endblock %}
+
+{% block content %}
+<h1>Bulk Import Users (CSV)</h1>
+
+<div style="background:#e7f3ff;border:1px solid #b6d9f7;border-radius:4px;padding:16px;margin-bottom:24px">
+  <strong>CSV format</strong>
+  <ul style="margin:8px 0 0 20px">
+    <li>Header row required: <code>staff_number,name,email,password</code></li>
+    <li><code>staff_number</code> and <code>password</code> may be left blank per row.</li>
+    <li>Rows left without a password get an unusable password — the user must use "forgot password" on first login.</li>
+    <li>A row is skipped (not an error) if a user with the same name, email, or staff number already exists.</li>
+  </ul>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <table>{{ form.as_table }}</table>
+  <br>
+  <input type="submit" value="Import Users"
+    style="background:#28a745;color:#fff;border:none;padding:8px 16px;cursor:pointer;border-radius:4px">
+  &nbsp;
+  <a href="{% url 'admin:accounts_user_changelist' %}" class="button">Cancel</a>
+</form>
+{% endblock %}

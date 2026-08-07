@@ -1,3 +1,5 @@
+import csv
+import io
 import os
 import subprocess
 
@@ -6,6 +8,9 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.db import transaction
 from django.http import FileResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import path, reverse
@@ -79,6 +84,18 @@ class CustomUserChangeForm(UserChangeForm):
             "status",
             "profile_photo",
         )
+
+
+class BulkUserImportForm(forms.Form):
+    csv_file = forms.FileField(
+        label="CSV file",
+        help_text=(
+            "Header row required: staff_number,name,email,password. "
+            "The password column may be left blank per-row — those users "
+            "get an unusable password and must reset it via the login "
+            "screen's forgot-password flow."
+        ),
+    )
 
 
 @admin.register(User)
@@ -174,6 +191,166 @@ class UserAdmin(BaseUserAdmin):
         )
         obj._deletion_logged = True
         super().delete_model(request, obj)
+
+    # ── Bulk CSV import ────────────────────────────────────────────────────
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "bulk-import/",
+                self.admin_site.admin_view(self.bulk_import_users_view),
+                name="accounts_bulk_import_users",
+            ),
+        ]
+        return custom + urls
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["bulk_import_url"] = reverse("admin:accounts_bulk_import_users")
+        return super().changelist_view(request, extra_context=extra_context)
+
+    @staticmethod
+    def _normalize_name(name):
+        return " ".join(name.split()).casefold()
+
+    def bulk_import_users_view(self, request):
+        if request.method == "POST":
+            form = BulkUserImportForm(request.POST, request.FILES)
+            if form.is_valid():
+                created, skipped, errors = self._process_bulk_import(
+                    request.FILES["csv_file"], request
+                )
+
+                if created:
+                    messages.success(request, f"Created {len(created)} user(s).")
+                if skipped:
+                    messages.warning(
+                        request,
+                        f"Skipped {len(skipped)} duplicate row(s): "
+                        + "; ".join(skipped[:20])
+                        + (" …" if len(skipped) > 20 else ""),
+                    )
+                if errors:
+                    messages.error(
+                        request,
+                        f"{len(errors)} row(s) could not be imported: "
+                        + "; ".join(errors[:20])
+                        + (" …" if len(errors) > 20 else ""),
+                    )
+
+                if created:
+                    AdminActionLog.log_action(
+                        user=request.user,
+                        action_type="user_created",
+                        description=(
+                            f"Bulk CSV import: created {len(created)} user(s), "
+                            f"skipped {len(skipped)} duplicate(s), "
+                            f"{len(errors)} error(s)."
+                        ),
+                        entity_type="User",
+                        request=request,
+                    )
+
+                return HttpResponseRedirect(reverse("admin:accounts_user_changelist"))
+        else:
+            form = BulkUserImportForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Bulk Import Users (CSV)",
+            "form": form,
+            "opts": self.model._meta,
+        }
+        return render(request, "admin/accounts/bulk_import_users.html", context)
+
+    def _process_bulk_import(self, uploaded_file, request):
+        """
+        Parse the uploaded CSV and create users, skipping duplicates.
+
+        A row is treated as a duplicate (and skipped, not an error) if its
+        name already matches an existing user — case/whitespace-insensitive
+        - or an existing user already has the same email/staff number.
+        Matching is checked both against the database and against rows
+        already created earlier in the same file, so repeats within one
+        upload are also skipped.
+        """
+        try:
+            decoded = uploaded_file.read().decode("utf-8-sig")
+        except UnicodeDecodeError:
+            return [], [], ["File is not valid UTF-8 text."]
+
+        reader = csv.DictReader(io.StringIO(decoded))
+        if reader.fieldnames:
+            reader.fieldnames = [
+                (f or "").strip().lower().replace(" ", "_") for f in reader.fieldnames
+            ]
+
+        existing_names = set(
+            self._normalize_name(n) for n in User.objects.values_list("name", flat=True)
+        )
+        existing_emails = set(User.objects.values_list("email", flat=True))
+        existing_staff_ids = set(
+            sid for sid in User.objects.values_list("staff_id", flat=True) if sid
+        )
+
+        created, skipped, errors = [], [], []
+
+        with transaction.atomic():
+            for i, row in enumerate(reader, start=2):  # start=2: header is row 1
+                name = (row.get("name") or "").strip()
+                email = (row.get("email") or "").strip().lower()
+                staff_number = (row.get("staff_number") or "").strip()
+                password = (row.get("password") or "").strip()
+
+                if not name or not email:
+                    errors.append(f"row {i}: missing name or email")
+                    continue
+
+                try:
+                    validate_email(email)
+                except ValidationError:
+                    errors.append(f"row {i}: invalid email '{email}'")
+                    continue
+
+                normalized_name = self._normalize_name(name)
+                if normalized_name in existing_names:
+                    skipped.append(f"row {i}: '{name}' (name already exists)")
+                    continue
+                if email in existing_emails:
+                    skipped.append(f"row {i}: '{name}' (email already exists)")
+                    continue
+                if staff_number and staff_number in existing_staff_ids:
+                    skipped.append(f"row {i}: '{name}' (staff number already exists)")
+                    continue
+
+                user = User(
+                    email=email,
+                    name=name,
+                    staff_id=staff_number or None,
+                )
+                if password:
+                    user.set_password(password)
+                else:
+                    user.set_unusable_password()
+                user.save()
+
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="user_created",
+                    description=f"User account created via bulk import: {email} ({name})",
+                    entity_type="User",
+                    entity_id=str(user.id),
+                    request=request,
+                )
+
+                existing_names.add(normalized_name)
+                existing_emails.add(email)
+                if staff_number:
+                    existing_staff_ids.add(staff_number)
+                created.append(email)
+
+        return created, skipped, errors
 
 
 class RolePermissionInline(admin.TabularInline):
