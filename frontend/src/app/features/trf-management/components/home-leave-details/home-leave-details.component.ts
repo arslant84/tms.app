@@ -174,8 +174,12 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     return this.passportFile;
   }
 
+  get isItineraryIncomplete(): boolean {
+    return this.tripTypeValue === 'Round Trip' && this.itinerarySegments.length < 2;
+  }
+
   isValid(): boolean {
-    return this.homeLeaveForm.valid && this.advanceAmountEditorValid;
+    return this.homeLeaveForm.valid && this.advanceAmountEditorValid && !this.isItineraryIncomplete;
   }
 
   markAllAsTouched(): void {

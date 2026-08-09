@@ -28,7 +28,10 @@
   <!-- Form Content -->
   <div class="wizard-content">
     <!-- Step 1: Requestor Information -->
-    <div class="step-content" *ngIf="currentStep === 1">
+    <!-- [hidden] rather than *ngIf: final submit validates every step via
+         @ViewChild references, which would go stale (undefined) if a step's
+         component were destroyed after navigating away from it. -->
+    <div class="step-content" [hidden]="currentStep !== 1">
       <app-requestor-information
         [initialData]="requestorData"
         (formSubmit)="onRequestorSubmit($event)">
@@ -36,7 +39,7 @@
     </div>
 
     <!-- Step 2: Travel Details (Dynamic based on type) -->
-    <div class="step-content" *ngIf="currentStep === 2">
+    <div class="step-content" [hidden]="currentStep !== 2">
       <app-domestic-travel-details
         *ngIf="selectedTravelType === 'Domestic'"
         [initialData]="domesticTravelData"
@@ -64,8 +67,12 @@
     </div>
 
     <!-- Step 3: Approval & Submission -->
-    <div class="step-content" *ngIf="currentStep === 3">
+    <div class="step-content" [hidden]="currentStep !== 3">
+      <!-- Gated on selectedTravelType, same as step 2's sub-components: in edit
+           mode this resolves asynchronously after the existing TRF loads, and
+           the component has no ngOnChanges to react to travelType arriving late. -->
       <app-approval-submission
+        *ngIf="selectedTravelType"
         [travelType]="selectedTravelType"
         [requestorData]="requestorData"
         [travelDetails]="getTravelDetailsForApproval()"
