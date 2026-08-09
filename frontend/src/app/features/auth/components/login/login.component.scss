@@ -133,6 +133,26 @@
         outline: none;
       }
     }
+
+    .btn-outline-secondary {
+      border: none;
+      border-left: 1px solid vars.$border-light;
+      border-radius: 0 !important;
+      height: auto;
+      min-height: 0;
+      background-color: vars.$gray-50;
+      color: vars.$gray-500;
+      padding: vars.$spacing-3 vars.$spacing-4;
+
+      &:hover {
+        background-color: vars.$gray-100;
+        color: vars.$gray-700;
+      }
+
+      i {
+        font-size: vars.$font-size-base;
+      }
+    }
   }
 
   // Error state for input groups

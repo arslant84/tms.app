@@ -177,8 +177,12 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
     return this.passportFile;
   }
 
+  get isItineraryIncomplete(): boolean {
+    return this.tripTypeValue === 'Round Trip' && this.itinerarySegments.length < 2;
+  }
+
   isValid(): boolean {
-    return this.externalForm.valid;
+    return this.externalForm.valid && !this.isItineraryIncomplete;
   }
 
   markAllAsTouched(): void {

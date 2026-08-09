@@ -172,8 +172,12 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     return this.passportFile;
   }
 
+  get isItineraryIncomplete(): boolean {
+    return this.tripTypeValue === 'Round Trip' && this.itinerarySegments.length < 2;
+  }
+
   isValid(): boolean {
-    return this.travelForm.valid;
+    return this.travelForm.valid && !this.isItineraryIncomplete;
   }
 
   markAllAsTouched(): void {
