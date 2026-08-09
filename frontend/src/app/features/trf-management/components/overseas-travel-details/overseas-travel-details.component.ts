@@ -242,8 +242,12 @@ export class OverseasTravelDetailsComponent
 		return this.passportFile;
 	}
 
+	get isItineraryIncomplete(): boolean {
+		return this.tripTypeValue === 'Round Trip' && this.itinerarySegments.length < 2;
+	}
+
 	isValid(): boolean {
-		return this.overseasForm.valid && this.advanceAmountEditorValid;
+		return this.overseasForm.valid && this.advanceAmountEditorValid && !this.isItineraryIncomplete;
 	}
 
 	markAllAsTouched(): void {

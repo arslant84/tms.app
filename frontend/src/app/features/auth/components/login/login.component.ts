@@ -18,6 +18,7 @@ export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   isSubmitting = false;
   errorMessage = '';
+  showPassword = false;
   applicationName$: Observable<string>;
 
   constructor(
@@ -37,6 +38,10 @@ export class LoginComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   onSubmit(): void {
