@@ -324,24 +324,28 @@ export class TrfWizardComponent implements OnInit {
     switch (this.selectedTravelType) {
       case 'Domestic':
         if (this.domesticTravelForm && !this.domesticTravelForm.isValid()) {
+          this.warnIfItineraryIncomplete(this.domesticTravelForm.isItineraryIncomplete);
           this.domesticTravelForm.markAllAsTouched();
           return false;
         }
         break;
       case 'Overseas':
         if (this.overseasTravelForm && !this.overseasTravelForm.isValid()) {
+          this.warnIfItineraryIncomplete(this.overseasTravelForm.isItineraryIncomplete);
           this.overseasTravelForm.markAllAsTouched();
           return false;
         }
         break;
       case 'Home Leave':
         if (this.homeLeaveForm && !this.homeLeaveForm.isValid()) {
+          this.warnIfItineraryIncomplete(this.homeLeaveForm.isItineraryIncomplete);
           this.homeLeaveForm.markAllAsTouched();
           return false;
         }
         break;
       case 'External Parties':
         if (this.externalPartiesForm && !this.externalPartiesForm.isValid()) {
+          this.warnIfItineraryIncomplete(this.externalPartiesForm.isItineraryIncomplete);
           this.externalPartiesForm.markAllAsTouched();
           return false;
         }
@@ -350,6 +354,20 @@ export class TrfWizardComponent implements OnInit {
         return false;
     }
     return true;
+  }
+
+  /**
+   * Round Trip requires at least 2 itinerary segments (outbound + return).
+   * The itinerary segment count isn't tracked by the reactive form, so it
+   * doesn't get an inline validation message like other fields - surface
+   * it as a toast instead.
+   */
+  private warnIfItineraryIncomplete(isIncomplete: boolean): void {
+    if (isIncomplete) {
+      this.toastService.error(
+        'Round Trip requires a return itinerary segment. Please add the return leg before continuing.'
+      );
+    }
   }
 
 

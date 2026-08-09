@@ -72,21 +72,21 @@
         </div>
 
         <div class="form-group">
-          <label for="contactNo" class="form-label">Tel. Ext. & E-Mail / Телефон и почта</label>
+          <label for="contactNo" class="form-label">Tel. Ext. / Телефон</label>
           <input
             type="text"
             class="form-control"
             id="contactNo"
             formControlName="contactNo"
-            placeholder="e.g., 0000 / your.email@example.com"
+            placeholder="e.g., 0000"
             [ngClass]="{'is-invalid': requestorForm.get('contactNo')?.invalid && requestorForm.get('contactNo')?.touched}">
           <div class="invalid-feedback" *ngIf="requestorForm.get('contactNo')?.errors?.['required'] && requestorForm.get('contactNo')?.touched">
-            Contact number is required
+            Tel. Ext. is required
           </div>
         </div>
       </div>
 
-      <!-- Hidden Email Field (for data structure compatibility) -->
+      <!-- Hidden Email Field (for data structure compatibility; auto-filled from user profile) -->
       <div class="form-group" style="display: none;">
         <label for="email" class="form-label">Email (hidden, for data)</label>
         <input
