@@ -2,14 +2,13 @@
 {% block title %}Bulk Import Users (CSV){% endblock %}
 
 {% block content %}
-<h1>Bulk Import Users (CSV)</h1>
-
 <div style="background:#e7f3ff;border:1px solid #b6d9f7;border-radius:4px;padding:16px;margin-bottom:24px">
   <strong>CSV format</strong>
   <ul style="margin:8px 0 0 20px">
-    <li>Header row required: <code>staff_number,name,email,password</code></li>
-    <li><code>staff_number</code> and <code>password</code> may be left blank per row.</li>
+    <li>Header row required: <code>staff_number,name,email,password,department</code></li>
+    <li><code>staff_number</code>, <code>password</code>, and <code>department</code> may be left blank per row.</li>
     <li>Rows left without a password get an unusable password — the user must use "forgot password" on first login.</li>
+    <li><code>department</code> must match an existing department's name exactly (case-insensitive). Unrecognized department names are left blank rather than failing the row.</li>
     <li>A row is skipped (not an error) if a user with the same name, email, or staff number already exists.</li>
   </ul>
 </div>
