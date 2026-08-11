@@ -72,11 +72,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.isNotificationsOpen) {
       const notificationsDropdown = document.querySelector('.notifications-dropdown');
       if (notificationsDropdown && !notificationsDropdown.contains(event.target as Node)) {
-        this.isNotificationsOpen = false;
-        const dropdownMenu = document.querySelector('.notifications-dropdown .dropdown-menu');
-        if (dropdownMenu) {
-          dropdownMenu.classList.remove('show');
-        }
+        this.closeNotificationsDropdown();
       }
     }
     
@@ -109,7 +105,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         const nav = this.buildNavigation(notification);
         this.router.navigate(nav.commands, nav.extras);
       }
-      this.isNotificationsOpen = false;
+      this.closeNotificationsDropdown();
     };
 
     if (!notification.is_read) {
@@ -208,7 +204,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
     this.router.navigate(['/notifications']);
+    this.closeNotificationsDropdown();
+  }
+
+  /**
+   * Close the notifications dropdown, keeping isNotificationsOpen and the
+   * manually-toggled .show class in sync (this dropdown isn't Angular-bound
+   * to the DOM class - see toggleNotificationsDropdown/updateDropdownVisibility).
+   */
+  private closeNotificationsDropdown(): void {
     this.isNotificationsOpen = false;
+    const dropdownMenu = document.querySelector('.notifications-dropdown .dropdown-menu');
+    if (dropdownMenu) {
+      dropdownMenu.classList.remove('show');
+    }
   }
 
   /**

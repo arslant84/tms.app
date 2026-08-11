@@ -61,6 +61,35 @@ class WorkflowEngine:
         Raises:
             ValueError: If no active workflow template found for module
         """
+        # Lock the entity row so concurrent start_workflow calls for the same
+        # entity (double-click submit, network retry, duplicate resubmission)
+        # serialize instead of each creating their own WorkflowInstance - the
+        # same select_for_update-inside-@transaction.atomic pattern used by
+        # process_action to "handle rapid duplicate submissions" (see its
+        # comment above the status re-check at engine.py's process_action).
+        type(entity).objects.select_for_update().get(pk=entity.pk)
+
+        content_type = ContentType.objects.get_for_model(entity)
+        existing_instance = (
+            WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id=entity.id,
+                status__in=["pending", "in_progress", "on_hold"],
+            )
+            .order_by("-started_at")
+            .first()
+        )
+        if existing_instance:
+            logger.warning(
+                "Workflow already active for %s #%s (instance #%s, status=%s). "
+                "Ignoring duplicate start_workflow call.",
+                module_name,
+                entity.id,
+                existing_instance.id,
+                existing_instance.status,
+            )
+            return existing_instance
+
         # Get active workflow template for the module (or its fallback)
         workflow_template = WorkflowTemplate.get_active_for(
             module_name, fallback_module_name
@@ -70,9 +99,6 @@ class WorkflowEngine:
             raise ValueError(
                 f"No active workflow template found for module: {module_name}"
             )
-
-        # Get content type for the entity
-        content_type = ContentType.objects.get_for_model(entity)
 
         # Create workflow instance with optional selected approvers and skipped steps
         additional_data = {}
