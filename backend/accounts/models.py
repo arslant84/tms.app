@@ -423,6 +423,51 @@ class AdminActionLog(models.Model):
         return instance
 
 
+class BulkImportJob(models.Model):
+    """Tracks the status of an async bulk user import submitted via the admin panel."""
+
+    STATUS_PENDING = "pending"
+    STATUS_PROCESSING = "processing"
+    STATUS_COMPLETED = "completed"
+    STATUS_FAILED = "failed"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_PROCESSING, "Processing"),
+        (STATUS_COMPLETED, "Completed"),
+        (STATUS_FAILED, "Failed"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_by = models.ForeignKey(
+        "User",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    csv_content = models.TextField(help_text="Raw decoded CSV text to process in the background.")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True, null=True)
+    created_count = models.IntegerField(default=0)
+    skipped_count = models.IntegerField(default=0)
+    error_count = models.IntegerField(default=0)
+    result_detail = models.JSONField(
+        default=dict,
+        help_text="Full result lists: {created, skipped, errors, unmatched_departments}",
+    )
+    task_id = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Bulk Import Job"
+        verbose_name_plural = "Bulk Import Jobs"
+
+    def __str__(self):
+        return f"BulkImportJob {self.id} ({self.get_status_display()}) by {self.created_by}"
+
+
 class DatabaseBackup(models.Model):
     """
     Tracks pg_dump backup files created by backup_db management command (CTRL-0000001040).

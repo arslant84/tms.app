@@ -1,0 +1,66 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Bulk Import — Job Status{% endblock %}
+
+{% block content %}
+<h1>Bulk Import Job Status</h1>
+
+{% if job.status == "pending" or job.status == "processing" %}
+<meta http-equiv="refresh" content="3">
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:16px;margin-bottom:20px">
+  <strong>Status: {{ job.get_status_display }}</strong> — This page refreshes every 3 seconds.
+</div>
+
+{% elif job.status == "completed" %}
+<div style="background:#d4edda;border:1px solid #28a745;border-radius:4px;padding:16px;margin-bottom:20px">
+  <strong>Import completed.</strong>
+  <ul style="margin:8px 0 0 20px">
+    <li>Created: <strong>{{ job.created_count }}</strong></li>
+    <li>Skipped (duplicates): <strong>{{ job.skipped_count }}</strong></li>
+    <li>Errors: <strong>{{ job.error_count }}</strong></li>
+  </ul>
+</div>
+
+{% if job.result_detail.skipped %}
+<details>
+  <summary style="cursor:pointer;font-weight:bold">Skipped rows ({{ job.result_detail.skipped|length }})</summary>
+  <ul style="margin-top:8px">
+    {% for item in job.result_detail.skipped %}<li>{{ item }}</li>{% endfor %}
+  </ul>
+</details>
+{% endif %}
+
+{% if job.result_detail.unmatched_departments %}
+<details style="margin-top:8px">
+  <summary style="cursor:pointer;font-weight:bold">Unmatched departments ({{ job.result_detail.unmatched_departments|length }})</summary>
+  <ul style="margin-top:8px">
+    {% for item in job.result_detail.unmatched_departments %}<li>{{ item }}</li>{% endfor %}
+  </ul>
+</details>
+{% endif %}
+
+{% if job.result_detail.errors %}
+<details style="margin-top:8px">
+  <summary style="cursor:pointer;font-weight:bold;color:#dc3545">Errors ({{ job.result_detail.errors|length }})</summary>
+  <ul style="margin-top:8px">
+    {% for item in job.result_detail.errors %}<li>{{ item }}</li>{% endfor %}
+  </ul>
+</details>
+{% endif %}
+
+{% elif job.status == "failed" %}
+<div style="background:#f8d7da;border:1px solid #dc3545;border-radius:4px;padding:16px;margin-bottom:20px">
+  <strong>Import failed.</strong>
+  {% if job.result_detail.errors %}
+  <ul style="margin:8px 0 0 20px">
+    {% for item in job.result_detail.errors %}<li>{{ item }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endif %}
+
+<div style="margin-top:20px">
+  <a href="{% url 'admin:accounts_user_changelist' %}" class="button">View Users</a>
+  &nbsp;
+  <a href="{% url 'admin:accounts_bulk_import_users' %}" class="button">Import Another File</a>
+</div>
+{% endblock %}
