@@ -464,10 +464,20 @@ class PasswordResetRequestView(APIView):
                 f"{settings.FRONTEND_URL}/auth/reset-password#token={reset_token}"
             )
 
-            try:
-                send_mail(
-                    subject="Password Reset Request - SynTra TMS",
-                    message=f"""Hello {user.name},
+            email_notifications_enabled = ApplicationSetting.get_setting(
+                "enable_email_notifications", True
+            )
+
+            if not email_notifications_enabled:
+                logger.warning(
+                    "Email notifications disabled globally - skipping password reset email to %s",
+                    email,
+                )
+            else:
+                try:
+                    send_mail(
+                        subject="Password Reset Request - SynTra TMS",
+                        message=f"""Hello {user.name},
 
 You have requested to reset your password for your SynTra Travel Management System account.
 
@@ -480,16 +490,16 @@ If you did not request this password reset, please ignore this email and your pa
 
 Best regards,
 SynTra TMS Team""",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[email],
-                    fail_silently=False,
-                )
-            except Exception as e:
-                # Log email sending failure but don't expose it to user
-                logger.error(
-                    f"Failed to send password reset email to {email}: {str(e)}"
-                )
-                # Continue execution - token is saved, user will see generic success message
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[email],
+                        fail_silently=False,
+                    )
+                except Exception as e:
+                    # Log email sending failure but don't expose it to user
+                    logger.error(
+                        f"Failed to send password reset email to {email}: {str(e)}"
+                    )
+                    # Continue execution - token is saved, user will see generic success message
 
         except User.DoesNotExist:
             # SECURITY: Don't reveal if email exists or not
@@ -737,9 +747,12 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Apply filters for role, department, and is_active."""
-        queryset = super().get_queryset().select_related(
-            "role", "department"
-        ).prefetch_related("role__permissions")
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related("role", "department")
+            .prefetch_related("role__permissions")
+        )
 
         # Filter by role (UUID)
         role = self.request.query_params.get("role")
@@ -859,7 +872,7 @@ class UserViewSet(viewsets.ModelViewSet):
         """Get the current user's profile"""
         serializer = self.get_serializer(request.user)
         response = Response(serializer.data)
-        response['Cache-Control'] = 'no-store'
+        response["Cache-Control"] = "no-store"
         return response
 
     @action(
