@@ -21,6 +21,7 @@ from .models import (
     AdminActionLog,
     ApplicationSetting,
     DatabaseBackup,
+    Department,
     Permission,
     Role,
     RolePermission,
@@ -90,10 +91,11 @@ class BulkUserImportForm(forms.Form):
     csv_file = forms.FileField(
         label="CSV file",
         help_text=(
-            "Header row required: staff_number,name,email,password. "
+            "Header row required: staff_number,name,email,password,department. "
             "The password column may be left blank per-row — those users "
             "get an unusable password and must reset it via the login "
-            "screen's forgot-password flow."
+            "screen's forgot-password flow. The department column may also "
+            "be left blank and must match an existing department's name."
         ),
     )
 
@@ -218,8 +220,8 @@ class UserAdmin(BaseUserAdmin):
         if request.method == "POST":
             form = BulkUserImportForm(request.POST, request.FILES)
             if form.is_valid():
-                created, skipped, errors = self._process_bulk_import(
-                    request.FILES["csv_file"], request
+                created, skipped, errors, unmatched_departments = (
+                    self._process_bulk_import(request.FILES["csv_file"], request)
                 )
 
                 if created:
@@ -230,6 +232,15 @@ class UserAdmin(BaseUserAdmin):
                         f"Skipped {len(skipped)} duplicate row(s): "
                         + "; ".join(skipped[:20])
                         + (" …" if len(skipped) > 20 else ""),
+                    )
+                if unmatched_departments:
+                    messages.warning(
+                        request,
+                        f"{len(unmatched_departments)} row(s) had a department name "
+                        "that didn't match any existing department, so it was left "
+                        "blank: "
+                        + "; ".join(unmatched_departments[:20])
+                        + (" …" if len(unmatched_departments) > 20 else ""),
                     )
                 if errors:
                     messages.error(
@@ -278,7 +289,7 @@ class UserAdmin(BaseUserAdmin):
         try:
             decoded = uploaded_file.read().decode("utf-8-sig")
         except UnicodeDecodeError:
-            return [], [], ["File is not valid UTF-8 text."]
+            return [], [], ["File is not valid UTF-8 text."], []
 
         reader = csv.DictReader(io.StringIO(decoded))
         if reader.fieldnames:
@@ -293,8 +304,12 @@ class UserAdmin(BaseUserAdmin):
         existing_staff_ids = set(
             sid for sid in User.objects.values_list("staff_id", flat=True) if sid
         )
+        departments_by_name = {
+            dept_name.strip().casefold(): dept_id
+            for dept_id, dept_name in Department.objects.values_list("id", "name")
+        }
 
-        created, skipped, errors = [], [], []
+        created, skipped, errors, unmatched_departments = [], [], [], []
 
         with transaction.atomic():
             for i, row in enumerate(reader, start=2):  # start=2: header is row 1
@@ -302,6 +317,7 @@ class UserAdmin(BaseUserAdmin):
                 email = (row.get("email") or "").strip().lower()
                 staff_number = (row.get("staff_number") or "").strip()
                 password = (row.get("password") or "").strip()
+                department_name = (row.get("department") or "").strip()
 
                 if not name or not email:
                     errors.append(f"row {i}: missing name or email")
@@ -324,10 +340,17 @@ class UserAdmin(BaseUserAdmin):
                     skipped.append(f"row {i}: '{name}' (staff number already exists)")
                     continue
 
+                department_id = None
+                if department_name:
+                    department_id = departments_by_name.get(department_name.casefold())
+                    if department_id is None:
+                        unmatched_departments.append(f"row {i}: '{department_name}'")
+
                 user = User(
                     email=email,
                     name=name,
                     staff_id=staff_number or None,
+                    department_id=department_id,
                 )
                 if password:
                     user.set_password(password)
@@ -350,7 +373,7 @@ class UserAdmin(BaseUserAdmin):
                     existing_staff_ids.add(staff_number)
                 created.append(email)
 
-        return created, skipped, errors
+        return created, skipped, errors, unmatched_departments
 
 
 class RolePermissionInline(admin.TabularInline):
