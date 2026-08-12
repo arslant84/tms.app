@@ -51,7 +51,6 @@ class BookingAnalyticsSerializer(serializers.Serializer):
     """Serializer for booking analytics"""
 
     total_flight_bookings = serializers.IntegerField()
-    flight_cost = serializers.DecimalField(max_digits=12, decimal_places=2)
     average_booking_lead_time = serializers.FloatField()
     preferred_airlines = serializers.ListField()
     booking_class_distribution = serializers.DictField()

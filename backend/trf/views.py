@@ -1249,7 +1249,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 arrival_time=arrival_time,
                 booking_reference=pnr,
                 status="CONFIRMED",
-                cost=0,  # Can be added later
                 booked_by=request.user,
                 booking_date=timezone.now(),
                 confirmation_date=timezone.now(),

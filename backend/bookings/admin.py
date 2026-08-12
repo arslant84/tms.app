@@ -17,7 +17,6 @@ class FlightBookingAdmin(admin.ModelAdmin):
         "route_display",
         "departure_time",
         "status_badge",
-        "total_cost",
         "created_at",
     ]
     list_filter = [
@@ -45,7 +44,6 @@ class FlightBookingAdmin(admin.ModelAdmin):
         "cancellation_date",
         "created_at",
         "updated_at",
-        "total_cost_display",
         "route_display",
     ]
     ordering = ["-created_at"]
@@ -77,10 +75,6 @@ class FlightBookingAdmin(admin.ModelAdmin):
             },
         ),
         ("Class & Seat", {"fields": ("booking_class", "seat_number")}),
-        (
-            "Cost Information",
-            {"fields": ("cost", "currency", "tax_amount", "total_cost_display")},
-        ),
         (
             "Baggage & Services",
             {
@@ -148,12 +142,6 @@ class FlightBookingAdmin(admin.ModelAdmin):
         )
 
     status_badge.short_description = "Status"
-
-    def total_cost_display(self, obj):
-        """Display total cost including tax"""
-        return f"{obj.currency} {obj.total_cost:,.2f}"
-
-    total_cost_display.short_description = "Total Cost (incl. tax)"
 
     def has_delete_permission(self, request, obj=None):
         """Only allow deletion of pending/cancelled bookings"""

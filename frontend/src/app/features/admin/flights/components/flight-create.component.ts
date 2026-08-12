@@ -5,7 +5,6 @@ import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { BookingsService, FlightBooking } from '../../../bookings/services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
-import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
@@ -52,8 +51,7 @@ export class FlightCreateComponent implements OnInit {
     private router: Router,
     private bookingsService: BookingsService,
     private toastService: ToastService,
-    private confirmationService: ConfirmationService,
-    private appSettingsService: AppSettingsService
+    private confirmationService: ConfirmationService
   ) {}
 
   ngOnInit(): void {
@@ -83,9 +81,6 @@ export class FlightCreateComponent implements OnInit {
       booking_class: ['ECONOMY', Validators.required],
       status: ['PENDING', Validators.required],
       booking_reference: ['', Validators.required],
-      cost: [0, [Validators.required, Validators.min(0)]],
-      currency: [this.appSettingsService.getDefaultCurrency(), Validators.required],
-      tax_amount: [0, [Validators.required, Validators.min(0)]],
 
       // Optional fields
       airline_code: [''],

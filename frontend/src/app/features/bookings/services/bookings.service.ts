@@ -25,9 +25,6 @@ export interface FlightBooking {
   status: 'PENDING' | 'REQUESTED' | 'CONFIRMED' | 'TICKETED' | 'CANCELLED' | 'REFUNDED' | 'NO_SHOW';
   booking_reference: string;
   ticket_number?: string;
-  cost: number;
-  currency: string;
-  tax_amount: number;
   baggage_allowance?: string;
   carry_on_allowance?: string;
   meal_preference?: string;
