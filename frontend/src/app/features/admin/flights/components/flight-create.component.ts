@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { BookingsService, FlightBooking } from '../../../bookings/services/bookings.service';
+import { BookingsService } from '../../../bookings/services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
@@ -12,7 +12,7 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
   standalone: true,
   imports: [CommonModule, RouterModule, ReactiveFormsModule, LoadingSpinnerComponent],
   templateUrl: './flight-create.component.html',
-  styleUrls: ['./flight-create.component.scss']
+  styleUrls: ['./flight-create.component.scss'],
 })
 export class FlightCreateComponent implements OnInit {
   flightForm!: FormGroup;
@@ -25,14 +25,14 @@ export class FlightCreateComponent implements OnInit {
   flightTypes = [
     { value: 'ONE_WAY', label: 'One Way' },
     { value: 'ROUND_TRIP', label: 'Round Trip' },
-    { value: 'MULTI_CITY', label: 'Multi-City' }
+    { value: 'MULTI_CITY', label: 'Multi-City' },
   ];
 
   bookingClasses = [
     { value: 'ECONOMY', label: 'Economy' },
     { value: 'PREMIUM_ECONOMY', label: 'Premium Economy' },
     { value: 'BUSINESS', label: 'Business' },
-    { value: 'FIRST', label: 'First Class' }
+    { value: 'FIRST', label: 'First Class' },
   ];
 
   statuses = [
@@ -42,7 +42,7 @@ export class FlightCreateComponent implements OnInit {
     { value: 'TICKETED', label: 'Ticketed' },
     { value: 'CANCELLED', label: 'Cancelled' },
     { value: 'REFUNDED', label: 'Refunded' },
-    { value: 'NO_SHOW', label: 'No Show' }
+    { value: 'NO_SHOW', label: 'No Show' },
   ];
 
   constructor(
@@ -100,7 +100,7 @@ export class FlightCreateComponent implements OnInit {
       ticketing_date: [''],
       cancellation_date: [''],
       cancellation_reason: [''],
-      notes: ['']
+      notes: [''],
     });
   }
 
@@ -109,16 +109,16 @@ export class FlightCreateComponent implements OnInit {
 
     this.loading = true;
     this.bookingsService.getFlightBookingById(this.bookingId).subscribe({
-      next: (booking) => {
+      next: booking => {
         this.flightForm.patchValue(booking);
         this.loading = false;
       },
-      error: (error) => {
+      error: error => {
         console.error('Error loading booking:', error);
         this.toastService.error('Failed to load booking details');
         this.loading = false;
         this.router.navigate(['/bookings/flights']);
-      }
+      },
     });
   }
 
@@ -137,21 +137,22 @@ export class FlightCreateComponent implements OnInit {
     this.submitting = true;
     const formData = this.flightForm.value;
 
-    const request = this.isEditMode && this.bookingId
-      ? this.bookingsService.updateFlightBooking(this.bookingId, formData)
-      : this.bookingsService.createFlightBooking(formData);
+    const request =
+      this.isEditMode && this.bookingId
+        ? this.bookingsService.updateFlightBooking(this.bookingId, formData)
+        : this.bookingsService.createFlightBooking(formData);
 
     request.subscribe({
-      next: (response) => {
+      next: response => {
         const action = this.isEditMode ? 'updated' : 'created';
         this.toastService.success(`Flight booking ${action} successfully`);
         this.router.navigate(['/bookings/flights', response.id]);
       },
-      error: (error) => {
+      error: error => {
         console.error('Error saving booking:', error);
         this.toastService.error('Failed to save flight booking');
         this.submitting = false;
-      }
+      },
     });
   }
 
