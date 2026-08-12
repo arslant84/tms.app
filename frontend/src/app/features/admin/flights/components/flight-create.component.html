@@ -283,62 +283,6 @@
       </div>
     </div>
 
-    <!-- Cost Information -->
-    <div class="card mb-4">
-      <div class="card-header bg-success text-white">
-        <h5 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Cost Information</h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label for="cost" class="form-label">Base Cost <span class="text-danger">*</span></label>
-            <input
-              type="number"
-              id="cost"
-              class="form-control"
-              formControlName="cost"
-              [class.is-invalid]="isFieldInvalid('cost')"
-              step="0.01"
-              min="0"
-              placeholder="0.00">
-            <div class="invalid-feedback" *ngIf="isFieldInvalid('cost')">
-              {{ getFieldError('cost') }}
-            </div>
-          </div>
-
-          <div class="col-md-4 mb-3">
-            <label for="tax_amount" class="form-label">Tax Amount <span class="text-danger">*</span></label>
-            <input
-              type="number"
-              id="tax_amount"
-              class="form-control"
-              formControlName="tax_amount"
-              [class.is-invalid]="isFieldInvalid('tax_amount')"
-              step="0.01"
-              min="0"
-              placeholder="0.00">
-            <div class="invalid-feedback" *ngIf="isFieldInvalid('tax_amount')">
-              {{ getFieldError('tax_amount') }}
-            </div>
-          </div>
-
-          <div class="col-md-4 mb-3">
-            <label for="currency" class="form-label">Currency <span class="text-danger">*</span></label>
-            <input
-              type="text"
-              id="currency"
-              class="form-control"
-              formControlName="currency"
-              [class.is-invalid]="isFieldInvalid('currency')"
-              placeholder="e.g., USD">
-            <div class="invalid-feedback" *ngIf="isFieldInvalid('currency')">
-              {{ getFieldError('currency') }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Passenger Preferences -->
     <div class="card mb-4">
       <div class="card-header bg-warning text-dark">

@@ -180,38 +180,6 @@
         </div>
       </div>
 
-      <!-- Cost Information -->
-      <div class="col-md-6 mb-4">
-        <div class="card h-100">
-          <div class="card-header bg-success text-white">
-            <h5 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Cost Information</h5>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <label class="text-muted small">Base Cost</label>
-              <div class="fw-medium fs-5">{{ formatCurrency(booking.cost, booking.currency) }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="text-muted small">Tax Amount</label>
-              <div>{{ formatCurrency(booking.tax_amount, booking.currency) }}</div>
-            </div>
-
-            <div class="mb-3">
-              <label class="text-muted small">Total Cost</label>
-              <div class="fw-bold fs-4 text-success">
-                {{ formatCurrency(booking.cost + booking.tax_amount, booking.currency) }}
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="text-muted small">Currency</label>
-              <div class="fw-medium">{{ booking.currency }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Passenger Preferences -->
       <div class="col-md-6 mb-4">
         <div class="card h-100">

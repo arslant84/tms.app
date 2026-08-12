@@ -442,9 +442,6 @@ def booking_analytics(request):
     # Counts
     total_flight_bookings = flights.count()
 
-    # Costs
-    flight_cost = flights.aggregate(total=Sum("cost"))["total"] or Decimal("0.00")
-
     # Average booking lead time (days between booking and departure)
     average_booking_lead_time = 14.0  # Default
 
@@ -465,7 +462,6 @@ def booking_analytics(request):
 
     data = {
         "total_flight_bookings": total_flight_bookings,
-        "flight_cost": flight_cost,
         "average_booking_lead_time": average_booking_lead_time,
         "preferred_airlines": preferred_airlines,
         "booking_class_distribution": booking_class_distribution,

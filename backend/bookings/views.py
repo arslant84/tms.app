@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from accounts.utils import can_view_all, is_module_admin
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Count
 from django.utils import timezone
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
@@ -47,7 +47,7 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
         "user__first_name",
         "user__last_name",
     ]
-    ordering_fields = ["departure_time", "arrival_time", "created_at", "status", "cost"]
+    ordering_fields = ["departure_time", "arrival_time", "created_at", "status"]
     ordering = ["-created_at"]
 
     def get_queryset(self):
@@ -304,8 +304,6 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
         ticketed = queryset.filter(status=BookingStatus.TICKETED).count()
         cancelled = queryset.filter(status=BookingStatus.CANCELLED).count()
 
-        total_cost = queryset.aggregate(total=Sum("cost"), total_tax=Sum("tax_amount"))
-
         # By airline
         by_airline = dict(
             queryset.values("airline")
@@ -326,8 +324,6 @@ class FlightBookingViewSet(viewsets.ModelViewSet):
             "confirmed_bookings": confirmed,
             "ticketed_bookings": ticketed,
             "cancelled_bookings": cancelled,
-            "total_flight_cost": total_cost["total"] or 0,
-            "total_tax": total_cost["total_tax"] or 0,
             "by_airline": by_airline,
             "by_class": by_class,
             "by_status": {

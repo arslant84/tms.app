@@ -19,9 +19,6 @@ class FlightBookingSerializer(serializers.ModelSerializer):
     booked_by_name = serializers.CharField(
         source="booked_by.get_full_name", read_only=True, allow_null=True
     )
-    total_cost_display = serializers.DecimalField(
-        source="total_cost", read_only=True, max_digits=10, decimal_places=2
-    )
     route_display = serializers.CharField(source="route", read_only=True)
     number_of_days = serializers.SerializerMethodField()
 
@@ -51,10 +48,6 @@ class FlightBookingSerializer(serializers.ModelSerializer):
             "status",
             "booking_reference",
             "ticket_number",
-            "cost",
-            "currency",
-            "tax_amount",
-            "total_cost_display",
             "baggage_allowance",
             "carry_on_allowance",
             "meal_preference",
@@ -111,9 +104,6 @@ class FlightBookingCreateSerializer(serializers.ModelSerializer):
             "booking_class",
             "seat_number",
             "booking_reference",
-            "cost",
-            "currency",
-            "tax_amount",
             "baggage_allowance",
             "carry_on_allowance",
             "meal_preference",
@@ -180,9 +170,6 @@ class FlightBookingUpdateSerializer(serializers.ModelSerializer):
             "seat_number",
             "booking_reference",
             "ticket_number",
-            "cost",
-            "currency",
-            "tax_amount",
             "baggage_allowance",
             "carry_on_allowance",
             "meal_preference",
@@ -259,7 +246,6 @@ class BookingStatsSerializer(serializers.Serializer):
     pending_bookings = serializers.IntegerField()
     confirmed_bookings = serializers.IntegerField()
     cancelled_bookings = serializers.IntegerField()
-    total_flight_cost = serializers.DecimalField(max_digits=12, decimal_places=2)
     total_hotel_cost = serializers.DecimalField(max_digits=12, decimal_places=2)
     by_status = serializers.DictField()
     by_airline = serializers.DictField(required=False)

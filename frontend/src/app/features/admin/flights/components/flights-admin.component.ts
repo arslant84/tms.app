@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { BookingsService, FlightBooking } from '../../../bookings/services/bookings.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
-import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
@@ -71,7 +70,6 @@ export class FlightsAdminComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private router: Router,
-    private appSettingsService: AppSettingsService,
     public dateUtils: DateUtilsService,
     private errorHandler: HttpErrorHandlerService
   ) {}
@@ -319,28 +317,6 @@ export class FlightsAdminComponent implements OnInit {
     return 'badge bg-secondary';
   }
 
-  /**
-   * Format currency
-   */
-  formatCurrency(amount: number | null | undefined, currency?: string | null): string {
-    if (amount === null || amount === undefined || isNaN(amount)) {
-      return 'N/A';
-    }
-
-    const currencyCode = currency || this.appSettingsService.getDefaultCurrency();
-
-    try {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currencyCode,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(amount);
-    } catch (error) {
-      console.error('Error formatting currency:', error);
-      return `${currencyCode} ${amount.toFixed(2)}`;
-    }
-  }
 
   /**
    * Format route

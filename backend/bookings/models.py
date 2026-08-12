@@ -1,7 +1,4 @@
-from decimal import Decimal
-
 from django.conf import settings
-from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from trf.models import TravelRequest
@@ -129,24 +126,6 @@ class FlightBooking(models.Model):
         max_length=50, blank=True, null=True, help_text="E-ticket number"
     )
 
-    # Cost Information
-    cost = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        validators=[MinValueValidator(Decimal("0.00"))],
-        help_text="Total booking cost",
-    )
-    currency = models.CharField(
-        max_length=3, default="USD", help_text="Currency code (ISO 4217)"
-    )
-    tax_amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal("0.00"),
-        validators=[MinValueValidator(Decimal("0.00"))],
-        help_text="Tax amount",
-    )
-
     # Baggage Allowance
     baggage_allowance = models.CharField(
         max_length=50,
@@ -220,11 +199,6 @@ class FlightBooking(models.Model):
     @property
     def trf_id(self):
         return self.trf.id
-
-    @property
-    def total_cost(self):
-        """Total cost including taxes"""
-        return self.cost + self.tax_amount
 
     @property
     def route(self):
