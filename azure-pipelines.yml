@@ -13,7 +13,7 @@ steps:
 - checkout: self
   persistCredentials: true
   clean: true
-  fetchDepth: 0          # important – gets full history
+  fetchDepth: 0
 
 - script: |
     echo "Configuring git..."
