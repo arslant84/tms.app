@@ -16,11 +16,6 @@ steps:
   fetchDepth: 0
 
 - script: |
-    echo "===== DEBUG INFO ====="
-    echo "Token length is: ${#AZURE_DEVOPS_PAT}"
-    echo "First 8 characters: ${AZURE_DEVOPS_PAT:0:8}"
-    echo "======================"
-
     git config --global user.email "azure-mirror@pipeline"
     git config --global user.name "Azure Repos Mirror"
 
