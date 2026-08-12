@@ -13,7 +13,7 @@ steps:
 - checkout: self
   persistCredentials: true
   clean: true
-  fetchDepth: 0          # full history
+  fetchDepth: 0
 
 - script: |
     echo "Configuring git..."
@@ -21,13 +21,14 @@ steps:
     git config --global user.name "Azure Repos Mirror"
 
     echo "Adding Azure remote..."
-    git remote add azure https://anything:$(AZURE_DEVOPS_PAT)@dev.azure.com/arslantekayev/Travel%20Management%20System/_git/Travel%20Management%20System || true
+    git remote remove azure 2>/dev/null || true
+    git remote add azure https://anything:$(AZURE_DEVOPS_PAT)@dev.azure.com/arslantekayev/Travel%20Management%20System/_git/Travel%20Management%20System
 
-    echo "Fetching all branches from GitHub..."
-    git fetch --all --prune
-
-    echo "Force pushing everything to Azure Repos (full mirror)..."
-    git push azure --mirror --force
-  displayName: 'Full Mirror GitHub → Azure Repos'
+    echo "Pushing main and other important branches..."
+    git push azure main --force
+    git push azure master --force 2>/dev/null || true
+    git push azure develop --force 2>/dev/null || true
+    git push azure --tags --force
+  displayName: 'Safe Mirror GitHub → Azure Repos'
   env:
     AZURE_DEVOPS_PAT: $(AZURE_DEVOPS_PAT)
