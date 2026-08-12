@@ -21,9 +21,11 @@ steps:
     git config --global user.name "Azure Repos Mirror"
 
     echo "Adding Azure Repo as remote..."
-    git remote add azure https://arslantekayev:$(AZURE_DEVOPS_PAT)@dev.azure.com/arslantekayev/Travel%20Management%20System/_git/Travel%20Management%20System
+    git remote add azure https://anything:$(AZURE_DEVOPS_PAT)@dev.azure.com/arslantekayev/Travel%20Management%20System/_git/Travel%20Management%20System
 
     echo "Pushing all branches and tags to Azure Repos..."
     git push azure --all --force
     git push azure --tags --force
   displayName: 'Mirror GitHub → Azure Repos'
+  env:
+    AZURE_DEVOPS_PAT: $(AZURE_DEVOPS_PAT)
