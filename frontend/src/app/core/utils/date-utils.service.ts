@@ -150,6 +150,26 @@ export class DateUtilsService {
   }
 
   /**
+   * Checks that a list of dates is in non-decreasing chronological order
+   * (each date is the same as or later than the one before it). Used to
+   * validate multi-segment itineraries where a later leg must not be
+   * dated before an earlier one (e.g. a return flight before departure).
+   * Blank/null entries are ignored rather than treated as invalid, since
+   * required-field validation already covers missing dates separately.
+   * @param dates Ordered list of date strings (YYYY-MM-DD) or nulls
+   * @returns True if every non-empty date is >= the previous non-empty date
+   */
+  isChronological(dates: (string | null | undefined)[]): boolean {
+    let previous: string | null = null;
+    for (const date of dates) {
+      if (!date) continue;
+      if (previous && date < previous) return false;
+      previous = date;
+    }
+    return true;
+  }
+
+  /**
    * Gets the weekday name for a date (e.g., "Monday")
    * @param dateString The date to check
    * @returns Weekday name, or empty string if invalid

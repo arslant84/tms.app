@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Outpu
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
+import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
 import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
 import { ItineraryEditorComponent, ItineraryFieldConfig } from '../../../../shared/components/itinerary-editor/itinerary-editor.component';
@@ -47,6 +48,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   ];
   tripTypeValue: 'One Way' | 'Round Trip' = 'Round Trip';
   itinerarySegments: Record<string, any>[] = [];
+  itineraryDates: (string | null)[] = [];
   advanceAmounts: Record<string, any>[] = [];
   advanceAmountEditorValid = false;
   advanceConsentAccepted = false;
@@ -60,7 +62,8 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
 
   constructor(
     private fb: FormBuilder,
-    private formUtils: FormUtilsService
+    private formUtils: FormUtilsService,
+    private dateUtils: DateUtilsService
   ) {}
 
   ngOnInit(): void {
@@ -114,6 +117,10 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
 
   onItinerarySegmentsChange(segments: Record<string, any>[]): void {
     this.itinerarySegments = segments;
+  }
+
+  onItineraryDatesChange(dates: (string | null)[]): void {
+    this.itineraryDates = dates;
   }
 
   onAdvanceAmountsChange(items: Record<string, any>[]): void {
@@ -178,8 +185,12 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
     return this.tripTypeValue === 'Round Trip' && this.itinerarySegments.length < 2;
   }
 
+  get isItineraryOutOfOrder(): boolean {
+    return !this.dateUtils.isChronological(this.itineraryDates);
+  }
+
   isValid(): boolean {
-    return this.homeLeaveForm.valid && this.advanceAmountEditorValid && !this.isItineraryIncomplete;
+    return this.homeLeaveForm.valid && this.advanceAmountEditorValid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder;
   }
 
   markAllAsTouched(): void {

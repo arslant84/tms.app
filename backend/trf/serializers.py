@@ -165,6 +165,47 @@ class TrfItinerarySegmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "created_at"]
 
+    def validate(self, attrs):
+        """
+        Segments are created/edited one at a time and have no explicit
+        ordering field - creation order via `id` is itinerary order,
+        matching how the frontend appends segments. Keep each segment's
+        date within the bounds of its immediate neighbors so a return leg
+        can't be dated before the outbound leg, even for clients that
+        bypass the frontend's own chronology check.
+        """
+        segment_date = attrs.get(
+            "segment_date", getattr(self.instance, "segment_date", None)
+        )
+        trf = attrs.get("trf", getattr(self.instance, "trf", None))
+
+        if segment_date and trf:
+            siblings = TrfItinerarySegment.objects.filter(trf=trf)
+            if self.instance:
+                siblings = siblings.exclude(pk=self.instance.pk)
+                earlier = (
+                    siblings.filter(id__lt=self.instance.id).order_by("-id").first()
+                )
+                later = siblings.filter(id__gt=self.instance.id).order_by("id").first()
+            else:
+                earlier = siblings.order_by("-id").first()
+                later = None
+
+            if earlier and earlier.segment_date and segment_date < earlier.segment_date:
+                raise serializers.ValidationError(
+                    {
+                        "segment_date": "Segment date cannot be earlier than the previous itinerary segment's date."
+                    }
+                )
+            if later and later.segment_date and segment_date > later.segment_date:
+                raise serializers.ValidationError(
+                    {
+                        "segment_date": "Segment date cannot be later than the next itinerary segment's date."
+                    }
+                )
+
+        return attrs
+
 
 class TrfMealProvisionSerializer(serializers.ModelSerializer):
     """Serializer for TRF Meal Provisions"""

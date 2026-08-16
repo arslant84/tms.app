@@ -176,8 +176,12 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     return this.tripTypeValue === 'Round Trip' && this.itinerarySegments.length < 2;
   }
 
+  get isItineraryOutOfOrder(): boolean {
+    return !this.dateUtils.isChronological(this.itineraryDates);
+  }
+
   isValid(): boolean {
-    return this.travelForm.valid && !this.isItineraryIncomplete;
+    return this.travelForm.valid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder;
   }
 
   markAllAsTouched(): void {

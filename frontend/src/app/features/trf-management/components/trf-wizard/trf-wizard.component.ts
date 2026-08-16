@@ -325,6 +325,7 @@ export class TrfWizardComponent implements OnInit {
       case 'Domestic':
         if (this.domesticTravelForm && !this.domesticTravelForm.isValid()) {
           this.warnIfItineraryIncomplete(this.domesticTravelForm.isItineraryIncomplete);
+          this.warnIfItineraryOutOfOrder(this.domesticTravelForm.isItineraryOutOfOrder);
           this.domesticTravelForm.markAllAsTouched();
           return false;
         }
@@ -332,6 +333,7 @@ export class TrfWizardComponent implements OnInit {
       case 'Overseas':
         if (this.overseasTravelForm && !this.overseasTravelForm.isValid()) {
           this.warnIfItineraryIncomplete(this.overseasTravelForm.isItineraryIncomplete);
+          this.warnIfItineraryOutOfOrder(this.overseasTravelForm.isItineraryOutOfOrder);
           this.overseasTravelForm.markAllAsTouched();
           return false;
         }
@@ -339,6 +341,7 @@ export class TrfWizardComponent implements OnInit {
       case 'Home Leave':
         if (this.homeLeaveForm && !this.homeLeaveForm.isValid()) {
           this.warnIfItineraryIncomplete(this.homeLeaveForm.isItineraryIncomplete);
+          this.warnIfItineraryOutOfOrder(this.homeLeaveForm.isItineraryOutOfOrder);
           this.homeLeaveForm.markAllAsTouched();
           return false;
         }
@@ -346,6 +349,7 @@ export class TrfWizardComponent implements OnInit {
       case 'External Parties':
         if (this.externalPartiesForm && !this.externalPartiesForm.isValid()) {
           this.warnIfItineraryIncomplete(this.externalPartiesForm.isItineraryIncomplete);
+          this.warnIfItineraryOutOfOrder(this.externalPartiesForm.isItineraryOutOfOrder);
           this.externalPartiesForm.markAllAsTouched();
           return false;
         }
@@ -366,6 +370,20 @@ export class TrfWizardComponent implements OnInit {
     if (isIncomplete) {
       this.toastService.error(
         'Round Trip requires a return itinerary segment. Please add the return leg before continuing.'
+      );
+    }
+  }
+
+  /**
+   * Itinerary segments must be in chronological order (e.g. a return leg
+   * cannot be dated before the outbound leg). Like the incomplete-itinerary
+   * check above, this spans multiple segments so it isn't a per-field
+   * reactive form error - surfaced as a toast instead.
+   */
+  private warnIfItineraryOutOfOrder(isOutOfOrder: boolean): void {
+    if (isOutOfOrder) {
+      this.toastService.error(
+        'Itinerary dates must be in chronological order. A later segment cannot be dated before an earlier one.'
       );
     }
   }

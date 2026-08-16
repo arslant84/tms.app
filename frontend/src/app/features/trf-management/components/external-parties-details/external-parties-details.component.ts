@@ -142,7 +142,6 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
 
       if (control instanceof FormGroup || control instanceof FormArray) {
         this.logFormErrors(control, currentPath);
-      } else if (control?.invalid) {
       }
     });
   }
@@ -181,8 +180,12 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
     return this.tripTypeValue === 'Round Trip' && this.itinerarySegments.length < 2;
   }
 
+  get isItineraryOutOfOrder(): boolean {
+    return !this.dateUtils.isChronological(this.itineraryDates);
+  }
+
   isValid(): boolean {
-    return this.externalForm.valid && !this.isItineraryIncomplete;
+    return this.externalForm.valid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder;
   }
 
   markAllAsTouched(): void {

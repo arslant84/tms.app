@@ -73,6 +73,7 @@
         [initialSegments]="initialData.itinerary || []"
         [tripType]="tripTypeValue"
         (segmentsChange)="onItinerarySegmentsChange($event)"
+        (datesChange)="onItineraryDatesChange($event)"
       >
       </app-itinerary-editor>
     </app-form-section-card>
