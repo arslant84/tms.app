@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
@@ -74,9 +74,11 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     const seed = this.initialSegments?.length ? this.initialSegments : [{}];
     seed.forEach(segment => this.segmentsArray.push(this.createSegment(segment)));
+    this.revalidateChronology();
     this.emitState();
 
     this.segmentsArray.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.revalidateChronology();
       this.emitState();
     });
   }
@@ -132,6 +134,44 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
     if (this.segmentsArray.length > 1) {
       this.segmentsArray.removeAt(index);
     }
+  }
+
+  /**
+   * Marks each segment's primary date field invalid (dateOrder error) when
+   * it's earlier than the immediately preceding segment's date, so the
+   * exact offending field gets the usual red border/inline message. This
+   * is display-only - `warnIfItineraryOutOfOrder` in the parent wizard is
+   * what actually blocks the Next button, since this component doesn't
+   * know whether it's embedded in a form the wizard consults.
+   */
+  private revalidateChronology(): void {
+    const primaryDateKey = this.fields.find(f => f.isPrimaryDate)?.key;
+    if (!primaryDateKey) {
+      return;
+    }
+
+    let previousDate: string | null = null;
+    this.segmentsArray.controls.forEach(segment => {
+      const dateControl = segment.get(primaryDateKey);
+      if (!dateControl) {
+        return;
+      }
+      const currentDate: string | null = dateControl.value || null;
+      this.setDateOrderError(dateControl, !!(previousDate && currentDate && currentDate < previousDate));
+      if (currentDate) {
+        previousDate = currentDate;
+      }
+    });
+  }
+
+  private setDateOrderError(control: AbstractControl, hasError: boolean): void {
+    const errors = { ...(control.errors || {}) };
+    if (hasError) {
+      errors['dateOrder'] = true;
+    } else {
+      delete errors['dateOrder'];
+    }
+    control.setErrors(Object.keys(errors).length ? errors : null);
   }
 
   private emitState(): void {

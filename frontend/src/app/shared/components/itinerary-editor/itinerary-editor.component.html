@@ -61,6 +61,12 @@
               *ngIf="segment.get(field.key)?.errors?.['required'] && segment.get(field.key)?.touched">
               {{ field.requiredErrorMessage || (field.label + ' is required') }}
             </div>
+
+            <div
+              class="invalid-feedback"
+              *ngIf="segment.get(field.key)?.errors?.['dateOrder'] && segment.get(field.key)?.touched">
+              {{ field.label }} cannot be earlier than the previous segment's date
+            </div>
           </div>
         </ng-container>
       </div>

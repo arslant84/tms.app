@@ -20,6 +20,7 @@ import {
 } from "@angular/forms";
 import { Subject, takeUntil } from "rxjs";
 import { FormUtilsService } from "../../../../core/utils/form-utils.service";
+import { DateUtilsService } from "../../../../core/utils/date-utils.service";
 import { FormSectionCardComponent } from "../../../../shared/components/form-section-card/form-section-card.component";
 import { PassportUploadComponent } from "../../../../shared/components/passport-upload/passport-upload.component";
 import { ItineraryEditorComponent, type ItineraryFieldConfig } from "../../../../shared/components/itinerary-editor/itinerary-editor.component";
@@ -102,6 +103,7 @@ export class OverseasTravelDetailsComponent
 	];
 	tripTypeValue: "One Way" | "Round Trip" = "One Way";
 	itinerarySegments: Record<string, any>[] = [];
+	itineraryDates: (string | null)[] = [];
 	advanceAmounts: Record<string, any>[] = [];
 	advanceAmountEditorValid = false;
 	advanceConsentAccepted = false;
@@ -115,6 +117,7 @@ export class OverseasTravelDetailsComponent
 
 	private fb = inject(FormBuilder);
 	private formUtils = inject(FormUtilsService);
+	private dateUtils = inject(DateUtilsService);
 
 	ngOnInit(): void {
 		this.initForm();
@@ -184,6 +187,10 @@ export class OverseasTravelDetailsComponent
 		this.itinerarySegments = segments;
 	}
 
+	onItineraryDatesChange(dates: (string | null)[]): void {
+		this.itineraryDates = dates;
+	}
+
 	onAdvanceAmountsChange(items: Record<string, any>[]): void {
 		this.advanceAmounts = items;
 	}
@@ -246,8 +253,12 @@ export class OverseasTravelDetailsComponent
 		return this.tripTypeValue === 'Round Trip' && this.itinerarySegments.length < 2;
 	}
 
+	get isItineraryOutOfOrder(): boolean {
+		return !this.dateUtils.isChronological(this.itineraryDates);
+	}
+
 	isValid(): boolean {
-		return this.overseasForm.valid && this.advanceAmountEditorValid && !this.isItineraryIncomplete;
+		return this.overseasForm.valid && this.advanceAmountEditorValid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder;
 	}
 
 	markAllAsTouched(): void {
