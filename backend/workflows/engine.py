@@ -927,6 +927,28 @@ class WorkflowEngine:
             entity.status = status
             entity.save(update_fields=["status"])
 
+            if status in ("Approved", "Rejected"):
+                WorkflowEngine._cascade_status_to_linked_accommodation(entity, status)
+
+    @staticmethod
+    def _cascade_status_to_linked_accommodation(entity, status: str):
+        """Accommodation requests embedded in a TRF have no approval workflow of
+        their own — they ride entirely on their linked TSR's approval. When the
+        TSR reaches a final Approved/Rejected outcome, mirror that outcome onto
+        any linked, still-pending AccommodationRequest so it becomes actionable
+        (or closed) in the Accommodation Admin queue without a separate step.
+        """
+        from trf.models import TravelRequest
+
+        if not isinstance(entity, TravelRequest):
+            return
+
+        from accommodation.models import AccommodationRequest
+
+        AccommodationRequest.objects.filter(trf=entity).exclude(
+            status__in=["Approved", "Rejected", "Accommodation Assigned"]
+        ).update(status=status)
+
     @staticmethod
     def _update_entity_status_from_step(
         workflow_instance: WorkflowInstance, step: WorkflowStep

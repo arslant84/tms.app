@@ -17,7 +17,6 @@ import {
   accommodationToFrontend,
   calculateNights,
   getStatusBadgeClass,
-  isEditable,
   isCancellable,
   isDeletable,
   formatTime12Hour,
@@ -165,10 +164,6 @@ export class AccommodationDetailComponent implements OnInit {
     });
   }
 
-  canEdit(): boolean {
-    return this.request ? isEditable(this.request.status) : false;
-  }
-
   canCancel(): boolean {
     return this.request ? isCancellable(this.request.status) : false;
   }
@@ -181,21 +176,19 @@ export class AccommodationDetailComponent implements OnInit {
     return this.request ? getStatusBadgeClass(this.request.status) : 'badge-secondary';
   }
 
-  goBack(): void {
-    this.router.navigate(['/accommodation']);
+  private navigateBack(): void {
+    // Accommodation requests are created and reached exclusively via their
+    // linked TSR now, so "back" returns to that TSR rather than a standalone
+    // accommodation list (which no longer exists).
+    if (this.request?.trfId) {
+      this.router.navigate(['/trf', this.request.trfId]);
+    } else {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
-  onEdit(): void {
-    // Check if request can be edited
-    if (!this.canEdit()) {
-      this.toastService.error(
-        'This accommodation request cannot be edited because it has been approved. ' +
-          'Approved requests can only be viewed, not modified.'
-      );
-      return;
-    }
-
-    this.router.navigate(['/accommodation/edit', this.requestId]);
+  goBack(): void {
+    this.navigateBack();
   }
 
   onCancel(): void {
@@ -206,7 +199,7 @@ export class AccommodationDetailComponent implements OnInit {
           this.accommodationService.cancelRequest(this.requestId).subscribe({
             next: () => {
               this.toastService.success('Accommodation request cancelled successfully');
-              this.router.navigate(['/accommodation']);
+              this.navigateBack();
             },
             error: err => {
               this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to cancel request'));
@@ -222,7 +215,7 @@ export class AccommodationDetailComponent implements OnInit {
         this.accommodationService.deleteRequest(this.requestId).subscribe({
           next: () => {
             this.toastService.success('Accommodation request deleted successfully');
-            this.router.navigate(['/accommodation']);
+            this.navigateBack();
           },
           error: err => {
             this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to delete request'));

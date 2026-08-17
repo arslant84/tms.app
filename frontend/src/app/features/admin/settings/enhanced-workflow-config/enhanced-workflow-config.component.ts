@@ -38,7 +38,6 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
     { value: 'travelrequest_external', label: 'TSR - External Parties' },
     { value: 'transportrequest', label: 'Transport Request' },
     { value: 'visaapplication', label: 'Visa Application' },
-    { value: 'accommodation', label: 'Accommodation Request' },
     {
       value: 'combinedrequest',
       label: 'Combined Request (TSR + Transport + Accommodation + Visa)',

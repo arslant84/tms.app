@@ -274,51 +274,10 @@ def unified_approvals(request):
                 item["visaType"] = getattr(visa, "visa_type", "")
                 all_items.append(item)
 
-    # 4. Accommodation Requests (from TRF with Accommodation travel_type)
-    if not item_type or item_type == "accommodation":
-        accommodations = TravelRequest.objects.filter(
-            status__in=approval_statuses, travel_type="Accommodation"
-        ).order_by("-submitted_at")
-
-        for accom in accommodations:
-            # Only include if user is authorized to approve
-            if can_user_approve(accom, "trf"):
-                item = format_item(accom, "Accommodation")
-                # Try to get accommodation details
-                accom_details = (
-                    accom.accommodation_details.first()
-                    if hasattr(accom, "accommodation_details")
-                    else None
-                )
-                if accom_details:
-                    item["location"] = getattr(accom_details, "location", "")
-                    item["checkInDate"] = getattr(accom_details, "check_in_date", None)
-                    item["checkOutDate"] = getattr(
-                        accom_details, "check_out_date", None
-                    )
-                all_items.append(item)
-
-        # Also check standalone accommodation requests
-        standalone_accommodations = AccommodationRequest.objects.filter(
-            status__in=approval_statuses
-        ).order_by("-submitted_at")
-
-        for accom in standalone_accommodations:
-            # Only include if user is authorized to approve
-            if can_user_approve(accom, "accommodation"):
-                item = format_item(accom, "Accommodation")
-                # Get location from additional_data
-                if hasattr(accom, "additional_data") and isinstance(
-                    accom.additional_data, dict
-                ):
-                    item["location"] = accom.additional_data.get("location", "")
-                    item["checkInDate"] = accom.additional_data.get(
-                        "requested_check_in_date", ""
-                    )
-                    item["checkOutDate"] = accom.additional_data.get(
-                        "requested_check_out_date", ""
-                    )
-                all_items.append(item)
+    # Accommodation requests are no longer a separate approval item: they ride
+    # entirely on their linked TSR's own approval (see WorkflowEngine's
+    # accommodation cascade) and are never independently approvable, so they
+    # are intentionally excluded from this queue.
 
     # 5. Combined Requests (TSR + Transport + Accommodation + Visa)
     if not item_type or item_type == "combined":
@@ -444,7 +403,6 @@ def bulk_approve(request):
         "trf": TravelRequest,
         "transport": TransportRequest,
         "visa": VisaApplication,
-        "accommodation": AccommodationRequest,
         "combined": CombinedRequest,
     }
 

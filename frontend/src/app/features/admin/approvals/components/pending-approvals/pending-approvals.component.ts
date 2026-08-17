@@ -17,7 +17,7 @@ interface ApprovableItem {
 	requestNumber: string;
 	requestorName: string;
 	staffId?: string;
-	itemType: "TSR" | "Visa" | "Accommodation" | "Transport" | "Combined";
+	itemType: "TSR" | "Visa" | "Transport" | "Combined";
 	purpose: string;
 	status: string;
 	submittedAt: string;
@@ -52,7 +52,7 @@ export class PendingApprovalsComponent implements OnInit {
 	error: string | null = null;
 
 	// Filters
-	activeTab: "all" | "trf" | "visa" | "accommodation" | "transport" | "combined" = "all";
+	activeTab: "all" | "trf" | "visa" | "transport" | "combined" = "all";
 	searchTerm = "";
 	statusFilter = "";
 
@@ -62,7 +62,6 @@ export class PendingApprovalsComponent implements OnInit {
 		trf: 0,
 		transport: 0,
 		visa: 0,
-		accommodation: 0,
 		combined: 0,
 	};
 
@@ -131,12 +130,11 @@ export class PendingApprovalsComponent implements OnInit {
 	 */
 	private setActiveTabFromType(type: string): void {
 		const tabMap: {
-			[key: string]: "all" | "trf" | "visa" | "accommodation" | "transport" | "combined";
+			[key: string]: "all" | "trf" | "visa" | "transport" | "combined";
 		} = {
 			trf: "trf",
 			transport: "transport",
 			visa: "visa",
-			accommodation: "accommodation",
 			combined: "combined",
 			expenses: "all",
 		};
@@ -191,11 +189,10 @@ export class PendingApprovalsComponent implements OnInit {
 
 	fetchTabCounts(): void {
 		// Fetch counts for each tab type
-		const types: Array<"trf" | "transport" | "visa" | "accommodation" | "combined"> = [
+		const types: Array<"trf" | "transport" | "visa" | "combined"> = [
 			"trf",
 			"transport",
 			"visa",
-			"accommodation",
 			"combined",
 		];
 
@@ -238,7 +235,7 @@ export class PendingApprovalsComponent implements OnInit {
 	}
 
 	onTabChange(
-		tab: "all" | "trf" | "visa" | "accommodation" | "transport" | "combined",
+		tab: "all" | "trf" | "visa" | "transport" | "combined",
 	): void {
 		this.activeTab = tab;
 		this.currentPage = 1;
@@ -258,7 +255,6 @@ export class PendingApprovalsComponent implements OnInit {
 			TSR: "bi-airplane",
 			Transport: "bi-truck",
 			Visa: "bi-passport",
-			Accommodation: "bi-house-door",
 			Combined: "bi-layers",
 		};
 		return icons[itemType] || "bi-file-text";
@@ -277,7 +273,6 @@ export class PendingApprovalsComponent implements OnInit {
 			TSR: `/trf/${item.id}`,
 			Transport: `/transport/${item.id}`,
 			Visa: `/visa/${item.id}`,
-			Accommodation: `/accommodation/${item.id}`,
 			Combined: `/combined/${item.id}`,
 		};
 
@@ -315,7 +310,6 @@ export class PendingApprovalsComponent implements OnInit {
 			TSR: "trf/travel-requests",
 			Transport: "transport/requests",
 			Visa: "visa/applications",
-			Accommodation: "accommodation/requests",
 			Combined: "combined/combined-requests",
 		};
 
@@ -371,7 +365,6 @@ export class PendingApprovalsComponent implements OnInit {
 			TSR: "trf/travel-requests",
 			Transport: "transport/requests",
 			Visa: "visa/applications",
-			Accommodation: "accommodation/requests",
 			Combined: "combined/combined-requests",
 		};
 
@@ -441,7 +434,6 @@ export class PendingApprovalsComponent implements OnInit {
 			TSR: "Travel Request",
 			Transport: "Transport Request",
 			Visa: "Visa Application",
-			Accommodation: "Accommodation",
 			Combined: "Combined Request",
 		};
 		return labels[itemType] || itemType;
