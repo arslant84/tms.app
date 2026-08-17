@@ -10,6 +10,7 @@ import { HomeLeaveDetailsComponent } from '../home-leave-details/home-leave-deta
 import { ExternalPartiesDetailsComponent } from '../external-parties-details/external-parties-details.component';
 import { ApprovalSubmissionComponent } from '../approval-submission/approval-submission.component';
 import { TrfService } from '../../services/trf.service';
+import { AccommodationService } from '../../../accommodation/services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { RbacService } from '../../../../core/services/rbac.service';
@@ -68,6 +69,7 @@ export class TrfWizardComponent implements OnInit {
 
   constructor(
     private trfService: TrfService,
+    private accommodationService: AccommodationService,
     private router: Router,
     private route: ActivatedRoute,
     private toastService: ToastService,
@@ -530,7 +532,7 @@ export class TrfWizardComponent implements OnInit {
 
           // For edit mode, we might need to delete and recreate nested resources
           // This is a simplified approach - ideally, you'd update existing ones
-          from(this.createNestedResources(this.trfId!, combinedData)).subscribe({
+          from(this.createNestedResources(this.trfId!, combinedData, isDraft)).subscribe({
             next: () => {
               // If not saving as draft, submit the TRF to workflow
               if (!isDraft) {
@@ -594,7 +596,7 @@ export class TrfWizardComponent implements OnInit {
         next: (createdTrf: any) => {
 
           // Step 2: Create nested resources (itinerary, meals, etc.)
-          from(this.createNestedResources(createdTrf.id, combinedData)).subscribe({
+          from(this.createNestedResources(createdTrf.id, combinedData, isDraft)).subscribe({
             next: () => {
               // If not saving as draft, submit the TRF to generate request number and start workflow
               if (!isDraft) {
@@ -682,7 +684,8 @@ export class TrfWizardComponent implements OnInit {
       mealSelections: this.domesticTravelData?.mealProvisions?.dailySelections || [],
       passportDetails: null,
       bankDetails: null,
-      advanceAmounts: []
+      advanceAmounts: [],
+      accommodation: this.domesticTravelData?.accommodation || null
     };
   }
 
@@ -800,7 +803,7 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Create nested resources (itinerary, meals, passport, bank details, etc.)
    */
-  private createNestedResources(trfId: number, data: any): any {
+  private createNestedResources(trfId: number, data: any, isDraft: boolean): any {
     return new Promise(async (resolve, reject) => {
 
       // Guard: Ensure trfId is valid
@@ -934,6 +937,42 @@ export class TrfWizardComponent implements OnInit {
             firstValueFrom(this.trfService.createAdvanceAmountItem(advanceData))
           );
         });
+      }
+
+      // Create linked accommodation request (Domestic only, opt-in) - only on a brand
+      // new TRF's first real submission, not on draft-save and not on edit-mode
+      // resubmission (unlike the other nested resources here, an already-submitted
+      // accommodation request may already be Assigned/processed by Accommodation Admin -
+      // blindly delete-and-recreate on every edit, like itinerary/meals do, would risk
+      // destroying that. Editing accommodation details after first submission doesn't
+      // propagate to the linked request yet - a known limitation, not a duplicate/data
+      // loss risk). Reuses the existing AccommodationRequestViewSet create+submit
+      // actions exactly as the standalone accommodation-create form does - no new
+      // backend endpoints.
+      if (!isDraft && !this.isEditMode && data.accommodation?.required) {
+        const acc = data.accommodation;
+        const accommodationData = {
+          requestor_name: this.requestorData.fullName,
+          staff_id: this.requestorData.staffId,
+          department: this.requestorData.department,
+          trf: trfId,
+          additional_data: {
+            requestor_gender: acc.gender,
+            location: acc.location,
+            requested_check_in_date: this.formatDateForAPI(acc.checkInDate) || acc.checkInDate,
+            requested_check_out_date: this.formatDateForAPI(acc.checkOutDate) || acc.checkOutDate,
+            requested_room_type: acc.roomType,
+            flight_arrival_time: acc.checkInTime,
+            flight_departure_time: acc.checkOutTime,
+            special_requests: acc.specialRequests
+          }
+        };
+
+        promises.push(
+          firstValueFrom(this.accommodationService.createRequest(accommodationData)).then(created =>
+            firstValueFrom(this.accommodationService.submitRequest(created.id))
+          )
+        );
       }
 
       // Upload passport file if provided

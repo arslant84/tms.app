@@ -56,6 +56,22 @@ textarea.form-control { min-height: 3rem; height: auto; }
   color: vars.$error-color;
 }
 
+// Accommodation Grid - 2 column layout
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: vars.$spacing-6;
+
+  @media (width <= 768px) {
+    grid-template-columns: 1fr;
+    gap: vars.$spacing-md;
+  }
+
+  .form-group.full-width {
+    grid-column: 1 / -1;
+  }
+}
+
 // Transport Grid - 4 column layout
 .transport-grid {
   display: grid;

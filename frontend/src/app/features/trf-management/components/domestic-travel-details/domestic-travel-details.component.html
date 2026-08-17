@@ -55,6 +55,123 @@
       </app-meal-provision>
     </app-form-section-card>
 
+    <!-- Accommodation Section -->
+    <app-form-section-card icon="bi-house-door" title="Accommodation">
+      <div formGroupName="accommodation">
+        <div class="form-check mb-3">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="accommodationRequired"
+            formControlName="required" />
+          <label class="form-check-label" for="accommodationRequired">
+            Requires Accommodation
+          </label>
+        </div>
+
+        <div class="form-grid" *ngIf="travelForm.get('accommodation.required')?.value">
+          <div class="form-group">
+            <label for="accommodationGender" class="form-label">Gender*</label>
+            <select
+              id="accommodationGender"
+              class="form-control"
+              formControlName="gender"
+              [ngClass]="{'is-invalid': travelForm.get('accommodation.gender')?.invalid && travelForm.get('accommodation.gender')?.touched}">
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="travelForm.get('accommodation.gender')?.invalid && travelForm.get('accommodation.gender')?.touched">
+              Please select gender
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationLocation" class="form-label">Location*</label>
+            <select
+              id="accommodationLocation"
+              class="form-control"
+              formControlName="location"
+              [ngClass]="{'is-invalid': travelForm.get('accommodation.location')?.invalid && travelForm.get('accommodation.location')?.touched}">
+              <option value="">Select location</option>
+              <option *ngFor="let loc of accommodationLocations" [value]="loc">{{ loc }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="travelForm.get('accommodation.location')?.invalid && travelForm.get('accommodation.location')?.touched">
+              Please select location
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationCheckInDate" class="form-label">Check-in Date*</label>
+            <input
+              type="date"
+              id="accommodationCheckInDate"
+              class="form-control"
+              formControlName="checkInDate"
+              [ngClass]="{'is-invalid': travelForm.get('accommodation.checkInDate')?.invalid && travelForm.get('accommodation.checkInDate')?.touched}" />
+            <div class="invalid-feedback" *ngIf="travelForm.get('accommodation.checkInDate')?.invalid && travelForm.get('accommodation.checkInDate')?.touched">
+              Check-in date is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationCheckInTime" class="form-label">Check-in Time</label>
+            <input
+              type="time"
+              id="accommodationCheckInTime"
+              class="form-control"
+              formControlName="checkInTime" />
+            <small class="form-text">Time of arrival (HH:MM)</small>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationCheckOutDate" class="form-label">Check-out Date*</label>
+            <input
+              type="date"
+              id="accommodationCheckOutDate"
+              class="form-control"
+              formControlName="checkOutDate"
+              [ngClass]="{'is-invalid': travelForm.get('accommodation.checkOutDate')?.invalid && travelForm.get('accommodation.checkOutDate')?.touched}" />
+            <div class="invalid-feedback" *ngIf="travelForm.get('accommodation.checkOutDate')?.invalid && travelForm.get('accommodation.checkOutDate')?.touched">
+              Check-out date is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationCheckOutTime" class="form-label">Check-out Time</label>
+            <input
+              type="time"
+              id="accommodationCheckOutTime"
+              class="form-control"
+              formControlName="checkOutTime" />
+            <small class="form-text">Time of departure (HH:MM)</small>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationRoomType" class="form-label">Preferred Room Type</label>
+            <select
+              id="accommodationRoomType"
+              class="form-control"
+              formControlName="roomType">
+              <option value="">Select room type (optional)</option>
+              <option *ngFor="let type of accommodationRoomTypes" [value]="type">{{ type }}</option>
+            </select>
+            <small class="form-text">Select your preferred room type (subject to availability)</small>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="accommodationSpecialRequests" class="form-label">Special Requests</label>
+            <textarea
+              id="accommodationSpecialRequests"
+              class="form-control"
+              formControlName="specialRequests"
+              rows="2"
+              placeholder="Any special requirements or preferences"></textarea>
+          </div>
+        </div>
+      </div>
+    </app-form-section-card>
+
     <!-- Passport Details Section -->
     <app-form-section-card icon="bi-file-earmark-text" title="Passport Details (Optional)">
         <p class="text-muted small mb-3">
