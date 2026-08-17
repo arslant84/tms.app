@@ -86,7 +86,6 @@ export interface TransportSegment {
   id?: number;
   segmentOrder: number;
   dayOfWeek?: string;
-  transportType?: string;
   pickupLocation: string;
   dropoffLocation: string;
   pickupDate?: string;
@@ -483,7 +482,6 @@ export function toFrontendFormat(backendData: any): CombinedRequest {
       id: s.id,
       segmentOrder: s.segment_order,
       dayOfWeek: s.day_of_week || '',
-      transportType: s.transport_type || '',
       pickupLocation: s.pickup_location,
       dropoffLocation: s.dropoff_location,
       pickupDate: s.pickup_date || '',
@@ -690,7 +688,6 @@ export function toBackendFormat(frontendData: Partial<CombinedRequest>): any {
     result.transport_segments = frontendData.transportSegments.map(s => ({
       segment_order: s.segmentOrder,
       day_of_week: s.dayOfWeek || null,
-      transport_type: s.transportType || null,
       pickup_location: s.pickupLocation,
       dropoff_location: s.dropoffLocation,
       pickup_date: s.pickupDate || null,

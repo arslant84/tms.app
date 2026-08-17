@@ -678,14 +678,6 @@
                            [class.is-invalid]="segment.get('pickupTime')?.invalid && segment.get('pickupTime')?.touched">
                   </div>
                   <div class="form-group">
-                    <label class="form-label">Transport Type <span class="text-danger">*</span></label>
-                    <select class="form-select" formControlName="transportType"
-                            [class.is-invalid]="segment.get('transportType')?.invalid && segment.get('transportType')?.touched">
-                      <option value="">Select type</option>
-                      <option *ngFor="let type of transportTypes" [value]="type">{{ type }}</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
                     <label class="form-label">Passengers <span class="text-danger">*</span></label>
                     <input type="number" class="form-control" formControlName="passengers" min="1"
                            [class.is-invalid]="segment.get('passengers')?.invalid && segment.get('passengers')?.touched">

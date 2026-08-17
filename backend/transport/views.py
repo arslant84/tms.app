@@ -183,10 +183,6 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             # when filter is "Pending"
             queryset = queryset.filter(status__istartswith=status_filter)
 
-        transport_type = self.request.query_params.get("transport_type", None)
-        if transport_type:
-            queryset = queryset.filter(transport_type=transport_type)
-
         trf_id = self.request.query_params.get("trf", None)
         if trf_id:
             queryset = queryset.filter(trf_id=trf_id)
@@ -1175,9 +1171,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             )
             if journeys:
                 elements.append(Paragraph("Journey Details", heading_style))
-                journey_data = [
-                    ["#", "Date", "From", "To", "Time", "Type", "Passengers"]
-                ]
+                journey_data = [["#", "Date", "From", "To", "Time", "Passengers"]]
                 for i, journey in enumerate(journeys, 1):
                     journey_data.append(
                         [
@@ -1196,11 +1190,6 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                             )[:8],
                             str(
                                 journey.get(
-                                    "transportType", journey.get("transport_type", "-")
-                                )
-                            )[:15],
-                            str(
-                                journey.get(
                                     "numberOfPassengers",
                                     journey.get("number_of_passengers", "-"),
                                 )
@@ -1212,11 +1201,10 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                     colWidths=[
                         0.3 * inch,
                         0.9 * inch,
-                        1.3 * inch,
-                        1.3 * inch,
-                        0.7 * inch,
+                        1.5 * inch,
+                        1.5 * inch,
+                        0.9 * inch,
                         1 * inch,
-                        0.8 * inch,
                     ],
                 )
                 journey_table.setStyle(table_style)

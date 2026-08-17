@@ -76,7 +76,6 @@ class CombinedRequestTransportSegmentSerializer(serializers.ModelSerializer):
             "id",
             "segment_order",
             "day_of_week",
-            "transport_type",
             "pickup_location",
             "dropoff_location",
             "pickup_date",

@@ -29,7 +29,6 @@ interface ApprovableItem {
 	checkOutDate?: string;
 	location?: string;
 	department?: string;
-	transportType?: string;
 	documentNumber?: string;
 	includedModules?: string[];
 }

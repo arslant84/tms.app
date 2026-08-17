@@ -343,7 +343,7 @@ export class ApprovalsService {
     return {
       id: transport.id,
       type: 'transport',
-      title: `Transport - ${transport.transport_type || 'Request'}`,
+      title: 'Transport Request',
       requester: {
         id: transport.requestor_id || transport.requestor?.id,
         name: transport.requestor_name || transport.requestor?.name || 'Unknown',
@@ -356,7 +356,6 @@ export class ApprovalsService {
       status: transport.status || 'Pending',
       currentApprovalStep: transport.current_approval_step,
       details: {
-        transportType: transport.transport_type,
         pickupLocation: transport.pickup_location,
         dropoffLocation: transport.dropoff_location,
         pickupDate: transport.pickup_date,

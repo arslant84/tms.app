@@ -190,12 +190,6 @@ export class TransportListComponent implements OnInit, OnDestroy {
 		);
 	}
 
-	getFirstTransportType(request: TransportRequest): string {
-		if (!request.transportDetails || request.transportDetails.length === 0)
-			return "N/A";
-		return request.transportDetails[0].transportType || "N/A";
-	}
-
 	formatCurrency(
 		amount: number | null | undefined,
 		currency?: string | null,
