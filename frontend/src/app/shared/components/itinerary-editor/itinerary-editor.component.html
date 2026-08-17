@@ -30,7 +30,7 @@
               type="date"
               class="form-control"
               [formControlName]="field.key"
-              [ngClass]="{'is-invalid': segment.get(field.key)?.invalid && segment.get(field.key)?.touched}">
+              [ngClass]="{'is-invalid': (segment.get(field.key)?.invalid && segment.get(field.key)?.touched) || (field.isPrimaryDate && outOfOrderIndices.has(i) && segment.get(field.key)?.touched)}">
 
             <input
               *ngIf="field.type === 'time'"
@@ -64,7 +64,7 @@
 
             <div
               class="invalid-feedback"
-              *ngIf="segment.get(field.key)?.errors?.['dateOrder'] && segment.get(field.key)?.touched">
+              *ngIf="field.isPrimaryDate && outOfOrderIndices.has(i) && segment.get(field.key)?.touched">
               {{ field.label }} cannot be earlier than the previous segment's date
             </div>
           </div>
