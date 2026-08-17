@@ -138,11 +138,11 @@
             <span class="value">{{ request.requestedRoomType }}</span>
           </div>
           <div class="detail-item" *ngIf="request.flightArrivalTime">
-            <label><i class="bi bi-airplane-fill"></i> Flight Arrival Time</label>
+            <label><i class="bi bi-airplane-fill"></i> Check-in Time</label>
             <span class="value">{{ formatTime(request.flightArrivalTime) }}</span>
           </div>
           <div class="detail-item" *ngIf="request.flightDepartureTime">
-            <label><i class="bi bi-airplane"></i> Flight Departure Time</label>
+            <label><i class="bi bi-airplane"></i> Check-out Time</label>
             <span class="value">{{ formatTime(request.flightDepartureTime) }}</span>
           </div>
         </div>

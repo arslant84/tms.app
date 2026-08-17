@@ -29,9 +29,19 @@
                 id="requestorName"
                 class="form-control"
                 formControlName="requestorName"
-                [class.is-invalid]="accommodationForm.get('requestorName')?.invalid && accommodationForm.get('requestorName')?.touched"
-                placeholder="Arslan Tekayev" />
-              <div class="invalid-feedback" *ngIf="accommodationForm.get('requestorName')?.invalid && accommodationForm.get('requestorName')?.touched">
+                [class.is-invalid]="
+                  accommodationForm.get('requestorName')?.invalid &&
+                  accommodationForm.get('requestorName')?.touched
+                "
+                placeholder="Arslan Tekayev"
+              />
+              <div
+                class="invalid-feedback"
+                *ngIf="
+                  accommodationForm.get('requestorName')?.invalid &&
+                  accommodationForm.get('requestorName')?.touched
+                "
+              >
                 Requestor name is required
               </div>
             </div>
@@ -44,7 +54,8 @@
                 id="requestorId"
                 class="form-control"
                 formControlName="requestorId"
-                placeholder="1049681" />
+                placeholder="1049681"
+              />
             </div>
 
             <!-- Gender -->
@@ -54,12 +65,22 @@
                 id="requestorGender"
                 class="form-control"
                 formControlName="requestorGender"
-                [class.is-invalid]="accommodationForm.get('requestorGender')?.invalid && accommodationForm.get('requestorGender')?.touched">
+                [class.is-invalid]="
+                  accommodationForm.get('requestorGender')?.invalid &&
+                  accommodationForm.get('requestorGender')?.touched
+                "
+              >
                 <option value="">Select gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </select>
-              <div class="invalid-feedback" *ngIf="accommodationForm.get('requestorGender')?.invalid && accommodationForm.get('requestorGender')?.touched">
+              <div
+                class="invalid-feedback"
+                *ngIf="
+                  accommodationForm.get('requestorGender')?.invalid &&
+                  accommodationForm.get('requestorGender')?.touched
+                "
+              >
                 Please select gender
               </div>
             </div>
@@ -72,7 +93,8 @@
                 id="department"
                 class="form-control"
                 formControlName="department"
-                placeholder="TBE" />
+                placeholder="TBE"
+              />
             </div>
 
             <!-- Location -->
@@ -82,13 +104,23 @@
                 id="location"
                 class="form-control"
                 formControlName="location"
-                [class.is-invalid]="accommodationForm.get('location')?.invalid && accommodationForm.get('location')?.touched">
+                [class.is-invalid]="
+                  accommodationForm.get('location')?.invalid &&
+                  accommodationForm.get('location')?.touched
+                "
+              >
                 <option value="">Select location</option>
                 <option value="Ashgabat">Ashgabat</option>
                 <option value="Kiyanly">Kiyanly</option>
                 <option value="Turkmenbashy">Turkmenbashy</option>
               </select>
-              <div class="invalid-feedback" *ngIf="accommodationForm.get('location')?.invalid && accommodationForm.get('location')?.touched">
+              <div
+                class="invalid-feedback"
+                *ngIf="
+                  accommodationForm.get('location')?.invalid &&
+                  accommodationForm.get('location')?.touched
+                "
+              >
                 Please select location
               </div>
             </div>
@@ -100,27 +132,29 @@
                 id="trfId"
                 class="form-control"
                 formControlName="trfId"
-                (change)="onTrfChange($event)">
+                (change)="onTrfChange($event)"
+              >
                 <option value="">-- No TSR (Independent Request) --</option>
                 <option *ngFor="let trf of availableTrfs" [value]="trf.id">
-                  {{ trf.request_number || 'TSR-' + trf.id }} - {{ trf.requestor_name }} ({{ trf.status }})
+                  {{ trf.request_number || 'TSR-' + trf.id }} - {{ trf.requestor_name }} ({{
+                    trf.status
+                  }})
                 </option>
               </select>
               <small class="form-text" *ngIf="!loadingTrfs && availableTrfs.length === 0">
                 No TSRs available. This request will be independent.
               </small>
-              <small class="form-text" *ngIf="loadingTrfs">
-                Loading available TSRs...
-              </small>
+              <small class="form-text" *ngIf="loadingTrfs"> Loading available TSRs... </small>
               <small class="form-text" *ngIf="!loadingTrfs && availableTrfs.length > 0">
                 Select a TSR to link this accommodation request to an existing travel request
               </small>
               <!-- Display selected TSR details -->
               <div *ngIf="selectedTrfDetails" class="alert alert-info mt-2">
-                <strong><i class="bi bi-info-circle"></i> Linked TSR:</strong><br>
-                <strong>Number:</strong> {{ selectedTrfDetails.request_number }}<br>
-                <strong>Requestor:</strong> {{ selectedTrfDetails.requestor_name }}<br>
-                <strong>Status:</strong> <span class="badge badge-primary">{{ selectedTrfDetails.status }}</span>
+                <strong><i class="bi bi-info-circle"></i> Linked TSR:</strong><br />
+                <strong>Number:</strong> {{ selectedTrfDetails.request_number }}<br />
+                <strong>Requestor:</strong> {{ selectedTrfDetails.requestor_name }}<br />
+                <strong>Status:</strong>
+                <span class="badge badge-primary">{{ selectedTrfDetails.status }}</span>
               </div>
             </div>
 
@@ -132,8 +166,18 @@
                 id="requestedCheckInDate"
                 class="form-control"
                 formControlName="requestedCheckInDate"
-                [class.is-invalid]="accommodationForm.get('requestedCheckInDate')?.invalid && accommodationForm.get('requestedCheckInDate')?.touched" />
-              <div class="invalid-feedback" *ngIf="accommodationForm.get('requestedCheckInDate')?.invalid && accommodationForm.get('requestedCheckInDate')?.touched">
+                [class.is-invalid]="
+                  accommodationForm.get('requestedCheckInDate')?.invalid &&
+                  accommodationForm.get('requestedCheckInDate')?.touched
+                "
+              />
+              <div
+                class="invalid-feedback"
+                *ngIf="
+                  accommodationForm.get('requestedCheckInDate')?.invalid &&
+                  accommodationForm.get('requestedCheckInDate')?.touched
+                "
+              >
                 Check-in date is required
               </div>
             </div>
@@ -146,8 +190,18 @@
                 id="requestedCheckOutDate"
                 class="form-control"
                 formControlName="requestedCheckOutDate"
-                [class.is-invalid]="accommodationForm.get('requestedCheckOutDate')?.invalid && accommodationForm.get('requestedCheckOutDate')?.touched" />
-              <div class="invalid-feedback" *ngIf="accommodationForm.get('requestedCheckOutDate')?.invalid && accommodationForm.get('requestedCheckOutDate')?.touched">
+                [class.is-invalid]="
+                  accommodationForm.get('requestedCheckOutDate')?.invalid &&
+                  accommodationForm.get('requestedCheckOutDate')?.touched
+                "
+              />
+              <div
+                class="invalid-feedback"
+                *ngIf="
+                  accommodationForm.get('requestedCheckOutDate')?.invalid &&
+                  accommodationForm.get('requestedCheckOutDate')?.touched
+                "
+              >
                 Check-out date is required
               </div>
             </div>
@@ -158,34 +212,39 @@
               <select
                 id="requestedRoomType"
                 class="form-control"
-                formControlName="requestedRoomType">
+                formControlName="requestedRoomType"
+              >
                 <option value="">Select room type (optional)</option>
                 <option value="Hotel">Hotel</option>
                 <option value="Staff House">Staff House</option>
                 <option value="PKC Camp">PKC Camp</option>
               </select>
-              <small class="form-text">Select your preferred room type (subject to availability)</small>
+              <small class="form-text"
+                >Select your preferred room type (subject to availability)</small
+              >
             </div>
 
-            <!-- Flight/Train Arrival Time -->
+            <!-- Check-in Time -->
             <div class="form-group">
-              <label for="flightArrivalTime" class="form-label">Flight/Train Arrival Time</label>
+              <label for="flightArrivalTime" class="form-label">Check-in Time</label>
               <input
                 type="time"
                 id="flightArrivalTime"
                 class="form-control"
-                formControlName="flightArrivalTime" />
+                formControlName="flightArrivalTime"
+              />
               <small class="form-text">Time of arrival (HH:MM)</small>
             </div>
 
-            <!-- Flight/Train Departure Time -->
+            <!-- Check-out Time -->
             <div class="form-group">
-              <label for="flightDepartureTime" class="form-label">Flight/Train Departure Time</label>
+              <label for="flightDepartureTime" class="form-label">Check-out Time</label>
               <input
                 type="time"
                 id="flightDepartureTime"
                 class="form-control"
-                formControlName="flightDepartureTime" />
+                formControlName="flightDepartureTime"
+              />
               <small class="form-text">Time of departure (HH:MM)</small>
             </div>
           </div>
@@ -198,7 +257,8 @@
               class="form-control"
               formControlName="specialRequests"
               rows="4"
-              placeholder="Any special requirements or preferences"></textarea>
+              placeholder="Any special requirements or preferences"
+            ></textarea>
             <small class="form-text">E.g., dietary restrictions, accessibility needs, etc.</small>
           </div>
 
@@ -226,7 +286,8 @@
               type="button"
               class="btn btn-outline-secondary"
               (click)="onCancel()"
-              [disabled]="submitting">
+              [disabled]="submitting"
+            >
               <i class="bi bi-x"></i>
               Cancel
             </button>
@@ -235,7 +296,8 @@
               type="button"
               class="btn btn-secondary"
               (click)="onSaveDraft()"
-              [disabled]="submitting">
+              [disabled]="submitting"
+            >
               <span *ngIf="!submitting">
                 <i class="bi bi-save"></i>
                 Save Draft
@@ -249,7 +311,8 @@
             <button
               type="submit"
               class="btn btn-primary"
-              [disabled]="accommodationForm.invalid || submitting">
+              [disabled]="accommodationForm.invalid || submitting"
+            >
               <span *ngIf="!submitting">
                 <i class="bi bi-send"></i>
                 Submit Request
