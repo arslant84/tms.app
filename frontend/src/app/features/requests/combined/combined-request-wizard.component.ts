@@ -376,7 +376,8 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
       phone: defaults.phone,
       department: defaults.department,
       position: defaults.position,
-      staffId: defaults.staffId
+      staffId: defaults.staffId,
+      accommodationGender: defaults.gender
     });
   }
 

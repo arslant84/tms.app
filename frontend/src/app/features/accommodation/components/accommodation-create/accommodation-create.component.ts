@@ -188,7 +188,8 @@ export class AccommodationCreateComponent implements OnInit {
     this.accommodationForm.patchValue({
       requestorName: userDefaults.fullName,
       requestorId: userDefaults.staffId,
-      department: userDefaults.department
+      department: userDefaults.department,
+      requestorGender: userDefaults.gender
     });
   }
 

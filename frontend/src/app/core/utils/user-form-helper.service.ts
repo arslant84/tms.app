@@ -11,6 +11,7 @@ export interface UserFormDefaults {
   position: string;
   email: string;
   phone: string;
+  gender: string;
 }
 
 /**
@@ -37,7 +38,8 @@ export class UserFormHelperService {
       department: this.extractDepartmentName(currentUser?.department),
       position: position || '',
       email: currentUser?.email || '',
-      phone: currentUser?.phone || ''
+      phone: currentUser?.phone || '',
+      gender: currentUser?.gender || ''
     };
   }
 
@@ -104,6 +106,14 @@ export class UserFormHelperService {
   }
 
   /**
+   * Get user gender
+   * @returns Current user's gender or empty string
+   */
+  getUserGender(): string {
+    return this.authService.getCurrentUser()?.gender || '';
+  }
+
+  /**
    * Merge user defaults with initial data (for edit mode)
    * Prioritizes initial data over user defaults
    * @param initialData The initial data from edit mode
@@ -121,7 +131,8 @@ export class UserFormHelperService {
       department: initialDepartment || userDefaults.department,
       position: initialData.position || userDefaults.position,
       email: initialData.email || userDefaults.email,
-      phone: initialData.phone || userDefaults.phone
+      phone: initialData.phone || userDefaults.phone,
+      gender: initialData.gender || userDefaults.gender
     };
   }
 }
