@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TrfService } from '../../services/trf.service';
+import { AccommodationService, AccommodationRequest } from '../../../accommodation/services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { WorkflowService } from '../../../../core/services/workflow.service';
@@ -40,10 +41,13 @@ export class TrfDetailComponent implements OnInit {
   // Statuses that indicate the request has been approved and should not be editable
   private readonly APPROVED_KEYWORDS = ['Approved', 'Completed', 'Assigned'];
 
+  linkedAccommodation: AccommodationRequest | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private trfService: TrfService,
+    private accommodationService: AccommodationService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
@@ -80,10 +84,31 @@ export class TrfDetailComponent implements OnInit {
         const data = response.trf || response;
         this.trfData = this.transformTrfData(data);
         this.loading = false;
+        this.loadLinkedAccommodation();
       },
       error: (err) => {
         this.error = 'Failed to load TRF details: ' + (err.message || 'Unknown error');
         this.loading = false;
+      }
+    });
+  }
+
+  /**
+   * Accommodation requests embedded in a TSR are linked via AccommodationRequest.trf,
+   * not returned as part of the TRF payload itself. The list endpoint has no `trf`
+   * query param, so this matches client-side against the requestor's own accommodation
+   * requests (a small list per user) rather than adding a new backend filter.
+   */
+  private loadLinkedAccommodation(): void {
+    this.accommodationService.getAllRequests({ page_size: 100 }).subscribe({
+      next: (response: any) => {
+        const results = response?.results || response || [];
+        this.linkedAccommodation = (Array.isArray(results) ? results : [])
+          .find((req: AccommodationRequest) => req.trf === this.trfId) || null;
+      },
+      error: () => {
+        // Non-critical - the rest of the TRF detail page still works without it
+        this.linkedAccommodation = null;
       }
     });
   }

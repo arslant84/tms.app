@@ -40,6 +40,8 @@ export interface AccommodationRequest {
   trf?: number;
   trf_request_number?: string;
   status: string;
+  assigned_room_name?: string;
+  assigned_staff_house_name?: string;
   additional_comments?: string;
   submitted_at?: string;
   created_at: string;

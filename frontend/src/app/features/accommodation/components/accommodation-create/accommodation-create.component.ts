@@ -6,7 +6,6 @@ import { AccommodationService } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
-import { TrfService } from '../../../trf-management/services/trf.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
@@ -38,11 +37,6 @@ export class AccommodationCreateComponent implements OnInit {
   initialSkippedSteps: SkippedStepsSelection = {};
   requesterStaffId?: string; // Original requestor's staff ID for department-based approver filtering
 
-  // TRF/TSR selection
-  availableTrfs: any[] = [];
-  loadingTrfs = false;
-  selectedTrfDetails: any = null;
-
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -50,7 +44,6 @@ export class AccommodationCreateComponent implements OnInit {
     private accommodationService: AccommodationService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
-    private trfService: TrfService,
     private formUtils: FormUtilsService,
     private userFormHelper: UserFormHelperService,
     private errorHandler: HttpErrorHandlerService
@@ -64,123 +57,13 @@ export class AccommodationCreateComponent implements OnInit {
       if (params['id']) {
         this.isEditMode = true;
         this.requestId = +params['id'];
-        // Load TRFs first, then load request data in the callback
-        this.loadAvailableTrfsAndRequestData(this.requestId);
+        this.loadRequestData(this.requestId);
       } else {
-        // In create mode, just load TRFs and populate user details
-        this.loadAvailableTrfs();
         this.populateUserDetails();
       }
     });
   }
 
-  loadAvailableTrfs(): void {
-    this.loadingTrfs = true;
-    this.trfService.getAllTrfs({ page_size: 1000 }).subscribe({
-      next: (response: any) => {
-        // Handle both paginated and non-paginated responses
-        const trfs = response.results || response;
-        this.availableTrfs = Array.isArray(trfs) ? trfs : [];
-        this.loadingTrfs = false;
-      },
-      error: (err) => {
-        this.availableTrfs = [];
-        this.loadingTrfs = false;
-      }
-    });
-  }
-
-  loadAvailableTrfsAndRequestData(requestId: number): void {
-    this.loadingTrfs = true;
-    this.trfService.getAllTrfs({ page_size: 1000 }).subscribe({
-      next: (response: any) => {
-        // Handle both paginated and non-paginated responses
-        const trfs = response.results || response;
-        this.availableTrfs = Array.isArray(trfs) ? trfs : [];
-        this.loadingTrfs = false;
-        // Now that TRFs are loaded, load the request data
-        this.loadRequestData(requestId);
-      },
-      error: (err) => {
-        this.availableTrfs = [];
-        this.loadingTrfs = false;
-        // Still try to load request data even if TRFs failed
-        this.loadRequestData(requestId);
-      }
-    });
-  }
-
-  onTrfChange(event: any): void {
-    const trfId = event.target.value;
-    if (trfId) {
-      this.selectedTrfDetails = this.availableTrfs.find(trf => trf.id === +trfId);
-
-      // Check accommodation availability and auto-populate dates
-      this.checkTsrAvailability(+trfId);
-    } else {
-      this.selectedTrfDetails = null;
-      // Clear the date fields if TSR is deselected
-      this.accommodationForm.patchValue({
-        requestedCheckInDate: '',
-        requestedCheckOutDate: ''
-      });
-    }
-  }
-
-  checkTsrAvailability(trfId: number): void {
-    this.trfService.checkAccommodationAvailability(trfId).subscribe({
-      next: (response: any) => {
-        if (!response.is_available) {
-          // TSR is already linked to another accommodation request
-          const existingAccom = response.existing_accommodation;
-
-          // Check if this is the current request being edited (in edit mode)
-          const isCurrentRequest = this.isEditMode && existingAccom && this.requestId === existingAccom.id;
-
-          if (!isCurrentRequest && existingAccom) {
-            // Show warning only if it's linked to a DIFFERENT accommodation request
-            this.toastService.warning(
-              `This TSR (${response.tsr_request_number || 'Unknown'}) is already linked to accommodation request ${existingAccom.request_number || existingAccom.id} by ${existingAccom.requestor_name || 'Unknown'}. Please select a different TSR.`
-            );
-
-            // Clear the TSR selection
-            this.accommodationForm.patchValue({
-              trfId: ''
-            });
-            this.selectedTrfDetails = null;
-          } else if (!isCurrentRequest && !existingAccom) {
-            // TSR is not available but no existing accommodation info provided
-            this.toastService.warning('This TSR is already linked to another accommodation request.');
-            this.accommodationForm.patchValue({ trfId: '' });
-            this.selectedTrfDetails = null;
-          } else {
-            // In edit mode, auto-populate dates from TSR even if it's already linked to this request
-            if (response.date_range) {
-              this.accommodationForm.patchValue({
-                requestedCheckInDate: response.date_range.start_date,
-                requestedCheckOutDate: response.date_range.end_date
-              });
-            }
-          }
-        } else {
-          // TSR is available - auto-populate dates if available
-          if (response.date_range) {
-            this.accommodationForm.patchValue({
-              requestedCheckInDate: response.date_range.start_date,
-              requestedCheckOutDate: response.date_range.end_date
-            });
-
-            this.toastService.success(
-              `Check-in and check-out dates have been auto-populated from TSR itinerary. You can adjust them within the TSR date range (${response.date_range.start_date} to ${response.date_range.end_date}).`
-            );
-          }
-        }
-      },
-      error: (err) => {
-        this.toastService.error('Failed to check TSR availability');
-      }
-    });
-  }
 
   private populateUserDetails(): void {
     // Auto-populate user details using helper service
@@ -200,7 +83,6 @@ export class AccommodationCreateComponent implements OnInit {
       requestorGender: ['', Validators.required],
       department: [''],
       location: ['', Validators.required],
-      trfId: [''],
       requestedCheckInDate: ['', Validators.required],
       requestedCheckOutDate: ['', Validators.required],
       requestedRoomType: [''],
@@ -233,15 +115,12 @@ export class AccommodationCreateComponent implements OnInit {
           return;
         }
 
-        const trfValue = request.trf || request.additional_data?.trf_id || request.additional_data?.trf;
-
         this.accommodationForm.patchValue({
           requestorName: request.requestor_name,
           requestorId: request.staff_id,
           requestorGender: request.requestor_gender || request.additional_data?.requestor_gender,
           department: request.department,
           location: request.location || request.additional_data?.location,
-          trfId: trfValue,
           requestedCheckInDate: request.requested_check_in_date || request.additional_data?.requested_check_in_date,
           requestedCheckOutDate: request.requested_check_out_date || request.additional_data?.requested_check_out_date,
           requestedRoomType: request.requested_room_type || request.additional_data?.requested_room_type,
@@ -249,11 +128,6 @@ export class AccommodationCreateComponent implements OnInit {
           flightDepartureTime: request.flight_departure_time || request.additional_data?.flight_departure_time,
           specialRequests: request.special_requests || request.additional_data?.special_requests
         });
-
-        // Set selected TRF details for display
-        if (trfValue && this.availableTrfs.length > 0) {
-          this.selectedTrfDetails = this.availableTrfs.find(trf => trf.id === +trfValue);
-        }
 
         // Set the staff ID for proper department-based approver filtering
         // This ensures approvers are filtered by the original requester's department
@@ -380,7 +254,6 @@ export class AccommodationCreateComponent implements OnInit {
       requestor_name: formValue.requestorName,
       staff_id: formValue.requestorId,
       department: formValue.department,
-      trf: formValue.trfId ? parseInt(formValue.trfId) : null,
       additional_data: {
         requestor_gender: formValue.requestorGender,
         location: formValue.location,

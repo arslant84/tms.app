@@ -125,39 +125,6 @@
               </div>
             </div>
 
-            <!-- TSR Selection -->
-            <div class="form-group">
-              <label for="trfId" class="form-label">Link to TSR (if applicable)</label>
-              <select
-                id="trfId"
-                class="form-control"
-                formControlName="trfId"
-                (change)="onTrfChange($event)"
-              >
-                <option value="">-- No TSR (Independent Request) --</option>
-                <option *ngFor="let trf of availableTrfs" [value]="trf.id">
-                  {{ trf.request_number || 'TSR-' + trf.id }} - {{ trf.requestor_name }} ({{
-                    trf.status
-                  }})
-                </option>
-              </select>
-              <small class="form-text" *ngIf="!loadingTrfs && availableTrfs.length === 0">
-                No TSRs available. This request will be independent.
-              </small>
-              <small class="form-text" *ngIf="loadingTrfs"> Loading available TSRs... </small>
-              <small class="form-text" *ngIf="!loadingTrfs && availableTrfs.length > 0">
-                Select a TSR to link this accommodation request to an existing travel request
-              </small>
-              <!-- Display selected TSR details -->
-              <div *ngIf="selectedTrfDetails" class="alert alert-info mt-2">
-                <strong><i class="bi bi-info-circle"></i> Linked TSR:</strong><br />
-                <strong>Number:</strong> {{ selectedTrfDetails.request_number }}<br />
-                <strong>Requestor:</strong> {{ selectedTrfDetails.requestor_name }}<br />
-                <strong>Status:</strong>
-                <span class="badge badge-primary">{{ selectedTrfDetails.status }}</span>
-              </div>
-            </div>
-
             <!-- Check-in Date -->
             <div class="form-group">
               <label for="requestedCheckInDate" class="form-label required">Check-in Date*</label>

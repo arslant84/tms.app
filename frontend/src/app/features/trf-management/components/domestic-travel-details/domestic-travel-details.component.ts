@@ -3,12 +3,16 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
+import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
 import { MealProvisionComponent, DailyMealSelection } from '../../../../shared/components/meal-provision/meal-provision.component';
 import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
 import { ItineraryEditorComponent, ItineraryFieldConfig } from '../../../../shared/components/itinerary-editor/itinerary-editor.component';
+import { LocationType, GuestGender, PreferredRoomType } from '../../../accommodation/models/accommodation.model';
 
 export const DOMESTIC_CITIES = ['Ashgabat', 'Turkmenbashi', 'Turkmenabat', 'Dashoguz', 'Mary'];
+export const ACCOMMODATION_LOCATIONS: LocationType[] = ['Ashgabat', 'Kiyanly', 'Turkmenbashy'];
+export const ACCOMMODATION_ROOM_TYPES: PreferredRoomType[] = ['Hotel', 'Staff House', 'PKC Camp'];
 
 export interface ItinerarySegment {
   date: Date | null;
@@ -31,12 +35,26 @@ export interface PassportUploadDetails {
   fileUrl: string;
 }
 
+/** Mirrors the standalone accommodation-create form's fields exactly. */
+export interface AccommodationDetails {
+  required: boolean;
+  gender: GuestGender | '';
+  location: LocationType | '';
+  checkInDate: string;
+  checkInTime: string;
+  checkOutDate: string;
+  checkOutTime: string;
+  roomType: PreferredRoomType | '';
+  specialRequests: string;
+}
+
 export interface DomesticTravelSpecificDetails {
   purposeOfTravel: string;
   tripType: 'One Way' | 'Round Trip';
   itinerary: ItinerarySegment[];
   mealProvisions: MealProvisionDetails;
   passportUpload?: PassportUploadDetails;
+  accommodation: AccommodationDetails;
 }
 
 @Component({
@@ -73,10 +91,15 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   passportFileName: string = '';
   passportFileUrl: string = '';
 
+  // Accommodation (embedded, mirrors the standalone accommodation-create form)
+  accommodationLocations = ACCOMMODATION_LOCATIONS;
+  accommodationRoomTypes = ACCOMMODATION_ROOM_TYPES;
+
   constructor(
     private fb: FormBuilder,
     private formUtils: FormUtilsService,
-    public dateUtils: DateUtilsService
+    public dateUtils: DateUtilsService,
+    private userFormHelper: UserFormHelperService
   ) {}
 
   ngOnInit(): void {
@@ -97,9 +120,23 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   }
 
   private initForm(): void {
+    const accommodation = this.initialData.accommodation;
+    const userDefaults = this.userFormHelper.getUserFormDefaults();
+
     this.travelForm = this.fb.group({
       purposeOfTravel: [this.initialData.purposeOfTravel || '', Validators.required],
-      tripType: [this.initialData.tripType || 'Round Trip', Validators.required]
+      tripType: [this.initialData.tripType || 'Round Trip', Validators.required],
+      accommodation: this.fb.group({
+        required: [accommodation?.required || false],
+        gender: [accommodation?.gender || userDefaults.gender || ''],
+        location: [accommodation?.location || ''],
+        checkInDate: [accommodation?.checkInDate || ''],
+        checkInTime: [accommodation?.checkInTime || ''],
+        checkOutDate: [accommodation?.checkOutDate || ''],
+        checkOutTime: [accommodation?.checkOutTime || ''],
+        roomType: [accommodation?.roomType || ''],
+        specialRequests: [accommodation?.specialRequests || '']
+      })
     });
 
     this.tripTypeValue = this.initialData.tripType || 'Round Trip';
@@ -107,6 +144,21 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     // Watch trip type changes to drive the itinerary editor's add/remove gating
     this.travelForm.get('tripType')?.valueChanges.subscribe(tripType => {
       this.tripTypeValue = tripType;
+    });
+
+    // Accommodation fields are only mandatory once the requestor opts in
+    const accommodationGroup = this.travelForm.get('accommodation');
+    const conditionalFields = ['gender', 'location', 'checkInDate', 'checkOutDate'];
+    const applyAccommodationValidators = (required: boolean) => {
+      conditionalFields.forEach(key => {
+        const control = accommodationGroup?.get(key);
+        control?.setValidators(required ? [Validators.required] : []);
+        control?.updateValueAndValidity({ emitEvent: false });
+      });
+    };
+    applyAccommodationValidators(accommodationGroup?.get('required')?.value || false);
+    accommodationGroup?.get('required')?.valueChanges.subscribe(required => {
+      applyAccommodationValidators(required);
     });
 
     this.mealSelections = this.initialData.mealProvisions?.dailySelections || [];
