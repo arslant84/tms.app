@@ -328,20 +328,18 @@
         <h3>Rejection Details</h3>
       </div>
       <div class="card-body">
-        <div class="rejection-info">
-          <div class="detail-item" *ngIf="request.rejectionDetails?.rejectedBy">
+        <div class="rejection-info" *ngIf="request.rejectionDetails as rejection">
+          <div class="detail-item" *ngIf="rejection.rejectedBy">
             <label>Rejected By</label>
-            <span class="value">{{ request.rejectionDetails?.rejectedBy }}</span>
+            <span class="value">{{ rejection.rejectedBy }}</span>
           </div>
-          <div class="detail-item" *ngIf="request.rejectionDetails?.rejectedAt">
+          <div class="detail-item" *ngIf="rejection.rejectedAt">
             <label>Rejected At</label>
-            <span class="value">{{
-              dateUtils.formatDateTime(request.rejectionDetails?.rejectedAt)
-            }}</span>
+            <span class="value">{{ dateUtils.formatDateTime(rejection.rejectedAt) }}</span>
           </div>
-          <div class="rejection-reason" *ngIf="request.rejectionDetails?.reason">
+          <div class="rejection-reason" *ngIf="rejection.reason">
             <label>Reason</label>
-            <p class="reason-text">{{ request.rejectionDetails?.reason }}</p>
+            <p class="reason-text">{{ rejection.reason }}</p>
           </div>
         </div>
       </div>
