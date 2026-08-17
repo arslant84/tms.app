@@ -13,7 +13,7 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { AuthService } from '../../../../core/services/auth.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
-import { TransportRequestForm, TransportDetail, TransportType, toBackendFormat } from '../../models/transport.model';
+import { TransportRequestForm, TransportDetail, toBackendFormat } from '../../models/transport.model';
 import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
 
@@ -41,8 +41,6 @@ export class TransportCreateComponent implements OnInit {
   initialApproverSelections: ApproverSelection = {};
   initialSkippedSteps: SkippedStepsSelection = {};
   requesterStaffId?: string; // Staff ID for department-based approver filtering
-
-  transportTypes: TransportType[] = ['Local', 'Intercity', 'Airport Transfer', 'Charter', 'Other'];
 
   constructor(
     private fb: FormBuilder,
@@ -150,7 +148,6 @@ export class TransportCreateComponent implements OnInit {
               from: [detail.from, Validators.required],
               to: [detail.to, Validators.required],
               departureTime: [detail.departureTime, Validators.required],
-              transportType: [detail.transportType || 'Local', Validators.required],
               numberOfPassengers: [detail.numberOfPassengers || 1, [Validators.required, Validators.min(1)]]
             });
             this.transportDetails.push(detailGroup);
@@ -200,7 +197,6 @@ export class TransportCreateComponent implements OnInit {
       from: ['', Validators.required],
       to: ['', Validators.required],
       departureTime: ['', Validators.required],
-      transportType: ['Local', Validators.required],
       numberOfPassengers: [1, [Validators.required, Validators.min(1)]]
     });
   }

@@ -15,13 +15,6 @@ export type TransportRequestStatus =
   | 'Rejected'
   | 'Cancelled';
 
-export type TransportType =
-  | 'Local'
-  | 'Intercity'
-  | 'Airport Transfer'
-  | 'Charter'
-  | 'Other';
-
 export interface TransportRequestorInformation {
   requestorName: string;
   staffId: string;
@@ -36,7 +29,6 @@ export interface TransportDetail {
   from: string;
   to: string;
   departureTime: string;
-  transportType: TransportType;
   numberOfPassengers: number;
 }
 
@@ -125,7 +117,6 @@ export function toBackendFormat(frontendData: Partial<TransportRequestForm>): an
       from: detail.from,
       to: detail.to,
       departure_time: detail.departureTime,
-      transport_type: detail.transportType,
       number_of_passengers: detail.numberOfPassengers
     })) || [],
 
@@ -181,7 +172,6 @@ export function toFrontendFormat(backendData: any): TransportRequestForm {
       from: detail.from || '',
       to: detail.to || '',
       departureTime: detail.departure_time || '',
-      transportType: detail.transport_type || 'Local',
       numberOfPassengers: detail.number_of_passengers || 1
     })) || [],
 

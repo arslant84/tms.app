@@ -194,7 +194,6 @@ export class ClerkPanelComponent implements OnInit {
         priority: 'low',
         status: 'pending',
         details: {
-          transportType: 'Car Rental',
           startDate: '2025-06-02',
           endDate: '2025-06-03',
           location: 'Karachi',

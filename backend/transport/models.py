@@ -54,7 +54,7 @@ class TransportRequest(models.Model):
     )
 
     # Transport details array (stored as JSON)
-    # Each item has: date, day, from, to, departureTime, transportType, numberOfPassengers
+    # Each item has: date, day, from, to, departureTime, numberOfPassengers
     transport_details = models.JSONField(
         default=list, help_text="Array of transport detail objects"
     )

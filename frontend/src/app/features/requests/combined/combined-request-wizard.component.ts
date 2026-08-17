@@ -156,9 +156,6 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
   entryTypes = ['Single Entry', 'Multiple Entry', 'Transit'];
   maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
 
-  // Transport type options (matches standalone transport form)
-  transportTypes = ['Local', 'Intercity', 'Airport Transfer', 'Charter', 'Other'];
-
   // Meal provision (domestic only)
   dailyMealDates: Date[] = [];
   mealSummary = { breakfast: 0, lunch: 0, dinner: 0, supper: 0, refreshment: 0 };
@@ -692,7 +689,6 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
       pickupLocation: [data?.pickupLocation || '', Validators.required],
       dropoffLocation: [data?.dropoffLocation || '', Validators.required],
       pickupTime: [data?.pickupTime || '', Validators.required],
-      transportType: [data?.transportType || 'Local', Validators.required],
       passengers: [data?.passengers || 1, [Validators.required, Validators.min(1)]],
       vehicleTypePreference: [data?.vehicleTypePreference || ''],
       notes: [data?.notes || '']
@@ -1083,7 +1079,6 @@ export class CombinedRequestWizardComponent implements OnInit, OnDestroy {
         pickupLocation: s.pickupLocation,
         dropoffLocation: s.dropoffLocation,
         pickupTime: s.pickupTime,
-        transportType: s.transportType,
         passengers: s.passengers,
         vehicleTypePreference: s.vehicleTypePreference || '',
         notes: s.notes || ''
