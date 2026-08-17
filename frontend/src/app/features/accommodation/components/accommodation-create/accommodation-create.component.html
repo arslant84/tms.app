@@ -182,6 +182,18 @@
               </div>
             </div>
 
+            <!-- Check-in Time -->
+            <div class="form-group">
+              <label for="flightArrivalTime" class="form-label">Check-in Time</label>
+              <input
+                type="time"
+                id="flightArrivalTime"
+                class="form-control"
+                formControlName="flightArrivalTime"
+              />
+              <small class="form-text">Time of arrival (HH:MM)</small>
+            </div>
+
             <!-- Check-out Date -->
             <div class="form-group">
               <label for="requestedCheckOutDate" class="form-label required">Check-out Date*</label>
@@ -206,6 +218,18 @@
               </div>
             </div>
 
+            <!-- Check-out Time -->
+            <div class="form-group">
+              <label for="flightDepartureTime" class="form-label">Check-out Time</label>
+              <input
+                type="time"
+                id="flightDepartureTime"
+                class="form-control"
+                formControlName="flightDepartureTime"
+              />
+              <small class="form-text">Time of departure (HH:MM)</small>
+            </div>
+
             <!-- Preferred Room Type -->
             <div class="form-group">
               <label for="requestedRoomType" class="form-label">Preferred Room Type</label>
@@ -222,30 +246,6 @@
               <small class="form-text"
                 >Select your preferred room type (subject to availability)</small
               >
-            </div>
-
-            <!-- Check-in Time -->
-            <div class="form-group">
-              <label for="flightArrivalTime" class="form-label">Check-in Time</label>
-              <input
-                type="time"
-                id="flightArrivalTime"
-                class="form-control"
-                formControlName="flightArrivalTime"
-              />
-              <small class="form-text">Time of arrival (HH:MM)</small>
-            </div>
-
-            <!-- Check-out Time -->
-            <div class="form-group">
-              <label for="flightDepartureTime" class="form-label">Check-out Time</label>
-              <input
-                type="time"
-                id="flightDepartureTime"
-                class="form-control"
-                formControlName="flightDepartureTime"
-              />
-              <small class="form-text">Time of departure (HH:MM)</small>
             </div>
           </div>
 
