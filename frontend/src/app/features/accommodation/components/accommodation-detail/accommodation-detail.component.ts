@@ -474,10 +474,9 @@ export class AccommodationDetailComponent implements OnInit {
     if (!roomType) return 'bi-door-open';
 
     const roomTypeIcons: Record<string, string> = {
-      Single: 'bi-person',
-      Double: 'bi-people',
-      Suite: 'bi-house-door',
-      Tent: 'bi-triangle',
+      Hotel: 'bi-building',
+      'Staff House': 'bi-house-door',
+      'PKC Camp': 'bi-tree',
     };
 
     return roomTypeIcons[roomType] || 'bi-door-open';
