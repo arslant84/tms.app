@@ -41,13 +41,6 @@
     </button>
     <button
       class="tab-button"
-      [class.active]="activeTab === 'accommodation'"
-      (click)="onTabChange('accommodation')">
-      <i class="bi bi-house-door"></i> Accommodation
-      <span class="tab-count" *ngIf="tabCounts.accommodation > 0">({{ tabCounts.accommodation }})</span>
-    </button>
-    <button
-      class="tab-button"
       [class.active]="activeTab === 'combined'"
       (click)="onTabChange('combined')">
       <i class="bi bi-layers"></i> Combined

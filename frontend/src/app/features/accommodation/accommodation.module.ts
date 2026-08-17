@@ -3,9 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { AccommodationRoutingModule } from './accommodation-routing.module';
-import { AccommodationListComponent } from './components/accommodation-list/accommodation-list.component';
 import { AccommodationDetailComponent } from './components/accommodation-detail/accommodation-detail.component';
-import { AccommodationCreateComponent } from './components/accommodation-create/accommodation-create.component';
 
 @NgModule({
   imports: [
@@ -13,9 +11,7 @@ import { AccommodationCreateComponent } from './components/accommodation-create/
     FormsModule,
     ReactiveFormsModule,
     AccommodationRoutingModule,
-    AccommodationListComponent,
-    AccommodationDetailComponent,
-    AccommodationCreateComponent
+    AccommodationDetailComponent
   ]
 })
 export class AccommodationModule { }
