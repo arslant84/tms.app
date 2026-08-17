@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
@@ -50,6 +50,20 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
   @Output() datesChange = new EventEmitter<(string | null)[]>();
 
   form: FormGroup;
+  /**
+   * Segment indices whose primary date is earlier than the preceding
+   * segment's - plain component state, not a reactive-forms error. Native
+   * `<input type="date">` exposes weird zero-padded interim values while
+   * the year is being typed (e.g. "0002-08-25" for a not-yet-complete
+   * "2026-08-25"), so routing this through `AbstractControl.setErrors()`
+   * meant every such keystroke re-ran validity/status propagation up the
+   * FormArray - on top of Angular's own per-keystroke updateValueAndValidity
+   * for the same control, that compounded into a real CPU-pinning loop
+   * while typing a date right after a sibling segment already had one.
+   * Keeping this as inert state read directly by the template avoids
+   * touching the form's validity machinery altogether.
+   */
+  outOfOrderIndices = new Set<number>();
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -102,9 +116,24 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
     const group: Record<string, any> = {};
     for (const field of this.fields) {
       const value = data?.[field.key] ?? '';
-      group[field.key] = field.required
-        ? [value, Validators.required]
-        : [value];
+      // Date fields update on blur, not on every keystroke: native
+      // `<input type="date">` reports intermediate zero-padded values while
+      // the year is mid-typed (e.g. "0002-08-25"), and running this
+      // component's reactive-forms pipeline (valueChanges subscribers,
+      // cross-segment revalidation, Output emissions to the parent) on
+      // every one of those keystrokes compounds into the browser tab
+      // hanging once a second segment already holds a complete date -
+      // reproduced directly with a CPU profiler showing the renderer
+      // pinned at 100% mid-keystroke. Deferring to blur keeps the same
+      // validation/highlighting, just computed once instead of per digit.
+      group[field.key] = field.type === 'date'
+        ? this.fb.control(value, {
+            validators: field.required ? Validators.required : null,
+            updateOn: 'blur',
+          })
+        : field.required
+          ? [value, Validators.required]
+          : [value];
     }
     const formGroup = this.fb.group(group);
 
@@ -137,11 +166,10 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
-   * Marks each segment's primary date field invalid (dateOrder error) when
-   * it's earlier than the immediately preceding segment's date, so the
-   * exact offending field gets the usual red border/inline message. This
-   * is display-only - `warnIfItineraryOutOfOrder` in the parent wizard is
-   * what actually blocks the Next button, since this component doesn't
+   * Recomputes which segments' primary date is earlier than the one before
+   * it, for the red-border/inline-message highlight in the template.
+   * `warnIfItineraryOutOfOrder` in the parent wizard is what actually
+   * blocks the Next button - this is display-only, this component doesn't
    * know whether it's embedded in a form the wizard consults.
    */
   private revalidateChronology(): void {
@@ -150,28 +178,32 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
       return;
     }
 
+    const nextOutOfOrder = new Set<number>();
     let previousDate: string | null = null;
-    this.segmentsArray.controls.forEach(segment => {
-      const dateControl = segment.get(primaryDateKey);
-      if (!dateControl) {
-        return;
+    this.segmentsArray.controls.forEach((segment, index) => {
+      const currentDate = this.asCompleteDate(segment.get(primaryDateKey)?.value);
+      if (previousDate && currentDate && currentDate < previousDate) {
+        nextOutOfOrder.add(index);
       }
-      const currentDate: string | null = dateControl.value || null;
-      this.setDateOrderError(dateControl, !!(previousDate && currentDate && currentDate < previousDate));
       if (currentDate) {
         previousDate = currentDate;
       }
     });
+    this.outOfOrderIndices = nextOutOfOrder;
   }
 
-  private setDateOrderError(control: AbstractControl, hasError: boolean): void {
-    const errors = { ...(control.errors || {}) };
-    if (hasError) {
-      errors['dateOrder'] = true;
-    } else {
-      delete errors['dateOrder'];
+  /**
+   * Native `<input type="date">` reports zero-padded interim values while
+   * the year is still being typed (e.g. "0002-08-25" partway through
+   * "2026-08-25"), which is syntactically a valid ISO date but not a real
+   * one - excluded here so mid-typing keystrokes never feed nonsense years
+   * into the chronology comparison.
+   */
+  private asCompleteDate(value: unknown): string | null {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return null;
     }
-    control.setErrors(Object.keys(errors).length ? errors : null);
+    return Number(value.slice(0, 4)) >= 1000 ? value : null;
   }
 
   private emitState(): void {
