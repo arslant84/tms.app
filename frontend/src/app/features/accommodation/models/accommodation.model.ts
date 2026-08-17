@@ -34,9 +34,17 @@ export type BookingStatus =
   | 'Blocked';        // Room blocked for maintenance
 
 /**
- * Room types available
+ * Room types available (physical room bed configuration, managed via the
+ * admin room-inventory screens - distinct from PreferredRoomType below).
  */
 export type RoomType = 'Single' | 'Double' | 'Suite' | 'Tent';
+
+/**
+ * Preferred room type a requester selects when submitting an
+ * accommodation request (facility type, not a physical room's bed
+ * configuration - kept separate from RoomType above).
+ */
+export type PreferredRoomType = 'Hotel' | 'Staff House' | 'PKC Camp';
 
 /**
  * Room status
@@ -157,7 +165,7 @@ export interface AccommodationRequestDetails {
   location: LocationType;
   requestedCheckInDate: Date | string;
   requestedCheckOutDate: Date | string;
-  requestedRoomType?: RoomType;
+  requestedRoomType?: PreferredRoomType;
 
   // Booking Status
   status: BookingStatus;
@@ -403,7 +411,7 @@ export function accommodationToFrontend(
     location: location as LocationType,
     requestedCheckInDate: checkInDate,
     requestedCheckOutDate: checkOutDate,
-    requestedRoomType: roomType as RoomType,
+    requestedRoomType: roomType as PreferredRoomType,
     status: (backend.status || 'Draft') as BookingStatus,
     assignedRoomId: backend.assigned_room,
     assignedRoomName: backend.assigned_room_name,
