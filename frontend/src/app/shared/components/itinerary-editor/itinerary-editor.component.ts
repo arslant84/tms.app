@@ -152,6 +152,30 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
     return formGroup;
   }
 
+  /**
+   * The primary date FormControl uses `updateOn: 'blur'` (see createSegment's
+   * comment) to avoid the per-keystroke CPU hang, but that also delays the
+   * valueChanges-driven day-of-week autofill below until the field loses
+   * focus - noticeably laggy when picking a date via the native calendar
+   * picker. Native `<input type="date">` only fires its `change` event once
+   * per committed value (not per keystroke, unlike `input`), so listening to
+   * it directly here gives the same instant feedback Transport's date field
+   * already has, without reintroducing the per-keystroke hang.
+   */
+  onPrimaryDateChange(index: number, field: ItineraryFieldConfig, event: Event): void {
+    if (!field.isPrimaryDate) {
+      return;
+    }
+    const value = (event.target as HTMLInputElement).value;
+    if (!value) {
+      return;
+    }
+    const dayName = this.dateUtils.getDayOfWeek(value);
+    if (dayName) {
+      this.segmentsArray.at(index).get(this.dayFieldKey)?.setValue(dayName, { emitEvent: false });
+    }
+  }
+
   addSegment(): void {
     if (!this.canAdd) {
       return;
