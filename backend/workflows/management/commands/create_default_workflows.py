@@ -10,7 +10,7 @@ from workflows.models import WorkflowStep, WorkflowTemplate
 
 
 class Command(BaseCommand):
-    help = "Creates default workflow templates for all modules (TRF, Claims, Visa, Transport, Accommodation, Combined Request)"
+    help = "Creates default workflow templates for all modules (TRF, Visa, Transport, Accommodation, Combined Request)"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -116,77 +116,7 @@ class Command(BaseCommand):
             sla_hours=72,
         )
 
-        # Step 4: Travel Desk (Final Processing)
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=4,
-            step_name="Travel Desk Processing",
-            step_description="Travel Desk processes the approved request",
-            approver_role="Travel Desk",
-            is_required=True,
-            can_skip=False,
-            requires_comments=False,
-            sla_hours=96,
-        )
-
-        self.stdout.write(self.style.SUCCESS("  ✓ Created TRF workflow with 4 steps"))
-
-    def create_claims_workflow(self, created_by):
-        """Create Expense Claims workflow"""
-        self.stdout.write("Creating Expense Claims workflow...")
-
-        template = WorkflowTemplate.objects.create(
-            name="Expense Claims Standard Approval Workflow",
-            description="Standard approval workflow for Expense Claims",
-            entity_type="expenseclaim",
-            is_active=True,
-            allow_parallel_steps=False,
-            auto_approve_on_condition=False,
-            created_by=created_by,
-        )
-
-        # Step 1: Department Focal
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=1,
-            step_name="Department Focal Approval",
-            step_description="Department Focal reviews expenses for accuracy",
-            approver_role="Department Focal",
-            is_required=True,
-            can_skip=False,
-            requires_comments=False,
-            sla_hours=48,
-        )
-
-        # Step 2: Line Manager
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=2,
-            step_name="Line Manager Approval",
-            step_description="Line Manager approves the expense claim",
-            approver_role="Line Manager",
-            is_required=True,
-            can_skip=False,
-            requires_comments=False,
-            sla_hours=48,
-        )
-
-        # Step 3: Finance (Final Processing)
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=3,
-            step_name="Finance Processing",
-            step_description="Finance department processes the payment",
-            approver_role="Finance",
-            is_required=True,
-            can_skip=False,
-            requires_comments=False,
-            sla_hours=120,  # 5 days
-        )
-
-        self.stdout.write(
-            self.style.SUCCESS("  ✓ Created Claims workflow with 3 steps")
-        )
+        self.stdout.write(self.style.SUCCESS("  ✓ Created TRF workflow with 3 steps"))
 
     def create_visa_workflow(self, created_by):
         """Create Visa Application workflow"""
@@ -457,19 +387,6 @@ class Command(BaseCommand):
             sla_hours=72,
         )
 
-        # Step 4: Travel Desk (coordinates all module processing)
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=4,
-            step_name="Travel Desk Coordination",
-            step_description="Travel Desk coordinates processing across all included modules (Travel, Transport, Accommodation, Visa)",
-            approver_role="Travel Desk",
-            is_required=True,
-            can_skip=False,  # Required - main processing step
-            requires_comments=False,
-            sla_hours=120,  # 5 days - longer SLA for multi-module coordination
-        )
-
         self.stdout.write(
-            self.style.SUCCESS("  ✓ Created Combined Request workflow with 4 steps")
+            self.style.SUCCESS("  ✓ Created Combined Request workflow with 3 steps")
         )
