@@ -495,9 +495,8 @@ class TravelRequestSerializer(serializers.ModelSerializer):
         valid_statuses = [
             "Draft",
             "Pending Department Focal",
+            "Pending Line Manager",
             "Pending HOD",
-            "Pending Travel Desk",
-            "Pending Finance",
             "Approved",
             "Rejected",
             "Cancelled",
