@@ -138,7 +138,6 @@ export class TrfDetailComponent implements OnInit {
       itinerary = overseasDetails.itinerary || data.itinerary_segments || data.itinerary || [];
       bankDetails = overseasDetails.advanceBankDetails || data.advance_bank_details || data.bankDetails;
       advanceAmounts = overseasDetails.advanceAmountRequested || data.advance_amount_items || data.advanceAmounts || [];
-      passportDetails = data.passport_details || data.passportDetails; // Passport details might be at top level
       purpose = overseasDetails.purpose || data.purpose || '';
     } else if (travelType === 'External Parties') {
       const externalDetails = data.externalPartiesTravelDetails || {};
@@ -146,6 +145,11 @@ export class TrfDetailComponent implements OnInit {
       mealSelections = externalDetails.mealProvision?.dailyMealSelections || data.daily_meals || data.daily_meal_selections || data.mealSelections || [];
       purpose = externalDetails.purpose || data.purpose || '';
     }
+
+    // Passport details are returned at the top level (passport_details) regardless
+    // of travel type - Domestic and External Parties can upload one too, not just
+    // Overseas/Home Leave.
+    passportDetails = data.passport_details || data.passportDetails;
 
 
     // Extract external party info from nested structure
