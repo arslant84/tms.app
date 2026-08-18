@@ -55,13 +55,17 @@
         {{ getWorkflowStatus() }}
       </span>
       <!-- Fallback to request status if no workflow -->
-      <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span>
+      <span *ngIf="!workflow && !workflowLoading" class="badge" [ngClass]="getStatusClass()">{{
+        trfData.status
+      }}</span>
       <!-- Loading state -->
       <span *ngIf="workflowLoading" class="badge bg-secondary">
         <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
         Loading workflow...
       </span>
-      <span *ngIf="trfData.requestNumber" class="text-muted">Request Number: {{ trfData.requestNumber }}</span>
+      <span *ngIf="trfData.requestNumber" class="text-muted"
+        >Request Number: {{ trfData.requestNumber }}</span
+      >
       <span *ngIf="!trfData.requestNumber" class="text-muted">TRF ID: #{{ trfData.id }}</span>
     </div>
 
@@ -102,7 +106,10 @@
             </div>
             <div class="detail-item">
               <label>Department & Position</label>
-              <span class="value">{{ trfData.department || 'N/A' }}{{ trfData.position ? ' / ' + trfData.position : '' }}</span>
+              <span class="value"
+                >{{ trfData.department || 'N/A'
+                }}{{ trfData.position ? ' / ' + trfData.position : '' }}</span
+              >
             </div>
             <div class="detail-item">
               <label>Cost Center</label>
@@ -173,7 +180,10 @@
       <div class="card-header">
         <i class="bi bi-house-door"></i>
         <h3>Accommodation</h3>
-        <span class="badge ms-auto" [ngClass]="statusUtils.getStatusBadgeClass(linkedAccommodation.status)">
+        <span
+          class="badge ms-auto"
+          [ngClass]="statusUtils.getStatusBadgeClass(linkedAccommodation.status)"
+        >
           {{ linkedAccommodation.status }}
         </span>
       </div>
@@ -196,7 +206,10 @@
             </tbody>
           </table>
         </div>
-        <a [routerLink]="['/accommodation', linkedAccommodation.id]" class="btn btn-outline-primary btn-sm mt-3">
+        <a
+          [routerLink]="['/accommodation', linkedAccommodation.id]"
+          class="btn btn-outline-primary btn-sm mt-3"
+        >
           <i class="bi bi-box-arrow-up-right me-1"></i>
           View Full Accommodation Details
         </a>
@@ -208,7 +221,10 @@
       <div class="card-header">
         <i class="bi bi-cup-straw"></i>
         <h3>Meal Provision{{ isDomestic ? ' (Kiyanly)' : '' }}</h3>
-        <span class="badge ms-auto" [ngClass]="statusUtils.getStatusBadgeClass(trfData.mealProcessingStatus || 'Pending')">
+        <span
+          class="badge ms-auto"
+          [ngClass]="statusUtils.getStatusBadgeClass(trfData.mealProcessingStatus || 'Pending')"
+        >
           {{ trfData.mealProcessingStatus || 'Pending' }}
         </span>
       </div>
@@ -265,56 +281,42 @@
       </div>
     </div>
 
-    <!-- Passport Details (any travel type - Domestic, External Parties, Overseas, Home Leave can all upload one) -->
-    <div class="detail-card" *ngIf="trfData.passportDetails && trfData.passportDetails.length > 0">
+    <!-- Passport Document (any travel type - Domestic, External Parties, Overseas, Home Leave can all upload one).
+         The upload UI only ever captures a file, not passport text fields, so this
+         just shows the document itself rather than a form's worth of empty "N/A"s. -->
+    <div
+      class="detail-card"
+      *ngIf="
+        trfData.passportDetails &&
+        trfData.passportDetails.length > 0 &&
+        (trfData.passportDetails[0]?.passport_file_url ||
+          trfData.passportDetails[0]?.passportFileUrl)
+      "
+    >
       <div class="card-header">
         <i class="bi bi-passport"></i>
-        <h3>Passport Details</h3>
+        <h3>Passport Document</h3>
       </div>
       <div class="card-body">
-        <div class="detail-grid">
-          <div class="detail-item">
-            <label>Full Name</label>
-            <span class="value">{{ trfData.passportDetails[0]?.full_name || trfData.passportDetails[0]?.fullName || 'N/A' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Passport Number</label>
-            <span class="value">{{ trfData.passportDetails[0]?.passport_number || trfData.passportDetails[0]?.passportNumber || 'N/A' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Nationality</label>
-            <span class="value">{{ trfData.passportDetails[0]?.nationality || 'N/A' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Date of Birth</label>
-            <span class="value">{{ dateUtils.formatDate(trfData.passportDetails[0]?.date_of_birth || trfData.passportDetails[0]?.dateOfBirth) }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Place of Birth</label>
-            <span class="value">{{ trfData.passportDetails[0]?.place_of_birth || trfData.passportDetails[0]?.placeOfBirth || 'N/A' }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Passport Issue Date</label>
-            <span class="value">{{ dateUtils.formatDate(trfData.passportDetails[0]?.passport_issue_date || trfData.passportDetails[0]?.passportIssueDate) }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Passport Expiry Date</label>
-            <span class="value">{{ dateUtils.formatDate(trfData.passportDetails[0]?.passport_expiry_date || trfData.passportDetails[0]?.passportExpiryDate) }}</span>
-          </div>
-          <div class="detail-item" *ngIf="trfData.passportDetails[0]?.passport_file_url || trfData.passportDetails[0]?.passportFileUrl">
-            <label>Uploaded Document</label>
-            <span class="value">
-              <a [href]="trfData.passportDetails[0]?.passport_file_url || trfData.passportDetails[0]?.passportFileUrl" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-file-earmark-arrow-down me-1"></i>View / Download
-              </a>
-            </span>
-          </div>
-        </div>
+        <a
+          [href]="
+            trfData.passportDetails[0]?.passport_file_url ||
+            trfData.passportDetails[0]?.passportFileUrl
+          "
+          target="_blank"
+          rel="noopener"
+          class="btn btn-outline-primary btn-sm"
+        >
+          <i class="bi bi-file-earmark-arrow-down me-1"></i>View / Download
+        </a>
       </div>
     </div>
 
     <!-- Advance Request (Overseas/Home Leave) -->
-    <div class="detail-card" *ngIf="isOverseas && (trfData.bankDetails || trfData.advanceAmounts?.length > 0)">
+    <div
+      class="detail-card"
+      *ngIf="isOverseas && (trfData.bankDetails || trfData.advanceAmounts?.length > 0)"
+    >
       <div class="card-header">
         <i class="bi bi-currency-dollar"></i>
         <h3>Advance Request</h3>
@@ -325,28 +327,42 @@
           <div class="detail-grid">
             <div class="detail-item">
               <label>Account Name</label>
-              <span class="value">{{ trfData.bankDetails.account_name || trfData.bankDetails.accountName || 'N/A' }}</span>
+              <span class="value">{{
+                trfData.bankDetails.account_name || trfData.bankDetails.accountName || 'N/A'
+              }}</span>
             </div>
             <div class="detail-item">
               <label>Bank Name</label>
-              <span class="value">{{ trfData.bankDetails.bank_name || trfData.bankDetails.bankName || 'N/A' }}</span>
+              <span class="value">{{
+                trfData.bankDetails.bank_name || trfData.bankDetails.bankName || 'N/A'
+              }}</span>
             </div>
             <div class="detail-item">
               <label>Account Number</label>
-              <span class="value">{{ trfData.bankDetails.account_number || trfData.bankDetails.accountNumber || 'N/A' }}</span>
+              <span class="value">{{
+                trfData.bankDetails.account_number || trfData.bankDetails.accountNumber || 'N/A'
+              }}</span>
             </div>
             <div class="detail-item">
               <label>Currency</label>
               <span class="value">{{ trfData.bankDetails.currency || 'N/A' }}</span>
             </div>
-            <div class="detail-item full-width" *ngIf="trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress">
+            <div
+              class="detail-item full-width"
+              *ngIf="trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress"
+            >
               <label>Remarks</label>
-              <span class="value">{{ trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress }}</span>
+              <span class="value">{{
+                trfData.bankDetails.branch_address || trfData.bankDetails.branchAddress
+              }}</span>
             </div>
           </div>
         </div>
 
-        <div class="sub-section" *ngIf="trfData.advanceAmounts && trfData.advanceAmounts.length > 0">
+        <div
+          class="sub-section"
+          *ngIf="trfData.advanceAmounts && trfData.advanceAmounts.length > 0"
+        >
           <h4 class="sub-title">Amount Requested Details</h4>
           <div class="table-container">
             <table class="detail-table">
@@ -378,15 +394,36 @@
               </tbody>
             </table>
           </div>
-          <p class="table-legend">LH: Lodging & Hotel | MA: Meals Allowance | OA: Other Allowance | TR: Transportation | OE: Other Expenses</p>
+          <p class="table-legend">
+            LH: Lodging & Hotel | MA: Meals Allowance | OA: Other Allowance | TR: Transportation |
+            OE: Other Expenses
+          </p>
         </div>
 
-        <div class="sub-section advance-consent-status" *ngIf="trfData.advanceAmounts && trfData.advanceAmounts.length > 0">
-          <span class="badge" [ngClass]="trfData.advanceConsentAccepted ? 'badge-success' : 'badge-warning'">
-            <i class="bi" [ngClass]="trfData.advanceConsentAccepted ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
-            {{ trfData.advanceConsentAccepted ? 'Refund/Deduction Terms & Conditions Acknowledged' : 'Terms & Conditions Not Yet Acknowledged' }}
+        <div
+          class="sub-section advance-consent-status"
+          *ngIf="trfData.advanceAmounts && trfData.advanceAmounts.length > 0"
+        >
+          <span
+            class="badge"
+            [ngClass]="trfData.advanceConsentAccepted ? 'badge-success' : 'badge-warning'"
+          >
+            <i
+              class="bi"
+              [ngClass]="
+                trfData.advanceConsentAccepted ? 'bi-check-circle' : 'bi-exclamation-triangle'
+              "
+            ></i>
+            {{
+              trfData.advanceConsentAccepted
+                ? 'Refund/Deduction Terms & Conditions Acknowledged'
+                : 'Terms & Conditions Not Yet Acknowledged'
+            }}
           </span>
-          <span class="text-sm text-muted ms-2" *ngIf="trfData.advanceConsentAccepted && trfData.advanceConsentAcceptedAt">
+          <span
+            class="text-sm text-muted ms-2"
+            *ngIf="trfData.advanceConsentAccepted && trfData.advanceConsentAcceptedAt"
+          >
             on {{ dateUtils.formatDate(trfData.advanceConsentAcceptedAt) }}
           </span>
         </div>
@@ -417,7 +454,9 @@
           <div class="detail-item">
             <label>Request Number</label>
             <span class="value" *ngIf="trfData.requestNumber">{{ trfData.requestNumber }}</span>
-            <span class="value text-muted" *ngIf="!trfData.requestNumber">#{{ trfData.id }} (Not submitted)</span>
+            <span class="value text-muted" *ngIf="!trfData.requestNumber"
+              >#{{ trfData.id }} (Not submitted)</span
+            >
           </div>
           <div class="detail-item">
             <label>Travel Type</label>
@@ -425,7 +464,9 @@
           </div>
           <div class="detail-item">
             <label>Current Status</label>
-            <span class="value"><span class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span></span>
+            <span class="value"
+              ><span class="badge" [ngClass]="getStatusClass()">{{ trfData.status }}</span></span
+            >
           </div>
           <div class="detail-item">
             <label>Created At</label>
@@ -448,7 +489,11 @@
         <div class="detail-grid">
           <div class="detail-item">
             <label>Flight Number</label>
-            <p>{{ trfData.flightDetails.flightNumber || trfData.flightDetails.flight_number || 'N/A' }}</p>
+            <p>
+              {{
+                trfData.flightDetails.flightNumber || trfData.flightDetails.flight_number || 'N/A'
+              }}
+            </p>
           </div>
           <div class="detail-item">
             <label>Airline</label>
@@ -456,31 +501,71 @@
           </div>
           <div class="detail-item">
             <label>Flight Class</label>
-            <p>{{ trfData.flightDetails.flightClass || trfData.flightDetails.flight_class || 'Economy' }}</p>
+            <p>
+              {{
+                trfData.flightDetails.flightClass || trfData.flightDetails.flight_class || 'Economy'
+              }}
+            </p>
           </div>
           <div class="detail-item">
             <label>Booking Reference (PNR)</label>
-            <p>{{ trfData.flightDetails.bookingReference || trfData.flightDetails.booking_reference || 'N/A' }}</p>
+            <p>
+              {{
+                trfData.flightDetails.bookingReference ||
+                  trfData.flightDetails.booking_reference ||
+                  'N/A'
+              }}
+            </p>
           </div>
           <div class="detail-item">
             <label>Departure Airport</label>
-            <p>{{ trfData.flightDetails.departureLocation || trfData.flightDetails.departure_location || 'N/A' }}</p>
+            <p>
+              {{
+                trfData.flightDetails.departureLocation ||
+                  trfData.flightDetails.departure_location ||
+                  'N/A'
+              }}
+            </p>
           </div>
           <div class="detail-item">
             <label>Arrival Airport</label>
-            <p>{{ trfData.flightDetails.arrivalLocation || trfData.flightDetails.arrival_location || 'N/A' }}</p>
+            <p>
+              {{
+                trfData.flightDetails.arrivalLocation ||
+                  trfData.flightDetails.arrival_location ||
+                  'N/A'
+              }}
+            </p>
           </div>
           <div class="detail-item">
             <label>Departure Date & Time</label>
-            <p>{{ formatFlightDateTime(trfData.flightDetails.departureDate || trfData.flightDetails.departure_date, trfData.flightDetails.departureTime || trfData.flightDetails.departure_time) }}</p>
+            <p>
+              {{
+                formatFlightDateTime(
+                  trfData.flightDetails.departureDate || trfData.flightDetails.departure_date,
+                  trfData.flightDetails.departureTime || trfData.flightDetails.departure_time
+                )
+              }}
+            </p>
           </div>
           <div class="detail-item">
             <label>Arrival Date & Time</label>
-            <p>{{ formatFlightDateTime(trfData.flightDetails.arrivalDate || trfData.flightDetails.arrival_date, trfData.flightDetails.arrivalTime || trfData.flightDetails.arrival_time) }}</p>
+            <p>
+              {{
+                formatFlightDateTime(
+                  trfData.flightDetails.arrivalDate || trfData.flightDetails.arrival_date,
+                  trfData.flightDetails.arrivalTime || trfData.flightDetails.arrival_time
+                )
+              }}
+            </p>
           </div>
           <div class="detail-item">
             <label>Flight Status</label>
-            <p><span class="badge badge-success">{{ trfData.flightDetails.status || 'Booked' }}</span></p>
+            <p>
+              <span class="badge badge-success">{{
+                trfData.flightDetails.status || 'Booked'
+              }}</span>
+            </p>
           </div>
           <div class="detail-item" *ngIf="trfData.flightDetails.processedBy">
             <label>Processed By</label>
@@ -512,9 +597,7 @@
       </div>
 
       <!-- Workflow Status Timeline (component has its own card) -->
-      <app-workflow-status
-        *ngIf="workflow && !workflowLoading"
-        [workflowInstance]="workflow">
+      <app-workflow-status *ngIf="workflow && !workflowLoading" [workflowInstance]="workflow">
       </app-workflow-status>
 
       <!-- Approval Action Buttons -->
@@ -523,7 +606,8 @@
         [stepExecution]="currentStepExecution"
         (approved)="onWorkflowApproved()"
         (rejected)="onWorkflowRejected()"
-        (delegated)="onWorkflowDelegated()">
+        (delegated)="onWorkflowDelegated()"
+      >
       </app-approval-actions>
 
       <!-- No Workflow Message -->
@@ -541,16 +625,31 @@
     </div>
 
     <!-- Fallback: Old Approval Workflow (if no modern workflow exists) -->
-    <div class="card mb-4" *ngIf="!workflow && !workflowLoading && trfData.approvalSteps && trfData.approvalSteps.length > 0">
+    <div
+      class="card mb-4"
+      *ngIf="
+        !workflow && !workflowLoading && trfData.approvalSteps && trfData.approvalSteps.length > 0
+      "
+    >
       <div class="card-header">
         <h5><i class="bi bi-check-circle"></i> Approval Workflow (Legacy)</h5>
       </div>
       <div class="card-body">
         <div class="approval-timeline">
-          <div *ngFor="let step of trfData.approvalSteps; let i = index" class="approval-step"
-               [ngClass]="{'completed': step.status === 'Approved', 'rejected': step.status === 'Rejected', 'pending': step.status === 'Pending'}">
+          <div
+            *ngFor="let step of trfData.approvalSteps; let i = index"
+            class="approval-step"
+            [ngClass]="{
+              completed: step.status === 'Approved',
+              rejected: step.status === 'Rejected',
+              pending: step.status === 'Pending',
+            }"
+          >
             <div class="step-icon">
-              <i *ngIf="step.status === 'Approved'" class="bi bi-check-circle-fill icon-success"></i>
+              <i
+                *ngIf="step.status === 'Approved'"
+                class="bi bi-check-circle-fill icon-success"
+              ></i>
               <i *ngIf="step.status === 'Rejected'" class="bi bi-x-circle-fill icon-error"></i>
               <i *ngIf="step.status === 'Pending'" class="bi bi-clock-fill icon-pending"></i>
               <span *ngIf="!step.status">{{ i + 1 }}</span>
