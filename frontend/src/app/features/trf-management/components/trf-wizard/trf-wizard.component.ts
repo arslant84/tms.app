@@ -188,6 +188,7 @@ export class TrfWizardComponent implements OnInit {
           },
           passportUpload: domesticPassport
         };
+        this.loadLinkedAccommodationForEdit(data.id);
         break;
 
       case 'Overseas':
@@ -249,6 +250,46 @@ export class TrfWizardComponent implements OnInit {
         };
         break;
     }
+  }
+
+  /**
+   * Accommodation requests embedded in a TSR are linked via AccommodationRequest.trf,
+   * not returned as part of the TRF payload itself (same reasoning as
+   * trf-detail.component.ts's loadLinkedAccommodation). When editing an existing
+   * Domestic TRF, fetch its linked accommodation request (if any) and merge it into
+   * domesticTravelData so the "Requires Accommodation" section pre-populates instead
+   * of always starting blank. Assigns a new object so the DomesticTravelDetailsComponent's
+   * ngOnChanges (which rebuilds the form on non-first initialData changes) picks it up.
+   */
+  private loadLinkedAccommodationForEdit(trfId: number): void {
+    this.accommodationService.getAllRequests({ page_size: 100 }).subscribe({
+      next: (response: any) => {
+        const results = response?.results || response || [];
+        const linked = (Array.isArray(results) ? results : [])
+          .find((req: any) => req.trf === trfId);
+        if (!linked) {
+          return;
+        }
+        const additionalData = linked.additional_data || {};
+        this.domesticTravelData = {
+          ...this.domesticTravelData,
+          accommodation: {
+            required: true,
+            gender: additionalData.requestor_gender || '',
+            location: additionalData.location || '',
+            checkInDate: additionalData.requested_check_in_date || '',
+            checkInTime: additionalData.flight_arrival_time || '',
+            checkOutDate: additionalData.requested_check_out_date || '',
+            checkOutTime: additionalData.flight_departure_time || '',
+            roomType: additionalData.requested_room_type || '',
+            specialRequests: additionalData.special_requests || ''
+          }
+        };
+      },
+      error: () => {
+        // Non-critical - the rest of the edit form still works without it
+      }
+    });
   }
 
   /**
