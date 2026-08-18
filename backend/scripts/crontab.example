@@ -34,3 +34,8 @@ VENV_PATH=/path/to/tms-app/backend/venv
 
 # Hourly workflow step reminder notifications (due within 24h, one-shot) — top of every hour
 0 * * * * cd $REPO_PATH && $VENV_PATH/bin/python manage.py send_step_reminders >> logs/cron_send_step_reminders.log 2>&1
+
+# External uptime check — every 5 minutes. Emails UPTIME_ALERT_EMAIL (.env)
+# after 2 consecutive failed checks and once more on recovery. No-op if
+# UPTIME_ALERT_EMAIL is unset.
+*/5 * * * * cd $REPO_PATH && $VENV_PATH/bin/python manage.py check_uptime >> logs/cron_check_uptime.log 2>&1
