@@ -73,7 +73,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 // Page Header
@@ -329,7 +331,8 @@
     width: 100%;
     border-collapse: collapse;
 
-    th, td {
+    th,
+    td {
       padding: vars.$spacing-3 vars.$spacing-md;
       text-align: left;
       border-bottom: 1px solid vars.$gray-200;
@@ -403,45 +406,26 @@
   }
 }
 
-// Meal Summary
-.meal-summary {
-  margin-top: vars.$spacing-6;
-  padding: vars.$spacing-md;
+// Meal Summary - a totals row appended to the same table as the daily
+// selections, so its columns are always guaranteed to line up with the
+// Breakfast/Lunch/Dinner/Supper/Refreshment headers above (a separate
+// same-width grid drifted out of alignment since it had no column standing
+// in for the table's wider Date column).
+.meal-summary-row {
   background: vars.$gray-50;
-  border-radius: vars.$radius-lg;
-  border: 1px solid vars.$gray-200;
+  font-weight: vars.$font-weight-semibold;
 
-  h4 {
-    font-size: vars.$font-size-sm;
-    font-weight: vars.$font-weight-semibold;
-    color: vars.$gray-600;
-    margin: 0 0 vars.$spacing-3 0;
+  td {
+    border-top: 2px solid vars.$gray-200;
+    color: vars.$info-color;
+    font-size: vars.$font-size-md;
   }
 
-  .summary-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: vars.$spacing-md;
-
-    .summary-item {
-      text-align: center;
-
-      span {
-        display: block;
-        font-size: vars.$font-size-xs;
-        font-weight: vars.$font-weight-medium;
-        color: vars.$gray-600;
-        text-transform: capitalize;
-        margin-bottom: vars.$spacing-1;
-      }
-
-      strong {
-        display: block;
-        font-size: vars.$font-size-xl;
-        font-weight: vars.$font-weight-bold;
-        color: vars.$info-color;
-      }
-    }
+  td:first-child {
+    color: vars.$gray-600;
+    font-size: vars.$font-size-sm;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 }
 
@@ -617,10 +601,6 @@
 
   .detail-grid {
     grid-template-columns: 1fr;
-  }
-
-  .meal-summary .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .detail-section {
