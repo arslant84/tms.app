@@ -167,14 +167,18 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
       });
     };
     applyAccommodationValidators(accommodationGroup?.get('required')?.value || false);
-    accommodationGroup?.get('required')?.valueChanges.subscribe(required => {
-      applyAccommodationValidators(required);
-      if (required) {
-        this.syncAccommodationDatesFromItinerary();
-      }
-    });
+    accommodationGroup?.get('required')?.valueChanges.subscribe(required =>
+      this.onAccommodationRequiredChange(required, applyAccommodationValidators)
+    );
 
     this.mealSelections = this.initialData.mealProvisions?.dailySelections || [];
+  }
+
+  private onAccommodationRequiredChange(required: boolean, applyValidators: (required: boolean) => void): void {
+    applyValidators(required);
+    if (required) {
+      this.syncAccommodationDatesFromItinerary();
+    }
   }
 
   onItinerarySegmentsChange(segments: Record<string, any>[]): void {
