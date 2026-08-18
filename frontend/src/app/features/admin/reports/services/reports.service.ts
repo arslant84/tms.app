@@ -42,6 +42,47 @@ export interface AdminReportsResponse {
   top_performers: TopPerformer[];
 }
 
+export interface DepartmentMonthlyFrequency {
+  labels: string[];
+  travel: number[];
+  transport: number[];
+  visa: number[];
+  accommodation: number[];
+}
+
+export interface DepartmentTopRequestor {
+  name: string;
+  email: string;
+  requests: number;
+}
+
+export interface DepartmentalReportEntry {
+  department: string;
+  totalRequests: number;
+  breakdown: {
+    travel: number;
+    transport: number;
+    visa: number;
+    accommodation: number;
+  };
+  status: {
+    approved: number;
+    pending: number;
+    rejected: number;
+  };
+  avgProcessingTime: number;
+  topRequestors: DepartmentTopRequestor[];
+  activeUsers: number;
+  monthlyFrequency: DepartmentMonthlyFrequency;
+}
+
+export interface DepartmentalReportsResponse {
+  reports: DepartmentalReportEntry[];
+  dateRange: string;
+  startDate: string;
+  endDate: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -57,6 +98,30 @@ export class ReportsService {
   getAdminReports(dateRange: 'week' | 'month' | 'quarter' | 'year' = 'month'): Observable<AdminReportsResponse> {
     return this.http.get<any>(`${this.apiUrl}/analytics/`, {
       params: { date_range: dateRange },
+      withCredentials: true
+    }).pipe(
+      map(response => response.data)
+    );
+  }
+
+  /**
+   * Get departmental reports data. Non-System-Admin callers (e.g. HODs) are
+   * always scoped server-side to their own department regardless of the
+   * `department` param - pass it only to let a System Admin pick a
+   * specific department to inspect.
+   * @param department - department id (System Admin only; ignored server-side otherwise)
+   * @param dateRange - week, month, quarter, or year
+   */
+  getDepartmentalReports(
+    department?: string,
+    dateRange: 'week' | 'month' | 'quarter' | 'year' = 'month'
+  ): Observable<DepartmentalReportsResponse> {
+    const params: Record<string, string> = { date_range: dateRange };
+    if (department) {
+      params['department'] = department;
+    }
+    return this.http.get<any>(`${this.apiUrl}/departmental/`, {
+      params,
       withCredentials: true
     }).pipe(
       map(response => response.data)

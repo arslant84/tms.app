@@ -7,6 +7,28 @@
     
     <div class="reports-actions">
       <div class="date-range-selector">
+        <span>View:</span>
+        <div class="btn-group" role="group">
+          <button
+            type="button"
+            class="btn"
+            [class.btn-primary]="activeView === 'overview'"
+            [class.btn-outline-secondary]="activeView !== 'overview'"
+            (click)="switchView('overview')">
+            Overview
+          </button>
+          <button
+            type="button"
+            class="btn"
+            [class.btn-primary]="activeView === 'department'"
+            [class.btn-outline-secondary]="activeView !== 'department'"
+            (click)="switchView('department')">
+            By Department
+          </button>
+        </div>
+      </div>
+
+      <div class="date-range-selector">
         <span>Time Period:</span>
         <div class="btn-group" role="group">
           <button 
@@ -64,13 +86,13 @@
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="loading-container">
+  <div *ngIf="isLoading && activeView === 'overview'" class="loading-container">
     <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
     <p>Loading reports data...</p>
   </div>
 
   <!-- Error State -->
-  <div *ngIf="error && !isLoading" class="alert alert-danger" role="alert">
+  <div *ngIf="error && !isLoading && activeView === 'overview'" class="alert alert-danger" role="alert">
     <i class="bi bi-exclamation-triangle"></i>
     {{ error }}
     <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadReportData()">
@@ -79,7 +101,7 @@
   </div>
 
   <!-- Content -->
-  <div *ngIf="!isLoading && !error" class="reports-content">
+  <div *ngIf="!isLoading && !error && activeView === 'overview'" class="reports-content">
     <!-- Key Metrics - Using unified stat-card structure -->
     <div class="stats-grid">
       <div class="stat-card" *ngFor="let metric of keyMetrics">
@@ -283,5 +305,228 @@
       </div>
     </div>
   </div>
+  </div>
+
+  <!-- By Department View -->
+  <div *ngIf="activeView === 'department'" class="reports-content department-view">
+    <!-- Department selector (System Admin only) / own-department label -->
+    <div class="card">
+      <div class="card-body">
+        <div class="department-selector-row">
+          <ng-container *ngIf="canViewAnyDepartment; else lockedDepartmentLabel">
+            <label for="departmentSelect" class="form-label mb-0">Department:</label>
+            <select
+              id="departmentSelect"
+              class="form-select department-select"
+              [(ngModel)]="selectedDepartmentId"
+              (change)="onDepartmentSelectChange()">
+              <option *ngFor="let dept of availableDepartments" [ngValue]="dept.id">{{ dept.name }}</option>
+            </select>
+          </ng-container>
+          <ng-template #lockedDepartmentLabel>
+            <span class="locked-department-label">
+              <i class="bi bi-building me-2"></i>
+              <strong>{{ departmentReport?.department || 'Your department' }}</strong>
+            </span>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="departmentReportLoading" class="loading-container">
+      <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
+      <p>Loading departmental report...</p>
+    </div>
+
+    <!-- Error / empty state -->
+    <div *ngIf="departmentReportError && !departmentReportLoading" class="alert alert-warning" role="alert">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ departmentReportError }}
+    </div>
+
+    <ng-container *ngIf="departmentReport && !departmentReportLoading">
+      <!-- Stat cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Total Requests</span>
+            <i class="bi stat-icon bi-collection"></i>
+          </div>
+          <div class="stat-card-content">
+            <div class="stat-value">{{ departmentReport.totalRequests }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Approved</span>
+            <i class="bi stat-icon bi-check-circle"></i>
+          </div>
+          <div class="stat-card-content">
+            <div class="stat-value">{{ departmentReport.status.approved }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Pending</span>
+            <i class="bi stat-icon bi-hourglass-split"></i>
+          </div>
+          <div class="stat-card-content">
+            <div class="stat-value">{{ departmentReport.status.pending }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Rejected</span>
+            <i class="bi stat-icon bi-x-circle"></i>
+          </div>
+          <div class="stat-card-content">
+            <div class="stat-value">{{ departmentReport.status.rejected }}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Avg. Processing Time</span>
+            <i class="bi stat-icon bi-clock-history"></i>
+          </div>
+          <div class="stat-card-content">
+            <div class="stat-value">{{ departmentReport.avgProcessingTime.toFixed(1) }}h</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-title">Active Users</span>
+            <i class="bi stat-icon bi-people"></i>
+          </div>
+          <div class="stat-card-content">
+            <div class="stat-value">{{ departmentReport.activeUsers }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Request type breakdown -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-content">
+            <div class="card-title-group">
+              <i class="bi bi-diagram-3 me-2"></i>
+              <h3 class="card-title">Requests by Type</h3>
+            </div>
+            <p class="card-description">For the selected time period</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="breakdown-row">
+            <div class="breakdown-item">
+              <span class="legend-dot bg-primary"></span>
+              <span class="breakdown-label">Travel</span>
+              <span class="breakdown-value">{{ departmentReport.breakdown.travel }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="legend-dot bg-success"></span>
+              <span class="breakdown-label">Transport</span>
+              <span class="breakdown-value">{{ departmentReport.breakdown.transport }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="legend-dot" style="background-color: #f6c23e;"></span>
+              <span class="breakdown-label">Visa</span>
+              <span class="breakdown-value">{{ departmentReport.breakdown.visa }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="legend-dot" style="background-color: #36b9cc;"></span>
+              <span class="breakdown-label">Accommodation</span>
+              <span class="breakdown-value">{{ departmentReport.breakdown.accommodation }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly frequency trend -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-content">
+            <div class="card-title-group">
+              <i class="bi bi-graph-up me-2"></i>
+              <h3 class="card-title">Travel Frequency (Last 12 Months)</h3>
+            </div>
+            <p class="card-description">Requests submitted per month, by type - independent of the Time Period filter above</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart-legend-inline">
+            <div class="legend-item">
+              <span class="legend-dot" style="background-color: #4e73df;"></span>
+              <span>Travel</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background-color: #1cc88a;"></span>
+              <span>Transport</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background-color: #f6c23e;"></span>
+              <span>Visa</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background-color: #36b9cc;"></span>
+              <span>Accommodation</span>
+            </div>
+          </div>
+          <div class="bar-chart-container">
+            <div class="bar-chart-area">
+              <div class="bar-item" *ngFor="let label of departmentFrequencyChart.labels; let i = index">
+                <div class="bar-wrapper">
+                  <span class="bar-value-label">{{ getFrequencyMonthTotal(i) }}</span>
+                  <div class="stacked-bar">
+                    <div class="bar-segment" style="background-color: #36b9cc;" [style.height.%]="getFrequencySegmentHeightPercent(departmentFrequencyChart.datasets[3].data[i])"></div>
+                    <div class="bar-segment" style="background-color: #f6c23e;" [style.height.%]="getFrequencySegmentHeightPercent(departmentFrequencyChart.datasets[2].data[i])"></div>
+                    <div class="bar-segment" style="background-color: #1cc88a;" [style.height.%]="getFrequencySegmentHeightPercent(departmentFrequencyChart.datasets[1].data[i])"></div>
+                    <div class="bar-segment" style="background-color: #4e73df;" [style.height.%]="getFrequencySegmentHeightPercent(departmentFrequencyChart.datasets[0].data[i])"></div>
+                  </div>
+                </div>
+                <span class="bar-label">{{ label }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top requestors -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-content">
+            <div class="card-title-group">
+              <i class="bi bi-trophy me-2"></i>
+              <h3 class="card-title">Top Requestors</h3>
+            </div>
+            <p class="card-description">Most active requestors in this department</p>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Requests</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let requestor of departmentReport.topRequestors; let i = index">
+                  <td><span class="rank-badge">{{ i + 1 }}</span></td>
+                  <td class="fw-medium">{{ requestor.name }}</td>
+                  <td>{{ requestor.email }}</td>
+                  <td>{{ requestor.requests }}</td>
+                </tr>
+                <tr *ngIf="departmentReport.topRequestors.length === 0">
+                  <td colspan="4" class="text-center text-muted">No requests in this period</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </ng-container>
   </div>
 </div>

@@ -51,6 +51,41 @@ def _require_admin_reports_permission(request):
     )
 
 
+def _resolve_department_scope(request):
+    """Access + scoping gate for DepartmentalReportsView.
+
+    System Admins (superuser or the system_admin permission) may view any
+    department: returns (True, None), and the caller's own ?department=
+    query param is honored as-is (or all departments if omitted).
+
+    Everyone else holding generate_admin_reports/export_data/
+    view_department_requests is locked to their own department: returns
+    (True, str(user.department_id)), regardless of what ?department= the
+    caller passed - this prevents a HOD from requesting another
+    department's data even though they also hold generate_admin_reports.
+
+    Returns (False, None) if the user has none of the above permissions,
+    or is department-locked but has no department assigned.
+    """
+    user = request.user
+
+    if user.is_superuser or has_permission(user, "system_admin"):
+        return True, None
+
+    is_department_scoped_role = (
+        has_permission(user, "generate_admin_reports")
+        or has_permission(user, "export_data")
+        or has_permission(user, "view_department_requests")
+    )
+    if not is_department_scoped_role:
+        return False, None
+
+    if not user.department_id:
+        return False, None
+
+    return True, str(user.department_id)
+
+
 class AdminReportsView(APIView):
     """
     Main reports endpoint for admin analytics
@@ -566,9 +601,11 @@ class DepartmentalReportsView(APIView):
         - department: specific department name (optional)
         - date_range: week, month, quarter, year (default: month)
         """
-        forbidden = _require_admin_reports_permission(request)
-        if forbidden:
-            return forbidden
+        allowed, forced_department_id = _resolve_department_scope(request)
+        if not allowed:
+            return forbidden_response(
+                message="You do not have permission to view departmental reports"
+            )
 
         date_range = request.query_params.get("date_range", "month")
         department_filter = request.query_params.get("department")
@@ -587,9 +624,16 @@ class DepartmentalReportsView(APIView):
         # Get departments
         from accounts.models import Department
 
-        department_ids = User.objects.values_list("department", flat=True).distinct()
-        if department_filter:
-            department_ids = [department_filter]
+        if forced_department_id:
+            # Department-locked caller (e.g. HOD): always their own
+            # department, regardless of what ?department= they passed.
+            department_ids = [forced_department_id]
+        else:
+            department_ids = User.objects.values_list(
+                "department", flat=True
+            ).distinct()
+            if department_filter:
+                department_ids = [department_filter]
 
         reports = []
         for dept_id in department_ids:
@@ -735,6 +779,8 @@ class DepartmentalReportsView(APIView):
             top_requestors.sort(key=lambda x: x["requests"], reverse=True)
             top_requestors = top_requestors[:5]  # Keep top 5
 
+            monthly_frequency = self._get_department_monthly_frequency(dept_users)
+
             reports.append(
                 {
                     "department": dept_name,
@@ -753,6 +799,7 @@ class DepartmentalReportsView(APIView):
                     "avgProcessingTime": round(avg_processing_time, 1),
                     "topRequestors": top_requestors,
                     "activeUsers": dept_users.count(),
+                    "monthlyFrequency": monthly_frequency,
                 }
             )
 
@@ -769,6 +816,66 @@ class DepartmentalReportsView(APIView):
             message="Departmental reports retrieved successfully",
             status_code=200,
         )
+
+    def _get_department_monthly_frequency(self, dept_users):
+        """12-calendar-month trip-count trend for a department, broken out
+        per request type. Fixed 12-month lookback independent of the
+        date_range filter, same as AdminReportsView._get_monthly_trends -
+        but using real calendar month boundaries via TruncMonth rather than
+        30-day buckets."""
+        now = timezone.now()
+        current_month_start = now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+
+        month_starts = []
+        year, month = current_month_start.year, current_month_start.month
+        for i in range(11, -1, -1):
+            target_month = month - i
+            target_year = year
+            while target_month <= 0:
+                target_month += 12
+                target_year -= 1
+            month_starts.append(
+                current_month_start.replace(year=target_year, month=target_month)
+            )
+
+        labels = [d.strftime("%b") for d in month_starts]
+        window_start = month_starts[0]
+
+        def bucket_counts(queryset):
+            counts = [0] * len(month_starts)
+            monthly = (
+                queryset.filter(created_at__gte=window_start)
+                .annotate(month=TruncMonth("created_at"))
+                .values("month")
+                .annotate(count=Count("id"))
+                .order_by("month")
+            )
+            for row in monthly:
+                row_month = row["month"]
+                for idx, month_start in enumerate(month_starts):
+                    if (
+                        row_month.year == month_start.year
+                        and row_month.month == month_start.month
+                    ):
+                        counts[idx] = row["count"]
+                        break
+            return counts
+
+        return {
+            "labels": labels,
+            "travel": bucket_counts(
+                TravelRequest.objects.filter(created_by__in=dept_users)
+            ),
+            "transport": bucket_counts(
+                TransportRequest.objects.filter(requestor__in=dept_users)
+            ),
+            "visa": bucket_counts(VisaApplication.objects.filter(user__in=dept_users)),
+            "accommodation": bucket_counts(
+                AccommodationRequest.objects.filter(trf__created_by__in=dept_users)
+            ),
+        }
 
 
 class UserActivityReportsView(APIView):
