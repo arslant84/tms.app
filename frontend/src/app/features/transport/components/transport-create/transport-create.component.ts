@@ -16,11 +16,12 @@ import { UserFormHelperService } from '../../../../core/utils/user-form-helper.s
 import { TransportRequestForm, TransportDetail, toBackendFormat } from '../../models/transport.model';
 import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
+import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
 
 @Component({
   selector: 'app-transport-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent],
+  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent, FormSectionCardComponent],
   templateUrl: './transport-create.component.html',
   styleUrls: ['./transport-create.component.scss']
 })
