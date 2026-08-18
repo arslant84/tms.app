@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TrfService } from '../../services/trf.service';
 import { AccommodationService, AccommodationRequest } from '../../../accommodation/services/accommodation.service';
+import { TransportService } from '../../../transport/services/transport.service';
+import { TransportRequestForm } from '../../../transport/models/transport.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { WorkflowService } from '../../../../core/services/workflow.service';
@@ -42,12 +44,14 @@ export class TrfDetailComponent implements OnInit {
   private readonly APPROVED_KEYWORDS = ['Approved', 'Completed', 'Assigned'];
 
   linkedAccommodation: AccommodationRequest | null = null;
+  linkedTransport: TransportRequestForm | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private trfService: TrfService,
     private accommodationService: AccommodationService,
+    private transportService: TransportService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
@@ -85,6 +89,7 @@ export class TrfDetailComponent implements OnInit {
         this.trfData = this.transformTrfData(data);
         this.loading = false;
         this.loadLinkedAccommodation();
+        this.loadLinkedTransport();
       },
       error: (err) => {
         this.error = 'Failed to load TRF details: ' + (err.message || 'Unknown error');
@@ -109,6 +114,25 @@ export class TrfDetailComponent implements OnInit {
       error: () => {
         // Non-critical - the rest of the TRF detail page still works without it
         this.linkedAccommodation = null;
+      }
+    });
+  }
+
+  /**
+   * Transport requests embedded in a TSR are linked via TransportRequest.trf, not
+   * returned as part of the TRF payload itself - same reasoning and pattern as
+   * loadLinkedAccommodation above.
+   */
+  private loadLinkedTransport(): void {
+    this.transportService.getAllRequests({ page_size: 100 }).subscribe({
+      next: (response: any) => {
+        const results = response?.results || response || [];
+        this.linkedTransport = (Array.isArray(results) ? results : [])
+          .find((req: TransportRequestForm) => Number(req.trfId) === this.trfId) || null;
+      },
+      error: () => {
+        // Non-critical - the rest of the TRF detail page still works without it
+        this.linkedTransport = null;
       }
     });
   }

@@ -58,6 +58,23 @@ function accommodationDateOrderValidator(group: AbstractControl): ValidationErro
   return null;
 }
 
+/** Mirrors the standalone transport-create form's per-journey fields exactly. */
+export interface TransportJourney {
+  date: string;
+  day: string;
+  from: string;
+  to: string;
+  departureTime: string;
+  numberOfPassengers: number | string;
+}
+
+/** Mirrors the standalone transport-create form's fields exactly. */
+export interface TransportDetails {
+  required: boolean;
+  purpose: string;
+  journeys: TransportJourney[];
+}
+
 export interface DomesticTravelSpecificDetails {
   purposeOfTravel: string;
   tripType: 'One Way' | 'Round Trip';
@@ -65,6 +82,7 @@ export interface DomesticTravelSpecificDetails {
   mealProvisions: MealProvisionDetails;
   passportUpload?: PassportUploadDetails;
   accommodation: AccommodationDetails;
+  transport: TransportDetails;
 }
 
 @Component({
@@ -105,6 +123,17 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   accommodationLocations = ACCOMMODATION_LOCATIONS;
   accommodationRoomTypes = ACCOMMODATION_ROOM_TYPES;
 
+  // Transport (embedded, mirrors the standalone transport-create form's journeys)
+  transportJourneyFields: ItineraryFieldConfig[] = [
+    { key: 'date', label: 'Date', type: 'date', required: true, requiredErrorMessage: 'Date is required', isPrimaryDate: true },
+    { key: 'day', label: 'Day', type: 'readonly-text' },
+    { key: 'from', label: 'From', type: 'text', required: true, requiredErrorMessage: 'From location is required', placeholder: 'Starting location' },
+    { key: 'to', label: 'To', type: 'text', required: true, requiredErrorMessage: 'To location is required', placeholder: 'Destination' },
+    { key: 'departureTime', label: 'Departure Time', type: 'time', required: true, requiredErrorMessage: 'Departure time is required' },
+    { key: 'numberOfPassengers', label: 'Number of Passengers', type: 'number', required: true, requiredErrorMessage: 'Number of passengers is required', min: 1 }
+  ];
+  transportSegments: Record<string, any>[] = [];
+
   constructor(
     private fb: FormBuilder,
     private formUtils: FormUtilsService,
@@ -131,6 +160,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
 
   private initForm(): void {
     const accommodation = this.initialData.accommodation;
+    const transport = this.initialData.transport;
     const userDefaults = this.userFormHelper.getUserFormDefaults();
 
     this.travelForm = this.fb.group({
@@ -146,8 +176,14 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
         checkOutTime: [accommodation?.checkOutTime || ''],
         roomType: [accommodation?.roomType || ''],
         specialRequests: [accommodation?.specialRequests || '']
-      }, { validators: accommodationDateOrderValidator })
+      }, { validators: accommodationDateOrderValidator }),
+      transport: this.fb.group({
+        required: [transport?.required || false],
+        purpose: [transport?.purpose || '']
+      })
     });
+
+    this.transportSegments = transport?.journeys || [];
 
     this.tripTypeValue = this.initialData.tripType || 'Round Trip';
 
@@ -169,6 +205,20 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     applyAccommodationValidators(accommodationGroup?.get('required')?.value || false);
     accommodationGroup?.get('required')?.valueChanges.subscribe(required =>
       this.onAccommodationRequiredChange(required, applyAccommodationValidators)
+    );
+
+    // Transport's Purpose field is only mandatory once the requestor opts in,
+    // matching the standalone transport-create form (Purpose of Transport is
+    // always required there, since it only ever exists once you're creating one).
+    const transportGroup = this.travelForm.get('transport');
+    const applyTransportValidators = (required: boolean) => {
+      const control = transportGroup?.get('purpose');
+      control?.setValidators(required ? [Validators.required] : []);
+      control?.updateValueAndValidity({ emitEvent: false });
+    };
+    applyTransportValidators(transportGroup?.get('required')?.value || false);
+    transportGroup?.get('required')?.valueChanges.subscribe(required =>
+      applyTransportValidators(required)
     );
 
     this.mealSelections = this.initialData.mealProvisions?.dailySelections || [];
@@ -221,13 +271,18 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     this.mealSelections = selections;
   }
 
+  onTransportSegmentsChange(segments: Record<string, any>[]): void {
+    this.transportSegments = segments;
+  }
+
   // Form submission
   onSubmit(): void {
     if (this.travelForm.valid) {
       this.formSubmit.emit({
         ...this.travelForm.value,
         itinerary: this.itinerarySegments,
-        mealProvisions: { dailySelections: this.mealSelections }
+        mealProvisions: { dailySelections: this.mealSelections },
+        transport: { ...this.travelForm.value.transport, journeys: this.transportSegments }
       });
     } else {
       this.formUtils.markFormGroupTouched(this.travelForm);
@@ -257,6 +312,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
       ...this.travelForm.value,
       itinerary: this.itinerarySegments,
       mealProvisions: { dailySelections: this.mealSelections },
+      transport: { ...this.travelForm.value.transport, journeys: this.transportSegments },
       passportUpload: {
         file: this.passportFile,
         fileName: this.passportFileName,
@@ -277,8 +333,13 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     return !this.dateUtils.isChronological(this.itineraryDates);
   }
 
+  get isTransportIncomplete(): boolean {
+    return this.travelForm.get('transport.required')?.value && this.transportSegments.length === 0;
+  }
+
   isValid(): boolean {
-    return this.travelForm.valid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder;
+    return this.travelForm.valid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder
+      && !this.isTransportIncomplete;
   }
 
   markAllAsTouched(): void {

@@ -296,8 +296,13 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # Save the transport request
         transport_request = serializer.save(requestor=user, **extra_kwargs)
 
-        # Start workflow if status is submitted (not Draft)
-        if status_value in ["Pending", "Submitted"]:
+        # Start workflow if status is submitted (not Draft). Skipped entirely for
+        # TSR-embedded requests (trf is set) - those ride on the parent TSR's own
+        # approval instead of starting a separate transportrequest workflow; see
+        # WorkflowEngine._cascade_status_to_linked_transport, which flips their
+        # status to match the TSR's outcome once it resolves. Ad-hoc requests
+        # (trf is null) are completely unaffected by this guard.
+        if status_value in ["Pending", "Submitted"] and not transport_request.trf_id:
             # Extract selected approvers from request data (optional)
             selected_approvers = self.request.data.get("selected_approvers", None)
             if selected_approvers:
@@ -415,28 +420,30 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             if skipped_steps:
                 skipped_steps = {int(k): v for k, v in skipped_steps.items()}
 
-            # Start new workflow
-            try:
-                workflow_instance = WorkflowRouter.start_workflow_for_request(
-                    entity=transport_request,
-                    entity_type="transportrequest",
-                    initiated_by=self.request.user,
-                    selected_approvers=selected_approvers,
-                    skipped_steps=skipped_steps,
-                )
+            # Start new workflow - skipped for TSR-embedded requests (trf is set),
+            # same as perform_create/submit above.
+            if not transport_request.trf_id:
+                try:
+                    workflow_instance = WorkflowRouter.start_workflow_for_request(
+                        entity=transport_request,
+                        entity_type="transportrequest",
+                        initiated_by=self.request.user,
+                        selected_approvers=selected_approvers,
+                        skipped_steps=skipped_steps,
+                    )
 
-                if workflow_instance:
-                    transport_request.refresh_from_db()
-                    logger.info(
-                        f" Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}"
-                    )
-                    logger.info(f" Status updated to: {transport_request.status}")
-                else:
-                    logger.warning(
-                        " No active workflow configured for transportrequest"
-                    )
-            except Exception as e:
-                logger.error(f" Error starting workflow: {str(e)}")
+                    if workflow_instance:
+                        transport_request.refresh_from_db()
+                        logger.info(
+                            f" Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}"
+                        )
+                        logger.info(f" Status updated to: {transport_request.status}")
+                    else:
+                        logger.warning(
+                            " No active workflow configured for transportrequest"
+                        )
+                except Exception as e:
+                    logger.error(f" Error starting workflow: {str(e)}")
 
     def perform_destroy(self, instance):
         """Log deletion before removing the record, since nothing else audits this."""
@@ -535,28 +542,46 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         if skipped_steps:
             skipped_steps = {int(k): v for k, v in skipped_steps.items()}
 
-        # Start workflow using WorkflowRouter
-        try:
-            workflow_instance = WorkflowRouter.start_workflow_for_request(
-                entity=transport_request,
-                entity_type="transportrequest",
-                initiated_by=request.user,
-                selected_approvers=selected_approvers,
-                skipped_steps=skipped_steps,
-            )
+        # Start workflow using WorkflowRouter - skipped entirely for TSR-embedded
+        # requests (trf is set), which ride on the parent TSR's own approval
+        # instead. See WorkflowEngine._cascade_status_to_linked_transport, which
+        # flips their status to match the TSR's outcome once it resolves. They
+        # stay at the generic "Pending" status set above with no
+        # WorkflowInstance/legacy approval step, exactly like embedded
+        # Accommodation requests.
+        if not transport_request.trf_id:
+            try:
+                workflow_instance = WorkflowRouter.start_workflow_for_request(
+                    entity=transport_request,
+                    entity_type="transportrequest",
+                    initiated_by=request.user,
+                    selected_approvers=selected_approvers,
+                    skipped_steps=skipped_steps,
+                )
 
-            if workflow_instance:
-                # Reload the transport request to get the updated status from workflow
-                transport_request.refresh_from_db()
-                logger.info(
-                    f" Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}"
-                )
-                logger.info(f" Status updated to: {transport_request.status}")
-            else:
-                # Fallback to legacy approval system if no workflow configured
-                logger.warning(
-                    " No active workflow configured - creating legacy approval step"
-                )
+                if workflow_instance:
+                    # Reload the transport request to get the updated status from workflow
+                    transport_request.refresh_from_db()
+                    logger.info(
+                        f" Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}"
+                    )
+                    logger.info(f" Status updated to: {transport_request.status}")
+                else:
+                    # Fallback to legacy approval system if no workflow configured
+                    logger.warning(
+                        " No active workflow configured - creating legacy approval step"
+                    )
+                    TransportApprovalStep.objects.create(
+                        transport_request=transport_request,
+                        step_role="HOD",
+                        step_name="HOD Approval",
+                        status="Pending",
+                    )
+                    transport_request.status = "Pending Department Focal"
+                    transport_request.save()
+            except Exception as e:
+                logger.error(f" Error starting workflow: {str(e)}")
+                # Fallback to legacy system on error
                 TransportApprovalStep.objects.create(
                     transport_request=transport_request,
                     step_role="HOD",
@@ -565,17 +590,6 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 )
                 transport_request.status = "Pending Department Focal"
                 transport_request.save()
-        except Exception as e:
-            logger.error(f" Error starting workflow: {str(e)}")
-            # Fallback to legacy system on error
-            TransportApprovalStep.objects.create(
-                transport_request=transport_request,
-                step_role="HOD",
-                step_name="HOD Approval",
-                status="Pending",
-            )
-            transport_request.status = "Pending Department Focal"
-            transport_request.save()
 
         # Ensure we have the latest status before serializing
         transport_request.refresh_from_db()

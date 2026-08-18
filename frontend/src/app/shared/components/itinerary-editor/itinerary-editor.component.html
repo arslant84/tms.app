@@ -48,6 +48,15 @@
               [placeholder]="field.placeholder || ''"
               [ngClass]="{'is-invalid': segment.get(field.key)?.invalid && segment.get(field.key)?.touched}">
 
+            <input
+              *ngIf="field.type === 'number'"
+              type="number"
+              class="form-control"
+              [formControlName]="field.key"
+              [attr.min]="field.min"
+              [placeholder]="field.placeholder || ''"
+              [ngClass]="{'is-invalid': segment.get(field.key)?.invalid && segment.get(field.key)?.touched}">
+
             <select
               *ngIf="field.type === 'select'"
               class="form-select"
@@ -76,7 +85,7 @@
 
   <div class="mt-3" *ngIf="canAdd">
     <button type="button" class="btn btn-outline-primary" (click)="addSegment()">
-      <i class="bi bi-plus-circle me-1"></i> Add Itinerary Segment
+      <i class="bi bi-plus-circle me-1"></i> {{ addButtonLabel }}
     </button>
   </div>
   <div class="mt-3" *ngIf="!canAdd">

@@ -175,6 +175,49 @@
       </div>
     </app-form-section-card>
 
+    <!-- Transport Section -->
+    <app-form-section-card icon="bi-truck" title="Transport">
+      <div formGroupName="transport">
+        <div class="form-check mb-3">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="transportRequired"
+            formControlName="required" />
+          <label class="form-check-label" for="transportRequired">
+            Requires Transport
+          </label>
+        </div>
+
+        <div *ngIf="travelForm.get('transport.required')?.value">
+          <div class="form-group mb-3">
+            <label for="transportPurpose" class="form-label">Purpose of Transport*</label>
+            <textarea
+              id="transportPurpose"
+              class="form-control"
+              formControlName="purpose"
+              rows="2"
+              placeholder="Describe the purpose of this transport request"
+              [ngClass]="{'is-invalid': travelForm.get('transport.purpose')?.invalid && travelForm.get('transport.purpose')?.touched}"></textarea>
+            <div class="invalid-feedback" *ngIf="travelForm.get('transport.purpose')?.invalid && travelForm.get('transport.purpose')?.touched">
+              Purpose of transport is required
+            </div>
+          </div>
+
+          <app-itinerary-editor
+            [fields]="transportJourneyFields"
+            [initialSegments]="initialData.transport?.journeys || []"
+            [forceAllowAdd]="true"
+            addButtonLabel="Add Journey"
+            (segmentsChange)="onTransportSegmentsChange($event)">
+          </app-itinerary-editor>
+          <div class="invalid-feedback d-block" *ngIf="isTransportIncomplete">
+            At least one journey is required
+          </div>
+        </div>
+      </div>
+    </app-form-section-card>
+
     <!-- Passport Details Section -->
     <app-form-section-card icon="bi-file-earmark-text" title="Passport Details (Optional)">
         <p class="text-muted small mb-3">

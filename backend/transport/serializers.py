@@ -98,6 +98,7 @@ class TransportRequestSerializer(serializers.ModelSerializer):
             "position",
             "purpose",
             "tsr_reference",
+            "trf",
             "status",
             "transport_details",
             "detail_count",
@@ -256,6 +257,7 @@ class TransportRequestCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransportRequest
         fields = [
+            "id",
             "trf",
             "requestor_name",
             "staff_id",
@@ -267,6 +269,7 @@ class TransportRequestCreateSerializer(serializers.ModelSerializer):
             "transport_details",
             "additional_comments",
         ]
+        read_only_fields = ["id"]
 
     def validate(self, data):
         """Validate transport request data"""
