@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import {
   HttpRequest,
   HttpHandlerFn,
@@ -16,7 +16,21 @@ export const AuthInterceptor: HttpInterceptorFn = (
   request: HttpRequest<unknown>,
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> => {
-  const authService = inject(AuthService);
+  // Deliberately NOT `inject(AuthService)` here: AuthService's own constructor
+  // fires the bootstrap GET /api/users/me/ request, which runs through this
+  // exact interceptor synchronously (RxJS pipes/HttpClient interceptors execute
+  // synchronously up to the actual network dispatch). If AuthService is still
+  // mid-construction at that point - which it is, since its own HTTP call is
+  // what's currently running - eagerly injecting it here throws NG0200
+  // ("circular dependency... currently being instantiated"). That exception has
+  // no HTTP status, so AuthService's error handler couldn't distinguish it from
+  // a real 401 and treated the whole app as logged-out - reproduced live via a
+  // page reload while already authenticated, which threw this and immediately
+  // bounced to /auth/login despite a fully valid session cookie.
+  // `Injector.get()` (used below, only inside the async error branches) doesn't
+  // have this restriction - by the time those callbacks run, AuthService's
+  // constructor has always already returned.
+  const injector = inject(Injector);
   const router = inject(Router);
 
   // SECURITY: Token is now in HttpOnly cookie (automatically sent by browser)
@@ -67,27 +81,30 @@ export const AuthInterceptor: HttpInterceptorFn = (
             return throwError(() => error);
           }
           // For login/refresh failures, clear state and redirect (don't call logout to avoid loop)
-          authService.clearUserState();
+          injector.get(AuthService).clearUserState();
           router.navigate(['/auth/login']);
           return throwError(() => error);
         }
 
         // SECURITY: Try to refresh the JWT token automatically
-        return authService.refreshToken().pipe(
-          switchMap((success: boolean) => {
-            if (success) {
-              // Refresh successful - retry the original request
-              return next(authReq);
-            } else if (noRedirectOnFailure) {
-              return throwError(() => error);
-            } else {
-              // Refresh failed - clear state and redirect (don't call logout to avoid loop)
-              authService.clearUserState();
-              router.navigate(['/auth/login']);
-              return throwError(() => error);
-            }
-          })
-        );
+        return injector
+          .get(AuthService)
+          .refreshToken()
+          .pipe(
+            switchMap((success: boolean) => {
+              if (success) {
+                // Refresh successful - retry the original request
+                return next(authReq);
+              } else if (noRedirectOnFailure) {
+                return throwError(() => error);
+              } else {
+                // Refresh failed - clear state and redirect (don't call logout to avoid loop)
+                injector.get(AuthService).clearUserState();
+                router.navigate(['/auth/login']);
+                return throwError(() => error);
+              }
+            })
+          );
       }
       return throwError(() => error);
     })
