@@ -265,8 +265,8 @@
       </div>
     </div>
 
-    <!-- Passport Details (Overseas/Home Leave) -->
-    <div class="detail-card" *ngIf="isOverseas && trfData.passportDetails && trfData.passportDetails.length > 0">
+    <!-- Passport Details (any travel type - Domestic, External Parties, Overseas, Home Leave can all upload one) -->
+    <div class="detail-card" *ngIf="trfData.passportDetails && trfData.passportDetails.length > 0">
       <div class="card-header">
         <i class="bi bi-passport"></i>
         <h3>Passport Details</h3>
@@ -300,6 +300,14 @@
           <div class="detail-item">
             <label>Passport Expiry Date</label>
             <span class="value">{{ dateUtils.formatDate(trfData.passportDetails[0]?.passport_expiry_date || trfData.passportDetails[0]?.passportExpiryDate) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="trfData.passportDetails[0]?.passport_file_url || trfData.passportDetails[0]?.passportFileUrl">
+            <label>Uploaded Document</label>
+            <span class="value">
+              <a [href]="trfData.passportDetails[0]?.passport_file_url || trfData.passportDetails[0]?.passportFileUrl" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-file-earmark-arrow-down me-1"></i>View / Download
+              </a>
+            </span>
           </div>
         </div>
       </div>
