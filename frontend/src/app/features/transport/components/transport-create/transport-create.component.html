@@ -27,15 +27,8 @@
 </div>
 
 <div *ngIf="!loading" class="transport-create-container" [formGroup]="transportForm">
-  <div class="form-card">
-    <!-- Requestor Information -->
-    <section class="form-section">
-      <h3 class="section-title">
-        <span class="title-text">
-          <i class="bi bi-person-circle"></i>
-          Requestor Information
-        </span>
-      </h3>
+  <!-- Requestor Information -->
+  <app-form-section-card icon="bi-person-circle" title="Requestor Information">
       <div class="form-grid">
         <div class="form-group">
           <label for="requestorName">Requestor Name <span class="required">*</span></label>
@@ -90,16 +83,10 @@
           >
         </div>
       </div>
-    </section>
+  </app-form-section-card>
 
-    <!-- Request Details -->
-    <section class="form-section">
-      <h3 class="section-title">
-        <span class="title-text">
-          <i class="bi bi-file-text"></i>
-          Request Details
-        </span>
-      </h3>
+  <!-- Request Details -->
+  <app-form-section-card icon="bi-file-text" title="Request Details">
       <div class="form-group full-width">
         <label for="purpose">Purpose of Transport <span class="required">*</span></label>
         <textarea
@@ -124,21 +111,10 @@
           placeholder="Reference to related TSR"
         >
       </div>
-    </section>
+  </app-form-section-card>
 
-    <!-- Transport Details -->
-    <section class="form-section">
-      <h3 class="section-title">
-        <span class="title-text">
-          <i class="bi bi-geo-alt"></i>
-          Transport Details
-        </span>
-        <button type="button" class="btn btn-sm btn-add-journey" (click)="addTransportDetail()">
-          <i class="bi bi-plus-circle"></i>
-          Add Journey
-        </button>
-      </h3>
-
+  <!-- Transport Details -->
+  <app-form-section-card icon="bi-geo-alt" title="Transport Details">
       <div formArrayName="transportDetails" class="details-container">
         <div *ngFor="let detail of transportDetails.controls; let i = index" [formGroupName]="i" class="detail-card">
           <div class="detail-header">
@@ -232,17 +208,15 @@
           </div>
         </div>
       </div>
-    </section>
+      <div class="mt-3">
+        <button type="button" class="btn btn-outline-primary" (click)="addTransportDetail()">
+          <i class="bi bi-plus-circle me-1"></i> Add Journey
+        </button>
+      </div>
+  </app-form-section-card>
 
-    <!-- Additional Comments -->
-    <section class="form-section">
-      <h3 class="section-title">
-        <span class="title-text">
-          <i class="bi bi-chat-text"></i>
-          Additional Information
-        </span>
-      </h3>
-
+  <!-- Additional Comments -->
+  <app-form-section-card icon="bi-chat-text" title="Additional Information">
       <div class="form-group full-width">
         <label for="additionalComments">Additional Comments</label>
         <textarea
@@ -253,16 +227,10 @@
           placeholder="Any other information relevant to this request"
         ></textarea>
       </div>
-    </section>
+  </app-form-section-card>
 
-    <!-- Approver Selection -->
-    <section class="form-section" *ngIf="showApproverSelection">
-      <h3 class="section-title">
-        <span class="title-text">
-          <i class="bi bi-people"></i>
-          Approval Workflow
-        </span>
-      </h3>
+  <!-- Approver Selection -->
+  <app-form-section-card icon="bi-people" title="Approval Workflow" *ngIf="showApproverSelection">
       <app-approver-selection
         entityType="transportrequest"
         [required]="false"
@@ -274,22 +242,21 @@
         (validityChange)="onApproverValidityChange($event)"
         (skippedStepsChange)="onSkippedStepsChange($event)"
       ></app-approver-selection>
-    </section>
+  </app-form-section-card>
 
-    <!-- Form Actions -->
-    <div class="form-actions">
-      <button type="button" class="btn btn-danger" (click)="onCancel()" [disabled]="submitting">
-        <i class="bi bi-x-circle"></i>
-        Cancel
-      </button>
-      <button type="button" class="btn btn-secondary" (click)="onSaveDraft()" [disabled]="submitting">
-        <i class="bi bi-save"></i>
-        {{ submitting ? 'Saving...' : 'Save Draft' }}
-      </button>
-      <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="submitting">
-        <i class="bi bi-send"></i>
-        {{ submitting ? 'Submitting...' : 'Submit Request' }}
-      </button>
-    </div>
+  <!-- Form Actions -->
+  <div class="form-actions">
+    <button type="button" class="btn btn-danger" (click)="onCancel()" [disabled]="submitting">
+      <i class="bi bi-x-circle"></i>
+      Cancel
+    </button>
+    <button type="button" class="btn btn-secondary" (click)="onSaveDraft()" [disabled]="submitting">
+      <i class="bi bi-save"></i>
+      {{ submitting ? 'Saving...' : 'Save Draft' }}
+    </button>
+    <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="submitting">
+      <i class="bi bi-send"></i>
+      {{ submitting ? 'Submitting...' : 'Submit Request' }}
+    </button>
   </div>
 </div>
