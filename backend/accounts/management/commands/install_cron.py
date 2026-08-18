@@ -14,6 +14,10 @@ Also installs send_step_reminders (hourly) - the periodic check that fires
 the workflow 'reminder' notification event type, which previously existed
 in the schema and admin UI but had no scheduled trigger anywhere.
 
+Also installs check_uptime (every 5 min) - an external liveness probe added
+after the Aug 2026 outage where tms.service stayed "active (running)" for
+3 days while every request 500'd; nothing was polling for that distinction.
+
 Run once per deployment (or after moving/re-deploying the repo):
 
     python manage.py install_cron
@@ -50,14 +54,21 @@ JOBS = [
         "send_step_reminders",
         "cron_send_step_reminders.log",
     ),
+    (
+        "check_uptime",
+        "*/5 * * * *",
+        "check_uptime",
+        "cron_check_uptime.log",
+    ),
 ]
 
 
 class Command(BaseCommand):
     help = (
         "Idempotently install the backup_db / disable_inactive_accounts / "
-        "cleanup_expired_data cron schedule into the current user's crontab "
-        "(matching backend/scripts/crontab.example)."
+        "cleanup_expired_data / send_step_reminders / check_uptime cron "
+        "schedule into the current user's crontab (matching "
+        "backend/scripts/crontab.example)."
     )
 
     def add_arguments(self, parser):

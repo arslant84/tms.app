@@ -321,6 +321,10 @@ DEFAULT_FROM_EMAIL = config(
 )
 EMAIL_TIMEOUT = 10  # seconds
 
+# Where the check_uptime management command sends downtime/recovery alerts.
+# Empty by default so the command is a silent no-op until configured.
+UPTIME_ALERT_EMAIL = config("UPTIME_ALERT_EMAIL", default="")
+
 # Frontend URL for email links
 # This is used to generate absolute URLs in email notifications
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:4200")
@@ -471,9 +475,11 @@ LOGGING = {
         "level": "WARNING",  # Only show warnings and errors from unlisted loggers
     },
     "loggers": {
-        # Silence Django framework logs completely
+        # Silence Django framework logs, but let errors (including 500
+        # tracebacks from django.request) actually reach a handler instead
+        # of vanishing silently.
         "django": {
-            "handlers": [],
+            "handlers": ["console"],
             "level": "ERROR",  # Only show errors
             "propagate": False,
         },
