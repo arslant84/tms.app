@@ -251,32 +251,17 @@
                 <td class="text-center">{{ meal.refreshment ? '✓' : '—' }}</td>
               </tr>
             </tbody>
+            <tfoot>
+              <tr class="meal-summary-row">
+                <td>Summary Totals</td>
+                <td class="text-center">{{ getMealTotal('breakfast') }}</td>
+                <td class="text-center">{{ getMealTotal('lunch') }}</td>
+                <td class="text-center">{{ getMealTotal('dinner') }}</td>
+                <td class="text-center">{{ getMealTotal('supper') }}</td>
+                <td class="text-center">{{ getMealTotal('refreshment') }}</td>
+              </tr>
+            </tfoot>
           </table>
-        </div>
-        <div class="meal-summary">
-          <h4>Summary Totals:</h4>
-          <div class="summary-grid">
-            <div class="summary-item">
-              <span>Breakfast</span>
-              <strong>{{ getMealTotal('breakfast') }}</strong>
-            </div>
-            <div class="summary-item">
-              <span>Lunch</span>
-              <strong>{{ getMealTotal('lunch') }}</strong>
-            </div>
-            <div class="summary-item">
-              <span>Dinner</span>
-              <strong>{{ getMealTotal('dinner') }}</strong>
-            </div>
-            <div class="summary-item">
-              <span>Supper</span>
-              <strong>{{ getMealTotal('supper') }}</strong>
-            </div>
-            <div class="summary-item">
-              <span>Refreshment</span>
-              <strong>{{ getMealTotal('refreshment') }}</strong>
-            </div>
-          </div>
         </div>
       </div>
     </div>
