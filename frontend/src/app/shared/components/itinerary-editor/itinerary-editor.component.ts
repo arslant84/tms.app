@@ -9,11 +9,13 @@ export interface ItineraryFieldConfig {
   key: string;
   /** Exact label text to render (bilingual labels included verbatim where the original had them). */
   label: string;
-  type: 'date' | 'time' | 'text' | 'readonly-text' | 'select';
+  type: 'date' | 'time' | 'text' | 'number' | 'readonly-text' | 'select';
   required?: boolean;
   placeholder?: string;
   /** Options for type: 'select'. */
   options?: string[];
+  /** HTML `min` attribute for type: 'number'. */
+  min?: number;
   /** Custom required-error text; defaults to "<label> is required". */
   requiredErrorMessage?: string;
   /** Grid column span at the widest breakpoint (8-col grid). Defaults to 1. */
@@ -45,6 +47,13 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
   @Input() tripType: TripType = 'One Way';
   /** Key of the readonly day-of-week field to auto-populate; defaults to 'day'. */
   @Input() dayFieldKey = 'day';
+  /**
+   * Allows adding/removing rows regardless of tripType - for non-itinerary
+   * consumers (e.g. embedded Transport journeys) that don't have a trip type
+   * concept at all but still want unlimited rows.
+   */
+  @Input() forceAllowAdd = false;
+  @Input() addButtonLabel = 'Add Itinerary Segment';
 
   @Output() segmentsChange = new EventEmitter<Record<string, any>[]>();
   @Output() datesChange = new EventEmitter<(string | null)[]>();
@@ -78,11 +87,11 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   get canAdd(): boolean {
-    return this.tripType === 'Round Trip';
+    return this.forceAllowAdd || this.tripType === 'Round Trip';
   }
 
   canRemove(index: number): boolean {
-    return this.segmentsArray.length > 1 && this.tripType === 'Round Trip';
+    return this.segmentsArray.length > 1 && (this.forceAllowAdd || this.tripType === 'Round Trip');
   }
 
   ngOnInit(): void {

@@ -41,6 +41,8 @@ export interface TransportRequestData {
   purpose: string;
   transportDetails: TransportDetail[];
   tsrReference?: string; // Reference to TSR if created from TSR
+  /** Id of the TravelRequest this was created from, if embedded in a TSR (null/undefined for ad-hoc requests). */
+  trfId?: number;
 }
 
 export interface TransportApprovalSubmissionData {
@@ -162,6 +164,7 @@ export function toFrontendFormat(backendData: any): TransportRequestForm {
     // Request data
     purpose: backendData.purpose || '',
     tsrReference: backendData.tsr_reference,
+    trfId: backendData.trf || undefined,
     status: backendData.status || 'Draft',
 
     // Transport details array

@@ -11,6 +11,7 @@ import { ExternalPartiesDetailsComponent } from '../external-parties-details/ext
 import { ApprovalSubmissionComponent } from '../approval-submission/approval-submission.component';
 import { TrfService } from '../../services/trf.service';
 import { AccommodationService } from '../../../accommodation/services/accommodation.service';
+import { TransportService } from '../../../transport/services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { RbacService } from '../../../../core/services/rbac.service';
@@ -70,6 +71,7 @@ export class TrfWizardComponent implements OnInit {
   constructor(
     private trfService: TrfService,
     private accommodationService: AccommodationService,
+    private transportService: TransportService,
     private router: Router,
     private route: ActivatedRoute,
     private toastService: ToastService,
@@ -189,6 +191,7 @@ export class TrfWizardComponent implements OnInit {
           passportUpload: domesticPassport
         };
         this.loadLinkedAccommodationForEdit(data.id);
+        this.loadLinkedTransportForEdit(data.id);
         break;
 
       case 'Overseas':
@@ -283,6 +286,35 @@ export class TrfWizardComponent implements OnInit {
             checkOutTime: additionalData.flight_departure_time || '',
             roomType: additionalData.requested_room_type || '',
             specialRequests: additionalData.special_requests || ''
+          }
+        };
+      },
+      error: () => {
+        // Non-critical - the rest of the edit form still works without it
+      }
+    });
+  }
+
+  /**
+   * Transport requests embedded in a TSR are linked via TransportRequest.trf, not
+   * returned as part of the TRF payload itself - same reasoning/pattern as
+   * loadLinkedAccommodationForEdit above.
+   */
+  private loadLinkedTransportForEdit(trfId: number): void {
+    this.transportService.getAllRequests({ page_size: 100 }).subscribe({
+      next: (response: any) => {
+        const results = response?.results || response || [];
+        const linked = (Array.isArray(results) ? results : [])
+          .find((req: any) => Number(req.trfId) === trfId);
+        if (!linked) {
+          return;
+        }
+        this.domesticTravelData = {
+          ...this.domesticTravelData,
+          transport: {
+            required: true,
+            purpose: linked.purpose || '',
+            journeys: linked.transportDetails || []
           }
         };
       },
@@ -726,7 +758,8 @@ export class TrfWizardComponent implements OnInit {
       passportDetails: null,
       bankDetails: null,
       advanceAmounts: [],
-      accommodation: this.domesticTravelData?.accommodation || null
+      accommodation: this.domesticTravelData?.accommodation || null,
+      transport: this.domesticTravelData?.transport || null
     };
   }
 
@@ -1013,6 +1046,43 @@ export class TrfWizardComponent implements OnInit {
           firstValueFrom(this.accommodationService.createRequest(accommodationData)).then(created =>
             firstValueFrom(this.accommodationService.submitRequest(created.id))
           )
+        );
+      }
+
+      // Create linked transport request (Domestic only, opt-in) - only on a brand new
+      // TRF's first real submission, same guarding as accommodation above and for the
+      // same reason (an already-submitted transport request may already be Assigned/
+      // processed by Transport Admin). Unlike accommodation, Transport's own
+      // WorkflowTemplate stays active for ad-hoc requests - setting `trf` here is what
+      // makes TransportRequestViewSet skip starting a separate workflow for this one,
+      // so it rides the TSR's approval instead (see
+      // WorkflowEngine._cascade_status_to_linked_transport). Matches the standalone
+      // transport-create form's own single-call pattern exactly (status: 'Pending' sent
+      // directly in the create payload - transport-create.component.ts does the same,
+      // unlike accommodation-create's create-then-submit two-call pattern) - no new
+      // backend endpoints.
+      if (!isDraft && !this.isEditMode && data.transport?.required) {
+        const transport = data.transport;
+        const transportData = {
+          requestor_name: this.requestorData.fullName,
+          staff_id: this.requestorData.staffId,
+          department: this.requestorData.department,
+          position: this.requestorData.position,
+          purpose: transport.purpose,
+          status: 'Pending',
+          trf: trfId,
+          transport_details: (transport.journeys || []).map((j: any) => ({
+            date: this.formatDateForAPI(j.date) || j.date,
+            day: j.day,
+            from: j.from,
+            to: j.to,
+            departure_time: j.departureTime,
+            number_of_passengers: j.numberOfPassengers
+          }))
+        };
+
+        promises.push(
+          firstValueFrom(this.transportService.createRequest(transportData))
         );
       }
 

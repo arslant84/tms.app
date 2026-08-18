@@ -929,6 +929,7 @@ class WorkflowEngine:
 
             if status in ("Approved", "Rejected"):
                 WorkflowEngine._cascade_status_to_linked_accommodation(entity, status)
+                WorkflowEngine._cascade_status_to_linked_transport(entity, status)
 
     @staticmethod
     def _cascade_status_to_linked_accommodation(entity, status: str):
@@ -947,6 +948,27 @@ class WorkflowEngine:
 
         AccommodationRequest.objects.filter(trf=entity).exclude(
             status__in=["Approved", "Rejected", "Accommodation Assigned"]
+        ).update(status=status)
+
+    @staticmethod
+    def _cascade_status_to_linked_transport(entity, status: str):
+        """Transport requests created from inside a TSR (trf is set) have no
+        approval workflow of their own either — same reasoning as accommodation
+        above, but transport's own WorkflowTemplate stays active for genuinely
+        ad-hoc requests (trf is null), so this only ever touches TSR-embedded
+        ones. See TransportRequestViewSet.perform_create/submit/perform_update,
+        which skip starting a workflow whenever trf is set, leaving embedded
+        requests at a generic "Pending" for this cascade to resolve.
+        """
+        from trf.models import TravelRequest
+
+        if not isinstance(entity, TravelRequest):
+            return
+
+        from transport.models import TransportRequest
+
+        TransportRequest.objects.filter(trf=entity).exclude(
+            status__in=["Approved", "Rejected", "Cancelled", "Completed"]
         ).update(status=status)
 
     @staticmethod
