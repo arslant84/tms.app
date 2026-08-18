@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
@@ -46,6 +46,16 @@ export interface AccommodationDetails {
   checkOutTime: string;
   roomType: PreferredRoomType | '';
   specialRequests: string;
+}
+
+/** Cross-field check: accommodation check-out can't be earlier than check-in. */
+function accommodationDateOrderValidator(group: AbstractControl): ValidationErrors | null {
+  const checkIn = group.get('checkInDate')?.value;
+  const checkOut = group.get('checkOutDate')?.value;
+  if (checkIn && checkOut && checkOut < checkIn) {
+    return { checkOutBeforeCheckIn: true };
+  }
+  return null;
 }
 
 export interface DomesticTravelSpecificDetails {
@@ -130,13 +140,13 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
         required: [accommodation?.required || false],
         gender: [accommodation?.gender || userDefaults.gender || ''],
         location: [accommodation?.location || ''],
-        checkInDate: [accommodation?.checkInDate || ''],
+        checkInDate: [accommodation?.checkInDate || '', { updateOn: 'blur' }],
         checkInTime: [accommodation?.checkInTime || ''],
-        checkOutDate: [accommodation?.checkOutDate || ''],
+        checkOutDate: [accommodation?.checkOutDate || '', { updateOn: 'blur' }],
         checkOutTime: [accommodation?.checkOutTime || ''],
         roomType: [accommodation?.roomType || ''],
         specialRequests: [accommodation?.specialRequests || '']
-      })
+      }, { validators: accommodationDateOrderValidator })
     });
 
     this.tripTypeValue = this.initialData.tripType || 'Round Trip';
@@ -159,6 +169,9 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     applyAccommodationValidators(accommodationGroup?.get('required')?.value || false);
     accommodationGroup?.get('required')?.valueChanges.subscribe(required => {
       applyAccommodationValidators(required);
+      if (required) {
+        this.syncAccommodationDatesFromItinerary();
+      }
     });
 
     this.mealSelections = this.initialData.mealProvisions?.dailySelections || [];
@@ -170,6 +183,34 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
 
   onItineraryDatesChange(dates: (string | null)[]): void {
     this.itineraryDates = dates;
+    if (this.travelForm.get('accommodation.required')?.value) {
+      this.syncAccommodationDatesFromItinerary();
+    }
+  }
+
+  /**
+   * Defaults accommodation Check-in/Check-out to the travel itinerary's date range
+   * (first segment date -> last segment date), since the requestor's stay logically
+   * spans their trip. Only touches fields the user hasn't already edited by hand,
+   * so it won't clobber a manual override.
+   */
+  private syncAccommodationDatesFromItinerary(): void {
+    const validDates = this.itineraryDates.filter((d): d is string => !!d).sort();
+    if (validDates.length === 0) {
+      return;
+    }
+    const firstDate = validDates[0];
+    const lastDate = validDates[validDates.length - 1];
+
+    const checkInControl = this.travelForm.get('accommodation.checkInDate');
+    const checkOutControl = this.travelForm.get('accommodation.checkOutDate');
+
+    if (checkInControl && !checkInControl.dirty) {
+      checkInControl.setValue(firstDate);
+    }
+    if (checkOutControl && !checkOutControl.dirty) {
+      checkOutControl.setValue(lastDate);
+    }
   }
 
   onMealSelectionsChange(selections: DailyMealSelection[]): void {
