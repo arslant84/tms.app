@@ -877,39 +877,14 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="pending-approvals")
     def pending_approvals(self, request):
-        """Get accommodation requests pending approval for the current user based on workflow step assignments"""
-        from accounts.utils import is_module_admin
-        from workflows.services import WorkflowApprovalHelper
+        """Deprecated: accommodation requests no longer have their own approval step.
 
-        user = request.user
-
-        # Admins and superusers see all pending requests
-        # Use startswith to match any workflow-generated 'Pending *' status
-        if user.is_superuser or is_module_admin(user, "accommodation"):
-            from django.db.models import Q
-
-            queryset = (
-                AccommodationRequest.objects.filter(
-                    Q(status__startswith="Pending")
-                    | Q(status="Submitted")
-                    | Q(status="Under Review")
-                )
-                .prefetch_related("trf__trfitinerarysegment_set")
-                .order_by("-submitted_at")
-            )
-        else:
-            # Use workflow-based filtering: get entities where user's role matches current step
-            pending_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(
-                user, AccommodationRequest
-            )
-            queryset = (
-                AccommodationRequest.objects.filter(id__in=pending_ids)
-                .prefetch_related("trf__trfitinerarysegment_set")
-                .order_by("-submitted_at")
-            )
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        They ride entirely on their linked TSR's approval (see WorkflowEngine's
+        accommodation cascade), so there is nothing for this queue to ever return.
+        Kept as a no-op endpoint rather than removed, since the route may still be
+        referenced by older clients/bookmarks.
+        """
+        return Response([])
 
     @action(detail=True, methods=["get"], url_path="export-pdf")
     def export_pdf(self, request, pk=None):

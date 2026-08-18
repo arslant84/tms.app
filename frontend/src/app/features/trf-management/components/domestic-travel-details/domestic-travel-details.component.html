@@ -131,9 +131,12 @@
               id="accommodationCheckOutDate"
               class="form-control"
               formControlName="checkOutDate"
-              [ngClass]="{'is-invalid': travelForm.get('accommodation.checkOutDate')?.invalid && travelForm.get('accommodation.checkOutDate')?.touched}" />
+              [ngClass]="{'is-invalid': (travelForm.get('accommodation.checkOutDate')?.invalid && travelForm.get('accommodation.checkOutDate')?.touched) || (travelForm.get('accommodation')?.errors?.['checkOutBeforeCheckIn'] && travelForm.get('accommodation.checkOutDate')?.touched)}" />
             <div class="invalid-feedback" *ngIf="travelForm.get('accommodation.checkOutDate')?.invalid && travelForm.get('accommodation.checkOutDate')?.touched">
               Check-out date is required
+            </div>
+            <div class="invalid-feedback" *ngIf="travelForm.get('accommodation')?.errors?.['checkOutBeforeCheckIn'] && travelForm.get('accommodation.checkOutDate')?.touched">
+              Check-out date can't be earlier than check-in date
             </div>
           </div>
 

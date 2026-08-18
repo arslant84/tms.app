@@ -208,31 +208,6 @@
             </div>
           </ng-container>
 
-          <!-- Accommodation Request -->
-          <ng-container *ngSwitchCase="'accommodation'">
-            <h5>Accommodation Details</h5>
-            <div class="detail-item" *ngIf="selectedRequest.details.hotelName">
-              <span class="detail-label">Hotel:</span>
-              <span class="detail-value">{{ selectedRequest.details.hotelName }}</span>
-            </div>
-            <div class="detail-item" *ngIf="selectedRequest.details.location">
-              <span class="detail-label">Location:</span>
-              <span class="detail-value">{{ selectedRequest.details.location }}</span>
-            </div>
-            <div class="detail-item" *ngIf="selectedRequest.details.checkInDate">
-              <span class="detail-label">Check-in:</span>
-              <span class="detail-value">{{ dateUtils.formatDate(selectedRequest.details.checkInDate) }}</span>
-            </div>
-            <div class="detail-item" *ngIf="selectedRequest.details.checkOutDate">
-              <span class="detail-label">Check-out:</span>
-              <span class="detail-value">{{ dateUtils.formatDate(selectedRequest.details.checkOutDate) }}</span>
-            </div>
-            <div class="detail-item" *ngIf="selectedRequest.details.roomType">
-              <span class="detail-label">Room Type:</span>
-              <span class="detail-value">{{ selectedRequest.details.roomType }}</span>
-            </div>
-          </ng-container>
-
           <!-- Transport Request -->
           <ng-container *ngSwitchCase="'transport'">
             <h5>Transport Details</h5>

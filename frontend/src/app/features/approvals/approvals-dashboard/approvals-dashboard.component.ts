@@ -55,7 +55,6 @@ export class ApprovalsDashboardComponent implements OnInit {
     { value: 'travelrequest', label: 'Travel Service Request' },
     { value: 'transportrequest', label: 'Transport Request' },
     { value: 'visaapplication', label: 'Visa Application' },
-    { value: 'accommodation', label: 'Accommodation' },
   ];
 
   selectedApproval: PendingApproval | null = null;
