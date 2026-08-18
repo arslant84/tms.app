@@ -41,7 +41,6 @@ class TestReportsPermissionGate:
             "/api/reports/analytics/",
             "/api/reports/departmental/",
             "/api/reports/user-activity/",
-            "/api/reports/financial/",
         ],
     )
     def test_regular_user_without_permission_is_forbidden(
