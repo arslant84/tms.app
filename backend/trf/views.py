@@ -522,8 +522,44 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 )
                 logger.warning(f" Using fallback request number: {trf.request_number}")
 
-        # Update status and submitted_at
-        trf.status = "Pending"
+        # Update status and submitted_at.
+        #
+        # A TRF that's already mid-approval (e.g. "Pending HOD") but gets
+        # edited and resubmitted is reset to "Draft" by the frontend first,
+        # which lets it reach this action again even though its
+        # WorkflowInstance never actually stopped. In that case, don't
+        # overwrite status with a generic "Pending" - the duplicate-start
+        # guard in WorkflowRouter/WorkflowEngine below returns the existing
+        # instance as-is without correcting it, so a generic "Pending" would
+        # persist and hide which step it's actually still waiting on.
+        # Instead, resync status to the real current step.
+        from django.contrib.contenttypes.models import ContentType
+        from workflows.engine import WorkflowEngine
+        from workflows.models import WorkflowInstance, WorkflowStep
+
+        existing_active_instance = (
+            WorkflowInstance.objects.filter(
+                content_type=ContentType.objects.get_for_model(trf),
+                object_id=trf.id,
+                status__in=["pending", "in_progress", "on_hold"],
+            )
+            .order_by("-started_at")
+            .first()
+        )
+
+        if existing_active_instance:
+            current_step = WorkflowStep.objects.filter(
+                workflow_template=existing_active_instance.workflow_template,
+                step_order=existing_active_instance.current_step_order,
+            ).first()
+            if current_step:
+                WorkflowEngine._update_entity_status_from_step(
+                    existing_active_instance, current_step
+                )
+                trf.refresh_from_db()
+        else:
+            trf.status = "Pending"
+
         trf.submitted_at = timezone.now()
         trf.save()
 
@@ -702,12 +738,15 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 approval_step.step_date = datetime.now()
                 approval_step.save()
 
-                # Update TRF status based on approval workflow
+                # Update TRF status based on approval workflow. Only real
+                # roles that exist in this system's active workflow
+                # templates (Department Focal, Line Manager, HOD) - "Travel
+                # Desk" and "Finance" were never real roles here and never
+                # matched any active TSR workflow step.
                 status_progression = {
                     "Department Focal": "Pending HOD",
-                    "HOD": "Pending Travel Desk",
-                    "Travel Desk": "Pending Finance",
-                    "Finance": "Approved",
+                    "Line Manager": "Pending HOD",
+                    "HOD": "Approved",
                 }
 
                 if step_role in status_progression:

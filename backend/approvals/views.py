@@ -85,8 +85,6 @@ def unified_approvals(request):
         "Pending",
         "Pending Department Focal",
         "Pending HOD",
-        "Pending Travel Desk",
-        "Pending Finance",
         "Pending Line Manager",
         "Pending Visa Clerk",
         "Submitted",

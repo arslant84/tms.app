@@ -29,8 +29,6 @@ class RequestStatus:
     PENDING_DEPARTMENT_FOCAL = "Pending Department Focal"
     PENDING_LINE_MANAGER = "Pending Line Manager"
     PENDING_HOD = "Pending HOD"
-    PENDING_TRAVEL_DESK = "Pending Travel Desk"
-    PENDING_FINANCE = "Pending Finance"
     PENDING_VISA_CLERK = "Pending Visa Clerk"
     PENDING_TRANSPORT_ADMIN = "Pending Transport Admin"
     SUBMITTED = "Submitted"
@@ -38,7 +36,6 @@ class RequestStatus:
 
     # Processing States
     PROCESSING = "Processing"
-    PROCESSING_TRAVEL_DESK = "Processing with Travel Desk"
     PROCESSING_VISA_CLERK = "Processing with Visa Clerk"
     PROCESSING_TRANSPORT_ADMIN = "Processing with Transport Admin"
     READY_FOR_BOOKING = "Ready for Booking"
@@ -63,8 +60,6 @@ class RequestStatus:
             cls.PENDING_DEPARTMENT_FOCAL,
             cls.PENDING_LINE_MANAGER,
             cls.PENDING_HOD,
-            cls.PENDING_TRAVEL_DESK,
-            cls.PENDING_FINANCE,
             cls.PENDING_VISA_CLERK,
             cls.PENDING_TRANSPORT_ADMIN,
             cls.SUBMITTED,
@@ -76,7 +71,6 @@ class RequestStatus:
         """Statuses that indicate request is being processed"""
         return [
             cls.PROCESSING,
-            cls.PROCESSING_TRAVEL_DESK,
             cls.PROCESSING_VISA_CLERK,
             cls.PROCESSING_TRANSPORT_ADMIN,
             cls.READY_FOR_BOOKING,
