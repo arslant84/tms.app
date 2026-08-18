@@ -30,6 +30,7 @@
               type="date"
               class="form-control"
               [formControlName]="field.key"
+              (change)="onPrimaryDateChange(i, field, $event)"
               [ngClass]="{'is-invalid': (segment.get(field.key)?.invalid && segment.get(field.key)?.touched) || (field.isPrimaryDate && outOfOrderIndices.has(i) && segment.get(field.key)?.touched)}">
 
             <input
