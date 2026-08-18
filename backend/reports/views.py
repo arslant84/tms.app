@@ -928,147 +928,6 @@ class UserActivityReportsView(APIView):
         )
 
 
-class FinancialSummaryReportsView(APIView):
-    """
-    Financial summary reports
-    Shows estimated costs and budget tracking
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        """
-        Get financial summary reports
-        Query params:
-        - date_range: week, month, quarter, year (default: month)
-        - department: specific department (optional)
-        """
-        forbidden = _require_admin_reports_permission(request)
-        if forbidden:
-            return forbidden
-
-        date_range = request.query_params.get("date_range", "month")
-        department_filter = request.query_params.get("department")
-
-        # Calculate date range
-        now = timezone.now()
-        if date_range == "week":
-            start_date = now - timedelta(days=7)
-        elif date_range == "quarter":
-            start_date = now - timedelta(days=90)
-        elif date_range == "year":
-            start_date = now - timedelta(days=365)
-        else:  # month
-            start_date = now - timedelta(days=30)
-
-        if department_filter:
-            dept_users = User.objects.filter(department=department_filter)
-        else:
-            dept_users = None
-
-        # Transport requests (estimated costs)
-        transport_query = TransportRequest.objects.filter(created_at__gte=start_date)
-        if dept_users:
-            transport_query = transport_query.filter(requestor__in=dept_users)
-
-        # Estimate transport cost based on count (placeholder - adjust as needed)
-        transport_count = transport_query.count()
-        estimated_transport_cost = (
-            transport_count * 50
-        )  # $50 per transport request estimate
-
-        # Visa applications (estimated costs)
-        visa_query = VisaApplication.objects.filter(created_at__gte=start_date)
-        if dept_users:
-            visa_query = visa_query.filter(user__in=dept_users)
-
-        visa_count = visa_query.count()
-        estimated_visa_cost = visa_count * 200  # $200 per visa estimate
-
-        # Accommodation has no cost estimate: all accommodation is company-provided
-        # (staff houses/rooms managed directly, not billed per booking), unlike
-        # flights/transport/visa which are real or estimated third-party spend.
-
-        # Total costs
-        total_cost = estimated_transport_cost + estimated_visa_cost
-
-        # Get breakdown by department
-        from accounts.models import Department
-
-        department_breakdown = []
-        department_ids = User.objects.values_list("department", flat=True).distinct()
-
-        for dept_id in department_ids:
-            if not dept_id:
-                continue
-
-            # Look up department name
-            try:
-                department = Department.objects.get(id=dept_id)
-                dept_name = department.name
-            except Department.DoesNotExist:
-                dept_name = str(dept_id)  # Fallback to ID if not found
-
-            dept_users = User.objects.filter(department=dept_id)
-
-            dept_transport = (
-                TransportRequest.objects.filter(
-                    requestor__in=dept_users, created_at__gte=start_date
-                ).count()
-                * 50
-            )
-
-            dept_visa = (
-                VisaApplication.objects.filter(
-                    user__in=dept_users, created_at__gte=start_date
-                ).count()
-                * 200
-            )
-
-            dept_accommodation = (
-                AccommodationRequest.objects.filter(
-                    trf__created_by__in=dept_users, created_at__gte=start_date
-                ).count()
-                * 300
-            )  # Simplified estimate
-
-            dept_total = dept_transport + dept_visa + dept_accommodation
-
-            if dept_total > 0:
-                department_breakdown.append(
-                    {
-                        "department": dept_name,
-                        "totalCost": round(dept_total, 2),
-                        "breakdown": {
-                            "transport": round(dept_transport, 2),
-                            "visa": round(dept_visa, 2),
-                            "accommodation": round(dept_accommodation, 2),
-                        },
-                    }
-                )
-
-        department_breakdown.sort(key=lambda x: x["totalCost"], reverse=True)
-
-        return success_response(
-            data={
-                "summary": {
-                    "totalCost": round(total_cost, 2),
-                    "breakdown": {
-                        "transport": round(estimated_transport_cost, 2),
-                        "visa": round(estimated_visa_cost, 2),
-                    },
-                    "currency": "USD",  # Placeholder
-                },
-                "departmentBreakdown": department_breakdown,
-                "dateRange": date_range,
-                "startDate": start_date.isoformat(),
-                "endDate": now.isoformat(),
-            },
-            message="Financial summary reports retrieved successfully",
-            status_code=200,
-        )
-
-
 class ReportExportView(APIView):
     """
     Export reports to CSV, Excel, or PDF
@@ -1082,7 +941,7 @@ class ReportExportView(APIView):
         """
         Export report data
         Query params:
-        - report_type: admin, departmental, user_activity, financial (required)
+        - report_type: admin, departmental, user_activity (required)
         - export_format: csv, excel, pdf (default: csv) - Note: use 'export_format' not 'format' to avoid DRF conflict
         - date_range: week, month, quarter, year (default: month)
         """
@@ -1106,8 +965,6 @@ class ReportExportView(APIView):
             view = DepartmentalReportsView()
         elif report_type == "user_activity":
             view = UserActivityReportsView()
-        elif report_type == "financial":
-            view = FinancialSummaryReportsView()
         else:
             return error_response(
                 message=f"Invalid report_type: {report_type}", status_code=400
@@ -1194,23 +1051,6 @@ class ReportExportView(APIView):
                         user.get("lastActivityDate", ""),
                     ]
                 )
-
-        elif report_type == "financial":
-            writer.writerow(["Category", "Cost (USD)"])
-            summary = data.get("summary", {})
-            breakdown = summary.get("breakdown", {})
-
-            writer.writerow(["Total", summary.get("totalCost", 0)])
-            writer.writerow(["Flights", breakdown.get("flights", 0)])
-            writer.writerow(["Hotels", breakdown.get("hotels", 0)])
-            writer.writerow(["Transport", breakdown.get("transport", 0)])
-            writer.writerow(["Visa", breakdown.get("visa", 0)])
-            writer.writerow(["Accommodation", breakdown.get("accommodation", 0)])
-
-            writer.writerow([])
-            writer.writerow(["Department", "Total Cost"])
-            for dept in data.get("departmentBreakdown", []):
-                writer.writerow([dept["department"], dept["totalCost"]])
 
         else:  # admin report
             writer.writerow(["Metric", "Value"])
@@ -1305,25 +1145,6 @@ class ReportExportView(APIView):
                         user.get("lastActivityDate", ""),
                     ]
                 )
-
-        elif report_type == "financial":
-            headers = ["Category", "Cost (USD)"]
-            ws.append(headers)
-
-            for cell in ws[1]:
-                cell.fill = header_fill
-                cell.font = header_font
-                cell.alignment = header_alignment
-
-            summary = data.get("summary", {})
-            breakdown = summary.get("breakdown", {})
-
-            ws.append(["Total", summary.get("totalCost", 0)])
-            ws.append(["Flights", breakdown.get("flights", 0)])
-            ws.append(["Hotels", breakdown.get("hotels", 0)])
-            ws.append(["Transport", breakdown.get("transport", 0)])
-            ws.append(["Visa", breakdown.get("visa", 0)])
-            ws.append(["Accommodation", breakdown.get("accommodation", 0)])
 
         else:  # admin report
             headers = ["Metric", "Value"]
@@ -1483,31 +1304,6 @@ class ReportExportView(APIView):
                         ),
                     ]
                 )
-
-        elif report_type == "financial":
-            headers = ["Category", "Cost (USD)"]
-            table_data = [headers]
-
-            summary = data.get("summary", {})
-            breakdown = summary.get("breakdown", {})
-
-            table_data.append(["Total", f"${summary.get('totalCost', 0):,.2f}"])
-            table_data.append(["Flights", f"${breakdown.get('flights', 0):,.2f}"])
-            table_data.append(["Hotels", f"${breakdown.get('hotels', 0):,.2f}"])
-            table_data.append(["Transport", f"${breakdown.get('transport', 0):,.2f}"])
-            table_data.append(["Visa", f"${breakdown.get('visa', 0):,.2f}"])
-            table_data.append(
-                ["Accommodation", f"${breakdown.get('accommodation', 0):,.2f}"]
-            )
-
-            # Add department breakdown if available
-            if data.get("departmentBreakdown"):
-                table_data.append(["", ""])  # Empty row
-                table_data.append(["Department Breakdown", ""])
-                for dept in data.get("departmentBreakdown", []):
-                    table_data.append(
-                        [dept["department"], f"${dept['totalCost']:,.2f}"]
-                    )
 
         else:  # admin report
             headers = ["Metric", "Value", "Change", "Trend"]
