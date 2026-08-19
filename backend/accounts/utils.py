@@ -142,7 +142,6 @@ def can_approve(user, module=None):
             "accommodation": "approve_accommodation",
             "transport": "approve_transport",
             "visa": "approve_visa",
-            "combined": "approve_combined",
         }
         permission_name = permission_map.get(module)
         if permission_name:
@@ -155,7 +154,6 @@ def can_approve(user, module=None):
         "approve_accommodation",
         "approve_transport",
         "approve_visa",
-        "approve_combined",
         "view_pending_approvals",
     ]
     return has_any_permission(user, approval_permissions)

@@ -609,12 +609,11 @@ tmsapp-admin-systemsettings-workflow-configuration,
 
   // Action buttons (view/edit/delete icons in the Action column): sizing,
   // shape and alignment come from the global .action-buttons/.btn-icon in
-  // buttons.scss - no local override here, so every list page (this group
-  // and Combined Requests) renders identically. A local override used to
-  // live here (28px, radius-base "square" buttons, centered) and it was
-  // masking a real bug: it fought buttons.scss's canonical .action-buttons
-  // circular 28px sizing, so any page NOT in this container list (e.g.
-  // Combined Requests) rendered differently from these five.
+  // buttons.scss - no local override here, so every list page renders
+  // identically. A local override used to live here (28px, radius-base
+  // "square" buttons, centered) and it was masking a real bug: it fought
+  // buttons.scss's canonical .action-buttons circular 28px sizing, so any
+  // page NOT in this container list rendered differently from these five.
 }
 
 // ==================== Unified Badge Styles ====================
@@ -630,7 +629,7 @@ tmsapp-admin-systemsettings-workflow-configuration,
 }
 
 // Status badge colors - unified across all modules (TRF/Transport/Visa/
-// Accommodation/Combined, Approvals, and every admin screen). Pastel
+// Accommodation, Approvals, and every admin screen). Pastel
 // background + dark text, no border - matches StatusUtilsService's
 // getStatusBadgeClass(), the single source of truth for status->class.
 .badge-pending,

@@ -66,7 +66,6 @@ INSTALLED_APPS = [
     "workflows",
     "notifications",
     "reports",
-    "combined_request.apps.CombinedRequestConfig",
 ]
 
 MIDDLEWARE = [
@@ -426,12 +425,12 @@ SIMPLE_JWT = {
 }
 
 # Celery
-REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/1')
+REDIS_URL = config("REDIS_URL", default="redis://127.0.0.1:6379/1")
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 

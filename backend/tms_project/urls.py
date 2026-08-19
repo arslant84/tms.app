@@ -14,68 +14,90 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path, include
+
+import os
+
+from approvals.views import approval_history, bulk_approve, unified_approvals
 from django.conf import settings
 from django.conf.urls.static import static
-from django.views.static import serve
+from django.contrib import admin
 from django.http import HttpResponse, JsonResponse
+from django.urls import include, path
 from django.views.decorators.csrf import ensure_csrf_cookie
-from approvals.views import unified_approvals, bulk_approve, approval_history
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-import os
+from django.views.static import serve
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 
 @ensure_csrf_cookie
 def csrf_token_view(request):
     """Return CSRF token for Angular SPA"""
-    return JsonResponse({'detail': 'CSRF cookie set'})
+    return JsonResponse({"detail": "CSRF cookie set"})
 
 
-def serve_spa(request, path=''):
-    index_path = os.path.join(settings.BASE_DIR.parent, 'frontend', 'dist', 'tms-frontend', 'browser', 'index.html')
+def serve_spa(request, path=""):
+    index_path = os.path.join(
+        settings.BASE_DIR.parent,
+        "frontend",
+        "dist",
+        "tms-frontend",
+        "browser",
+        "index.html",
+    )
     try:
-        with open(index_path, 'rb') as f:
-            return HttpResponse(f.read(), content_type='text/html')
+        with open(index_path, "rb") as f:
+            return HttpResponse(f.read(), content_type="text/html")
     except FileNotFoundError:
-        return HttpResponse("Frontend not built. Run 'ng build' in the frontend/ directory.", status=503, content_type='text/plain')
+        return HttpResponse(
+            "Frontend not built. Run 'ng build' in the frontend/ directory.",
+            status=503,
+            content_type="text/plain",
+        )
 
 
 def security_txt(request):
     """Serve the security.txt file per RFC 9116"""
-    security_txt_path = os.path.join(settings.BASE_DIR, 'static', '.well-known', 'security.txt')
+    security_txt_path = os.path.join(
+        settings.BASE_DIR, "static", ".well-known", "security.txt"
+    )
     try:
-        with open(security_txt_path, 'r') as f:
+        with open(security_txt_path, "r") as f:
             content = f.read()
-        return HttpResponse(content, content_type='text/plain')
+        return HttpResponse(content, content_type="text/plain")
     except FileNotFoundError:
-        return HttpResponse('security.txt not found', status=404)
+        return HttpResponse("security.txt not found", status=404)
 
 
 urlpatterns = [
-    path('django-admin/', admin.site.urls),
-    path('api/csrf/', csrf_token_view, name='csrf-token'),
-    path('api/', include('accounts.urls')),
-    path('api/trf/', include('trf.urls')),
-    path('api/bookings/', include('bookings.urls')),
-    path('api/insights/', include('insights.urls')),
-    path('api/visa/', include('visa.urls')),
-    path('api/accommodation/', include('accommodation.urls')),
-    path('api/transport/', include('transport.urls')),
-    path('api/combined/', include('combined_request.urls')),
-    path('api/workflows/', include('workflows.urls')),
-    path('api/notifications/', include('notifications.urls')),
-    path('api/reports/', include('reports.urls')),
+    path("django-admin/", admin.site.urls),
+    path("api/csrf/", csrf_token_view, name="csrf-token"),
+    path("api/", include("accounts.urls")),
+    path("api/trf/", include("trf.urls")),
+    path("api/bookings/", include("bookings.urls")),
+    path("api/insights/", include("insights.urls")),
+    path("api/visa/", include("visa.urls")),
+    path("api/accommodation/", include("accommodation.urls")),
+    path("api/transport/", include("transport.urls")),
+    path("api/workflows/", include("workflows.urls")),
+    path("api/notifications/", include("notifications.urls")),
+    path("api/reports/", include("reports.urls")),
     # Unified approvals endpoints
-    path('api/admin/approvals/', unified_approvals, name='unified-approvals'),
-    path('api/admin/approvals/bulk/', bulk_approve, name='bulk-approve'),
-    path('api/admin/approvals/history/', approval_history, name='approval-history'),
+    path("api/admin/approvals/", unified_approvals, name="unified-approvals"),
+    path("api/admin/approvals/bulk/", bulk_approve, name="bulk-approve"),
+    path("api/admin/approvals/history/", approval_history, name="approval-history"),
     # Security.txt per RFC 9116
-    path('.well-known/security.txt', security_txt, name='security-txt'),
+    path(".well-known/security.txt", security_txt, name="security-txt"),
     # API Documentation (drf-spectacular)
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
 
 # Serve media and static files in development
@@ -86,6 +108,6 @@ if settings.DEBUG:
 # Catch-all: serve Angular SPA index.html for any non-API path
 # WhiteNoise handles the actual JS/CSS/image asset files at root URL
 urlpatterns += [
-    path('', serve_spa, name='spa-root'),
-    path('<path:path>', serve_spa, name='spa'),
+    path("", serve_spa, name="spa-root"),
+    path("<path:path>", serve_spa, name="spa"),
 ]

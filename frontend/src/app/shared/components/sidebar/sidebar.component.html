@@ -80,19 +80,6 @@
       <span class="nav-label">Meal Admin</span>
     </a>
 
-    <!-- Combined Admin -->
-    <a
-      *ngIf="hasCombinedAdminPermission"
-      routerLink="/admin/combined"
-      routerLinkActive="active"
-      [routerLinkActiveOptions]="{ exact: false }"
-      class="nav-item"
-      [attr.title]="'Combined Admin'"
-    >
-      <i class="bi bi-layers"></i>
-      <span class="nav-label">Combined Admin</span>
-    </a>
-
     <!-- Approvals Queue -->
     <a
       *ngIf="hasApprovalPermissions"

@@ -15,24 +15,19 @@ import { AccommodationAdminComponent } from './features/admin/accommodation/comp
 import { AccommodationProcessingComponent } from './features/admin/accommodation/components/accommodation-processing.component';
 import { VisaAdminComponent } from './features/admin/visa/components/visa-admin.component';
 import { VisaProcessingComponent } from './features/admin/visa/components/visa-processing.component';
-import { CombinedAdminComponent } from './features/admin/combined/components/combined-admin.component';
-import { CombinedProcessingComponent } from './features/admin/combined/components/combined-processing.component';
 import { MealAdminComponent } from './features/admin/meal/components/meal-admin.component';
 import { SystemSettingsComponent } from './features/admin/settings/system-settings.component';
 import { TmsApp_Admin_SystemSettings_NotificationTemplatesComponent } from './features/admin/settings/notification-templates/notification-templates.component';
-import { CombinedRequestWizardComponent } from './features/requests/combined/combined-request-wizard.component';
-import { CombinedListComponent } from './features/requests/combined/combined-list.component';
-import { CombinedDetailComponent } from './features/requests/combined/combined-detail.component';
 
 export const routes: Routes = [
-  { 
-    path: '', 
-    redirectTo: 'dashboard', 
-    pathMatch: 'full' 
+  {
+    path: '',
+    redirectTo: 'dashboard',
+    pathMatch: 'full',
   },
   {
     path: 'auth',
-    loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
+    loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule),
   },
   {
     path: '',
@@ -42,7 +37,8 @@ export const routes: Routes = [
       // Dashboard route
       {
         path: 'dashboard',
-        loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule)
+        loadChildren: () =>
+          import('./features/dashboard/dashboard.module').then(m => m.DashboardModule),
       },
       // Approvals routes (for users with approval permissions)
       {
@@ -59,9 +55,9 @@ export const routes: Routes = [
             Permission.APPROVE_TRF,
             Permission.APPROVE_VISA,
             Permission.APPROVE_TRANSPORT,
-            Permission.APPROVE_ACCOMMODATION
-          ]
-        }
+            Permission.APPROVE_ACCOMMODATION,
+          ],
+        },
       },
       // Admin approvals - separate route with its own guard (bypasses parent /admin guard)
       {
@@ -74,9 +70,9 @@ export const routes: Routes = [
             Permission.APPROVE_TRF,
             Permission.APPROVE_TRANSPORT,
             Permission.APPROVE_VISA,
-            Permission.APPROVE_ACCOMMODATION
-          ]
-        }
+            Permission.APPROVE_ACCOMMODATION,
+          ],
+        },
       },
       // Admin routes
       {
@@ -92,9 +88,9 @@ export const routes: Routes = [
               permissions: [
                 Permission.GENERATE_ADMIN_REPORTS,
                 Permission.EXPORT_DATA,
-                Permission.SYSTEM_ADMIN
-              ]
-            }
+                Permission.SYSTEM_ADMIN,
+              ],
+            },
           },
           // Note: /admin/approvals is handled by a separate route above to bypass parent guard
           {
@@ -103,8 +99,8 @@ export const routes: Routes = [
             data: { adminModule: 'transport' },
             children: [
               { path: '', component: TransportAdminComponent },
-              { path: 'processing', component: TransportProcessingComponent }
-            ]
+              { path: 'processing', component: TransportProcessingComponent },
+            ],
           },
           {
             path: 'flights',
@@ -112,8 +108,8 @@ export const routes: Routes = [
             data: { adminModule: 'flights' },
             children: [
               { path: '', component: FlightsAdminOverviewComponent },
-              { path: 'processing', component: FlightsProcessingComponent }
-            ]
+              { path: 'processing', component: FlightsProcessingComponent },
+            ],
           },
           {
             path: 'accommodation',
@@ -121,8 +117,8 @@ export const routes: Routes = [
             data: { adminModule: 'accommodation' },
             children: [
               { path: '', component: AccommodationAdminComponent },
-              { path: 'processing', component: AccommodationProcessingComponent }
-            ]
+              { path: 'processing', component: AccommodationProcessingComponent },
+            ],
           },
           {
             path: 'visa',
@@ -130,36 +126,27 @@ export const routes: Routes = [
             data: { adminModule: 'visa' },
             children: [
               { path: '', component: VisaAdminComponent },
-              { path: 'processing', component: VisaProcessingComponent }
-            ]
-          },
-          {
-            path: 'combined',
-            canActivate: [AdminMenuGuard],
-            data: { adminModule: 'combined' },
-            children: [
-              { path: '', component: CombinedAdminComponent },
-              { path: 'processing', component: CombinedProcessingComponent }
-            ]
+              { path: 'processing', component: VisaProcessingComponent },
+            ],
           },
           {
             path: 'meal',
             canActivate: [AdminMenuGuard],
             data: { adminModule: 'meal' },
-            children: [{ path: '', component: MealAdminComponent }]
+            children: [{ path: '', component: MealAdminComponent }],
           },
           {
             path: 'settings',
             component: SystemSettingsComponent,
             canActivate: [PermissionGuard],
-            data: { permissions: [Permission.VIEW_SYSTEM_SETTINGS, Permission.SYSTEM_ADMIN] }
+            data: { permissions: [Permission.VIEW_SYSTEM_SETTINGS, Permission.SYSTEM_ADMIN] },
           },
           {
             path: 'settings/notifications',
             component: TmsApp_Admin_SystemSettings_NotificationTemplatesComponent,
             canActivate: [PermissionGuard],
-            data: { permissions: [Permission.MANAGE_NOTIFICATIONS, Permission.SYSTEM_ADMIN] }
-          }
+            data: { permissions: [Permission.MANAGE_NOTIFICATIONS, Permission.SYSTEM_ADMIN] },
+          },
         ],
         // Admin routes require ANY admin module permission, system admin, reporting, or approval permission
         canActivate: [PermissionGuard],
@@ -170,7 +157,6 @@ export const routes: Routes = [
             Permission.VIEW_ADMIN_ACCOMMODATION,
             Permission.VIEW_ADMIN_VISA,
             Permission.VIEW_ADMIN_TRANSPORT,
-            Permission.VIEW_ADMIN_COMBINED,
             Permission.VIEW_ADMIN_MEAL,
             Permission.MANAGE_USERS,
             Permission.GENERATE_ADMIN_REPORTS,
@@ -180,78 +166,79 @@ export const routes: Routes = [
             Permission.APPROVE_TRANSPORT,
             Permission.APPROVE_VISA,
             Permission.APPROVE_ACCOMMODATION,
-            Permission.APPROVE_COMBINED
-          ]
-        }
+          ],
+        },
       },
       // TRF Management
       {
         path: 'trf',
-        loadChildren: () => import('./features/trf-management/trf-management.module').then(m => m.TrfManagementModule)
+        loadChildren: () =>
+          import('./features/trf-management/trf-management.module').then(
+            m => m.TrfManagementModule
+          ),
       },
 
       // Transport Management
       {
         path: 'transport',
-        loadChildren: () => import('./features/transport/transport.module').then(m => m.TransportModule)
+        loadChildren: () =>
+          import('./features/transport/transport.module').then(m => m.TransportModule),
       },
 
       // Accommodation Management
       {
         path: 'accommodation',
-        loadChildren: () => import('./features/accommodation/accommodation.module').then(m => m.AccommodationModule)
+        loadChildren: () =>
+          import('./features/accommodation/accommodation.module').then(m => m.AccommodationModule),
       },
 
       // User Management (Admins only with manage_users permission)
       {
         path: 'users',
-        loadChildren: () => import('./features/user-management/user-management.module').then(m => m.UserManagementModule),
+        loadChildren: () =>
+          import('./features/user-management/user-management.module').then(
+            m => m.UserManagementModule
+          ),
         canActivate: [PermissionGuard],
         data: {
-          permissions: [Permission.MANAGE_USERS, Permission.SYSTEM_ADMIN]
-        }
+          permissions: [Permission.MANAGE_USERS, Permission.SYSTEM_ADMIN],
+        },
       },
       // User Profile
       {
         path: 'profile',
-        loadChildren: () => import('./features/user-management/user-management.module').then(m => m.UserManagementModule)
+        loadChildren: () =>
+          import('./features/user-management/user-management.module').then(
+            m => m.UserManagementModule
+          ),
       },
 
       // Notifications
       {
         path: 'notifications',
-        loadChildren: () => import('./features/notifications/notifications.module').then(m => m.NotificationsModule)
+        loadChildren: () =>
+          import('./features/notifications/notifications.module').then(m => m.NotificationsModule),
       },
 
       // Bookings (Flights & Hotels)
       {
         path: 'bookings',
-        loadChildren: () => import('./features/bookings/bookings.module').then(m => m.BookingsModule)
+        loadChildren: () =>
+          import('./features/bookings/bookings.module').then(m => m.BookingsModule),
       },
 
       // Visa Management
       {
         path: 'visa',
-        loadChildren: () => import('./features/visa/visa.module').then(m => m.VisaModule)
-      },
-
-      // Combined Request Management
-      {
-        path: 'combined',
-        children: [
-          { path: '', component: CombinedListComponent },
-          { path: 'new', component: CombinedRequestWizardComponent },
-          { path: 'edit/:id', component: CombinedRequestWizardComponent },
-          { path: ':id', component: CombinedDetailComponent }
-        ]
+        loadChildren: () => import('./features/visa/visa.module').then(m => m.VisaModule),
       },
 
       // Secondary Settings entry from avatar menu
-      { path: 'settings', component: SystemSettingsComponent }
-    ]
+      { path: 'settings', component: SystemSettingsComponent },
+    ],
   },
-  { 
-    path: '**', 
-    redirectTo: 'dashboard' 
-  }
+  {
+    path: '**',
+    redirectTo: 'dashboard',
+  },
 ];

@@ -1,6 +1,6 @@
 """
 Regression tests for RBAC bypasses found during the permission audit
-(2026-07-23): trf/views.py and combined_request/views.py both let any
+(2026-07-23): trf/views.py let any
 user with the Django is_staff flag skip real permission checks entirely.
 Both were changed to rely solely on the existing permission system
 (accounts.utils permissions / is_superuser), matching the project's
@@ -104,64 +104,3 @@ class TestTrfBookFlightBypassRemoved:
         )
 
         assert response.status_code == status.HTTP_201_CREATED
-
-
-@pytest.mark.django_db
-class TestCombinedRequestProcessModuleBypassRemoved:
-    def test_staff_without_module_permission_is_forbidden(
-        self, api_client, staff_user_without_permission
-    ):
-        """Previously: `if not (request.user.is_admin or request.user.is_staff)`
-        skipped the permission check entirely for any is_staff user."""
-        from combined_request.models import CombinedRequest
-
-        combined_request = CombinedRequest.objects.create(
-            requestor_name=staff_user_without_permission.name,
-            travel_type="Domestic",
-            status="Approved",
-            requestor=staff_user_without_permission,
-        )
-        api_client.force_authenticate(user=staff_user_without_permission)
-
-        response = api_client.post(
-            f"/api/combined/combined-requests/{combined_request.id}/process-module/",
-            {"module": "travel", "processing_data": {}},
-            format="json",
-        )
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_module_permission_grants_access(self, api_client):
-        from accounts.models import User
-        from combined_request.models import CombinedRequest
-
-        permission, _ = Permission.objects.get_or_create(
-            name="view_admin_flights",
-            defaults={"description": "Can access the Flight Admin module interface"},
-        )
-        role = Role.objects.create(name="Flight Admin")
-        RolePermission.objects.create(role=role, permission=permission)
-        flight_admin = User.objects.create_user(
-            email="flight-admin@example.com",
-            password="testpass123",
-            name="Flight Admin",
-            role=role,
-        )
-
-        combined_request = CombinedRequest.objects.create(
-            requestor_name=flight_admin.name,
-            travel_type="Domestic",
-            status="Approved",
-            requestor=flight_admin,
-        )
-        api_client.force_authenticate(user=flight_admin)
-
-        response = api_client.post(
-            f"/api/combined/combined-requests/{combined_request.id}/process-module/",
-            {"module": "travel", "processing_data": {}},
-            format="json",
-        )
-
-        # Permission check passes; whatever happens downstream is not what
-        # this test is verifying, but it must not be a 403.
-        assert response.status_code != status.HTTP_403_FORBIDDEN

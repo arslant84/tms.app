@@ -3,8 +3,8 @@ Regression tests for the 2026-07-23 "paper permissions" audit
 (docs/APP_WIDE_GAPS_FIX_ROADMAP.md Fix 9).
 
 Covers:
-- create_trf / create_visa / create_transport / create_accommodation /
-  create_combined now actually gate the corresponding create endpoints.
+- create_trf / create_visa / create_transport / create_accommodation
+  now actually gate the corresponding create endpoints.
 - manage_own_profile now gates the self-service profile update endpoint.
 - export_data now grants access to ReportExportView alongside
   generate_admin_reports.
@@ -14,8 +14,6 @@ Covers:
   folded into manage_bookings/process_bookings instead.
 - access_debug_endpoints and manage_document_templates were deleted as
   dead permissions with no corresponding feature.
-- create_combined is no longer inverted (assigned to the same 10 roles as
-  create_trf, not to Registered User).
 """
 
 import pytest
@@ -106,26 +104,6 @@ class TestCreatePermissionsEnforced:
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_create_combined_forbidden_without_permission(
-        self, authenticated_client, regular_user
-    ):
-        response = authenticated_client.post(
-            "/api/combined/combined-requests/",
-            {},
-        )
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_create_combined_allowed_with_permission(
-        self, authenticated_client, regular_user
-    ):
-        _grant_permission(regular_user, "create_combined", "Combined Creator Test")
-
-        response = authenticated_client.post(
-            "/api/combined/combined-requests/",
-            {},
-        )
-        assert response.status_code != status.HTTP_403_FORBIDDEN
-
     def test_superuser_bypasses_create_checks(self, admin_client):
         """Superusers must still be able to create TRFs without any
         explicit create_trf permission assignment."""
@@ -204,16 +182,3 @@ class TestDuplicatePermissionsConsolidated:
         perm_names = set(role.permissions.values_list("name", flat=True))
         assert "manage_bookings" in perm_names
         assert "process_bookings" in perm_names
-
-    def test_create_combined_assigned_to_real_roles_not_registered_user(self):
-        from accounts.models import Role
-
-        registered_user_role = Role.objects.get(name="Registered User")
-        registered_user_perms = set(
-            registered_user_role.permissions.values_list("name", flat=True)
-        )
-        assert "create_combined" not in registered_user_perms
-
-        employee_role = Role.objects.get(name="Employee")
-        employee_perms = set(employee_role.permissions.values_list("name", flat=True))
-        assert "create_combined" in employee_perms

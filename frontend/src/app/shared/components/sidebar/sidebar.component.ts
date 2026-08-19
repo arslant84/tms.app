@@ -58,7 +58,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
       Permission.VIEW_ADMIN_ACCOMMODATION,
       Permission.VIEW_ADMIN_VISA,
       Permission.VIEW_ADMIN_TRANSPORT,
-      Permission.VIEW_ADMIN_COMBINED,
       Permission.VIEW_ADMIN_MEAL,
     ]);
   }
@@ -78,10 +77,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   get hasTransportAdminPermission(): boolean {
     return this.rbacService.canAccessAdminMenu('transport');
-  }
-
-  get hasCombinedAdminPermission(): boolean {
-    return this.rbacService.canAccessAdminMenu('combined');
   }
 
   get hasMealAdminPermission(): boolean {

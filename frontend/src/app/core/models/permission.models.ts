@@ -25,10 +25,6 @@ export enum Permission {
   MANAGE_FLIGHTS = 'manage_flights',
   PROCESS_FLIGHTS = 'process_flights',
 
-  VIEW_ADMIN_COMBINED = 'view_admin_combined',
-  MANAGE_COMBINED_REQUESTS = 'manage_combined_requests',
-  PROCESS_COMBINED_REQUESTS = 'process_combined_requests',
-
   VIEW_ADMIN_MEAL = 'view_admin_meal',
   PROCESS_MEAL = 'process_meal',
   MANAGE_MEAL = 'manage_meal',
@@ -40,7 +36,6 @@ export enum Permission {
   CREATE_TRANSPORT = 'create_transport',
   CREATE_VISA = 'create_visa',
   CREATE_ACCOMMODATION = 'create_accommodation',
-  CREATE_COMBINED = 'create_combined',
 
   // ============================================================================
   // APPROVAL CAPABILITIES (Workflow-based)
@@ -49,7 +44,6 @@ export enum Permission {
   APPROVE_TRANSPORT = 'approve_transport',
   APPROVE_VISA = 'approve_visa',
   APPROVE_TRF = 'approve_trf',
-  APPROVE_COMBINED = 'approve_combined',
 
   // ============================================================================
   // SYSTEM ADMINISTRATION
@@ -130,23 +124,18 @@ export const PERMISSION_CATEGORIES: Record<Permission, PermissionCategory> = {
   [Permission.VIEW_ADMIN_FLIGHTS]: PermissionCategory.MODULE_ACCESS,
   [Permission.MANAGE_FLIGHTS]: PermissionCategory.MODULE_ACCESS,
   [Permission.PROCESS_FLIGHTS]: PermissionCategory.MODULE_ACCESS,
-  [Permission.VIEW_ADMIN_COMBINED]: PermissionCategory.MODULE_ACCESS,
-  [Permission.MANAGE_COMBINED_REQUESTS]: PermissionCategory.MODULE_ACCESS,
-  [Permission.PROCESS_COMBINED_REQUESTS]: PermissionCategory.MODULE_ACCESS,
 
   // Request Creation
   [Permission.CREATE_TRF]: PermissionCategory.REQUEST_CREATION,
   [Permission.CREATE_TRANSPORT]: PermissionCategory.REQUEST_CREATION,
   [Permission.CREATE_VISA]: PermissionCategory.REQUEST_CREATION,
   [Permission.CREATE_ACCOMMODATION]: PermissionCategory.REQUEST_CREATION,
-  [Permission.CREATE_COMBINED]: PermissionCategory.REQUEST_CREATION,
 
   // Approvals
   [Permission.APPROVE_ACCOMMODATION]: PermissionCategory.APPROVALS,
   [Permission.APPROVE_TRANSPORT]: PermissionCategory.APPROVALS,
   [Permission.APPROVE_VISA]: PermissionCategory.APPROVALS,
   [Permission.APPROVE_TRF]: PermissionCategory.APPROVALS,
-  [Permission.APPROVE_COMBINED]: PermissionCategory.APPROVALS,
 
   // System Admin
   [Permission.SYSTEM_ADMIN]: PermissionCategory.SYSTEM_ADMIN,
@@ -223,7 +212,6 @@ export const PermissionGroups = {
     Permission.CREATE_TRANSPORT,
     Permission.CREATE_VISA,
     Permission.CREATE_ACCOMMODATION,
-    Permission.CREATE_COMBINED,
     Permission.VIEW_OWN_REQUESTS,
     Permission.MANAGE_OWN_PROFILE,
     Permission.UPLOAD_DOCUMENTS,
@@ -237,7 +225,6 @@ export const PermissionGroups = {
     Permission.APPROVE_TRANSPORT,
     Permission.APPROVE_VISA,
     Permission.APPROVE_ACCOMMODATION,
-    Permission.APPROVE_COMBINED,
     Permission.VIEW_PENDING_APPROVALS,
   ],
 
@@ -249,7 +236,6 @@ export const PermissionGroups = {
     Permission.VIEW_ADMIN_TRANSPORT,
     Permission.VIEW_ADMIN_VISA,
     Permission.VIEW_ADMIN_FLIGHTS,
-    Permission.VIEW_ADMIN_COMBINED,
     Permission.VIEW_ADMIN_MEAL,
   ],
 

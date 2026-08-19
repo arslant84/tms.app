@@ -5,8 +5,8 @@ Triggered by a real bug: notifications.views.CanManageNotifications checked
 has_permission(user, 'manage_notifications' or 'view_system_settings') with
 no is_superuser bypass at all - unlike every other permission check in this
 codebase. Auditing the rest of the app for the same "missing is_superuser
-or ..." pattern found the same class of gap in trf/visa/transport/
-combined_request's get_queryset() (the retrieve and admin_view can_view_all
+or ..." pattern found the same class of gap in trf/visa/transport's
+get_queryset() (the retrieve and admin_view can_view_all
 checks) and in accommodation/views.py, which used a separate is_admin flag
 instead of is_superuser (the same anti-pattern Fix 5 already removed
 elsewhere - accounts/utils.py's own docstring says these functions
@@ -105,25 +105,6 @@ class TestTransportSuperuserBypass:
             requestor=regular_user,
         )
         response = admin_client.get(f"/api/transport/requests/{transport_request.id}/")
-        assert response.status_code == status.HTTP_200_OK
-
-
-@pytest.mark.django_db
-class TestCombinedRequestSuperuserBypass:
-    def test_superuser_without_role_can_retrieve_others_request(
-        self, admin_client, regular_user
-    ):
-        from combined_request.models import CombinedRequest
-
-        combined_request = CombinedRequest.objects.create(
-            requestor_name=regular_user.name,
-            travel_type="Domestic",
-            status="Pending",
-            requestor=regular_user,
-        )
-        response = admin_client.get(
-            f"/api/combined/combined-requests/{combined_request.id}/"
-        )
         assert response.status_code == status.HTTP_200_OK
 
 
