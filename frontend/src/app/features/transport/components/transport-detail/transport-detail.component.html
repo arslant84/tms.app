@@ -108,15 +108,26 @@
       </div>
     </div>
 
-    <!-- TSR Reference -->
-    <div class="card mb-4" *ngIf="request.tsrReference">
+    <!-- TSR Reference: a real link when embedded in a TSR, or an explicit Ad-Hoc label
+         when this is a genuinely standalone request. Independent of the free-text
+         tsrReference field (a manually-typed note on the standalone create form), which
+         plays no part in this. -->
+    <div class="card mb-4">
       <div class="card-header">
         <h5><i class="bi bi-link"></i> TSR Reference</h5>
       </div>
       <div class="card-body">
-        <div class="purpose-text">
-          <p>{{ request.tsrReference }}</p>
+        <div class="purpose-text" *ngIf="hasTrfLink(); else adHocLabel">
+          <a [routerLink]="getTrfLink()" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-text me-1"></i>
+            {{ request.trfRequestNumber || 'TSR-' + request.trfId }}
+          </a>
         </div>
+        <ng-template #adHocLabel>
+          <div class="purpose-text">
+            <p>Ad-Hoc Transport Request</p>
+          </div>
+        </ng-template>
       </div>
     </div>
 

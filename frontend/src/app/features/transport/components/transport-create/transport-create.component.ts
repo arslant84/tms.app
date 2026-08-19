@@ -80,7 +80,6 @@ export class TransportCreateComponent implements OnInit {
 
       // Request details
       purpose: ['', Validators.required],
-      tsrReference: [''],
 
       // Transport details array
       transportDetails: this.fb.array([], Validators.required),
@@ -135,7 +134,6 @@ export class TransportCreateComponent implements OnInit {
           department: request.department,
           position: request.position || '',
           purpose: request.purpose,
-          tsrReference: request.tsrReference || '',
           additionalComments: request.additionalComments || ''
         });
 
