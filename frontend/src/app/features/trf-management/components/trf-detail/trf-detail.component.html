@@ -605,6 +605,18 @@
             <label>Remarks</label>
             <p>{{ trfData.flightDetails.remarks }}</p>
           </div>
+          <div class="detail-item" *ngIf="trfData.flightDetails.eTicketUrl">
+            <label>E-Ticket</label>
+            <p>
+              <a
+                [href]="trfData.flightDetails.eTicketUrl"
+                target="_blank"
+                class="btn btn-sm btn-outline-primary"
+              >
+                <i class="bi bi-download"></i> Download E-Ticket
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>

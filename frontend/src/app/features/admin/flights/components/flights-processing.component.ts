@@ -330,10 +330,37 @@ export class FlightsProcessingComponent implements OnInit {
       departureAirport: segment.from_location || segment.from || '',
       arrivalAirport: segment.to_location || segment.to || '',
       departureDate: depDate ? this.formatDateForInput(depDate) : '',
-      departureTime: segment.etd || '',
+      departureTime: this.parseItineraryTime(segment.etd),
       arrivalDate: arrDate ? this.formatDateForInput(arrDate) : '',
-      arrivalTime: segment.eta || '',
+      arrivalTime: this.parseItineraryTime(segment.eta),
     };
+  }
+
+  /**
+   * The TSR itinerary's ETD/ETA is free text (requestors can type "14:30"
+   * or "Morning") - a native <input type="time"> silently drops anything
+   * that isn't strict HH:MM, which is why it used to render empty even
+   * though a value was set. Normalize real times, and translate the
+   * common day-period labels to a representative clock time so the field
+   * still starts pre-filled; admins can still edit it before confirming.
+   */
+  private parseItineraryTime(value?: string): string {
+    if (!value) {
+      return '';
+    }
+    const timeMatch = value.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (timeMatch) {
+      return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+    }
+    const periodDefaults: Record<string, string> = {
+      morning: '08:00',
+      afternoon: '13:00',
+      evening: '18:00',
+      night: '21:00',
+      noon: '12:00',
+      midnight: '00:00',
+    };
+    return periodDefaults[value.trim().toLowerCase()] || '';
   }
 
   private emptyLeg(): FlightLegForm {
