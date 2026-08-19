@@ -973,83 +973,26 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         import io
 
         from django.http import HttpResponse
-        from reportlab.lib import colors
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import inch
-        from reportlab.platypus import (
-            Paragraph,
-            SimpleDocTemplate,
-            Spacer,
-            Table,
-            TableStyle,
-        )
+        from reportlab.platypus import Paragraph
+        from utils import pdf_export
 
         visa = self.get_object()
 
-        # Create PDF buffer
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(
-            buffer,
-            pagesize=letter,
-            rightMargin=0.5 * inch,
-            leftMargin=0.5 * inch,
-            topMargin=0.5 * inch,
-            bottomMargin=0.5 * inch,
-        )
+        doc = pdf_export.new_document(buffer)
+        styles = pdf_export.get_styles()
+        normal_style = styles["normal"]
 
-        # Styles
-        styles = getSampleStyleSheet()
-        title_style = ParagraphStyle(
-            "CustomTitle",
-            parent=styles["Heading1"],
-            fontSize=18,
-            spaceAfter=20,
-            textColor=colors.HexColor("#0d9488"),
-        )
-        heading_style = ParagraphStyle(
-            "CustomHeading",
-            parent=styles["Heading2"],
-            fontSize=12,
-            spaceBefore=15,
-            spaceAfter=10,
-            textColor=colors.HexColor("#0d9488"),
-        )
-        normal_style = styles["Normal"]
-
-        elements = []
-
-        # Title
-        title = f"Visa Application - {visa.request_number or f'VISA-{visa.id}'}"
-        elements.append(Paragraph(title, title_style))
-        elements.append(Spacer(1, 12))
-
-        # Status badge
-        status_text = f"<b>Status:</b> {visa.status}"
-        elements.append(Paragraph(status_text, normal_style))
-        elements.append(Spacer(1, 12))
-
-        # Table style
-        table_style = TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0d9488")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
-                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 1), (-1, -1), 9),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-            ]
+        elements = pdf_export.build_header(
+            title="Visa Application",
+            request_number=visa.request_number or f"VISA-{visa.id}",
+            status=visa.status,
+            styles=styles,
         )
 
         # Applicant Information
-        elements.append(Paragraph("Applicant Information", heading_style))
+        elements.extend(pdf_export.section_heading("Applicant Information", styles))
         applicant_data = [
             ["Field", "Value"],
             ["Name", visa.requestor_name or "Not provided"],
@@ -1060,12 +1003,10 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             ["Contact Telephone", visa.contact_telephone or "Not provided"],
             ["Home Address", (visa.home_address or "Not provided")[:80]],
         ]
-        applicant_table = Table(applicant_data, colWidths=[2 * inch, 5 * inch])
-        applicant_table.setStyle(table_style)
-        elements.append(applicant_table)
+        elements.append(pdf_export.make_table(applicant_data, [2 * inch, 5 * inch]))
 
         # Status & Tracking
-        elements.append(Paragraph("Status &amp; Tracking", heading_style))
+        elements.extend(pdf_export.section_heading("Status &amp; Tracking", styles))
         tracking_data = [
             ["Field", "Value"],
             ["Request Number", visa.request_number or f"VISA-{visa.id}"],
@@ -1112,12 +1053,10 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 ),
             ],
         ]
-        tracking_table = Table(tracking_data, colWidths=[2 * inch, 5 * inch])
-        tracking_table.setStyle(table_style)
-        elements.append(tracking_table)
+        elements.append(pdf_export.make_table(tracking_data, [2 * inch, 5 * inch]))
 
         # Travel Details
-        elements.append(Paragraph("Travel Details", heading_style))
+        elements.extend(pdf_export.section_heading("Travel Details", styles))
         travel_data = [
             ["Field", "Value"],
             ["Destination", visa.destination or "-"],
@@ -1145,12 +1084,10 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             ["Duration of Stay", visa.duration_of_stay or "-"],
             ["Itinerary Details", (visa.itinerary_details or "-")[:100]],
         ]
-        travel_table = Table(travel_data, colWidths=[2 * inch, 5 * inch])
-        travel_table.setStyle(table_style)
-        elements.append(travel_table)
+        elements.append(pdf_export.make_table(travel_data, [2 * inch, 5 * inch]))
 
         # Visa Information
-        elements.append(Paragraph("Visa Information", heading_style))
+        elements.extend(pdf_export.section_heading("Visa Information", styles))
         visa_info_data = [
             ["Field", "Value"],
             ["Visa Type", visa.visa_type or "-"],
@@ -1161,12 +1098,10 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             ["Cost Centre Number", visa.cost_centre_number or "-"],
             ["TRF Reference Number", visa.trf_reference_number or "-"],
         ]
-        visa_info_table = Table(visa_info_data, colWidths=[2 * inch, 5 * inch])
-        visa_info_table.setStyle(table_style)
-        elements.append(visa_info_table)
+        elements.append(pdf_export.make_table(visa_info_data, [2 * inch, 5 * inch]))
 
         # Passport Details
-        elements.append(Paragraph("Passport Details", heading_style))
+        elements.extend(pdf_export.section_heading("Passport Details", styles))
         passport_data = [
             ["Field", "Value"],
             ["Passport Number", visa.passport_number or "-"],
@@ -1188,12 +1123,10 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 ),
             ],
         ]
-        passport_table = Table(passport_data, colWidths=[2 * inch, 5 * inch])
-        passport_table.setStyle(table_style)
-        elements.append(passport_table)
+        elements.append(pdf_export.make_table(passport_data, [2 * inch, 5 * inch]))
 
         # Personal Demographics
-        elements.append(Paragraph("Personal Demographics", heading_style))
+        elements.extend(pdf_export.section_heading("Personal Demographics", styles))
         personal_data = [
             ["Field", "Value"],
             [
@@ -1206,31 +1139,35 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             ["Family Information", (visa.family_information or "-")[:80]],
             ["Education Details", (visa.education_details or "-")[:80]],
         ]
-        personal_table = Table(personal_data, colWidths=[2 * inch, 5 * inch])
-        personal_table.setStyle(table_style)
-        elements.append(personal_table)
+        elements.append(pdf_export.make_table(personal_data, [2 * inch, 5 * inch]))
 
         # Employment Information
         if visa.current_employer_name or visa.current_employer_address:
-            elements.append(Paragraph("Employment Information", heading_style))
+            elements.extend(
+                pdf_export.section_heading("Employment Information", styles)
+            )
             employer_data = [
                 ["Field", "Value"],
                 ["Employer Name", visa.current_employer_name or "-"],
                 ["Employer Address", (visa.current_employer_address or "-")[:80]],
             ]
-            employer_table = Table(employer_data, colWidths=[2 * inch, 5 * inch])
-            employer_table.setStyle(table_style)
-            elements.append(employer_table)
+            elements.append(pdf_export.make_table(employer_data, [2 * inch, 5 * inch]))
 
         # Processing Details - format as table if available
         if visa.processing_details and isinstance(visa.processing_details, dict):
-            elements.append(Paragraph("Processing Details", heading_style))
+            elements.extend(pdf_export.section_heading("Processing Details", styles))
             processing_data = [["Field", "Value"]]
             # Map field names to readable labels
             field_labels = {
                 "visa_number": "Visa Number",
                 "visa_valid_from": "Valid From",
                 "visa_valid_to": "Valid To",
+                # The non-dialog "complete processing" action sends these
+                # instead of visa_valid_from/visa_valid_to (see
+                # visa-processing.component.ts executeCompleteProcessing) -
+                # same meaning, different key.
+                "visa_issue_date": "Valid From",
+                "visa_expiry_date": "Valid To",
                 "completed_at": "Completed At",
                 "processing_notes": "Processing Notes",
                 "completed_by_admin": "Completed by Admin",
@@ -1241,9 +1178,9 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 if isinstance(value, bool):
                     value = "Yes" if value else "No"
                 processing_data.append([label, str(value)[:80] if value else "-"])
-            processing_table = Table(processing_data, colWidths=[2 * inch, 5 * inch])
-            processing_table.setStyle(table_style)
-            elements.append(processing_table)
+            elements.append(
+                pdf_export.make_table(processing_data, [2 * inch, 5 * inch])
+            )
 
         # Approval History - try workflow first, then fall back to legacy approval steps
         from django.contrib.contenttypes.models import ContentType
@@ -1263,18 +1200,18 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 approval_data = [
                     ["Step", "Role", "Status", "Actioned By", "Date", "Comments"]
                 ]
-                for step in workflow_instance.step_executions.all().order_by(
-                    "step_order"
-                ):
+                for step in workflow_instance.step_executions.select_related(
+                    "workflow_step", "actioned_by"
+                ).order_by("workflow_step__step_order"):
                     approval_data.append(
                         [
-                            str(step.step_order),
-                            step.step_name or step.role_required or "-",
+                            str(step.workflow_step.step_order),
+                            (step.workflow_step.step_name or "-")[:14],
                             step.status or "-",
                             step.actioned_by.name if step.actioned_by else "-",
                             (
-                                step.actioned_at.strftime("%Y-%m-%d %H:%M")
-                                if step.actioned_at
+                                step.action_date.strftime("%Y-%m-%d %H:%M")
+                                if step.action_date
                                 else "-"
                             ),
                             (step.comments or "-")[:30],
@@ -1282,20 +1219,22 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                     )
                 # Only add if we have actual data rows (more than just header)
                 if len(approval_data) > 1:
-                    elements.append(Paragraph("Approval History", heading_style))
-                    approval_table = Table(
-                        approval_data,
-                        colWidths=[
-                            0.4 * inch,
-                            1.2 * inch,
-                            0.9 * inch,
-                            1.2 * inch,
-                            1.3 * inch,
-                            2 * inch,
-                        ],
+                    elements.extend(
+                        pdf_export.section_heading("Approval History", styles)
                     )
-                    approval_table.setStyle(table_style)
-                    elements.append(approval_table)
+                    elements.append(
+                        pdf_export.make_table(
+                            approval_data,
+                            [
+                                0.4 * inch,
+                                1.2 * inch,
+                                0.9 * inch,
+                                1.2 * inch,
+                                1.3 * inch,
+                                2 * inch,
+                            ],
+                        )
+                    )
                     approval_found = True
         except Exception:
             pass
@@ -1304,7 +1243,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         if not approval_found:
             approval_steps = visa.visaapprovalstep_set.all().order_by("created_at")
             if approval_steps.exists():
-                elements.append(Paragraph("Approval History", heading_style))
+                elements.extend(pdf_export.section_heading("Approval History", styles))
                 approval_data = [["Role", "Status", "Date", "Comments"]]
                 for step in approval_steps:
                     approval_data.append(
@@ -1319,28 +1258,20 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                             (step.comments or "-")[:50],
                         ]
                     )
-                approval_table = Table(
-                    approval_data,
-                    colWidths=[1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch],
+                elements.append(
+                    pdf_export.make_table(
+                        approval_data,
+                        [1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch],
+                    )
                 )
-                approval_table.setStyle(table_style)
-                elements.append(approval_table)
 
         # Additional Comments
         if visa.additional_comments:
-            elements.append(Paragraph("Additional Comments", heading_style))
+            elements.extend(pdf_export.section_heading("Additional Comments", styles))
             elements.append(Paragraph(visa.additional_comments[:500], normal_style))
 
-        # Footer
-        elements.append(Spacer(1, 20))
-        footer_style = ParagraphStyle(
-            "Footer", parent=styles["Normal"], fontSize=8, textColor=colors.grey
-        )
-        footer_text = f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M:%S')} | Travel Management System"
-        elements.append(Paragraph(footer_text, footer_style))
-
         # Build PDF
-        doc.build(elements)
+        pdf_export.build(doc, elements)
         buffer.seek(0)
 
         # Create response
