@@ -77,16 +77,14 @@ def unified_approvals(request):
 
     offset = (page - 1) * limit
 
-    # Define approval statuses that should appear in approval queue
-    approval_statuses = [
-        "Pending",
-        "Pending Department Focal",
-        "Pending HOD",
-        "Pending Line Manager",
-        "Pending Visa Clerk",
-        "Submitted",
-        "Under Review",
-    ]
+    # Approval-queue statuses: workflow step statuses are generated dynamically
+    # as "Pending {role name}" or "Pending {step name}" (see
+    # WorkflowEngine._update_entity_status_from_step), so any role/step name
+    # in the system can produce a status never seen before. Match on prefix
+    # instead of enumerating every role name, plus a few legacy fixed values.
+    approval_status_filter = Q(status__istartswith="Pending") | Q(
+        status__in=["Submitted", "Under Review"]
+    )
 
     all_items = []
 
@@ -228,7 +226,7 @@ def unified_approvals(request):
     # 1. Travel Requests (TRF/TSR) - exclude Accommodation type
     if not item_type or item_type == "trf":
         trfs = (
-            TravelRequest.objects.filter(status__in=approval_statuses)
+            TravelRequest.objects.filter(approval_status_filter)
             .exclude(
                 Q(travel_type="Accommodation")
                 | Q(travel_type__icontains="Accommodation")
@@ -245,9 +243,9 @@ def unified_approvals(request):
 
     # 2. Transport Requests
     if not item_type or item_type == "transport":
-        transports = TransportRequest.objects.filter(
-            status__in=approval_statuses
-        ).order_by("-submitted_at")
+        transports = TransportRequest.objects.filter(approval_status_filter).order_by(
+            "-submitted_at"
+        )
 
         for transport in transports:
             # Only include if user is authorized to approve
@@ -257,7 +255,7 @@ def unified_approvals(request):
 
     # 3. Visa Applications
     if not item_type or item_type == "visa":
-        visas = VisaApplication.objects.filter(status__in=approval_statuses).order_by(
+        visas = VisaApplication.objects.filter(approval_status_filter).order_by(
             "-submitted_date"
         )
 
