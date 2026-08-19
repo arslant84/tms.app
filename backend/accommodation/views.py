@@ -901,100 +901,40 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
         from django.contrib.contenttypes.models import ContentType
         from django.http import HttpResponse
-        from reportlab.lib import colors
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import inch
-        from reportlab.platypus import (
-            Paragraph,
-            SimpleDocTemplate,
-            Spacer,
-            Table,
-            TableStyle,
-        )
+        from reportlab.platypus import Paragraph, Spacer
+        from utils import pdf_export
         from workflows.models import WorkflowInstance
 
         accommodation_request = self.get_object()
 
-        # Create PDF buffer
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(
-            buffer,
-            pagesize=letter,
-            rightMargin=0.5 * inch,
-            leftMargin=0.5 * inch,
-            topMargin=0.5 * inch,
-            bottomMargin=0.5 * inch,
+        doc = pdf_export.new_document(buffer)
+        styles = pdf_export.get_styles()
+        normal_style = styles["normal"]
+
+        elements = pdf_export.build_header(
+            title="Accommodation Request",
+            request_number=accommodation_request.request_number
+            or f"ACC-{accommodation_request.id}",
+            status=accommodation_request.status,
+            styles=styles,
         )
 
-        # Styles
-        styles = getSampleStyleSheet()
-        title_style = ParagraphStyle(
-            "CustomTitle",
-            parent=styles["Heading1"],
-            fontSize=18,
-            spaceAfter=20,
-            textColor=colors.HexColor("#0d9488"),
-        )
-        heading_style = ParagraphStyle(
-            "CustomHeading",
-            parent=styles["Heading2"],
-            fontSize=12,
-            spaceBefore=15,
-            spaceAfter=10,
-            textColor=colors.HexColor("#0d9488"),
-        )
-        normal_style = styles["Normal"]
-
-        elements = []
-
-        # Title
-        title = f"Accommodation Request - {accommodation_request.request_number or f'ACC-{accommodation_request.id}'}"
-        elements.append(Paragraph(title, title_style))
-        elements.append(Spacer(1, 12))
-
-        # Status badge - prominent display
-        status_text = f"<b>Current Status:</b> <font color='#0d9488'><b>{accommodation_request.status}</b></font>"
-        elements.append(Paragraph(status_text, normal_style))
-        elements.append(Spacer(1, 12))
-
-        # Table style
-        table_style = TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0d9488")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
-                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 1), (-1, -1), 9),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-            ]
-        )
-
-        # Requestor Information
-        elements.append(Paragraph("Requestor Information", heading_style))
+        # Requestor Information - Position, Cost Center, Tel/Email, and Email
+        # are omitted: the live creation path (embedded in the Domestic TSR
+        # wizard) never sends them, so they're always blank.
+        elements.extend(pdf_export.section_heading("Requestor Information", styles))
         requestor_data = [
             ["Field", "Value"],
             ["Name", accommodation_request.requestor_name or "Not provided"],
             ["Staff ID", accommodation_request.staff_id or "Not provided"],
             ["Department", accommodation_request.department or "Not provided"],
-            ["Position", accommodation_request.position or "Not provided"],
-            ["Cost Center", accommodation_request.cost_center or "Not provided"],
-            ["Tel/Email", accommodation_request.tel_email or "Not provided"],
-            ["Email", accommodation_request.email or "Not provided"],
         ]
-        requestor_table = Table(requestor_data, colWidths=[2 * inch, 5 * inch])
-        requestor_table.setStyle(table_style)
-        elements.append(requestor_table)
+        elements.append(pdf_export.make_table(requestor_data, [2 * inch, 5 * inch]))
 
         # Status & Tracking
-        elements.append(Paragraph("Status &amp; Tracking", heading_style))
+        elements.extend(pdf_export.section_heading("Status &amp; Tracking", styles))
         trf = accommodation_request.trf
         tsr_reference = "Not linked"
         if trf:
@@ -1034,9 +974,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 ),
             ],
         ]
-        tracking_table = Table(tracking_data, colWidths=[2 * inch, 5 * inch])
-        tracking_table.setStyle(table_style)
-        elements.append(tracking_table)
+        elements.append(pdf_export.make_table(tracking_data, [2 * inch, 5 * inch]))
 
         # Booking Details
         bookings = (
@@ -1044,7 +982,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             .select_related("staff_house", "room")
             .order_by("date")
         )
-        elements.append(Paragraph("Booking Details", heading_style))
+        elements.extend(pdf_export.section_heading("Booking Details", styles))
 
         if bookings.exists():
             # Get unique staff house and room info
@@ -1109,16 +1047,14 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 ["Total Nights", str(bookings.count())],
                 ["Booking Status", first_booking.status or "Pending"],
             ]
-            booking_summary_table = Table(
-                booking_summary, colWidths=[2 * inch, 5 * inch]
+            elements.append(
+                pdf_export.make_table(booking_summary, [2 * inch, 5 * inch])
             )
-            booking_summary_table.setStyle(table_style)
-            elements.append(booking_summary_table)
 
             # Daily booking breakdown if multiple nights
             if bookings.count() > 1:
                 elements.append(Spacer(1, 10))
-                elements.append(Paragraph("Daily Breakdown", heading_style))
+                elements.extend(pdf_export.section_heading("Daily Breakdown", styles))
                 daily_data = [["Date", "Staff House", "Room", "Status"]]
                 for booking in bookings:
                     daily_data.append(
@@ -1129,11 +1065,11 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                             booking.status or "-",
                         ]
                     )
-                daily_table = Table(
-                    daily_data, colWidths=[1.5 * inch, 2 * inch, 2 * inch, 1.5 * inch]
+                elements.append(
+                    pdf_export.make_table(
+                        daily_data, [1.5 * inch, 2 * inch, 2 * inch, 1.5 * inch]
+                    )
                 )
-                daily_table.setStyle(table_style)
-                elements.append(daily_table)
         else:
             # No bookings yet
             no_booking_data = [
@@ -1141,9 +1077,9 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 ["Status", "No accommodation assigned yet"],
                 ["Note", "Booking will be assigned after approval"],
             ]
-            no_booking_table = Table(no_booking_data, colWidths=[2 * inch, 5 * inch])
-            no_booking_table.setStyle(table_style)
-            elements.append(no_booking_table)
+            elements.append(
+                pdf_export.make_table(no_booking_data, [2 * inch, 5 * inch])
+            )
 
         # Approval History from Workflow
         try:
@@ -1157,18 +1093,18 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 approval_data = [
                     ["Step", "Role", "Status", "Actioned By", "Date", "Comments"]
                 ]
-                for step in workflow_instance.step_executions.all().order_by(
-                    "step_order"
-                ):
+                for step in workflow_instance.step_executions.select_related(
+                    "workflow_step", "actioned_by"
+                ).order_by("workflow_step__step_order"):
                     approval_data.append(
                         [
-                            str(step.step_order),
-                            step.step_name or step.role_required or "-",
+                            str(step.workflow_step.step_order),
+                            (step.workflow_step.step_name or "-")[:14],
                             step.status or "-",
                             step.actioned_by.name if step.actioned_by else "-",
                             (
-                                step.actioned_at.strftime("%Y-%m-%d %H:%M")
-                                if step.actioned_at
+                                step.action_date.strftime("%Y-%m-%d %H:%M")
+                                if step.action_date
                                 else "-"
                             ),
                             (step.comments or "-")[:30],
@@ -1176,26 +1112,28 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                     )
                 # Only add if we have actual data rows (more than just header)
                 if len(approval_data) > 1:
-                    elements.append(Paragraph("Approval History", heading_style))
-                    approval_table = Table(
-                        approval_data,
-                        colWidths=[
-                            0.4 * inch,
-                            1.2 * inch,
-                            0.9 * inch,
-                            1.2 * inch,
-                            1.3 * inch,
-                            2 * inch,
-                        ],
+                    elements.extend(
+                        pdf_export.section_heading("Approval History", styles)
                     )
-                    approval_table.setStyle(table_style)
-                    elements.append(approval_table)
+                    elements.append(
+                        pdf_export.make_table(
+                            approval_data,
+                            [
+                                0.4 * inch,
+                                1.2 * inch,
+                                0.9 * inch,
+                                1.2 * inch,
+                                1.3 * inch,
+                                2 * inch,
+                            ],
+                        )
+                    )
         except Exception:
             pass  # No workflow found, skip approval history
 
         # Additional Comments
         if accommodation_request.additional_comments:
-            elements.append(Paragraph("Additional Comments", heading_style))
+            elements.extend(pdf_export.section_heading("Additional Comments", styles))
             elements.append(
                 Paragraph(accommodation_request.additional_comments, normal_style)
             )
@@ -1204,7 +1142,7 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
         if accommodation_request.additional_data and isinstance(
             accommodation_request.additional_data, dict
         ):
-            elements.append(Paragraph("Request Details", heading_style))
+            elements.extend(pdf_export.section_heading("Request Details", styles))
             request_details_data = [["Field", "Value"]]
             # Map field names to readable labels
             field_labels = {
@@ -1216,8 +1154,6 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 "requested_room_type": "Requested Room Type",
                 "requested_check_in_date": "Requested Check-in",
                 "requested_check_out_date": "Requested Check-out",
-                "number_of_guests": "Number of Guests",
-                "purpose": "Purpose",
             }
             for key, value in accommodation_request.additional_data.items():
                 label = field_labels.get(key, key.replace("_", " ").title())
@@ -1228,22 +1164,12 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                     request_details_data.append([label, str(value)[:80]])
             # Only add if we have data rows
             if len(request_details_data) > 1:
-                request_details_table = Table(
-                    request_details_data, colWidths=[2 * inch, 5 * inch]
+                elements.append(
+                    pdf_export.make_table(request_details_data, [2 * inch, 5 * inch])
                 )
-                request_details_table.setStyle(table_style)
-                elements.append(request_details_table)
-
-        # Footer
-        elements.append(Spacer(1, 20))
-        footer_style = ParagraphStyle(
-            "Footer", parent=styles["Normal"], fontSize=8, textColor=colors.grey
-        )
-        footer_text = f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M:%S')} | Travel Management System"
-        elements.append(Paragraph(footer_text, footer_style))
 
         # Build PDF
-        doc.build(elements)
+        pdf_export.build(doc, elements)
         buffer.seek(0)
 
         # Create response

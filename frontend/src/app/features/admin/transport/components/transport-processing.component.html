@@ -361,6 +361,10 @@
           <div class="mb-2">
             <strong>Request ID:</strong> {{ selectedRequest.request_number || selectedRequest.id }}
           </div>
+          <div class="mb-2">
+            <strong>TSR Reference:</strong>
+            {{ selectedRequest.trfRequestNumber || 'Ad-Hoc Transport Request' }}
+          </div>
           <div class="mb-0"><strong>Purpose:</strong> {{ selectedRequest.purpose }}</div>
         </div>
       </div>
@@ -397,6 +401,8 @@
           <strong>{{ selectedRequest.requestorName }}</strong
           ><br />
           <strong>ID:</strong> {{ selectedRequest.request_number || selectedRequest.id }}<br />
+          <strong>TSR Reference:</strong>
+          {{ selectedRequest.trfRequestNumber || 'Ad-Hoc Transport Request' }}<br />
           <strong>Purpose:</strong> {{ selectedRequest.purpose }}
         </div>
 
@@ -440,33 +446,6 @@
               placeholder="e.g., 09:00 AM"
             />
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Dropoff Time</label>
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="bookingForm.dropoffTime"
-              placeholder="e.g., 05:00 PM"
-            />
-          </div>
-          <div class="col-12">
-            <label class="form-label">Actual Route</label>
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="bookingForm.actualRoute"
-              placeholder="Actual route taken"
-            />
-          </div>
-          <div class="col-12">
-            <label class="form-label">Booking Reference</label>
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="bookingForm.bookingReference"
-              placeholder="Internal booking reference"
-            />
-          </div>
           <div class="col-12">
             <label class="form-label">Additional Notes</label>
             <textarea
@@ -491,11 +470,7 @@
           type="button"
           class="btn btn-primary"
           (click)="handleCompleteProcessing()"
-          [disabled]="
-            isLoading ||
-            !bookingForm.vehicleNumber ||
-            !bookingForm.driverName
-          "
+          [disabled]="isLoading || !bookingForm.vehicleNumber || !bookingForm.driverName"
         >
           <span *ngIf="!isLoading">
             <i class="bi bi-check-circle me-1"></i>
@@ -549,6 +524,10 @@
             <span class="fw-medium text-muted">Submitted:</span>
             <p>{{ dateUtils.formatDate(selectedRequest.submittedAt) }}</p>
           </div>
+          <div class="col-md-6">
+            <span class="fw-medium text-muted">TSR Reference:</span>
+            <p>{{ selectedRequest.trfRequestNumber || 'Ad-Hoc Transport Request' }}</p>
+          </div>
         </div>
 
         <hr />
@@ -587,14 +566,6 @@
           <div class="row g-3">
             <div class="col-md-6">
               <div class="detail-item">
-                <label class="text-muted small">Vehicle Type</label>
-                <p class="mb-0 fw-medium">
-                  {{ selectedRequest.bookingDetails.vehicleType || 'N/A' }}
-                </p>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="detail-item">
                 <label class="text-muted small">Vehicle Number</label>
                 <p class="mb-0 fw-medium">
                   {{ selectedRequest.bookingDetails.vehicleNumber || 'N/A' }}
@@ -619,24 +590,6 @@
               <div class="detail-item">
                 <label class="text-muted small">Pickup Time</label>
                 <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.pickupTime }}</p>
-              </div>
-            </div>
-            <div class="col-md-6" *ngIf="selectedRequest.bookingDetails.dropoffTime">
-              <div class="detail-item">
-                <label class="text-muted small">Dropoff Time</label>
-                <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.dropoffTime }}</p>
-              </div>
-            </div>
-            <div class="col-12" *ngIf="selectedRequest.bookingDetails.actualRoute">
-              <div class="detail-item">
-                <label class="text-muted small">Actual Route</label>
-                <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.actualRoute }}</p>
-              </div>
-            </div>
-            <div class="col-md-6" *ngIf="selectedRequest.bookingDetails.bookingReference">
-              <div class="detail-item">
-                <label class="text-muted small">Booking Reference</label>
-                <p class="mb-0 fw-medium">{{ selectedRequest.bookingDetails.bookingReference }}</p>
               </div>
             </div>
             <div class="col-12" *ngIf="selectedRequest.bookingDetails.additionalNotes">

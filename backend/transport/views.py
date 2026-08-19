@@ -1026,83 +1026,26 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         import io
 
         from django.http import HttpResponse
-        from reportlab.lib import colors
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import inch
-        from reportlab.platypus import (
-            Paragraph,
-            SimpleDocTemplate,
-            Spacer,
-            Table,
-            TableStyle,
-        )
+        from reportlab.platypus import Paragraph
+        from utils import pdf_export
 
         transport_request = self.get_object()
 
-        # Create PDF buffer
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(
-            buffer,
-            pagesize=letter,
-            rightMargin=0.5 * inch,
-            leftMargin=0.5 * inch,
-            topMargin=0.5 * inch,
-            bottomMargin=0.5 * inch,
-        )
+        doc = pdf_export.new_document(buffer)
+        styles = pdf_export.get_styles()
 
-        # Styles
-        styles = getSampleStyleSheet()
-        title_style = ParagraphStyle(
-            "CustomTitle",
-            parent=styles["Heading1"],
-            fontSize=18,
-            spaceAfter=20,
-            textColor=colors.HexColor("#0d9488"),
-        )
-        heading_style = ParagraphStyle(
-            "CustomHeading",
-            parent=styles["Heading2"],
-            fontSize=12,
-            spaceBefore=15,
-            spaceAfter=10,
-            textColor=colors.HexColor("#0d9488"),
-        )
-        normal_style = styles["Normal"]
-
-        elements = []
-
-        # Title
-        title = f"Transport Request - {transport_request.request_number or f'TR-{transport_request.id}'}"
-        elements.append(Paragraph(title, title_style))
-        elements.append(Spacer(1, 12))
-
-        # Status badge
-        status_text = f"<b>Status:</b> {transport_request.status}"
-        elements.append(Paragraph(status_text, normal_style))
-        elements.append(Spacer(1, 12))
-
-        # Table style
-        table_style = TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0d9488")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
-                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 1), (-1, -1), 9),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-            ]
+        elements = pdf_export.build_header(
+            title="Transport Request",
+            request_number=transport_request.request_number
+            or f"TR-{transport_request.id}",
+            status=transport_request.status,
+            styles=styles,
         )
 
         # Requestor Information
-        elements.append(Paragraph("Requestor Information", heading_style))
+        elements.extend(pdf_export.section_heading("Requestor Information", styles))
         requestor_data = [
             ["Field", "Value"],
             ["Name", transport_request.requestor_name or "Not provided"],
@@ -1118,12 +1061,10 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 ),
             ],
         ]
-        requestor_table = Table(requestor_data, colWidths=[2 * inch, 5 * inch])
-        requestor_table.setStyle(table_style)
-        elements.append(requestor_table)
+        elements.append(pdf_export.make_table(requestor_data, [2 * inch, 5 * inch]))
 
         # Status & Tracking
-        elements.append(Paragraph("Status &amp; Tracking", heading_style))
+        elements.extend(pdf_export.section_heading("Status &amp; Tracking", styles))
         tracking_data = [
             ["Field", "Value"],
             [
@@ -1131,7 +1072,14 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 transport_request.request_number or f"TR-{transport_request.id}",
             ],
             ["Current Status", transport_request.status],
-            ["TSR Reference", transport_request.tsr_reference or "Not linked"],
+            [
+                "TSR Reference",
+                (
+                    transport_request.trf.request_number
+                    if transport_request.trf_id and transport_request.trf
+                    else "Ad-Hoc Transport Request"
+                ),
+            ],
             [
                 "Created",
                 (
@@ -1157,12 +1105,10 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 ),
             ],
         ]
-        tracking_table = Table(tracking_data, colWidths=[2 * inch, 5 * inch])
-        tracking_table.setStyle(table_style)
-        elements.append(tracking_table)
+        elements.append(pdf_export.make_table(tracking_data, [2 * inch, 5 * inch]))
 
         # Transport Details
-        elements.append(Paragraph("Transport Details", heading_style))
+        elements.extend(pdf_export.section_heading("Transport Details", styles))
         transport_data = [
             ["Field", "Value"],
             ["Purpose", (transport_request.purpose or "Not provided")[:100]],
@@ -1171,9 +1117,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 (transport_request.additional_comments or "None")[:100],
             ],
         ]
-        transport_table = Table(transport_data, colWidths=[2 * inch, 5 * inch])
-        transport_table.setStyle(table_style)
-        elements.append(transport_table)
+        elements.append(pdf_export.make_table(transport_data, [2 * inch, 5 * inch]))
 
         # Journey Details from transport_details JSON field
         if transport_request.transport_details:
@@ -1184,7 +1128,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 else []
             )
             if journeys:
-                elements.append(Paragraph("Journey Details", heading_style))
+                elements.extend(pdf_export.section_heading("Journey Details", styles))
                 journey_data = [["#", "Date", "From", "To", "Time", "Passengers"]]
                 for i, journey in enumerate(journeys, 1):
                     journey_data.append(
@@ -1210,40 +1154,35 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                             ),
                         ]
                     )
-                journey_table = Table(
-                    journey_data,
-                    colWidths=[
-                        0.3 * inch,
-                        0.9 * inch,
-                        1.5 * inch,
-                        1.5 * inch,
-                        0.9 * inch,
-                        1 * inch,
-                    ],
+                elements.append(
+                    pdf_export.make_table(
+                        journey_data,
+                        [
+                            0.3 * inch,
+                            0.9 * inch,
+                            1.5 * inch,
+                            1.5 * inch,
+                            0.9 * inch,
+                            1 * inch,
+                        ],
+                    )
                 )
-                journey_table.setStyle(table_style)
-                elements.append(journey_table)
 
         # Vehicle Assignment
         vehicle_assignments = transport_request.vehicle_assignments.all()
         if vehicle_assignments.exists():
-            elements.append(Paragraph("Vehicle Assignment", heading_style))
+            elements.extend(pdf_export.section_heading("Vehicle Assignment", styles))
             for assignment in vehicle_assignments:
+                # Vehicle Type, Vehicle Capacity, and Driver License are
+                # omitted: no admin processing UI (transport-processing or
+                # transport-admin components) ever collects them as real
+                # per-assignment data - they're hardcoded constants
+                # ("COMPANY_VEHICLE", 4, "") on every assignment ever created.
                 assignment_data = [
                     ["Field", "Value"],
                     ["Vehicle Number", assignment.vehicle_number or "-"],
-                    ["Vehicle Type", assignment.vehicle_type or "-"],
-                    [
-                        "Vehicle Capacity",
-                        (
-                            str(assignment.vehicle_capacity)
-                            if assignment.vehicle_capacity
-                            else "-"
-                        ),
-                    ],
                     ["Driver Name", assignment.driver_name or "-"],
                     ["Driver Contact", assignment.driver_contact or "-"],
-                    ["Driver License", assignment.driver_license or "-"],
                     ["Assignment Status", assignment.status or "-"],
                     [
                         "Assigned Date",
@@ -1254,11 +1193,9 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                         ),
                     ],
                 ]
-                assignment_table = Table(
-                    assignment_data, colWidths=[2 * inch, 5 * inch]
+                elements.append(
+                    pdf_export.make_table(assignment_data, [2 * inch, 5 * inch])
                 )
-                assignment_table.setStyle(table_style)
-                elements.append(assignment_table)
 
         # Approval History - try workflow first, then fall back to legacy approval steps
         from django.contrib.contenttypes.models import ContentType
@@ -1272,40 +1209,40 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             ).first()
 
             if workflow_instance and workflow_instance.step_executions.exists():
-                elements.append(Paragraph("Approval History", heading_style))
+                elements.extend(pdf_export.section_heading("Approval History", styles))
                 approval_data = [
                     ["Step", "Role", "Status", "Actioned By", "Date", "Comments"]
                 ]
-                for step in workflow_instance.step_executions.all().order_by(
-                    "step_order"
-                ):
+                for step in workflow_instance.step_executions.select_related(
+                    "workflow_step", "actioned_by"
+                ).order_by("workflow_step__step_order"):
                     approval_data.append(
                         [
-                            str(step.step_order),
-                            step.step_name or step.role_required or "-",
+                            str(step.workflow_step.step_order),
+                            (step.workflow_step.step_name or "-")[:14],
                             step.status or "-",
                             step.actioned_by.name if step.actioned_by else "-",
                             (
-                                step.actioned_at.strftime("%Y-%m-%d %H:%M")
-                                if step.actioned_at
+                                step.action_date.strftime("%Y-%m-%d %H:%M")
+                                if step.action_date
                                 else "-"
                             ),
                             (step.comments or "-")[:30],
                         ]
                     )
-                approval_table = Table(
-                    approval_data,
-                    colWidths=[
-                        0.4 * inch,
-                        1.2 * inch,
-                        0.9 * inch,
-                        1.2 * inch,
-                        1.3 * inch,
-                        2 * inch,
-                    ],
+                elements.append(
+                    pdf_export.make_table(
+                        approval_data,
+                        [
+                            0.4 * inch,
+                            1.2 * inch,
+                            0.9 * inch,
+                            1.2 * inch,
+                            1.3 * inch,
+                            2 * inch,
+                        ],
+                    )
                 )
-                approval_table.setStyle(table_style)
-                elements.append(approval_table)
                 approval_found = True
         except Exception:
             pass
@@ -1316,7 +1253,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 "created_at"
             )
             if approval_steps.exists():
-                elements.append(Paragraph("Approval History", heading_style))
+                elements.extend(pdf_export.section_heading("Approval History", styles))
                 approval_data = [["Role", "Status", "Date", "Comments"]]
                 for step in approval_steps:
                     approval_data.append(
@@ -1331,23 +1268,15 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                             (step.comments or "-")[:50],
                         ]
                     )
-                approval_table = Table(
-                    approval_data,
-                    colWidths=[1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch],
+                elements.append(
+                    pdf_export.make_table(
+                        approval_data,
+                        [1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch],
+                    )
                 )
-                approval_table.setStyle(table_style)
-                elements.append(approval_table)
-
-        # Footer
-        elements.append(Spacer(1, 20))
-        footer_style = ParagraphStyle(
-            "Footer", parent=styles["Normal"], fontSize=8, textColor=colors.grey
-        )
-        footer_text = f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M:%S')} | Travel Management System"
-        elements.append(Paragraph(footer_text, footer_style))
 
         # Build PDF
-        doc.build(elements)
+        pdf_export.build(doc, elements)
         buffer.seek(0)
 
         # Create response

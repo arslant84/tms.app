@@ -51,13 +51,14 @@ export interface TransportApprovalSubmissionData {
   additionalComments: string;
 }
 
-export interface TransportRequestForm extends TransportRequestData, TransportApprovalSubmissionData {
+export interface TransportRequestForm
+  extends TransportRequestData, TransportApprovalSubmissionData {
   id: string;
   request_number?: string;
   status: TransportRequestStatus;
   approvalWorkflow: TransportApprovalStep[];
-  approval_steps?: any[]; // Legacy field for backward compatibility
-  vehicle_assignments?: any[]; // Vehicle assignments for transport processing
+  approval_steps?: TransportApprovalStep[]; // Legacy field for backward compatibility
+  vehicle_assignments?: unknown[]; // Vehicle assignments for transport processing
   selected_approvers?: { [stepOrder: number]: number }; // Selected approvers for workflow steps
   skipped_steps?: { [stepOrder: number]: string | null }; // Skipped workflow steps
   createdAt?: Date | string;
@@ -71,20 +72,23 @@ export interface TransportRequestForm extends TransportRequestData, TransportApp
 export interface TransportApprovalStep {
   role: string; // e.g., 'Requestor', 'Line Manager', 'Department Focal', 'HOD'
   name: string;
-  status: 'Current' | 'Pending' | 'Approved' | 'Rejected' | 'Not Started' | 'Cancelled' | 'Submitted';
+  status:
+    | 'Current'
+    | 'Pending'
+    | 'Approved'
+    | 'Rejected'
+    | 'Not Started'
+    | 'Cancelled'
+    | 'Submitted';
   date?: Date | string;
   comments?: string;
 }
 
 export interface TransportBookingDetails {
-  vehicleType?: string;
   vehicleNumber?: string;
   driverName?: string;
   driverContact?: string;
   pickupTime?: string;
-  dropoffTime?: string;
-  actualRoute?: string;
-  bookingReference?: string;
   additionalNotes?: string;
 }
 
@@ -101,7 +105,64 @@ export interface TransportRequestSummary {
 
 // Helper functions for backend/frontend conversion
 
-export function toBackendFormat(frontendData: Partial<TransportRequestForm>): any {
+interface TransportBackendApprovalStep {
+  role?: string;
+  step_role?: string;
+  name?: string;
+  step_name?: string;
+  status?: string;
+  date?: string;
+  step_date?: string;
+  comments?: string;
+}
+
+interface TransportBackendTransportDetail {
+  id?: string | number;
+  date?: string;
+  day?: string;
+  from?: string;
+  to?: string;
+  departure_time?: string;
+  number_of_passengers?: number;
+}
+
+interface TransportBackendData {
+  id?: string | number;
+  request_number?: string;
+  requestor_name?: string;
+  requestor?: { get_full_name?: string; department?: string | { name?: string } };
+  staff_id?: string;
+  department?: string | { name?: string };
+  position?: string;
+  purpose?: string;
+  tsr_reference?: string;
+  trf?: number;
+  trf_request_number?: string;
+  status?: string;
+  transport_details?: TransportBackendTransportDetail[];
+  additional_comments?: string;
+  approval_workflow?: TransportBackendApprovalStep[];
+  approval_steps?: TransportBackendApprovalStep[];
+  vehicle_assignments?: unknown[];
+  selected_approvers?: { [stepOrder: number]: number };
+  skipped_steps?: { [stepOrder: number]: string | null };
+  booking_details?: {
+    vehicle_number?: string;
+    driver_name?: string;
+    driver_contact?: string;
+    pickup_time?: string;
+    additional_notes?: string;
+  };
+  created_at?: string;
+  submitted_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  updated_by?: string;
+}
+
+export function toBackendFormat(
+  frontendData: Partial<TransportRequestForm>
+): Record<string, unknown> {
   return {
     // Requestor info
     requestor_name: frontendData.requestorName,
@@ -115,34 +176,33 @@ export function toBackendFormat(frontendData: Partial<TransportRequestForm>): an
     status: frontendData.status || 'Draft',
 
     // Transport details array
-    transport_details: frontendData.transportDetails?.map(detail => ({
-      date: detail.date,
-      day: detail.day,
-      from: detail.from,
-      to: detail.to,
-      departure_time: detail.departureTime,
-      number_of_passengers: detail.numberOfPassengers
-    })) || [],
+    transport_details:
+      frontendData.transportDetails?.map(detail => ({
+        date: detail.date,
+        day: detail.day,
+        from: detail.from,
+        to: detail.to,
+        departure_time: detail.departureTime,
+        number_of_passengers: detail.numberOfPassengers,
+      })) || [],
 
     // Submission data
     additional_comments: frontendData.additionalComments,
 
     // Booking details (for admin)
-    booking_details: frontendData.bookingDetails ? {
-      vehicle_type: frontendData.bookingDetails.vehicleType,
-      vehicle_number: frontendData.bookingDetails.vehicleNumber,
-      driver_name: frontendData.bookingDetails.driverName,
-      driver_contact: frontendData.bookingDetails.driverContact,
-      pickup_time: frontendData.bookingDetails.pickupTime,
-      dropoff_time: frontendData.bookingDetails.dropoffTime,
-      actual_route: frontendData.bookingDetails.actualRoute,
-      booking_reference: frontendData.bookingDetails.bookingReference,
-      additional_notes: frontendData.bookingDetails.additionalNotes
-    } : undefined
+    booking_details: frontendData.bookingDetails
+      ? {
+          vehicle_number: frontendData.bookingDetails.vehicleNumber,
+          driver_name: frontendData.bookingDetails.driverName,
+          driver_contact: frontendData.bookingDetails.driverContact,
+          pickup_time: frontendData.bookingDetails.pickupTime,
+          additional_notes: frontendData.bookingDetails.additionalNotes,
+        }
+      : undefined,
   };
 }
 
-function extractDepartmentName(department: any): string {
+function extractDepartmentName(department: string | { name?: string } | undefined | null): string {
   if (!department) {
     return '';
   }
@@ -152,77 +212,93 @@ function extractDepartmentName(department: any): string {
   return department.name || '';
 }
 
-export function toFrontendFormat(backendData: any): TransportRequestForm {
+function mapTransportDetail(detail: TransportBackendTransportDetail): TransportDetail {
   return {
-    id: backendData.id?.toString() || '',
-    request_number: backendData.request_number,
+    id: detail.id?.toString(),
+    date: detail.date || null,
+    day: detail.day || '',
+    from: detail.from || '',
+    to: detail.to || '',
+    departureTime: detail.departure_time || '',
+    numberOfPassengers: detail.number_of_passengers || 1,
+  };
+}
 
-    // Requestor info
+function mapApprovalStep(step: TransportBackendApprovalStep): TransportApprovalStep {
+  return {
+    role: step.role || step.step_role || '',
+    name: step.name || step.step_name || '',
+    status: (step.status || 'Pending') as TransportApprovalStep['status'],
+    date: step.date || step.step_date,
+    comments: step.comments,
+  };
+}
+
+function mapRequestorInfo(backendData: TransportBackendData) {
+  return {
     requestorName: backendData.requestor_name || backendData.requestor?.get_full_name || '',
     staffId: backendData.staff_id || '',
     department: extractDepartmentName(backendData.department || backendData.requestor?.department),
     position: backendData.position || '',
+  };
+}
+
+function mapWorkflowFields(backendData: TransportBackendData) {
+  return {
+    approvalWorkflow: backendData.approval_workflow?.map(mapApprovalStep) || [],
+    approval_steps: (backendData.approval_steps || backendData.approval_workflow || []).map(
+      mapApprovalStep
+    ),
+    selected_approvers: backendData.selected_approvers || {},
+    skipped_steps: backendData.skipped_steps || {},
+  };
+}
+
+function mapBookingDetails(backendData: TransportBackendData): TransportBookingDetails | undefined {
+  if (!backendData.booking_details) {
+    return undefined;
+  }
+  return {
+    vehicleNumber: backendData.booking_details.vehicle_number,
+    driverName: backendData.booking_details.driver_name,
+    driverContact: backendData.booking_details.driver_contact,
+    pickupTime: backendData.booking_details.pickup_time,
+    additionalNotes: backendData.booking_details.additional_notes,
+  };
+}
+
+export function toFrontendFormat(backendData: TransportBackendData): TransportRequestForm {
+  return {
+    id: backendData.id?.toString() || '',
+    request_number: backendData.request_number,
+    ...mapRequestorInfo(backendData),
 
     // Request data
     purpose: backendData.purpose || '',
     tsrReference: backendData.tsr_reference,
     trfId: backendData.trf || undefined,
     trfRequestNumber: backendData.trf_request_number || undefined,
-    status: backendData.status || 'Draft',
+    status: (backendData.status || 'Draft') as TransportRequestStatus,
 
     // Transport details array
-    transportDetails: backendData.transport_details?.map((detail: any) => ({
-      id: detail.id?.toString(),
-      date: detail.date,
-      day: detail.day || '',
-      from: detail.from || '',
-      to: detail.to || '',
-      departureTime: detail.departure_time || '',
-      numberOfPassengers: detail.number_of_passengers || 1
-    })) || [],
+    transportDetails: backendData.transport_details?.map(mapTransportDetail) || [],
 
     // Submission data
     additionalComments: backendData.additional_comments || '',
 
-    // Approval workflow
-    approvalWorkflow: backendData.approval_workflow?.map((step: any) => ({
-      role: step.role || step.step_role || '',
-      name: step.name || step.step_name || '',
-      status: step.status || 'Pending',
-      date: step.date || step.step_date,
-      comments: step.comments
-    })) || [],
-    
-    // Legacy approval_steps for backward compatibility
-    approval_steps: backendData.approval_steps || backendData.approval_workflow || [],
+    ...mapWorkflowFields(backendData),
 
     // Vehicle assignments
     vehicle_assignments: backendData.vehicle_assignments || [],
 
-    // Selected approvers for workflow steps
-    selected_approvers: backendData.selected_approvers || {},
-
-    // Skipped workflow steps
-    skipped_steps: backendData.skipped_steps || {},
-
     // Booking details
-    bookingDetails: backendData.booking_details ? {
-      vehicleType: backendData.booking_details.vehicle_type,
-      vehicleNumber: backendData.booking_details.vehicle_number,
-      driverName: backendData.booking_details.driver_name,
-      driverContact: backendData.booking_details.driver_contact,
-      pickupTime: backendData.booking_details.pickup_time,
-      dropoffTime: backendData.booking_details.dropoff_time,
-      actualRoute: backendData.booking_details.actual_route,
-      bookingReference: backendData.booking_details.booking_reference,
-      additionalNotes: backendData.booking_details.additional_notes
-    } : undefined,
+    bookingDetails: mapBookingDetails(backendData),
 
     // Timestamps
     createdAt: backendData.created_at,
     submittedAt: backendData.submitted_at,
     updatedAt: backendData.updated_at,
     createdBy: backendData.created_by,
-    updatedBy: backendData.updated_by
+    updatedBy: backendData.updated_by,
   };
 }

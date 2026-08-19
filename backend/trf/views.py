@@ -1320,121 +1320,92 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         """
         Export Travel Request to PDF
 
-        Returns a PDF document containing all TRF details including:
-        - Requestor information
-        - Travel itinerary
-        - Meal provisions
-        - Passport details
-        - Bank details for advance payments
-        - Approval history
+        Returns a PDF document containing all TRF details. Sections are
+        populated dynamically based on what data actually exists for this
+        request's travel_type and current processing status, rather than a
+        fixed layout - a Domestic request never has passport/bank sections
+        (they're never created for that type), an Overseas/Home Leave
+        request never has meal provisions, Flight Booking only appears once
+        Ticketing has actually booked it, embedded Accommodation/Transport
+        only appear for Domestic requests that opted in, and Approval
+        History reflects whichever approval mechanism actually drove this
+        request (the modern WorkflowEngine, or the legacy per-step model for
+        requests with no active WorkflowTemplate):
+        - Requestor / External Party information
+        - Travel details (incl. Advance T&C acceptance for Overseas/Home Leave)
+        - Itinerary
+        - Meal provision (Domestic)
+        - Embedded Accommodation and Transport (Domestic, opt-in)
+        - Passport details (Home Leave)
+        - Bank details and advance amount requested (Overseas/Home Leave)
+        - Flight booking details (once booked)
+        - Approval history / current approval status
         """
         import io
 
         from django.http import HttpResponse
-        from reportlab.lib import colors
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.lib.units import inch
-        from reportlab.platypus import (
-            Paragraph,
-            SimpleDocTemplate,
-            Spacer,
-            Table,
-            TableStyle,
-        )
+        from reportlab.platypus import Paragraph, Spacer
+        from utils import pdf_export
 
         try:
             trf = TravelRequest.objects.get(pk=pk)
         except TravelRequest.DoesNotExist:
             return not_found_response(message="Travel Request not found")
 
-        # Create PDF buffer
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(
-            buffer,
-            pagesize=letter,
-            rightMargin=0.5 * inch,
-            leftMargin=0.5 * inch,
-            topMargin=0.5 * inch,
-            bottomMargin=0.5 * inch,
+        doc = pdf_export.new_document(buffer)
+        styles = pdf_export.get_styles()
+        normal_style = styles["normal"]
+
+        elements = pdf_export.build_header(
+            title="Travel Service Request",
+            request_number=trf.request_number or f"TSR-{trf.id}",
+            status=trf.status,
+            styles=styles,
         )
 
-        # Styles
-        styles = getSampleStyleSheet()
-        title_style = ParagraphStyle(
-            "CustomTitle",
-            parent=styles["Heading1"],
-            fontSize=18,
-            spaceAfter=20,
-            textColor=colors.HexColor("#0d9488"),
-        )
-        heading_style = ParagraphStyle(
-            "CustomHeading",
-            parent=styles["Heading2"],
-            fontSize=12,
-            spaceBefore=15,
-            spaceAfter=10,
-            textColor=colors.HexColor("#0d9488"),
-        )
-        normal_style = styles["Normal"]
-
-        elements = []
-
-        # Title
-        title = f"Travel Service Request - {trf.request_number or f'TSR-{trf.id}'}"
-        elements.append(Paragraph(title, title_style))
-        elements.append(Spacer(1, 12))
-
-        # Status badge
-        status_text = f"<b>Status:</b> {trf.status}"
-        elements.append(Paragraph(status_text, normal_style))
-        elements.append(Spacer(1, 12))
-
-        # Table style
-        table_style = TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0d9488")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
-                ("TEXTCOLOR", (0, 1), (-1, -1), colors.black),
-                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 1), (-1, -1), 9),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        # Requestor Information - External Parties submits a non-employee
+        # (organization, authority letter) rather than staff_id/department/
+        # position/cost_center, which the wizard never populates for that
+        # travel type (see prepareExternalPartiesData in trf-wizard.component.ts)
+        is_external = trf.travel_type == "External Parties"
+        if is_external:
+            elements.extend(
+                pdf_export.section_heading("External Party Details", styles)
+            )
+            requestor_data = [
+                ["Field", "Value"],
+                ["Name", trf.requestor_name or trf.external_full_name or "-"],
+                ["Organization", trf.external_organization or "-"],
+                [
+                    "Ref. to Authority Letter",
+                    trf.external_ref_to_authority_letter or "-",
+                ],
+                ["Cost Center", trf.external_cost_center or "-"],
+                ["Email", trf.email or "-"],
+                ["Phone/Email", trf.tel_email or "-"],
             ]
-        )
-
-        # Requestor Information
-        elements.append(Paragraph("Requestor Information", heading_style))
-        requestor_data = [
-            ["Field", "Value"],
-            ["Name", trf.requestor_name or "-"],
-            ["Staff ID", trf.staff_id or "-"],
-            ["Department", trf.department or "-"],
-            ["Position", trf.position or "-"],
-            ["Cost Center", trf.cost_center or "-"],
-            ["Email", trf.email or "-"],
-            ["Phone/Email", trf.tel_email or "-"],
-        ]
-        requestor_table = Table(requestor_data, colWidths=[2 * inch, 5 * inch])
-        requestor_table.setStyle(table_style)
-        elements.append(requestor_table)
+        else:
+            elements.extend(pdf_export.section_heading("Requestor Information", styles))
+            requestor_data = [
+                ["Field", "Value"],
+                ["Name", trf.requestor_name or "-"],
+                ["Staff ID", trf.staff_id or "-"],
+                ["Department", trf.department or "-"],
+                ["Position", trf.position or "-"],
+                ["Cost Center", trf.cost_center or "-"],
+                ["Email", trf.email or "-"],
+                ["Phone/Email", trf.tel_email or "-"],
+            ]
+        elements.append(pdf_export.make_table(requestor_data, [2 * inch, 5 * inch]))
 
         # Travel Details
-        elements.append(Paragraph("Travel Details", heading_style))
+        elements.extend(pdf_export.section_heading("Travel Details", styles))
         travel_data = [
             ["Field", "Value"],
             ["Travel Type", trf.travel_type or "-"],
             ["Purpose", (trf.purpose or "-")[:100]],
-            [
-                "Estimated Cost",
-                f"${trf.estimated_cost:,.2f}" if trf.estimated_cost else "-",
-            ],
             [
                 "Submitted At",
                 (
@@ -1448,16 +1419,28 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 trf.created_at.strftime("%Y-%m-%d %H:%M") if trf.created_at else "-",
             ],
         ]
-        travel_table = Table(travel_data, colWidths=[2 * inch, 5 * inch])
-        travel_table.setStyle(table_style)
-        elements.append(travel_table)
+        # Terms & Conditions acceptance (Overseas/Home Leave only - see
+        # TravelRequest.advance_consent_accepted help text)
+        if trf.travel_type in ("Overseas", "Home Leave"):
+            travel_data.append(
+                [
+                    "Advance T&C Accepted",
+                    (
+                        f"Yes ({trf.advance_consent_accepted_at.strftime('%Y-%m-%d %H:%M')})"
+                        if trf.advance_consent_accepted
+                        and trf.advance_consent_accepted_at
+                        else ("Yes" if trf.advance_consent_accepted else "No")
+                    ),
+                ]
+            )
+        elements.append(pdf_export.make_table(travel_data, [2 * inch, 5 * inch]))
 
         # Itinerary Segments
         itinerary_segments = TrfItinerarySegment.objects.filter(trf=trf).order_by(
             "segment_date"
         )
         if itinerary_segments.exists():
-            elements.append(Paragraph("Itinerary", heading_style))
+            elements.extend(pdf_export.section_heading("Itinerary", styles))
             itinerary_data = [["Date", "From", "To", "Departure", "Arrival", "Purpose"]]
             for seg in itinerary_segments:
                 itinerary_data.append(
@@ -1474,24 +1457,134 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                         (seg.purpose or "-")[:30],
                     ]
                 )
-            itinerary_table = Table(
-                itinerary_data,
-                colWidths=[
-                    1 * inch,
-                    1.2 * inch,
-                    1.2 * inch,
-                    0.9 * inch,
-                    0.9 * inch,
-                    1.8 * inch,
-                ],
+            elements.append(
+                pdf_export.make_table(
+                    itinerary_data,
+                    [
+                        1 * inch,
+                        1.2 * inch,
+                        1.2 * inch,
+                        0.9 * inch,
+                        0.9 * inch,
+                        1.8 * inch,
+                    ],
+                )
             )
-            itinerary_table.setStyle(table_style)
-            elements.append(itinerary_table)
+
+        # Meal Provision (Domestic - the wizard only ever populates
+        # TrfDailyMealSelection rows for Domestic travel_type; Overseas/Home
+        # Leave/External Parties never send any, so this is existence-gated
+        # rather than travel_type-gated)
+        meal_selections = TrfDailyMealSelection.objects.filter(trf=trf).order_by(
+            "meal_date"
+        )
+        if meal_selections.exists():
+            elements.extend(pdf_export.section_heading("Meal Provision", styles))
+            meal_status = (trf.meal_processing_status or "Pending").title()
+            elements.append(
+                Paragraph(f"<b>Processing Status:</b> {meal_status}", normal_style)
+            )
+            elements.append(Spacer(1, 6))
+            meal_data = [
+                ["Date", "Breakfast", "Lunch", "Dinner", "Supper", "Refreshment"]
+            ]
+            for meal in meal_selections:
+                meal_data.append(
+                    [
+                        meal.meal_date.strftime("%Y-%m-%d") if meal.meal_date else "-",
+                        "Yes" if meal.breakfast else "-",
+                        "Yes" if meal.lunch else "-",
+                        "Yes" if meal.dinner else "-",
+                        "Yes" if meal.supper else "-",
+                        "Yes" if meal.refreshment else "-",
+                    ]
+                )
+            elements.append(
+                pdf_export.make_table(
+                    meal_data,
+                    [
+                        1.2 * inch,
+                        1.1 * inch,
+                        1.1 * inch,
+                        1.1 * inch,
+                        1.1 * inch,
+                        1.4 * inch,
+                    ],
+                )
+            )
+
+        # Embedded Accommodation (Domestic, opt-in) - rides entirely on the
+        # TSR's own workflow, no separate approval status of its own once
+        # embedded (see docs/ACCOMMODATION_IN_TSR_ROADMAP.md), but still
+        # worth surfacing what was requested/assigned.
+        from accommodation.models import AccommodationBooking, AccommodationRequest
+
+        accommodation_requests = AccommodationRequest.objects.filter(trf=trf)
+        if accommodation_requests.exists():
+            elements.extend(pdf_export.section_heading("Accommodation", styles))
+            for accom in accommodation_requests:
+                accom_data = [
+                    ["Field", "Value"],
+                    ["Request Number", accom.request_number or "-"],
+                    ["Status", accom.status or "-"],
+                ]
+                bookings = AccommodationBooking.objects.filter(
+                    accommodation_request=accom
+                ).select_related("staff_house", "room")
+                if bookings.exists():
+                    booking_summary = "; ".join(
+                        f"{b.room} @ {b.staff_house} ({b.date})" for b in bookings
+                    )
+                    accom_data.append(["Assigned", booking_summary[:200]])
+                elements.append(pdf_export.make_table(accom_data, [2 * inch, 5 * inch]))
+
+        # Embedded Transport (Domestic, opt-in) - same dual-mode design as
+        # Accommodation: no separate approval status once embedded (see
+        # docs/TRANSPORT_IN_TSR_ROADMAP.md)
+        from transport.models import TransportRequest
+
+        transport_requests = TransportRequest.objects.filter(trf=trf)
+        if transport_requests.exists():
+            elements.extend(pdf_export.section_heading("Transport", styles))
+            for transport_req in transport_requests:
+                elements.append(
+                    Paragraph(
+                        f"<b>Request Number:</b> {transport_req.request_number or '-'} "
+                        f"&nbsp;&nbsp; <b>Status:</b> {transport_req.status or '-'}",
+                        normal_style,
+                    )
+                )
+                elements.append(Spacer(1, 6))
+                journeys = transport_req.transport_details or []
+                if journeys:
+                    journey_data = [["Date", "From", "To", "Departure", "Passengers"]]
+                    for journey in journeys:
+                        journey_data.append(
+                            [
+                                journey.get("date", "-"),
+                                journey.get("from", "-"),
+                                journey.get("to", "-"),
+                                journey.get("departureTime", "-"),
+                                str(journey.get("numberOfPassengers", "-")),
+                            ]
+                        )
+                    elements.append(
+                        pdf_export.make_table(
+                            journey_data,
+                            [
+                                1.2 * inch,
+                                1.5 * inch,
+                                1.5 * inch,
+                                1.2 * inch,
+                                1.1 * inch,
+                            ],
+                        )
+                    )
 
         # Passport Details
         passport_details = TrfPassportDetail.objects.filter(trf=trf)
         if passport_details.exists():
-            elements.append(Paragraph("Passport Details", heading_style))
+            elements.extend(pdf_export.section_heading("Passport Details", styles))
             passport_data = [
                 ["Name", "Passport No.", "Nationality", "Date of Birth", "Expiry"]
             ]
@@ -1513,35 +1606,147 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                         ),
                     ]
                 )
-            passport_table = Table(
-                passport_data,
-                colWidths=[1.5 * inch, 1.3 * inch, 1.2 * inch, 1.2 * inch, 1 * inch],
+            elements.append(
+                pdf_export.make_table(
+                    passport_data,
+                    [1.5 * inch, 1.3 * inch, 1.2 * inch, 1.2 * inch, 1 * inch],
+                )
             )
-            passport_table.setStyle(table_style)
-            elements.append(passport_table)
 
         # Bank Details
         try:
             bank_detail = TrfAdvanceBankDetail.objects.get(trf=trf)
-            elements.append(Paragraph("Bank Details for Advance", heading_style))
+            elements.extend(
+                pdf_export.section_heading("Bank Details for Advance", styles)
+            )
             bank_data = [
                 ["Field", "Value"],
                 ["Bank Name", bank_detail.bank_name or "-"],
                 ["Account Name", bank_detail.account_name or "-"],
                 ["Account Number", bank_detail.account_number or "-"],
                 ["Currency", bank_detail.currency or "-"],
-                ["Amount", f"{bank_detail.amount:,.2f}" if bank_detail.amount else "-"],
             ]
-            bank_table = Table(bank_data, colWidths=[2 * inch, 5 * inch])
-            bank_table.setStyle(table_style)
-            elements.append(bank_table)
+            elements.append(pdf_export.make_table(bank_data, [2 * inch, 5 * inch]))
         except TrfAdvanceBankDetail.DoesNotExist:
             pass
 
+        # Advance Amount Requested (the per-period LH/MA/OA/TR/OE/USD
+        # breakdown entered on the wizard - separate from the single
+        # TrfAdvanceBankDetail.amount field above, which the wizard doesn't
+        # populate for Overseas/Home Leave requests)
+        advance_items = TrfAdvanceAmountRequestedItem.objects.filter(trf=trf).order_by(
+            "date_from"
+        )
+        if advance_items.exists():
+            elements.extend(
+                pdf_export.section_heading("Advance Amount Requested", styles)
+            )
+            advance_data = [
+                ["From", "To", "LH", "MA", "OA", "TR", "OE", "USD", "Remarks"]
+            ]
+            total_usd = 0
+            for item in advance_items:
+                total_usd += item.usd or 0
+                advance_data.append(
+                    [
+                        item.date_from.strftime("%Y-%m-%d") if item.date_from else "-",
+                        item.date_to.strftime("%Y-%m-%d") if item.date_to else "-",
+                        f"{item.lh:,.2f}",
+                        f"{item.ma:,.2f}",
+                        f"{item.oa:,.2f}",
+                        f"{item.tr:,.2f}",
+                        f"{item.oe:,.2f}",
+                        f"{item.usd:,.2f}",
+                        (item.remarks or "-")[:30],
+                    ]
+                )
+            advance_data.append(
+                ["", "", "", "", "", "", "Total:", f"{total_usd:,.2f}", ""]
+            )
+            elements.append(
+                pdf_export.make_table(
+                    advance_data,
+                    [
+                        0.8 * inch,
+                        0.8 * inch,
+                        0.6 * inch,
+                        0.6 * inch,
+                        0.6 * inch,
+                        0.6 * inch,
+                        0.6 * inch,
+                        0.7 * inch,
+                        1.7 * inch,
+                    ],
+                )
+            )
+
+        # Flight Booking Details (status-dependent - only exists once
+        # Ticketing has processed an Approved request)
+        flight_bookings = TrfFlightBooking.objects.filter(trf=trf).order_by(
+            "departure_date"
+        )
+        if flight_bookings.exists():
+            elements.extend(
+                pdf_export.section_heading("Flight Booking Details", styles)
+            )
+            flight_data = [
+                [
+                    "Flight",
+                    "Class",
+                    "From",
+                    "To",
+                    "Departure",
+                    "Arrival",
+                    "Status",
+                ]
+            ]
+            for booking in flight_bookings:
+                flight_data.append(
+                    [
+                        f"{booking.airline or ''} {booking.flight_number}".strip(),
+                        booking.flight_class or "-",
+                        booking.departure_location or "-",
+                        booking.arrival_location or "-",
+                        (
+                            f"{booking.departure_date.strftime('%Y-%m-%d')} {booking.departure_time.strftime('%H:%M')}"
+                            if booking.departure_date and booking.departure_time
+                            else "-"
+                        ),
+                        (
+                            f"{booking.arrival_date.strftime('%Y-%m-%d')} {booking.arrival_time.strftime('%H:%M')}"
+                            if booking.arrival_date and booking.arrival_time
+                            else "-"
+                        ),
+                        booking.status or "-",
+                    ]
+                )
+            elements.append(
+                pdf_export.make_table(
+                    flight_data,
+                    [
+                        1 * inch,
+                        0.7 * inch,
+                        1 * inch,
+                        1 * inch,
+                        1.1 * inch,
+                        1.1 * inch,
+                        0.9 * inch,
+                    ],
+                )
+            )
+
         # Approval History
+        # Legacy fallback path (trf/views.py's non-workflow approve/reject
+        # actions) writes to TrfApprovalStep, but the primary approval path
+        # for every module now goes through WorkflowEngine.process_action,
+        # which only writes WorkflowInstance/WorkflowStepExecution rows and
+        # never touches TrfApprovalStep - so for any request actually driven
+        # by an active WorkflowTemplate, TrfApprovalStep is empty and the
+        # PDF would otherwise show no approval status at all. Fall back to
+        # the real workflow step executions in that case.
         approval_steps = TrfApprovalStep.objects.filter(trf=trf).order_by("created_at")
         if approval_steps.exists():
-            elements.append(Paragraph("Approval History", heading_style))
+            elements.extend(pdf_export.section_heading("Approval History", styles))
             approval_data = [["Role", "Status", "Date", "Comments"]]
             for step in approval_steps:
                 approval_data.append(
@@ -1556,22 +1761,54 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                         (step.comments or "-")[:50],
                     ]
                 )
-            approval_table = Table(
-                approval_data, colWidths=[1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch]
+            elements.append(
+                pdf_export.make_table(
+                    approval_data, [1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch]
+                )
             )
-            approval_table.setStyle(table_style)
-            elements.append(approval_table)
+        else:
+            from django.contrib.contenttypes.models import ContentType
+            from workflows.models import WorkflowInstance
 
-        # Footer
-        elements.append(Spacer(1, 20))
-        footer_style = ParagraphStyle(
-            "Footer", parent=styles["Normal"], fontSize=8, textColor=colors.grey
-        )
-        footer_text = f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M:%S')} | Travel Management System"
-        elements.append(Paragraph(footer_text, footer_style))
+            content_type = ContentType.objects.get_for_model(trf)
+            workflow_instance = (
+                WorkflowInstance.objects.filter(
+                    content_type=content_type, object_id=trf.id
+                )
+                .order_by("-created_at")
+                .first()
+            )
+            if workflow_instance:
+                step_executions = workflow_instance.step_executions.select_related(
+                    "workflow_step", "actioned_by"
+                ).order_by("workflow_step__step_order")
+                if step_executions.exists():
+                    elements.extend(
+                        pdf_export.section_heading("Approval History", styles)
+                    )
+                    approval_data = [["Role", "Status", "Date", "Comments"]]
+                    for execution in step_executions:
+                        approval_data.append(
+                            [
+                                (execution.workflow_step.step_name or "-")[:22],
+                                execution.status or "-",
+                                (
+                                    execution.action_date.strftime("%Y-%m-%d %H:%M")
+                                    if execution.action_date
+                                    else "-"
+                                ),
+                                (execution.comments or "-")[:40],
+                            ]
+                        )
+                    elements.append(
+                        pdf_export.make_table(
+                            approval_data,
+                            [2 * inch, 1 * inch, 1.5 * inch, 2.7 * inch],
+                        )
+                    )
 
         # Build PDF
-        doc.build(elements)
+        pdf_export.build(doc, elements)
         buffer.seek(0)
 
         # Create response
