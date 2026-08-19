@@ -84,6 +84,9 @@ class TransportRequestSerializer(serializers.ModelSerializer):
     requestor_email = serializers.EmailField(source="requestor.email", read_only=True)
     detail_count = serializers.SerializerMethodField()
     vehicle_assignments = VehicleAssignmentSerializer(many=True, read_only=True)
+    trf_request_number = serializers.CharField(
+        source="trf.request_number", read_only=True, allow_null=True
+    )
 
     class Meta:
         model = TransportRequest
@@ -99,6 +102,7 @@ class TransportRequestSerializer(serializers.ModelSerializer):
             "purpose",
             "tsr_reference",
             "trf",
+            "trf_request_number",
             "status",
             "transport_details",
             "detail_count",
@@ -113,6 +117,7 @@ class TransportRequestSerializer(serializers.ModelSerializer):
             "id",
             "request_number",
             "requestor",
+            "trf_request_number",
             "created_at",
             "updated_at",
         ]

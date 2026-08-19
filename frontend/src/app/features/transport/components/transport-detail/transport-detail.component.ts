@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TransportService } from '../../services/transport.service';
 import { TransportRequestForm } from '../../models/transport.model';
 import { WorkflowService } from '../../../../core/services/workflow.service';
@@ -18,7 +18,7 @@ import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handl
 @Component({
   selector: 'app-transport-detail',
   standalone: true,
-  imports: [CommonModule, ApprovalActionsComponent, WorkflowStatusComponent, LoadingSpinnerComponent],
+  imports: [CommonModule, RouterModule, ApprovalActionsComponent, WorkflowStatusComponent, LoadingSpinnerComponent],
   templateUrl: './transport-detail.component.html',
   styleUrls: ['./transport-detail.component.scss']
 })
@@ -216,6 +216,15 @@ export class TransportDetailComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/transport']);
+  }
+
+  // Check if there's a TRF link to display (i.e. this was created via TSR embedding)
+  hasTrfLink(): boolean {
+    return !!this.request?.trfId;
+  }
+
+  getTrfLink(): string {
+    return `/trf/${this.request?.trfId}`;
   }
 
   onEdit(): void {
