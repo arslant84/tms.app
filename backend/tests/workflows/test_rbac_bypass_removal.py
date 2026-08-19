@@ -45,16 +45,25 @@ class TestTrfBookFlightBypassRemoved:
         )
         api_client.force_authenticate(user=staff_user_without_permission)
 
+        import json
+
         response = api_client.post(
             f"/api/trf/travel-requests/{trf.id}/admin/book-flight/",
             {
                 "pnr": "ABC123",
                 "airline": "Test Air",
-                "flightNumber": "TA1",
-                "departureAirport": "KUL",
-                "arrivalAirport": "LHR",
-                "departureDateTime": "2026-08-01T10:00:00",
-                "arrivalDateTime": "2026-08-01T18:00:00",
+                "segments": json.dumps(
+                    [
+                        {
+                            "direction": "OUTBOUND",
+                            "flightNumber": "TA1",
+                            "departureAirport": "KUL",
+                            "arrivalAirport": "LHR",
+                            "departureDateTime": "2026-08-01T10:00:00",
+                            "arrivalDateTime": "2026-08-01T18:00:00",
+                        }
+                    ]
+                ),
             },
         )
 
@@ -90,17 +99,32 @@ class TestTrfBookFlightBypassRemoved:
         )
         api_client.force_authenticate(user=booking_admin)
 
+        import json
+
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
         response = api_client.post(
             f"/api/trf/travel-requests/{trf.id}/admin/book-flight/",
             {
                 "pnr": "ABC123",
                 "airline": "Test Air",
-                "flightNumber": "TA1",
-                "departureAirport": "KUL",
-                "arrivalAirport": "LHR",
-                "departureDateTime": "2026-08-01T10:00:00",
-                "arrivalDateTime": "2026-08-01T18:00:00",
+                "segments": json.dumps(
+                    [
+                        {
+                            "direction": "OUTBOUND",
+                            "flightNumber": "TA1",
+                            "departureAirport": "KUL",
+                            "arrivalAirport": "LHR",
+                            "departureDateTime": "2026-08-01T10:00:00",
+                            "arrivalDateTime": "2026-08-01T18:00:00",
+                        }
+                    ]
+                ),
+                "eTicket": SimpleUploadedFile(
+                    "ticket.pdf", b"fake-pdf-bytes", content_type="application/pdf"
+                ),
             },
+            format="multipart",
         )
 
         assert response.status_code == status.HTTP_201_CREATED

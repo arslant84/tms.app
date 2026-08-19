@@ -1,11 +1,6 @@
 from django.contrib import admin
 
-from .models import (
-    TransportApprovalStep,
-    TransportRequest,
-    TransportSegment,
-    VehicleAssignment,
-)
+from .models import TransportApprovalStep, TransportRequest, VehicleAssignment
 
 
 @admin.register(TransportRequest)
@@ -88,69 +83,6 @@ class TransportRequestAdmin(admin.ModelAdmin):
                 "fields": ("submitted_at", "created_at", "updated_at"),
                 "classes": ("collapse",),
             },
-        ),
-    )
-
-
-@admin.register(TransportSegment)
-class TransportSegmentAdmin(admin.ModelAdmin):
-    """Admin configuration for TransportSegment model"""
-
-    list_display = [
-        "id",
-        "transport_request",
-        "from_location",
-        "to_location",
-        "departure_date",
-        "departure_time",
-        "distance_km",
-        "segment_cost",
-    ]
-    list_filter = ["departure_date", "created_at"]
-    search_fields = [
-        "from_location",
-        "to_location",
-        "route_description",
-        "vehicle_number",
-        "driver_name",
-    ]
-    readonly_fields = ["created_at", "updated_at"]
-    ordering = ["departure_date", "departure_time"]
-
-    fieldsets = (
-        ("Transport Request", {"fields": ("transport_request",)}),
-        (
-            "Journey Details",
-            {
-                "fields": (
-                    "from_location",
-                    "to_location",
-                    "departure_date",
-                    "departure_time",
-                    "arrival_date",
-                    "arrival_time",
-                )
-            },
-        ),
-        (
-            "Route Information",
-            {
-                "fields": (
-                    "distance_km",
-                    "estimated_duration_hours",
-                    "route_description",
-                )
-            },
-        ),
-        (
-            "Vehicle Assignment",
-            {"fields": ("vehicle_number", "driver_name", "driver_contact")},
-        ),
-        ("Cost", {"fields": ("segment_cost",)}),
-        ("Additional Information", {"fields": ("remarks",)}),
-        (
-            "Timestamps",
-            {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
         ),
     )
 

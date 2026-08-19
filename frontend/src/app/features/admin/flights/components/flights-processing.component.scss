@@ -122,25 +122,8 @@
 
 // Content Layout
 .content-layout {
-  display: grid;
-  grid-template-columns: 1fr 420px;
-  gap: vars.$spacing-5;
-  align-items: start;
-
-  @media (width <= 1600px) {
-    grid-template-columns: 1fr 380px;
-    gap: vars.$spacing-4;
-  }
-
-  @media (width <= 1400px) {
-    grid-template-columns: 1fr 340px;
-    gap: vars.$spacing-md;
-  }
-
-  @media (width <= 1200px) {
-    grid-template-columns: 1fr;
-    gap: vars.$spacing-5;
-  }
+  display: flex;
+  flex-direction: column;
 }
 
 .left-panel {
@@ -148,13 +131,6 @@
   flex-direction: column;
   gap: vars.$spacing-md;
   min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.right-panel {
-  display: flex;
-  flex-direction: column;
   min-width: 0;
 }
 
@@ -345,105 +321,8 @@
   }
 }
 
-// Booking Details Card
-.booking-details-card {
-  background: vars.$white;
-  border: 1px solid vars.$border-light;
-  border-radius: vars.$radius-base;
-  box-shadow: vars.$shadow-sm;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: fit-content;
-  max-height: calc(100vh - 120px);
-  position: sticky;
-  top: vars.$spacing-md;
-
-  @media (width <= 1400px) {
-    max-height: calc(100vh - 100px);
-  }
-
-  @media (width <= 1200px) {
-    position: static;
-    max-height: none;
-  }
-
-  .booking-details-header {
-    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
-    color: vars.$white;
-    padding: vars.$spacing-md vars.$spacing-5;
-    flex-shrink: 0;
-
-    h2 {
-      font-size: vars.$font-size-lg;
-      font-weight: vars.$font-weight-semibold;
-      margin: 0 0 vars.$spacing-1 0;
-      display: flex;
-      align-items: center;
-
-      @media (width <= 1400px) {
-        font-size: vars.$font-size-base;
-      }
-    }
-
-    .booking-details-description {
-      font-size: vars.$font-size-sm;
-      margin: 0;
-      opacity: 0.95;
-
-      @media (width <= 1400px) {
-        font-size: 0.8125rem;
-      }
-    }
-  }
-}
-
-// No Selection State
-.no-selection {
-  padding: vars.$spacing-10 vars.$spacing-5;
-  text-align: center;
-  color: vars.$text-secondary;
-
-  svg {
-    width: 4rem;
-    height: 4rem;
-    opacity: 0.5;
-    margin-bottom: vars.$spacing-md;
-  }
-
-  p {
-    font-size: vars.$font-size-base;
-  }
-}
-
-// Booking Form
+// Booking Form (lives inside the Book Flight modal body)
 .booking-form {
-  padding: vars.$spacing-5;
-  overflow-y: auto;
-  max-height: calc(100vh - 220px);
-
-  @media (width <= 1200px) {
-    max-height: none;
-    overflow-y: visible;
-  }
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: vars.$gray-100;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: vars.$gray-400;
-    border-radius: 3px;
-
-    &:hover {
-      background: vars.$gray-400;
-    }
-  }
-
   .request-info {
     background-color: vars.$gray-50;
     border: 1px solid vars.$border-light;
@@ -520,43 +399,122 @@
     }
   }
 
-  .segment-block {
-    border: vars.$card-border;
-    border-radius: vars.$card-border-radius;
-    padding: vars.$spacing-3;
-    margin-bottom: vars.$spacing-md;
+  .segment-heading {
+    font-size: vars.$font-size-xs;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$gray-500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
 
-    .segment-heading {
-      font-size: vars.$font-size-xs;
-      font-weight: vars.$font-weight-semibold;
-      color: vars.$gray-500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin: 0 0 vars.$spacing-3;
-    }
+// Outbound/Return leg sections inside the Book Flight modal
+.leg-section {
+  margin-bottom: vars.$spacing-5;
 
-    .row + .row {
-      margin-top: vars.$spacing-md;
+  .leg-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: vars.$spacing-3;
+  }
+}
+
+.leg-table {
+  min-width: 900px;
+  margin: 0;
+  font-size: vars.$font-size-sm;
+
+  th {
+    white-space: nowrap;
+  }
+
+  td {
+    vertical-align: middle;
+    padding: vars.$spacing-2;
+  }
+
+  .leg-col-index {
+    width: 2.5rem;
+    text-align: center;
+    color: vars.$text-secondary;
+  }
+
+  .leg-col-actions {
+    width: 2.5rem;
+  }
+
+  .datetime-cell {
+    display: flex;
+    gap: vars.$spacing-2;
+
+    input {
+      min-width: 0;
     }
   }
 
-  .action-buttons-group {
-    margin: vars.$spacing-5 calc(-1 * vars.$spacing-5) calc(-1 * vars.$spacing-5)
-      calc(-1 * vars.$spacing-5);
-    padding: vars.$spacing-5 vars.$spacing-5 vars.$spacing-5 vars.$spacing-5;
-    border-top: 1px solid vars.$border-light;
-    display: flex;
-    flex-direction: column;
-    gap: vars.$spacing-3;
-    position: sticky;
-    bottom: 0;
-    background: vars.$white;
+  .leg-empty {
+    text-align: center;
+    color: vars.$text-secondary;
+    padding: vars.$spacing-4;
+  }
+}
 
-    @media (width <= 1200px) {
-      position: static;
-      margin: vars.$spacing-5 0 0 0;
-      padding: vars.$spacing-5 0 0 0;
+// Modal title's request number badge
+.modal-title-request {
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-medium;
+  color: vars.$text-secondary;
+  margin-left: vars.$spacing-2;
+}
+
+// Book Flight Modal (manual Bootstrap modal - see transport-processing.component.scss
+// for the same [class.show]/[style.display] pattern)
+.modal {
+  &.show {
+    display: block;
+    opacity: 1;
+  }
+
+  .modal-dialog {
+    max-height: calc(100vh - 2rem);
+  }
+
+  .modal-header {
+    background-color: vars.$gray-100;
+    border-bottom: 1px solid vars.$gray-200;
+
+    .modal-title {
+      font-size: vars.$font-size-lg;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-700;
+      display: flex;
+      align-items: center;
     }
+
+    .btn-close {
+      &:focus {
+        box-shadow: none;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: vars.$spacing-6;
+  }
+
+  .modal-footer {
+    background-color: vars.$gray-100;
+    border-top: 1px solid vars.$gray-200;
+    padding: vars.$spacing-4 vars.$spacing-6;
+  }
+}
+
+.modal-backdrop {
+  background-color: rgb(0 0 0 / 50%);
+
+  &.show {
+    opacity: 1;
   }
 }
 
@@ -731,23 +689,7 @@
     }
   }
 
-  .booking-details-card {
-    .booking-details-header {
-      padding: vars.$spacing-3 vars.$spacing-md;
-
-      h2 {
-        font-size: 0.9375rem;
-      }
-
-      .booking-details-description {
-        font-size: vars.$font-size-xs;
-      }
-    }
-  }
-
   .booking-form {
-    padding: vars.$spacing-md;
-
     .request-info {
       padding: vars.$spacing-3;
 
@@ -773,17 +715,6 @@
       .form-control {
         padding: vars.$spacing-2 vars.$spacing-3;
         font-size: 0.8125rem;
-      }
-    }
-
-    .action-buttons-group {
-      margin-top: vars.$spacing-md;
-      padding-top: vars.$spacing-md;
-      gap: vars.$spacing-2;
-
-      .btn {
-        font-size: vars.$font-size-sm;
-        padding: vars.$spacing-2 vars.$spacing-md;
       }
     }
   }

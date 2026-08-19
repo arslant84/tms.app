@@ -83,7 +83,6 @@
       <!-- Pending Requests Tab -->
       <div *ngIf="activeTab === 'pending'" class="tab-panel">
         <div class="content-layout">
-          <!-- Left Side: Requests -->
           <div class="left-panel">
             <!-- Search & Filter -->
             <div class="search-filter-section">
@@ -225,13 +224,9 @@
                     <td>
                       <div class="action-buttons justify-content-center">
                         <button
-                          class="btn btn-sm btn-icon"
-                          [class.btn-outline-primary]="selectedTrf?.id !== trf.id"
-                          [class.btn-primary]="selectedTrf?.id === trf.id"
-                          (click)="selectTrf(trf)"
-                          title="{{
-                            selectedTrf?.id === trf.id ? 'Selected' : 'Select for booking'
-                          }}"
+                          class="btn btn-sm btn-outline-primary btn-icon"
+                          (click)="openBookingModal(trf)"
+                          title="Book Flight"
                         >
                           <i class="bi bi-check-circle"></i>
                         </button>
@@ -247,365 +242,6 @@
                   </tr>
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          <!-- Right Side: Booking Details Panel -->
-          <div class="right-panel">
-            <div class="booking-details-card">
-              <div class="booking-details-header">
-                <h2>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="icon-sm me-2"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-                    />
-                  </svg>
-                  Booking Details
-                </h2>
-                <p class="booking-details-description">
-                  {{ selectedTrf ? selectedTrf.request_number : 'Select a request to process' }}
-                </p>
-              </div>
-
-              <!-- No Selection State -->
-              <div *ngIf="!selectedTrf" class="no-selection">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-                  />
-                </svg>
-                <p>Select a TRF from the list to book flights</p>
-              </div>
-
-              <!-- Booking Form -->
-              <div *ngIf="selectedTrf" class="booking-form">
-                <!-- Request Info -->
-                <div class="request-info">
-                  <div class="info-row">
-                    <span class="info-label">Staff Name:</span>
-                    <span class="info-value">{{ selectedTrf.requestorName }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">Department:</span>
-                    <span class="info-value">{{ selectedTrf.department | departmentName }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">Travel Type:</span>
-                    <span class="badge" [class]="getTravelTypeBadgeClass(selectedTrf.travelType)">
-                      {{ selectedTrf.travelType }}
-                    </span>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">Status:</span>
-                    <span class="badge" [class]="getStatusClass(selectedTrf.status)">{{
-                      selectedTrf.status
-                    }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">Destination:</span>
-                    <span class="info-value">{{ selectedTrf.destinationSummary }}</span>
-                  </div>
-                </div>
-
-                <!-- Divider -->
-                <div class="divider"></div>
-
-                <!-- Form Fields -->
-                <div class="form-fields">
-                  <!-- PNR / Booking Reference -->
-                  <div class="form-group">
-                    <label for="pnr">PNR / Booking Reference *</label>
-                    <input
-                      type="text"
-                      id="pnr"
-                      [(ngModel)]="pnr"
-                      name="pnr"
-                      class="form-control"
-                      placeholder="e.g., ABC123XYZ"
-                      required
-                    />
-                    <small class="form-text text-muted">
-                      <i class="bi bi-info-circle me-1"></i>
-                      PNR must be unique across all bookings
-                    </small>
-                  </div>
-
-                  <!-- Airline -->
-                  <div class="form-group">
-                    <label for="airline"
-                      >Airline{{ isAirlineRequired ? ' *' : ' (optional)' }}</label
-                    >
-                    <input
-                      type="text"
-                      id="airline"
-                      [(ngModel)]="airline"
-                      name="airline"
-                      class="form-control"
-                      placeholder="e.g., Turkish Airlines"
-                      [required]="isAirlineRequired"
-                    />
-                    <small *ngIf="!isAirlineRequired" class="form-text text-muted">
-                      <i class="bi bi-info-circle me-1"></i>
-                      Only required for Overseas travel
-                    </small>
-                  </div>
-
-                  <!-- Departure / Arrival Airport -->
-                  <div class="row g-3">
-                    <div class="col-md-6">
-                      <div class="form-group mb-0">
-                        <label for="departureAirport">Departure Airport *</label>
-                        <input
-                          type="text"
-                          id="departureAirport"
-                          [(ngModel)]="departureAirport"
-                          name="departureAirport"
-                          class="form-control"
-                          placeholder="e.g., ASB (Ashgabat)"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="form-group mb-0">
-                        <label for="arrivalAirport">Arrival Airport *</label>
-                        <input
-                          type="text"
-                          id="arrivalAirport"
-                          [(ngModel)]="arrivalAirport"
-                          name="arrivalAirport"
-                          class="form-control"
-                          placeholder="e.g., IST (Istanbul)"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Outbound Segment -->
-                  <div class="segment-block">
-                    <p class="segment-heading">Outbound</p>
-                    <div class="form-group">
-                      <label for="flightNumber">Flight Number *</label>
-                      <input
-                        type="text"
-                        id="flightNumber"
-                        [(ngModel)]="flightNumber"
-                        name="flightNumber"
-                        class="form-control"
-                        placeholder="e.g., TK1234"
-                        required
-                      />
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <div class="form-group mb-0">
-                          <label for="departureDate">Departure Date *</label>
-                          <input
-                            type="date"
-                            id="departureDate"
-                            [(ngModel)]="departureDate"
-                            name="departureDate"
-                            class="form-control"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group mb-0">
-                          <label for="departureTime">Departure Time *</label>
-                          <input
-                            type="time"
-                            id="departureTime"
-                            [(ngModel)]="departureTime"
-                            name="departureTime"
-                            class="form-control"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <div class="form-group mb-0">
-                          <label for="arrivalDate">Arrival Date *</label>
-                          <input
-                            type="date"
-                            id="arrivalDate"
-                            [(ngModel)]="arrivalDate"
-                            name="arrivalDate"
-                            class="form-control"
-                            [min]="departureDate"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group mb-0">
-                          <label for="arrivalTime">Arrival Time *</label>
-                          <input
-                            type="time"
-                            id="arrivalTime"
-                            [(ngModel)]="arrivalTime"
-                            name="arrivalTime"
-                            class="form-control"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Return Segment (round trip only, auto-shown from the TSR's own itinerary) -->
-                  <div class="segment-block" *ngIf="isRoundTrip">
-                    <p class="segment-heading">Return</p>
-                    <div class="form-group">
-                      <label for="returnFlightNumber">Flight Number *</label>
-                      <input
-                        type="text"
-                        id="returnFlightNumber"
-                        [(ngModel)]="returnFlightNumber"
-                        name="returnFlightNumber"
-                        class="form-control"
-                        placeholder="e.g., TK1235"
-                        required
-                      />
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <div class="form-group mb-0">
-                          <label for="returnDepartureDate">Departure Date *</label>
-                          <input
-                            type="date"
-                            id="returnDepartureDate"
-                            [(ngModel)]="returnDepartureDate"
-                            name="returnDepartureDate"
-                            class="form-control"
-                            [min]="arrivalDate"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group mb-0">
-                          <label for="returnDepartureTime">Departure Time *</label>
-                          <input
-                            type="time"
-                            id="returnDepartureTime"
-                            [(ngModel)]="returnDepartureTime"
-                            name="returnDepartureTime"
-                            class="form-control"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <div class="form-group mb-0">
-                          <label for="returnArrivalDate">Arrival Date *</label>
-                          <input
-                            type="date"
-                            id="returnArrivalDate"
-                            [(ngModel)]="returnArrivalDate"
-                            name="returnArrivalDate"
-                            class="form-control"
-                            [min]="returnDepartureDate"
-                            required
-                          />
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group mb-0">
-                          <label for="returnArrivalTime">Arrival Time *</label>
-                          <input
-                            type="time"
-                            id="returnArrivalTime"
-                            [(ngModel)]="returnArrivalTime"
-                            name="returnArrivalTime"
-                            class="form-control"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- E-ticket Upload -->
-                  <div class="form-group">
-                    <label for="eTicket">E-ticket Upload *</label>
-                    <input
-                      type="file"
-                      id="eTicket"
-                      name="eTicket"
-                      class="form-control"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      (change)="onETicketSelected($event)"
-                    />
-                    <small class="form-text text-muted">
-                      <i class="bi bi-info-circle me-1"></i>
-                      {{ eTicketFile ? eTicketFile.name : 'PDF or image of the issued e-ticket' }}
-                    </small>
-                  </div>
-
-                  <!-- Notes -->
-                  <div class="form-group">
-                    <label for="flightNotes">Booking Notes (Optional)</label>
-                    <textarea
-                      id="flightNotes"
-                      [(ngModel)]="flightNotes"
-                      name="flightNotes"
-                      rows="3"
-                      class="form-control"
-                      placeholder="Add any additional notes about this booking..."
-                    ></textarea>
-                  </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="action-buttons-group">
-                  <button
-                    class="btn btn-primary w-100"
-                    (click)="bookFlight()"
-                    [disabled]="!isFormValid() || isProcessing"
-                  >
-                    <i class="bi bi-airplane me-2"></i>
-                    <span *ngIf="!isProcessing">Confirm Flight Booking</span>
-                    <span *ngIf="isProcessing">
-                      <app-loading-spinner
-                        size="sm"
-                        class="me-2 d-inline-block"
-                      ></app-loading-spinner>
-                      Booking...
-                    </span>
-                  </button>
-                  <button
-                    class="btn btn-secondary w-100"
-                    (click)="clearForm()"
-                    [disabled]="isProcessing"
-                  >
-                    <i class="bi bi-x-circle me-2"></i>
-                    Clear Form
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -699,3 +335,377 @@
     </div>
   </div>
 </div>
+
+<!-- Book Flight Modal -->
+<div
+  class="modal fade"
+  [class.show]="isBookingModalOpen"
+  [style.display]="isBookingModalOpen ? 'block' : 'none'"
+>
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content" *ngIf="selectedTrf">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-airplane me-2"></i>
+          Booking Details
+          <span class="modal-title-request">{{ selectedTrf.request_number }}</span>
+        </h5>
+        <button type="button" class="btn-close" (click)="closeBookingModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="booking-form">
+          <!-- Request Info -->
+          <div class="request-info">
+            <div class="info-row">
+              <span class="info-label">Staff Name:</span>
+              <span class="info-value">{{ selectedTrf.requestorName }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Department:</span>
+              <span class="info-value">{{ selectedTrf.department | departmentName }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Travel Type:</span>
+              <span class="badge" [class]="getTravelTypeBadgeClass(selectedTrf.travelType)">
+                {{ selectedTrf.travelType }}
+              </span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Status:</span>
+              <span class="badge" [class]="getStatusClass(selectedTrf.status)">{{
+                selectedTrf.status
+              }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Destination:</span>
+              <span class="info-value">{{ selectedTrf.destinationSummary }}</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- PNR / Airline -->
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="form-group mb-0">
+                <label for="pnr">PNR / Booking Reference *</label>
+                <input
+                  type="text"
+                  id="pnr"
+                  [(ngModel)]="pnr"
+                  name="pnr"
+                  class="form-control"
+                  placeholder="e.g., ABC123XYZ"
+                  required
+                />
+                <small class="form-text text-muted">
+                  <i class="bi bi-info-circle me-1"></i>
+                  PNR must be unique across all bookings
+                </small>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group mb-0">
+                <label for="airline">Airline{{ isAirlineRequired ? ' *' : ' (optional)' }}</label>
+                <input
+                  type="text"
+                  id="airline"
+                  [(ngModel)]="airline"
+                  name="airline"
+                  class="form-control"
+                  placeholder="e.g., Turkish Airlines"
+                  [required]="isAirlineRequired"
+                />
+                <small *ngIf="!isAirlineRequired" class="form-text text-muted">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Only required for Overseas travel
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Outbound Legs -->
+          <div class="leg-section">
+            <div class="leg-section-header">
+              <p class="segment-heading mb-0">Outbound</p>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                (click)="addOutboundLeg()"
+              >
+                <i class="bi bi-plus-circle me-1"></i>
+                Add Leg
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="table leg-table">
+                <thead>
+                  <tr>
+                    <th class="leg-col-index">Leg</th>
+                    <th>Flight No. *</th>
+                    <th>Departure Airport *</th>
+                    <th>Arrival Airport *</th>
+                    <th>Departure Date/Time *</th>
+                    <th>Arrival Date/Time *</th>
+                    <th class="leg-col-actions"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let leg of outboundLegs; let i = index">
+                    <td class="leg-col-index">{{ i + 1 }}</td>
+                    <td>
+                      <input
+                        type="text"
+                        [(ngModel)]="leg.flightNumber"
+                        [name]="'outFlightNumber' + i"
+                        class="form-control form-control-sm"
+                        placeholder="e.g., TK1234"
+                        required
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        [(ngModel)]="leg.departureAirport"
+                        [name]="'outDepartureAirport' + i"
+                        class="form-control form-control-sm"
+                        placeholder="e.g., Dubai"
+                        required
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        [(ngModel)]="leg.arrivalAirport"
+                        [name]="'outArrivalAirport' + i"
+                        class="form-control form-control-sm"
+                        placeholder="e.g., Kuala Lumpur"
+                        required
+                      />
+                    </td>
+                    <td>
+                      <div class="datetime-cell">
+                        <input
+                          type="date"
+                          [(ngModel)]="leg.departureDate"
+                          [name]="'outDepartureDate' + i"
+                          class="form-control form-control-sm"
+                          required
+                        />
+                        <input
+                          type="time"
+                          [(ngModel)]="leg.departureTime"
+                          [name]="'outDepartureTime' + i"
+                          class="form-control form-control-sm"
+                          required
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="datetime-cell">
+                        <input
+                          type="date"
+                          [(ngModel)]="leg.arrivalDate"
+                          [name]="'outArrivalDate' + i"
+                          class="form-control form-control-sm"
+                          [min]="leg.departureDate"
+                          required
+                        />
+                        <input
+                          type="time"
+                          [(ngModel)]="leg.arrivalTime"
+                          [name]="'outArrivalTime' + i"
+                          class="form-control form-control-sm"
+                          required
+                        />
+                      </div>
+                    </td>
+                    <td class="leg-col-actions">
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-danger btn-icon"
+                        (click)="removeOutboundLeg(i)"
+                        [disabled]="outboundLegs.length === 1"
+                        title="Remove leg"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Return Legs (round trip only, auto-shown from the TSR's own itinerary) -->
+          <div class="leg-section" *ngIf="isRoundTrip">
+            <div class="leg-section-header">
+              <p class="segment-heading mb-0">Return</p>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="addReturnLeg()">
+                <i class="bi bi-plus-circle me-1"></i>
+                Add Leg
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="table leg-table">
+                <thead>
+                  <tr>
+                    <th class="leg-col-index">Leg</th>
+                    <th>Flight No. *</th>
+                    <th>Departure Airport *</th>
+                    <th>Arrival Airport *</th>
+                    <th>Departure Date/Time *</th>
+                    <th>Arrival Date/Time *</th>
+                    <th class="leg-col-actions"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let leg of returnLegs; let i = index">
+                    <td class="leg-col-index">{{ i + 1 }}</td>
+                    <td>
+                      <input
+                        type="text"
+                        [(ngModel)]="leg.flightNumber"
+                        [name]="'retFlightNumber' + i"
+                        class="form-control form-control-sm"
+                        placeholder="e.g., TK1235"
+                        required
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        [(ngModel)]="leg.departureAirport"
+                        [name]="'retDepartureAirport' + i"
+                        class="form-control form-control-sm"
+                        placeholder="e.g., Kuala Lumpur"
+                        required
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        [(ngModel)]="leg.arrivalAirport"
+                        [name]="'retArrivalAirport' + i"
+                        class="form-control form-control-sm"
+                        placeholder="e.g., Dubai"
+                        required
+                      />
+                    </td>
+                    <td>
+                      <div class="datetime-cell">
+                        <input
+                          type="date"
+                          [(ngModel)]="leg.departureDate"
+                          [name]="'retDepartureDate' + i"
+                          class="form-control form-control-sm"
+                          required
+                        />
+                        <input
+                          type="time"
+                          [(ngModel)]="leg.departureTime"
+                          [name]="'retDepartureTime' + i"
+                          class="form-control form-control-sm"
+                          required
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div class="datetime-cell">
+                        <input
+                          type="date"
+                          [(ngModel)]="leg.arrivalDate"
+                          [name]="'retArrivalDate' + i"
+                          class="form-control form-control-sm"
+                          [min]="leg.departureDate"
+                          required
+                        />
+                        <input
+                          type="time"
+                          [(ngModel)]="leg.arrivalTime"
+                          [name]="'retArrivalTime' + i"
+                          class="form-control form-control-sm"
+                          required
+                        />
+                      </div>
+                    </td>
+                    <td class="leg-col-actions">
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-danger btn-icon"
+                        (click)="removeReturnLeg(i)"
+                        title="Remove leg"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="returnLegs.length === 0">
+                    <td colspan="7" class="leg-empty">No return legs yet - click "Add Leg".</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- E-ticket Upload -->
+          <div class="form-group">
+            <label for="eTicket">E-ticket Upload *</label>
+            <input
+              type="file"
+              id="eTicket"
+              name="eTicket"
+              class="form-control"
+              accept=".pdf,.jpg,.jpeg,.png"
+              (change)="onETicketSelected($event)"
+            />
+            <small class="form-text text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              {{ eTicketFile ? eTicketFile.name : 'PDF or image of the issued e-ticket' }}
+            </small>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group mb-0">
+            <label for="flightNotes">Booking Notes (Optional)</label>
+            <textarea
+              id="flightNotes"
+              [(ngModel)]="flightNotes"
+              name="flightNotes"
+              rows="3"
+              class="form-control"
+              placeholder="Add any additional notes about this booking..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="clearForm()"
+          [disabled]="isProcessing"
+        >
+          <i class="bi bi-x-circle me-2"></i>
+          Clear Form
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="bookFlight()"
+          [disabled]="!isFormValid() || isProcessing"
+        >
+          <i class="bi bi-airplane me-2"></i>
+          <span *ngIf="!isProcessing">Confirm Flight Booking</span>
+          <span *ngIf="isProcessing">
+            <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
+            Booking...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="isBookingModalOpen" *ngIf="isBookingModalOpen"></div>

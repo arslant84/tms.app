@@ -16,12 +16,7 @@ logger = logging.getLogger(__name__)
 from utils.request_id_generator import generate_request_id
 from workflows.router import WorkflowRouter
 
-from .models import (
-    TransportApprovalStep,
-    TransportRequest,
-    TransportSegment,
-    VehicleAssignment,
-)
+from .models import TransportApprovalStep, TransportRequest, VehicleAssignment
 from .serializers import (
     ApprovalActionSerializer,
     TransportApprovalStepSerializer,
@@ -213,7 +208,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             )
 
         return queryset.select_related("requestor", "trf").prefetch_related(
-            "segments", "approval_steps", "vehicle_assignments"
+            "approval_steps", "vehicle_assignments"
         )
 
     def get_serializer_class(self):

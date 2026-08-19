@@ -5,9 +5,32 @@ from rest_framework import serializers
 from trf.models import TravelRequest
 from utils.constants import BOOKABLE_STATUSES
 
-from .models import BookingClass, BookingStatus, FlightBooking, FlightType
+from .models import (
+    BookingClass,
+    BookingStatus,
+    FlightBooking,
+    FlightBookingSegment,
+    FlightType,
+)
 
 User = get_user_model()
+
+
+class FlightBookingSegmentSerializer(serializers.ModelSerializer):
+    """Serializer for a single leg within a flight booking"""
+
+    class Meta:
+        model = FlightBookingSegment
+        fields = [
+            "id",
+            "direction",
+            "sequence",
+            "flight_number",
+            "departure_airport",
+            "arrival_airport",
+            "departure_time",
+            "arrival_time",
+        ]
 
 
 class FlightBookingSerializer(serializers.ModelSerializer):
@@ -21,6 +44,7 @@ class FlightBookingSerializer(serializers.ModelSerializer):
     )
     route_display = serializers.CharField(source="route", read_only=True)
     number_of_days = serializers.SerializerMethodField()
+    segments = FlightBookingSegmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = FlightBooking
@@ -38,6 +62,7 @@ class FlightBookingSerializer(serializers.ModelSerializer):
             "return_flight_number",
             "return_departure_time",
             "return_arrival_time",
+            "segments",
             "e_ticket",
             "departure_airport",
             "departure_airport_code",
