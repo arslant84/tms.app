@@ -334,6 +334,21 @@ export class TrfDetailComponent implements OnInit {
   }
 
   /**
+   * Flight bookings can have any number of legs per direction
+   * (connections); this splits the flat segments list for the Outbound
+   * and Return tables on the Flight Processing Details card.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getSegmentsByDirection(direction: 'OUTBOUND' | 'RETURN'): any[] {
+    const segments = this.trfData?.flightDetails?.segments;
+    if (!segments) {
+      return [];
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return segments.filter((seg: any) => seg.direction === direction);
+  }
+
+  /**
    * Format number for display
    */
   formatNumber(num: number | string | null | undefined, decimals: number = 0): string {

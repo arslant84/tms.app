@@ -306,6 +306,29 @@
   }
 }
 
+// Flight booking legs (one row per leg, grouped by Outbound/Return)
+.flight-segments {
+  margin-top: vars.$spacing-5;
+
+  .flight-segments-group {
+    margin-bottom: vars.$spacing-md;
+
+    h6 {
+      font-size: vars.$font-size-xs;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: vars.$spacing-2;
+    }
+
+    table {
+      font-size: vars.$font-size-sm;
+      margin: 0;
+    }
+  }
+}
+
 // Purpose Text
 .purpose-text {
   padding: vars.$spacing-md;
