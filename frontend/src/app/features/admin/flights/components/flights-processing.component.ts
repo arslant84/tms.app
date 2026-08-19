@@ -35,7 +35,6 @@ interface PendingTrf {
   destinationSummary: string;
   requestedDate: string;
   itinerary?: ItinerarySegment[];
-  tripType?: 'One Way' | 'Round Trip';
 }
 
 interface FlightLegForm {
@@ -164,12 +163,6 @@ export class FlightsProcessingComponent implements OnInit {
           const domesticDetails = trf.domestic_travel_details || trf.domesticTravelDetails;
           const externalDetails =
             trf.external_parties_travel_details || trf.externalPartiesTravelDetails;
-          const tripType: 'One Way' | 'Round Trip' =
-            overseasDetails?.tripType ||
-            homeLeaveDetails?.tripType ||
-            domesticDetails?.tripType ||
-            externalDetails?.tripType ||
-            'One Way';
 
           if (overseasDetails?.itinerary?.length) {
             itinerary = overseasDetails.itinerary;
@@ -201,6 +194,16 @@ export class FlightsProcessingComponent implements OnInit {
                 .join(', ');
               requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
             }
+          } else if (externalDetails?.itinerary?.length) {
+            itinerary = externalDetails.itinerary;
+            if (itinerary) {
+              destinationSummary = itinerary
+                .map(
+                  (s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`
+                )
+                .join(', ');
+              requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
+            }
           } else if (trf.purpose) {
             destinationSummary = trf.purpose.substring(0, 50) + '...';
           }
@@ -217,7 +220,6 @@ export class FlightsProcessingComponent implements OnInit {
             destinationSummary,
             requestedDate,
             itinerary,
-            tripType,
           };
         });
 
@@ -263,12 +265,22 @@ export class FlightsProcessingComponent implements OnInit {
   }
 
   /**
-   * True when the TRF's own itinerary is Round Trip - drives whether the
-   * Return segment row is shown in the booking form (auto, not a manual
-   * add/remove toggle).
+   * True when the TRF's own itinerary comes back to its starting point -
+   * drives whether the Return leg section is shown in the booking form.
+   * There's no persisted "trip type" field on the backend (the create
+   * wizard collects one locally but never sends it to the API), so this
+   * is inferred from the itinerary itself: a round trip's last leg lands
+   * back where the first leg departed from.
    */
   get isRoundTrip(): boolean {
-    return this.selectedTrf?.tripType === 'Round Trip';
+    const itinerary = this.selectedTrf?.itinerary;
+    if (!itinerary || itinerary.length < 2) {
+      return false;
+    }
+    const origin = itinerary[0].from_location || itinerary[0].from;
+    const finalDestination =
+      itinerary[itinerary.length - 1].to_location || itinerary[itinerary.length - 1].to;
+    return !!origin && !!finalDestination && origin === finalDestination;
   }
 
   /**
@@ -653,16 +665,38 @@ export class FlightsProcessingComponent implements OnInit {
    * Check if form is valid
    */
   isFormValid(): boolean {
-    if (!this.pnr || (this.isAirlineRequired && !this.airline) || !this.eTicketFile) {
-      return false;
+    return this.getValidationIssues().length === 0;
+  }
+
+  /**
+   * Human-readable list of what's still missing, shown next to the
+   * Confirm button so a disabled button is never a silent mystery.
+   */
+  getValidationIssues(): string[] {
+    const issues: string[] = [];
+    if (!this.pnr) {
+      issues.push('PNR / Booking Reference');
     }
-    if (!this.outboundLegs.length || !this.outboundLegs.every(leg => this.isLegValid(leg))) {
-      return false;
+    if (this.isAirlineRequired && !this.airline) {
+      issues.push('Airline');
     }
-    if (this.isRoundTrip) {
-      return this.returnLegs.length > 0 && this.returnLegs.every(leg => this.isLegValid(leg));
+    if (!this.eTicketFile) {
+      issues.push('E-ticket upload');
     }
-    return true;
+    this.outboundLegs.forEach((leg, i) => {
+      if (!this.isLegValid(leg)) {
+        issues.push(`Outbound leg ${i + 1}`);
+      }
+    });
+    if (this.isRoundTrip && this.returnLegs.length === 0) {
+      issues.push('At least one return leg');
+    }
+    this.returnLegs.forEach((leg, i) => {
+      if (!this.isLegValid(leg)) {
+        issues.push(`Return leg ${i + 1}`);
+      }
+    });
+    return issues;
   }
 
   private isLegValid(leg: FlightLegForm): boolean {
