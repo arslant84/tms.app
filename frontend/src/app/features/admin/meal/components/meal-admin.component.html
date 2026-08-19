@@ -182,15 +182,6 @@
                   >
                     <i class="bi bi-check-circle"></i>
                   </button>
-                  <button
-                    *ngIf="request.meal_processing_status !== 'Completed'"
-                    class="btn btn-sm btn-outline-success btn-icon"
-                    [disabled]="isProcessing(request.id)"
-                    (click)="markStatus(request, 'Completed')"
-                    title="Mark Completed"
-                  >
-                    <i class="bi bi-check2-all"></i>
-                  </button>
                 </div>
               </td>
             </tr>

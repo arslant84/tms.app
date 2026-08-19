@@ -335,12 +335,16 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 )
             if self.action == "update_meal_status" and not meal_queue:
                 return queryset
-            return (
+            queryset = (
                 queryset.filter(trfdailymealselection__isnull=False)
                 .exclude(status="Draft")
                 .distinct()
                 .order_by("-created_at")
             )
+            meal_status_filter = self.request.query_params.get("status")
+            if meal_status_filter:
+                queryset = queryset.filter(meal_processing_status=meal_status_filter)
+            return queryset
 
         # For retrieve (viewing details), check view_all permission first, then pending approvals
         if self.action == "retrieve":
