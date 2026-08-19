@@ -1596,38 +1596,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                         )
                     )
 
-        # Passport Details
-        passport_details = TrfPassportDetail.objects.filter(trf=trf)
-        if passport_details.exists():
-            elements.extend(pdf_export.section_heading("Passport Details", styles))
-            passport_data = [
-                ["Name", "Passport No.", "Nationality", "Date of Birth", "Expiry"]
-            ]
-            for passport in passport_details:
-                passport_data.append(
-                    [
-                        passport.full_name or "-",
-                        passport.passport_number or "-",
-                        passport.nationality or "-",
-                        (
-                            passport.date_of_birth.strftime("%Y-%m-%d")
-                            if passport.date_of_birth
-                            else "-"
-                        ),
-                        (
-                            passport.expiry_date.strftime("%Y-%m-%d")
-                            if hasattr(passport, "expiry_date") and passport.expiry_date
-                            else "-"
-                        ),
-                    ]
-                )
-            elements.append(
-                pdf_export.make_table(
-                    passport_data,
-                    [1.5 * inch, 1.3 * inch, 1.2 * inch, 1.2 * inch, 1 * inch],
-                )
-            )
-
         # Bank Details
         try:
             bank_detail = TrfAdvanceBankDetail.objects.get(trf=trf)

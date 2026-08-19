@@ -427,7 +427,7 @@ export class TrfDetailComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `TRF-${this.trfId}.pdf`;
+        link.download = `TSR-${this.trfData?.requestNumber || this.trfId}.pdf`;
         link.click();
         window.URL.revokeObjectURL(url);
         this.toastService.success('PDF exported successfully');
