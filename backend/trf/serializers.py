@@ -7,13 +7,63 @@ from .models import (
     TrfAdvanceBankDetail,
     TrfApprovalStep,
     TrfDailyMealSelection,
-    TrfFlightBooking,
     TrfItinerarySegment,
     TrfMealProvision,
     TrfPassportDetail,
 )
 
 User = get_user_model()
+
+
+def _build_flight_details(flight_booking, request=None):
+    """
+    Shared shape for the flight_details field on both the list and detail
+    TravelRequest serializers. `flight_booking` is a bookings.FlightBooking
+    instance (the real, populated model - see backend/trf/views.py's
+    book_flight action).
+    """
+
+    def split_date_time(value):
+        if not value:
+            return None, None
+        return value.date().isoformat(), value.time().isoformat()
+
+    departure_date, departure_time = split_date_time(flight_booking.departure_time)
+    arrival_date, arrival_time = split_date_time(flight_booking.arrival_time)
+    return_departure_date, return_departure_time = split_date_time(
+        flight_booking.return_departure_time
+    )
+    return_arrival_date, return_arrival_time = split_date_time(
+        flight_booking.return_arrival_time
+    )
+
+    return {
+        "id": flight_booking.id,
+        "flightType": flight_booking.flight_type,
+        "airline": flight_booking.airline,
+        "flightNumber": flight_booking.flight_number,
+        "flightClass": flight_booking.booking_class,
+        "departureLocation": flight_booking.departure_airport,
+        "arrivalLocation": flight_booking.arrival_airport,
+        "departureDate": departure_date,
+        "departureTime": departure_time,
+        "arrivalDate": arrival_date,
+        "arrivalTime": arrival_time,
+        "returnFlightNumber": flight_booking.return_flight_number,
+        "returnDepartureDate": return_departure_date,
+        "returnDepartureTime": return_departure_time,
+        "returnArrivalDate": return_arrival_date,
+        "returnArrivalTime": return_arrival_time,
+        "eTicketUrl": (
+            request.build_absolute_uri(flight_booking.e_ticket.url)
+            if flight_booking.e_ticket and request
+            else (flight_booking.e_ticket.url if flight_booking.e_ticket else None)
+        ),
+        "bookingReference": flight_booking.booking_reference,
+        "pnr": flight_booking.booking_reference,
+        "status": flight_booking.status,
+        "remarks": flight_booking.notes,
+    }
 
 
 # =============== NESTED/RELATED SERIALIZERS ===============
@@ -101,33 +151,6 @@ class TrfDailyMealSelectionSerializer(serializers.ModelSerializer):
             "dinner",
             "supper",
             "refreshment",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["id", "created_at", "updated_at"]
-
-
-class TrfFlightBookingSerializer(serializers.ModelSerializer):
-    """Serializer for TRF Flight Bookings"""
-
-    class Meta:
-        model = TrfFlightBooking
-        fields = [
-            "id",
-            "trf",
-            "flight_number",
-            "airline",
-            "flight_class",
-            "departure_location",
-            "arrival_location",
-            "departure_date",
-            "arrival_date",
-            "departure_time",
-            "arrival_time",
-            "booking_reference",
-            "status",
-            "remarks",
-            "created_by",
             "created_at",
             "updated_at",
         ]
@@ -358,56 +381,16 @@ class TravelRequestSerializer(serializers.ModelSerializer):
     def get_flight_details(self, obj):
         """Get flight booking details if exists"""
         flight_booking = obj.flight_bookings.first()
-        if flight_booking:
-            # Extract date and time from DateTimeFields
-            departure_date = (
-                flight_booking.departure_time.date().isoformat()
-                if flight_booking.departure_time
-                else None
-            )
-            departure_time = (
-                flight_booking.departure_time.time().isoformat()
-                if flight_booking.departure_time
-                else None
-            )
-            arrival_date = (
-                flight_booking.arrival_time.date().isoformat()
-                if flight_booking.arrival_time
-                else None
-            )
-            arrival_time_val = (
-                flight_booking.arrival_time.time().isoformat()
-                if flight_booking.arrival_time
-                else None
-            )
-
-            return {
-                "id": flight_booking.id,
-                "airline": flight_booking.airline,
-                "flightNumber": flight_booking.flight_number,
-                "flightClass": flight_booking.booking_class,
-                "departureLocation": flight_booking.departure_airport,
-                "arrivalLocation": flight_booking.arrival_airport,
-                "departureDate": departure_date,
-                "departureTime": departure_time,
-                "arrivalDate": arrival_date,
-                "arrivalTime": arrival_time_val,
-                "bookingReference": flight_booking.booking_reference,
-                "pnr": flight_booking.booking_reference,
-                "status": flight_booking.status,
-                "remarks": flight_booking.notes,
-                "createdBy": (
-                    flight_booking.booked_by.username
-                    if flight_booking.booked_by
-                    else None
-                ),
-                "createdAt": (
-                    flight_booking.created_at.isoformat()
-                    if flight_booking.created_at
-                    else None
-                ),
-            }
-        return None
+        if not flight_booking:
+            return None
+        details = _build_flight_details(flight_booking, self.context.get("request"))
+        details["createdBy"] = (
+            flight_booking.booked_by.username if flight_booking.booked_by else None
+        )
+        details["createdAt"] = (
+            flight_booking.created_at.isoformat() if flight_booking.created_at else None
+        )
+        return details
 
     def get_overseas_travel_details(self, obj):
         """Get overseas travel details with itinerary"""
@@ -533,9 +516,6 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
     daily_meals = TrfDailyMealSelectionSerializer(
         many=True, read_only=True, source="trfdailymealselection_set"
     )
-    flight_bookings = TrfFlightBookingSerializer(
-        many=True, read_only=True, source="trfflightbooking_set"
-    )
     itinerary_segments = TrfItinerarySegmentSerializer(
         many=True, read_only=True, source="trfitinerarysegment_set"
     )
@@ -589,7 +569,6 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             "bank_detail",
             "approval_steps",
             "daily_meals",
-            "flight_bookings",
             "flight_details",
             "itinerary_segments",
             "meal_provisions",
@@ -764,56 +743,16 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
     def get_flight_details(self, obj):
         """Get flight booking details if exists"""
         flight_booking = obj.flight_bookings.first()
-        if flight_booking:
-            # Extract date and time from DateTimeFields
-            departure_date = (
-                flight_booking.departure_time.date().isoformat()
-                if flight_booking.departure_time
-                else None
-            )
-            departure_time = (
-                flight_booking.departure_time.time().isoformat()
-                if flight_booking.departure_time
-                else None
-            )
-            arrival_date = (
-                flight_booking.arrival_time.date().isoformat()
-                if flight_booking.arrival_time
-                else None
-            )
-            arrival_time_val = (
-                flight_booking.arrival_time.time().isoformat()
-                if flight_booking.arrival_time
-                else None
-            )
-
-            return {
-                "id": flight_booking.id,
-                "airline": flight_booking.airline,
-                "flightNumber": flight_booking.flight_number,
-                "flightClass": flight_booking.booking_class,
-                "departureLocation": flight_booking.departure_airport,
-                "arrivalLocation": flight_booking.arrival_airport,
-                "departureDate": departure_date,
-                "departureTime": departure_time,
-                "arrivalDate": arrival_date,
-                "arrivalTime": arrival_time_val,
-                "bookingReference": flight_booking.booking_reference,
-                "pnr": flight_booking.booking_reference,
-                "status": flight_booking.status,
-                "remarks": flight_booking.notes,
-                "processedBy": (
-                    flight_booking.booked_by.username
-                    if flight_booking.booked_by
-                    else None
-                ),
-                "processedDate": (
-                    flight_booking.created_at.isoformat()
-                    if flight_booking.created_at
-                    else None
-                ),
-            }
-        return None
+        if not flight_booking:
+            return None
+        details = _build_flight_details(flight_booking, self.context.get("request"))
+        details["processedBy"] = (
+            flight_booking.booked_by.username if flight_booking.booked_by else None
+        )
+        details["processedDate"] = (
+            flight_booking.created_at.isoformat() if flight_booking.created_at else None
+        )
+        return details
 
     def get_selected_approvers(self, obj):
         """

@@ -68,7 +68,13 @@ class FlightBooking(models.Model):
         default=FlightType.ONE_WAY,
         help_text="Type of flight booking",
     )
-    airline = models.CharField(max_length=100, help_text="Airline name")
+    airline = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Airline name. Required for Overseas travel; optional for Domestic "
+        "(single-airline market) - enforced in the booking view, not at the DB level.",
+    )
     airline_code = models.CharField(
         max_length=10,
         blank=True,
@@ -76,7 +82,18 @@ class FlightBooking(models.Model):
         help_text="2-letter IATA code (e.g., EK, QR)",
     )
     flight_number = models.CharField(
-        max_length=20, help_text="Flight number (e.g., EK123)"
+        max_length=20, help_text="Outbound flight number (e.g., EK123)"
+    )
+
+    # Return leg (round trip only - null/blank for one-way bookings)
+    return_flight_number = models.CharField(
+        max_length=20, blank=True, null=True, help_text="Return flight number"
+    )
+    return_departure_time = models.DateTimeField(
+        null=True, blank=True, help_text="Return leg scheduled departure date and time"
+    )
+    return_arrival_time = models.DateTimeField(
+        null=True, blank=True, help_text="Return leg scheduled arrival date and time"
     )
 
     # Route Information
@@ -124,6 +141,12 @@ class FlightBooking(models.Model):
     )
     ticket_number = models.CharField(
         max_length=50, blank=True, null=True, help_text="E-ticket number"
+    )
+    e_ticket = models.FileField(
+        upload_to="flight_tickets/",
+        null=True,
+        blank=True,
+        help_text="Uploaded e-ticket document",
     )
 
     # Baggage Allowance

@@ -37,7 +37,6 @@ from .models import (
     TrfAdvanceBankDetail,
     TrfApprovalStep,
     TrfDailyMealSelection,
-    TrfFlightBooking,
     TrfItinerarySegment,
     TrfMealProvision,
     TrfPassportDetail,
@@ -52,7 +51,6 @@ from .serializers import (
     TrfAdvanceBankDetailSerializer,
     TrfApprovalStepSerializer,
     TrfDailyMealSelectionSerializer,
-    TrfFlightBookingSerializer,
     TrfItinerarySegmentSerializer,
     TrfMealProvisionSerializer,
     TrfPassportDetailSerializer,
@@ -1127,22 +1125,26 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         Book a flight for an approved TRF
         Creates a FlightBooking record and links it to the TRF
 
-        Expected payload:
+        Expected payload (multipart/form-data, since eTicket is a file):
         {
             "pnr": "ABC123",
-            "airline": "MH",
+            "airline": "MH",              # required only for Overseas travel
             "flightNumber": "MH123",
             "departureAirport": "KUL",
             "arrivalAirport": "LHR",
             "departureDateTime": "2025-12-01T10:00:00",
             "arrivalDateTime": "2025-12-01T18:00:00",
+            "returnFlightNumber": "MH124",          # optional, round trip only
+            "returnDepartureDateTime": "...",       # optional, round trip only
+            "returnArrivalDateTime": "...",         # optional, round trip only
+            "eTicket": <file>,             # required on first booking
             "flightNotes": "Optional notes"
         }
         """
         import traceback
         from datetime import datetime
 
-        from bookings.models import FlightBooking
+        from bookings.models import FlightBooking, FlightType
 
         trf = self.get_object()
 
@@ -1150,7 +1152,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         logger.debug(f"TRF ID: {trf.id}")
         logger.debug(f"TRF Status: [{trf.status}]")
         logger.debug(f"TRF Travel Type: {trf.travel_type}")
-        logger.debug(f"Request Data: {request.data}")
         logger.debug("========================\n")
 
         # Validate TRF status - allow booking for approved TRFs or updating existing bookings
@@ -1169,30 +1170,32 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         arrival_airport = request.data.get("arrivalAirport", "")
         departure_datetime_str = request.data.get("departureDateTime")
         arrival_datetime_str = request.data.get("arrivalDateTime")
+        return_flight_number = request.data.get("returnFlightNumber", "")
+        return_departure_datetime_str = request.data.get("returnDepartureDateTime")
+        return_arrival_datetime_str = request.data.get("returnArrivalDateTime")
+        e_ticket = request.FILES.get("eTicket")
         flight_notes = request.data.get("flightNotes", "")
 
-        logger.debug("Extracted data:")
-        logger.debug(f"  PNR: {pnr}")
-        logger.debug(f"  Airline: {airline}")
-        logger.debug(f"  Flight Number: {flight_number}")
-        logger.debug(f"  Departure Airport: {departure_airport}")
-        logger.debug(f"  Arrival Airport: {arrival_airport}")
-        logger.debug(f"  Departure DateTime: {departure_datetime_str}")
-        logger.debug(f"  Arrival DateTime: {arrival_datetime_str}")
+        existing_booking = FlightBooking.objects.filter(trf=trf).first()
 
-        # Validate required fields
-        if not all([pnr, airline, flight_number, departure_airport, arrival_airport]):
-            missing = []
-            if not pnr:
-                missing.append("pnr")
-            if not airline:
-                missing.append("airline")
-            if not flight_number:
-                missing.append("flightNumber")
-            if not departure_airport:
-                missing.append("departureAirport")
-            if not arrival_airport:
-                missing.append("arrivalAirport")
+        # Validate required fields. Airline is only required for Overseas
+        # travel - domestic routes have a single national carrier, so
+        # forcing admins to retype it every time added no value.
+        required = {
+            "pnr": pnr,
+            "flightNumber": flight_number,
+            "departureAirport": departure_airport,
+            "arrivalAirport": arrival_airport,
+        }
+        if trf.travel_type == "Overseas":
+            required["airline"] = airline
+        missing = [name for name, value in required.items() if not value]
+        # E-ticket is required the first time a booking is created; an
+        # existing booking already has one on file, so re-uploading isn't
+        # forced on every edit.
+        if not e_ticket and not (existing_booking and existing_booking.e_ticket):
+            missing.append("eTicket")
+        if missing:
             error_msg = f'Missing required fields: {", ".join(missing)}'
             logger.error(f" Field validation failed: {error_msg}")
             return error_response(
@@ -1202,33 +1205,31 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             )
 
         # Parse datetime strings
+        def parse_datetime(value, field_label):
+            if not value:
+                return None
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                from django.utils import timezone as django_tz
+
+                parsed = django_tz.make_aware(parsed)
+            return parsed
+
         try:
-            if departure_datetime_str:
-                # Handle both with and without timezone
-                departure_time = datetime.fromisoformat(
-                    departure_datetime_str.replace("Z", "+00:00")
-                )
-                if departure_time.tzinfo is None:
-                    from django.utils import timezone as django_tz
-
-                    departure_time = django_tz.make_aware(departure_time)
-            else:
-                departure_time = timezone.now()
-
-            if arrival_datetime_str:
-                arrival_time = datetime.fromisoformat(
-                    arrival_datetime_str.replace("Z", "+00:00")
-                )
-                if arrival_time.tzinfo is None:
-                    from django.utils import timezone as django_tz
-
-                    arrival_time = django_tz.make_aware(arrival_time)
-            else:
-                arrival_time = timezone.now()
-
-            logger.debug("Parsed datetimes:")
-            logger.debug(f"  Departure: {departure_time}")
-            logger.debug(f"  Arrival: {arrival_time}")
+            departure_time = (
+                parse_datetime(departure_datetime_str, "departureDateTime")
+                or timezone.now()
+            )
+            arrival_time = (
+                parse_datetime(arrival_datetime_str, "arrivalDateTime")
+                or timezone.now()
+            )
+            return_departure_time = parse_datetime(
+                return_departure_datetime_str, "returnDepartureDateTime"
+            )
+            return_arrival_time = parse_datetime(
+                return_arrival_datetime_str, "returnArrivalDateTime"
+            )
         except (ValueError, TypeError) as e:
             error_msg = f"Invalid datetime format: {str(e)}"
             logger.error(f" DateTime parsing failed: {error_msg}")
@@ -1237,8 +1238,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 message=error_msg, status_code=status.HTTP_400_BAD_REQUEST
             )
 
+        flight_type = (
+            FlightType.ROUND_TRIP if return_flight_number else FlightType.ONE_WAY
+        )
+
         # Check if a flight booking already exists for this TRF
-        existing_booking = FlightBooking.objects.filter(trf=trf).first()
         if existing_booking:
             # Check if the new PNR is used by a different booking
             if existing_booking.booking_reference != pnr:
@@ -1258,6 +1262,12 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             existing_booking.arrival_airport = arrival_airport
             existing_booking.departure_time = departure_time
             existing_booking.arrival_time = arrival_time
+            existing_booking.return_flight_number = return_flight_number or None
+            existing_booking.return_departure_time = return_departure_time
+            existing_booking.return_arrival_time = return_arrival_time
+            existing_booking.flight_type = flight_type
+            if e_ticket:
+                existing_booking.e_ticket = e_ticket
             existing_booking.booking_reference = pnr
             existing_booking.status = "CONFIRMED"
             existing_booking.booked_by = request.user
@@ -1280,12 +1290,17 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             flight_booking = FlightBooking.objects.create(
                 trf=trf,
                 user=trf.created_by if trf.created_by else request.user,
-                airline=airline,
+                airline=airline or None,
                 flight_number=flight_number,
                 departure_airport=departure_airport,
                 arrival_airport=arrival_airport,
                 departure_time=departure_time,
                 arrival_time=arrival_time,
+                return_flight_number=return_flight_number or None,
+                return_departure_time=return_departure_time,
+                return_arrival_time=return_arrival_time,
+                flight_type=flight_type,
+                e_ticket=e_ticket,
                 booking_reference=pnr,
                 status="CONFIRMED",
                 booked_by=request.user,
@@ -1681,59 +1696,67 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             )
 
         # Flight Booking Details (status-dependent - only exists once
-        # Ticketing has processed an Approved request)
-        flight_bookings = TrfFlightBooking.objects.filter(trf=trf).order_by(
-            "departure_date"
-        )
+        # Ticketing has processed an Approved request). Reads the real
+        # bookings.FlightBooking model (trf.flight_bookings) - the legacy
+        # trf.models.TrfFlightBooking this used to read from was never
+        # populated by the actual booking flow (backend/trf/views.py's
+        # book_flight action always wrote to bookings.FlightBooking).
+        flight_bookings = trf.flight_bookings.all().order_by("departure_time")
         if flight_bookings.exists():
             elements.extend(
                 pdf_export.section_heading("Flight Booking Details", styles)
             )
-            flight_data = [
-                [
-                    "Flight",
-                    "Class",
-                    "From",
-                    "To",
-                    "Departure",
-                    "Arrival",
-                    "Status",
-                ]
-            ]
             for booking in flight_bookings:
-                flight_data.append(
-                    [
-                        f"{booking.airline or ''} {booking.flight_number}".strip(),
-                        booking.flight_class or "-",
-                        booking.departure_location or "-",
-                        booking.arrival_location or "-",
-                        (
-                            f"{booking.departure_date.strftime('%Y-%m-%d')} {booking.departure_time.strftime('%H:%M')}"
-                            if booking.departure_date and booking.departure_time
-                            else "-"
-                        ),
-                        (
-                            f"{booking.arrival_date.strftime('%Y-%m-%d')} {booking.arrival_time.strftime('%H:%M')}"
-                            if booking.arrival_date and booking.arrival_time
-                            else "-"
-                        ),
-                        booking.status or "-",
-                    ]
+                summary_data = [
+                    ["Field", "Value"],
+                    ["PNR / Booking Reference", booking.booking_reference or "-"],
+                    ["Airline", booking.airline or "-"],
+                    ["Status", booking.status or "-"],
+                ]
+                elements.append(
+                    pdf_export.make_table(summary_data, [2 * inch, 5 * inch])
                 )
-            elements.append(
-                pdf_export.make_table(
-                    flight_data,
+
+                segment_data = [
+                    ["Segment", "Flight No.", "Departure", "Arrival"],
                     [
-                        1 * inch,
-                        0.7 * inch,
-                        1 * inch,
-                        1 * inch,
-                        1.1 * inch,
-                        1.1 * inch,
-                        0.9 * inch,
+                        "Outbound",
+                        booking.flight_number or "-",
+                        (
+                            booking.departure_time.strftime("%Y-%m-%d %H:%M")
+                            if booking.departure_time
+                            else "-"
+                        ),
+                        (
+                            booking.arrival_time.strftime("%Y-%m-%d %H:%M")
+                            if booking.arrival_time
+                            else "-"
+                        ),
                     ],
+                ]
+                if booking.return_flight_number or booking.return_departure_time:
+                    segment_data.append(
+                        [
+                            "Return",
+                            booking.return_flight_number or "-",
+                            (
+                                booking.return_departure_time.strftime("%Y-%m-%d %H:%M")
+                                if booking.return_departure_time
+                                else "-"
+                            ),
+                            (
+                                booking.return_arrival_time.strftime("%Y-%m-%d %H:%M")
+                                if booking.return_arrival_time
+                                else "-"
+                            ),
+                        ]
+                    )
+                elements.append(
+                    pdf_export.make_table(
+                        segment_data,
+                        [1.2 * inch, 1.5 * inch, 2.15 * inch, 2.15 * inch],
+                    )
                 )
-            )
 
         # Approval History
         # Legacy fallback path (trf/views.py's non-workflow approve/reject
@@ -1882,20 +1905,6 @@ class TrfDailyMealSelectionViewSet(viewsets.ModelViewSet):
         if trf_id:
             return self.queryset.filter(trf_id=trf_id)
         return self.queryset.order_by("meal_date")
-
-
-class TrfFlightBookingViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Flight Bookings"""
-
-    queryset = TrfFlightBooking.objects.all()
-    serializer_class = TrfFlightBookingSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        trf_id = self.request.query_params.get("trf", None)
-        if trf_id:
-            return self.queryset.filter(trf_id=trf_id)
-        return self.queryset.order_by("departure_date", "departure_time")
 
 
 class TrfItinerarySegmentViewSet(viewsets.ModelViewSet):

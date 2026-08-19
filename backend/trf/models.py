@@ -154,25 +154,6 @@ class TrfDailyMealSelection(models.Model):
         unique_together = ("trf", "meal_date")
 
 
-class TrfFlightBooking(models.Model):
-    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
-    flight_number = models.CharField(max_length=20)
-    flight_class = models.CharField(max_length=20)
-    departure_location = models.CharField(max_length=100)
-    arrival_location = models.CharField(max_length=100)
-    departure_date = models.DateField()
-    arrival_date = models.DateField()
-    departure_time = models.TimeField()
-    arrival_time = models.TimeField()
-    booking_reference = models.CharField(max_length=50, blank=True, null=True)
-    status = models.CharField(max_length=20, default="Pending")
-    remarks = models.TextField(blank=True, null=True)
-    created_by = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    airline = models.CharField(max_length=100, blank=True, null=True)
-
-
 class TrfItinerarySegment(models.Model):
     trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE)
     segment_date = models.DateField(blank=True, null=True)

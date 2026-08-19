@@ -35,6 +35,7 @@ interface PendingTrf {
   destinationSummary: string;
   requestedDate: string;
   itinerary?: ItinerarySegment[];
+  tripType?: 'One Way' | 'Round Trip';
 }
 
 interface BookedFlight {
@@ -90,6 +91,12 @@ export class FlightsProcessingComponent implements OnInit {
   departureTime = '';
   arrivalDate: string = '';
   arrivalTime = '';
+  returnFlightNumber = '';
+  returnDepartureDate = '';
+  returnDepartureTime = '';
+  returnArrivalDate = '';
+  returnArrivalTime = '';
+  eTicketFile: File | null = null;
   flightNotes = '';
 
   // Search and filter
@@ -144,6 +151,14 @@ export class FlightsProcessingComponent implements OnInit {
           const overseasDetails = trf.overseas_travel_details || trf.overseasTravelDetails;
           const homeLeaveDetails = trf.home_leave_details || trf.overseasTravelDetails;
           const domesticDetails = trf.domestic_travel_details || trf.domesticTravelDetails;
+          const externalDetails =
+            trf.external_parties_travel_details || trf.externalPartiesTravelDetails;
+          const tripType: 'One Way' | 'Round Trip' =
+            overseasDetails?.tripType ||
+            homeLeaveDetails?.tripType ||
+            domesticDetails?.tripType ||
+            externalDetails?.tripType ||
+            'One Way';
 
           if (overseasDetails?.itinerary?.length) {
             itinerary = overseasDetails.itinerary;
@@ -191,6 +206,7 @@ export class FlightsProcessingComponent implements OnInit {
             destinationSummary,
             requestedDate,
             itinerary,
+            tripType,
           };
         });
 
@@ -236,46 +252,84 @@ export class FlightsProcessingComponent implements OnInit {
   }
 
   /**
-   * Select TRF for booking
+   * True when the TRF's own itinerary is Round Trip - drives whether the
+   * Return segment row is shown in the booking form (auto, not a manual
+   * add/remove toggle).
    */
-  // eslint-disable-next-line complexity
+  get isRoundTrip(): boolean {
+    return this.selectedTrf?.tripType === 'Round Trip';
+  }
+
+  /**
+   * Airline is only required for Overseas travel - domestic routes have a
+   * single national carrier, so it isn't worth forcing admins to retype it.
+   */
+  get isAirlineRequired(): boolean {
+    return this.selectedTrf?.travelType === 'Overseas';
+  }
+
+  /**
+   * Select TRF for booking. Outbound is always the first itinerary segment;
+   * Return (shown only when the TRF is Round Trip) is the last segment -
+   * the itinerary always has >=2 segments for Round Trip TRFs.
+   */
   selectTrf(trf: PendingTrf): void {
     this.selectedTrf = trf;
     this.resetFormFields();
 
-    // Auto-populate from itinerary if available
-    if (trf.itinerary && trf.itinerary.length > 0) {
-      const firstSegment = trf.itinerary[0];
-      const lastSegment = trf.itinerary[trf.itinerary.length - 1];
-
-      // Departure details
-      if (firstSegment.from_location || firstSegment.from) {
-        this.departureAirport = firstSegment.from_location || firstSegment.from || '';
-      }
-      if (firstSegment.departure_date || firstSegment.date) {
-        const depDate = firstSegment.departure_date || firstSegment.date;
-        if (depDate) {
-          this.departureDate = this.formatDateForInput(depDate);
-        }
-      }
-      if (firstSegment.etd) {
-        this.departureTime = firstSegment.etd;
-      }
-
-      // Arrival details
-      if (lastSegment.to_location || lastSegment.to) {
-        this.arrivalAirport = lastSegment.to_location || lastSegment.to || '';
-      }
-      if (lastSegment.arrival_date || lastSegment.date) {
-        const arrDate = lastSegment.arrival_date || lastSegment.date;
-        if (arrDate) {
-          this.arrivalDate = this.formatDateForInput(arrDate);
-        }
-      }
-      if (lastSegment.eta) {
-        this.arrivalTime = lastSegment.eta;
-      }
+    if (!trf.itinerary || trf.itinerary.length === 0) {
+      return;
     }
+
+    this.populateOutboundSegment(trf.itinerary[0]);
+
+    if (this.isRoundTrip && trf.itinerary.length >= 2) {
+      this.populateReturnSegment(trf.itinerary[trf.itinerary.length - 1]);
+    }
+  }
+
+  private populateOutboundSegment(segment: ItinerarySegment): void {
+    this.departureAirport = segment.from_location || segment.from || '';
+    this.arrivalAirport = segment.to_location || segment.to || '';
+    const depDate = segment.departure_date || segment.date;
+    if (depDate) {
+      this.departureDate = this.formatDateForInput(depDate);
+    }
+    if (segment.etd) {
+      this.departureTime = segment.etd;
+    }
+    const arrDate = segment.arrival_date || segment.date;
+    if (arrDate) {
+      this.arrivalDate = this.formatDateForInput(arrDate);
+    }
+    if (segment.eta) {
+      this.arrivalTime = segment.eta;
+    }
+  }
+
+  private populateReturnSegment(segment: ItinerarySegment): void {
+    const depDate = segment.departure_date || segment.date;
+    if (depDate) {
+      this.returnDepartureDate = this.formatDateForInput(depDate);
+    }
+    if (segment.etd) {
+      this.returnDepartureTime = segment.etd;
+    }
+    const arrDate = segment.arrival_date || segment.date;
+    if (arrDate) {
+      this.returnArrivalDate = this.formatDateForInput(arrDate);
+    }
+    if (segment.eta) {
+      this.returnArrivalTime = segment.eta;
+    }
+  }
+
+  /**
+   * Handle e-ticket file selection
+   */
+  onETicketSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.eTicketFile = input.files?.[0] || null;
   }
 
   /**
@@ -291,7 +345,75 @@ export class FlightsProcessingComponent implements OnInit {
     this.departureTime = '';
     this.arrivalDate = '';
     this.arrivalTime = '';
+    this.returnFlightNumber = '';
+    this.returnDepartureDate = '';
+    this.returnDepartureTime = '';
+    this.returnArrivalDate = '';
+    this.returnArrivalTime = '';
+    this.eTicketFile = null;
     this.flightNotes = '';
+  }
+
+  /**
+   * Validate the four HH:MM time inputs - type="time" can be bypassed via
+   * paste, so this catches anything the browser's own picker wouldn't.
+   */
+  private validateTimeFields(): boolean {
+    const timePattern = /^\d{2}:\d{2}(:\d{2})?$/;
+    const checks: Array<[string, string]> = [
+      [this.departureTime, 'departure time'],
+      [this.arrivalTime, 'arrival time'],
+      [this.returnDepartureTime, 'return departure time'],
+      [this.returnArrivalTime, 'return arrival time'],
+    ];
+    for (const [value, label] of checks) {
+      if (value && !timePattern.test(value)) {
+        this.toastService.error(`Invalid ${label}. Please use HH:MM format.`);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private buildBookingFormData(): FormData {
+    const payload = new FormData();
+    payload.set('pnr', this.pnr);
+    if (this.airline) {
+      payload.set('airline', this.airline);
+    }
+    payload.set('flightNumber', this.flightNumber);
+    payload.set('departureAirport', this.departureAirport);
+    payload.set('arrivalAirport', this.arrivalAirport);
+    if (this.departureDate) {
+      payload.set('departureDateTime', `${this.departureDate}T${this.departureTime || '00:00'}`);
+    }
+    if (this.arrivalDate) {
+      payload.set('arrivalDateTime', `${this.arrivalDate}T${this.arrivalTime || '00:00'}`);
+    }
+    if (this.isRoundTrip) {
+      this.appendReturnSegment(payload);
+    }
+    if (this.eTicketFile) {
+      payload.set('eTicket', this.eTicketFile);
+    }
+    payload.set('flightNotes', this.flightNotes);
+    return payload;
+  }
+
+  private appendReturnSegment(payload: FormData): void {
+    payload.set('returnFlightNumber', this.returnFlightNumber);
+    if (this.returnDepartureDate) {
+      payload.set(
+        'returnDepartureDateTime',
+        `${this.returnDepartureDate}T${this.returnDepartureTime || '00:00'}`
+      );
+    }
+    if (this.returnArrivalDate) {
+      payload.set(
+        'returnArrivalDateTime',
+        `${this.returnArrivalDate}T${this.returnArrivalTime || '00:00'}`
+      );
+    }
   }
 
   /**
@@ -303,33 +425,12 @@ export class FlightsProcessingComponent implements OnInit {
       return;
     }
 
-    // Validate time fields — type="time" inputs can be bypassed via paste.
-    const timePattern = /^\d{2}:\d{2}(:\d{2})?$/;
-    if (this.departureTime && !timePattern.test(this.departureTime)) {
-      this.toastService.error('Invalid departure time. Please use HH:MM format.');
-      return;
-    }
-    if (this.arrivalTime && !timePattern.test(this.arrivalTime)) {
-      this.toastService.error('Invalid arrival time. Please use HH:MM format.');
+    if (!this.validateTimeFields()) {
       return;
     }
 
     this.isProcessing = true;
-
-    const payload = {
-      pnr: this.pnr,
-      airline: this.airline,
-      flightNumber: this.flightNumber,
-      departureAirport: this.departureAirport,
-      arrivalAirport: this.arrivalAirport,
-      departureDateTime: this.departureDate
-        ? `${this.departureDate}T${this.departureTime || '00:00'}`
-        : undefined,
-      arrivalDateTime: this.arrivalDate
-        ? `${this.arrivalDate}T${this.arrivalTime || '00:00'}`
-        : undefined,
-      flightNotes: this.flightNotes,
-    };
+    const payload = this.buildBookingFormData();
 
     this.trfService.bookFlight(this.selectedTrf.id, payload).subscribe({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -390,7 +491,9 @@ export class FlightsProcessingComponent implements OnInit {
           this.isProcessing = false;
         },
         error: err => {
-          this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to cancel request'));
+          this.toastService.error(
+            this.errorHandler.getErrorMessage(err, 'Failed to cancel request')
+          );
           this.isProcessing = false;
         },
       });
@@ -499,16 +602,31 @@ export class FlightsProcessingComponent implements OnInit {
    * Check if form is valid
    */
   isFormValid(): boolean {
+    return this.isOutboundValid() && (!this.isRoundTrip || this.isReturnSegmentValid());
+  }
+
+  private isOutboundValid(): boolean {
     return !!(
       this.pnr &&
-      this.airline &&
+      (!this.isAirlineRequired || this.airline) &&
       this.flightNumber &&
       this.departureAirport &&
       this.arrivalAirport &&
       this.departureDate &&
       this.departureTime &&
       this.arrivalDate &&
-      this.arrivalTime
+      this.arrivalTime &&
+      this.eTicketFile
+    );
+  }
+
+  private isReturnSegmentValid(): boolean {
+    return !!(
+      this.returnFlightNumber &&
+      this.returnDepartureDate &&
+      this.returnDepartureTime &&
+      this.returnArrivalDate &&
+      this.returnArrivalTime
     );
   }
 
