@@ -520,6 +520,26 @@
     }
   }
 
+  .segment-block {
+    border: vars.$card-border;
+    border-radius: vars.$card-border-radius;
+    padding: vars.$spacing-3;
+    margin-bottom: vars.$spacing-md;
+
+    .segment-heading {
+      font-size: vars.$font-size-xs;
+      font-weight: vars.$font-weight-semibold;
+      color: vars.$gray-500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0 0 vars.$spacing-3;
+    }
+
+    .row + .row {
+      margin-top: vars.$spacing-md;
+    }
+  }
+
   .action-buttons-group {
     margin: vars.$spacing-5 calc(-1 * vars.$spacing-5) calc(-1 * vars.$spacing-5)
       calc(-1 * vars.$spacing-5);

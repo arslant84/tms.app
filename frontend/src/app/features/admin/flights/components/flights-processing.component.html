@@ -349,7 +349,9 @@
 
                   <!-- Airline -->
                   <div class="form-group">
-                    <label for="airline">Airline *</label>
+                    <label for="airline"
+                      >Airline{{ isAirlineRequired ? ' *' : ' (optional)' }}</label
+                    >
                     <input
                       type="text"
                       id="airline"
@@ -357,111 +359,210 @@
                       name="airline"
                       class="form-control"
                       placeholder="e.g., Turkish Airlines"
-                      required
+                      [required]="isAirlineRequired"
                     />
+                    <small *ngIf="!isAirlineRequired" class="form-text text-muted">
+                      <i class="bi bi-info-circle me-1"></i>
+                      Only required for Overseas travel
+                    </small>
                   </div>
 
-                  <!-- Flight Number -->
-                  <div class="form-group">
-                    <label for="flightNumber">Flight Number *</label>
-                    <input
-                      type="text"
-                      id="flightNumber"
-                      [(ngModel)]="flightNumber"
-                      name="flightNumber"
-                      class="form-control"
-                      placeholder="e.g., TK1234"
-                      required
-                    />
-                  </div>
-
-                  <!-- Departure Details -->
-                  <div class="form-group">
-                    <label for="departureAirport">Departure Airport *</label>
-                    <input
-                      type="text"
-                      id="departureAirport"
-                      [(ngModel)]="departureAirport"
-                      name="departureAirport"
-                      class="form-control"
-                      placeholder="e.g., ASB (Ashgabat)"
-                      required
-                    />
-                  </div>
-
-                  <!-- Arrival Details -->
-                  <div class="form-group">
-                    <label for="arrivalAirport">Arrival Airport *</label>
-                    <input
-                      type="text"
-                      id="arrivalAirport"
-                      [(ngModel)]="arrivalAirport"
-                      name="arrivalAirport"
-                      class="form-control"
-                      placeholder="e.g., IST (Istanbul)"
-                      required
-                    />
-                  </div>
-
-                  <!-- Departure Date & Time -->
+                  <!-- Departure / Arrival Airport -->
                   <div class="row g-3">
                     <div class="col-md-6">
                       <div class="form-group mb-0">
-                        <label for="departureDate">Departure Date *</label>
+                        <label for="departureAirport">Departure Airport *</label>
                         <input
-                          type="date"
-                          id="departureDate"
-                          [(ngModel)]="departureDate"
-                          name="departureDate"
+                          type="text"
+                          id="departureAirport"
+                          [(ngModel)]="departureAirport"
+                          name="departureAirport"
                           class="form-control"
+                          placeholder="e.g., ASB (Ashgabat)"
                           required
                         />
                       </div>
                     </div>
                     <div class="col-md-6">
                       <div class="form-group mb-0">
-                        <label for="departureTime">Departure Time *</label>
+                        <label for="arrivalAirport">Arrival Airport *</label>
                         <input
-                          type="time"
-                          id="departureTime"
-                          [(ngModel)]="departureTime"
-                          name="departureTime"
+                          type="text"
+                          id="arrivalAirport"
+                          [(ngModel)]="arrivalAirport"
+                          name="arrivalAirport"
                           class="form-control"
+                          placeholder="e.g., IST (Istanbul)"
                           required
                         />
                       </div>
                     </div>
                   </div>
 
-                  <!-- Arrival Date & Time -->
-                  <div class="row g-3">
-                    <div class="col-md-6">
-                      <div class="form-group mb-0">
-                        <label for="arrivalDate">Arrival Date *</label>
-                        <input
-                          type="date"
-                          id="arrivalDate"
-                          [(ngModel)]="arrivalDate"
-                          name="arrivalDate"
-                          class="form-control"
-                          [min]="departureDate"
-                          required
-                        />
+                  <!-- Outbound Segment -->
+                  <div class="segment-block">
+                    <p class="segment-heading">Outbound</p>
+                    <div class="form-group">
+                      <label for="flightNumber">Flight Number *</label>
+                      <input
+                        type="text"
+                        id="flightNumber"
+                        [(ngModel)]="flightNumber"
+                        name="flightNumber"
+                        class="form-control"
+                        placeholder="e.g., TK1234"
+                        required
+                      />
+                    </div>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <div class="form-group mb-0">
+                          <label for="departureDate">Departure Date *</label>
+                          <input
+                            type="date"
+                            id="departureDate"
+                            [(ngModel)]="departureDate"
+                            name="departureDate"
+                            class="form-control"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group mb-0">
+                          <label for="departureTime">Departure Time *</label>
+                          <input
+                            type="time"
+                            id="departureTime"
+                            [(ngModel)]="departureTime"
+                            name="departureTime"
+                            class="form-control"
+                            required
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div class="col-md-6">
-                      <div class="form-group mb-0">
-                        <label for="arrivalTime">Arrival Time *</label>
-                        <input
-                          type="time"
-                          id="arrivalTime"
-                          [(ngModel)]="arrivalTime"
-                          name="arrivalTime"
-                          class="form-control"
-                          required
-                        />
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <div class="form-group mb-0">
+                          <label for="arrivalDate">Arrival Date *</label>
+                          <input
+                            type="date"
+                            id="arrivalDate"
+                            [(ngModel)]="arrivalDate"
+                            name="arrivalDate"
+                            class="form-control"
+                            [min]="departureDate"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group mb-0">
+                          <label for="arrivalTime">Arrival Time *</label>
+                          <input
+                            type="time"
+                            id="arrivalTime"
+                            [(ngModel)]="arrivalTime"
+                            name="arrivalTime"
+                            class="form-control"
+                            required
+                          />
+                        </div>
                       </div>
                     </div>
+                  </div>
+
+                  <!-- Return Segment (round trip only, auto-shown from the TSR's own itinerary) -->
+                  <div class="segment-block" *ngIf="isRoundTrip">
+                    <p class="segment-heading">Return</p>
+                    <div class="form-group">
+                      <label for="returnFlightNumber">Flight Number *</label>
+                      <input
+                        type="text"
+                        id="returnFlightNumber"
+                        [(ngModel)]="returnFlightNumber"
+                        name="returnFlightNumber"
+                        class="form-control"
+                        placeholder="e.g., TK1235"
+                        required
+                      />
+                    </div>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <div class="form-group mb-0">
+                          <label for="returnDepartureDate">Departure Date *</label>
+                          <input
+                            type="date"
+                            id="returnDepartureDate"
+                            [(ngModel)]="returnDepartureDate"
+                            name="returnDepartureDate"
+                            class="form-control"
+                            [min]="arrivalDate"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group mb-0">
+                          <label for="returnDepartureTime">Departure Time *</label>
+                          <input
+                            type="time"
+                            id="returnDepartureTime"
+                            [(ngModel)]="returnDepartureTime"
+                            name="returnDepartureTime"
+                            class="form-control"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <div class="form-group mb-0">
+                          <label for="returnArrivalDate">Arrival Date *</label>
+                          <input
+                            type="date"
+                            id="returnArrivalDate"
+                            [(ngModel)]="returnArrivalDate"
+                            name="returnArrivalDate"
+                            class="form-control"
+                            [min]="returnDepartureDate"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="form-group mb-0">
+                          <label for="returnArrivalTime">Arrival Time *</label>
+                          <input
+                            type="time"
+                            id="returnArrivalTime"
+                            [(ngModel)]="returnArrivalTime"
+                            name="returnArrivalTime"
+                            class="form-control"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- E-ticket Upload -->
+                  <div class="form-group">
+                    <label for="eTicket">E-ticket Upload *</label>
+                    <input
+                      type="file"
+                      id="eTicket"
+                      name="eTicket"
+                      class="form-control"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      (change)="onETicketSelected($event)"
+                    />
+                    <small class="form-text text-muted">
+                      <i class="bi bi-info-circle me-1"></i>
+                      {{ eTicketFile ? eTicketFile.name : 'PDF or image of the issued e-ticket' }}
+                    </small>
                   </div>
 
                   <!-- Notes -->
