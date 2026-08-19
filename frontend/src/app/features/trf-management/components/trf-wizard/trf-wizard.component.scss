@@ -10,6 +10,24 @@
   box-sizing: border-box;
 }
 
+// Global Actions (Cancel & Save Draft) - .btn-danger/.btn-primary come from
+// global buttons.scss; .btn-secondary is kept as a solid-dark variant here
+// (canonical .btn-secondary is light/white), same convention as
+// transport-create.component.scss and visa-form.component.scss's own
+// .form-actions.
+.wizard-global-actions {
+  .btn-secondary {
+    background-color: vars.$gray-600;
+    color: vars.$white;
+    border-color: vars.$gray-600;
+
+    &:hover:not(:disabled) {
+      background-color: vars.$gray-700;
+      border-color: vars.$gray-700;
+    }
+  }
+}
+
 // Loading Overlay (Edit Mode)
 .loading-overlay {
   display: flex;

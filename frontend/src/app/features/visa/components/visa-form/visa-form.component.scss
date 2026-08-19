@@ -10,54 +10,34 @@
   box-sizing: border-box;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+// Page header - matches transport-create.component.scss's pattern exactly
+.page-header-section {
   margin-bottom: vars.$spacing-8;
 
-  h2 {
-    margin: 0;
-    font-size: vars.$font-size-2xl;
-    font-weight: vars.$font-weight-semibold;
-    color: vars.$text-primary;
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: vars.$spacing-2;
   }
-}
 
-// Section Cards - React Style
-.section-card {
-  border: 1px solid vars.$gray-300;
-  border-radius: vars.$radius-md;
-  box-shadow: vars.$shadow-sm;
-  overflow: hidden;
+  // .btn-back comes from the global buttons.scss
 
-  .section-header {
-    background: linear-gradient(135deg, vars.$primary-color 0%, vars.$primary-hover 100%);
-    border-bottom: 2px solid vars.$primary-color;
-    padding: vars.$spacing-5 vars.$spacing-6;
+  .page-title {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-3;
+    font-size: vars.$font-size-3xl;
+    font-weight: vars.$font-weight-bold;
+    color: vars.$text-primary;
+    margin: 0;
 
-    h4 {
-      margin: 0;
-      font-size: vars.$font-size-lg;
-      font-weight: vars.$font-weight-semibold;
-      color: vars.$text-inverse;
-      display: flex;
-      align-items: center;
-
-      i {
-        margin-right: vars.$spacing-3;
-        font-size: vars.$font-size-xl;
-      }
+    i {
+      color: vars.$primary-color;
     }
   }
-
-  .card-body {
-    padding: vars.$spacing-8;
-    background-color: vars.$white;
-  }
 }
 
-// Subsections within cards
+// Subsections within cards (rendered inside the shared app-form-section-card)
 .subsection {
   margin-bottom: 0;
 
@@ -135,53 +115,29 @@ textarea.form-control {
   min-height: 100px;
 }
 
+// Matches transport-create.component.scss's pattern exactly - .btn-danger/
+// .btn-primary come from global buttons.scss; .btn-secondary is kept as a
+// solid-dark variant here (canonical .btn-secondary is light/white), same
+// convention as the *-detail pages' "Save Draft" action.
 .form-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: vars.$spacing-4;
-  margin-top: vars.$spacing-8;
-  padding: vars.$spacing-6 vars.$spacing-8;
-  border-top: 2px solid vars.$border-light;
-  background-color: vars.$gray-50;
+  justify-content: flex-end;
+  gap: vars.$spacing-3;
+  margin-top: vars.$spacing-2;
+  padding: vars.$spacing-6;
+  background: vars.$gray-50;
+  border-top: 1px solid vars.$border-light;
   border-radius: vars.$radius-md;
+  flex-wrap: wrap;
 
-  .submit-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: vars.$spacing-3;
-  }
+  .btn-secondary {
+    background-color: vars.$gray-600;
+    color: vars.$white;
+    border-color: vars.$gray-600;
 
-  button {
-    display: flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    padding: vars.$spacing-2 vars.$spacing-5;
-    font-weight: vars.$font-weight-medium;
-    font-size: vars.$font-size-sm;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    flex-shrink: 0;
-
-    i {
-      font-size: vars.$font-size-lg;
-    }
-
-    &.btn-success {
-      background-color: vars.$primary-color;
-      border-color: vars.$primary-color;
-
-      // Fluent 2: Flat hover
-      &:hover {
-        background-color: vars.$primary-hover;
-        border-color: vars.$primary-hover;
-      }
-
-      &:active {
-        background-color: vars.$primary-active;
-        border-color: vars.$primary-active;
-      }
+    &:hover:not(:disabled) {
+      background-color: vars.$gray-700;
+      border-color: vars.$gray-700;
     }
   }
 }
@@ -189,39 +145,12 @@ textarea.form-control {
 @media (width <= 992px) {
   .form-actions {
     padding: vars.$spacing-4 vars.$spacing-5;
-
-    .submit-buttons {
-      gap: vars.$spacing-2;
-    }
-
-    button {
-      padding: vars.$spacing-2 vars.$spacing-3;
-      font-size: vars.$font-size-xs;
-    }
   }
 }
 
 @media (width <= 768px) {
   .visa-form-container {
     padding: vars.$spacing-md;
-  }
-
-  .section-card {
-    .section-header {
-      padding: vars.$spacing-md;
-
-      h4 {
-        font-size: vars.$font-size-lg;
-
-        i {
-          font-size: vars.$font-size-lg;
-        }
-      }
-    }
-
-    .card-body {
-      padding: vars.$spacing-5;
-    }
   }
 
   .subsection {
@@ -232,18 +161,10 @@ textarea.form-control {
 
   .form-actions {
     flex-direction: column;
-    align-items: stretch;
-    padding: vars.$spacing-md;
-    gap: vars.$spacing-3;
 
-    .submit-buttons {
+    .btn {
       width: 100%;
-      justify-content: stretch;
-
-      button {
-        flex: 1;
-        justify-content: center;
-      }
+      justify-content: center;
     }
   }
 }
