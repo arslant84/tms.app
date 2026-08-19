@@ -1456,7 +1456,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         )
         if itinerary_segments.exists():
             elements.extend(pdf_export.section_heading("Itinerary", styles))
-            itinerary_data = [["Date", "From", "To", "Departure", "Arrival", "Purpose"]]
+            itinerary_data = [["Date", "From", "To", "Departure", "Arrival", "Remarks"]]
             for seg in itinerary_segments:
                 itinerary_data.append(
                     [
@@ -1469,7 +1469,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                         seg.to_location or "-",
                         seg.departure_time or "-",
                         seg.arrival_time or "-",
-                        (seg.purpose or "-")[:30],
+                        (seg.remarks or "-")[:30],
                     ]
                 )
             elements.append(
