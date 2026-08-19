@@ -38,10 +38,6 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
     { value: 'travelrequest_external', label: 'TSR - External Parties' },
     { value: 'transportrequest', label: 'Transport Request' },
     { value: 'visaapplication', label: 'Visa Application' },
-    {
-      value: 'combinedrequest',
-      label: 'Combined Request (TSR + Transport + Accommodation + Visa)',
-    },
   ];
 
   // Available roles
@@ -198,7 +194,7 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
         approver_role: step.roleId,
         is_required: true,
         // Every other module's steps are can_skip=true today (accommodation,
-        // transportrequest, visaapplication, combinedrequest, travelrequest -
+        // transportrequest, visaapplication, travelrequest -
         // see workflows/migrations/0009,0011,0012,0015) - this form has no
         // per-step toggle for it, so match that standard instead of forcing
         // every newly created/edited step back to false.

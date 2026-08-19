@@ -10,7 +10,7 @@ export class StatusUtilsService {
   /**
    * Get the unified badge class for a given status. This is the single
    * source of truth for status -> color across the whole app (TRF,
-   * Transport, Visa, Accommodation, Combined, Approvals, and every admin
+   * Transport, Visa, Accommodation, Approvals, and every admin
    * screen) - every component should call this instead of maintaining its
    * own local status->class mapping, so the same status always renders
    * the same color everywhere.

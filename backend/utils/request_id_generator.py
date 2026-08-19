@@ -11,7 +11,6 @@ Examples:
 - ACCOM: ACCOM-20250702-1423-DEL-2Y8P
 - CLM: CLM-20250702-1423-QWSDF-P4Z5 (5+4 character unique IDs)
 - TRN: TRN-20250702-1423-LOCAL-3K8M
-- CMB: CMB-20250702-1423-DXB-7K9P (Combined Request)
 """
 
 import random
@@ -20,10 +19,10 @@ from datetime import datetime
 from typing import Literal, Optional, Tuple
 
 # Valid request types
-RequestType = Literal['TSR', 'VIS', 'ACCOM', 'CLM', 'TRN', 'CMB']
+RequestType = Literal["TSR", "VIS", "ACCOM", "CLM", "TRN"]
 
 # Characters to use for unique ID generation (avoiding ambiguous characters like 0/O, 1/I)
-UNIQUE_ID_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+UNIQUE_ID_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 
 def generate_unique_id(length: int = 4) -> str:
@@ -36,7 +35,7 @@ def generate_unique_id(length: int = 4) -> str:
     Returns:
         Random string of specified length
     """
-    return ''.join(random.choice(UNIQUE_ID_CHARS) for _ in range(length))
+    return "".join(random.choice(UNIQUE_ID_CHARS) for _ in range(length))
 
 
 def format_date_for_request_id(date: Optional[datetime] = None) -> str:
@@ -52,7 +51,7 @@ def format_date_for_request_id(date: Optional[datetime] = None) -> str:
     if date is None:
         date = datetime.now()
 
-    return date.strftime('%Y%m%d-%H%M')
+    return date.strftime("%Y%m%d-%H%M")
 
 
 def validate_context(context: str) -> str:
@@ -66,16 +65,14 @@ def validate_context(context: str) -> str:
         Validated context string (uppercase, no special characters)
     """
     # Remove special characters and spaces, convert to uppercase
-    sanitized = re.sub(r'[^a-zA-Z0-9]', '', context).upper()
+    sanitized = re.sub(r"[^a-zA-Z0-9]", "", context).upper()
 
     # Limit to 5 characters max
     return sanitized[:5]
 
 
 def generate_request_id(
-    request_type: RequestType,
-    context: str,
-    date: Optional[datetime] = None
+    request_type: RequestType, context: str, date: Optional[datetime] = None
 ) -> str:
     """
     Generates a unified request ID according to the specified format
@@ -92,7 +89,7 @@ def generate_request_id(
     valid_context = validate_context(context)
 
     # Special handling for claims - they need XXXXX-XXXX format instead of context-unique
-    if request_type == 'CLM':
+    if request_type == "CLM":
         unique_id1 = generate_unique_id(5)  # 5 characters
         unique_id2 = generate_unique_id(4)  # 4 characters
         return f"{request_type}-{timestamp}-{unique_id1}-{unique_id2}"
@@ -112,7 +109,7 @@ def parse_request_id(request_id: str) -> Optional[dict]:
     Returns:
         Dictionary containing the parsed components, or None if invalid
     """
-    parts = request_id.split('-')
+    parts = request_id.split("-")
 
     # Claims have 5 parts: CLM-YYYYMMDD-HHMM-XXXXX-XXXX
     # Others have 5 parts: TYPE-YYYYMMDD-HHMM-CONTEXT-UNIQUEID
@@ -121,9 +118,9 @@ def parse_request_id(request_id: str) -> Optional[dict]:
 
     request_type, date_str, time_str, part3, part4 = parts
 
-    if request_type == 'CLM':
+    if request_type == "CLM":
         # For claims: part3 is first unique ID, part4 is second unique ID
-        context = 'CLAIM'  # Standard context for claims
+        context = "CLAIM"  # Standard context for claims
         unique_id = f"{part3}-{part4}"  # Combine both unique parts
     else:
         # For other types: part3 is context, part4 is unique ID
@@ -131,7 +128,7 @@ def parse_request_id(request_id: str) -> Optional[dict]:
         unique_id = part4
 
     # Validate type
-    if request_type not in ['TSR', 'VIS', 'ACCOM', 'CLM', 'TRN', 'CMB']:
+    if request_type not in ["TSR", "VIS", "ACCOM", "CLM", "TRN"]:
         return None
 
     # Parse date
@@ -145,11 +142,11 @@ def parse_request_id(request_id: str) -> Optional[dict]:
         date = datetime(year, month, day, hours, minutes)
 
         return {
-            'type': request_type,
-            'timestamp': f"{date_str}-{time_str}",
-            'context': context,
-            'unique_id': unique_id,
-            'date': date
+            "type": request_type,
+            "timestamp": f"{date_str}-{time_str}",
+            "context": context,
+            "unique_id": unique_id,
+            "date": date,
         }
     except (ValueError, IndexError):
         return None
@@ -169,13 +166,13 @@ def extract_context_from_itinerary(itinerary: list) -> str:
     if itinerary and len(itinerary) > 0:
         first_segment = itinerary[0]
         destination = (
-            first_segment.get('to_location') or
-            first_segment.get('to') or
-            first_segment.get('destination') or
-            ''
+            first_segment.get("to_location")
+            or first_segment.get("to")
+            or first_segment.get("destination")
+            or ""
         )
-        return destination if destination else 'TRF'
-    return 'TRF'
+        return destination if destination else "TRF"
+    return "TRF"
 
 
 def extract_context_from_country(country: str) -> str:
@@ -188,7 +185,7 @@ def extract_context_from_country(country: str) -> str:
     Returns:
         Context string (will be validated and limited to 5 chars by generate_request_id)
     """
-    return country if country else 'VIS'
+    return country if country else "VIS"
 
 
 def extract_context_from_location(location: str) -> str:
@@ -201,7 +198,7 @@ def extract_context_from_location(location: str) -> str:
     Returns:
         Context string (will be validated and limited to 5 chars by generate_request_id)
     """
-    return location if location else 'ACCOM'
+    return location if location else "ACCOM"
 
 
 def extract_context_from_transport(transport_details: list) -> str:
@@ -220,29 +217,10 @@ def extract_context_from_transport(transport_details: list) -> str:
         first_detail = transport_details[0]
         # Handle both formats: JSON field (to, from) and model field (to_location, from_location)
         destination = (
-            first_detail.get('to') or
-            first_detail.get('to_location') or
-            first_detail.get('destination') or
-            ''
+            first_detail.get("to")
+            or first_detail.get("to_location")
+            or first_detail.get("destination")
+            or ""
         )
-        return destination if destination else 'TRN'
-    return 'TRN'
-
-
-def extract_context_for_combined(destination_city: str = None, destination_country: str = None) -> str:
-    """
-    Extracts context for CMB (Combined Request) IDs
-    Uses destination city or country
-
-    Args:
-        destination_city: Destination city
-        destination_country: Destination country (fallback)
-
-    Returns:
-        Context string (will be validated and limited to 5 chars by generate_request_id)
-    """
-    if destination_city:
-        return destination_city
-    if destination_country:
-        return destination_country
-    return 'CMB'
+        return destination if destination else "TRN"
+    return "TRN"

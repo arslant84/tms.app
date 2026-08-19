@@ -10,7 +10,7 @@ from workflows.models import WorkflowStep, WorkflowTemplate
 
 
 class Command(BaseCommand):
-    help = "Creates default workflow templates for all modules (TRF, Visa, Transport, Accommodation, Combined Request)"
+    help = "Creates default workflow templates for all modules (TRF, Visa, Transport, Accommodation)"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -35,7 +35,6 @@ class Command(BaseCommand):
             self.create_trf_workflow(admin_user)
             self.create_visa_workflow(admin_user)
             self.create_transport_workflow(admin_user)
-            self.create_combined_request_workflow(admin_user)
 
         self.stdout.write(
             self.style.SUCCESS("✅ Successfully created all default workflows!")
@@ -330,63 +329,4 @@ class Command(BaseCommand):
             self.style.SUCCESS(
                 "  ✓ Created Accommodation workflow with 4 steps (inactive)"
             )
-        )
-
-    def create_combined_request_workflow(self, created_by):
-        """Create Combined Request workflow - unified workflow for TSR + Transport + Accommodation + Visa"""
-        if self._already_exists("combinedrequest"):
-            return
-        self.stdout.write("Creating Combined Request workflow...")
-
-        template = WorkflowTemplate.objects.create(
-            name="Combined Request Unified Approval Workflow",
-            description="Unified approval workflow for Combined Requests (TSR, Transport, Accommodation, Visa)",
-            entity_type="combinedrequest",
-            is_active=True,
-            allow_parallel_steps=False,
-            auto_approve_on_condition=False,
-            created_by=created_by,
-        )
-
-        # Step 1: Department Focal
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=1,
-            step_name="Department Focal Approval",
-            step_description="Department Focal reviews and approves the combined request",
-            approver_role="Department Focal",
-            is_required=True,
-            can_skip=True,  # Allow skip if no dept focal available
-            requires_comments=False,
-            sla_hours=48,
-        )
-
-        # Step 2: Line Manager
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=2,
-            step_name="Line Manager Approval",
-            step_description="Line Manager reviews and approves the combined request",
-            approver_role="Line Manager",
-            is_required=True,
-            can_skip=True,  # Allow skip if no line manager available
-            requires_comments=False,
-            sla_hours=48,
-        )
-
-        # Step 3: HOD
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=3,
-            step_name="HOD Approval",
-            step_description="Head of Department reviews and approves the combined request",
-            approver_role="HOD",
-            is_required=True,
-            can_skip=True,  # Allow skip if no HOD available
-            requires_comments=False,
-            sla_hours=72,
-        )
-
-        self.stdout.write(
-            self.style.SUCCESS("  ✓ Created Combined Request workflow with 3 steps")
         )

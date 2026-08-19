@@ -1,10 +1,13 @@
 import { Component, OnInit, Output, EventEmitter, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { NavigationExtras, RouterModule, Router } from '@angular/router';
 import { Observable, map, Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { User } from '../../../core/models/user.model';
-import { NotificationService, UserNotification } from '../../../features/notifications/services/notification.service';
+import {
+  NotificationService,
+  UserNotification,
+} from '../../../features/notifications/services/notification.service';
 import { AppSettingsService } from '../../../core/services/app-settings.service';
 
 @Component({
@@ -12,7 +15,7 @@ import { AppSettingsService } from '../../../core/services/app-settings.service'
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, RouterModule],
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   isCollapsed = true;
@@ -35,9 +38,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private appSettingsService: AppSettingsService
   ) {
     this.currentUser$ = this.authService.currentUser$;
-    this.isAdmin$ = this.currentUser$.pipe(
-      map(user => user?.is_admin === true)
-    );
+    this.isAdmin$ = this.currentUser$.pipe(map(user => user?.is_admin === true));
     this.notificationCount$ = this.notificationService.unreadCount$;
     this.applicationName$ = this.appSettingsService.settings$.pipe(
       map(settings => settings.application_name || 'TMS')
@@ -62,7 +63,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   }
-  
+
   /**
    * Handle document clicks to close dropdowns when clicking outside
    */
@@ -75,7 +76,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.closeNotificationsDropdown();
       }
     }
-    
+
     // Close profile dropdown if clicking outside
     if (this.isProfileOpen) {
       const profileDropdown = document.querySelector('.profile-dropdown');
@@ -88,14 +89,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
       }
     }
   }
-  
+
   /**
    * Setup click outside listener
    */
   private setupClickOutsideListener(): void {
     // This is handled by the HostListener above
   }
-  
+
   /**
    * Mark a notification as read and navigate to its action URL
    */
@@ -109,7 +110,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     };
 
     if (!notification.is_read) {
-      this.notificationService.markAsRead(notification.id)
+      this.notificationService
+        .markAsRead(notification.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({ next: navigate, error: () => navigate() });
     } else {
@@ -117,7 +119,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
   }
 
-  private buildNavigation(notification: UserNotification): { commands: any[]; extras?: any } {
+  private buildNavigation(notification: UserNotification): {
+    commands: unknown[];
+    extras?: NavigationExtras;
+  } {
     const actionUrl = notification.action_url!;
 
     const isApproval =
@@ -130,7 +135,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       if (entityInfo) {
         return {
           commands: ['/admin/approvals'],
-          extras: { queryParams: { type: entityInfo.type, id: entityInfo.id, action: 'approve' } }
+          extras: { queryParams: { type: entityInfo.type, id: entityInfo.id, action: 'approve' } },
         };
       }
       return { commands: ['/admin/approvals'] };
@@ -140,7 +145,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       '/travelrequest/': '/trf/',
       '/transportrequest/': '/transport/',
       '/visaapplication/': '/visa/',
-      '/combinedrequest/': '/combined/',
       '/expenseclaim/': '/expenses/',
     };
 
@@ -161,11 +165,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
    */
   private extractEntityInfo(actionUrl: string): { type: string; id: string } | null {
     const entityMappings: { [key: string]: string } = {
-      'travelrequest': 'trf',
-      'transportrequest': 'transport',
-      'visaapplication': 'visa',
-      'accommodation': 'accommodation',
-      'expenseclaim': 'expenses'
+      travelrequest: 'trf',
+      transportrequest: 'transport',
+      visaapplication: 'visa',
+      accommodation: 'accommodation',
+      expenseclaim: 'expenses',
     };
 
     for (const [backendType, frontendType] of Object.entries(entityMappings)) {
@@ -174,7 +178,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       if (match) {
         return {
           type: frontendType,
-          id: match[1]
+          id: match[1],
         };
       }
     }
@@ -188,12 +192,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
   markAllAsRead(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this.notificationService.markAllAsRead()
+    this.notificationService
+      .markAllAsRead()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        error: (err) => {
+        error: err => {
           console.error('Error marking all as read:', err);
-        }
+        },
       });
   }
 
@@ -225,11 +230,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
    */
   getNotificationIcon(priority: string): string {
     switch (priority) {
-      case 'urgent': return 'bi-exclamation-triangle-fill text-danger';
-      case 'high': return 'bi-exclamation-circle-fill text-warning';
-      case 'normal': return 'bi-info-circle-fill text-info';
+      case 'urgent':
+        return 'bi-exclamation-triangle-fill text-danger';
+      case 'high':
+        return 'bi-exclamation-circle-fill text-warning';
+      case 'normal':
+        return 'bi-info-circle-fill text-info';
       case 'low':
-      default: return 'bi-bell-fill text-secondary';
+      default:
+        return 'bi-bell-fill text-secondary';
     }
   }
 
@@ -250,13 +259,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
     return date.toLocaleDateString();
   }
-  
+
   /**
    * Toggle notifications dropdown
    */
   toggleNotificationsDropdown(event: Event): void {
     event.stopPropagation();
-    
+
     // If notifications dropdown is already open, close it
     // Otherwise, open it and close profile dropdown
     if (this.isNotificationsOpen) {
@@ -265,17 +274,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.isNotificationsOpen = true;
       this.isProfileOpen = false; // Always close profile dropdown when opening notifications
     }
-    
+
     // Toggle bootstrap dropdown manually
     this.updateDropdownVisibility();
   }
-  
+
   /**
    * Toggle profile dropdown
    */
   toggleProfileDropdown(event: Event): void {
     event.stopPropagation();
-    
+
     // If profile dropdown is already open, close it
     // Otherwise, open it and close notifications dropdown
     if (this.isProfileOpen) {
@@ -284,11 +293,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.isProfileOpen = true;
       this.isNotificationsOpen = false; // Always close notifications dropdown when opening profile
     }
-    
+
     // Toggle bootstrap dropdown manually
     this.updateDropdownVisibility();
   }
-  
+
   /**
    * Update dropdown visibility based on state
    */
@@ -302,7 +311,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         notificationsMenu.classList.remove('show');
       }
     }
-    
+
     // Handle profile dropdown
     const profileMenu = document.querySelector('.profile-dropdown .dropdown-menu');
     if (profileMenu) {
@@ -317,7 +326,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   toggleNavbar(): void {
     this.isCollapsed = !this.isCollapsed;
   }
-  
+
   toggleSidebar(): void {
     this.toggleSidebarEvent.emit();
   }

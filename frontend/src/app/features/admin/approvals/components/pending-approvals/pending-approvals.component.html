@@ -12,39 +12,24 @@
 
   <!-- Tabs -->
   <div class="tabs-container">
-    <button
-      class="tab-button"
-      [class.active]="activeTab === 'all'"
-      (click)="onTabChange('all')">
+    <button class="tab-button" [class.active]="activeTab === 'all'" (click)="onTabChange('all')">
       All ({{ tabCounts.all }})
     </button>
-    <button
-      class="tab-button"
-      [class.active]="activeTab === 'trf'"
-      (click)="onTabChange('trf')">
+    <button class="tab-button" [class.active]="activeTab === 'trf'" (click)="onTabChange('trf')">
       <i class="bi bi-airplane"></i> Travel
       <span class="tab-count" *ngIf="tabCounts.trf > 0">({{ tabCounts.trf }})</span>
     </button>
     <button
       class="tab-button"
       [class.active]="activeTab === 'transport'"
-      (click)="onTabChange('transport')">
+      (click)="onTabChange('transport')"
+    >
       <i class="bi bi-truck"></i> Transport
       <span class="tab-count" *ngIf="tabCounts.transport > 0">({{ tabCounts.transport }})</span>
     </button>
-    <button
-      class="tab-button"
-      [class.active]="activeTab === 'visa'"
-      (click)="onTabChange('visa')">
+    <button class="tab-button" [class.active]="activeTab === 'visa'" (click)="onTabChange('visa')">
       <i class="bi bi-passport"></i> Visa
       <span class="tab-count" *ngIf="tabCounts.visa > 0">({{ tabCounts.visa }})</span>
-    </button>
-    <button
-      class="tab-button"
-      [class.active]="activeTab === 'combined'"
-      (click)="onTabChange('combined')">
-      <i class="bi bi-layers"></i> Combined
-      <span class="tab-count" *ngIf="tabCounts.combined > 0">({{ tabCounts.combined }})</span>
     </button>
   </div>
 
@@ -71,13 +56,10 @@
             placeholder="Search by name, purpose, or ID..."
             [(ngModel)]="searchTerm"
             (input)="onSearchChange()"
-          >
+          />
         </div>
         <div class="col-md-4">
-          <select
-            class="form-select"
-            [(ngModel)]="statusFilter"
-            (change)="onStatusFilterChange()">
+          <select class="form-select" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
             <option value="">All Statuses</option>
             <option *ngFor="let status of statusOptions" [value]="status">
               {{ status }}
@@ -123,77 +105,81 @@
     <div *ngIf="!isLoading && !error && filteredItems.length > 0" class="card-body p-0">
       <div class="table-responsive">
         <table class="table">
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Request #</th>
-            <th>Staff Name</th>
-            <th>Purpose/Details</th>
-            <th>Status</th>
-            <th>Submitted</th>
-            <th class="text-end">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of filteredItems">
-            <td>
-              <div class="type-badge">
-                <i class="bi" [ngClass]="getItemTypeIcon(item.itemType)"></i>
-                {{ item.itemType }}
-              </div>
-            </td>
-            <td class="id-cell">
-              <a href="javascript:void(0)" (click)="viewItem(item)" class="request-number text-decoration-none">
-                {{ item.requestNumber }}
-              </a>
-            </td>
-            <td class="staff-cell">
-              <div class="staff-name">{{ item.requestorName }}</div>
-              <small class="staff-id" *ngIf="item.staffId">{{ item.staffId }}</small>
-            </td>
-            <td class="purpose-cell">
-              <div class="purpose-text">{{ item.purpose }}</div>
-              <div class="purpose-details text-muted small">
-                <span *ngIf="item.destination">{{ item.destination }}</span>
-                <span *ngIf="item.location">{{ item.location }}</span>
-                <span *ngIf="item.department">{{ item.department | departmentName }}</span>
-                <span *ngIf="item.amount"> | {{ formatCurrency(item.amount) }}</span>
-                <span *ngIf="item.includedModules && item.includedModules.length > 0">
-                  &nbsp;<i class="bi bi-layers"></i> {{ item.includedModules.join(', ') }}
-                </span>
-              </div>
-            </td>
-            <td>
-              <span class="badge" [ngClass]="getStatusClass(item.status)">
-                {{ item.status }}
-              </span>
-            </td>
-            <td>{{ dateUtils.formatDate(item.submittedAt) }}</td>
-            <td class="text-end">
-              <div class="action-buttons">
-                <button
-                  class="btn btn-sm btn-outline-primary btn-icon"
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Request #</th>
+              <th>Staff Name</th>
+              <th>Purpose/Details</th>
+              <th>Status</th>
+              <th>Submitted</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of filteredItems">
+              <td>
+                <div class="type-badge">
+                  <i class="bi" [ngClass]="getItemTypeIcon(item.itemType)"></i>
+                  {{ item.itemType }}
+                </div>
+              </td>
+              <td class="id-cell">
+                <a
+                  href="javascript:void(0)"
                   (click)="viewItem(item)"
-                  title="View Details">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="openApproveDialog(item)"
-                  title="Approve">
-                  <i class="bi bi-check-circle"></i>
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-danger btn-icon"
-                  (click)="openRejectDialog(item)"
-                  title="Reject">
-                  <i class="bi bi-x-circle"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                  class="request-number text-decoration-none"
+                >
+                  {{ item.requestNumber }}
+                </a>
+              </td>
+              <td class="staff-cell">
+                <div class="staff-name">{{ item.requestorName }}</div>
+                <small class="staff-id" *ngIf="item.staffId">{{ item.staffId }}</small>
+              </td>
+              <td class="purpose-cell">
+                <div class="purpose-text">{{ item.purpose }}</div>
+                <div class="purpose-details text-muted small">
+                  <span *ngIf="item.destination">{{ item.destination }}</span>
+                  <span *ngIf="item.location">{{ item.location }}</span>
+                  <span *ngIf="item.department">{{ item.department | departmentName }}</span>
+                  <span *ngIf="item.amount"> | {{ formatCurrency(item.amount) }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(item.status)">
+                  {{ item.status }}
+                </span>
+              </td>
+              <td>{{ dateUtils.formatDate(item.submittedAt) }}</td>
+              <td class="text-end">
+                <div class="action-buttons">
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="viewItem(item)"
+                    title="View Details"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="openApproveDialog(item)"
+                    title="Approve"
+                  >
+                    <i class="bi bi-check-circle"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    (click)="openRejectDialog(item)"
+                    title="Reject"
+                  >
+                    <i class="bi bi-x-circle"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- Pagination -->
@@ -205,7 +191,8 @@
           <button
             class="btn btn-sm btn-secondary"
             (click)="previousPage()"
-            [disabled]="currentPage === 1">
+            [disabled]="currentPage === 1"
+          >
             <i class="bi bi-chevron-left"></i>
             Previous
           </button>
@@ -213,7 +200,8 @@
           <button
             class="btn btn-sm btn-secondary"
             (click)="nextPage()"
-            [disabled]="currentPage >= totalPages">
+            [disabled]="currentPage >= totalPages"
+          >
             Next
             <i class="bi bi-chevron-right"></i>
           </button>
@@ -236,7 +224,12 @@
           <p><strong>Request:</strong> {{ selectedItem.requestNumber }}</p>
           <p><strong>Requestor:</strong> {{ selectedItem.requestorName }}</p>
           <p><strong>Type:</strong> {{ getItemTypeLabel(selectedItem.itemType) }}</p>
-          <p><strong>Current Status:</strong> <span class="badge" [ngClass]="getStatusClass(selectedItem.status)">{{ selectedItem.status }}</span></p>
+          <p>
+            <strong>Current Status:</strong>
+            <span class="badge" [ngClass]="getStatusClass(selectedItem.status)">{{
+              selectedItem.status
+            }}</span>
+          </p>
 
           <div class="form-group mt-3">
             <label for="approvalComments">Comments (Optional)</label>
@@ -245,15 +238,30 @@
               class="form-control"
               rows="3"
               [(ngModel)]="approvalComments"
-              placeholder="Add any comments..."></textarea>
+              placeholder="Add any comments..."
+            ></textarea>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeDialogs()" [disabled]="isActionPending">Cancel</button>
-        <button type="button" class="btn btn-success" (click)="approveItem()" [disabled]="isActionPending">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="closeDialogs()"
+          [disabled]="isActionPending"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-success"
+          (click)="approveItem()"
+          [disabled]="isActionPending"
+        >
           <span *ngIf="!isActionPending">Approve</span>
-          <span *ngIf="isActionPending"><i class="bi bi-arrow-clockwise spin-animation"></i> Approving...</span>
+          <span *ngIf="isActionPending"
+            ><i class="bi bi-arrow-clockwise spin-animation"></i> Approving...</span
+          >
         </button>
       </div>
     </div>
@@ -275,26 +283,47 @@
           <p><strong>Type:</strong> {{ getItemTypeLabel(selectedItem.itemType) }}</p>
 
           <div class="form-group mt-3">
-            <label for="rejectionComments">Rejection Reason <span class="text-danger">*</span></label>
+            <label for="rejectionComments"
+              >Rejection Reason <span class="text-danger">*</span></label
+            >
             <textarea
               id="rejectionComments"
               class="form-control"
               rows="3"
               [(ngModel)]="rejectionComments"
               placeholder="Please provide a reason for rejection..."
-              required></textarea>
+              required
+            ></textarea>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeDialogs()" [disabled]="isActionPending">Cancel</button>
-        <button type="button" class="btn btn-danger" (click)="rejectItem()" [disabled]="isActionPending || !rejectionComments">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="closeDialogs()"
+          [disabled]="isActionPending"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="rejectItem()"
+          [disabled]="isActionPending || !rejectionComments"
+        >
           <span *ngIf="!isActionPending">Reject</span>
-          <span *ngIf="isActionPending"><i class="bi bi-arrow-clockwise spin-animation"></i> Rejecting...</span>
+          <span *ngIf="isActionPending"
+            ><i class="bi bi-arrow-clockwise spin-animation"></i> Rejecting...</span
+          >
         </button>
       </div>
     </div>
   </div>
 </div>
 
-<div class="modal-backdrop" *ngIf="showApproveDialog || showRejectDialog" (click)="closeDialogs()"></div>
+<div
+  class="modal-backdrop"
+  *ngIf="showApproveDialog || showRejectDialog"
+  (click)="closeDialogs()"
+></div>

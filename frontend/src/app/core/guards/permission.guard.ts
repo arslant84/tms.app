@@ -29,7 +29,7 @@ export const PermissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
 
   // Get required permissions from route data
   const requiredPermissions = route.data['permissions'] as Permission[] | undefined;
-  const requireAll = route.data['requireAll'] as boolean | undefined ?? false;
+  const requireAll = (route.data['requireAll'] as boolean | undefined) ?? false;
 
   // If no permissions specified, allow access
   if (!requiredPermissions || requiredPermissions.length === 0) {
@@ -61,7 +61,7 @@ export const PermissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
           requireAll,
           userPermissions: currentUser?.permissions,
           is_admin: currentUser?.is_admin,
-          role: currentUser?.role
+          role: currentUser?.role,
         });
 
         // Redirect to dashboard if user doesn't have permission
@@ -94,7 +94,13 @@ export const AdminMenuGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => 
   const authService = inject(AuthService);
 
   // Get admin module from route data
-  const adminModule = route.data['adminModule'] as 'accommodation' | 'transport' | 'visa' | 'flights' | 'combined' | 'meal' | undefined;
+  const adminModule = route.data['adminModule'] as
+    | 'accommodation'
+    | 'transport'
+    | 'visa'
+    | 'flights'
+    | 'meal'
+    | undefined;
 
   // If no module specified, deny access
   if (!adminModule) {
@@ -125,7 +131,7 @@ export const AdminMenuGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => 
           adminModule,
           userPermissions: currentUser?.permissions,
           is_admin: currentUser?.is_admin,
-          role: currentUser?.role
+          role: currentUser?.role,
         });
         router.navigate(['/dashboard']);
         return false;

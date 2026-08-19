@@ -1,16 +1,15 @@
 <div class="dashboard-container">
   <!-- Hero Section -->
   <div class="hero-section text-center">
-    <h1 class="hero-title">Welcome to <span class="brand-name">{{ applicationName$ | async }}</span></h1>
+    <h1 class="hero-title">
+      Welcome to <span class="brand-name">{{ applicationName$ | async }}</span>
+    </h1>
     <p class="hero-subtitle">Travel is Synchronised</p>
   </div>
 
   <!-- Quick Actions -->
   <div class="quick-actions-card">
     <div class="quick-actions-content">
-      <button class="btn btn-primary btn-action" routerLink="/combined">
-        <i class="bi bi-layers me-2"></i>Combined Request
-      </button>
       <button class="btn btn-primary btn-action" routerLink="/trf/create">
         <i class="bi bi-plus-circle me-2"></i>New TSR
       </button>
@@ -92,7 +91,8 @@
         <button
           class="btn btn-outline-secondary btn-sm refresh-btn"
           (click)="refresh()"
-          [disabled]="isLoading">
+          [disabled]="isLoading"
+        >
           <i class="bi bi-arrow-clockwise" [class.spin]="isLoading"></i>
           Refresh
         </button>
@@ -106,7 +106,8 @@
             class="form-control search-input"
             placeholder="Search activities..."
             [(ngModel)]="searchQuery"
-            (ngModelChange)="onSearchChange()">
+            (ngModelChange)="onSearchChange()"
+          />
         </div>
       </div>
     </div>
@@ -128,7 +129,10 @@
           <div class="activity-item-content">
             <div class="activity-item-left">
               <div class="activity-icon-circle" [ngClass]="getActivityIconBg(item.status)">
-                <i [class]="getActivityIcon(item.type)" [ngClass]="getActivityIconColor(item.status)"></i>
+                <i
+                  [class]="getActivityIcon(item.type)"
+                  [ngClass]="getActivityIconColor(item.status)"
+                ></i>
               </div>
               <div class="activity-item-info">
                 <h5 class="activity-item-title">{{ item.title }}</h5>
@@ -136,7 +140,9 @@
               </div>
             </div>
             <div class="activity-item-right">
-              <span class="badge" [ngClass]="getStatusBadgeClass(item.status)">{{ item.status }}</span>
+              <span class="badge" [ngClass]="getStatusBadgeClass(item.status)">{{
+                item.status
+              }}</span>
               <a [routerLink]="getActivityRoute(item)" class="view-details-link">View Details →</a>
             </div>
           </div>
@@ -144,15 +150,23 @@
       </div>
 
       <!-- Empty State (Search) -->
-      <div *ngIf="!isLoading && !error && filteredActivities.length === 0 && searchQuery.trim() !== ''" class="empty-state">
+      <div
+        *ngIf="!isLoading && !error && filteredActivities.length === 0 && searchQuery.trim() !== ''"
+        class="empty-state"
+      >
         <p class="empty-message">No activities match your search.</p>
       </div>
 
       <!-- Empty State (No Data) -->
-      <div *ngIf="!isLoading && !error && filteredActivities.length === 0 && searchQuery.trim() === ''" class="empty-state">
+      <div
+        *ngIf="!isLoading && !error && filteredActivities.length === 0 && searchQuery.trim() === ''"
+        class="empty-state"
+      >
         <i class="bi bi-file-earmark-text empty-icon"></i>
         <p class="empty-title">No recent activity found</p>
-        <p class="empty-subtitle">Your travel requests, claims, and applications will appear here once created.</p>
+        <p class="empty-subtitle">
+          Your travel requests, claims, and applications will appear here once created.
+        </p>
       </div>
     </div>
   </div>

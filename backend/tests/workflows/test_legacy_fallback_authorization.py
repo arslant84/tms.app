@@ -3,7 +3,7 @@ Regression tests for the "no active WorkflowTemplate" legacy-fallback
 authorization gap found while expanding docs/ARCHITECTURE.md's data flow
 coverage (2026-07-22).
 
-Before this fix, when trf/visa/transport/accommodation/combined_request had
+Before this fix, when trf/visa/transport/accommodation had
 no active WorkflowInstance for a request (e.g. no WorkflowTemplate configured
 for that entity_type), their approve()/reject() actions fell back to legacy
 status-mutation logic that only required IsAuthenticated at the ViewSet
@@ -210,66 +210,6 @@ class TestAccommodationLegacyFallbackAuthorization:
         )
 
         assert response.status_code == status.HTTP_200_OK
-
-
-@pytest.mark.django_db
-class TestCombinedRequestLegacyFallbackAuthorization:
-    def test_approve_without_permission_is_forbidden(self, api_client, regular_user):
-        from combined_request.models import CombinedRequest
-
-        combined_request = CombinedRequest.objects.create(
-            requestor_name=regular_user.name,
-            travel_type="Domestic",
-            status="Pending",
-            requestor=regular_user,
-        )
-        api_client.force_authenticate(user=regular_user)
-
-        response = api_client.post(
-            f"/api/combined/combined-requests/{combined_request.id}/approve/",
-            {"step_role": "", "comments": ""},
-        )
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_approve_with_permission_succeeds(self, api_client, make_approver):
-        from combined_request.models import CombinedRequest
-
-        approver = make_approver("approve_combined", "combined-approver@example.com")
-        combined_request = CombinedRequest.objects.create(
-            requestor_name="Someone",
-            travel_type="Domestic",
-            status="Pending",
-            requestor=approver,
-        )
-        api_client.force_authenticate(user=approver)
-
-        response = api_client.post(
-            f"/api/combined/combined-requests/{combined_request.id}/approve/",
-            {"step_role": "", "comments": ""},
-        )
-
-        assert response.status_code == status.HTTP_200_OK
-
-    def test_reject_without_permission_is_forbidden(self, api_client, regular_user):
-        """combined_request's legacy reject fallback previously had no
-        status check OR permission check at all — the weakest of the five."""
-        from combined_request.models import CombinedRequest
-
-        combined_request = CombinedRequest.objects.create(
-            requestor_name=regular_user.name,
-            travel_type="Domestic",
-            status="Pending",
-            requestor=regular_user,
-        )
-        api_client.force_authenticate(user=regular_user)
-
-        response = api_client.post(
-            f"/api/combined/combined-requests/{combined_request.id}/reject/",
-            {"step_role": "", "comments": "not good"},
-        )
-
-        assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 @pytest.mark.django_db
@@ -512,62 +452,4 @@ class TestLegacyFallbackAuditLogging:
             action_type="workflow_step_rejected",
             entity_type="accommodation",
             entity_id=str(accommodation_request.id),
-        ).exists()
-
-    def test_combined_request_approve_fallback_writes_audit_log(
-        self, api_client, make_approver
-    ):
-        from accounts.models import AdminActionLog
-        from combined_request.models import CombinedRequest
-
-        approver = make_approver(
-            "approve_combined", "combined-audit-approver@example.com"
-        )
-        combined_request = CombinedRequest.objects.create(
-            requestor_name="Someone",
-            travel_type="Domestic",
-            status="Pending",
-            requestor=approver,
-        )
-        api_client.force_authenticate(user=approver)
-
-        response = api_client.post(
-            f"/api/combined/combined-requests/{combined_request.id}/approve/",
-            {"step_role": "", "comments": ""},
-        )
-
-        assert response.status_code == status.HTTP_200_OK
-        assert AdminActionLog.objects.filter(
-            action_type="workflow_step_approved",
-            entity_type="combinedrequest",
-            entity_id=str(combined_request.id),
-        ).exists()
-
-    def test_combined_request_reject_fallback_writes_audit_log(
-        self, api_client, make_approver
-    ):
-        from accounts.models import AdminActionLog
-        from combined_request.models import CombinedRequest
-
-        approver = make_approver(
-            "approve_combined", "combined-audit-rejecter@example.com"
-        )
-        combined_request = CombinedRequest.objects.create(
-            requestor_name="Someone",
-            travel_type="Domestic",
-            status="Pending",
-            requestor=approver,
-        )
-        api_client.force_authenticate(user=approver)
-
-        response = api_client.post(
-            f"/api/combined/combined-requests/{combined_request.id}/reject/",
-            {"step_role": "", "comments": "not viable"},
-        )
-
-        assert response.status_code == status.HTTP_200_OK
-        assert AdminActionLog.objects.filter(
-            action_type="workflow_step_rejected",
-            entity_type="combinedrequest",
-            entity_id=str(combined_request.id),
         ).exists()
