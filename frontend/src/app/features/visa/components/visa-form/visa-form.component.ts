@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { VisaService, VisaApplication } from '../../services/visa.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
@@ -9,12 +9,14 @@ import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
 import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
+import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
 
 @Component({
   selector: 'app-visa-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, ApproverSelectionComponent, LoadingSpinnerComponent],
+  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent, LoadingSpinnerComponent, FormSectionCardComponent, PassportUploadComponent],
   templateUrl: './visa-form.component.html',
   styleUrl: './visa-form.component.scss'
 })
@@ -41,7 +43,6 @@ export class VisaFormComponent implements OnInit {
   passportFile: File | null = null;
   passportFileName: string | null = null;
   passportFileUrl: string | null = null;
-  passportFileError: string | null = null;
 
   visaTypes = ['Tourist', 'Business', 'Work', 'Student', 'Transit', 'Diplomatic', 'Official', 'Other'];
   entryTypes = ['Single Entry', 'Multiple Entry', 'Transit'];
@@ -471,30 +472,9 @@ export class VisaFormComponent implements OnInit {
     return !!(field && field.invalid && field.touched);
   }
 
-  // Passport file handling methods
-  onPassportFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-
-    const file = input.files[0];
-    this.passportFileError = null;
-
-    // Validate file type
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-    if (!allowedTypes.includes(file.type)) {
-      this.passportFileError = 'Invalid file type. Please upload PDF, JPG, or PNG.';
-      input.value = '';
-      return;
-    }
-
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-      this.passportFileError = 'File size must not exceed 10MB.';
-      input.value = '';
-      return;
-    }
-
+  // Passport file handling methods - validation (type/size) is handled by
+  // app-passport-upload itself; this just stores the already-validated File.
+  onPassportFileSelected(file: File): void {
     this.passportFile = file;
     this.passportFileName = file.name;
     this.passportFileUrl = null; // Clear existing URL when new file is selected
@@ -516,7 +496,6 @@ export class VisaFormComponent implements OnInit {
     this.passportFile = null;
     this.passportFileName = null;
     this.passportFileUrl = null;
-    this.passportFileError = null;
   }
 
   private uploadPassportFileToServer(applicationId: number): void {
