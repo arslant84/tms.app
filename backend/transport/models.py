@@ -82,50 +82,6 @@ class TransportRequest(models.Model):
         return f"{self.requestor_name} - {self.purpose[:50]}"
 
 
-class TransportSegment(models.Model):
-    """Individual transport segment/leg within a transport request"""
-
-    transport_request = models.ForeignKey(
-        TransportRequest, on_delete=models.CASCADE, related_name="segments"
-    )
-
-    # Journey details
-    from_location = models.CharField(max_length=255)
-    to_location = models.CharField(max_length=255)
-    departure_date = models.DateField()
-    departure_time = models.TimeField()
-    arrival_date = models.DateField(blank=True, null=True)
-    arrival_time = models.TimeField(blank=True, null=True)
-
-    # Route information
-    distance_km = models.DecimalField(
-        max_digits=8, decimal_places=2, blank=True, null=True
-    )
-    estimated_duration_hours = models.DecimalField(
-        max_digits=5, decimal_places=2, blank=True, null=True
-    )
-    route_description = models.TextField(blank=True, null=True)
-
-    # Vehicle assignment (for company vehicles)
-    vehicle_number = models.CharField(max_length=50, blank=True, null=True)
-    driver_name = models.CharField(max_length=255, blank=True, null=True)
-    driver_contact = models.CharField(max_length=50, blank=True, null=True)
-
-    # Cost tracking
-    segment_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    # Additional info
-    remarks = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["departure_date", "departure_time"]
-
-    def __str__(self):
-        return f"{self.from_location} → {self.to_location} on {self.departure_date}"
-
-
 class TransportApprovalStep(models.Model):
     """Approval workflow tracking for transport requests"""
 

@@ -41,6 +41,13 @@ class BaggageType(models.TextChoices):
     EXTRA = "EXTRA", _("Extra")
 
 
+class SegmentDirection(models.TextChoices):
+    """Direction of a flight leg within a booking"""
+
+    OUTBOUND = "OUTBOUND", _("Outbound")
+    RETURN = "RETURN", _("Return")
+
+
 class FlightBooking(models.Model):
     """
     Flight booking model for managing flight reservations linked to TRFs.
@@ -263,3 +270,40 @@ class FlightBooking(models.Model):
         if self.trf.status == RequestStatus.FLIGHT_BOOKED:
             self.trf.status = RequestStatus.APPROVED
             self.trf.save(update_fields=["status"])
+
+
+class FlightBookingSegment(models.Model):
+    """
+    A single flight leg within a booking. A booking with connections (e.g.
+    NYC -> CHI -> DEN) has multiple OUTBOUND segments; a round trip adds
+    one or more RETURN segments. The flat departure/arrival/flight_number
+    fields on FlightBooking remain a first-leg/last-leg summary for
+    backward compatibility with code written before multi-leg support.
+    """
+
+    booking = models.ForeignKey(
+        FlightBooking,
+        on_delete=models.CASCADE,
+        related_name="segments",
+        help_text="Booking this leg belongs to",
+    )
+    direction = models.CharField(
+        max_length=10,
+        choices=SegmentDirection.choices,
+        help_text="Outbound or return leg",
+    )
+    sequence = models.PositiveSmallIntegerField(
+        help_text="Order of this leg within its direction, starting at 1"
+    )
+    flight_number = models.CharField(max_length=20)
+    departure_airport = models.CharField(max_length=100)
+    arrival_airport = models.CharField(max_length=100)
+    departure_time = models.DateTimeField()
+    arrival_time = models.DateTimeField()
+
+    class Meta:
+        ordering = ["direction", "sequence"]
+        unique_together = [["booking", "direction", "sequence"]]
+
+    def __str__(self):
+        return f"{self.direction} leg {self.sequence}: {self.flight_number}"

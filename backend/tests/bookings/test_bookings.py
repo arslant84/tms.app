@@ -58,7 +58,6 @@ class TestBookingCreation:
             "departure_time": "2026-08-01T10:00:00Z",
             "arrival_time": "2026-08-01T18:00:00Z",
             "booking_reference": booking_reference,
-            "cost": "500.00",
         }
 
     def test_create_flight_booking_rejected_for_draft_trf(
@@ -223,7 +222,6 @@ class TestBookingCancellation:
             arrival_time="2026-08-01T18:00:00Z",
             booking_reference="PNR-CANCEL-1",
             status=BookingStatus.CONFIRMED,
-            cost="500.00",
         )
         return trf, booking
 

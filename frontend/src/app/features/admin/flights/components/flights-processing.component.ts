@@ -38,6 +38,26 @@ interface PendingTrf {
   tripType?: 'One Way' | 'Round Trip';
 }
 
+interface FlightLegForm {
+  flightNumber: string;
+  departureAirport: string;
+  arrivalAirport: string;
+  departureDate: string;
+  departureTime: string;
+  arrivalDate: string;
+  arrivalTime: string;
+}
+
+interface FlightSegmentPayload {
+  direction: 'OUTBOUND' | 'RETURN';
+  sequence: number;
+  flightNumber: string;
+  departureAirport: string;
+  arrivalAirport: string;
+  departureDateTime: string;
+  arrivalDateTime: string;
+}
+
 interface BookedFlight {
   id: string;
   trfId: string;
@@ -80,22 +100,13 @@ export class FlightsProcessingComponent implements OnInit {
   // Selected TRF for booking
   selectedTrf: PendingTrf | null = null;
   isProcessing = false;
+  isBookingModalOpen = false;
 
   // Booking form fields
   pnr = '';
   airline = '';
-  flightNumber = '';
-  departureAirport = '';
-  arrivalAirport = '';
-  departureDate: string = '';
-  departureTime = '';
-  arrivalDate: string = '';
-  arrivalTime = '';
-  returnFlightNumber = '';
-  returnDepartureDate = '';
-  returnDepartureTime = '';
-  returnArrivalDate = '';
-  returnArrivalTime = '';
+  outboundLegs: FlightLegForm[] = [this.emptyLeg()];
+  returnLegs: FlightLegForm[] = [];
   eTicketFile: File | null = null;
   flightNotes = '';
 
@@ -269,59 +280,90 @@ export class FlightsProcessingComponent implements OnInit {
   }
 
   /**
-   * Select TRF for booking. Outbound is always the first itinerary segment;
-   * Return (shown only when the TRF is Round Trip) is the last segment -
-   * the itinerary always has >=2 segments for Round Trip TRFs.
+   * Open the booking modal for a TRF, pre-populating one leg row per
+   * itinerary segment. Legs are split into Outbound/Return by grouping
+   * consecutive segments that share the itinerary's first travel date
+   * (Outbound) vs. every segment after that (Return) - itineraries don't
+   * carry an explicit direction flag, so date-grouping is the best
+   * available signal. Admins can still add/remove/edit legs afterward.
    */
-  selectTrf(trf: PendingTrf): void {
+  openBookingModal(trf: PendingTrf): void {
     this.selectedTrf = trf;
     this.resetFormFields();
 
-    if (!trf.itinerary || trf.itinerary.length === 0) {
-      return;
+    const itinerary = trf.itinerary || [];
+    if (itinerary.length > 0) {
+      const { outbound, returning } = this.splitItineraryByDirection(itinerary);
+      this.outboundLegs = outbound.map(segment => this.legFromSegment(segment));
+      if (this.isRoundTrip && returning.length) {
+        this.returnLegs = returning.map(segment => this.legFromSegment(segment));
+      }
     }
 
-    this.populateOutboundSegment(trf.itinerary[0]);
+    this.isBookingModalOpen = true;
+  }
 
-    if (this.isRoundTrip && trf.itinerary.length >= 2) {
-      this.populateReturnSegment(trf.itinerary[trf.itinerary.length - 1]);
+  closeBookingModal(): void {
+    this.isBookingModalOpen = false;
+    this.selectedTrf = null;
+    this.resetFormFields();
+  }
+
+  private splitItineraryByDirection(itinerary: ItinerarySegment[]): {
+    outbound: ItinerarySegment[];
+    returning: ItinerarySegment[];
+  } {
+    if (!this.isRoundTrip) {
+      return { outbound: itinerary, returning: [] };
+    }
+    const firstDate = itinerary[0]?.departure_date || itinerary[0]?.date;
+    const outbound = itinerary.filter(s => (s.departure_date || s.date) === firstDate);
+    const returning = itinerary.filter(s => (s.departure_date || s.date) !== firstDate);
+    return { outbound: outbound.length ? outbound : [itinerary[0]], returning };
+  }
+
+  private legFromSegment(segment: ItinerarySegment): FlightLegForm {
+    const depDate = segment.departure_date || segment.date;
+    const arrDate = segment.arrival_date || segment.date;
+    return {
+      flightNumber: '',
+      departureAirport: segment.from_location || segment.from || '',
+      arrivalAirport: segment.to_location || segment.to || '',
+      departureDate: depDate ? this.formatDateForInput(depDate) : '',
+      departureTime: segment.etd || '',
+      arrivalDate: arrDate ? this.formatDateForInput(arrDate) : '',
+      arrivalTime: segment.eta || '',
+    };
+  }
+
+  private emptyLeg(): FlightLegForm {
+    return {
+      flightNumber: '',
+      departureAirport: '',
+      arrivalAirport: '',
+      departureDate: '',
+      departureTime: '',
+      arrivalDate: '',
+      arrivalTime: '',
+    };
+  }
+
+  addOutboundLeg(): void {
+    this.outboundLegs.push(this.emptyLeg());
+  }
+
+  removeOutboundLeg(index: number): void {
+    if (this.outboundLegs.length > 1) {
+      this.outboundLegs.splice(index, 1);
     }
   }
 
-  private populateOutboundSegment(segment: ItinerarySegment): void {
-    this.departureAirport = segment.from_location || segment.from || '';
-    this.arrivalAirport = segment.to_location || segment.to || '';
-    const depDate = segment.departure_date || segment.date;
-    if (depDate) {
-      this.departureDate = this.formatDateForInput(depDate);
-    }
-    if (segment.etd) {
-      this.departureTime = segment.etd;
-    }
-    const arrDate = segment.arrival_date || segment.date;
-    if (arrDate) {
-      this.arrivalDate = this.formatDateForInput(arrDate);
-    }
-    if (segment.eta) {
-      this.arrivalTime = segment.eta;
-    }
+  addReturnLeg(): void {
+    this.returnLegs.push(this.emptyLeg());
   }
 
-  private populateReturnSegment(segment: ItinerarySegment): void {
-    const depDate = segment.departure_date || segment.date;
-    if (depDate) {
-      this.returnDepartureDate = this.formatDateForInput(depDate);
-    }
-    if (segment.etd) {
-      this.returnDepartureTime = segment.etd;
-    }
-    const arrDate = segment.arrival_date || segment.date;
-    if (arrDate) {
-      this.returnArrivalDate = this.formatDateForInput(arrDate);
-    }
-    if (segment.eta) {
-      this.returnArrivalTime = segment.eta;
-    }
+  removeReturnLeg(index: number): void {
+    this.returnLegs.splice(index, 1);
   }
 
   /**
@@ -338,41 +380,47 @@ export class FlightsProcessingComponent implements OnInit {
   resetFormFields(): void {
     this.pnr = '';
     this.airline = '';
-    this.flightNumber = '';
-    this.departureAirport = '';
-    this.arrivalAirport = '';
-    this.departureDate = '';
-    this.departureTime = '';
-    this.arrivalDate = '';
-    this.arrivalTime = '';
-    this.returnFlightNumber = '';
-    this.returnDepartureDate = '';
-    this.returnDepartureTime = '';
-    this.returnArrivalDate = '';
-    this.returnArrivalTime = '';
+    this.outboundLegs = [this.emptyLeg()];
+    this.returnLegs = [];
     this.eTicketFile = null;
     this.flightNotes = '';
   }
 
   /**
-   * Validate the four HH:MM time inputs - type="time" can be bypassed via
-   * paste, so this catches anything the browser's own picker wouldn't.
+   * Validate every leg's HH:MM time inputs - type="time" can be bypassed
+   * via paste, so this catches anything the browser's own picker wouldn't.
    */
   private validateTimeFields(): boolean {
     const timePattern = /^\d{2}:\d{2}(:\d{2})?$/;
-    const checks: Array<[string, string]> = [
-      [this.departureTime, 'departure time'],
-      [this.arrivalTime, 'arrival time'],
-      [this.returnDepartureTime, 'return departure time'],
-      [this.returnArrivalTime, 'return arrival time'],
-    ];
-    for (const [value, label] of checks) {
-      if (value && !timePattern.test(value)) {
-        this.toastService.error(`Invalid ${label}. Please use HH:MM format.`);
+    for (const leg of [...this.outboundLegs, ...this.returnLegs]) {
+      if (leg.departureTime && !timePattern.test(leg.departureTime)) {
+        this.toastService.error('Invalid departure time. Please use HH:MM format.');
+        return false;
+      }
+      if (leg.arrivalTime && !timePattern.test(leg.arrivalTime)) {
+        this.toastService.error('Invalid arrival time. Please use HH:MM format.');
         return false;
       }
     }
     return true;
+  }
+
+  private legToSegmentPayload(
+    leg: FlightLegForm,
+    direction: 'OUTBOUND' | 'RETURN',
+    sequence: number
+  ): FlightSegmentPayload {
+    return {
+      direction,
+      sequence,
+      flightNumber: leg.flightNumber,
+      departureAirport: leg.departureAirport,
+      arrivalAirport: leg.arrivalAirport,
+      departureDateTime: leg.departureDate
+        ? `${leg.departureDate}T${leg.departureTime || '00:00'}`
+        : '',
+      arrivalDateTime: leg.arrivalDate ? `${leg.arrivalDate}T${leg.arrivalTime || '00:00'}` : '',
+    };
   }
 
   private buildBookingFormData(): FormData {
@@ -381,39 +429,16 @@ export class FlightsProcessingComponent implements OnInit {
     if (this.airline) {
       payload.set('airline', this.airline);
     }
-    payload.set('flightNumber', this.flightNumber);
-    payload.set('departureAirport', this.departureAirport);
-    payload.set('arrivalAirport', this.arrivalAirport);
-    if (this.departureDate) {
-      payload.set('departureDateTime', `${this.departureDate}T${this.departureTime || '00:00'}`);
-    }
-    if (this.arrivalDate) {
-      payload.set('arrivalDateTime', `${this.arrivalDate}T${this.arrivalTime || '00:00'}`);
-    }
-    if (this.isRoundTrip) {
-      this.appendReturnSegment(payload);
-    }
+    const segments = [
+      ...this.outboundLegs.map((leg, i) => this.legToSegmentPayload(leg, 'OUTBOUND', i + 1)),
+      ...this.returnLegs.map((leg, i) => this.legToSegmentPayload(leg, 'RETURN', i + 1)),
+    ];
+    payload.set('segments', JSON.stringify(segments));
     if (this.eTicketFile) {
       payload.set('eTicket', this.eTicketFile);
     }
     payload.set('flightNotes', this.flightNotes);
     return payload;
-  }
-
-  private appendReturnSegment(payload: FormData): void {
-    payload.set('returnFlightNumber', this.returnFlightNumber);
-    if (this.returnDepartureDate) {
-      payload.set(
-        'returnDepartureDateTime',
-        `${this.returnDepartureDate}T${this.returnDepartureTime || '00:00'}`
-      );
-    }
-    if (this.returnArrivalDate) {
-      payload.set(
-        'returnArrivalDateTime',
-        `${this.returnArrivalDate}T${this.returnArrivalTime || '00:00'}`
-      );
-    }
   }
 
   /**
@@ -431,15 +456,14 @@ export class FlightsProcessingComponent implements OnInit {
 
     this.isProcessing = true;
     const payload = this.buildBookingFormData();
+    const trfDisplay = this.selectedTrf.request_number || this.selectedTrf.id;
 
     this.trfService.bookFlight(this.selectedTrf.id, payload).subscribe({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       next: (_response: any) => {
-        const trfDisplay = this.selectedTrf!.request_number || this.selectedTrf!.id;
         this.toastService.success(`Flight booked successfully for TRF ${trfDisplay}`);
         this.loadAll();
-        this.selectedTrf = null;
-        this.resetFormFields();
+        this.closeBookingModal();
         this.isProcessing = false;
       },
       error: err => {
@@ -602,31 +626,27 @@ export class FlightsProcessingComponent implements OnInit {
    * Check if form is valid
    */
   isFormValid(): boolean {
-    return this.isOutboundValid() && (!this.isRoundTrip || this.isReturnSegmentValid());
+    if (!this.pnr || (this.isAirlineRequired && !this.airline) || !this.eTicketFile) {
+      return false;
+    }
+    if (!this.outboundLegs.length || !this.outboundLegs.every(leg => this.isLegValid(leg))) {
+      return false;
+    }
+    if (this.isRoundTrip) {
+      return this.returnLegs.length > 0 && this.returnLegs.every(leg => this.isLegValid(leg));
+    }
+    return true;
   }
 
-  private isOutboundValid(): boolean {
+  private isLegValid(leg: FlightLegForm): boolean {
     return !!(
-      this.pnr &&
-      (!this.isAirlineRequired || this.airline) &&
-      this.flightNumber &&
-      this.departureAirport &&
-      this.arrivalAirport &&
-      this.departureDate &&
-      this.departureTime &&
-      this.arrivalDate &&
-      this.arrivalTime &&
-      this.eTicketFile
-    );
-  }
-
-  private isReturnSegmentValid(): boolean {
-    return !!(
-      this.returnFlightNumber &&
-      this.returnDepartureDate &&
-      this.returnDepartureTime &&
-      this.returnArrivalDate &&
-      this.returnArrivalTime
+      leg.flightNumber &&
+      leg.departureAirport &&
+      leg.arrivalAirport &&
+      leg.departureDate &&
+      leg.departureTime &&
+      leg.arrivalDate &&
+      leg.arrivalTime
     );
   }
 

@@ -37,6 +37,20 @@ def _build_flight_details(flight_booking, request=None):
         flight_booking.return_arrival_time
     )
 
+    segments = [
+        {
+            "id": seg.id,
+            "direction": seg.direction,
+            "sequence": seg.sequence,
+            "flightNumber": seg.flight_number,
+            "departureAirport": seg.departure_airport,
+            "arrivalAirport": seg.arrival_airport,
+            "departureDateTime": seg.departure_time.isoformat(),
+            "arrivalDateTime": seg.arrival_time.isoformat(),
+        }
+        for seg in flight_booking.segments.all()
+    ]
+
     return {
         "id": flight_booking.id,
         "flightType": flight_booking.flight_type,
@@ -63,6 +77,7 @@ def _build_flight_details(flight_booking, request=None):
         "pnr": flight_booking.booking_reference,
         "status": flight_booking.status,
         "remarks": flight_booking.notes,
+        "segments": segments,
     }
 
 
