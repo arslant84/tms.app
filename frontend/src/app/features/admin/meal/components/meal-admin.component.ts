@@ -22,14 +22,18 @@ interface MealQueueRequest {
   created_at?: string;
 }
 
-const MEAL_STATUSES = ['Pending', 'Arranged', 'Completed'] as const;
+// 'Completed' was retired as a meal status: with one person handling the
+// whole queue, Arranged is the terminal state in practice and no request
+// has ever been marked Completed - keeping it around just left a filter
+// option and stat tile that always showed zero.
+const MEAL_STATUSES = ['Pending', 'Arranged'] as const;
 
 @Component({
   selector: 'app-meal-admin',
   standalone: true,
   imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './meal-admin.component.html',
-  styleUrl: './meal-admin.component.scss'
+  styleUrl: './meal-admin.component.scss',
 })
 export class MealAdminComponent implements OnInit {
   requests: MealQueueRequest[] = [];
@@ -37,11 +41,10 @@ export class MealAdminComponent implements OnInit {
   totalRequestsCount = 0;
   pendingCount = 0;
   arrangedCount = 0;
-  completedCount = 0;
 
   filterCriteria = {
     status: 'all',
-    search: ''
+    search: '',
   };
 
   currentPage = 1;
@@ -54,7 +57,7 @@ export class MealAdminComponent implements OnInit {
 
   statusOptions = [
     { value: 'all', label: 'All Meal Statuses' },
-    ...MEAL_STATUSES.map(s => ({ value: s, label: s }))
+    ...MEAL_STATUSES.map(s => ({ value: s, label: s })),
   ];
 
   private trfService = inject(TrfService);
@@ -78,7 +81,7 @@ export class MealAdminComponent implements OnInit {
         page: this.currentPage,
         page_size: this.pageSize,
         status: this.filterCriteria.status !== 'all' ? this.filterCriteria.status : undefined,
-        search: this.filterCriteria.search || undefined
+        search: this.filterCriteria.search || undefined,
       })
       .subscribe({
         next: response => {
@@ -90,15 +93,16 @@ export class MealAdminComponent implements OnInit {
         error: err => {
           this.error = this.errorHandler.getErrorMessage(err, 'Failed to load meal requests');
           this.loading = false;
-        }
+        },
       });
   }
 
   calculateStats(): void {
     this.totalRequestsCount = this.requests.length;
-    this.pendingCount = this.requests.filter(r => (r.meal_processing_status || 'Pending') === 'Pending').length;
+    this.pendingCount = this.requests.filter(
+      r => (r.meal_processing_status || 'Pending') === 'Pending'
+    ).length;
     this.arrangedCount = this.requests.filter(r => r.meal_processing_status === 'Arranged').length;
-    this.completedCount = this.requests.filter(r => r.meal_processing_status === 'Completed').length;
   }
 
   applyFilters(): void {
@@ -127,7 +131,7 @@ export class MealAdminComponent implements OnInit {
         title: `Mark as ${newStatus}`,
         message: `Mark meal request for ${request.request_number || '#' + request.id} as ${newStatus}?`,
         confirmText: newStatus,
-        type: 'success'
+        type: 'success',
       })
       .subscribe(confirmed => {
         if (!confirmed) return;
@@ -145,9 +149,11 @@ export class MealAdminComponent implements OnInit {
         this.loadRequests();
       },
       error: err => {
-        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to update meal status'));
+        this.toastService.error(
+          this.errorHandler.getErrorMessage(err, 'Failed to update meal status')
+        );
         this.processingId = null;
-      }
+      },
     });
   }
 
