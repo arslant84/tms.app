@@ -144,7 +144,9 @@ class FlightBooking(models.Model):
         help_text="Current booking status",
     )
     booking_reference = models.CharField(
-        max_length=50, unique=True, help_text="PNR/Booking reference"
+        max_length=50,
+        help_text="PNR/Booking reference. Not unique - the same PNR can "
+        "legitimately cover multiple travelers on one booking.",
     )
     ticket_number = models.CharField(
         max_length=50, blank=True, null=True, help_text="E-ticket number"

@@ -526,14 +526,6 @@
             <p>{{ trfData.flightDetails.airline || 'N/A' }}</p>
           </div>
           <div class="detail-item">
-            <label>Flight Class</label>
-            <p>
-              {{
-                trfData.flightDetails.flightClass || trfData.flightDetails.flight_class || 'Economy'
-              }}
-            </p>
-          </div>
-          <div class="detail-item">
             <label>Booking Reference (PNR)</label>
             <p>
               {{
@@ -543,7 +535,7 @@
               }}
             </p>
           </div>
-          <div class="detail-item">
+          <div class="detail-item" *ngIf="!trfData.flightDetails.segments?.length">
             <label>Departure Airport</label>
             <p>
               {{
@@ -553,7 +545,7 @@
               }}
             </p>
           </div>
-          <div class="detail-item">
+          <div class="detail-item" *ngIf="!trfData.flightDetails.segments?.length">
             <label>Arrival Airport</label>
             <p>
               {{
@@ -563,7 +555,7 @@
               }}
             </p>
           </div>
-          <div class="detail-item">
+          <div class="detail-item" *ngIf="!trfData.flightDetails.segments?.length">
             <label>Departure Date & Time</label>
             <p>
               {{
@@ -574,7 +566,7 @@
               }}
             </p>
           </div>
-          <div class="detail-item">
+          <div class="detail-item" *ngIf="!trfData.flightDetails.segments?.length">
             <label>Arrival Date & Time</label>
             <p>
               {{
@@ -616,6 +608,72 @@
                 <i class="bi bi-download"></i> Download E-Ticket
               </a>
             </p>
+          </div>
+        </div>
+
+        <!-- Per-leg breakdown: a booking can have any number of legs per
+             direction (connections), so the flat Departure/Arrival fields
+             above only ever showed the overall first/last airport. -->
+        <div class="flight-segments" *ngIf="trfData.flightDetails.segments?.length">
+          <div
+            class="flight-segments-group"
+            *ngIf="getSegmentsByDirection('OUTBOUND').length as outboundCount"
+          >
+            <h6>Outbound</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Leg</th>
+                    <th>Flight No.</th>
+                    <th>Departure Airport</th>
+                    <th>Arrival Airport</th>
+                    <th>Departure</th>
+                    <th>Arrival</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let seg of getSegmentsByDirection('OUTBOUND')">
+                    <td>{{ seg.sequence }}</td>
+                    <td>{{ seg.flightNumber || 'N/A' }}</td>
+                    <td>{{ seg.departureAirport || 'N/A' }}</td>
+                    <td>{{ seg.arrivalAirport || 'N/A' }}</td>
+                    <td>{{ dateUtils.formatDateTime(seg.departureDateTime) }}</td>
+                    <td>{{ dateUtils.formatDateTime(seg.arrivalDateTime) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div
+            class="flight-segments-group"
+            *ngIf="getSegmentsByDirection('RETURN').length as returnCount"
+          >
+            <h6>Return</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Leg</th>
+                    <th>Flight No.</th>
+                    <th>Departure Airport</th>
+                    <th>Arrival Airport</th>
+                    <th>Departure</th>
+                    <th>Arrival</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let seg of getSegmentsByDirection('RETURN')">
+                    <td>{{ seg.sequence }}</td>
+                    <td>{{ seg.flightNumber || 'N/A' }}</td>
+                    <td>{{ seg.departureAirport || 'N/A' }}</td>
+                    <td>{{ seg.arrivalAirport || 'N/A' }}</td>
+                    <td>{{ dateUtils.formatDateTime(seg.departureDateTime) }}</td>
+                    <td>{{ dateUtils.formatDateTime(seg.arrivalDateTime) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

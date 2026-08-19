@@ -56,7 +56,6 @@ def _build_flight_details(flight_booking, request=None):
         "flightType": flight_booking.flight_type,
         "airline": flight_booking.airline,
         "flightNumber": flight_booking.flight_number,
-        "flightClass": flight_booking.booking_class,
         "departureLocation": flight_booking.departure_airport,
         "arrivalLocation": flight_booking.arrival_airport,
         "departureDate": departure_date,

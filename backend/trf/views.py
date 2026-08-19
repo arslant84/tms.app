@@ -1276,25 +1276,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 message=str(e), status_code=status.HTTP_400_BAD_REQUEST
             )
 
-        if existing_booking and existing_booking.booking_reference != pnr:
-            if (
-                FlightBooking.objects.filter(booking_reference=pnr)
-                .exclude(id=existing_booking.id)
-                .exists()
-            ):
-                return error_response(
-                    message=f'Booking reference "{pnr}" is already in use by another booking. Please use a unique PNR.',
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                )
-        elif (
-            not existing_booking
-            and FlightBooking.objects.filter(booking_reference=pnr).exists()
-        ):
-            return error_response(
-                message=f'Booking reference "{pnr}" is already in use. Please use a unique PNR.',
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
         flight_type = FlightType.ROUND_TRIP if return_legs else FlightType.ONE_WAY
         summary = {
             "airline": airline or None,

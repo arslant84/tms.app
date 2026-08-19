@@ -152,14 +152,6 @@ class FlightBookingCreateSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def validate_booking_reference(self, value):
-        """Ensure booking reference is unique"""
-        if FlightBooking.objects.filter(booking_reference=value).exists():
-            raise serializers.ValidationError(
-                "A booking with this reference already exists."
-            )
-        return value
-
     def validate(self, data):
         """Cross-field validation"""
         if data["departure_time"] >= data["arrival_time"]:
