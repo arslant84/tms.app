@@ -159,7 +159,7 @@ export class FlightsProcessingComponent implements OnInit {
           let itinerary: ItinerarySegment[] | undefined;
 
           const overseasDetails = trf.overseas_travel_details || trf.overseasTravelDetails;
-          const homeLeaveDetails = trf.home_leave_details || trf.overseasTravelDetails;
+          const homeLeaveDetails = trf.home_leave_details;
           const domesticDetails = trf.domestic_travel_details || trf.domesticTravelDetails;
           const externalDetails =
             trf.external_parties_travel_details || trf.externalPartiesTravelDetails;

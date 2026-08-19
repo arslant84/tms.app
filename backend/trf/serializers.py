@@ -339,6 +339,7 @@ class TravelRequestSerializer(serializers.ModelSerializer):
     overseas_travel_details = serializers.SerializerMethodField()
     home_leave_details = serializers.SerializerMethodField()
     domestic_travel_details = serializers.SerializerMethodField()
+    external_parties_travel_details = serializers.SerializerMethodField()
 
     class Meta:
         model = TravelRequest
@@ -374,6 +375,7 @@ class TravelRequestSerializer(serializers.ModelSerializer):
             "overseas_travel_details",
             "home_leave_details",
             "domestic_travel_details",
+            "external_parties_travel_details",
         ]
         read_only_fields = [
             "id",
@@ -464,6 +466,33 @@ class TravelRequestSerializer(serializers.ModelSerializer):
     def get_domestic_travel_details(self, obj):
         """Get domestic travel details with itinerary"""
         if obj.travel_type == "Domestic":
+            itinerary_segments = obj.trfitinerarysegment_set.all()
+            return {
+                "itinerary": [
+                    {
+                        "from_location": seg.from_location,
+                        "from": seg.from_location,
+                        "to_location": seg.to_location,
+                        "to": seg.to_location,
+                        "departure_date": (
+                            seg.segment_date.isoformat() if seg.segment_date else None
+                        ),
+                        "date": (
+                            seg.segment_date.isoformat() if seg.segment_date else None
+                        ),
+                        "etd": seg.departure_time,
+                        "eta": seg.arrival_time,
+                        "departure_time": seg.departure_time,
+                        "arrival_time": seg.arrival_time,
+                    }
+                    for seg in itinerary_segments
+                ]
+            }
+        return None
+
+    def get_external_parties_travel_details(self, obj):
+        """Get external parties travel details with itinerary"""
+        if obj.travel_type == "External Parties":
             itinerary_segments = obj.trfitinerarysegment_set.all()
             return {
                 "itinerary": [
