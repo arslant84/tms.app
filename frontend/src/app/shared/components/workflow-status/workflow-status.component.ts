@@ -79,22 +79,6 @@ export class WorkflowStatusComponent implements OnInit, OnChanges {
     });
   }
 
-  getStepClass(step: WorkflowStepExecution): string {
-    if (step.status === 'approved') return 'step-completed';
-    if (step.status === 'rejected') return 'step-rejected';
-    if (step.status === 'skipped') return 'step-skipped';
-    if (step.status === 'pending' && this.isCurrentStep(step)) return 'step-current';
-    return 'step-pending';
-  }
-
-  getStepIcon(step: WorkflowStepExecution): string {
-    if (step.status === 'approved') return '✓';
-    if (step.status === 'rejected') return '✗';
-    if (step.status === 'skipped') return '⊘';
-    if (step.status === 'pending' && this.isCurrentStep(step)) return '⧗';
-    return '○';
-  }
-
   isCurrentStep(step: WorkflowStepExecution): boolean {
     if (!this.workflow || !step.workflow_step_detail) return false;
     return (
@@ -108,10 +92,6 @@ export class WorkflowStatusComponent implements OnInit, OnChanges {
     return this.workflowService.getStatusClass(this.workflow.status);
   }
 
-  getStepStatusBadge(step: WorkflowStepExecution): string {
-    return this.workflowService.getStepStatusClass(step.status);
-  }
-
   formatUserName(step: WorkflowStepExecution): string {
     if (step.actioned_by_user) {
       return this.workflowService.formatUserName(step.actioned_by_user);
@@ -123,25 +103,6 @@ export class WorkflowStatusComponent implements OnInit, OnChanges {
       return step.workflow_step_detail.approver_role;
     }
     return 'Unassigned';
-  }
-
-  getDelegatedUserName(step: WorkflowStepExecution): string {
-    if (step.delegations && step.delegations.length > 0) {
-      const delegation = step.delegations[0];
-      if (delegation.delegated_to_user) {
-        return this.workflowService.formatUserName(delegation.delegated_to_user);
-      }
-    }
-    return 'Unknown';
-  }
-
-  getTimeRemaining(step: WorkflowStepExecution): string {
-    if (step.status !== 'pending') return '';
-    return this.workflowService.getTimeRemaining(step.sla_due_date);
-  }
-
-  isOverdue(step: WorkflowStepExecution): boolean {
-    return this.workflowService.isStepOverdue(step);
   }
 
   get progressPercentage(): number {
@@ -202,6 +163,38 @@ export class WorkflowStatusComponent implements OnInit, OnChanges {
       isCurrent: !!execution && this.isCurrentStep(execution),
       execution,
     };
+  }
+
+  /**
+   * Circles sit centered within their own 1/N-wide slice of the row, so the
+   * track (drawn center-to-center) is inset by half a slice on each side.
+   */
+  get stepperTrackInsetPercent(): number {
+    const n = this.stepperItems.length;
+    return n > 0 ? 50 / n : 0;
+  }
+
+  /**
+   * Width of the colored "progress" segment of the track, as a percentage
+   * of the full row - from the first circle's center up to the center of
+   * the furthest step reached (last approved/rejected/skipped/current one).
+   */
+  get stepperProgressWidthPercent(): number {
+    const n = this.stepperItems.length;
+    if (n <= 1) return 0;
+    const inset = this.stepperTrackInsetPercent;
+    const trackSpan = 100 - 2 * inset;
+    return (this.stepperFurthestIndex / (n - 1)) * trackSpan;
+  }
+
+  private get stepperFurthestIndex(): number {
+    let furthest = 0;
+    this.stepperItems.forEach((item, index) => {
+      if (item.status !== 'upcoming') {
+        furthest = index;
+      }
+    });
+    return furthest;
   }
 
   getStepperClass(item: StepperItem): string {

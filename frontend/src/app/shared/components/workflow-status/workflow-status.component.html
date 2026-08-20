@@ -51,14 +51,29 @@
 
     <!-- Horizontal Stepper: the whole workflow at a glance, including steps
          not reached yet (they have no step_execution row so far, but the
-         template still knows they exist). -->
+         template still knows they exist). The connecting line is one
+         absolutely-positioned track behind the circles (spanning
+         center-to-center, inset by half a slice on each side) rather than
+         each circle owning a line segment - that per-item approach broke
+         under real step counts (a stray trailing segment past the last
+         circle, a missing segment elsewhere). -->
     <div *ngIf="!compact && stepperItems.length > 0" class="workflow-stepper">
-      <div
-        *ngFor="let item of stepperItems; let isLast = last"
-        class="stepper-item"
-        [ngClass]="getStepperClass(item)"
-      >
-        <div class="stepper-node-row">
+      <div class="stepper-track-row">
+        <div
+          class="stepper-track-bg"
+          [style.left.%]="stepperTrackInsetPercent"
+          [style.right.%]="stepperTrackInsetPercent"
+        ></div>
+        <div
+          class="stepper-track-progress"
+          [style.left.%]="stepperTrackInsetPercent"
+          [style.width.%]="stepperProgressWidthPercent"
+        ></div>
+        <div
+          *ngFor="let item of stepperItems"
+          class="stepper-circle-wrap"
+          [ngClass]="getStepperClass(item)"
+        >
           <div class="stepper-circle">
             <span *ngIf="item.status === 'approved'">✓</span>
             <span *ngIf="item.status === 'rejected'">✗</span>
@@ -72,9 +87,14 @@
               >{{ item.order }}</span
             >
           </div>
-          <div *ngIf="!isLast" class="stepper-connector"></div>
         </div>
-        <div class="stepper-label">
+      </div>
+      <div class="stepper-labels-row">
+        <div
+          *ngFor="let item of stepperItems"
+          class="stepper-label"
+          [ngClass]="getStepperClass(item)"
+        >
           <div class="stepper-name">{{ item.name }}</div>
           <div class="stepper-caption">{{ getStepperCaption(item) }}</div>
         </div>
@@ -100,95 +120,24 @@
       </div>
     </div>
 
-    <!-- Step history unavailable (workflow exists but has no step records) -->
-    <div *ngIf="!compact && sortedSteps.length === 0" class="no-workflow step-history-unavailable">
+    <!-- Step history unavailable (workflow exists but has no step records at
+         all, and the template's step list wasn't available either - the
+         stepper above already covers the normal cases). -->
+    <div *ngIf="!compact && stepperItems.length === 0" class="no-workflow step-history-unavailable">
       <i class="bi bi-info-circle"></i>
       Step-by-step history is unavailable for this workflow.
     </div>
 
-    <!-- Full View (Timeline) -->
-    <div *ngIf="!compact && sortedSteps.length > 0" class="workflow-timeline">
-      <div
-        *ngFor="let step of sortedSteps; let i = index; let isLast = last"
-        class="timeline-item"
-        [ngClass]="getStepClass(step)"
-      >
-        <!-- Timeline connector -->
-        <div class="timeline-connector" *ngIf="!isLast"></div>
-
-        <!-- Step Icon -->
-        <div class="timeline-icon">
-          <span class="step-icon" [ngClass]="getStepClass(step)">
-            {{ getStepIcon(step) }}
-          </span>
+    <!-- Comments on any actioned step - the only per-step detail not already
+         shown by the stepper above. -->
+    <div *ngIf="!compact && sortedSteps.length > 0" class="workflow-comments">
+      <ng-container *ngFor="let step of sortedSteps">
+        <div class="comment-row" *ngIf="step.comments">
+          <i class="bi bi-chat-left-text"></i>
+          <span class="comment-step">Step {{ step.workflow_step_detail?.step_order }}:</span>
+          <span class="comment-text">"{{ step.comments }}"</span>
         </div>
-
-        <!-- Step Content -->
-        <div class="timeline-content">
-          <div class="d-flex justify-content-between align-items-start mb-1">
-            <div>
-              <h6 class="step-title mb-0">
-                Step {{ step.workflow_step_detail?.step_order }}:
-                {{ step.workflow_step_detail?.step_name }}
-              </h6>
-              <span class="badge badge-sm mt-1" [ngClass]="getStepStatusBadge(step)">
-                {{ step.status | titlecase }}
-              </span>
-            </div>
-          </div>
-
-          <div class="step-details">
-            <!-- Assigned To / Actioned By -->
-            <div class="detail-row">
-              <i class="bi bi-person"></i>
-              <span class="detail-label">
-                {{ step.status === 'pending' ? 'Assigned to:' : 'Actioned by:' }}
-              </span>
-              <span class="detail-value">
-                {{ formatUserName(step) }}
-              </span>
-            </div>
-
-            <!-- Action Date -->
-            <div class="detail-row" *ngIf="step.action_date">
-              <i class="bi bi-calendar-check"></i>
-              <span class="detail-label">Completed:</span>
-              <span class="detail-value">{{ dateUtils.formatDate(step.action_date) }}</span>
-            </div>
-
-            <!-- SLA Due Date (for pending steps) -->
-            <div class="detail-row" *ngIf="step.status === 'pending' && step.sla_due_date">
-              <i class="bi bi-clock" [ngClass]="{ 'text-danger': isOverdue(step) }"></i>
-              <span class="detail-label">Due:</span>
-              <span class="detail-value" [ngClass]="{ 'text-danger fw-bold': isOverdue(step) }">
-                {{ getTimeRemaining(step) }}
-              </span>
-            </div>
-
-            <!-- Comments -->
-            <div class="detail-row" *ngIf="step.comments">
-              <i class="bi bi-chat-left-text"></i>
-              <span class="detail-label">Comments:</span>
-              <span class="detail-value fst-italic">"{{ step.comments }}"</span>
-            </div>
-
-            <!-- Delegation Info -->
-            <div
-              class="detail-row"
-              *ngIf="step.status === 'delegated' && step.delegations && step.delegations.length > 0"
-            >
-              <i class="bi bi-arrow-right-circle text-info"></i>
-              <span class="text-info"> Delegated to {{ getDelegatedUserName(step) }} </span>
-            </div>
-
-            <!-- Current Step Indicator -->
-            <div class="current-step-badge" *ngIf="isCurrentStep(step)">
-              <i class="bi bi-arrow-right-circle-fill"></i>
-              Current Step
-            </div>
-          </div>
-        </div>
-      </div>
+      </ng-container>
     </div>
 
     <!-- Footer Info -->
