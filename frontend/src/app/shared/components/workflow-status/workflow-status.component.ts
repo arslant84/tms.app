@@ -139,4 +139,15 @@ export class WorkflowStatusComponent implements OnInit, OnChanges {
       return orderA - orderB;
     });
   }
+
+  /**
+   * The template's real, configured step count - not sortedSteps.length,
+   * which only counts steps reached so far (WorkflowEngine creates step
+   * executions lazily, one at a time, so a workflow still on step 1 of a
+   * 3-step template only has 1 step_execution row and would wrongly show
+   * "Step 1 of 1").
+   */
+  get totalStepCount(): number {
+    return this.workflow?.workflow_template_detail?.step_count || this.sortedSteps.length;
+  }
 }
