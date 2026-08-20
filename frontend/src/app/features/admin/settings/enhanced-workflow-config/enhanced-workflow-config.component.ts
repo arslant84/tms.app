@@ -17,7 +17,6 @@ interface WorkflowStepConfig {
   order: number;
   roleId: string;
   roleName?: string;
-  slaHours: number;
   notification_configs?: WorkflowStepNotificationConfig[];
 }
 
@@ -136,7 +135,6 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
       this.steps.push({
         order: i,
         roleId: '',
-        slaHours: 72,
       });
     }
   }
@@ -200,7 +198,6 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
         // every newly created/edited step back to false.
         can_skip: true,
         requires_comments: false,
-        sla_hours: step.slaHours,
         notification_configs: step.notification_configs || [],
       })),
     };
@@ -242,7 +239,6 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
         this.steps = (fullWorkflow.steps || []).map((step: any) => ({
           order: step.step_order,
           roleId: step.approver_role || '',
-          slaHours: step.sla_hours || 72,
           notification_configs: step.notification_configs || [],
         }));
 
@@ -307,7 +303,6 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
             is_required: step.is_required,
             can_skip: step.can_skip,
             requires_comments: step.requires_comments,
-            sla_hours: step.sla_hours,
             notification_configs: (step.notification_configs || []).map((config: any) => ({
               event_type: config.event_type,
               notification_template: config.notification_template,

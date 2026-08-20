@@ -51,12 +51,6 @@ class Command(BaseCommand):
             "priority": "normal",
             "description": "Notify the requester when the workflow is cancelled",
         },
-        "reminder": {
-            "template_name": "approval_reminder",
-            "recipient_types": ["current_approver"],
-            "priority": "high",
-            "description": "Remind the approver when their pending step is due within 24 hours",
-        },
     }
 
     def add_arguments(self, parser):

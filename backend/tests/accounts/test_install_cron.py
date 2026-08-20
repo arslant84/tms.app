@@ -41,13 +41,17 @@ class TestInstallCron:
 
         call_command("install_cron")
 
-        assert mock_cron.remove_all.call_count == 4
+        # 4 current jobs + 1 legacy tag (send_step_reminders, retired - see
+        # LEGACY_JOB_NAMES) cleaned up so a server that already has the
+        # stale entry actually gets it removed on the next install.
+        assert mock_cron.remove_all.call_count == 5
         tags = {
             call.kwargs.get("comment") for call in mock_cron.remove_all.call_args_list
         }
         assert any("backup_db" in tag for tag in tags)
         assert any("disable_inactive_accounts" in tag for tag in tags)
         assert any("cleanup_expired_data" in tag for tag in tags)
+        assert any("check_uptime" in tag for tag in tags)
         assert any("send_step_reminders" in tag for tag in tags)
 
     def test_dry_run_does_not_write(self, mock_crontab):
@@ -84,5 +88,5 @@ class TestInstallCron:
             "0 2 * * *",
             "0 3 * * 0",
             "0 4 1 * *",
-            "0 * * * *",
+            "*/5 * * * *",
         ]

@@ -292,39 +292,6 @@ export class WorkflowService {
   }
 
   /**
-   * Check if step is overdue
-   */
-  isStepOverdue(stepExecution: WorkflowStepExecution): boolean {
-    if (!stepExecution.sla_due_date) return false;
-    return new Date(stepExecution.sla_due_date) < new Date() && stepExecution.status === 'pending';
-  }
-
-  /**
-   * Get time remaining for SLA
-   */
-  getTimeRemaining(dueDate: string | undefined): string {
-    if (!dueDate) return 'No deadline';
-
-    const now = new Date();
-    const due = new Date(dueDate);
-    const diffMs = due.getTime() - now.getTime();
-
-    if (diffMs < 0) return 'Overdue';
-
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) {
-      return `${diffDays} day${diffDays > 1 ? 's' : ''} remaining`;
-    } else if (diffHours > 0) {
-      return `${diffHours} hour${diffHours > 1 ? 's' : ''} remaining`;
-    } else {
-      const diffMinutes = Math.floor(diffMs / (1000 * 60));
-      return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} remaining`;
-    }
-  }
-
-  /**
    * Get status display text for workflow instance
    */
   getWorkflowStatus(workflow: WorkflowInstance | WorkflowInstanceList | null): string {

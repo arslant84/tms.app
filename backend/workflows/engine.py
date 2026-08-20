@@ -4,7 +4,7 @@ Handles workflow lifecycle: start, process actions, complete
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 from typing import Any, Dict, Optional
@@ -579,12 +579,6 @@ class WorkflowEngine:
                 ),
             )
 
-        # Calculate SLA due date
-        sla_due_date = None
-
-        if step.sla_hours:
-            sla_due_date = timezone.now() + timedelta(hours=step.sla_hours)
-
         if existing_execution:
             # If step already exists and is pending, it's a race condition - skip
             if existing_execution.status == "pending":
@@ -600,7 +594,6 @@ class WorkflowEngine:
                 )
                 existing_execution.status = "pending"
                 existing_execution.assigned_to = assigned_user
-                existing_execution.sla_due_date = sla_due_date
                 existing_execution.save()
                 step_execution = existing_execution
                 created = True  # Treat as newly created for logging/notifications
@@ -618,7 +611,6 @@ class WorkflowEngine:
                 defaults={
                     "assigned_to": assigned_user,
                     "status": "pending",
-                    "sla_due_date": sla_due_date,
                 },
             )
 

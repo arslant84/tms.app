@@ -107,7 +107,7 @@ class TestWorkflowStepNotificationConfigEndpoints:
 
         payload = {
             "workflow_step": step.id,
-            "event_type": "reminder",
+            "event_type": "delegation",
             "notification_template": str(template.id),
             "recipient_types": ["current_approver"],
             "is_active": True,
@@ -164,12 +164,14 @@ class TestNotificationConfigConsistencyAcrossApps:
             f"at all, inconsistent with the others: {missing}"
         )
 
-    def test_every_active_step_has_all_seven_event_types_configured(self):
-        """Regression test for Fix 19: workflow_completed/workflow_cancelled/
-        reminder previously had zero configs for every app (not just a
+    def test_every_active_step_has_all_six_event_types_configured(self):
+        """Regression test for Fix 19: workflow_completed/workflow_cancelled
+        previously had zero configs for every app (not just a
         travelrequest/combinedrequest gap) since nothing ever populated
         them - only assignment/approval/rejection/delegation were covered.
-        Every active WorkflowStep should now have one config per event type."""
+        Every active WorkflowStep should now have one config per event type.
+        ('reminder' was a seventh event type here originally, retired along
+        with the SLA due-date/reminder-email feature it powered.)"""
         from workflows.models import WorkflowStep, WorkflowStepNotificationConfig
 
         all_event_types = {
@@ -179,7 +181,6 @@ class TestNotificationConfigConsistencyAcrossApps:
             "assignment",
             "approval",
             "rejection",
-            "reminder",
             "delegation",
             "workflow_completed",
             "workflow_cancelled",

@@ -117,13 +117,6 @@ class WorkflowStep(models.Model):
         default=False, help_text="Whether approver must provide comments"
     )
 
-    # Time constraints
-    sla_hours = models.IntegerField(
-        null=True,
-        blank=True,
-        help_text="Service Level Agreement - expected hours to complete this step",
-    )
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -163,7 +156,6 @@ class WorkflowStepNotificationConfig(models.Model):
         ("assignment", "On Step Assignment"),
         ("approval", "On Step Approval"),
         ("rejection", "On Step Rejection"),
-        ("reminder", "Reminder Notification"),
         ("delegation", "On Step Delegation"),
         # Workflow-level events (after all approvals)
         ("workflow_completed", "When All Approvals Complete"),
@@ -400,17 +392,6 @@ class WorkflowStepExecution(models.Model):
     # Action details
     comments = models.TextField(blank=True, null=True)
     action_date = models.DateTimeField(null=True, blank=True)
-
-    # SLA tracking
-    sla_due_date = models.DateTimeField(null=True, blank=True)
-    is_overdue = models.BooleanField(default=False)
-    reminder_sent_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="When the one-shot 'reminder' notification was sent for this step "
-        "execution's SLA window (send_step_reminders management command). Null if "
-        "not yet sent.",
-    )
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

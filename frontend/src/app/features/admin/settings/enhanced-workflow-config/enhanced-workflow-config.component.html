@@ -119,7 +119,7 @@
 
               <div class="row g-3">
                 <!-- Role Selection -->
-                <div class="col-md-6">
+                <div class="col-md-12">
                   <label [for]="'role-' + i" class="form-label">
                     <i class="bi bi-person-badge me-1"></i>
                     Approver Role *
@@ -130,23 +130,6 @@
                       {{ role.name }}
                     </option>
                   </select>
-                </div>
-
-                <!-- SLA Hours -->
-                <div class="col-md-6">
-                  <label [for]="'sla-' + i" class="form-label">
-                    <i class="bi bi-clock me-1"></i>
-                    SLA (Hours)
-                  </label>
-                  <input
-                    type="number"
-                    [id]="'sla-' + i"
-                    class="form-control"
-                    [(ngModel)]="step.slaHours"
-                    min="1"
-                    placeholder="72"
-                  />
-                  <small class="form-text text-muted">Expected completion time</small>
                 </div>
               </div>
 

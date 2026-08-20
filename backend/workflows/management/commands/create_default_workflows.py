@@ -86,7 +86,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=48,
         )
 
         # Step 2: Line Manager
@@ -99,7 +98,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=48,
         )
 
         # Step 3: HOD
@@ -112,7 +110,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=72,
         )
 
         self.stdout.write(self.style.SUCCESS("  ✓ Created TRF workflow with 3 steps"))
@@ -143,7 +140,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=48,
         )
 
         # Step 2: Line Manager
@@ -156,7 +152,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=48,
         )
 
         # Step 3: HOD
@@ -169,7 +164,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=72,
         )
 
         # Step 4: Visa Admin (Final Processing)
@@ -182,7 +176,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=240,  # 10 days (embassy processing can be slow)
         )
 
         self.stdout.write(self.style.SUCCESS("  ✓ Created Visa workflow with 4 steps"))
@@ -213,7 +206,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=24,
         )
 
         # Step 2: Line Manager
@@ -226,7 +218,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=24,
         )
 
         # Step 3: HOD
@@ -239,7 +230,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=48,
         )
 
         # Step 4: Transport Admin (Final Processing)
@@ -252,7 +242,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=72,
         )
 
         self.stdout.write(
@@ -283,7 +272,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=48,
         )
 
         # Step 2: Line Manager
@@ -296,7 +284,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=48,
         )
 
         # Step 3: HOD
@@ -309,7 +296,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=72,
         )
 
         # Step 4: Accommodation Admin
@@ -322,7 +308,6 @@ class Command(BaseCommand):
             is_required=True,
             can_skip=False,
             requires_comments=False,
-            sla_hours=96,
         )
 
         self.stdout.write(

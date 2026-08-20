@@ -91,7 +91,6 @@ export interface WorkflowStep {
   is_required: boolean;
   can_skip: boolean;
   requires_comments: boolean;
-  sla_hours?: number;
   conditions?: WorkflowCondition[];
   notification_configs?: WorkflowStepNotificationConfig[];
   created_at: string;
@@ -139,8 +138,6 @@ export interface WorkflowStepExecution {
   actioned_by_user?: WorkflowUser;
   comments?: string;
   action_date?: string;
-  sla_due_date?: string;
-  is_overdue: boolean;
   delegations?: WorkflowDelegation[];
   can_action?: boolean;
   created_at: string;
@@ -222,8 +219,6 @@ export interface PendingApproval {
   step_name: string;
   step_order: number;
   assigned_to: string;
-  sla_due_date?: string;
-  is_overdue: boolean;
   initiated_by: string;
   initiated_at: string;
 }

@@ -10,7 +10,11 @@
         <p class="text-muted mb-0">Review and action requests awaiting your approval</p>
       </div>
       <div>
-        <button class="btn btn-outline-primary" (click)="loadPendingApprovals()" [disabled]="isLoading">
+        <button
+          class="btn btn-outline-primary"
+          (click)="loadPendingApprovals()"
+          [disabled]="isLoading"
+        >
           <i class="bi bi-arrow-clockwise me-2"></i>
           Refresh
         </button>
@@ -31,7 +35,8 @@
             id="moduleFilter"
             class="form-select"
             [(ngModel)]="filterModule"
-            (change)="applyFilters()">
+            (change)="applyFilters()"
+          >
             <option *ngFor="let module of modules" [value]="module.value">
               {{ module.label }}
             </option>
@@ -51,7 +56,8 @@
             class="form-control"
             [(ngModel)]="searchQuery"
             (ngModelChange)="applyFilters()"
-            placeholder="Search by step name or requester...">
+            placeholder="Search by step name or requester..."
+          />
         </div>
       </div>
     </div>
@@ -74,27 +80,18 @@
 
   <!-- Approvals List -->
   <div *ngIf="!isLoading && filteredApprovals.length > 0" class="approvals-grid">
-    <div *ngFor="let approval of filteredApprovals" class="approval-card"
-         [class.overdue]="approval.isOverdue"
-         [class.warning]="isOverdueSoon(approval)">
+    <div *ngFor="let approval of filteredApprovals" class="approval-card">
       <div class="card-header-section">
         <div class="d-flex justify-content-between align-items-start">
           <div>
-            <span class="badge" [ngClass]="'bg-' + getModuleColor(approval.workflowInstance.entityType)">
+            <span
+              class="badge"
+              [ngClass]="'bg-' + getModuleColor(approval.workflowInstance.entityType)"
+            >
               {{ getModuleName(approval.workflowInstance.entityType) }}
             </span>
             <span class="badge bg-secondary ms-2">
               Step {{ approval.workflowStep.stepOrder }}
-            </span>
-          </div>
-          <div>
-            <span *ngIf="approval.isOverdue" class="badge bg-danger">
-              <i class="bi bi-exclamation-triangle me-1"></i>
-              Overdue
-            </span>
-            <span *ngIf="!approval.isOverdue && isOverdueSoon(approval)" class="badge bg-warning">
-              <i class="bi bi-clock me-1"></i>
-              Due Soon
             </span>
           </div>
         </div>
@@ -107,35 +104,25 @@
           <div class="detail-item">
             <i class="bi bi-person me-2 text-muted"></i>
             <span class="text-muted">Requested by:</span>
-            <strong class="ms-1">{{ getInitiatorName(approval.workflowInstance.initiatedBy) }}</strong>
+            <strong class="ms-1">{{
+              getInitiatorName(approval.workflowInstance.initiatedBy)
+            }}</strong>
           </div>
 
           <div class="detail-item">
             <i class="bi bi-calendar me-2 text-muted"></i>
             <span class="text-muted">Submitted:</span>
-            <strong class="ms-1">{{ approval.workflowInstance.createdAt | date:'medium' }}</strong>
-          </div>
-
-          <div class="detail-item" *ngIf="approval.slaDueDate">
-            <i class="bi bi-alarm me-2 text-muted"></i>
-            <span class="text-muted">Time remaining:</span>
-            <strong class="ms-1" [class.text-danger]="approval.isOverdue" [class.text-warning]="isOverdueSoon(approval)">
-              {{ getTimeRemaining(approval.slaDueDate) }}
-            </strong>
+            <strong class="ms-1">{{ approval.workflowInstance.createdAt | date: 'medium' }}</strong>
           </div>
         </div>
       </div>
 
       <div class="card-actions">
-        <button
-          class="btn btn-outline-primary btn-sm"
-          (click)="viewRequestDetails(approval)">
+        <button class="btn btn-outline-primary btn-sm" (click)="viewRequestDetails(approval)">
           <i class="bi bi-eye me-1"></i>
           View Details
         </button>
-        <button
-          class="btn btn-success btn-sm"
-          (click)="openApprovalModal(approval)">
+        <button class="btn btn-success btn-sm" (click)="openApprovalModal(approval)">
           <i class="bi bi-check-lg me-1"></i>
           Take Action
         </button>
@@ -160,7 +147,9 @@
           <div class="row g-3">
             <div class="col-md-6">
               <label class="text-muted small">Module</label>
-              <p class="fw-semibold mb-0">{{ getModuleName(selectedApproval.workflowInstance.entityType) }}</p>
+              <p class="fw-semibold mb-0">
+                {{ getModuleName(selectedApproval.workflowInstance.entityType) }}
+              </p>
             </div>
             <div class="col-md-6">
               <label class="text-muted small">Approval Step</label>
@@ -168,11 +157,15 @@
             </div>
             <div class="col-md-6">
               <label class="text-muted small">Requested By</label>
-              <p class="fw-semibold mb-0">{{ getInitiatorName(selectedApproval.workflowInstance.initiatedBy) }}</p>
+              <p class="fw-semibold mb-0">
+                {{ getInitiatorName(selectedApproval.workflowInstance.initiatedBy) }}
+              </p>
             </div>
             <div class="col-md-6">
               <label class="text-muted small">Submitted On</label>
-              <p class="fw-semibold mb-0">{{ selectedApproval.workflowInstance.createdAt | date:'medium' }}</p>
+              <p class="fw-semibold mb-0">
+                {{ selectedApproval.workflowInstance.createdAt | date: 'medium' }}
+              </p>
             </div>
           </div>
         </div>
@@ -186,7 +179,8 @@
             class="form-control"
             rows="4"
             [(ngModel)]="actionComments"
-            placeholder="Enter your comments or feedback..."></textarea>
+            placeholder="Enter your comments or feedback..."
+          ></textarea>
           <small class="form-text text-muted">Comments are required for rejection</small>
         </div>
       </div>
@@ -196,15 +190,21 @@
           type="button"
           class="btn btn-secondary"
           (click)="closeModal()"
-          [disabled]="isProcessing">
+          [disabled]="isProcessing"
+        >
           Cancel
         </button>
         <button
           type="button"
           class="btn btn-danger"
           (click)="takeAction('reject')"
-          [disabled]="isProcessing">
-          <app-loading-spinner *ngIf="isProcessing" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
+          [disabled]="isProcessing"
+        >
+          <app-loading-spinner
+            *ngIf="isProcessing"
+            size="sm"
+            class="me-2 d-inline-block"
+          ></app-loading-spinner>
           <i *ngIf="!isProcessing" class="bi bi-x-circle me-2"></i>
           Reject
         </button>
@@ -212,8 +212,13 @@
           type="button"
           class="btn btn-success"
           (click)="takeAction('approve')"
-          [disabled]="isProcessing">
-          <app-loading-spinner *ngIf="isProcessing" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
+          [disabled]="isProcessing"
+        >
+          <app-loading-spinner
+            *ngIf="isProcessing"
+            size="sm"
+            class="me-2 d-inline-block"
+          ></app-loading-spinner>
           <i *ngIf="!isProcessing" class="bi bi-check-circle me-2"></i>
           Approve
         </button>
