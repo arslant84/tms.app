@@ -23,7 +23,6 @@ class WorkflowStepInline(admin.TabularInline):
         "approver_permission",
         "approver_role",
         "is_required",
-        "sla_hours",
     ]
     ordering = ["step_order"]
 
@@ -109,7 +108,6 @@ class WorkflowStepAdmin(admin.ModelAdmin):
         "approver_role",
         "is_required",
         "can_skip",
-        "sla_hours",
     ]
     list_filter = ["is_required", "can_skip", "requires_comments", "workflow_template"]
     search_fields = [
@@ -133,7 +131,6 @@ class WorkflowStepAdmin(admin.ModelAdmin):
             },
         ),
         ("Behavior", {"fields": ("is_required", "can_skip", "requires_comments")}),
-        ("SLA Configuration", {"fields": ("sla_hours",)}),
         (
             "Timestamps",
             {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
@@ -270,9 +267,8 @@ class WorkflowStepExecutionAdmin(admin.ModelAdmin):
         "assigned_to",
         "actioned_by",
         "action_date",
-        "is_overdue",
     ]
-    list_filter = ["status", "is_overdue", "action_date"]
+    list_filter = ["status", "action_date"]
     search_fields = [
         "workflow_instance__id",
         "workflow_step__step_name",
@@ -287,7 +283,6 @@ class WorkflowStepExecutionAdmin(admin.ModelAdmin):
         ("Status", {"fields": ("status",)}),
         ("Assignment", {"fields": ("assigned_to", "actioned_by", "action_date")}),
         ("Comments", {"fields": ("comments",)}),
-        ("SLA Tracking", {"fields": ("sla_due_date", "is_overdue")}),
         (
             "Timestamps",
             {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},

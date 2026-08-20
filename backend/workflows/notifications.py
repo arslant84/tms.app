@@ -458,13 +458,6 @@ class WorkflowNotifications:
                             ),
                             "entityId": entity_id,
                             "requestorName": workflow_instance.initiated_by.get_full_name(),
-                            "dueDate": (
-                                step_execution.sla_due_date.strftime(
-                                    "%B %d, %Y at %I:%M %p"
-                                )
-                                if step_execution.sla_due_date
-                                else "Not specified"
-                            ),
                             "actionUrl": _get_action_url(
                                 workflow_instance.workflow_template.entity_type,
                                 workflow_instance.object_id,
@@ -530,11 +523,6 @@ class WorkflowNotifications:
                             ),
                             "entityId": entity_id,
                             "requestorName": workflow_instance.initiated_by.get_full_name(),
-                            "dueDate": (
-                                next_step.sla_due_date.strftime("%B %d, %Y at %I:%M %p")
-                                if next_step.sla_due_date
-                                else "Not specified"
-                            ),
                             "actionUrl": _get_action_url(
                                 workflow_instance.workflow_template.entity_type,
                                 workflow_instance.object_id,
@@ -596,41 +584,6 @@ class WorkflowNotifications:
                                 workflow_instance.workflow_template.entity_type
                             ),
                             "entityId": entity_id,
-                            "actionUrl": _get_action_url(
-                                workflow_instance.workflow_template.entity_type,
-                                workflow_instance.object_id,
-                            ),
-                        },
-                        send_email=True,
-                    )
-
-            elif event_type == "reminder":
-                # Notify the assigned approver their pending step is due soon
-                if step_execution.assigned_to:
-                    NotificationService.create_notification(
-                        user=step_execution.assigned_to,
-                        title=f"Reminder: Approval Due Soon - {step_execution.workflow_step.step_name}",
-                        message=f"{step_execution.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request from {workflow_instance.initiated_by.get_full_name()} is due soon. Please review and take action.",
-                        event_type=_get_event_type("APPROVAL_REMINDER"),
-                        priority="high",
-                        action_url=_get_action_url(
-                            workflow_instance.workflow_template.entity_type,
-                            workflow_instance.object_id,
-                        ),
-                        additional_data={
-                            "approverName": step_execution.assigned_to.get_full_name(),
-                            "requestType": _get_display_request_type(
-                                workflow_instance.workflow_template.entity_type
-                            ),
-                            "entityId": entity_id,
-                            "requestorName": workflow_instance.initiated_by.get_full_name(),
-                            "dueDate": (
-                                step_execution.sla_due_date.strftime(
-                                    "%B %d, %Y at %I:%M %p"
-                                )
-                                if step_execution.sla_due_date
-                                else "Not specified"
-                            ),
                             "actionUrl": _get_action_url(
                                 workflow_instance.workflow_template.entity_type,
                                 workflow_instance.object_id,
@@ -749,13 +702,6 @@ class WorkflowNotifications:
         # Get completion date
         completion_date = timezone.now().strftime("%B %d, %Y at %I:%M %p")
 
-        # Get due date formatted nicely
-        due_date = (
-            step_execution.sla_due_date.strftime("%B %d, %Y at %I:%M %p")
-            if step_execution.sla_due_date
-            else "Not specified"
-        )
-
         # Get formatted request number from the actual entity (e.g., "VISA-2024-0013")
         # Falls back to object_id if request_number is not available
         entity = workflow_instance.content_object
@@ -791,7 +737,6 @@ class WorkflowNotifications:
             "requester": workflow_instance.initiated_by.get_full_name(),
             "requesterName": workflow_instance.initiated_by.get_full_name(),
             # Dates
-            "dueDate": due_date,
             "completionDate": completion_date,
             # Status
             "status": step_execution.status,
@@ -803,17 +748,6 @@ class WorkflowNotifications:
             "processorHint": f"Please review and approve {step_execution.workflow_step.step_name}",
             "completionDetails": "All approval steps have been successfully completed.",
             "rejectionReason": step_execution.comments or "No reason provided",
-            # Legacy compatibility
-            "sla_due_date": (
-                step_execution.sla_due_date.strftime("%Y-%m-%d %H:%M")
-                if step_execution.sla_due_date
-                else "N/A"
-            ),
-            "slaDueDate": (
-                step_execution.sla_due_date.strftime("%Y-%m-%d %H:%M")
-                if step_execution.sla_due_date
-                else "N/A"
-            ),
             # Action URL
             "actionUrl": _get_action_url(
                 workflow_instance.workflow_template.entity_type,

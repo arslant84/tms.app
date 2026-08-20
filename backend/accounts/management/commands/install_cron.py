@@ -10,10 +10,6 @@ cleanup_expired_data (7-year retention) - both tied to compliance controls
 into the current user's crontab via python-crontab, tagged with a comment
 so re-running it updates the existing entries instead of duplicating them.
 
-Also installs send_step_reminders (hourly) - the periodic check that fires
-the workflow 'reminder' notification event type, which previously existed
-in the schema and admin UI but had no scheduled trigger anywhere.
-
 Also installs check_uptime (every 5 min) - an external liveness probe added
 after the Aug 2026 outage where tms.service stayed "active (running)" for
 3 days while every request 500'd; nothing was polling for that distinction.
@@ -49,12 +45,6 @@ JOBS = [
         "cron_cleanup_expired_data.log",
     ),
     (
-        "send_step_reminders",
-        "0 * * * *",
-        "send_step_reminders",
-        "cron_send_step_reminders.log",
-    ),
-    (
         "check_uptime",
         "*/5 * * * *",
         "check_uptime",
@@ -62,13 +52,19 @@ JOBS = [
     ),
 ]
 
+# Job names previously installed by this command that no longer exist -
+# cleaned up here so re-running install_cron on a server that already has
+# the stale entry actually removes it (the loop below only knows about
+# names currently in JOBS, which is exactly why a removed job needs listing
+# here explicitly rather than just deleting its JOBS entry).
+LEGACY_JOB_NAMES = ["send_step_reminders"]
+
 
 class Command(BaseCommand):
     help = (
         "Idempotently install the backup_db / disable_inactive_accounts / "
-        "cleanup_expired_data / send_step_reminders / check_uptime cron "
-        "schedule into the current user's crontab (matching "
-        "backend/scripts/crontab.example)."
+        "cleanup_expired_data / check_uptime cron schedule into the current "
+        "user's crontab (matching backend/scripts/crontab.example)."
     )
 
     def add_arguments(self, parser):
@@ -107,6 +103,9 @@ class Command(BaseCommand):
         for job_name, _schedule, _mgmt_command, _log_file in JOBS:
             tag = f"{JOB_TAG_PREFIX} {job_name}"
             cron.remove_all(comment=tag)
+
+        for job_name in LEGACY_JOB_NAMES:
+            cron.remove_all(comment=f"{JOB_TAG_PREFIX} {job_name}")
 
         if remove:
             if dry_run:

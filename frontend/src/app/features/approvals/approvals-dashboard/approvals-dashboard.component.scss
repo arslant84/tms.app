@@ -30,16 +30,6 @@
       transform: translateY(-2px);
     }
 
-    &.overdue {
-      border-color: vars.$error-color;
-      background: vars.$error-lightest;
-    }
-
-    &.warning {
-      border-color: vars.$warning-color;
-      background: vars.$warning-lightest;
-    }
-
     .card-header-section {
       padding: vars.$spacing-md;
       background: vars.$gray-50;

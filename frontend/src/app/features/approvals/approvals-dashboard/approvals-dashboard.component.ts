@@ -32,8 +32,6 @@ interface PendingApproval {
   status: string;
   assignedTo: any;
   createdAt: string;
-  slaDueDate: string | null;
-  isOverdue: boolean;
 }
 
 @Component({
@@ -190,32 +188,6 @@ export class ApprovalsDashboardComponent implements OnInit {
     if (route) {
       window.open(route, '_blank');
     }
-  }
-
-  isOverdueSoon(approval: PendingApproval): boolean {
-    if (!approval.slaDueDate) return false;
-
-    const now = new Date().getTime();
-    const dueDate = new Date(approval.slaDueDate).getTime();
-    const hoursUntilDue = (dueDate - now) / (1000 * 60 * 60);
-
-    return hoursUntilDue <= 24 && hoursUntilDue > 0;
-  }
-
-  getTimeRemaining(dateString: string | null): string {
-    if (!dateString) return 'No deadline';
-
-    const now = new Date().getTime();
-    const target = new Date(dateString).getTime();
-    const diff = target - now;
-
-    if (diff < 0) return 'Overdue';
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-    if (days > 0) return `${days}d ${hours}h`;
-    return `${hours}h`;
   }
 
   getInitiatorName(initiator: any): string {

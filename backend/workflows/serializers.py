@@ -190,7 +190,6 @@ class WorkflowStepSerializer(serializers.ModelSerializer):
             "is_required",
             "can_skip",
             "requires_comments",
-            "sla_hours",
             "conditions",
             "notification_configs",
             "created_at",
@@ -203,10 +202,6 @@ class WorkflowStepSerializer(serializers.ModelSerializer):
         # Ensure step_order is positive
         if data.get("step_order", 1) < 1:
             raise serializers.ValidationError("Step order must be positive")
-
-        # Validate SLA hours
-        if data.get("sla_hours") and data["sla_hours"] < 1:
-            raise serializers.ValidationError("SLA hours must be at least 1")
 
         return data
 
@@ -316,12 +311,6 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
             "recipient_types": ["requester"],
             "priority": "normal",
         },
-        {
-            "event_type": "reminder",
-            "template_name": "approval_reminder",
-            "recipient_types": ["current_approver"],
-            "priority": "high",
-        },
     ]
 
     def _create_default_notification_configs(self, step):
@@ -378,7 +367,6 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                 is_required=step_data.get("is_required", True),
                 can_skip=step_data.get("can_skip", False),
                 requires_comments=step_data.get("requires_comments", False),
-                sla_hours=step_data.get("sla_hours"),
             )
 
             # Create notification configs for this step (CREATE always gets defaults if none provided)
@@ -453,7 +441,6 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                         step.requires_comments = step_data.get(
                             "requires_comments", False
                         )
-                        step.sla_hours = step_data.get("sla_hours")
                         step.save()
                         step.notification_configs.all().delete()
                     else:
@@ -468,7 +455,6 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                             is_required=step_data.get("is_required", True),
                             can_skip=step_data.get("can_skip", False),
                             requires_comments=step_data.get("requires_comments", False),
-                            sla_hours=step_data.get("sla_hours"),
                         )
 
                     # On UPDATE: Use exactly what frontend sends (respect user's changes)
@@ -531,9 +517,6 @@ class WorkflowStepExecutionSerializer(serializers.ModelSerializer):
             "actioned_by_user",
             "comments",
             "action_date",
-            "sla_due_date",
-            "is_overdue",
-            "reminder_sent_at",
             "created_at",
             "updated_at",
         ]
@@ -541,8 +524,6 @@ class WorkflowStepExecutionSerializer(serializers.ModelSerializer):
             "id",
             "actioned_by",
             "action_date",
-            "is_overdue",
-            "reminder_sent_at",
             "created_at",
             "updated_at",
         ]
