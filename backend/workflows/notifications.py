@@ -5,10 +5,23 @@ Sends notifications when workflow instances change state.
 
 import logging
 
+from django.conf import settings
 from notifications.services import NotificationService
 
 logger = logging.getLogger(__name__)
 from notifications.models import NotificationEventType, NotificationTemplate
+
+# Maps a workflow's entity_type (after collapsing TRF sub-types, see
+# _get_display_request_type) to the actual frontend route segment. These
+# don't match 1:1 - the Angular routes are /trf, /transport, /visa,
+# /accommodation, not the raw "travelrequest"/"transportrequest"/etc.
+# entity_type strings.
+_ENTITY_TYPE_ROUTE_SEGMENT = {
+    "travelrequest": "trf",
+    "transportrequest": "transport",
+    "visaapplication": "visa",
+    "accommodationrequest": "accommodation",
+}
 
 
 def _get_event_type(event_name):
@@ -30,6 +43,29 @@ def _get_display_request_type(entity_type):
     """
     base_type = entity_type.split("_", 1)[0] if entity_type else entity_type
     return base_type.title()
+
+
+def _get_action_url(entity_type, object_id):
+    """
+    Absolute URL to the request's detail page, for the email's "View" button
+    and its "Review & Approve" link.
+
+    This used to be f"/{entity_type}/{object_id}" - the raw entity_type
+    ("transportrequest", "travelrequest_overseas", etc.) instead of the
+    actual Angular route segment ("transport", "trf"), so the link 404'd
+    into the wildcard route and landed on the dashboard. It was also never
+    made absolute for the additional_data["actionUrl"] variant (used by the
+    template's own "[Review & Approve](...)" markdown link, as opposed to
+    the button's action_url which does go through EmailTemplateRenderer's
+    own absolute-URL conversion) - a bare relative path has no meaning
+    clicked from an email client.
+    """
+    base_type = entity_type.split("_", 1)[0] if entity_type else entity_type
+    route_segment = _ENTITY_TYPE_ROUTE_SEGMENT.get(base_type, base_type)
+    frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:4200").rstrip(
+        "/"
+    )
+    return f"{frontend_url}/{route_segment}/{object_id}"
 
 
 class WorkflowNotifications:
@@ -75,7 +111,10 @@ class WorkflowNotifications:
                 message=f"Your {workflow_instance.workflow_template.entity_type} request has been submitted and the approval workflow has started.",
                 event_type=_get_event_type("WORKFLOW_STARTED"),
                 priority="normal",
-                action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                action_url=_get_action_url(
+                    workflow_instance.workflow_template.entity_type,
+                    workflow_instance.object_id,
+                ),
                 additional_data={
                     "requestorName": workflow_instance.initiated_by.get_full_name(),
                     "requestType": _get_display_request_type(
@@ -83,7 +122,10 @@ class WorkflowNotifications:
                     ),
                     "entityId": entity_id,
                     "approverName": first_approver_name,
-                    "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                    "actionUrl": _get_action_url(
+                        workflow_instance.workflow_template.entity_type,
+                        workflow_instance.object_id,
+                    ),
                 },
                 send_email=True,
             )
@@ -181,7 +223,10 @@ class WorkflowNotifications:
                         message=f"Your {workflow_instance.workflow_template.entity_type} request has been fully approved! All approval steps are complete.",
                         event_type=_get_event_type("WORKFLOW_APPROVED"),
                         priority="high",
-                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        action_url=_get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
                         additional_data={
                             "requestorName": workflow_instance.initiated_by.get_full_name(),
                             "requestType": _get_display_request_type(
@@ -191,7 +236,10 @@ class WorkflowNotifications:
                             "processorName": processor_name,
                             "completionDate": completion_date,
                             "completionDetails": "All approval steps have been successfully completed.",
-                            "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                            "actionUrl": _get_action_url(
+                                workflow_instance.workflow_template.entity_type,
+                                workflow_instance.object_id,
+                            ),
                         },
                         send_email=True,
                     )
@@ -255,7 +303,10 @@ class WorkflowNotifications:
                         message=f"Your {workflow_instance.workflow_template.entity_type} request has been cancelled. {f'Reason: {reason}' if reason else ''}",
                         event_type=_get_event_type("WORKFLOW_CANCELLED"),
                         priority="normal",
-                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        action_url=_get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
                         send_email=True,
                     )
 
@@ -344,7 +395,10 @@ class WorkflowNotifications:
                                 message=message,
                                 event_type=template.event_type,
                                 priority=config.priority,
-                                action_url=f"/{step_execution.workflow_instance.workflow_template.entity_type}/{step_execution.workflow_instance.object_id}",
+                                action_url=_get_action_url(
+                                    step_execution.workflow_instance.workflow_template.entity_type,
+                                    step_execution.workflow_instance.object_id,
+                                ),
                                 send_email=send_email_flag,
                                 content_object=step_execution.workflow_instance,
                                 additional_data=context,  # Pass context for email template rendering
@@ -393,7 +447,10 @@ class WorkflowNotifications:
                         message=f"You have been assigned to approve {step_execution.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request from {workflow_instance.initiated_by.get_full_name()}.",
                         event_type=_get_event_type("APPROVAL_REQUESTED"),
                         priority="high",
-                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        action_url=_get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
                         additional_data={
                             "approverName": step_execution.assigned_to.get_full_name(),
                             "requestType": _get_display_request_type(
@@ -408,7 +465,10 @@ class WorkflowNotifications:
                                 if step_execution.sla_due_date
                                 else "Not specified"
                             ),
-                            "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                            "actionUrl": _get_action_url(
+                                workflow_instance.workflow_template.entity_type,
+                                workflow_instance.object_id,
+                            ),
                         },
                         send_email=True,
                     )
@@ -426,7 +486,10 @@ class WorkflowNotifications:
                     message=f"{step_execution.workflow_step.step_name} has been approved by {approver_name}. Your request is progressing.",
                     event_type=_get_event_type("WORKFLOW_UPDATED"),
                     priority="normal",
-                    action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                    action_url=_get_action_url(
+                        workflow_instance.workflow_template.entity_type,
+                        workflow_instance.object_id,
+                    ),
                     additional_data={
                         "requestorName": workflow_instance.initiated_by.get_full_name(),
                         "requestType": _get_display_request_type(
@@ -435,7 +498,10 @@ class WorkflowNotifications:
                         "entityId": entity_id,
                         "approverName": approver_name,
                         "stepName": step_execution.workflow_step.step_name,
-                        "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        "actionUrl": _get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
                     },
                     send_email=True,
                 )
@@ -453,7 +519,10 @@ class WorkflowNotifications:
                         message=f"You have been assigned to approve {next_step.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request.",
                         event_type=_get_event_type("APPROVAL_REQUESTED"),
                         priority="high",
-                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        action_url=_get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
                         additional_data={
                             "approverName": next_step.assigned_to.get_full_name(),
                             "requestType": _get_display_request_type(
@@ -466,7 +535,10 @@ class WorkflowNotifications:
                                 if next_step.sla_due_date
                                 else "Not specified"
                             ),
-                            "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                            "actionUrl": _get_action_url(
+                                workflow_instance.workflow_template.entity_type,
+                                workflow_instance.object_id,
+                            ),
                         },
                         send_email=True,
                     )
@@ -484,7 +556,10 @@ class WorkflowNotifications:
                     message=f"Your {workflow_instance.workflow_template.entity_type} request has been rejected at {step_execution.workflow_step.step_name}. Reason: {step_execution.comments or 'No reason provided'}",
                     event_type=_get_event_type("WORKFLOW_REJECTED"),
                     priority="urgent",
-                    action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                    action_url=_get_action_url(
+                        workflow_instance.workflow_template.entity_type,
+                        workflow_instance.object_id,
+                    ),
                     additional_data={
                         "requestorName": workflow_instance.initiated_by.get_full_name(),
                         "requestType": _get_display_request_type(
@@ -494,7 +569,10 @@ class WorkflowNotifications:
                         "approverName": approver_name,
                         "rejectionReason": step_execution.comments
                         or "No reason provided",
-                        "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        "actionUrl": _get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
                     },
                     send_email=True,
                 )
@@ -508,14 +586,20 @@ class WorkflowNotifications:
                         message=f"An approval for {workflow_instance.workflow_template.entity_type} has been delegated to you. Please review and take action.",
                         event_type=_get_event_type("APPROVAL_DELEGATED"),
                         priority="high",
-                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        action_url=_get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
                         additional_data={
                             "approverName": step_execution.assigned_to.get_full_name(),
                             "requestType": _get_display_request_type(
                                 workflow_instance.workflow_template.entity_type
                             ),
                             "entityId": entity_id,
-                            "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                            "actionUrl": _get_action_url(
+                                workflow_instance.workflow_template.entity_type,
+                                workflow_instance.object_id,
+                            ),
                         },
                         send_email=True,
                     )
@@ -529,7 +613,10 @@ class WorkflowNotifications:
                         message=f"{step_execution.workflow_step.step_name} for a {workflow_instance.workflow_template.entity_type} request from {workflow_instance.initiated_by.get_full_name()} is due soon. Please review and take action.",
                         event_type=_get_event_type("APPROVAL_REMINDER"),
                         priority="high",
-                        action_url=f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                        action_url=_get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
                         additional_data={
                             "approverName": step_execution.assigned_to.get_full_name(),
                             "requestType": _get_display_request_type(
@@ -544,7 +631,10 @@ class WorkflowNotifications:
                                 if step_execution.sla_due_date
                                 else "Not specified"
                             ),
-                            "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+                            "actionUrl": _get_action_url(
+                                workflow_instance.workflow_template.entity_type,
+                                workflow_instance.object_id,
+                            ),
                         },
                         send_email=True,
                     )
@@ -725,7 +815,10 @@ class WorkflowNotifications:
                 else "N/A"
             ),
             # Action URL
-            "actionUrl": f"/{workflow_instance.workflow_template.entity_type}/{workflow_instance.object_id}",
+            "actionUrl": _get_action_url(
+                workflow_instance.workflow_template.entity_type,
+                workflow_instance.object_id,
+            ),
         }
 
     @staticmethod
