@@ -193,7 +193,9 @@ export class AccommodationDetailComponent implements OnInit {
 
   onCancel(): void {
     this.confirmationService
-      .confirmDestructive('Cancel', 'this accommodation request')
+      .confirmCancel(
+        'Are you sure you want to cancel this accommodation request? This action cannot be undone.'
+      )
       .subscribe(confirmed => {
         if (confirmed) {
           this.accommodationService.cancelRequest(this.requestId).subscribe({
