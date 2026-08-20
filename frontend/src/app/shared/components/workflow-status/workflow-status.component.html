@@ -49,6 +49,38 @@
       </p>
     </div>
 
+    <!-- Horizontal Stepper: the whole workflow at a glance, including steps
+         not reached yet (they have no step_execution row so far, but the
+         template still knows they exist). -->
+    <div *ngIf="!compact && stepperItems.length > 0" class="workflow-stepper">
+      <div
+        *ngFor="let item of stepperItems; let isLast = last"
+        class="stepper-item"
+        [ngClass]="getStepperClass(item)"
+      >
+        <div class="stepper-node-row">
+          <div class="stepper-circle">
+            <span *ngIf="item.status === 'approved'">✓</span>
+            <span *ngIf="item.status === 'rejected'">✗</span>
+            <span *ngIf="item.status === 'skipped'">⊘</span>
+            <span
+              *ngIf="
+                item.status !== 'approved' &&
+                item.status !== 'rejected' &&
+                item.status !== 'skipped'
+              "
+              >{{ item.order }}</span
+            >
+          </div>
+          <div *ngIf="!isLast" class="stepper-connector"></div>
+        </div>
+        <div class="stepper-label">
+          <div class="stepper-name">{{ item.name }}</div>
+          <div class="stepper-caption">{{ getStepperCaption(item) }}</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Compact View (for lists) -->
     <div *ngIf="compact" class="workflow-compact">
       <div class="d-flex align-items-center gap-2">
