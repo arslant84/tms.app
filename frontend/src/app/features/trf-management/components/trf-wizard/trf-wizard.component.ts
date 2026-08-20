@@ -898,9 +898,19 @@ export class TrfWizardComponent implements OnInit {
 
       const promises: Promise<any>[] = [];
 
-      // Create itinerary segments
+      // Create itinerary segments SEQUENTIALLY, not in parallel. The
+      // backend has no explicit ordering field for segments - it infers
+      // itinerary order from creation order (row id), matching how the
+      // frontend appends them (see TrfItinerarySegmentSerializer.validate).
+      // Firing these as concurrent, unawaited requests (as a .forEach
+      // pushing into the shared `promises` array used to) races the
+      // inserts: whichever request's transaction commits first gets the
+      // lowest id, regardless of the segments' actual array/date order.
+      // That scrambles the id order the backend relies on and causes it
+      // to reject perfectly valid, correctly-ordered itineraries with a
+      // false "date cannot be earlier than previous segment" error.
       if (data.itinerarySegments && data.itinerarySegments.length > 0) {
-        data.itinerarySegments.forEach((segment: any) => {
+        for (const segment of data.itinerarySegments) {
           // Handle both standard fields (date, from, to) and External Parties fields (departureDate, departureLocation, arrivalLocation)
           const date = segment.date || segment.departureDate;
           const from = segment.from || segment.departureLocation;
@@ -908,7 +918,7 @@ export class TrfWizardComponent implements OnInit {
 
           // Skip segments with missing required fields
           if (!date || !from || !to) {
-            return;
+            continue;
           }
 
           const itineraryData = {
@@ -923,10 +933,8 @@ export class TrfWizardComponent implements OnInit {
             remarks: segment.remarks || ''
           };
 
-          promises.push(
-            firstValueFrom(this.trfService.createItinerarySegment(itineraryData))
-          );
-        });
+          await firstValueFrom(this.trfService.createItinerarySegment(itineraryData));
+        }
       }
 
       // Create meal selections (Domestic only)
