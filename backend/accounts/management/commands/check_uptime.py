@@ -46,9 +46,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if not settings.UPTIME_ALERT_EMAIL:
             self.stdout.write(
-                self.style.WARNING(
-                    "UPTIME_ALERT_EMAIL is not set - skipping (no-op)."
-                )
+                self.style.WARNING("UPTIME_ALERT_EMAIL is not set - skipping (no-op).")
             )
             return
 
@@ -85,12 +83,20 @@ class Command(BaseCommand):
 
     def _check(self):
         try:
-            resp = requests.get(CHECK_URL, timeout=REQUEST_TIMEOUT_SECONDS, verify=False)
+            # Cert doesn't chain to a trusted root (self-signed/internal CA);
+            # accepted here since this only ever talks to the one known
+            # internal host (CHECK_URL above), not arbitrary third parties.
+            resp = requests.get(
+                CHECK_URL, timeout=REQUEST_TIMEOUT_SECONDS, verify=False
+            )  # nosec B501
         except requests.RequestException as exc:
             return False, f"Request failed: {exc}"
 
         if resp.status_code == 200:
-            return True, f"HTTP {resp.status_code} in {resp.elapsed.total_seconds():.2f}s"
+            return (
+                True,
+                f"HTTP {resp.status_code} in {resp.elapsed.total_seconds():.2f}s",
+            )
         return False, f"HTTP {resp.status_code}: {resp.text[:300]}"
 
     def _send_mail(self, subject, message):
