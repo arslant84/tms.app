@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
@@ -97,15 +97,18 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   @Output() formSubmit = new EventEmitter<DomesticTravelSpecificDetails>();
   @Output() backClick = new EventEmitter<void>();
 
+  @ViewChild('tripItineraryEditor') tripItineraryEditor!: ItineraryEditorComponent;
+  @ViewChild('transportJourneyEditor') transportJourneyEditor!: ItineraryEditorComponent;
+
   travelForm!: FormGroup;
 
   itineraryFields: ItineraryFieldConfig[] = [
     { key: 'date', label: 'Date', type: 'date', required: true, requiredErrorMessage: 'Date is required', isPrimaryDate: true },
     { key: 'day', label: 'Day', type: 'readonly-text' },
-    { key: 'from', label: 'From', type: 'select', options: DOMESTIC_CITIES, required: true, requiredErrorMessage: 'Origin is required' },
-    { key: 'to', label: 'To', type: 'select', options: DOMESTIC_CITIES, required: true, requiredErrorMessage: 'Destination is required' },
-    { key: 'etd', label: 'ETD', type: 'text', placeholder: 'e.g. 14:30 or Morning' },
-    { key: 'eta', label: 'ETA', type: 'text', placeholder: 'e.g. 14:30 or Morning' },
+    { key: 'from', label: 'From', type: 'select', options: DOMESTIC_CITIES, required: true, requiredErrorMessage: 'Origin is required', isOrigin: true },
+    { key: 'to', label: 'To', type: 'select', options: DOMESTIC_CITIES, required: true, requiredErrorMessage: 'Destination is required', isDestination: true },
+    { key: 'etd', label: 'ETD', type: 'text', placeholder: 'e.g. 14:30 or Morning', required: true, requiredErrorMessage: 'Departure time is required' },
+    { key: 'eta', label: 'ETA', type: 'text', placeholder: 'e.g. 14:30 or Morning', required: true, requiredErrorMessage: 'Arrival time is required' },
     { key: 'flightNumber', label: 'Flight', type: 'text' },
     { key: 'remarks', label: 'Remarks', type: 'text', colSpan: 8 }
   ];
@@ -339,10 +342,14 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
 
   isValid(): boolean {
     return this.travelForm.valid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder
-      && !this.isTransportIncomplete;
+      && !this.isTransportIncomplete
+      && (!this.tripItineraryEditor || this.tripItineraryEditor.form.valid)
+      && (!this.transportJourneyEditor || this.transportJourneyEditor.form.valid);
   }
 
   markAllAsTouched(): void {
     this.formUtils.markFormGroupTouched(this.travelForm);
+    this.tripItineraryEditor?.markAllAsTouched();
+    this.transportJourneyEditor?.markAllAsTouched();
   }
 }

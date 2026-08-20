@@ -46,7 +46,7 @@
               class="form-control"
               [formControlName]="field.key"
               [placeholder]="field.placeholder || ''"
-              [ngClass]="{'is-invalid': segment.get(field.key)?.invalid && segment.get(field.key)?.touched}">
+              [ngClass]="{'is-invalid': (segment.get(field.key)?.invalid && segment.get(field.key)?.touched) || ((field.isOrigin || field.isDestination) && segment.errors?.['sameOriginDestination'] && segment.get(field.key)?.touched)}">
 
             <input
               *ngIf="field.type === 'number'"
@@ -61,7 +61,7 @@
               *ngIf="field.type === 'select'"
               class="form-select"
               [formControlName]="field.key"
-              [ngClass]="{'is-invalid': segment.get(field.key)?.invalid && segment.get(field.key)?.touched}">
+              [ngClass]="{'is-invalid': (segment.get(field.key)?.invalid && segment.get(field.key)?.touched) || ((field.isOrigin || field.isDestination) && segment.errors?.['sameOriginDestination'] && segment.get(field.key)?.touched)}">
               <option value="">Select {{ field.label }}</option>
               <option *ngFor="let option of field.options" [value]="option">{{ option }}</option>
             </select>
@@ -76,6 +76,12 @@
               class="invalid-feedback"
               *ngIf="field.isPrimaryDate && outOfOrderIndices.has(i) && segment.get(field.key)?.touched">
               {{ field.label }} cannot be earlier than the previous segment's date
+            </div>
+
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="field.isDestination && segment.errors?.['sameOriginDestination'] && segment.get(field.key)?.touched">
+              Destination cannot be the same as origin
             </div>
           </div>
         </ng-container>

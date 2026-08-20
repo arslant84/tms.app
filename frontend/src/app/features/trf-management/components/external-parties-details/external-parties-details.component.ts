@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
@@ -47,11 +47,11 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   itineraryFields: ItineraryFieldConfig[] = [
     { key: 'departureDate', label: 'Date', type: 'date', required: true, requiredErrorMessage: 'Date is required', isPrimaryDate: true },
     { key: 'day', label: 'Day', type: 'readonly-text' },
-    { key: 'departureTime', label: 'Departure Time', type: 'time' },
-    { key: 'departureLocation', label: 'From', type: 'text', required: true, placeholder: 'Origin city/airport', requiredErrorMessage: 'Origin location is required' },
+    { key: 'departureTime', label: 'Departure Time', type: 'time', required: true, requiredErrorMessage: 'Departure time is required' },
+    { key: 'departureLocation', label: 'From', type: 'text', required: true, placeholder: 'Origin city/airport', requiredErrorMessage: 'Origin location is required', isOrigin: true },
     { key: 'arrivalDate', label: 'Arrival Date', type: 'text', hidden: true },
-    { key: 'arrivalTime', label: 'Arrival Time', type: 'time' },
-    { key: 'arrivalLocation', label: 'To', type: 'text', required: true, placeholder: 'Destination city/airport', requiredErrorMessage: 'Destination location is required' },
+    { key: 'arrivalTime', label: 'Arrival Time', type: 'time', required: true, requiredErrorMessage: 'Arrival time is required' },
+    { key: 'arrivalLocation', label: 'To', type: 'text', required: true, placeholder: 'Destination city/airport', requiredErrorMessage: 'Destination location is required', isDestination: true },
     { key: 'modeOfTransport', label: 'Mode of Transport', type: 'text', required: true, placeholder: 'e.g., Flight, Train, Car', requiredErrorMessage: 'Mode of transport is required' },
     { key: 'remarks', label: 'Remarks', type: 'text', placeholder: 'Any additional information', colSpan: 8 }
   ];
@@ -59,6 +59,8 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   itinerarySegments: Record<string, any>[] = [];
   itineraryDates: (string | null)[] = [];
   mealSelections: DailyMealSelection[] = [];
+
+  @ViewChild(ItineraryEditorComponent) itineraryEditorRef?: ItineraryEditorComponent;
 
   // Passport upload
   passportFile: File | null = null;
@@ -185,11 +187,13 @@ export class ExternalPartiesDetailsComponent implements OnInit, OnChanges {
   }
 
   isValid(): boolean {
-    return this.externalForm.valid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder;
+    return this.externalForm.valid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder
+      && (!this.itineraryEditorRef || this.itineraryEditorRef.form.valid);
   }
 
   markAllAsTouched(): void {
     this.formUtils.markFormGroupTouched(this.externalForm);
+    this.itineraryEditorRef?.markAllAsTouched();
   }
 
   onBack(): void {

@@ -1,8 +1,21 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
+
+/**
+ * Cross-field check: a segment's destination can't be the same as its own
+ * origin (e.g. Turkmenbashi -> Turkmenbashi). Compared case-insensitively
+ * since these are free-typed or dropdown-selected city names.
+ */
+function sameCityValidator(originKey: string, destinationKey: string): ValidatorFn {
+  return (group: AbstractControl): ValidationErrors | null => {
+    const origin = (group.get(originKey)?.value || '').toString().trim().toLowerCase();
+    const destination = (group.get(destinationKey)?.value || '').toString().trim().toLowerCase();
+    return origin && destination && origin === destination ? { sameOriginDestination: true } : null;
+  };
+}
 
 export interface ItineraryFieldConfig {
   /** Property name on each segment, e.g. 'date', 'departureDate', 'modeOfTransport'. */
@@ -24,6 +37,10 @@ export interface ItineraryFieldConfig {
   isPrimaryDate?: boolean;
   /** Present in the data model but not rendered (e.g. External Parties' unused arrivalDate). */
   hidden?: boolean;
+  /** Marks the origin-city field, paired with isDestination, for a same-city cross-field check. */
+  isOrigin?: boolean;
+  /** Marks the destination-city field; flagged when it matches isOrigin's value. */
+  isDestination?: boolean;
 }
 
 export type TripType = 'One Way' | 'Round Trip';
@@ -144,7 +161,12 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
           ? [value, Validators.required]
           : [value];
     }
-    const formGroup = this.fb.group(group);
+    const originKey = this.fields.find(f => f.isOrigin)?.key;
+    const destinationKey = this.fields.find(f => f.isDestination)?.key;
+    const formGroup = this.fb.group(
+      group,
+      originKey && destinationKey ? { validators: sameCityValidator(originKey, destinationKey) } : undefined
+    );
 
     const primaryDateKey = this.fields.find(f => f.isPrimaryDate)?.key;
     if (primaryDateKey) {
@@ -183,6 +205,16 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
     if (dayName) {
       this.segmentsArray.at(index).get(this.dayFieldKey)?.setValue(dayName, { emitEvent: false });
     }
+  }
+
+  /**
+   * Called by the parent form's own markAllAsTouched() so validation
+   * messages (required fields, same-city, etc.) actually surface when the
+   * user tries to move on without filling out the itinerary - touching
+   * this component's own fields isn't otherwise reachable from outside.
+   */
+  markAllAsTouched(): void {
+    this.segmentsArray.markAllAsTouched();
   }
 
   addSegment(): void {

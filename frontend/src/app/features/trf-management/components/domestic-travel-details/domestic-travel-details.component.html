@@ -38,6 +38,7 @@
     <!-- Itinerary Section -->
     <app-form-section-card icon="bi-clipboard-check" title="Itinerary">
         <app-itinerary-editor
+          #tripItineraryEditor
           [fields]="itineraryFields"
           [initialSegments]="initialData.itinerary || []"
           [tripType]="tripTypeValue"
@@ -205,6 +206,7 @@
           </div>
 
           <app-itinerary-editor
+            #transportJourneyEditor
             [fields]="transportJourneyFields"
             [initialSegments]="initialData.transport?.journeys || []"
             [forceAllowAdd]="true"
