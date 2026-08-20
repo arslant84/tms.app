@@ -28,6 +28,10 @@ PASSWORD_HASHERS = [
 # Disable rate limiting in tests
 RATELIMIT_ENABLE = False
 
+# Run Celery tasks synchronously in tests (no broker needed)
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+
 # Use in-memory email backend for tests
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 

@@ -4,13 +4,12 @@ Notification service for creating and sending notifications
 
 import logging
 import re
-import threading
 import traceback
-from concurrent.futures import ThreadPoolExecutor
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
+from django.db import transaction
 from django.utils import timezone
 
 from .models import (
@@ -22,45 +21,6 @@ from .models import (
 )
 
 logger = logging.getLogger(__name__)
-
-# Bounded, in-process email-sending pool. Replaces one raw threading.Thread
-# per email (unbounded thread creation, no backpressure — a real risk for
-# loops like NotificationService.notify_role/notify_users, which can create
-# dozens of notifications in one request). Per Gunicorn worker process:
-# at most EMAIL_EXECUTOR_MAX_WORKERS threads running at once, at most
-# EMAIL_QUEUE_MAX_SIZE tasks in flight or queued — beyond that, submission
-# is rejected immediately (never blocks the calling HTTP request) and the
-# notification is marked with an email_error instead of being sent.
-EMAIL_EXECUTOR_MAX_WORKERS = 8
-EMAIL_QUEUE_MAX_SIZE = 200
-
-_email_executor = ThreadPoolExecutor(
-    max_workers=EMAIL_EXECUTOR_MAX_WORKERS,
-    thread_name_prefix="email-notify",
-)
-_email_queue_semaphore = threading.BoundedSemaphore(EMAIL_QUEUE_MAX_SIZE)
-
-
-def _submit_bounded_email_task(fn, *args, **kwargs):
-    """
-    Submit a task to the bounded email executor. Returns the Future on
-    success, or None if the queue is saturated (task is dropped, not
-    blocked — a saturated queue must never stall the calling request).
-    """
-    if not _email_queue_semaphore.acquire(blocking=False):
-        logger.error(
-            "Email queue saturated (%d in flight) - dropping email send",
-            EMAIL_QUEUE_MAX_SIZE,
-        )
-        return None
-
-    def _wrapped():
-        try:
-            fn(*args, **kwargs)
-        finally:
-            _email_queue_semaphore.release()
-
-    return _email_executor.submit(_wrapped)
 
 
 class NotificationService:
@@ -187,40 +147,29 @@ class NotificationService:
     @staticmethod
     def send_email_async(notification):
         """
-        Send email asynchronously via the bounded email executor.
-        This prevents blocking the HTTP request while waiting for SMTP,
-        without spawning an unbounded number of threads (see the
-        EMAIL_EXECUTOR_MAX_WORKERS/EMAIL_QUEUE_MAX_SIZE pool defined at
-        module scope).
+        Enqueue an email send as a Celery task after the current DB transaction
+        commits. Using transaction.on_commit ensures the notification row is
+        visible to the worker before it tries to fetch it, and moves all SMTP
+        I/O out of the HTTP request thread entirely.
 
         Args:
             notification: UserNotification instance
         """
+        from notifications.tasks import send_notification_email
 
-        def _send_in_background():
-            try:
-                NotificationService.send_email_notification(notification)
-            except Exception as e:
-                # Error is already logged in send_email_notification
-                logger.error(
-                    f"Background email send failed for notification {notification.id}: {str(e)}"
-                )
-            finally:
-                # This runs on a pool thread outside Django's request_finished
-                # signal, which is what normally closes DB connections -
-                # without this, each send leaks a Postgres connection that
-                # never gets reclaimed.
-                from django.db import connection
+        notification_id = notification.id
 
-                connection.close()
+        def _enqueue():
+            send_notification_email.apply_async(
+                args=[notification_id], queue="emails"
+            )
+            logger.info(
+                "Email task enqueued for notification %s → %s",
+                notification_id,
+                notification.user.email,
+            )
 
-        future = _submit_bounded_email_task(_send_in_background)
-        if future is None:
-            notification.email_error = "Email queue saturated - send dropped"
-            notification.save(update_fields=["email_error"])
-            return
-
-        logger.info(f"Email queued for background sending to {notification.user.email}")
+        transaction.on_commit(_enqueue)
 
     @staticmethod
     def send_email_notification(notification):

@@ -5,7 +5,7 @@ import logging
 from celery import shared_task
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, OperationalError, transaction
 
 logger = logging.getLogger("accounts")
 
@@ -14,7 +14,7 @@ def _normalize_name(name):
     return " ".join(name.split()).casefold()
 
 
-@shared_task(bind=True, max_retries=0)
+@shared_task(bind=True, max_retries=3)
 def process_bulk_user_import(self, job_id):
     """
     Background task: process a BulkImportJob created by the admin bulk-import view.
@@ -22,6 +22,9 @@ def process_bulk_user_import(self, job_id):
     All heavy work (user creation, password hashing, per-row audit logging) runs
     here in the Celery worker instead of in the gunicorn request thread, eliminating
     the 30-second worker timeout that caused 502 errors on large CSV uploads.
+
+    Retries up to 3 times (with exponential backoff) on transient DB errors.
+    Already-created rows are skipped on retry due to duplicate checks in _run_import.
     """
     from .models import AdminActionLog, BulkImportJob, Department, User
 
@@ -30,6 +33,11 @@ def process_bulk_user_import(self, job_id):
     except BulkImportJob.DoesNotExist:
         logger.error("BulkImportJob %s not found", job_id)
         return
+    except OperationalError as exc:
+        # Transient DB error before any work was done — safe to retry
+        countdown = 30 * (2 ** self.request.retries)
+        logger.warning("BulkImportJob %s: transient DB error on fetch, retrying in %ds: %s", job_id, countdown, exc)
+        raise self.retry(exc=exc, countdown=countdown)
 
     job.status = BulkImportJob.STATUS_PROCESSING
     job.task_id = self.request.id or ""
@@ -77,6 +85,14 @@ def process_bulk_user_import(self, job_id):
 
         logger.info("BulkImportJob %s completed: %d created, %d skipped, %d errors",
                     job_id, len(created), len(skipped), len(errors))
+
+    except OperationalError as exc:
+        # Transient DB error mid-import — already-created rows will be skipped on retry
+        countdown = 30 * (2 ** self.request.retries)
+        logger.warning("BulkImportJob %s: transient DB error during import, retrying in %ds: %s", job_id, countdown, exc)
+        job.status = BulkImportJob.STATUS_PROCESSING  # keep as processing during retry
+        job.save(update_fields=["status"])
+        raise self.retry(exc=exc, countdown=countdown)
 
     except Exception as exc:
         logger.exception("BulkImportJob %s failed: %s", job_id, exc)
