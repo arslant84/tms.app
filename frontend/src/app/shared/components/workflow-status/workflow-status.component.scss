@@ -34,164 +34,6 @@
   }
 }
 
-// ==================== Timeline Styles ====================
-
-.workflow-timeline {
-  position: relative;
-  padding: vars.$spacing-5 0;
-}
-
-.timeline-item {
-  position: relative;
-  display: flex;
-  gap: vars.$spacing-5;
-  margin-bottom: vars.$spacing-8;
-  padding-bottom: vars.$spacing-8;
-
-  &:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-  }
-}
-
-.timeline-connector {
-  position: absolute;
-  left: 19px;
-  top: 40px;
-  bottom: -30px;
-  width: 2px;
-  background: vars.$border-light;
-}
-
-.timeline-icon {
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-
-  .step-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: vars.$radius-full;
-    font-size: vars.$font-size-base;
-    font-weight: vars.$font-weight-bold;
-    border: 3px solid;
-    background: vars.$bg-primary;
-    transition: all 0.3s ease;
-
-    // Step States
-    &.step-completed {
-      color: vars.$success-color;
-      border-color: vars.$success-color;
-      background: vars.$success-lightest;
-    }
-
-    &.step-current {
-      color: vars.$warning-color;
-      border-color: vars.$warning-color;
-      background: vars.$warning-light;
-      animation: pulse 2s infinite;
-    }
-
-    &.step-pending {
-      color: vars.$gray-600;
-      border-color: vars.$gray-200;
-      background: vars.$gray-50;
-    }
-
-    &.step-rejected {
-      color: vars.$error-color;
-      border-color: vars.$error-color;
-      background: vars.$error-lightest;
-    }
-
-    &.step-skipped {
-      color: vars.$gray-600;
-      border-color: vars.$gray-600;
-      background: vars.$gray-100;
-    }
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgb(255 193 7 / 70%);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgb(255 193 7 / 0%);
-  }
-}
-
-.timeline-content {
-  flex: 1;
-  padding: vars.$spacing-3 0;
-
-  .step-title {
-    font-size: vars.$font-size-base;
-    color: vars.$gray-800;
-    font-weight: vars.$font-weight-semibold;
-    margin-bottom: vars.$spacing-2;
-  }
-
-  .step-details {
-    margin-top: vars.$spacing-3;
-    padding: vars.$spacing-3;
-    background: vars.$gray-50;
-    border-radius: vars.$radius-md;
-  }
-
-  .detail-row {
-    display: flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    margin-bottom: vars.$spacing-2;
-    font-size: vars.$font-size-sm;
-    color: vars.$gray-600;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    i {
-      width: 16px;
-      text-align: center;
-      color: vars.$gray-600;
-    }
-
-    .detail-label {
-      font-weight: vars.$font-weight-medium;
-      color: vars.$gray-600;
-    }
-
-    .detail-value {
-      color: vars.$gray-800;
-    }
-  }
-
-  .current-step-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: vars.$spacing-2;
-    padding: vars.$spacing-2 vars.$spacing-3;
-    background: vars.$warning-light;
-    border: 1px solid vars.$warning-color;
-    border-radius: vars.$radius-md;
-    color: vars.$warning-dark;
-    font-weight: vars.$font-weight-semibold;
-    font-size: vars.$font-size-xs;
-    margin-top: vars.$spacing-2;
-
-    i {
-      color: vars.$warning-color;
-    }
-  }
-}
-
 // ==================== Badge Styles ====================
 
 .badge-sm {
@@ -253,6 +95,156 @@
   color: vars.$gray-600;
 }
 
+// ==================== Horizontal Stepper ====================
+// At-a-glance overview of the whole workflow, including steps not reached
+// yet. The connecting line is one track spanning circle-center to
+// circle-center, drawn behind a row of centered circles - simpler and more
+// robust than giving each circle its own line segment.
+
+.workflow-stepper {
+  margin-bottom: vars.$spacing-6;
+  overflow-x: auto;
+  padding-bottom: vars.$spacing-2;
+}
+
+.stepper-track-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+}
+
+.stepper-track-bg,
+.stepper-track-progress {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+.stepper-track-bg {
+  background: vars.$gray-300;
+}
+
+.stepper-track-progress {
+  background: vars.$success-color;
+  transition: width 0.3s ease;
+}
+
+.stepper-circle-wrap {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 120px;
+  display: flex;
+  justify-content: center;
+}
+
+.stepper-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-semibold;
+  border: 2px solid vars.$gray-300;
+  background: vars.$bg-primary;
+  color: vars.$gray-500;
+}
+
+.stepper-labels-row {
+  display: flex;
+  margin-top: vars.$spacing-2;
+}
+
+.stepper-label {
+  flex: 1 1 0;
+  min-width: 120px;
+  text-align: center;
+  padding: 0 vars.$spacing-2;
+
+  .stepper-name {
+    font-size: vars.$font-size-sm;
+    font-weight: vars.$font-weight-medium;
+    color: vars.$gray-800;
+  }
+
+  .stepper-caption {
+    font-size: vars.$font-size-xs;
+    color: vars.$gray-500;
+    margin-top: 2px;
+  }
+}
+
+.stepper-circle-wrap,
+.stepper-label {
+  &.stepper-completed .stepper-circle {
+    background: vars.$success-color;
+    border-color: vars.$success-color;
+    color: vars.$white;
+  }
+
+  &.stepper-rejected .stepper-circle {
+    background: vars.$error-color;
+    border-color: vars.$error-color;
+    color: vars.$white;
+  }
+
+  &.stepper-skipped .stepper-circle {
+    background: vars.$gray-400;
+    border-color: vars.$gray-400;
+    color: vars.$white;
+  }
+
+  &.stepper-current .stepper-circle {
+    border-color: vars.$primary-color;
+    color: vars.$primary-color;
+    background: vars.$primary-lightest;
+    box-shadow: 0 0 0 4px rgb(13 148 136 / 15%);
+  }
+
+  &.stepper-current .stepper-name {
+    color: vars.$primary-color;
+    font-weight: vars.$font-weight-semibold;
+  }
+
+  &.stepper-upcoming .stepper-circle {
+    border-style: dashed;
+  }
+}
+
+// ==================== Step Comments ====================
+// The only per-step detail not already covered by the stepper above.
+
+.workflow-comments {
+  margin-bottom: vars.$spacing-3;
+
+  .comment-row {
+    display: flex;
+    align-items: baseline;
+    gap: vars.$spacing-2;
+    padding: vars.$spacing-2 0;
+    font-size: vars.$font-size-sm;
+
+    i {
+      color: vars.$gray-600;
+    }
+
+    .comment-step {
+      font-weight: vars.$font-weight-medium;
+      color: vars.$gray-600;
+      flex-shrink: 0;
+    }
+
+    .comment-text {
+      color: vars.$gray-800;
+      font-style: italic;
+    }
+  }
+}
+
 // ==================== Responsive ====================
 
 @media (max-width: vars.$breakpoint-md) {
@@ -260,142 +252,13 @@
     padding: vars.$spacing-md;
   }
 
-  .timeline-item {
-    gap: vars.$spacing-md;
-  }
-
-  .timeline-icon .step-icon {
-    width: 35px;
-    height: 35px;
-    font-size: vars.$font-size-base;
-  }
-
-  .timeline-connector {
-    left: 16px;
-  }
-
-  .timeline-content .step-title {
-    font-size: vars.$font-size-sm;
-  }
-
-  .detail-row {
-    font-size: vars.$font-size-xs;
-  }
-}
-
-// Horizontal Stepper - at-a-glance overview of the whole workflow,
-// including steps not reached yet.
-.workflow-stepper {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: vars.$spacing-6;
-  overflow-x: auto;
-  padding-bottom: vars.$spacing-2;
-}
-
-.stepper-item {
-  flex: 1 1 0;
-  min-width: 120px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-
-  .stepper-node-row {
-    display: flex;
-    align-items: center;
-    width: 100%;
+  .stepper-circle-wrap,
+  .stepper-label {
+    min-width: 90px;
   }
 
   .stepper-circle {
-    flex: 0 0 auto;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: vars.$font-size-sm;
-    font-weight: vars.$font-weight-semibold;
-    border: 2px solid vars.$gray-300;
-    background: vars.$bg-primary;
-    color: vars.$gray-500;
-    z-index: 1;
-  }
-
-  .stepper-connector {
-    flex: 1 1 auto;
-    height: 2px;
-    background: vars.$gray-300;
-    margin: 0 -1px;
-  }
-
-  .stepper-label {
-    margin-top: vars.$spacing-2;
-    padding: 0 vars.$spacing-2;
-
-    .stepper-name {
-      font-size: vars.$font-size-sm;
-      font-weight: vars.$font-weight-medium;
-      color: vars.$gray-800;
-    }
-
-    .stepper-caption {
-      font-size: vars.$font-size-xs;
-      color: vars.$gray-500;
-      margin-top: 2px;
-    }
-  }
-
-  &:last-child .stepper-connector {
-    display: none;
-  }
-
-  &.stepper-completed {
-    .stepper-circle {
-      background: vars.$success-color;
-      border-color: vars.$success-color;
-      color: vars.$white;
-    }
-
-    .stepper-connector {
-      background: vars.$success-color;
-    }
-  }
-
-  &.stepper-rejected {
-    .stepper-circle {
-      background: vars.$error-color;
-      border-color: vars.$error-color;
-      color: vars.$white;
-    }
-  }
-
-  &.stepper-skipped {
-    .stepper-circle {
-      background: vars.$gray-400;
-      border-color: vars.$gray-400;
-      color: vars.$white;
-    }
-  }
-
-  &.stepper-current {
-    .stepper-circle {
-      border-color: vars.$primary-color;
-      color: vars.$primary-color;
-      background: vars.$primary-lightest;
-      box-shadow: 0 0 0 4px rgb(13 148 136 / 15%);
-    }
-
-    .stepper-name {
-      color: vars.$primary-color;
-      font-weight: vars.$font-weight-semibold;
-    }
-  }
-
-  &.stepper-upcoming {
-    .stepper-circle {
-      border-style: dashed;
-    }
+    width: 30px;
+    height: 30px;
   }
 }
