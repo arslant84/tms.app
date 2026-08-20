@@ -332,7 +332,14 @@ export class WorkflowService {
 
     const status = workflow.status;
     const currentStep = 'current_step_order' in workflow ? workflow.current_step_order : undefined;
-    const totalSteps = 'step_executions' in workflow ? workflow.step_executions?.length || 0 : 0;
+    // The template's real, configured step count - not step_executions.length,
+    // which only counts steps reached so far (WorkflowEngine creates step
+    // executions lazily, one at a time, so a workflow still on step 1 of a
+    // 3-step template only has 1 step_execution row and would wrongly show
+    // "Step 1 of 1").
+    const totalSteps =
+      ('workflow_template_detail' in workflow && workflow.workflow_template_detail?.step_count) ||
+      ('step_executions' in workflow ? workflow.step_executions?.length || 0 : 0);
 
     if (status === 'approved') return 'Approved';
     if (status === 'rejected') return 'Rejected';

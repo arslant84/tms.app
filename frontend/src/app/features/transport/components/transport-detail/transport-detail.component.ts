@@ -199,7 +199,13 @@ export class TransportDetailComponent implements OnInit {
 
     const status = this.workflow.status;
     const currentStep = this.workflow.current_step_order;
-    const totalSteps = this.workflow.step_executions?.length || 0;
+    // The template's real, configured step count - not step_executions.length,
+    // which only counts steps reached so far (see trf-detail.component.ts's
+    // getWorkflowStatus for the full explanation).
+    const totalSteps =
+      this.workflow.workflow_template_detail?.step_count ||
+      this.workflow.step_executions?.length ||
+      0;
 
     if (status === 'approved') return 'Approved';
     if (status === 'rejected') return 'Rejected';
