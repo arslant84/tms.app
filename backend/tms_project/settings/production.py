@@ -63,10 +63,24 @@ DATABASES['default']['OPTIONS'] = {
 # Static files - Use WhiteNoise for static file serving
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
+# MinIO / S3-compatible object storage for media files
+AWS_ACCESS_KEY_ID = config('MINIO_ACCESS_KEY', default='')
+AWS_SECRET_ACCESS_KEY = config('MINIO_SECRET_KEY', default='')
+AWS_STORAGE_BUCKET_NAME = config('MINIO_BUCKET_NAME', default='tms-media')
+AWS_S3_ENDPOINT_URL = config('MINIO_ENDPOINT_URL', default='http://127.0.0.1:9000')
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = 'public-read'
+AWS_QUERYSTRING_AUTH = False  # Serve files via clean public URLs
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+
+# Public URL base: nginx proxies /<bucket>/ → MinIO
+AWS_S3_CUSTOM_DOMAIN = f"{config('MINIO_PUBLIC_DOMAIN')}/{AWS_STORAGE_BUCKET_NAME}"
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+
 # Django 5.x+ uses STORAGES instead of deprecated STATICFILES_STORAGE
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
