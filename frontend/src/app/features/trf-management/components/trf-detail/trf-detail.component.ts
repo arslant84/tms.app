@@ -397,7 +397,9 @@ export class TrfDetailComponent implements OnInit {
    * Cancel TRF
    */
   onCancel(): void {
-    this.confirmationService.confirmDestructive('Cancel', 'this TRF').subscribe(confirmed => {
+    this.confirmationService
+      .confirmCancel('Are you sure you want to cancel this TRF? This action cannot be undone.')
+      .subscribe(confirmed => {
       if (confirmed) {
         // Call the cancel action endpoint using TrfService
         this.trfService.cancelTrf(this.trfId).subscribe({

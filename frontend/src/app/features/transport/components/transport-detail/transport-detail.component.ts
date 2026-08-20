@@ -241,7 +241,11 @@ export class TransportDetailComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.confirmationService.confirmDestructive('Cancel', 'this transport request').subscribe(confirmed => {
+    this.confirmationService
+      .confirmCancel(
+        'Are you sure you want to cancel this transport request? This action cannot be undone.'
+      )
+      .subscribe(confirmed => {
       if (confirmed) {
         this.transportService.cancelRequest(this.requestId).subscribe({
           next: () => {
