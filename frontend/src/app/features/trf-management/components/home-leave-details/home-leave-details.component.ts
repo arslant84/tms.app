@@ -41,8 +41,8 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   itineraryFields: ItineraryFieldConfig[] = [
     { key: 'date', label: 'Date / Дата', type: 'date', required: true, requiredErrorMessage: 'Date is required', isPrimaryDate: true },
     { key: 'day', label: 'Day / День', type: 'readonly-text' },
-    { key: 'from', label: 'From / Откуда', type: 'text', required: true, placeholder: 'Origin city/airport', requiredErrorMessage: 'Origin is required' },
-    { key: 'to', label: 'To / Куда', type: 'text', required: true, placeholder: 'Destination city/airport', requiredErrorMessage: 'Destination is required' },
+    { key: 'from', label: 'From / Откуда', type: 'text', required: true, placeholder: 'Origin city/airport', requiredErrorMessage: 'Origin is required', isOrigin: true },
+    { key: 'to', label: 'To / Куда', type: 'text', required: true, placeholder: 'Destination city/airport', requiredErrorMessage: 'Destination is required', isDestination: true },
     { key: 'flightNumber', label: 'Flight/Transport Number', type: 'text', placeholder: 'e.g., LH1234, Train 45' },
     { key: 'remarks', label: 'Remarks / Примечания', type: 'text', placeholder: 'Any additional information', colSpan: 8 }
   ];
@@ -54,6 +54,7 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   advanceConsentAccepted = false;
 
   @ViewChild(AdvanceAmountEditorComponent) advanceAmountEditor?: AdvanceAmountEditorComponent;
+  @ViewChild(ItineraryEditorComponent) itineraryEditorRef?: ItineraryEditorComponent;
 
   // Passport upload
   passportFile: File | null = null;
@@ -190,12 +191,14 @@ export class HomeLeaveDetailsComponent implements OnInit, OnChanges {
   }
 
   isValid(): boolean {
-    return this.homeLeaveForm.valid && this.advanceAmountEditorValid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder;
+    return this.homeLeaveForm.valid && this.advanceAmountEditorValid && !this.isItineraryIncomplete && !this.isItineraryOutOfOrder
+      && (!this.itineraryEditorRef || this.itineraryEditorRef.form.valid);
   }
 
   markAllAsTouched(): void {
     this.formUtils.markFormGroupTouched(this.homeLeaveForm);
     this.advanceAmountEditor?.markConsentTouched();
+    this.itineraryEditorRef?.markAllAsTouched();
   }
 
   onBack(): void {
