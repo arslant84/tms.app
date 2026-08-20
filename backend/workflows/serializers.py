@@ -597,9 +597,18 @@ class WorkflowInstanceSerializer(serializers.ModelSerializer):
 
 
 class WorkflowInstanceDetailSerializer(WorkflowInstanceSerializer):
-    """Detailed serializer with step executions"""
+    """
+    Detailed serializer with step executions. workflow_template_detail is
+    upgraded to the richer WorkflowTemplateDetailSerializer (adds the
+    template's full ordered `steps` list) so the frontend can render a
+    complete stepper - including steps not yet reached, which have no
+    step_execution row yet since WorkflowEngine creates those lazily.
+    """
 
     step_executions = WorkflowStepExecutionSerializer(many=True, read_only=True)
+    workflow_template_detail = WorkflowTemplateDetailSerializer(
+        source="workflow_template", read_only=True
+    )
 
     class Meta(WorkflowInstanceSerializer.Meta):
         fields = WorkflowInstanceSerializer.Meta.fields + ["step_executions"]

@@ -1,16 +1,31 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WorkflowInstance, WorkflowStepExecution } from '../../../core/models/workflow.models';
+import {
+  WorkflowInstance,
+  WorkflowStep,
+  WorkflowStepExecution,
+} from '../../../core/models/workflow.models';
 import { WorkflowService } from '../../../core/services/workflow.service';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
 import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
+
+export interface StepperItem {
+  order: number;
+  name: string;
+  /** 'upcoming' means the template defines this step but it hasn't started
+   *  yet - it has no step_execution row (WorkflowEngine creates those
+   *  lazily), so there's nothing else to show for it but its name. */
+  status: 'approved' | 'rejected' | 'skipped' | 'pending' | 'delegated' | 'upcoming';
+  isCurrent: boolean;
+  execution?: WorkflowStepExecution;
+}
 
 @Component({
   selector: 'app-workflow-status',
   standalone: true,
   imports: [CommonModule, LoadingSpinnerComponent],
   templateUrl: './workflow-status.component.html',
-  styleUrls: ['./workflow-status.component.scss']
+  styleUrls: ['./workflow-status.component.scss'],
 })
 export class WorkflowStatusComponent implements OnInit, OnChanges {
   @Input() workflowInstanceId?: string;
@@ -52,15 +67,15 @@ export class WorkflowStatusComponent implements OnInit, OnChanges {
     this.error = '';
 
     this.workflowService.getInstance(this.workflowInstanceId).subscribe({
-      next: (workflow) => {
+      next: workflow => {
         this.workflow = workflow;
         this.loading = false;
       },
-      error: (err) => {
+      error: err => {
         this.error = 'Failed to load workflow status';
         this.loading = false;
         console.error('Error loading workflow:', err);
-      }
+      },
     });
   }
 
@@ -82,8 +97,10 @@ export class WorkflowStatusComponent implements OnInit, OnChanges {
 
   isCurrentStep(step: WorkflowStepExecution): boolean {
     if (!this.workflow || !step.workflow_step_detail) return false;
-    return step.workflow_step_detail.step_order === this.workflow.current_step_order &&
-           step.status === 'pending';
+    return (
+      step.workflow_step_detail.step_order === this.workflow.current_step_order &&
+      step.status === 'pending'
+    );
   }
 
   getStatusClass(): string {
@@ -149,5 +166,67 @@ export class WorkflowStatusComponent implements OnInit, OnChanges {
    */
   get totalStepCount(): number {
     return this.workflow?.workflow_template_detail?.step_count || this.sortedSteps.length;
+  }
+
+  /**
+   * Merges the template's full, ordered step list (all of them, including
+   * ones not started yet) with this instance's step_executions (which only
+   * exist for steps actually reached so far) into one array the stepper can
+   * render end-to-end. Falls back to sortedSteps alone when the template's
+   * step list isn't available (e.g. an older cached response).
+   */
+  get stepperItems(): StepperItem[] {
+    const templateSteps = this.workflow?.workflow_template_detail?.steps;
+    if (!templateSteps?.length) {
+      return this.sortedSteps.map(execution => ({
+        order: execution.workflow_step_detail?.step_order || 0,
+        name: execution.workflow_step_detail?.step_name || 'Step',
+        status: execution.status,
+        isCurrent: this.isCurrentStep(execution),
+        execution,
+      }));
+    }
+
+    const sortedTemplateSteps = [...templateSteps].sort((a, b) => a.step_order - b.step_order);
+    return sortedTemplateSteps.map(templateStep => this.toStepperItem(templateStep));
+  }
+
+  private toStepperItem(templateStep: WorkflowStep): StepperItem {
+    const execution = this.sortedSteps.find(
+      e => e.workflow_step === templateStep.id || e.workflow_step_detail?.id === templateStep.id
+    );
+    return {
+      order: templateStep.step_order,
+      name: templateStep.step_name,
+      status: execution?.status || 'upcoming',
+      isCurrent: !!execution && this.isCurrentStep(execution),
+      execution,
+    };
+  }
+
+  getStepperClass(item: StepperItem): string {
+    if (item.status === 'approved') return 'stepper-completed';
+    if (item.status === 'rejected') return 'stepper-rejected';
+    if (item.status === 'skipped') return 'stepper-skipped';
+    if (item.isCurrent) return 'stepper-current';
+    if (item.status === 'upcoming') return 'stepper-upcoming';
+    return 'stepper-pending';
+  }
+
+  getStepperCaption(item: StepperItem): string {
+    const execution = item.execution;
+    if (item.status === 'upcoming') {
+      return 'Upcoming';
+    }
+    if (item.status === 'approved' || item.status === 'rejected' || item.status === 'skipped') {
+      const actor = execution ? this.formatUserName(execution) : '';
+      const date = execution?.action_date ? this.dateUtils.formatDate(execution.action_date) : '';
+      const statusLabel = item.status.charAt(0).toUpperCase() + item.status.slice(1);
+      return actor && date ? `${statusLabel} (${actor}, ${date})` : statusLabel;
+    }
+    if (item.isCurrent) {
+      return 'Awaiting Review';
+    }
+    return 'Pending';
   }
 }
