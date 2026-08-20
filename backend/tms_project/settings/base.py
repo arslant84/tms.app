@@ -433,6 +433,18 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
+# Task time limits — raises SoftTimeLimitExceeded at 5 min, hard-kills at 6 min
+CELERY_TASK_SOFT_TIME_LIMIT = 300
+CELERY_TASK_TIME_LIMIT = 360
+# Recycle workers periodically to prevent memory leaks from long-running processes
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
+# Route email tasks to a dedicated queue so a burst of emails can't starve
+# other queues (bulk imports, workflow actions, etc.)
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_ROUTES = {
+    "notifications.tasks.*": {"queue": "emails"},
+    "accounts.tasks.*": {"queue": "default"},
+}
 
 # Logging Configuration
 # Clean, readable logs for development - ONLY application logs

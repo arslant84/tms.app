@@ -36,29 +36,28 @@ DATABASES['default']['OPTIONS'] = {
     'connect_timeout': 10,
 }
 
-# Caching configuration - Redis (recommended for production)
-# Uncomment and configure when Redis is available:
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django_redis.cache.RedisCache',
-#         'LOCATION': config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
-#         'OPTIONS': {
-#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-#             'SOCKET_CONNECT_TIMEOUT': 5,
-#             'SOCKET_TIMEOUT': 5,
-#             'CONNECTION_POOL_KWARGS': {
-#                 'max_connections': 50,
-#                 'retry_on_timeout': True,
-#             },
-#         },
-#         'KEY_PREFIX': 'tms',
-#         'TIMEOUT': 300,  # 5 minutes default
-#     }
-# }
+# Caching — Redis (shared with Celery broker, separate DB index)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': config('REDIS_URL', default='redis://127.0.0.1:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+        },
+        'KEY_PREFIX': 'tms',
+        'TIMEOUT': 300,  # 5 minutes default
+    }
+}
 
 # Session configuration - Use cache in production
-# SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-# SESSION_CACHE_ALIAS = 'default'
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
 
 # Static files - Use WhiteNoise for static file serving
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
