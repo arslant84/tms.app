@@ -22,7 +22,7 @@ cryptography==50.0.0
 cyclonedx-python-lib==6.4.4
 defusedxml==0.7.1
 distlib==0.4.0
-Django==5.2.16
+Django==5.2.17
 django-cors-headers==4.3.1
 django-csp==4.0
 django-ratelimit==4.1.0
@@ -102,7 +102,7 @@ safety-schemas==0.0.16
 shellingham==1.5.4
 six==1.17.0
 sortedcontainers==2.4.0
-sqlparse==0.5.4
+sqlparse==0.6.0
 stevedore==5.6.0
 tenacity==9.1.2
 toml==0.10.2
