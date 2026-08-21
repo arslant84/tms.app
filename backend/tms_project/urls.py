@@ -62,7 +62,7 @@ def serve_spa(request, path=""):
 def security_txt(request):
     """Serve the security.txt file per RFC 9116"""
     security_txt_path = os.path.join(
-        settings.BASE_DIR, "static", ".well-known", "security.txt"
+        settings.BASE_DIR, ".well-known", "security.txt"
     )
     try:
         with open(security_txt_path, "r") as f:

@@ -46,13 +46,13 @@ class TestPendingApprovals:
 
     def test_list_pending_approvals(self, authenticated_client):
         """Test listing pending approvals for current user."""
-        response = authenticated_client.get('/api/workflows/pending-approvals/')
+        response = authenticated_client.get('/api/admin/approvals/')
 
         assert response.status_code == status.HTTP_200_OK
 
     def test_list_pending_approvals_unauthenticated(self, api_client):
         """Test listing pending approvals without authentication."""
-        response = api_client.get('/api/workflows/pending-approvals/')
+        response = api_client.get('/api/admin/approvals/')
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -63,7 +63,7 @@ class TestWorkflowApproval:
 
     def test_approve_action_requires_auth(self, api_client):
         """Test that approval actions require authentication."""
-        response = api_client.post('/api/workflows/step-executions/test-id/action/', {
+        response = api_client.post('/api/workflows/executions/test-id/take_action/', {
             'action': 'approve',
             'comments': 'Approved'
         })

@@ -7,19 +7,39 @@ import pytest
 from rest_framework import status
 
 
+@pytest.fixture
+def visa_creator_client(db, api_client, create_user):
+    """Authenticated client whose user holds the create_visa permission."""
+    from accounts.models import Permission, Role, RolePermission
+
+    perm, _ = Permission.objects.get_or_create(
+        name="create_visa", defaults={"description": "Create visa application"}
+    )
+    role = Role.objects.create(name="Visa Creator Test")
+    RolePermission.objects.create(role=role, permission=perm)
+    user = create_user(
+        email="visa-creator@example.com",
+        password="testpass123",
+        name="Visa Creator",
+        role=role,
+    )
+    api_client.force_authenticate(user=user)
+    return api_client
+
+
 @pytest.mark.django_db
 class TestVisaApplicationList:
     """Test cases for listing visa applications."""
 
     def test_list_visa_applications_authenticated(self, authenticated_client):
         """Test listing visa applications as authenticated user."""
-        response = authenticated_client.get("/api/visa/")
+        response = authenticated_client.get("/api/visa/applications/")
 
         assert response.status_code == status.HTTP_200_OK
 
     def test_list_visa_applications_unauthenticated(self, api_client):
         """Test listing visa applications without authentication."""
-        response = api_client.get("/api/visa/")
+        response = api_client.get("/api/visa/applications/")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -28,12 +48,13 @@ class TestVisaApplicationList:
 class TestVisaApplicationCreation:
     """Test cases for creating visa applications."""
 
-    def test_create_visa_application(self, authenticated_client, regular_user):
+    def test_create_visa_application(self, visa_creator_client):
         """Test creating a new visa application."""
-        response = authenticated_client.post(
-            "/api/visa/",
+        response = visa_creator_client.post(
+            "/api/visa/applications/",
             {
-                "destination_country": "United States",
+                "requestor_name": "Visa Creator",
+                "destination": "United States",
                 "visa_type": "Business",
                 "travel_purpose": "Business meeting",
                 "planned_departure_date": "2026-04-01",
@@ -43,10 +64,10 @@ class TestVisaApplicationCreation:
 
         assert response.status_code in [status.HTTP_201_CREATED, status.HTTP_200_OK]
 
-    def test_create_visa_application_missing_fields(self, authenticated_client):
+    def test_create_visa_application_missing_fields(self, visa_creator_client):
         """Test creating a visa application with missing fields."""
-        response = authenticated_client.post(
-            "/api/visa/", {"destination_country": "United States"}
+        response = visa_creator_client.post(
+            "/api/visa/applications/", {"destination_country": "United States"}
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -81,7 +102,7 @@ class TestVisaApplicationRetrieval:
         """Test retrieving a single visa application."""
         # First create an application
         create_response = authenticated_client.post(
-            "/api/visa/",
+            "/api/visa/applications/",
             {
                 "destination_country": "United States",
                 "visa_type": "Business",
@@ -96,7 +117,7 @@ class TestVisaApplicationRetrieval:
                 "id"
             ) or create_response.json().get("id")
             if visa_id:
-                response = authenticated_client.get(f"/api/visa/{visa_id}/")
+                response = authenticated_client.get(f"/api/visa/applications/{visa_id}/")
                 assert response.status_code == status.HTTP_200_OK
 
 

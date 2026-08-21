@@ -57,6 +57,34 @@ class TestWorkflowStepNotificationConfigPermissions:
         assert response.status_code == status.HTTP_200_OK
 
 
+@pytest.fixture
+def trf_workflow_step(db):
+    """Minimal WorkflowTemplate + WorkflowStep + one NotificationConfig for travelrequest."""
+    from notifications.models import NotificationTemplate
+    from workflows.models import WorkflowStep, WorkflowStepNotificationConfig, WorkflowTemplate
+
+    template = WorkflowTemplate.objects.create(
+        name="TRF Test Workflow",
+        entity_type="travelrequest",
+        is_active=True,
+    )
+    step = WorkflowStep.objects.create(
+        workflow_template=template,
+        step_order=1,
+        step_name="Line Manager",
+        can_skip=True,
+    )
+    notif_template = NotificationTemplate.objects.filter(name="approval_required").first()
+    if notif_template:
+        WorkflowStepNotificationConfig.objects.create(
+            workflow_step=step,
+            event_type="approval",
+            notification_template=notif_template,
+            recipient_types=["current_approver"],
+        )
+    return step
+
+
 @pytest.mark.django_db
 class TestWorkflowStepNotificationConfigEndpoints:
     def test_list_returns_real_configs(self, admin_client):
@@ -78,13 +106,8 @@ class TestWorkflowStepNotificationConfigEndpoints:
         ):
             assert key in body
 
-    def test_by_step_returns_configs_for_that_step_only(self, admin_client):
-        from workflows.models import WorkflowStep
-
-        step = WorkflowStep.objects.filter(
-            workflow_template__entity_type="travelrequest"
-        ).first()
-        assert step is not None
+    def test_by_step_returns_configs_for_that_step_only(self, admin_client, trf_workflow_step):
+        step = trf_workflow_step
 
         response = admin_client.get(
             f"/api/workflows/notification-configs/by_step/{step.id}/"
@@ -94,13 +117,11 @@ class TestWorkflowStepNotificationConfigEndpoints:
         assert len(results) > 0
         assert all(r["workflow_step"] == step.id for r in results)
 
-    def test_create_update_delete_round_trip(self, admin_client):
+    def test_create_update_delete_round_trip(self, admin_client, trf_workflow_step):
         from notifications.models import NotificationTemplate
-        from workflows.models import WorkflowStep, WorkflowStepNotificationConfig
+        from workflows.models import WorkflowStepNotificationConfig
 
-        step = WorkflowStep.objects.filter(
-            workflow_template__entity_type="travelrequest"
-        ).first()
+        step = trf_workflow_step
         template = NotificationTemplate.objects.filter(name="approval_required").first()
         assert step is not None
         assert template is not None

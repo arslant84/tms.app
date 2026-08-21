@@ -16,9 +16,28 @@ import pytest
 from workflows.models import WorkflowTemplate
 
 
+@pytest.fixture
+def active_trf_workflow(db):
+    """Seed a minimal active travelrequest WorkflowTemplate with one skippable step."""
+    from workflows.models import WorkflowStep
+
+    template = WorkflowTemplate.objects.create(
+        name="TRF Skip Test Workflow",
+        entity_type="travelrequest",
+        is_active=True,
+    )
+    WorkflowStep.objects.create(
+        workflow_template=template,
+        step_order=1,
+        step_name="Line Manager",
+        can_skip=True,
+    )
+    return template
+
+
 @pytest.mark.django_db
 class TestWorkflowStepSkipConsistency:
-    def test_all_active_templates_allow_skip_on_every_step(self):
+    def test_all_active_templates_allow_skip_on_every_step(self, active_trf_workflow):
         templates = WorkflowTemplate.objects.filter(is_active=True)
         assert templates.exists()
 
@@ -33,7 +52,7 @@ class TestWorkflowStepSkipConsistency:
             f"with every other entity type: {non_skippable}"
         )
 
-    def test_travelrequest_steps_specifically_allow_skip(self):
+    def test_travelrequest_steps_specifically_allow_skip(self, active_trf_workflow):
         template = WorkflowTemplate.objects.filter(
             entity_type__iexact="travelrequest", is_active=True
         ).first()
