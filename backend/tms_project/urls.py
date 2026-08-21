@@ -19,6 +19,7 @@ import os
 
 from approvals.views import approval_history, bulk_approve, unified_approvals
 from django.conf import settings
+from tms_project.task_views import task_status
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.http import HttpResponse, JsonResponse
@@ -88,6 +89,8 @@ urlpatterns = [
     path("api/admin/approvals/", unified_approvals, name="unified-approvals"),
     path("api/admin/approvals/bulk/", bulk_approve, name="bulk-approve"),
     path("api/admin/approvals/history/", approval_history, name="approval-history"),
+    # Async task status polling
+    path("api/tasks/<str:task_id>/", task_status, name="task-status"),
     # Security.txt per RFC 9116
     path(".well-known/security.txt", security_txt, name="security-txt"),
     # API Documentation (drf-spectacular)

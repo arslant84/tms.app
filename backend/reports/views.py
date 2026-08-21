@@ -10,6 +10,7 @@ from datetime import timedelta
 from accommodation.models import AccommodationRequest
 from accounts.models import User
 from accounts.utils import has_permission
+from django.core.cache import cache
 from django.db.models import Avg, Count, F, Q
 from django.db.models.functions import TruncDate, TruncMonth
 from django.http import HttpResponse
@@ -104,6 +105,17 @@ class AdminReportsView(APIView):
             return forbidden
 
         date_range = request.query_params.get("date_range", "month")
+
+        # Serve from cache if available (5-minute TTL — report data changes rarely
+        # within a single working session and these queries are expensive)
+        cache_key = f"admin_report:{date_range}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return success_response(
+                data=cached,
+                message="Admin reports retrieved successfully",
+                status_code=200,
+            )
 
         # Calculate date range
         now = timezone.now()
@@ -377,6 +389,7 @@ class AdminReportsView(APIView):
             "top_performers": top_performers,
         }
 
+        cache.set(cache_key, report_data, timeout=300)
         return success_response(
             data=report_data,
             message="Admin reports retrieved successfully",
@@ -610,6 +623,19 @@ class DepartmentalReportsView(APIView):
         date_range = request.query_params.get("date_range", "month")
         department_filter = request.query_params.get("department")
 
+        # Cache key encodes scope (forced vs free) + filter + range so different
+        # users/departments never share each other's cached data.
+        dept_scope = forced_department_id or "all"
+        dept_param = department_filter or "all"
+        cache_key = f"dept_report:{dept_scope}:{dept_param}:{date_range}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return success_response(
+                data=cached,
+                message="Departmental reports retrieved successfully",
+                status_code=200,
+            )
+
         # Calculate date range
         now = timezone.now()
         if date_range == "week":
@@ -806,13 +832,15 @@ class DepartmentalReportsView(APIView):
         # Sort by total requests
         reports.sort(key=lambda x: x["totalRequests"], reverse=True)
 
+        report_data = {
+            "reports": reports,
+            "dateRange": date_range,
+            "startDate": start_date.isoformat(),
+            "endDate": now.isoformat(),
+        }
+        cache.set(cache_key, report_data, timeout=300)
         return success_response(
-            data={
-                "reports": reports,
-                "dateRange": date_range,
-                "startDate": start_date.isoformat(),
-                "endDate": now.isoformat(),
-            },
+            data=report_data,
             message="Departmental reports retrieved successfully",
             status_code=200,
         )
