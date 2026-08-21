@@ -447,6 +447,9 @@ CELERY_TASK_ROUTES = {
     "trf.tasks.*": {"queue": "pdfs"},
     "approvals.tasks.*": {"queue": "default"},
 }
+# approvals has no models (not in INSTALLED_APPS) so autodiscover_tasks()
+# won't find it — import it explicitly.
+CELERY_IMPORTS = ["approvals.tasks"]
 
 # Logging Configuration
 # Clean, readable logs for development - ONLY application logs
