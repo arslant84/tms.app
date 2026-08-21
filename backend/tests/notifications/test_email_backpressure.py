@@ -112,11 +112,15 @@ class TestSendNotificationEmailTask:
             message="Body",
         )
 
+        # Patch retry() to record calls. Celery's eager machinery intercepts the
+        # Retry exception internally so it never surfaces from .apply(); we just
+        # assert retry() was invoked, proving Celery will reschedule the task.
         with patch(
             "notifications.services.NotificationService.send_email_notification",
             side_effect=Exception("SMTP timeout"),
-        ):
-            with pytest.raises(Retry):
-                # CELERY_TASK_ALWAYS_EAGER + CELERY_TASK_EAGER_PROPAGATES means
-                # self.retry() raises Retry immediately in tests
-                send_notification_email.apply(args=[notification.id])
+        ), patch.object(
+            send_notification_email, "retry", side_effect=Retry()
+        ) as mock_retry:
+            send_notification_email.apply(args=[notification.id])
+
+        assert mock_retry.call_count >= 1, "self.retry() must be called on SMTP failure"
