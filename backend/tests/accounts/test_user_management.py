@@ -18,7 +18,8 @@ class TestUserCreation:
         response = admin_client.post('/api/users/', {
             'email': 'newuser@example.com',
             'name': 'New User',
-            'password': 'SecurePass123!'
+            'password': 'SecurePass123456!',
+            'password_confirm': 'SecurePass123456!',
         })
 
         assert response.status_code in [status.HTTP_201_CREATED, status.HTTP_200_OK]
@@ -104,12 +105,13 @@ class TestRoleManagement:
 
     def test_assign_role_to_user(self, admin_client, regular_user):
         """Test assigning a role to a user."""
-        # Get first available role
         roles_response = admin_client.get('/api/roles/')
         if roles_response.status_code == status.HTTP_200_OK:
             roles = roles_response.json()
-            if roles.get('results') and len(roles['results']) > 0:
-                role_id = roles['results'][0]['id']
+            # /api/roles/ returns a plain list, not a paginated dict
+            role_list = roles if isinstance(roles, list) else roles.get('results', [])
+            if role_list:
+                role_id = role_list[0]['id']
                 response = admin_client.patch(f'/api/users/{regular_user.id}/', {
                     'role': role_id
                 })

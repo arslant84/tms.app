@@ -15,7 +15,7 @@ from rest_framework import status
 @pytest.fixture
 def report_viewer(db):
     """A user whose role has the generate_admin_reports permission."""
-    from accounts.models import User
+    from accounts.models import Department, User
 
     permission, _ = Permission.objects.get_or_create(
         name="generate_admin_reports",
@@ -25,11 +25,13 @@ def report_viewer(db):
     )
     role = Role.objects.create(name="Report Viewer")
     RolePermission.objects.create(role=role, permission=permission)
+    department = Department.objects.create(name="Test Department")
     return User.objects.create_user(
         email="report-viewer@example.com",
         password="testpass123",
         name="Report Viewer",
         role=role,
+        department=department,
     )
 
 
