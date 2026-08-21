@@ -181,10 +181,11 @@ export class TrfWizardComponent implements OnInit {
         const mealData = domesticDetails.mealProvision?.dailyMealSelections || data.daily_meals || data.daily_meal_selections || data.mealSelections || [];
         const domesticPassport = this.extractPassportFileInfo(data.passport_details || data.passportDetails);
 
+        const domesticItinerary = this.transformItineraryData(itineraryData);
         this.domesticTravelData = {
           purposeOfTravel: domesticDetails.purpose || data.purpose || '',
-          tripType: data.trip_type || data.tripType || 'Round Trip',
-          itinerary: this.transformItineraryData(itineraryData),
+          tripType: this.deriveTripTypeFromItinerary(domesticItinerary, 'from', 'to', 'date'),
+          itinerary: domesticItinerary,
           mealProvisions: {
             dailySelections: this.transformMealSelectionsData(mealData)
           },
@@ -202,10 +203,11 @@ export class TrfWizardComponent implements OnInit {
         const advanceAmounts = overseasDetails.advanceAmountRequested || data.advance_amounts || data.advance_amount_items || data.advanceAmounts || [];
         const overseasPassport = this.extractPassportFileInfo(data.passport_details || data.passportDetails);
 
+        const overseasTransformedItinerary = this.transformItineraryData(overseasItinerary);
         this.overseasTravelData = {
           purpose: overseasDetails.purpose || data.purpose || '',
-          tripType: data.trip_type || data.tripType || 'Round Trip',
-          itinerary: this.transformItineraryData(overseasItinerary),
+          tripType: this.deriveTripTypeFromItinerary(overseasTransformedItinerary, 'from', 'to', 'date'),
+          itinerary: overseasTransformedItinerary,
           advanceBankDetails: this.transformBankDetails(bankDetails),
           advanceAmountRequested: this.transformAdvanceAmounts(advanceAmounts),
           advanceConsentAccepted: data.advance_consent_accepted || false,
@@ -222,10 +224,11 @@ export class TrfWizardComponent implements OnInit {
         const homeLeaveAdvanceAmounts = homeLeaveDetails.advanceAmountRequested || data.advance_amounts || data.advance_amount_items || data.advanceAmounts || [];
         const homeLeavePassport = this.extractPassportFileInfo(passportDetails);
 
+        const homeLeaveTransformedItinerary = this.transformItineraryData(homeLeaveItinerary);
         this.homeLeaveData = {
           purpose: homeLeaveDetails.purpose || data.purpose || '',
-          tripType: data.trip_type || data.tripType || 'Round Trip',
-          itinerary: this.transformItineraryData(homeLeaveItinerary),
+          tripType: this.deriveTripTypeFromItinerary(homeLeaveTransformedItinerary, 'from', 'to', 'date'),
+          itinerary: homeLeaveTransformedItinerary,
           passportDetails: this.transformPassportDetails(passportDetails),
           advanceBankDetails: this.transformBankDetails(homeLeaveBank),
           advanceAmountRequested: this.transformAdvanceAmounts(homeLeaveAdvanceAmounts),
@@ -241,14 +244,21 @@ export class TrfWizardComponent implements OnInit {
         const externalItinerary = externalDetails.itinerary || data.itinerary_segments || data.itinerary || [];
         const externalPassport = this.extractPassportFileInfo(data.passport_details || data.passportDetails);
 
+        const externalTransformedItinerary = this.transformExternalPartiesItineraryData(externalItinerary);
         this.externalPartiesData = {
           purpose: externalDetails.purpose || data.purpose || '',
-          tripType: data.trip_type || data.tripType || 'One Way',
+          tripType: this.deriveTripTypeFromItinerary(
+            externalTransformedItinerary,
+            'departureLocation',
+            'arrivalLocation',
+            'departureDate',
+            'departureTime'
+          ),
           externalFullName: externalRequestorInfo.externalFullName || data.external_full_name || data.externalFullName || '',
           externalOrganization: externalRequestorInfo.externalOrganization || data.external_organization || data.externalOrganization || '',
           externalRefToAuthorityLetter: externalRequestorInfo.externalRefToAuthorityLetter || data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter || '',
           externalCostCenter: externalRequestorInfo.externalCostCenter || data.external_cost_center || data.externalCostCenter || '',
-          itinerary: this.transformExternalPartiesItineraryData(externalItinerary),
+          itinerary: externalTransformedItinerary,
           passportUpload: externalPassport
         };
         break;
@@ -1161,6 +1171,83 @@ export class TrfWizardComponent implements OnInit {
         this.router.navigate(['/trf']);
       }
     });
+  }
+
+  /**
+   * Trip type ("One Way" vs "Round Trip") is never actually persisted to the
+   * backend - the create wizard's own dropdown drives the itinerary editor's
+   * add/remove-segment gating locally, but nothing sends or stores that
+   * choice server-side (no model field, no serializer field). So on reopen,
+   * data.trip_type/data.tripType is always undefined and every TRF silently
+   * reset to whatever hardcoded default the caller passed, regardless of
+   * what the requestor originally picked.
+   *
+   * Instead of adding a redundant field that could drift from the real
+   * itinerary, derive it the same way flights-processing.component.ts's
+   * isRoundTrip getter already does: a round trip's last leg lands back
+   * where the first leg started.
+   */
+  private deriveTripTypeFromItinerary(
+    itinerary: Array<Record<string, any>>,
+    originKey: string,
+    destinationKey: string,
+    dateKey: string,
+    timeKey: string = 'etd'
+  ): 'One Way' | 'Round Trip' {
+    if (!itinerary || itinerary.length < 2) {
+      return 'One Way';
+    }
+    // Sort by date (then time-of-day) rather than trusting array order:
+    // itinerary segments created before a since-fixed race condition
+    // (concurrent, unawaited creation requests) can still be stored with an
+    // id order that doesn't match their actual date order - and same-day
+    // multi-city legs need the time to disambiguate at all.
+    const sorted = [...itinerary]
+      .map((segment, index) => ({ segment, index }))
+      .sort((a, b) => {
+        const dateA = a.segment?.[dateKey] || '';
+        const dateB = b.segment?.[dateKey] || '';
+        if (dateA !== dateB) {
+          return dateA < dateB ? -1 : 1;
+        }
+        const minutesA = this.parseTimeOfDayMinutes(a.segment?.[timeKey]);
+        const minutesB = this.parseTimeOfDayMinutes(b.segment?.[timeKey]);
+        if (minutesA !== minutesB) {
+          return minutesA - minutesB;
+        }
+        return a.index - b.index;
+      })
+      .map(({ segment }) => segment);
+    const origin = sorted[0]?.[originKey];
+    const finalDestination = sorted[sorted.length - 1]?.[destinationKey];
+    return origin && finalDestination && origin === finalDestination ? 'Round Trip' : 'One Way';
+  }
+
+  /**
+   * ETD/ETA on an itinerary segment is free text - a real "HH:MM" or a
+   * vague day-period label ("Morning", "Evening", etc., see the create
+   * form's placeholder). Mirrors flights-processing.component.ts's
+   * parseItineraryTime: normalizes what it can, falls back to the middle
+   * of the day for anything unparseable so same-day legs still sort in a
+   * sensible order instead of colliding.
+   */
+  private parseTimeOfDayMinutes(value?: string): number {
+    if (!value) {
+      return 12 * 60;
+    }
+    const timeMatch = value.trim().match(/^(\d{1,2}):(\d{2})/);
+    if (timeMatch) {
+      return Number(timeMatch[1]) * 60 + Number(timeMatch[2]);
+    }
+    const periodMinutes: Record<string, number> = {
+      morning: 8 * 60,
+      afternoon: 13 * 60,
+      evening: 18 * 60,
+      night: 21 * 60,
+      noon: 12 * 60,
+      midnight: 0,
+    };
+    return periodMinutes[value.trim().toLowerCase()] ?? 12 * 60;
   }
 
   /**
