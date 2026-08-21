@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { EMPTY, Observable, throwError, timer } from 'rxjs';
+import { catchError, map, switchMap, takeWhile } from 'rxjs/operators';
 import { DomesticTravelRequestForm, OverseasTravelRequestForm, TravelRequestForm } from '../models/trf.model';
 import { environment } from '../../../../environments/environment';
 
@@ -144,13 +144,37 @@ export class TrfService {
       );
   }
 
-  // Export TRF to PDF
+  // Export TRF to PDF — async flow:
+  //   1. POST /export-pdf/  → { task_id }
+  //   2. Poll /api/tasks/{task_id}/ every 2 s until SUCCESS or FAILURE
+  //   3. GET  /download-pdf/?task_id=  → PDF blob
   exportTrfToPdf(id: number, isOverseas: boolean = false): Observable<Blob> {
-    // Note: Don't set Accept header to avoid DRF content negotiation issues
-    // responseType: 'blob' handles binary content properly
-    return this.http.get(`${environment.apiUrl}/trf/travel-requests/${id}/export-pdf/`, {
-      responseType: 'blob'
-    }).pipe(
+    return this.http.post<{ task_id: string }>(
+      `${environment.apiUrl}/trf/travel-requests/${id}/export-pdf/`, {}
+    ).pipe(
+      switchMap(({ task_id }) =>
+        timer(0, 2000).pipe(
+          switchMap(() =>
+            this.http.get<{ status: string; result?: any; error?: string }>(
+              `${environment.apiUrl}/tasks/${task_id}/`
+            )
+          ),
+          takeWhile(r => r.status !== 'SUCCESS' && r.status !== 'FAILURE', true),
+          switchMap(r => {
+            if (r.status === 'FAILURE') {
+              return throwError(() => new Error(r.error || 'PDF generation failed'));
+            }
+            if (r.status !== 'SUCCESS') {
+              return EMPTY;
+            }
+            return this.http.get(
+              `${environment.apiUrl}/trf/travel-requests/${id}/download-pdf/`,
+              { params: { task_id }, responseType: 'blob' }
+            );
+          })
+        )
+      ),
+      map(v => v as Blob),
       catchError(this.handleError)
     );
   }

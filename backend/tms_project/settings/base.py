@@ -444,6 +444,8 @@ CELERY_TASK_DEFAULT_QUEUE = "default"
 CELERY_TASK_ROUTES = {
     "notifications.tasks.*": {"queue": "emails"},
     "accounts.tasks.*": {"queue": "default"},
+    "trf.tasks.*": {"queue": "pdfs"},
+    "approvals.tasks.*": {"queue": "default"},
 }
 
 # Logging Configuration

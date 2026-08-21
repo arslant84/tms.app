@@ -20,6 +20,7 @@ from accounts.models import AdminActionLog, Role
 from accounts.utils import can_approve, has_permission
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import api_view, permission_classes
@@ -34,7 +35,7 @@ from utils.api_response import (
 )
 from visa.models import VisaApplication
 from workflows.engine import WorkflowEngine
-from workflows.models import WorkflowInstance, WorkflowStepExecution
+from workflows.models import WorkflowDelegation, WorkflowInstance, WorkflowStepExecution
 
 
 @extend_schema(
@@ -88,88 +89,102 @@ def unified_approvals(request):
 
     all_items = []
 
-    # Helper function to check if user can approve this entity
-    def can_user_approve(entity, module_name):
-        """Check if current user is authorized to approve this entity based on workflow step.
-
-        IMPORTANT: When a specific approver is selected (assigned_to is set),
-        ONLY that user (or admin/delegated users) can approve. Role-based
-        matching is only used when no specific user is assigned.
+    def _batch_approvable_ids(entities, user):
         """
-        # Only superusers see ALL approvals without workflow check
+        Return the set of entity IDs (as strings) that `user` is authorized
+        to approve. Replaces the N+1 per-entity DB lookups with 3 queries:
+
+          1. All in-progress WorkflowInstances for the entity list.
+          2. First pending WorkflowStepExecution per instance.
+          3. Active delegations for the user on those steps.
+        """
+        if not entities:
+            return set()
         if user.is_superuser:
-            return True
+            return {str(e.id) for e in entities}
 
-        # Get workflow instance for this entity
-        content_type = ContentType.objects.get_for_model(entity)
-        workflow_instance = WorkflowInstance.objects.filter(
-            content_type=content_type, object_id=entity.id, status="in_progress"
-        ).first()
+        content_type = ContentType.objects.get_for_model(entities[0].__class__)
+        entity_ids_str = [str(e.id) for e in entities]
 
-        if not workflow_instance:
-            # No workflow - only show to superusers (handled above)
-            return False
-
-        # Get current pending step execution
-        current_step_execution = (
-            workflow_instance.step_executions.filter(status="pending")
-            .order_by("workflow_step__step_order")
-            .first()
-        )
-
-        if not current_step_execution:
-            return False
-
-        # Check if user is directly assigned to this step (specific approver was selected)
-        if current_step_execution.assigned_to == user:
-            return True
-
-        # If a specific approver is assigned (assigned_to is NOT null),
-        # only that user can approve - skip role-based matching and only check delegations
-        from django.utils import timezone
-
-        if current_step_execution.assigned_to is not None:
-            active_delegations = (
-                current_step_execution.delegations.filter(
-                    delegated_to=user, is_active=True
-                )
-                .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
-                .exists()
+        # Query 1 — in-progress workflow instances
+        instances = {
+            wi.object_id: wi
+            for wi in WorkflowInstance.objects.filter(
+                content_type=content_type,
+                object_id__in=entity_ids_str,
+                status="in_progress",
             )
-            return active_delegations
+        }
+        if not instances:
+            return set()
 
-        # Role-based matching - only when NO specific user is assigned (assigned_to is NULL)
-        if (
-            hasattr(user, "role")
-            and user.role
-            and current_step_execution.workflow_step.approver_role
+        # Query 2 — first pending step per instance (ordered by step_order)
+        instance_step_map = {}
+        for step in (
+            WorkflowStepExecution.objects.filter(
+                workflow_instance_id__in=[wi.id for wi in instances.values()],
+                status="pending",
+            )
+            .select_related("workflow_step")
+            .order_by("workflow_instance_id", "workflow_step__step_order")
         ):
-            approver_role_value = current_step_execution.workflow_step.approver_role
+            if step.workflow_instance_id not in instance_step_map:
+                instance_step_map[step.workflow_instance_id] = step
 
-            # Compare user's role UUID with step's approver_role
-            if str(user.role.id) == approver_role_value:
-                return True
+        # Build object_id → step map
+        entity_step_map = {
+            obj_id: instance_step_map[wi.id]
+            for obj_id, wi in instances.items()
+            if wi.id in instance_step_map
+        }
+        if not entity_step_map:
+            return set()
 
-            # Also try role name comparison for legacy data
-            if user.role.name == approver_role_value:
-                return True
+        user_role_id = str(user.role.id) if getattr(user, "role", None) else None
+        user_role_name = user.role.name if getattr(user, "role", None) else None
 
-            # Try looking up the role by UUID to compare names
-            try:
-                step_role = Role.objects.get(id=approver_role_value)
-                if user.role.id == step_role.id:
-                    return True
-            except (Role.DoesNotExist, ValueError):
-                pass
+        approvable = set()
+        needs_delegation = []  # (object_id, step_execution_id)
 
-        # Check for active delegation
-        active_delegations = (
-            current_step_execution.delegations.filter(delegated_to=user, is_active=True)
-            .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
-            .exists()
-        )
+        for obj_id, step in entity_step_map.items():
+            # Directly assigned to this user
+            if step.assigned_to_id and str(step.assigned_to_id) == str(user.id):
+                approvable.add(obj_id)
+                continue
 
-        return active_delegations
+            # Assigned to someone else → delegation only
+            if step.assigned_to_id is not None:
+                needs_delegation.append((obj_id, step.id))
+                continue
+
+            # Role-based matching
+            if user_role_id and step.workflow_step.approver_role:
+                role_val = step.workflow_step.approver_role
+                if user_role_id == role_val or user_role_name == role_val:
+                    approvable.add(obj_id)
+                    continue
+
+            needs_delegation.append((obj_id, step.id))
+
+        # Query 3 — delegation check in one shot
+        if needs_delegation:
+            step_ids = [s_id for _, s_id in needs_delegation]
+            obj_by_step = {s_id: obj_id for obj_id, s_id in needs_delegation}
+            now = timezone.now()
+            delegated = set(
+                WorkflowDelegation.objects.filter(
+                    workflow_step_execution_id__in=step_ids,
+                    delegated_to=user,
+                    is_active=True,
+                )
+                .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
+                .values_list("workflow_step_execution_id", flat=True)
+            )
+            for step_id in delegated:
+                if step_id in obj_by_step:
+                    approvable.add(obj_by_step[step_id])
+
+        return approvable
 
     # Helper function to format items
     def format_item(obj, item_type_name):
@@ -225,7 +240,7 @@ def unified_approvals(request):
 
     # 1. Travel Requests (TRF/TSR) - exclude Accommodation type
     if not item_type or item_type == "trf":
-        trfs = (
+        trfs = list(
             TravelRequest.objects.filter(approval_status_filter)
             .exclude(
                 Q(travel_type="Accommodation")
@@ -233,35 +248,36 @@ def unified_approvals(request):
             )
             .order_by("-submitted_at")
         )
-
+        approvable_trf_ids = _batch_approvable_ids(trfs, user)
         for trf in trfs:
-            # Only include if user is authorized to approve
-            if can_user_approve(trf, "trf"):
+            if str(trf.id) in approvable_trf_ids:
                 item = format_item(trf, "TSR")
                 item["travelType"] = getattr(trf, "travel_type", "")
                 all_items.append(item)
 
     # 2. Transport Requests
     if not item_type or item_type == "transport":
-        transports = TransportRequest.objects.filter(approval_status_filter).order_by(
-            "-submitted_at"
+        transports = list(
+            TransportRequest.objects.filter(approval_status_filter).order_by(
+                "-submitted_at"
+            )
         )
-
+        approvable_transport_ids = _batch_approvable_ids(transports, user)
         for transport in transports:
-            # Only include if user is authorized to approve
-            if can_user_approve(transport, "transport"):
+            if str(transport.id) in approvable_transport_ids:
                 item = format_item(transport, "Transport")
                 all_items.append(item)
 
     # 3. Visa Applications
     if not item_type or item_type == "visa":
-        visas = VisaApplication.objects.filter(approval_status_filter).order_by(
-            "-submitted_date"
+        visas = list(
+            VisaApplication.objects.filter(approval_status_filter).order_by(
+                "-submitted_date"
+            )
         )
-
+        approvable_visa_ids = _batch_approvable_ids(visas, user)
         for visa in visas:
-            # Only include if user is authorized to approve
-            if can_user_approve(visa, "visa"):
+            if str(visa.id) in approvable_visa_ids:
                 item = format_item(visa, "Visa")
                 item["destination"] = getattr(visa, "destination", "")
                 item["visaType"] = getattr(visa, "visa_type", "")
@@ -367,10 +383,27 @@ def bulk_approve(request):
             message='Invalid action. Must be "approve" or "reject"', status_code=400
         )
 
+    # For large batches dispatch a Celery task so the request returns immediately.
+    # Small batches (<=10 items) run synchronously for instant UI feedback.
+    ASYNC_THRESHOLD = 10
+    if len(items) > ASYNC_THRESHOLD:
+        from approvals.tasks import bulk_approve_task
+
+        task = bulk_approve_task.apply_async(
+            args=[items, action, comments, request.user.id],
+            queue="default",
+        )
+        return success_response(
+            data={"task_id": task.id},
+            message=f"Bulk {action} queued for {len(items)} items — poll /api/tasks/{task.id}/ for results",
+            status_code=202,
+        )
+
     type_model_map = {
         "trf": TravelRequest,
         "transport": TransportRequest,
         "visa": VisaApplication,
+        "accommodation": AccommodationRequest,
     }
 
     results = {"success": [], "failed": []}
