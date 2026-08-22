@@ -45,10 +45,21 @@ if (-not $memurai) {
 }
 
 Write-Host "== Starting Celery worker ==" -ForegroundColor Cyan
-Start-Process -FilePath $venvPython `
-    -ArgumentList '-m', 'celery', '-A', 'tms_project', 'worker', '-Q', 'emails,celery', '--pool=solo', '--loglevel=info' `
-    -WorkingDirectory $backendDir `
-    -WindowStyle Normal
+$celeryService = Get-Service -Name 'TMS-Celery-Worker' -ErrorAction SilentlyContinue
+if ($celeryService) {
+    if ($celeryService.Status -eq 'Running') {
+        Write-Host "TMS-Celery-Worker service already running."
+    } else {
+        Start-Service 'TMS-Celery-Worker'
+        Write-Host "TMS-Celery-Worker service started." -ForegroundColor Green
+    }
+} else {
+    Write-Warning "TMS-Celery-Worker service not installed - falling back to a plain background process (won't survive a reboot or auto-restart on crash). Run backend\scripts\install-celery-service.ps1 as Administrator once to fix this."
+    Start-Process -FilePath $venvPython `
+        -ArgumentList '-m', 'celery', '-A', 'tms_project', 'worker', '-Q', 'emails,celery', '--pool=solo', '--loglevel=info' `
+        -WorkingDirectory $backendDir `
+        -WindowStyle Normal
+}
 
 Write-Host "== Starting Django dev server ==" -ForegroundColor Cyan
 Set-Location $backendDir
