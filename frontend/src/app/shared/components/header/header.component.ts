@@ -119,11 +119,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
   }
 
+  // The backend (workflows/notifications.py _get_action_url) already sends
+  // the real Angular route with the correct segment - /trf/123,
+  // /transport/123, /visa/123, /accommodation/123 - as an absolute URL
+  // (http://host/trf/123). Approval notifications route to admin approvals
+  // with query params instead of the entity detail page directly.
   private buildNavigation(notification: UserNotification): {
     commands: unknown[];
     extras?: NavigationExtras;
   } {
-    const actionUrl = notification.action_url!;
+    const pathname = this.extractPathname(notification.action_url!);
 
     const isApproval =
       notification.title?.toLowerCase().includes('approval required') ||
@@ -131,7 +136,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       notification.action_text?.toLowerCase().includes('approve');
 
     if (isApproval) {
-      const entityInfo = this.extractEntityInfo(actionUrl);
+      const entityInfo = this.extractEntityInfo(pathname);
       if (entityInfo) {
         return {
           commands: ['/admin/approvals'],
@@ -141,43 +146,34 @@ export class HeaderComponent implements OnInit, OnDestroy {
       return { commands: ['/admin/approvals'] };
     }
 
-    const mappings: Record<string, string> = {
-      '/travelrequest/': '/trf/',
-      '/transportrequest/': '/transport/',
-      '/visaapplication/': '/visa/',
-      '/expenseclaim/': '/expenses/',
-    };
-
-    let url = actionUrl;
-    for (const [backend, frontend] of Object.entries(mappings)) {
-      if (url.includes(backend)) {
-        url = url.replace(backend, frontend);
-        break;
-      }
-    }
-
-    return { commands: [url] };
+    return { commands: [pathname] };
   }
 
   /**
-   * Extracts entity type and ID from action URL
-   * Example: /transportrequest/37 -> { type: 'transport', id: '37' }
+   * action_url may be absolute (http://host/trf/123, the current format) or
+   * a bare path (/trf/123, from older notifications) - the router only
+   * understands the path, so strip the origin when present.
    */
-  private extractEntityInfo(actionUrl: string): { type: string; id: string } | null {
-    const entityMappings: { [key: string]: string } = {
-      travelrequest: 'trf',
-      transportrequest: 'transport',
-      visaapplication: 'visa',
-      accommodation: 'accommodation',
-      expenseclaim: 'expenses',
-    };
+  private extractPathname(actionUrl: string): string {
+    try {
+      return new URL(actionUrl).pathname;
+    } catch {
+      return actionUrl;
+    }
+  }
 
-    for (const [backendType, frontendType] of Object.entries(entityMappings)) {
-      const pattern = new RegExp(`/${backendType}/(\\d+)`);
-      const match = actionUrl.match(pattern);
+  /**
+   * Extracts entity type and ID from the action URL's path.
+   * Example: /transport/37 -> { type: 'transport', id: '37' }
+   */
+  private extractEntityInfo(pathname: string): { type: string; id: string } | null {
+    const routeTypes = ['trf', 'transport', 'visa', 'accommodation', 'expenses'];
+
+    for (const type of routeTypes) {
+      const match = pathname.match(new RegExp(`/${type}/(\\d+)`));
       if (match) {
         return {
-          type: frontendType,
+          type,
           id: match[1],
         };
       }
