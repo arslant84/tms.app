@@ -252,15 +252,19 @@ export class NotificationService {
     return this.http.post<any>(`${this.apiUrl}/subscriptions/${eventTypeId}/update_subscription/`, data);
   }
 
-  // Helper method to refresh notifications
+  // Helper method to refresh the notifications list.
+  // Unread count is intentionally NOT derived here - it used to recompute
+  // unreadCount from just this page's 20 most recent notifications and
+  // overwrite unreadCountSubject with it, racing against the accurate
+  // server-side total from refreshUnreadCount()/getUnreadCount() (the real
+  // count across ALL notifications, not just the current page). Whichever
+  // response landed last won, so the header badge flickered unpredictably
+  // between the true total and a partial, page-sized undercount. The list
+  // update below already happens as a side effect of getAllNotifications()'s
+  // own tap(), so this recompute was also entirely redundant on top of
+  // being wrong - removed rather than fixed.
   refreshNotifications(): void {
-    // Single HTTP call — derive unread count from results to avoid a second request.
-    // The 30s poller still calls refreshUnreadCount() for an accurate server-side count.
-    this.getAllNotifications({ page_size: 20 }).subscribe(response => {
-      const notifications = Array.isArray(response) ? response : (response.results || []);
-      const unreadCount = (notifications as UserNotification[]).filter(n => !n.is_read).length;
-      this.unreadCountSubject.next(unreadCount);
-    });
+    this.getAllNotifications({ page_size: 20 }).subscribe();
   }
 
   // Initialize service (call this on app init)
