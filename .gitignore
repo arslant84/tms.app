@@ -39,6 +39,10 @@ backend/backups/
 # Runtime log files
 backend/logs/
 
+# NSSM binary (downloaded locally to install the Celery Windows service, see
+# backend/scripts/install-celery-service.ps1 - not a project dependency)
+backend/scripts/nssm.exe
+
 # Static and media files (generated/uploaded)
 staticfiles/
 media/
