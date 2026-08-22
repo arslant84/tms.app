@@ -160,6 +160,11 @@ class WorkflowStepNotificationConfig(models.Model):
         # Workflow-level events (after all approvals)
         ("workflow_completed", "When All Approvals Complete"),
         ("workflow_cancelled", "When Workflow Cancelled"),
+        # Post-approval processing events (e.g. Transport Admin assigning a
+        # vehicle, Visa Clerk finishing visa processing) - distinct from
+        # workflow_completed, which fires when the approval chain itself
+        # finishes, not this separate admin action that happens after.
+        ("processing_completed", "When Processing Is Marked Complete"),
     ]
 
     workflow_step = models.ForeignKey(

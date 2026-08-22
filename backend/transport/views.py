@@ -955,6 +955,33 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         transport_request.status = "Completed"
         transport_request.save()
 
+        # Notify the requester - this action happens after the approval
+        # workflow already finished, so it needs its own trigger (see
+        # WorkflowNotifications.notify_processing_completed).
+        try:
+            from django.contrib.contenttypes.models import ContentType
+            from workflows.models import WorkflowInstance
+            from workflows.notifications import WorkflowNotifications
+
+            content_type = ContentType.objects.get_for_model(transport_request)
+            workflow_instance = (
+                WorkflowInstance.objects.filter(
+                    content_type=content_type, object_id=transport_request.id
+                )
+                .order_by("-created_at")
+                .first()
+            )
+            if workflow_instance:
+                WorkflowNotifications.notify_processing_completed(
+                    workflow_instance, completed_by=request.user
+                )
+        except Exception:
+            logger.exception(
+                "Failed to send processing completion notification for "
+                "TransportRequest #%s",
+                transport_request.id,
+            )
+
         serializer = TransportRequestDetailSerializer(transport_request)
         return Response(serializer.data)
 

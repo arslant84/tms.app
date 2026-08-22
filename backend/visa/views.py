@@ -643,6 +643,12 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                 logger.info(
                     f" Workflow instance #{workflow_instance.id} marked as completed for Visa #{visa.id}"
                 )
+
+                from workflows.notifications import WorkflowNotifications
+
+                WorkflowNotifications.notify_processing_completed(
+                    workflow_instance, completed_by=request.user
+                )
             else:
                 logger.warning(
                     f" No approved workflow instance found for Visa #{visa.id}"

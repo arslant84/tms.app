@@ -61,7 +61,11 @@ class TestWorkflowStepNotificationConfigPermissions:
 def trf_workflow_step(db):
     """Minimal WorkflowTemplate + WorkflowStep + one NotificationConfig for travelrequest."""
     from notifications.models import NotificationTemplate
-    from workflows.models import WorkflowStep, WorkflowStepNotificationConfig, WorkflowTemplate
+    from workflows.models import (
+        WorkflowStep,
+        WorkflowStepNotificationConfig,
+        WorkflowTemplate,
+    )
 
     template = WorkflowTemplate.objects.create(
         name="TRF Test Workflow",
@@ -74,7 +78,9 @@ def trf_workflow_step(db):
         step_name="Line Manager",
         can_skip=True,
     )
-    notif_template = NotificationTemplate.objects.filter(name="approval_required").first()
+    notif_template = NotificationTemplate.objects.filter(
+        name="approval_required"
+    ).first()
     if notif_template:
         WorkflowStepNotificationConfig.objects.create(
             workflow_step=step,
@@ -106,7 +112,9 @@ class TestWorkflowStepNotificationConfigEndpoints:
         ):
             assert key in body
 
-    def test_by_step_returns_configs_for_that_step_only(self, admin_client, trf_workflow_step):
+    def test_by_step_returns_configs_for_that_step_only(
+        self, admin_client, trf_workflow_step
+    ):
         step = trf_workflow_step
 
         response = admin_client.get(
@@ -192,13 +200,17 @@ class TestNotificationConfigConsistencyAcrossApps:
         them - only assignment/approval/rejection/delegation were covered.
         Every active WorkflowStep should now have one config per event type.
         ('reminder' was a seventh event type here originally, retired along
-        with the SLA due-date/reminder-email feature it powered.)"""
+        with the SLA due-date/reminder-email feature it powered.)
+
+        'processing_completed' (added for Transport/Visa's post-approval
+        admin processing step - see notify_processing_completed) is
+        intentionally excluded from the "every step" check below: unlike
+        the other six, it's only meaningful for the two modules that have
+        a distinct complete() action after approval, so it's only seeded
+        on those two templates' last step, not universally."""
         from workflows.models import WorkflowStep, WorkflowStepNotificationConfig
 
-        all_event_types = {
-            choice[0] for choice in WorkflowStepNotificationConfig.EVENT_TYPE_CHOICES
-        }
-        assert all_event_types == {
+        universal_event_types = {
             "assignment",
             "approval",
             "rejection",
@@ -206,6 +218,10 @@ class TestNotificationConfigConsistencyAcrossApps:
             "workflow_completed",
             "workflow_cancelled",
         }
+        all_event_types = {
+            choice[0] for choice in WorkflowStepNotificationConfig.EVENT_TYPE_CHOICES
+        }
+        assert all_event_types == universal_event_types | {"processing_completed"}
 
         for step in WorkflowStep.objects.filter(
             workflow_template__is_active=True
@@ -215,7 +231,7 @@ class TestNotificationConfigConsistencyAcrossApps:
                     workflow_step=step
                 ).values_list("event_type", flat=True)
             )
-            missing = all_event_types - configured
+            missing = universal_event_types - configured
             assert missing == set(), (
                 f"Step '{step.step_name}' on "
                 f"'{step.workflow_template.name}' is missing configs for: {missing}"
