@@ -1,0 +1,79 @@
+"""
+One-time cleanup of WorkflowInstance/UserNotification rows left orphaned by
+entity deletions that predate the cascade-cleanup signals added alongside
+this migration (see workflows/signals.py). Deleting a TravelRequest,
+TransportRequest, VisaApplication, or AccommodationRequest never cleaned up
+its WorkflowInstance (linked via GenericForeignKey, which Django can't
+cascade automatically), leaving step executions/delegations/audit logs
+behind too, plus UserNotification rows whose action_url pointed at a
+now-deleted entity. Found via audit: 153 orphaned WorkflowInstance rows
+across transportrequest/travelrequest/visaapplication content types.
+"""
+
+from django.db import migrations
+
+MODEL_LOOKUP = {
+    "travelrequest": ("trf", "TravelRequest"),
+    "transportrequest": ("transport", "TransportRequest"),
+    "visaapplication": ("visa", "VisaApplication"),
+    "accommodationrequest": ("accommodation", "AccommodationRequest"),
+}
+
+
+def cleanup_orphans(apps, schema_editor):
+    WorkflowInstance = apps.get_model("workflows", "WorkflowInstance")
+    UserNotification = apps.get_model("notifications", "UserNotification")
+    ContentType = apps.get_model("contenttypes", "ContentType")
+
+    deleted_instances = 0
+    deleted_notifications = 0
+
+    for model_name, (app_label, real_model_name) in MODEL_LOOKUP.items():
+        try:
+            content_type = ContentType.objects.get(
+                app_label=app_label, model=model_name
+            )
+        except ContentType.DoesNotExist:
+            continue
+
+        RealModel = apps.get_model(app_label, real_model_name)
+        existing_ids = set(RealModel.objects.values_list("pk", flat=True))
+
+        orphaned_instances = WorkflowInstance.objects.filter(
+            content_type=content_type
+        ).exclude(object_id__in=existing_ids)
+        count, _ = orphaned_instances.delete()
+        deleted_instances += count
+
+        orphaned_notifications = UserNotification.objects.filter(
+            content_type=content_type
+        ).exclude(object_id__in=existing_ids)
+        count, _ = orphaned_notifications.delete()
+        deleted_notifications += count
+
+    if deleted_instances or deleted_notifications:
+        print(
+            f"Cleaned up {deleted_instances} orphaned WorkflowInstance(s) and "
+            f"{deleted_notifications} orphaned UserNotification(s)"
+        )
+
+
+def noop_reverse(apps, schema_editor):
+    pass
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("workflows", "0018_remove_sla_tracking"),
+        ("notifications", "0009_fix_stale_action_urls"),
+        ("contenttypes", "0002_remove_content_type_name"),
+        ("trf", "__latest__"),
+        ("transport", "__latest__"),
+        ("visa", "__latest__"),
+        ("accommodation", "__latest__"),
+    ]
+
+    operations = [
+        migrations.RunPython(cleanup_orphans, noop_reverse),
+    ]
