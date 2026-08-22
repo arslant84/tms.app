@@ -699,6 +699,21 @@ class WorkflowNotifications:
             else "Unassigned"
         )
 
+        # delegatorName: delegate_step() reassigns step_execution.assigned_to
+        # to the new delegate *before* firing the 'delegation' notification
+        # (see workflows/engine.py), so by the time this context is built
+        # there's no field on step_execution itself that still names the
+        # original assignee - only the WorkflowDelegation record does. The
+        # 'delegation_confirmed' template's {{delegatorName}} was never
+        # populated by anything, so every delegation email has been
+        # rendering the literal text "{{delegatorName}}" instead of a name.
+        latest_delegation = step_execution.delegations.order_by("-delegated_at").first()
+        delegator_name = (
+            latest_delegation.delegated_from.get_full_name()
+            if latest_delegation and latest_delegation.delegated_from
+            else "A colleague"
+        )
+
         # Get completion date
         completion_date = timezone.now().strftime("%B %d, %Y at %I:%M %p")
 
@@ -729,6 +744,7 @@ class WorkflowNotifications:
             # People - for improved templates
             "requestorName": workflow_instance.initiated_by.get_full_name(),
             "approverName": approver_name,
+            "delegatorName": delegator_name,
             "processorName": processor_name,
             "userName": workflow_instance.initiated_by.get_full_name(),  # For comment notifications
             # People - legacy compatibility
