@@ -251,6 +251,102 @@ class WorkflowNotifications:
             logger.error(f" Failed to send workflow completion notification: {str(e)}")
 
     @staticmethod
+    def notify_processing_completed(workflow_instance, completed_by=None):
+        """
+        Send notification when a request has been processed and marked
+        completed by an admin, after the approval workflow already finished
+        (e.g. Transport Admin assigning a vehicle, Visa Clerk finishing visa
+        processing). Distinct from notify_workflow_completed, which fires
+        when the *approval chain itself* finishes - this fires for that
+        separate, later admin action, which previously had no notification
+        at all in Transport/Visa's complete() actions.
+
+        Checks for configured 'processing_completed' notifications; falls
+        back to a default notification to the requester if none exist.
+        """
+        try:
+            from .models import WorkflowStepNotificationConfig
+
+            workflow_steps = workflow_instance.workflow_template.steps.all()
+            configs = WorkflowStepNotificationConfig.objects.filter(
+                workflow_step__in=workflow_steps,
+                event_type="processing_completed",
+                is_active=True,
+            )
+
+            last_step_execution = workflow_instance.step_executions.order_by(
+                "-workflow_step__step_order"
+            ).first()
+
+            if not last_step_execution:
+                logger.warning(
+                    f" No step executions found for workflow {workflow_instance.id}"
+                )
+                return
+
+            processor_name = (
+                completed_by.get_full_name() if completed_by else "The processing team"
+            )
+            completion_details = "Your request has been fully processed and completed."
+
+            if configs.exists():
+                logger.info(
+                    f" Found {configs.count()} processing_completed notification config(s)"
+                )
+                WorkflowNotifications.trigger_configured_notifications(
+                    last_step_execution,
+                    "processing_completed",
+                    context_overrides={
+                        "processorName": processor_name,
+                        "completionDetails": completion_details,
+                    },
+                )
+            else:
+                logger.info(
+                    " No processing_completed configs found, using default notification"
+                )
+                entity_id = WorkflowNotifications._get_entity_id(workflow_instance)
+
+                from django.utils import timezone
+
+                completion_date = timezone.now().strftime("%B %d, %Y at %I:%M %p")
+
+                NotificationService.create_notification(
+                    user=workflow_instance.initiated_by,
+                    title=f"Request Completed: {workflow_instance.workflow_template.name}",
+                    message=f"Your {workflow_instance.workflow_template.entity_type} request has been fully processed and marked completed.",
+                    event_type=_get_event_type("WORKFLOW_UPDATED"),
+                    priority="normal",
+                    action_url=_get_action_url(
+                        workflow_instance.workflow_template.entity_type,
+                        workflow_instance.object_id,
+                    ),
+                    additional_data={
+                        "requestorName": workflow_instance.initiated_by.get_full_name(),
+                        "requestType": _get_display_request_type(
+                            workflow_instance.workflow_template.entity_type
+                        ),
+                        "entityId": entity_id,
+                        "processorName": processor_name,
+                        "completionDate": completion_date,
+                        "completionDetails": completion_details,
+                        "actionUrl": _get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
+                    },
+                    send_email=True,
+                )
+
+            logger.info(
+                f" Processing completion notifications sent for: {workflow_instance.id}"
+            )
+        except Exception as e:
+            logger.error(
+                f" Failed to send processing completion notification: {str(e)}"
+            )
+
+    @staticmethod
     def notify_workflow_cancelled(workflow_instance, cancelled_by, reason=None):
         """
         Send notification when a workflow is cancelled.
@@ -319,7 +415,9 @@ class WorkflowNotifications:
             )
 
     @staticmethod
-    def trigger_configured_notifications(step_execution, event_type):
+    def trigger_configured_notifications(
+        step_execution, event_type, context_overrides=None
+    ):
         """
         Trigger notifications based on WorkflowStepNotificationConfig.
         If no configuration exists for the event type, falls back to default behavior.
@@ -327,6 +425,12 @@ class WorkflowNotifications:
         Args:
             step_execution: WorkflowStepExecution instance
             event_type: Event type ('assignment', 'approval', 'rejection', etc.)
+            context_overrides: optional dict merged into the rendered template
+                context after _build_notification_context() - lets callers that
+                aren't a plain step action (e.g. notify_processing_completed,
+                which fires from an admin action outside the approval steps)
+                correct fields like processorName/completionDetails that would
+                otherwise default to the last approval step's data.
         """
         try:
             from .models import WorkflowStepNotificationConfig
@@ -372,6 +476,8 @@ class WorkflowNotifications:
                     context = WorkflowNotifications._build_notification_context(
                         step_execution
                     )
+                    if context_overrides:
+                        context.update(context_overrides)
 
                     # Render template
                     title = WorkflowNotifications._render_template(
