@@ -2,49 +2,71 @@
   <form [formGroup]="travelForm" (ngSubmit)="onSubmit()">
     <!-- Purpose of Travel Section -->
     <app-form-section-card icon="bi-file-text" title="Purpose of Travel">
-        <div class="form-group mb-3">
-          <label for="purposeOfTravel" class="form-label">Please describe the purpose of your travel</label>
-          <textarea
-            class="form-control"
-            id="purposeOfTravel"
-            formControlName="purposeOfTravel"
-            rows="3"
-            [ngClass]="{'is-invalid': travelForm.get('purposeOfTravel')?.invalid && travelForm.get('purposeOfTravel')?.touched}"></textarea>
-          <div class="invalid-feedback" *ngIf="travelForm.get('purposeOfTravel')?.errors?.['required'] && travelForm.get('purposeOfTravel')?.touched">
-            Purpose of travel is required
-          </div>
+      <div class="form-group mb-3">
+        <label for="purposeOfTravel" class="form-label"
+          >Please describe the purpose of your travel</label
+        >
+        <textarea
+          class="form-control"
+          id="purposeOfTravel"
+          formControlName="purposeOfTravel"
+          rows="3"
+          [ngClass]="{
+            'is-invalid':
+              travelForm.get('purposeOfTravel')?.invalid &&
+              travelForm.get('purposeOfTravel')?.touched,
+          }"
+        ></textarea>
+        <div
+          class="invalid-feedback"
+          *ngIf="
+            travelForm.get('purposeOfTravel')?.errors?.['required'] &&
+            travelForm.get('purposeOfTravel')?.touched
+          "
+        >
+          Purpose of travel is required
         </div>
+      </div>
 
-        <div class="form-group">
-          <label for="tripType" class="form-label d-flex align-items-center gap-2">
-            <i class="bi bi-card-checklist"></i>
-            Trip Type <span class="text-danger">*</span>
-          </label>
-          <select
-            id="tripType"
-            formControlName="tripType"
-            class="form-select"
-            [ngClass]="{'is-invalid': travelForm.get('tripType')?.invalid && travelForm.get('tripType')?.touched}"
-          >
-            <option value="One Way">One Way</option>
-            <option value="Round Trip">Round Trip</option>
-          </select>
-          <div class="invalid-feedback" *ngIf="travelForm.get('tripType')?.errors?.['required'] && travelForm.get('tripType')?.touched">
-            Trip type is required
-          </div>
+      <div class="form-group">
+        <label for="tripType" class="form-label d-flex align-items-center gap-2">
+          <i class="bi bi-card-checklist"></i>
+          Trip Type <span class="text-danger">*</span>
+        </label>
+        <select
+          id="tripType"
+          formControlName="tripType"
+          class="form-select"
+          [ngClass]="{
+            'is-invalid':
+              travelForm.get('tripType')?.invalid && travelForm.get('tripType')?.touched,
+          }"
+        >
+          <option value="One Way">One Way</option>
+          <option value="Round Trip">Round Trip</option>
+        </select>
+        <div
+          class="invalid-feedback"
+          *ngIf="
+            travelForm.get('tripType')?.errors?.['required'] && travelForm.get('tripType')?.touched
+          "
+        >
+          Trip type is required
         </div>
+      </div>
     </app-form-section-card>
 
     <!-- Itinerary Section -->
     <app-form-section-card icon="bi-clipboard-check" title="Itinerary">
-        <app-itinerary-editor
-          #tripItineraryEditor
-          [fields]="itineraryFields"
-          [initialSegments]="initialData.itinerary || []"
-          [tripType]="tripTypeValue"
-          (segmentsChange)="onItinerarySegmentsChange($event)"
-          (datesChange)="onItineraryDatesChange($event)">
-        </app-itinerary-editor>
+      <app-itinerary-editor
+        #tripItineraryEditor
+        [fields]="itineraryFields"
+        [initialSegments]="initialData.itinerary || []"
+        [tripType]="tripTypeValue"
+        (segmentsChange)="onItinerarySegmentsChange($event)"
+        (datesChange)="onItineraryDatesChange($event)"
+      >
+      </app-itinerary-editor>
     </app-form-section-card>
 
     <!-- Meal Provisions Section -->
@@ -52,7 +74,8 @@
       <app-meal-provision
         [itineraryDates]="itineraryDates"
         [initialSelections]="initialData.mealProvisions?.dailySelections || []"
-        (selectionsChange)="onMealSelectionsChange($event)">
+        (selectionsChange)="onMealSelectionsChange($event)"
+      >
       </app-meal-provision>
     </app-form-section-card>
 
@@ -64,7 +87,8 @@
             type="checkbox"
             class="form-check-input"
             id="accommodationRequired"
-            formControlName="required" />
+            formControlName="required"
+          />
           <label class="form-check-label" for="accommodationRequired">
             Requires Accommodation
           </label>
@@ -77,12 +101,23 @@
               id="accommodationGender"
               class="form-control"
               formControlName="gender"
-              [ngClass]="{'is-invalid': travelForm.get('accommodation.gender')?.invalid && travelForm.get('accommodation.gender')?.touched}">
+              [ngClass]="{
+                'is-invalid':
+                  travelForm.get('accommodation.gender')?.invalid &&
+                  travelForm.get('accommodation.gender')?.touched,
+              }"
+            >
               <option value="">Select gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
             </select>
-            <div class="invalid-feedback" *ngIf="travelForm.get('accommodation.gender')?.invalid && travelForm.get('accommodation.gender')?.touched">
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                travelForm.get('accommodation.gender')?.invalid &&
+                travelForm.get('accommodation.gender')?.touched
+              "
+            >
               Please select gender
             </div>
           </div>
@@ -93,11 +128,22 @@
               id="accommodationLocation"
               class="form-control"
               formControlName="location"
-              [ngClass]="{'is-invalid': travelForm.get('accommodation.location')?.invalid && travelForm.get('accommodation.location')?.touched}">
+              [ngClass]="{
+                'is-invalid':
+                  travelForm.get('accommodation.location')?.invalid &&
+                  travelForm.get('accommodation.location')?.touched,
+              }"
+            >
               <option value="">Select location</option>
               <option *ngFor="let loc of accommodationLocations" [value]="loc">{{ loc }}</option>
             </select>
-            <div class="invalid-feedback" *ngIf="travelForm.get('accommodation.location')?.invalid && travelForm.get('accommodation.location')?.touched">
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                travelForm.get('accommodation.location')?.invalid &&
+                travelForm.get('accommodation.location')?.touched
+              "
+            >
               Please select location
             </div>
           </div>
@@ -109,8 +155,19 @@
               id="accommodationCheckInDate"
               class="form-control"
               formControlName="checkInDate"
-              [ngClass]="{'is-invalid': travelForm.get('accommodation.checkInDate')?.invalid && travelForm.get('accommodation.checkInDate')?.touched}" />
-            <div class="invalid-feedback" *ngIf="travelForm.get('accommodation.checkInDate')?.invalid && travelForm.get('accommodation.checkInDate')?.touched">
+              [ngClass]="{
+                'is-invalid':
+                  travelForm.get('accommodation.checkInDate')?.invalid &&
+                  travelForm.get('accommodation.checkInDate')?.touched,
+              }"
+            />
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                travelForm.get('accommodation.checkInDate')?.invalid &&
+                travelForm.get('accommodation.checkInDate')?.touched
+              "
+            >
               Check-in date is required
             </div>
           </div>
@@ -121,7 +178,8 @@
               type="time"
               id="accommodationCheckInTime"
               class="form-control"
-              formControlName="checkInTime" />
+              formControlName="checkInTime"
+            />
             <small class="form-text">Time of arrival (HH:MM)</small>
           </div>
 
@@ -132,11 +190,30 @@
               id="accommodationCheckOutDate"
               class="form-control"
               formControlName="checkOutDate"
-              [ngClass]="{'is-invalid': (travelForm.get('accommodation.checkOutDate')?.invalid && travelForm.get('accommodation.checkOutDate')?.touched) || (travelForm.get('accommodation')?.errors?.['checkOutBeforeCheckIn'] && travelForm.get('accommodation.checkOutDate')?.touched)}" />
-            <div class="invalid-feedback" *ngIf="travelForm.get('accommodation.checkOutDate')?.invalid && travelForm.get('accommodation.checkOutDate')?.touched">
+              [ngClass]="{
+                'is-invalid':
+                  (travelForm.get('accommodation.checkOutDate')?.invalid &&
+                    travelForm.get('accommodation.checkOutDate')?.touched) ||
+                  (travelForm.get('accommodation')?.errors?.['checkOutBeforeCheckIn'] &&
+                    travelForm.get('accommodation.checkOutDate')?.touched),
+              }"
+            />
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                travelForm.get('accommodation.checkOutDate')?.invalid &&
+                travelForm.get('accommodation.checkOutDate')?.touched
+              "
+            >
               Check-out date is required
             </div>
-            <div class="invalid-feedback" *ngIf="travelForm.get('accommodation')?.errors?.['checkOutBeforeCheckIn'] && travelForm.get('accommodation.checkOutDate')?.touched">
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                travelForm.get('accommodation')?.errors?.['checkOutBeforeCheckIn'] &&
+                travelForm.get('accommodation.checkOutDate')?.touched
+              "
+            >
               Check-out date can't be earlier than check-in date
             </div>
           </div>
@@ -147,20 +224,20 @@
               type="time"
               id="accommodationCheckOutTime"
               class="form-control"
-              formControlName="checkOutTime" />
+              formControlName="checkOutTime"
+            />
             <small class="form-text">Time of departure (HH:MM)</small>
           </div>
 
           <div class="form-group">
             <label for="accommodationRoomType" class="form-label">Preferred Room Type</label>
-            <select
-              id="accommodationRoomType"
-              class="form-control"
-              formControlName="roomType">
+            <select id="accommodationRoomType" class="form-control" formControlName="roomType">
               <option value="">Select room type (optional)</option>
               <option *ngFor="let type of accommodationRoomTypes" [value]="type">{{ type }}</option>
             </select>
-            <small class="form-text">Select your preferred room type (subject to availability)</small>
+            <small class="form-text"
+              >Select your preferred room type (subject to availability)</small
+            >
           </div>
 
           <div class="form-group full-width">
@@ -170,7 +247,8 @@
               class="form-control"
               formControlName="specialRequests"
               rows="2"
-              placeholder="Any special requirements or preferences"></textarea>
+              placeholder="Any special requirements or preferences"
+            ></textarea>
           </div>
         </div>
       </div>
@@ -184,34 +262,20 @@
             type="checkbox"
             class="form-check-input"
             id="transportRequired"
-            formControlName="required" />
-          <label class="form-check-label" for="transportRequired">
-            Requires Transport
-          </label>
+            formControlName="required"
+          />
+          <label class="form-check-label" for="transportRequired"> Requires Transport </label>
         </div>
 
         <div *ngIf="travelForm.get('transport.required')?.value">
-          <div class="form-group mb-3">
-            <label for="transportPurpose" class="form-label">Purpose of Transport*</label>
-            <textarea
-              id="transportPurpose"
-              class="form-control"
-              formControlName="purpose"
-              rows="2"
-              placeholder="Describe the purpose of this transport request"
-              [ngClass]="{'is-invalid': travelForm.get('transport.purpose')?.invalid && travelForm.get('transport.purpose')?.touched}"></textarea>
-            <div class="invalid-feedback" *ngIf="travelForm.get('transport.purpose')?.invalid && travelForm.get('transport.purpose')?.touched">
-              Purpose of transport is required
-            </div>
-          </div>
-
           <app-itinerary-editor
             #transportJourneyEditor
             [fields]="transportJourneyFields"
             [initialSegments]="initialData.transport?.journeys || []"
             [forceAllowAdd]="true"
             addButtonLabel="Add Journey"
-            (segmentsChange)="onTransportSegmentsChange($event)">
+            (segmentsChange)="onTransportSegmentsChange($event)"
+          >
           </app-itinerary-editor>
           <div class="invalid-feedback d-block" *ngIf="isTransportIncomplete">
             At least one journey is required
@@ -222,18 +286,20 @@
 
     <!-- Passport Details Section -->
     <app-form-section-card icon="bi-file-earmark-text" title="Passport Details (Optional)">
-        <p class="text-muted small mb-3">
-          Upload a copy of your passport for flight booking purposes. This helps the flight admin process your booking faster.
-        </p>
+      <p class="text-muted small mb-3">
+        Upload a copy of your passport for flight booking purposes. This helps the flight admin
+        process your booking faster.
+      </p>
 
-        <!-- File Input -->
-        <app-passport-upload
-          inputId="passportFile"
-          [fileName]="initialData.passportUpload?.fileName || ''"
-          [fileUrl]="initialData.passportUpload?.fileUrl || ''"
-          (fileSelected)="onPassportFileSelected($event)"
-          (fileRemoved)="onPassportFileRemoved()">
-        </app-passport-upload>
+      <!-- File Input -->
+      <app-passport-upload
+        inputId="passportFile"
+        [fileName]="initialData.passportUpload?.fileName || ''"
+        [fileUrl]="initialData.passportUpload?.fileUrl || ''"
+        (fileSelected)="onPassportFileSelected($event)"
+        (fileRemoved)="onPassportFileRemoved()"
+      >
+      </app-passport-upload>
     </app-form-section-card>
 
     <!-- Navigation Buttons -->
