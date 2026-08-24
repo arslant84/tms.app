@@ -77,7 +77,7 @@ if ($existing) {
     & $nssmPath remove $serviceName confirm
 }
 
-& $nssmPath install $serviceName $venvPython '-m' 'celery' '-A' 'tms_project' 'worker' '-Q' 'emails,celery' '--pool=solo' '--loglevel=info'
+& $nssmPath install $serviceName $venvPython '-m' 'celery' '-A' 'tms_project' 'worker' '-Q' 'emails,default,pdfs' '--pool=solo' '--loglevel=info'
 & $nssmPath set $serviceName AppDirectory $backendDir
 & $nssmPath set $serviceName DisplayName 'TMS Celery Worker'
 & $nssmPath set $serviceName Description 'Celery worker for the TMS backend (email dispatch, background tasks). Managed by NSSM.'

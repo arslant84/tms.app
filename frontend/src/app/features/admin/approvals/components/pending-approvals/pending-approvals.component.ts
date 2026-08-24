@@ -114,11 +114,21 @@ export class PendingApprovalsComponent implements OnInit {
         // Wait for items to load and then open the dialog
         setTimeout(() => {
           this.openApproveDialogForItem(itemId);
-          // Clear query params after opening dialog
+          // Clear query params after opening the dialog. Deliberately NOT
+          // passing queryParamsHandling: 'merge' here - merging an empty
+          // object into the existing params is a no-op, so ?id=&type=&action=
+          // used to stay in the URL forever. That left this branch armed:
+          // clicking a second notification-required-approval link (any
+          // click that resolves to the exact same /admin/approvals URL,
+          // e.g. a second notification for the same item) matched Angular's
+          // default onSameUrlNavigation: 'ignore' and silently did nothing,
+          // which looked like "the second notification doesn't open" until
+          // navigating elsewhere first. Omitting queryParamsHandling makes
+          // this a full replace with the given (empty) object, which
+          // actually clears the params.
           this.router.navigate([], {
             relativeTo: this.route,
             queryParams: {},
-            queryParamsHandling: 'merge',
           });
         }, 1000);
       } else {

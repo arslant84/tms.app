@@ -157,7 +157,8 @@ class WorkflowStepNotificationConfig(models.Model):
         ("approval", "On Step Approval"),
         ("rejection", "On Step Rejection"),
         ("delegation", "On Step Delegation"),
-        # Workflow-level events (after all approvals)
+        # Workflow-level events
+        ("workflow_started", "When Workflow Starts"),
         ("workflow_completed", "When All Approvals Complete"),
         ("workflow_cancelled", "When Workflow Cancelled"),
         # Post-approval processing events (e.g. Transport Admin assigning a

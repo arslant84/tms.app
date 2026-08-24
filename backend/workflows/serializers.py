@@ -276,6 +276,12 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
     # Default notification configs to create for new workflow steps
     DEFAULT_NOTIFICATION_CONFIGS = [
         {
+            "event_type": "workflow_started",
+            "template_name": "workflow_started",
+            "recipient_types": ["requester"],
+            "priority": "normal",
+        },
+        {
             "event_type": "assignment",
             "template_name": "approval_required",
             "recipient_types": ["current_approver"],

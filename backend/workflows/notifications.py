@@ -87,52 +87,75 @@ class WorkflowNotifications:
     def notify_workflow_started(workflow_instance):
         """
         Send notification when a new workflow is started.
+        Checks for configured 'workflow_started' notifications, same pattern
+        as notify_workflow_completed/notify_workflow_cancelled.
 
         Args:
             workflow_instance: WorkflowInstance that was started
         """
         try:
-            # Get formatted entity ID (e.g., "VISA-2024-0013")
-            entity_id = WorkflowNotifications._get_entity_id(workflow_instance)
+            from .models import WorkflowStepNotificationConfig
 
-            # Get first approver
-            first_approver_name = "the approval team"
-            if workflow_instance.step_executions.exists():
-                first_step = workflow_instance.step_executions.filter(
-                    workflow_step__step_order=1
-                ).first()
-                if first_step and first_step.assigned_to:
-                    first_approver_name = first_step.assigned_to.get_full_name()
+            first_step_execution = workflow_instance.step_executions.filter(
+                workflow_step__step_order=1
+            ).first()
 
-            # Notify the person who initiated the workflow
-            NotificationService.create_notification(
-                user=workflow_instance.initiated_by,
-                title=f"Workflow Started: {workflow_instance.workflow_template.name}",
-                message=f"Your {workflow_instance.workflow_template.entity_type} request has been submitted and the approval workflow has started.",
-                event_type=_get_event_type("WORKFLOW_STARTED"),
-                priority="normal",
-                action_url=_get_action_url(
-                    workflow_instance.workflow_template.entity_type,
-                    workflow_instance.object_id,
-                ),
-                additional_data={
-                    "requestorName": workflow_instance.initiated_by.get_full_name(),
-                    "requestType": _get_display_request_type(
-                        workflow_instance.workflow_template.entity_type
-                    ),
-                    "entityId": entity_id,
-                    "approverName": first_approver_name,
-                    "actionUrl": _get_action_url(
+            workflow_steps = workflow_instance.workflow_template.steps.all()
+            configs = WorkflowStepNotificationConfig.objects.filter(
+                workflow_step__in=workflow_steps,
+                event_type="workflow_started",
+                is_active=True,
+            )
+
+            if configs.exists() and first_step_execution:
+                logger.info(
+                    f" Found {configs.count()} workflow_started notification config(s)"
+                )
+                # recipient_types on this event's configs is expected to be
+                # ['requester'] (see populate_default_notification_configs /
+                # DEFAULT_NOTIFICATION_CONFIGS) - the first approver is
+                # notified separately, by the config-driven 'assignment'
+                # event fired from WorkflowEngine._start_step() when their
+                # step execution is created, not duplicated here.
+                WorkflowNotifications.trigger_configured_notifications(
+                    first_step_execution, "workflow_started"
+                )
+            else:
+                logger.info(
+                    " No workflow_started configs found, using default notification"
+                )
+                entity_id = WorkflowNotifications._get_entity_id(workflow_instance)
+
+                first_approver_name = "the approval team"
+                if first_step_execution and first_step_execution.assigned_to:
+                    first_approver_name = (
+                        first_step_execution.assigned_to.get_full_name()
+                    )
+
+                NotificationService.create_notification(
+                    user=workflow_instance.initiated_by,
+                    title=f"Workflow Started: {workflow_instance.workflow_template.name}",
+                    message=f"Your {workflow_instance.workflow_template.entity_type} request has been submitted and the approval workflow has started.",
+                    event_type=_get_event_type("WORKFLOW_STARTED"),
+                    priority="normal",
+                    action_url=_get_action_url(
                         workflow_instance.workflow_template.entity_type,
                         workflow_instance.object_id,
                     ),
-                },
-                send_email=True,
-            )
-
-            # Note: the first approver is notified separately, by the config-driven
-            # 'assignment' event fired from WorkflowEngine._start_step() when their
-            # step execution is created - not duplicated here.
+                    additional_data={
+                        "requestorName": workflow_instance.initiated_by.get_full_name(),
+                        "requestType": _get_display_request_type(
+                            workflow_instance.workflow_template.entity_type
+                        ),
+                        "entityId": entity_id,
+                        "approverName": first_approver_name,
+                        "actionUrl": _get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
+                    },
+                    send_email=True,
+                )
 
             logger.info(
                 f" Notifications sent for workflow start: {workflow_instance.id}"

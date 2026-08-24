@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, BehaviorSubject, interval, Subscription } from 'rxjs';
+import { Observable, BehaviorSubject, interval, Subscription, of } from 'rxjs';
 import { tap, catchError, filter, map } from 'rxjs/operators';
-import { of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
 import { extractData } from '../../../core/utils/api-response.handler';
@@ -25,7 +24,7 @@ export interface UserNotification {
   email_sent_at?: string;
   sent_via_push: boolean;
   push_sent_at?: string;
-  additional_data?: any;
+  additional_data?: Record<string, unknown>;
   expires_at?: string;
   created_at: string;
 }
@@ -42,6 +41,13 @@ export interface NotificationPreference {
   quiet_hours_end?: string;
 }
 
+interface NotificationListResponse {
+  results?: UserNotification[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+}
+
 export interface NotificationEventType {
   id: number;
   name: string;
@@ -53,7 +59,7 @@ export interface NotificationEventType {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class NotificationService {
   private apiUrl = `${environment.apiUrl}/notifications`;
@@ -82,16 +88,12 @@ export class NotificationService {
     }
 
     // SECURITY: Only poll when user is authenticated
-    this.authService.currentUser$.pipe(
-      filter(user => user !== null)
-    ).subscribe(() => {
+    this.authService.currentUser$.pipe(filter(user => user !== null)).subscribe(() => {
       this.startPolling();
     });
 
     // Stop polling when user logs out
-    this.authService.currentUser$.pipe(
-      filter(user => user === null)
-    ).subscribe(() => {
+    this.authService.currentUser$.pipe(filter(user => user === null)).subscribe(() => {
       this.stopPolling();
     });
   }
@@ -101,8 +103,12 @@ export class NotificationService {
     if (this.pollingSubscription) {
       return; // Already polling
     }
-    // Load initial notifications and unread count
+    // Load initial notifications and unread count. interval() below does NOT
+    // emit immediately - its first tick is 60s out - so without this call the
+    // unread badge sits at its initial value of 0 for a full minute after every
+    // login/page load, regardless of how many unread notifications actually exist.
     this.refreshNotifications();
+    this.refreshUnreadCount();
     // Then poll only the count every 60 seconds (notifications are heavier to fetch).
     // Skip ticks when the tab is hidden — the visibilitychange listener fires an
     // immediate refresh when the user returns, so no data is lost.
@@ -129,7 +135,7 @@ export class NotificationService {
     priority?: string;
     page?: number;
     page_size?: number;
-  }): Observable<any> {
+  }): Observable<NotificationListResponse> {
     let params = new HttpParams();
 
     if (filters) {
@@ -139,12 +145,12 @@ export class NotificationService {
       if (filters.page_size) params = params.set('page_size', filters.page_size.toString());
     }
 
-    return this.http.get<any>(`${this.apiUrl}/`, { params }).pipe(
-      tap((response) => {
+    return this.http.get<NotificationListResponse>(`${this.apiUrl}/`, { params }).pipe(
+      tap(response => {
         const notifications = Array.isArray(response) ? response : response.results || [];
         this.notificationsSubject.next(notifications);
       }),
-      catchError((error) => {
+      catchError(error => {
         // Only log server errors to avoid console spam
         if (error.status >= 500) {
           console.error('❌ Server error fetching notifications:', error.status);
@@ -156,12 +162,12 @@ export class NotificationService {
 
   // Get unread count
   getUnreadCount(): Observable<{ count: number }> {
-    return this.http.get<any>(`${this.apiUrl}/unread_count/`).pipe(
+    return this.http.get<unknown>(`${this.apiUrl}/unread_count/`).pipe(
       map(response => extractData<{ count: number }>(response) || { count: 0 }),
-      tap((data) => {
+      tap(data => {
         this.unreadCountSubject.next(data.count);
       }),
-      catchError((error) => {
+      catchError(error => {
         // Silently handle errors to avoid console spam from polling
         // Only log once if there's an actual server error
         if (error.status >= 500) {
@@ -180,8 +186,12 @@ export class NotificationService {
     }
     this.unreadCountInFlight = true;
     this.getUnreadCount().subscribe({
-      complete: () => { this.unreadCountInFlight = false; },
-      error: () => { this.unreadCountInFlight = false; },
+      complete: () => {
+        this.unreadCountInFlight = false;
+      },
+      error: () => {
+        this.unreadCountInFlight = false;
+      },
     });
   }
 
@@ -192,7 +202,7 @@ export class NotificationService {
 
   // Mark notification as read
   markAsRead(id: number): Observable<UserNotification> {
-    return this.http.post<any>(`${this.apiUrl}/${id}/mark_as_read/`, {}).pipe(
+    return this.http.post<unknown>(`${this.apiUrl}/${id}/mark_as_read/`, {}).pipe(
       map(response => extractData<UserNotification>(response) as UserNotification),
       tap(() => {
         this.refreshUnreadCount();
@@ -202,9 +212,9 @@ export class NotificationService {
   }
 
   // Mark all as read
-  markAllAsRead(): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/mark_all_as_read/`, {}).pipe(
-      map(response => extractData<any>(response)),
+  markAllAsRead(): Observable<unknown> {
+    return this.http.post<unknown>(`${this.apiUrl}/mark_all_as_read/`, {}).pipe(
+      map(response => extractData<unknown>(response)),
       tap(() => {
         this.refreshUnreadCount();
         this.refreshNotifications();
@@ -229,7 +239,10 @@ export class NotificationService {
 
   // Update user preferences
   updatePreferences(data: Partial<NotificationPreference>): Observable<NotificationPreference> {
-    return this.http.put<NotificationPreference>(`${this.apiUrl}/preferences/update_my_preferences/`, data);
+    return this.http.put<NotificationPreference>(
+      `${this.apiUrl}/preferences/update_my_preferences/`,
+      data
+    );
   }
 
   // Get event types
@@ -238,18 +251,27 @@ export class NotificationService {
   }
 
   // Get notification templates
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getNotificationTemplates(): Observable<any[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.http.get<any[]>(`${this.apiUrl}/templates/`);
   }
 
   // Get user subscriptions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getSubscriptions(): Observable<any[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.http.get<any[]>(`${this.apiUrl}/subscriptions/my_subscriptions/`);
   }
 
   // Update subscription for an event type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateSubscription(eventTypeId: number | string, data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/subscriptions/${eventTypeId}/update_subscription/`, data);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this.http.post<any>(
+      `${this.apiUrl}/subscriptions/${eventTypeId}/update_subscription/`,
+      data
+    );
   }
 
   // Helper method to refresh the notifications list.
