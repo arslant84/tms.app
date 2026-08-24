@@ -203,11 +203,17 @@ class TestNotificationConfigConsistencyAcrossApps:
         with the SLA due-date/reminder-email feature it powered.)
 
         'processing_completed' (added for Transport/Visa's post-approval
-        admin processing step - see notify_processing_completed) is
-        intentionally excluded from the "every step" check below: unlike
-        the other six, it's only meaningful for the two modules that have
-        a distinct complete() action after approval, so it's only seeded
-        on those two templates' last step, not universally."""
+        admin processing step - see notify_processing_completed) and
+        'workflow_started' (added when notify_workflow_started() became
+        config-driven - see notifications.py) are intentionally excluded
+        from the "every step" check below: unlike the other six,
+        'processing_completed' is only meaningful for the two modules with a
+        distinct complete() action, and 'workflow_started' only ever fires
+        against a workflow's first step (WorkflowNotifications.notify_workflow_started
+        always passes step_order=1's execution to trigger_configured_notifications),
+        so seeding it on every step would create rows that can never be
+        looked up. Both are seeded on a narrower, targeted set of steps
+        instead - see their own tests below."""
         from workflows.models import WorkflowStep, WorkflowStepNotificationConfig
 
         universal_event_types = {
@@ -221,7 +227,10 @@ class TestNotificationConfigConsistencyAcrossApps:
         all_event_types = {
             choice[0] for choice in WorkflowStepNotificationConfig.EVENT_TYPE_CHOICES
         }
-        assert all_event_types == universal_event_types | {"processing_completed"}
+        assert all_event_types == universal_event_types | {
+            "processing_completed",
+            "workflow_started",
+        }
 
         for step in WorkflowStep.objects.filter(
             workflow_template__is_active=True
@@ -236,3 +245,26 @@ class TestNotificationConfigConsistencyAcrossApps:
                 f"Step '{step.step_name}' on "
                 f"'{step.workflow_template.name}' is missing configs for: {missing}"
             )
+
+    def test_every_active_template_first_step_has_workflow_started_configured(self):
+        """Companion to the six-universal-event-types check above:
+        'workflow_started' isn't universal (see that test's docstring), but
+        every active template's *first* step specifically must have it -
+        that's the only step notify_workflow_started() ever checks."""
+        from workflows.models import WorkflowStepNotificationConfig, WorkflowTemplate
+
+        missing = []
+        for template in WorkflowTemplate.objects.filter(is_active=True):
+            first_step = template.steps.filter(step_order=1).first()
+            if not first_step:
+                continue
+            has_config = WorkflowStepNotificationConfig.objects.filter(
+                workflow_step=first_step, event_type="workflow_started"
+            ).exists()
+            if not has_config:
+                missing.append(template.name)
+
+        assert missing == [], (
+            f"These active templates' first step has no 'workflow_started' "
+            f"config: {missing}"
+        )

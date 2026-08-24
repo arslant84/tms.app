@@ -15,6 +15,12 @@ class Command(BaseCommand):
 
     # Mapping of event types to their default configuration
     DEFAULT_CONFIGS = {
+        "workflow_started": {
+            "template_name": "workflow_started",
+            "recipient_types": ["requester"],
+            "priority": "normal",
+            "description": "Notify the requester when the workflow starts",
+        },
         "assignment": {
             "template_name": "approval_required",
             "recipient_types": ["current_approver"],

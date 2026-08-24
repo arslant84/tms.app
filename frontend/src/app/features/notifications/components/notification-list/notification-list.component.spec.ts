@@ -3,15 +3,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import { HeaderComponent } from './header.component';
-import {
-  NotificationService,
-  type UserNotification,
-} from '../../../features/notifications/services/notification.service';
+import { NotificationListComponent } from './notification-list.component';
+import { NotificationService, type UserNotification } from '../../services/notification.service';
 
-describe('HeaderComponent', () => {
-  let component: HeaderComponent;
-  let fixture: ComponentFixture<HeaderComponent>;
+describe('NotificationListComponent', () => {
+  let component: NotificationListComponent;
+  let fixture: ComponentFixture<NotificationListComponent>;
   let router: Router;
   let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
 
@@ -27,21 +24,18 @@ describe('HeaderComponent', () => {
     notificationServiceSpy.markAsRead.and.returnValue(of({} as UserNotification));
 
     await TestBed.configureTestingModule({
-      imports: [HeaderComponent],
+      imports: [NotificationListComponent],
       providers: [
         provideHttpClient(),
         { provide: NotificationService, useValue: notificationServiceSpy },
         {
           provide: ActivatedRoute,
-          useValue: {
-            params: of({}),
-            snapshot: { params: {} },
-          },
+          useValue: { params: of({}), snapshot: { params: {} } },
         },
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(HeaderComponent);
+    fixture = TestBed.createComponent(NotificationListComponent);
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
     spyOn(router, 'navigate').and.resolveTo(true);
@@ -52,16 +46,12 @@ describe('HeaderComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  // Regression coverage for the 2026-08-23 fix (commit 49b73586): the
-  // backend's action_url changed shape from a bare relative path with the
-  // wrong raw entity_type segment (e.g. /travelrequest/123) to an absolute
-  // URL with the real Angular route segment already correct
-  // (http://host/trf/123). The old client-side remapping logic looked for
-  // the stale segment names, found nothing to replace, and passed the
-  // whole absolute URL string to router.navigate() as one invalid path
-  // segment - which matches no route and silently falls through to the
-  // wildcard route. This locks in that an absolute action_url now resolves
-  // to the correct bare path.
+  // Same regression coverage as header.component.spec.ts's
+  // 'onNotificationClick navigation' block - this component had its own,
+  // independently-broken-and-fixed copy of the same navigation logic (see
+  // commit 49b73586). Kept as a parallel suite rather than a shared helper
+  // so a future edit to either component's buildNavigation() that
+  // re-introduces drift between the two gets caught here too.
   describe('onNotificationClick navigation', () => {
     function notification(overrides: Partial<UserNotification>): UserNotification {
       return {
@@ -87,8 +77,8 @@ describe('HeaderComponent', () => {
     });
 
     it('navigates correctly for an already-bare action_url (older notifications)', () => {
-      component.onNotificationClick(notification({ action_url: '/transport/45', is_read: true }));
-      expect(router.navigate).toHaveBeenCalledWith(['/transport/45'], undefined);
+      component.onNotificationClick(notification({ action_url: '/visa/8', is_read: true }));
+      expect(router.navigate).toHaveBeenCalledWith(['/visa/8'], undefined);
     });
 
     it('does not navigate when action_url is absent', () => {
@@ -100,12 +90,12 @@ describe('HeaderComponent', () => {
       component.onNotificationClick(
         notification({
           title: 'New Approval Required: Manager Approval',
-          action_url: 'http://localhost:4200/trf/77',
+          action_url: 'http://localhost:4200/accommodation/12',
           is_read: true,
         })
       );
       expect(router.navigate).toHaveBeenCalledWith(['/admin/approvals'], {
-        queryParams: { type: 'trf', id: '77', action: 'approve' },
+        queryParams: { type: 'accommodation', id: '12', action: 'approve' },
       });
     });
 
