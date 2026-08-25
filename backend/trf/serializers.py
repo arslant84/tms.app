@@ -622,6 +622,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             "externalPartyRequestorInfo",
             "selected_approvers",
             "skipped_steps",
+            "created_by",
         ]
         read_only_fields = [
             "id",
@@ -629,6 +630,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             "submitted_at",
             "created_at",
             "updated_at",
+            "created_by",
         ]
 
     def get_domesticTravelDetails(self, obj):
