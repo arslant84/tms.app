@@ -10,18 +10,19 @@ import { StatusUtilsService } from '../../../../core/utils/status-utils.service'
 import { DepartmentNamePipe } from '../../../../core/pipes/department-name.pipe';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
-
-interface ItinerarySegment {
-  from_location?: string;
-  from?: string;
-  to_location?: string;
-  to?: string;
-  departure_date?: string;
-  arrival_date?: string;
-  date?: string;
-  etd?: string;
-  eta?: string;
-}
+import {
+  ItinerarySegment,
+  FlightLegForm,
+  emptyLeg as mapperEmptyLeg,
+  formatDateForInput as mapperFormatDateForInput,
+  legFromSegment as mapperLegFromSegment,
+  splitItineraryByDirection as mapperSplitItineraryByDirection,
+  legToSegmentPayload as mapperLegToSegmentPayload,
+  getValidationIssues as mapperGetValidationIssues,
+  isFormValid as mapperIsFormValid,
+  getTravelTypeBadgeClass as mapperGetTravelTypeBadgeClass,
+  extractErrorMessage as mapperExtractErrorMessage,
+} from './flights-processing.mapper';
 
 interface PendingTrf {
   id: string;
@@ -35,26 +36,6 @@ interface PendingTrf {
   destinationSummary: string;
   requestedDate: string;
   itinerary?: ItinerarySegment[];
-}
-
-interface FlightLegForm {
-  flightNumber: string;
-  departureAirport: string;
-  arrivalAirport: string;
-  departureDate: string;
-  departureTime: string;
-  arrivalDate: string;
-  arrivalTime: string;
-}
-
-interface FlightSegmentPayload {
-  direction: 'OUTBOUND' | 'RETURN';
-  sequence: number;
-  flightNumber: string;
-  departureAirport: string;
-  arrivalAirport: string;
-  departureDateTime: string;
-  arrivalDateTime: string;
 }
 
 interface BookedFlight {
@@ -104,7 +85,7 @@ export class FlightsProcessingComponent implements OnInit {
   // Booking form fields
   pnr = '';
   airline = '';
-  outboundLegs: FlightLegForm[] = [this.emptyLeg()];
+  outboundLegs: FlightLegForm[] = [mapperEmptyLeg()];
   returnLegs: FlightLegForm[] = [];
   eTicketFile: File | null = null;
   flightNotes = '';
@@ -305,10 +286,10 @@ export class FlightsProcessingComponent implements OnInit {
 
     const itinerary = trf.itinerary || [];
     if (itinerary.length > 0) {
-      const { outbound, returning } = this.splitItineraryByDirection(itinerary);
-      this.outboundLegs = outbound.map(segment => this.legFromSegment(segment));
+      const { outbound, returning } = mapperSplitItineraryByDirection(itinerary, this.isRoundTrip);
+      this.outboundLegs = outbound.map(segment => mapperLegFromSegment(segment));
       if (this.isRoundTrip && returning.length) {
-        this.returnLegs = returning.map(segment => this.legFromSegment(segment));
+        this.returnLegs = returning.map(segment => mapperLegFromSegment(segment));
       }
     }
 
@@ -321,74 +302,8 @@ export class FlightsProcessingComponent implements OnInit {
     this.resetFormFields();
   }
 
-  private splitItineraryByDirection(itinerary: ItinerarySegment[]): {
-    outbound: ItinerarySegment[];
-    returning: ItinerarySegment[];
-  } {
-    if (!this.isRoundTrip) {
-      return { outbound: itinerary, returning: [] };
-    }
-    const firstDate = itinerary[0]?.departure_date || itinerary[0]?.date;
-    const outbound = itinerary.filter(s => (s.departure_date || s.date) === firstDate);
-    const returning = itinerary.filter(s => (s.departure_date || s.date) !== firstDate);
-    return { outbound: outbound.length ? outbound : [itinerary[0]], returning };
-  }
-
-  private legFromSegment(segment: ItinerarySegment): FlightLegForm {
-    const depDate = segment.departure_date || segment.date;
-    const arrDate = segment.arrival_date || segment.date;
-    return {
-      flightNumber: '',
-      departureAirport: segment.from_location || segment.from || '',
-      arrivalAirport: segment.to_location || segment.to || '',
-      departureDate: depDate ? this.formatDateForInput(depDate) : '',
-      departureTime: this.parseItineraryTime(segment.etd),
-      arrivalDate: arrDate ? this.formatDateForInput(arrDate) : '',
-      arrivalTime: this.parseItineraryTime(segment.eta),
-    };
-  }
-
-  /**
-   * The TSR itinerary's ETD/ETA is free text (requestors can type "14:30"
-   * or "Morning") - a native <input type="time"> silently drops anything
-   * that isn't strict HH:MM, which is why it used to render empty even
-   * though a value was set. Normalize real times, and translate the
-   * common day-period labels to a representative clock time so the field
-   * still starts pre-filled; admins can still edit it before confirming.
-   */
-  private parseItineraryTime(value?: string): string {
-    if (!value) {
-      return '';
-    }
-    const timeMatch = value.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
-    if (timeMatch) {
-      return `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
-    }
-    const periodDefaults: Record<string, string> = {
-      morning: '08:00',
-      afternoon: '13:00',
-      evening: '18:00',
-      night: '21:00',
-      noon: '12:00',
-      midnight: '00:00',
-    };
-    return periodDefaults[value.trim().toLowerCase()] || '';
-  }
-
-  private emptyLeg(): FlightLegForm {
-    return {
-      flightNumber: '',
-      departureAirport: '',
-      arrivalAirport: '',
-      departureDate: '',
-      departureTime: '',
-      arrivalDate: '',
-      arrivalTime: '',
-    };
-  }
-
   addOutboundLeg(): void {
-    this.outboundLegs.push(this.emptyLeg());
+    this.outboundLegs.push(mapperEmptyLeg());
   }
 
   removeOutboundLeg(index: number): void {
@@ -398,7 +313,7 @@ export class FlightsProcessingComponent implements OnInit {
   }
 
   addReturnLeg(): void {
-    this.returnLegs.push(this.emptyLeg());
+    this.returnLegs.push(mapperEmptyLeg());
   }
 
   removeReturnLeg(index: number): void {
@@ -419,7 +334,7 @@ export class FlightsProcessingComponent implements OnInit {
   resetFormFields(): void {
     this.pnr = '';
     this.airline = '';
-    this.outboundLegs = [this.emptyLeg()];
+    this.outboundLegs = [mapperEmptyLeg()];
     this.returnLegs = [];
     this.eTicketFile = null;
     this.flightNotes = '';
@@ -444,24 +359,6 @@ export class FlightsProcessingComponent implements OnInit {
     return true;
   }
 
-  private legToSegmentPayload(
-    leg: FlightLegForm,
-    direction: 'OUTBOUND' | 'RETURN',
-    sequence: number
-  ): FlightSegmentPayload {
-    return {
-      direction,
-      sequence,
-      flightNumber: leg.flightNumber,
-      departureAirport: leg.departureAirport,
-      arrivalAirport: leg.arrivalAirport,
-      departureDateTime: leg.departureDate
-        ? `${leg.departureDate}T${leg.departureTime || '00:00'}`
-        : '',
-      arrivalDateTime: leg.arrivalDate ? `${leg.arrivalDate}T${leg.arrivalTime || '00:00'}` : '',
-    };
-  }
-
   private buildBookingFormData(): FormData {
     const payload = new FormData();
     payload.set('pnr', this.pnr);
@@ -469,8 +366,8 @@ export class FlightsProcessingComponent implements OnInit {
       payload.set('airline', this.airline);
     }
     const segments = [
-      ...this.outboundLegs.map((leg, i) => this.legToSegmentPayload(leg, 'OUTBOUND', i + 1)),
-      ...this.returnLegs.map((leg, i) => this.legToSegmentPayload(leg, 'RETURN', i + 1)),
+      ...this.outboundLegs.map((leg, i) => mapperLegToSegmentPayload(leg, 'OUTBOUND', i + 1)),
+      ...this.returnLegs.map((leg, i) => mapperLegToSegmentPayload(leg, 'RETURN', i + 1)),
     ];
     payload.set('segments', JSON.stringify(segments));
     if (this.eTicketFile) {
@@ -506,7 +403,7 @@ export class FlightsProcessingComponent implements OnInit {
         this.isProcessing = false;
       },
       error: err => {
-        const errorMessage = this.extractErrorMessage(err);
+        const errorMessage = mapperExtractErrorMessage(err);
         this.toastService.error(errorMessage);
         this.isProcessing = false;
       },
@@ -621,13 +518,7 @@ export class FlightsProcessingComponent implements OnInit {
    * Format date for input field (YYYY-MM-DD)
    */
   formatDateForInput(date: string | Date): string {
-    if (!date) return '';
-    try {
-      const d = typeof date === 'string' ? new Date(date) : date;
-      return d.toISOString().split('T')[0];
-    } catch {
-      return '';
-    }
+    return mapperFormatDateForInput(date);
   }
 
   /**
@@ -649,23 +540,14 @@ export class FlightsProcessingComponent implements OnInit {
    * Get travel type badge class
    */
   getTravelTypeBadgeClass(travelType: string): string {
-    switch (travelType) {
-      case 'Overseas':
-        return 'badge-blue';
-      case 'Home Leave':
-        return 'badge-purple';
-      case 'Domestic':
-        return 'badge-green';
-      default:
-        return 'badge-gray';
-    }
+    return mapperGetTravelTypeBadgeClass(travelType);
   }
 
   /**
    * Check if form is valid
    */
   isFormValid(): boolean {
-    return this.getValidationIssues().length === 0;
+    return mapperIsFormValid(this.validationParams());
   }
 
   /**
@@ -673,42 +555,19 @@ export class FlightsProcessingComponent implements OnInit {
    * Confirm button so a disabled button is never a silent mystery.
    */
   getValidationIssues(): string[] {
-    const issues: string[] = [];
-    if (!this.pnr) {
-      issues.push('PNR / Booking Reference');
-    }
-    if (this.isAirlineRequired && !this.airline) {
-      issues.push('Airline');
-    }
-    if (!this.eTicketFile) {
-      issues.push('E-ticket upload');
-    }
-    this.outboundLegs.forEach((leg, i) => {
-      if (!this.isLegValid(leg)) {
-        issues.push(`Outbound leg ${i + 1}`);
-      }
-    });
-    if (this.isRoundTrip && this.returnLegs.length === 0) {
-      issues.push('At least one return leg');
-    }
-    this.returnLegs.forEach((leg, i) => {
-      if (!this.isLegValid(leg)) {
-        issues.push(`Return leg ${i + 1}`);
-      }
-    });
-    return issues;
+    return mapperGetValidationIssues(this.validationParams());
   }
 
-  private isLegValid(leg: FlightLegForm): boolean {
-    return !!(
-      leg.flightNumber &&
-      leg.departureAirport &&
-      leg.arrivalAirport &&
-      leg.departureDate &&
-      leg.departureTime &&
-      leg.arrivalDate &&
-      leg.arrivalTime
-    );
+  private validationParams() {
+    return {
+      pnr: this.pnr,
+      airline: this.airline,
+      isAirlineRequired: this.isAirlineRequired,
+      eTicketFile: this.eTicketFile,
+      outboundLegs: this.outboundLegs,
+      returnLegs: this.returnLegs,
+      isRoundTrip: this.isRoundTrip,
+    };
   }
 
   /**
@@ -716,46 +575,6 @@ export class FlightsProcessingComponent implements OnInit {
    */
   clearForm(): void {
     this.resetFormFields();
-  }
-
-  /**
-   * Extract error message from HTTP error response
-   */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private extractErrorMessage(err: any): string {
-    // Handle various Django REST framework error response formats
-    if (err.error) {
-      // Direct error message
-      if (typeof err.error === 'string') {
-        return err.error;
-      }
-      // { error: "message" } format
-      if (err.error.error) {
-        return err.error.error;
-      }
-      // { detail: "message" } format (DRF default)
-      if (err.error.detail) {
-        return err.error.detail;
-      }
-      // { message: "message" } format
-      if (err.error.message) {
-        return err.error.message;
-      }
-      // { non_field_errors: ["message"] } format
-      if (err.error.non_field_errors && Array.isArray(err.error.non_field_errors)) {
-        return err.error.non_field_errors.join(', ');
-      }
-      // { field: ["error1", "error2"] } format - extract first field error
-      const keys = Object.keys(err.error);
-      if (keys.length > 0 && Array.isArray(err.error[keys[0]])) {
-        return `${keys[0]}: ${err.error[keys[0]].join(', ')}`;
-      }
-    }
-    // Fallback to HTTP status message
-    if (err.message) {
-      return err.message;
-    }
-    return 'An unexpected error occurred. Please try again.';
   }
 
   /**
