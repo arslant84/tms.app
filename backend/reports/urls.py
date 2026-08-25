@@ -4,12 +4,10 @@ Reports URL Configuration
 
 from django.urls import path
 
-from .views import (
-    AdminReportsView,
-    DepartmentalReportsView,
-    ReportExportView,
-    UserActivityReportsView,
-)
+from .admin_reports_view import AdminReportsView
+from .departmental_reports_view import DepartmentalReportsView
+from .report_export_view import ReportExportView
+from .user_activity_reports_view import UserActivityReportsView
 
 urlpatterns = [
     path("analytics/", AdminReportsView.as_view(), name="admin-analytics"),
