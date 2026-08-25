@@ -2,7 +2,7 @@ import { Component, type OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import type { HttpErrorResponse } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
-import { from, firstValueFrom } from 'rxjs';
+import { from } from 'rxjs';
 import { TrfStepperComponent } from '../trf-stepper/trf-stepper.component';
 import {
   RequestorInformationComponent,
@@ -48,10 +48,8 @@ import type {
   RawAdvanceAmountRow,
   RawPassportRow,
   TransformedPassportDetails,
-  PreparedTrfData,
 } from './trf-wizard.types';
 import {
-  formatDateForAPI,
   deriveTripTypeFromItinerary,
   transformItineraryData,
   transformExternalPartiesItineraryData,
@@ -61,6 +59,7 @@ import {
   extractPassportFileInfo,
   transformPassportDetails,
 } from './trf-data-mapper';
+import { TrfSubmissionService } from './trf-submission.service';
 
 @Component({
   selector: 'app-trf-wizard',
@@ -132,7 +131,8 @@ export class TrfWizardComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private rbacService: RbacService,
-    private errorHandler: HttpErrorHandlerService
+    private errorHandler: HttpErrorHandlerService,
+    private trfSubmission: TrfSubmissionService
   ) {}
 
   ngOnInit(): void {
@@ -790,7 +790,16 @@ export class TrfWizardComponent implements OnInit {
     this.submitError = '';
 
     // Combine all form data
-    const combinedData = this.prepareTrfData(isDraft);
+    const combinedData = this.trfSubmission.prepareTrfData({
+      selectedTravelType: this.selectedTravelType,
+      requestorData: this.requestorData,
+      domesticTravelData: this.domesticTravelData,
+      overseasTravelData: this.overseasTravelData,
+      homeLeaveData: this.homeLeaveData,
+      externalPartiesData: this.externalPartiesData,
+      additionalComments: this.approvalForm?.getFormData()?.additionalComments || '',
+    });
+    const passportFile = this.getPassportFileFromTravelForm();
 
     if (this.isEditMode && this.trfId) {
       // Update existing TRF
@@ -805,7 +814,16 @@ export class TrfWizardComponent implements OnInit {
         next: () => {
           // For edit mode, we might need to delete and recreate nested resources
           // This is a simplified approach - ideally, you'd update existing ones
-          from(this.createNestedResources(this.trfId!, combinedData, isDraft)).subscribe({
+          from(
+            this.trfSubmission.createNestedResources(
+              this.trfId!,
+              combinedData,
+              isDraft,
+              this.isEditMode,
+              this.requestorData,
+              passportFile
+            )
+          ).subscribe({
             next: () => {
               // If not saving as draft, submit the TRF to workflow
               if (!isDraft) {
@@ -873,7 +891,16 @@ export class TrfWizardComponent implements OnInit {
       this.trfService.createTravelRequest(combinedData.mainTrf).subscribe({
         next: (createdTrf: { id: number }) => {
           // Step 2: Create nested resources (itinerary, meals, etc.)
-          from(this.createNestedResources(createdTrf.id, combinedData, isDraft)).subscribe({
+          from(
+            this.trfSubmission.createNestedResources(
+              createdTrf.id,
+              combinedData,
+              isDraft,
+              this.isEditMode,
+              this.requestorData,
+              passportFile
+            )
+          ).subscribe({
             next: () => {
               // If not saving as draft, submit the TRF to generate request number and start workflow
               if (!isDraft) {
@@ -920,408 +947,6 @@ export class TrfWizardComponent implements OnInit {
         },
       });
     }
-  }
-
-  /**
-   * Prepare TRF data for submission
-   */
-  private prepareTrfData(isDraft: boolean): PreparedTrfData {
-    // Main TRF data
-    const mainTrf: Record<string, unknown> = {
-      requestor_name: this.requestorData.fullName,
-      staff_id: this.requestorData.staffId,
-      department: this.requestorData.department,
-      position: this.requestorData.position || '',
-      cost_center: this.requestorData.costCenter,
-      tel_email: this.requestorData.contactNo,
-      email: this.requestorData.email,
-      travel_type: this.selectedTravelType,
-      // Always create as Draft, then call submit endpoint to generate request number
-      status: 'Draft',
-      estimated_cost: 0,
-    };
-
-    // Prepare data based on travel type
-    switch (this.selectedTravelType) {
-      case 'Domestic':
-        return this.prepareDomesticData(mainTrf, isDraft);
-      case 'Overseas':
-        return this.prepareOverseasData(mainTrf, isDraft);
-      case 'Home Leave':
-        return this.prepareHomeLeaveData(mainTrf, isDraft);
-      case 'External Parties':
-        return this.prepareExternalPartiesData(mainTrf, isDraft);
-      default:
-        return {
-          mainTrf,
-          itinerarySegments: [],
-          mealSelections: [],
-          passportDetails: null,
-          bankDetails: null,
-          advanceAmounts: [],
-        };
-    }
-  }
-
-  /**
-   * Prepare Domestic travel data
-   */
-  private prepareDomesticData(
-    mainTrf: Record<string, unknown>,
-    _isDraft: boolean
-  ): PreparedTrfData {
-    mainTrf['purpose'] = this.domesticTravelData?.purposeOfTravel || '';
-    mainTrf['additional_comments'] = this.approvalForm?.getFormData()?.additionalComments || '';
-
-    return {
-      mainTrf,
-      itinerarySegments: (this.domesticTravelData?.itinerary ||
-        []) as unknown as NestedItineraryRow[],
-      mealSelections: this.domesticTravelData?.mealProvisions?.dailySelections || [],
-      passportDetails: null,
-      bankDetails: null,
-      advanceAmounts: [],
-      accommodation: this.domesticTravelData?.accommodation || null,
-      transport: this.domesticTravelData?.transport || null,
-    };
-  }
-
-  /**
-   * Prepare Overseas travel data
-   */
-  private prepareOverseasData(
-    mainTrf: Record<string, unknown>,
-    _isDraft: boolean
-  ): PreparedTrfData {
-    mainTrf['purpose'] = this.overseasTravelData?.purpose || '';
-    mainTrf['additional_comments'] = this.approvalForm?.getFormData()?.additionalComments || '';
-    mainTrf['advance_consent_accepted'] = this.overseasTravelData?.advanceConsentAccepted || false;
-
-    return {
-      mainTrf,
-      itinerarySegments: (this.overseasTravelData?.itinerary ||
-        []) as unknown as NestedItineraryRow[],
-      mealSelections: [],
-      passportDetails: null,
-      bankDetails: this.overseasTravelData?.advanceBankDetails || null,
-      advanceAmounts: this.overseasTravelData?.advanceAmountRequested || [],
-    };
-  }
-
-  /**
-   * Prepare Home Leave data
-   */
-  private prepareHomeLeaveData(
-    mainTrf: Record<string, unknown>,
-    _isDraft: boolean
-  ): PreparedTrfData {
-    mainTrf['purpose'] = this.homeLeaveData?.purpose || '';
-    mainTrf['additional_comments'] = this.approvalForm?.getFormData()?.additionalComments || '';
-    mainTrf['advance_consent_accepted'] = this.homeLeaveData?.advanceConsentAccepted || false;
-
-    return {
-      mainTrf,
-      itinerarySegments: (this.homeLeaveData?.itinerary || []) as unknown as NestedItineraryRow[],
-      mealSelections: [],
-      passportDetails: this.homeLeaveData?.passportDetails || null,
-      bankDetails: this.homeLeaveData?.advanceBankDetails || null,
-      advanceAmounts: this.homeLeaveData?.advanceAmountRequested || [],
-    };
-  }
-
-  /**
-   * Prepare External Parties data
-   */
-  private prepareExternalPartiesData(
-    mainTrf: Record<string, unknown>,
-    _isDraft: boolean
-  ): PreparedTrfData {
-    mainTrf['purpose'] = this.externalPartiesData?.purpose || '';
-    mainTrf['additional_comments'] = this.approvalForm?.getFormData()?.additionalComments || '';
-
-    // Add external party specific fields - CORRECTED FIELD NAMES
-    mainTrf['external_full_name'] = this.externalPartiesData?.externalFullName || '';
-    mainTrf['external_organization'] = this.externalPartiesData?.externalOrganization || '';
-    mainTrf['external_ref_to_authority_letter'] =
-      this.externalPartiesData?.externalRefToAuthorityLetter || '';
-    mainTrf['external_cost_center'] = this.externalPartiesData?.externalCostCenter || '';
-
-    return {
-      mainTrf,
-      itinerarySegments: (this.externalPartiesData?.itinerary ||
-        []) as unknown as NestedItineraryRow[],
-      mealSelections: [],
-      passportDetails: null,
-      bankDetails: null,
-      advanceAmounts: [],
-    };
-  }
-
-  /**
-   * Delete existing nested resources for a TRF (used during update to prevent duplicates)
-   */
-  private deleteExistingNestedResources(trfId: number): Promise<void> {
-    const promises: Promise<unknown>[] = [];
-
-    // Delete all existing nested resources - errors intentionally swallowed
-    // (matching the caller's own comment: "some resources might not exist")
-    promises.push(
-      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'itinerary')).catch(() => {
-        // Intentionally ignored - resource may not exist
-      })
-    );
-    promises.push(
-      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'meals')).catch(() => {
-        // Intentionally ignored - resource may not exist
-      })
-    );
-    promises.push(
-      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'passport')).catch(() => {
-        // Intentionally ignored - resource may not exist
-      })
-    );
-    promises.push(
-      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'bank')).catch(() => {
-        // Intentionally ignored - resource may not exist
-      })
-    );
-    promises.push(
-      firstValueFrom(this.trfService.deleteNestedResources(trfId, 'advance-amounts')).catch(() => {
-        // Intentionally ignored - resource may not exist
-      })
-    );
-
-    return Promise.all(promises).then(() => undefined);
-  }
-
-  /**
-   * Create nested resources (itinerary, meals, passport, bank details, etc.)
-   *
-   * High cyclomatic complexity is 5 independent "if this section is present,
-   * build its payload" blocks, not branchy control flow - splitting it up is
-   * a real refactor better done on its own rather than folded into an
-   * unrelated form-field removal.
-   */
-  // eslint-disable-next-line complexity
-  private async createNestedResources(
-    trfId: number,
-    data: PreparedTrfData,
-    isDraft: boolean
-  ): Promise<boolean> {
-    // Guard: Ensure trfId is valid
-    if (!trfId || typeof trfId !== 'number' || trfId <= 0) {
-      throw new Error(`Invalid TRF ID: ${trfId}`);
-    }
-
-    // If in edit mode, delete existing nested resources first to prevent duplicates
-    if (this.isEditMode) {
-      try {
-        await this.deleteExistingNestedResources(trfId);
-      } catch {
-        // Continue anyway - some resources might not exist
-      }
-    }
-
-    const promises: Promise<unknown>[] = [];
-
-    // Create itinerary segments SEQUENTIALLY, not in parallel. The
-    // backend has no explicit ordering field for segments - it infers
-    // itinerary order from creation order (row id), matching how the
-    // frontend appends them (see TrfItinerarySegmentSerializer.validate).
-    // Firing these as concurrent, unawaited requests (as a .forEach
-    // pushing into the shared `promises` array used to) races the
-    // inserts: whichever request's transaction commits first gets the
-    // lowest id, regardless of the segments' actual array/date order.
-    // That scrambles the id order the backend relies on and causes it
-    // to reject perfectly valid, correctly-ordered itineraries with a
-    // false "date cannot be earlier than previous segment" error.
-    if (data.itinerarySegments && data.itinerarySegments.length > 0) {
-      for (const segment of data.itinerarySegments) {
-        // Handle both standard fields (date, from, to) and External Parties fields (departureDate, departureLocation, arrivalLocation)
-        const date = segment.date || segment.departureDate;
-        const from = segment.from || segment.departureLocation;
-        const to = segment.to || segment.arrivalLocation;
-
-        // Skip segments with missing required fields
-        if (!date || !from || !to) {
-          continue;
-        }
-
-        const itineraryData = {
-          trf: trfId,
-          segment_date: formatDateForAPI(date),
-          day_of_week: segment.day || '',
-          from_location: from,
-          to_location: to,
-          departure_time: segment.departureTime || segment.etd || '',
-          arrival_time: segment.arrivalTime || segment.eta || '',
-          flight_number: segment.modeOfTransport || segment.flightNumber || '',
-          remarks: segment.remarks || '',
-        };
-
-        await firstValueFrom(this.trfService.createItinerarySegment(itineraryData));
-      }
-    }
-
-    // Create meal selections (Domestic only)
-    if (data.mealSelections && data.mealSelections.length > 0) {
-      data.mealSelections.forEach(meal => {
-        // Skip meals with missing required meal_date
-        if (!meal.date) {
-          return;
-        }
-
-        const mealData = {
-          trf: trfId,
-          meal_date: formatDateForAPI(meal.date),
-          breakfast: meal.breakfast || false,
-          lunch: meal.lunch || false,
-          dinner: meal.dinner || false,
-          supper: meal.supper || false,
-          refreshment: meal.refreshment || false,
-        };
-
-        promises.push(firstValueFrom(this.trfService.createDailyMeal(mealData)));
-      });
-    }
-
-    // Create passport details (Home Leave)
-    if (data.passportDetails) {
-      const passportData = {
-        trf: trfId,
-        full_name: data.passportDetails.fullName || '',
-        passport_number: data.passportDetails.passportNumber || '',
-        nationality: data.passportDetails.nationality || '',
-        date_of_birth: data.passportDetails.dateOfBirth || '',
-        place_of_birth: data.passportDetails.placeOfBirth || '',
-        passport_issue_date: data.passportDetails.passportIssueDate || '',
-        passport_expiry_date: data.passportDetails.passportExpiryDate || '',
-      };
-
-      // Note: Need to create passport details endpoint in service
-      // For now, we'll skip if not available
-      if (this.trfService.createPassportDetail) {
-        promises.push(firstValueFrom(this.trfService.createPassportDetail(passportData)));
-      }
-    }
-
-    // Create bank details (Overseas, Home Leave)
-    if (data.bankDetails) {
-      const bankData = {
-        trf: trfId,
-        bank_name: data.bankDetails.bankName || '',
-        account_number: data.bankDetails.accountNumber || '',
-        account_name: data.bankDetails.accountName || '',
-        branch_address: data.bankDetails.branchAddress || '',
-        currency: data.bankDetails.currency || 'USD',
-      };
-
-      promises.push(firstValueFrom(this.trfService.createBankDetail(bankData)));
-    }
-
-    // Create advance amount items (Overseas, Home Leave)
-    if (data.advanceAmounts && data.advanceAmounts.length > 0) {
-      data.advanceAmounts.forEach(amount => {
-        const advanceData = {
-          trf: trfId,
-          date_from: amount.dateFrom || '',
-          date_to: amount.dateTo || '',
-          lh: amount.lh || 0,
-          ma: amount.ma || 0,
-          oa: amount.oa || 0,
-          tr: amount.tr || 0,
-          oe: amount.oe || 0,
-          usd: amount.usd || 0,
-          remarks: amount.remarks || '',
-        };
-
-        promises.push(firstValueFrom(this.trfService.createAdvanceAmountItem(advanceData)));
-      });
-    }
-
-    // Create linked accommodation request (Domestic only, opt-in) - only on a brand
-    // new TRF's first real submission, not on draft-save and not on edit-mode
-    // resubmission (unlike the other nested resources here, an already-submitted
-    // accommodation request may already be Assigned/processed by Accommodation Admin -
-    // blindly delete-and-recreate on every edit, like itinerary/meals do, would risk
-    // destroying that. Editing accommodation details after first submission doesn't
-    // propagate to the linked request yet - a known limitation, not a duplicate/data
-    // loss risk). Reuses the existing AccommodationRequestViewSet create+submit
-    // actions exactly as the standalone accommodation-create form does - no new
-    // backend endpoints.
-    if (!isDraft && !this.isEditMode && data.accommodation?.required) {
-      const acc = data.accommodation;
-      const accommodationData = {
-        requestor_name: this.requestorData.fullName,
-        staff_id: this.requestorData.staffId,
-        department: this.requestorData.department,
-        trf: trfId,
-        additional_data: {
-          requestor_gender: acc.gender,
-          location: acc.location,
-          requested_check_in_date: formatDateForAPI(acc.checkInDate) || acc.checkInDate,
-          requested_check_out_date: formatDateForAPI(acc.checkOutDate) || acc.checkOutDate,
-          requested_room_type: acc.roomType,
-          flight_arrival_time: acc.checkInTime,
-          flight_departure_time: acc.checkOutTime,
-          special_requests: acc.specialRequests,
-        },
-      };
-
-      promises.push(
-        firstValueFrom(this.accommodationService.createRequest(accommodationData)).then(created =>
-          firstValueFrom(this.accommodationService.submitRequest(created.id))
-        )
-      );
-    }
-
-    // Create linked transport request (Domestic only, opt-in) - only on a brand new
-    // TRF's first real submission, same guarding as accommodation above and for the
-    // same reason (an already-submitted transport request may already be Assigned/
-    // processed by Transport Admin). Unlike accommodation, Transport's own
-    // WorkflowTemplate stays active for ad-hoc requests - setting `trf` here is what
-    // makes TransportRequestViewSet skip starting a separate workflow for this one,
-    // so it rides the TSR's approval instead (see
-    // WorkflowEngine._cascade_status_to_linked_transport). Matches the standalone
-    // transport-create form's own single-call pattern exactly (status: 'Pending' sent
-    // directly in the create payload - transport-create.component.ts does the same,
-    // unlike accommodation-create's create-then-submit two-call pattern) - no new
-    // backend endpoints.
-    if (!isDraft && !this.isEditMode && data.transport?.required) {
-      const transport = data.transport;
-      const transportData = {
-        requestor_name: this.requestorData.fullName,
-        staff_id: this.requestorData.staffId,
-        department: this.requestorData.department,
-        position: this.requestorData.position,
-        // No separate purpose field on this embedded section (see
-        // TransportDetails) - reuse the TSR's own purpose so the linked
-        // transport request's required `purpose` field is still satisfied.
-        purpose: data.mainTrf?.['purpose'] || '',
-        status: 'Pending',
-        trf: trfId,
-        transport_details: (transport.journeys || []).map(j => ({
-          date: formatDateForAPI(j.date) || j.date,
-          day: j.day,
-          from: j.from,
-          to: j.to,
-          departure_time: j.departureTime,
-          number_of_passengers: j.numberOfPassengers,
-        })),
-      };
-
-      promises.push(firstValueFrom(this.transportService.createRequest(transportData)));
-    }
-
-    // Upload passport file if provided
-    const passportFile = this.getPassportFileFromTravelForm();
-    if (passportFile) {
-      promises.push(firstValueFrom(this.trfService.uploadPassportDocument(trfId, passportFile)));
-    }
-
-    // Wait for all nested resources to be created
-    await Promise.all(promises);
-    return true;
   }
 
   /**
