@@ -36,7 +36,14 @@ import {
   PreferredRoomType,
 } from '../../../accommodation/models/accommodation.model';
 
-export const DOMESTIC_CITIES = ['Ashgabat', 'Turkmenbashi', 'Turkmenabat', 'Dashoguz', 'Mary'];
+export const DOMESTIC_CITIES = [
+  'Ashgabat',
+  'Balkanabat',
+  'Turkmenbashi',
+  'Turkmenabat',
+  'Dashoguz',
+  'Mary',
+];
 export const ACCOMMODATION_LOCATIONS: LocationType[] = ['Ashgabat', 'Kiyanly', 'Turkmenbashy'];
 export const ACCOMMODATION_ROOM_TYPES: PreferredRoomType[] = ['Hotel', 'Staff House', 'PKC Camp'];
 
