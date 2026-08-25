@@ -21,8 +21,6 @@ from rest_framework.response import Response
 logger = logging.getLogger(__name__)
 from accounts.models import AdminActionLog
 from accounts.utils import can_approve, has_permission
-from utils.request_id_generator import generate_request_id
-from workflows.router import WorkflowRouter
 
 from .models import (
     AccommodationBooking,
@@ -31,6 +29,11 @@ from .models import (
     AccommodationStaffHouse,
 )
 from .serializers import AccommodationRequestSerializer
+from .services import (
+    generate_accommodation_request_number,
+    generate_accommodation_request_number_with_fallback,
+    start_accommodation_workflow,
+)
 
 
 class AccommodationRequestViewSet(viewsets.ModelViewSet):
@@ -302,76 +305,20 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
             # Generate request number if submitting directly (not Draft)
             if not serializer.validated_data.get("request_number"):
-                try:
-                    from utils.request_id_generator import (
-                        extract_context_from_location,
-                        generate_request_id,
-                    )
-
-                    # Extract context from additional_data location
-                    additional_data = serializer.validated_data.get(
-                        "additional_data", {}
-                    )
-                    location = (
-                        additional_data.get("location", "")
-                        if isinstance(additional_data, dict)
-                        else ""
-                    )
-                    context = (
-                        extract_context_from_location(location) if location else "ACCOM"
-                    )
-
-                    # Generate unique request number
-                    request_number = generate_request_id("ACCOM", context)
+                request_number = generate_accommodation_request_number(
+                    serializer.validated_data.get("additional_data", {})
+                )
+                if request_number:
                     extra_kwargs["request_number"] = request_number
-                    logger.info(
-                        f" Generated request number during creation: {request_number}"
-                    )
-                except Exception as e:
-                    logger.error(f" Error generating request number: {str(e)}")
-                    # Will be generated later if needed
 
         # Save the accommodation request
         accommodation_request = serializer.save(**extra_kwargs)
 
         # Start workflow if status is submitted (not Draft)
         if status_value in ["Pending", "Submitted"]:
-            # Extract selected approvers from request data (optional)
-            selected_approvers = self.request.data.get("selected_approvers", None)
-            if selected_approvers:
-                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
-
-            # Extract skipped steps from request data (optional)
-            skipped_steps = self.request.data.get("skipped_steps", None)
-            if skipped_steps:
-                skipped_steps = {int(k): v for k, v in skipped_steps.items()}
-
-            try:
-                workflow_instance = WorkflowRouter.start_workflow_for_request(
-                    entity=accommodation_request,
-                    entity_type="accommodation",
-                    initiated_by=self.request.user,
-                    selected_approvers=selected_approvers,
-                    skipped_steps=skipped_steps,
-                )
-
-                if workflow_instance:
-                    # Reload the accommodation request to get the updated status from workflow
-                    accommodation_request.refresh_from_db()
-                    logger.info(
-                        f" Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}"
-                    )
-                    logger.info(f" Status updated to: {accommodation_request.status}")
-                else:
-                    logger.warning(
-                        " No active workflow configured for accommodation - using legacy approval system"
-                    )
-            except Exception as e:
-                logger.error(
-                    f" Error starting workflow for Accommodation Request #{accommodation_request.id}: {str(e)}"
-                )
-                # Don't fail the request creation if workflow fails
-                pass
+            start_accommodation_workflow(
+                accommodation_request, self.request.data, self.request.user
+            )
 
     def perform_update(self, serializer):
         """Update accommodation request and start workflow if status changes to Pending/Submitted"""
@@ -386,75 +333,20 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             # Generate request number if submitting (changing from Draft to Pending/Submitted)
             accommodation_request = self.get_object()
             if not accommodation_request.request_number:
-                try:
-                    from utils.request_id_generator import (
-                        extract_context_from_location,
-                        generate_request_id,
-                    )
-
-                    # Extract context from additional_data location
-                    additional_data = serializer.validated_data.get(
-                        "additional_data", {}
-                    )
-                    location = (
-                        additional_data.get("location", "")
-                        if isinstance(additional_data, dict)
-                        else ""
-                    )
-                    context = (
-                        extract_context_from_location(location) if location else "ACCOM"
-                    )
-
-                    # Generate unique request number
-                    request_number = generate_request_id("ACCOM", context)
+                request_number = generate_accommodation_request_number(
+                    serializer.validated_data.get("additional_data", {})
+                )
+                if request_number:
                     extra_kwargs["request_number"] = request_number
-                    logger.info(
-                        f" Generated request number during update: {request_number}"
-                    )
-                except Exception as e:
-                    logger.error(f" Error generating request number: {str(e)}")
 
         # Save the accommodation request
         accommodation_request = serializer.save(**extra_kwargs)
 
         # Start workflow if status changed from Draft to Pending/Submitted
         if new_status in ["Pending", "Submitted"] and old_status == "Draft":
-            # Extract selected approvers from request data (optional)
-            selected_approvers = self.request.data.get("selected_approvers", None)
-            if selected_approvers:
-                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
-
-            # Extract skipped steps from request data (optional)
-            skipped_steps = self.request.data.get("skipped_steps", None)
-            if skipped_steps:
-                skipped_steps = {int(k): v for k, v in skipped_steps.items()}
-
-            try:
-                workflow_instance = WorkflowRouter.start_workflow_for_request(
-                    entity=accommodation_request,
-                    entity_type="accommodation",
-                    initiated_by=self.request.user,
-                    selected_approvers=selected_approvers,
-                    skipped_steps=skipped_steps,
-                )
-
-                if workflow_instance:
-                    # Reload the accommodation request to get the updated status from workflow
-                    accommodation_request.refresh_from_db()
-                    logger.info(
-                        f" Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}"
-                    )
-                    logger.info(f" Status updated to: {accommodation_request.status}")
-                else:
-                    logger.warning(
-                        " No active workflow configured for accommodation - using legacy approval system"
-                    )
-            except Exception as e:
-                logger.error(
-                    f" Error starting workflow for Accommodation Request #{accommodation_request.id}: {str(e)}"
-                )
-                # Don't fail the request update if workflow fails
-                pass
+            start_accommodation_workflow(
+                accommodation_request, self.request.data, self.request.user
+            )
 
     def perform_destroy(self, instance):
         """Log deletion before removing the record, since nothing else audits this."""
@@ -487,76 +379,19 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
         # Generate request number if it doesn't exist
         if not accommodation_request.request_number:
-            try:
-                # Extract context from additional_data location or use generic context
-                context = "ACCOM"
-                if accommodation_request.additional_data and isinstance(
-                    accommodation_request.additional_data, dict
-                ):
-                    location = accommodation_request.additional_data.get("location", "")
-                    if location:
-                        context = location  # Let generate_request_id handle validation and length
-
-                logger.debug(
-                    f" Extracted context for Accommodation Request #{accommodation_request.id}: {context}"
+            accommodation_request.request_number = (
+                generate_accommodation_request_number_with_fallback(
+                    accommodation_request
                 )
-
-                # Generate unique request number (will auto-validate and limit context to 5 chars)
-                request_number = generate_request_id("ACCOM", context)
-                accommodation_request.request_number = request_number
-                logger.info(f" Generated request number: {request_number}")
-            except Exception as e:
-                logger.error(f" Error generating request number: {str(e)}")
-                import traceback
-
-                traceback.print_exc()
-                # Fallback to simple format
-                accommodation_request.request_number = f"ACCOM-{datetime.now().strftime('%Y%m%d-%H%M')}-ACCOM-{accommodation_request.id}"
-                logger.warning(
-                    f" Using fallback request number: {accommodation_request.request_number}"
-                )
+            )
 
         # Update status and submitted_at
         accommodation_request.status = "Pending"
         accommodation_request.submitted_at = timezone.now()
         accommodation_request.save()
 
-        # Extract selected approvers from request data (optional)
-        selected_approvers = request.data.get("selected_approvers", None)
-        if selected_approvers:
-            selected_approvers = {int(k): v for k, v in selected_approvers.items()}
-
-        # Extract skipped steps from request data (optional)
-        skipped_steps = request.data.get("skipped_steps", None)
-        if skipped_steps:
-            skipped_steps = {int(k): v for k, v in skipped_steps.items()}
-
         # Start workflow using WorkflowRouter
-        try:
-            workflow_instance = WorkflowRouter.start_workflow_for_request(
-                entity=accommodation_request,
-                entity_type="accommodation",
-                initiated_by=request.user,
-                selected_approvers=selected_approvers,
-                skipped_steps=skipped_steps,
-            )
-
-            if workflow_instance:
-                # Reload the accommodation request to get the updated status from workflow
-                accommodation_request.refresh_from_db()
-                logger.info(
-                    f" Workflow started for Accommodation Request #{accommodation_request.id}: Workflow Instance #{workflow_instance.id}"
-                )
-                logger.info(f" Status updated to: {accommodation_request.status}")
-            else:
-                # Fallback to legacy approval system if no workflow configured
-                logger.warning(
-                    " No active workflow configured - keeping status as Pending"
-                )
-        except Exception as e:
-            logger.error(f" Error starting workflow: {str(e)}")
-            # Fallback to legacy system on error - status remains 'Pending'
-            pass
+        start_accommodation_workflow(accommodation_request, request.data, request.user)
 
         # Ensure we have the latest status before serializing
         accommodation_request.refresh_from_db()
