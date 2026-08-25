@@ -310,6 +310,11 @@ class UserAdminUpdateSerializer(serializers.ModelSerializer):
             return list(obj.role.permissions.values_list("name", flat=True))
         return []
 
+    def validate_staff_id(self, value):
+        """Normalize blank staff_id to None - it's unique but optional, and
+        two users with staff_id="" would collide on the unique constraint."""
+        return value or None
+
     def validate_email(self, value):
         """Validate email uniqueness excluding current user"""
         if self.instance:
@@ -435,6 +440,11 @@ class UserCreateSerializer(serializers.ModelSerializer):
                 {"password": "Password fields didn't match."}
             )
         return attrs
+
+    def validate_staff_id(self, value):
+        """Normalize blank staff_id to None - it's unique but optional, and
+        two users with staff_id="" would collide on the unique constraint."""
+        return value or None
 
     def validate_department(self, value):
         """Validate and convert department (UUID, code, or name) to Department object"""
