@@ -1,30 +1,42 @@
-/**
- * This wizard maps four travel types' worth of loosely-typed, multi-shaped
- * backend payloads (each with its own legacy field-name aliases - see the
- * "transform" and "prepare" data methods below) into component form data
- * and back. None of those shapes have a canonical TypeScript interface
- * today, unlike e.g. UserNotification elsewhere in this codebase -
- * retyping the ~60 "any" usages here would mean designing that type system
- * from scratch under an unrelated task (removing a redundant form field),
- * with no test coverage for this component to verify the retyping didn't
- * change behavior. A file-level disable (rather than 60+ scattered
- * line-level ones, the pattern used elsewhere in this codebase for a
- * handful of genuinely untyped spots) keeps that real typing effort
- * visible as a single, deliberate, revertible line instead of noise
- * throughout the file.
- */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, type OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import type { HttpErrorResponse } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
 import { from, firstValueFrom } from 'rxjs';
 import { TrfStepperComponent } from '../trf-stepper/trf-stepper.component';
-import { RequestorInformationComponent } from '../requestor-information/requestor-information.component';
-import { DomesticTravelDetailsComponent } from '../domestic-travel-details/domestic-travel-details.component';
-import { OverseasTravelDetailsComponent } from '../overseas-travel-details/overseas-travel-details.component';
-import { HomeLeaveDetailsComponent } from '../home-leave-details/home-leave-details.component';
-import { ExternalPartiesDetailsComponent } from '../external-parties-details/external-parties-details.component';
-import { ApprovalSubmissionComponent } from '../approval-submission/approval-submission.component';
+import {
+  RequestorInformationComponent,
+  type RequestorInformation,
+} from '../requestor-information/requestor-information.component';
+import {
+  DomesticTravelDetailsComponent,
+  type DomesticTravelSpecificDetails,
+  type AccommodationDetails,
+  type TransportDetails,
+  type TransportJourney,
+  type ItinerarySegment as DomesticItinerarySegment,
+  type PassportUploadDetails,
+} from '../domestic-travel-details/domestic-travel-details.component';
+import {
+  OverseasTravelDetailsComponent,
+  type OverseasTravelDetails,
+  type AdvanceBankDetails,
+  type AdvanceAmountItem,
+  type ItinerarySegment as OverseasItinerarySegment,
+} from '../overseas-travel-details/overseas-travel-details.component';
+import type { DailyMealSelection } from '../../../../shared/components/meal-provision/meal-provision.component';
+import {
+  HomeLeaveDetailsComponent,
+  type HomeLeaveDetails,
+} from '../home-leave-details/home-leave-details.component';
+import {
+  ExternalPartiesDetailsComponent,
+  type ExternalPartiesDetails,
+} from '../external-parties-details/external-parties-details.component';
+import {
+  ApprovalSubmissionComponent,
+  type ApprovalSubmissionData,
+} from '../approval-submission/approval-submission.component';
 import { TrfService } from '../../services/trf.service';
 import { AccommodationService } from '../../../accommodation/services/accommodation.service';
 import { TransportService } from '../../../transport/services/transport.service';
@@ -32,7 +44,208 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import type { ApproverSelection } from '../../../../core/services/workflow.service';
+import type { SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
+
+/**
+ * Raw TRF payload as the backend actually sends it. snake_case is the
+ * current serializer's real field naming; the camelCase fallbacks
+ * throughout this file (data.foo || data.fooBar) defend against an older
+ * serializer shape this wizard has always had to tolerate on edit-load -
+ * both are kept here rather than picking one, to match that existing
+ * defensive pattern instead of silently dropping a code path.
+ */
+interface TrfBackendDetail {
+  purpose?: string;
+  itinerary?: unknown[];
+  mealProvision?: { dailyMealSelections?: unknown[] };
+  advanceBankDetails?: unknown;
+  advanceAmountRequested?: unknown[];
+}
+
+interface TrfBackendResponse {
+  id: number;
+  trf?: TrfBackendResponse; // some endpoints wrap the row as { trf: {...} }
+  status?: string;
+  travel_type?: string;
+  travelType?: string;
+  requestor_name?: string;
+  requestorName?: string;
+  staff_id?: string;
+  staffId?: string;
+  department?: string;
+  position?: string;
+  cost_center?: string;
+  costCenter?: string;
+  tel_email?: string;
+  telEmail?: string;
+  email?: string;
+  purpose?: string;
+  additional_comments?: string;
+  additionalComments?: string;
+  selected_approvers?: ApproverSelection;
+  skipped_steps?: SkippedStepsSelection;
+  domesticTravelDetails?: TrfBackendDetail;
+  overseasTravelDetails?: TrfBackendDetail;
+  externalPartiesTravelDetails?: TrfBackendDetail;
+  externalPartyRequestorInfo?: {
+    externalFullName?: string;
+    externalOrganization?: string;
+    externalRefToAuthorityLetter?: string;
+    externalCostCenter?: string;
+  };
+  itinerary_segments?: unknown[];
+  itinerary?: unknown[];
+  daily_meals?: unknown[];
+  daily_meal_selections?: unknown[];
+  mealSelections?: unknown[];
+  passport_details?: unknown;
+  passportDetails?: unknown;
+  bank_detail?: unknown;
+  advance_bank_details?: unknown;
+  bankDetails?: unknown;
+  advance_amounts?: unknown[];
+  advance_amount_items?: unknown[];
+  advanceAmounts?: unknown[];
+  advance_consent_accepted?: boolean;
+  external_full_name?: string;
+  externalFullName?: string;
+  external_organization?: string;
+  externalOrganization?: string;
+  external_ref_to_authority_letter?: string;
+  externalRefToAuthorityLetter?: string;
+  external_cost_center?: string;
+  externalCostCenter?: string;
+}
+
+/**
+ * An itinerary row as createNestedResources() actually reads it - a union
+ * of the standard field names (date/from/to/etd/eta/flightNumber), External
+ * Parties' own names (departureDate/departureLocation/arrivalLocation/
+ * departureTime/arrivalTime/modeOfTransport), and the backend's raw
+ * snake_case names (segment_date/from_location/etc.) that
+ * transformItineraryData()/transformExternalPartiesItineraryData() read
+ * directly off an edit-load response, before it's been normalized to the
+ * camelCase names above. All optional since no single row ever has every
+ * field at once - which alias is present depends on where the row came
+ * from (raw backend vs. already-transformed component data).
+ */
+interface NestedItineraryRow {
+  date?: string | Date | null;
+  segment_date?: string | Date | null;
+  departureDate?: string | Date | null;
+  arrivalDate?: string | Date | null;
+  arrival_date?: string | Date | null;
+  from?: string;
+  from_location?: string;
+  departureLocation?: string;
+  to?: string;
+  to_location?: string;
+  arrivalLocation?: string;
+  day?: string;
+  day_of_week?: string;
+  departureTime?: string;
+  etd?: string;
+  departure_time?: string;
+  arrivalTime?: string;
+  eta?: string;
+  arrival_time?: string;
+  modeOfTransport?: string;
+  mode_of_transport?: string;
+  flightNumber?: string;
+  flight_number?: string;
+  remarks?: string;
+}
+
+/** Raw meal-selection row as read directly off an edit-load backend
+ * response - boolean flags may arrive as an actual boolean, the string
+ * "true", or 1, depending on which serializer produced the response. */
+interface RawMealRow {
+  date?: string | Date | null;
+  meal_date?: string | Date | null;
+  breakfast?: boolean | string | number;
+  lunch?: boolean | string | number;
+  dinner?: boolean | string | number;
+  supper?: boolean | string | number;
+  refreshment?: boolean | string | number;
+}
+
+/** Raw bank-detail row as read directly off an edit-load backend response. */
+interface RawBankDetailRow {
+  bank_name?: string;
+  bankName?: string;
+  account_number?: string;
+  accountNumber?: string;
+  account_name?: string;
+  accountName?: string;
+  branch_address?: string;
+  branchAddress?: string;
+  currency?: string;
+}
+
+/** Raw advance-amount row as read directly off an edit-load backend
+ * response. */
+interface RawAdvanceAmountRow {
+  date_from?: string | null;
+  dateFrom?: string | null;
+  date_to?: string | null;
+  dateTo?: string | null;
+  lh?: number;
+  ma?: number;
+  oa?: number;
+  tr?: number;
+  oe?: number;
+  usd?: number;
+  remarks?: string;
+}
+
+/** Raw passport-detail row as read directly off an edit-load backend
+ * response - may arrive as a single object or (per the backend's own array
+ * serialization) the first element of an array. */
+interface RawPassportRow {
+  passport_file_url?: string;
+  passportFileUrl?: string;
+  passport_file?: string;
+  full_name?: string;
+  fullName?: string;
+  passport_number?: string;
+  passportNumber?: string;
+  nationality?: string;
+  date_of_birth?: string | null;
+  dateOfBirth?: string | null;
+  place_of_birth?: string;
+  placeOfBirth?: string;
+  passport_issue_date?: string | null;
+  passportIssueDate?: string | null;
+  passport_expiry_date?: string | null;
+  passportExpiryDate?: string | null;
+}
+
+/** Return shape of transformPassportDetails() / what's read back out of it
+ * in createNestedResources(). */
+interface TransformedPassportDetails {
+  fullName: string;
+  passportNumber: string;
+  nationality: string;
+  dateOfBirth: string | null;
+  placeOfBirth: string;
+  passportIssueDate: string | null;
+  passportExpiryDate: string | null;
+}
+
+/** Return shape of prepareTrfData()/prepareXData() - what
+ * createNestedResources() consumes to build every linked resource. */
+interface PreparedTrfData {
+  mainTrf: Record<string, unknown>;
+  itinerarySegments: NestedItineraryRow[];
+  mealSelections: DailyMealSelection[];
+  passportDetails: TransformedPassportDetails | null;
+  bankDetails: AdvanceBankDetails | null;
+  advanceAmounts: AdvanceAmountItem[];
+  accommodation?: AccommodationDetails | null;
+  transport?: TransportDetails | null;
+}
 
 @Component({
   selector: 'app-trf-wizard',
@@ -69,20 +282,31 @@ export class TrfWizardComponent implements OnInit {
   // Edit mode
   isEditMode: boolean = false;
   trfId: number | null = null;
-  existingTrfData: any = null;
+  existingTrfData: TrfBackendResponse | null = null;
   isLoadingTrf: boolean = false;
 
   // Travel type - determined by route
   selectedTravelType: 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties' | null = null;
 
   // Store form data from each step
-  requestorData: any = {};
-  domesticTravelData: any = {};
-  overseasTravelData: any = {};
-  homeLeaveData: any = {};
-  externalPartiesData: any = {};
-  approvalData: any = {}; // Store approval & submission data including additionalComments
-  approvalSubmissionData: any = {};
+  requestorData: Partial<RequestorInformation> = {};
+  domesticTravelData: Partial<DomesticTravelSpecificDetails> = {};
+  overseasTravelData: Partial<OverseasTravelDetails> = {};
+  // The `passportDetails` extension here is a pre-existing bug this typing
+  // just made visible, not something introduced by it: HomeLeaveDetails
+  // (and HomeLeaveDetailsComponent) has no such field - it only knows about
+  // passportUpload (file metadata). prePopulateTravelData() below sets
+  // passportDetails on edit-load, but saveCurrentStepData() immediately
+  // overwrites this whole object with getFormData()'s return the moment the
+  // user reaches step 2, which never carries it forward - so it's silently
+  // discarded before submission regardless. Left exactly as-is (including
+  // the bug) rather than fixed under this typing task.
+  homeLeaveData: Partial<HomeLeaveDetails> & {
+    passportDetails?: TransformedPassportDetails | null;
+  } = {};
+  externalPartiesData: Partial<ExternalPartiesDetails> = {};
+  approvalData: Partial<ApprovalSubmissionData> = {}; // Store approval & submission data including additionalComments
+  approvalSubmissionData: Partial<ApprovalSubmissionData> = {};
 
   constructor(
     private trfService: TrfService,
@@ -131,19 +355,28 @@ export class TrfWizardComponent implements OnInit {
       this.rbacService.hasPermission('manage_trf');
 
     this.trfService.getTrfById(id, false, hasAdminView).subscribe({
-      next: (response: any) => {
+      // TrfService.getTrfById() is typed Observable<TravelRequestForm>, but
+      // that model (core/models/trf.model.ts) is a stale/mock shape that
+      // doesn't match what the endpoint actually returns (this file has
+      // always read requestor_name/staff_id/etc., none of which exist on
+      // TravelRequestForm) - out of scope to fix trf.service.ts's typing
+      // here, so cast at this boundary to the shape this file actually
+      // consumes instead of trusting the declared (wrong) type.
+      next: response => {
+        const raw = response as unknown as TrfBackendResponse;
         // The backend returns { trf: { ...data } }, so we need to extract the trf object
-        const data = response.trf || response;
+        const data = raw.trf || raw;
 
         this.existingTrfData = data;
-        this.selectedTravelType = data.travel_type || data.travelType;
+        this.selectedTravelType = (data.travel_type ||
+          data.travelType) as typeof this.selectedTravelType;
 
         // Check if TRF can be edited
         // Allow editing for Draft, Rejected, or any Pending status
         const canEdit =
           data.status === 'Draft' ||
           data.status === 'Rejected' ||
-          data.status.startsWith('Pending');
+          !!data.status?.startsWith('Pending');
 
         if (data.status && !canEdit) {
           const errorMsg = `This TRF cannot be edited because its status is "${data.status}". Only Draft, Rejected, or Pending TRFs can be edited.`;
@@ -180,9 +413,8 @@ export class TrfWizardComponent implements OnInit {
 
         this.isLoadingTrf = false;
       },
-      error: (err: any) => {
-        this.submitError =
-          'Failed to load TRF: ' + (err.error?.message || err.message || 'Unknown error');
+      error: (err: HttpErrorResponse) => {
+        this.submitError = `Failed to load TRF: ${err.error?.message || err.message || 'Unknown error'}`;
         this.isLoadingTrf = false;
       },
     });
@@ -198,7 +430,7 @@ export class TrfWizardComponent implements OnInit {
    * into an unrelated form-field removal.
    */
   // eslint-disable-next-line complexity
-  private prePopulateTravelData(data: any): void {
+  private prePopulateTravelData(data: TrfBackendResponse): void {
     switch (this.selectedTravelType) {
       case 'Domestic': {
         // Backend returns nested structure: data.domesticTravelDetails.itinerary
@@ -212,16 +444,23 @@ export class TrfWizardComponent implements OnInit {
           data.mealSelections ||
           [];
         const domesticPassport = this.extractPassportFileInfo(
-          data.passport_details || data.passportDetails
+          (data.passport_details || data.passportDetails) as RawPassportRow | RawPassportRow[]
         );
 
-        const domesticItinerary = this.transformItineraryData(itineraryData);
+        const domesticItinerary = this.transformItineraryData(
+          itineraryData as NestedItineraryRow[]
+        );
         this.domesticTravelData = {
           purposeOfTravel: domesticDetails.purpose || data.purpose || '',
-          tripType: this.deriveTripTypeFromItinerary(domesticItinerary, 'from', 'to', 'date'),
-          itinerary: domesticItinerary,
+          tripType: this.deriveTripTypeFromItinerary(
+            domesticItinerary as unknown as Record<string, unknown>[],
+            'from',
+            'to',
+            'date'
+          ),
+          itinerary: domesticItinerary as unknown as DomesticItinerarySegment[],
           mealProvisions: {
-            dailySelections: this.transformMealSelectionsData(mealData),
+            dailySelections: this.transformMealSelectionsData(mealData as RawMealRow[]),
           },
           passportUpload: domesticPassport,
         };
@@ -247,21 +486,25 @@ export class TrfWizardComponent implements OnInit {
           data.advanceAmounts ||
           [];
         const overseasPassport = this.extractPassportFileInfo(
-          data.passport_details || data.passportDetails
+          (data.passport_details || data.passportDetails) as RawPassportRow | RawPassportRow[]
         );
 
-        const overseasTransformedItinerary = this.transformItineraryData(overseasItinerary);
+        const overseasTransformedItinerary = this.transformItineraryData(
+          overseasItinerary as NestedItineraryRow[]
+        );
         this.overseasTravelData = {
           purpose: overseasDetails.purpose || data.purpose || '',
           tripType: this.deriveTripTypeFromItinerary(
-            overseasTransformedItinerary,
+            overseasTransformedItinerary as unknown as Record<string, unknown>[],
             'from',
             'to',
             'date'
           ),
-          itinerary: overseasTransformedItinerary,
-          advanceBankDetails: this.transformBankDetails(bankDetails),
-          advanceAmountRequested: this.transformAdvanceAmounts(advanceAmounts),
+          itinerary: overseasTransformedItinerary as unknown as OverseasItinerarySegment[],
+          advanceBankDetails: this.transformBankDetails(bankDetails as RawBankDetailRow),
+          advanceAmountRequested: this.transformAdvanceAmounts(
+            advanceAmounts as RawAdvanceAmountRow[]
+          ),
           advanceConsentAccepted: data.advance_consent_accepted || false,
           passportUpload: overseasPassport,
         };
@@ -273,7 +516,9 @@ export class TrfWizardComponent implements OnInit {
         const homeLeaveDetails = data.overseasTravelDetails || {};
         const homeLeaveItinerary =
           homeLeaveDetails.itinerary || data.itinerary_segments || data.itinerary || [];
-        const passportDetails = data.passport_details || data.passportDetails;
+        const passportDetails = (data.passport_details || data.passportDetails) as
+          | RawPassportRow
+          | RawPassportRow[];
         const homeLeaveBank =
           homeLeaveDetails.advanceBankDetails ||
           data.bank_detail ||
@@ -287,19 +532,23 @@ export class TrfWizardComponent implements OnInit {
           [];
         const homeLeavePassport = this.extractPassportFileInfo(passportDetails);
 
-        const homeLeaveTransformedItinerary = this.transformItineraryData(homeLeaveItinerary);
+        const homeLeaveTransformedItinerary = this.transformItineraryData(
+          homeLeaveItinerary as NestedItineraryRow[]
+        );
         this.homeLeaveData = {
           purpose: homeLeaveDetails.purpose || data.purpose || '',
           tripType: this.deriveTripTypeFromItinerary(
-            homeLeaveTransformedItinerary,
+            homeLeaveTransformedItinerary as unknown as Record<string, unknown>[],
             'from',
             'to',
             'date'
           ),
           itinerary: homeLeaveTransformedItinerary,
           passportDetails: this.transformPassportDetails(passportDetails),
-          advanceBankDetails: this.transformBankDetails(homeLeaveBank),
-          advanceAmountRequested: this.transformAdvanceAmounts(homeLeaveAdvanceAmounts),
+          advanceBankDetails: this.transformBankDetails(homeLeaveBank as RawBankDetailRow),
+          advanceAmountRequested: this.transformAdvanceAmounts(
+            homeLeaveAdvanceAmounts as RawAdvanceAmountRow[]
+          ),
           advanceConsentAccepted: data.advance_consent_accepted || false,
           passportUpload: homeLeavePassport,
         };
@@ -313,15 +562,16 @@ export class TrfWizardComponent implements OnInit {
         const externalItinerary =
           externalDetails.itinerary || data.itinerary_segments || data.itinerary || [];
         const externalPassport = this.extractPassportFileInfo(
-          data.passport_details || data.passportDetails
+          (data.passport_details || data.passportDetails) as RawPassportRow | RawPassportRow[]
         );
 
-        const externalTransformedItinerary =
-          this.transformExternalPartiesItineraryData(externalItinerary);
+        const externalTransformedItinerary = this.transformExternalPartiesItineraryData(
+          externalItinerary as NestedItineraryRow[]
+        );
         this.externalPartiesData = {
           purpose: externalDetails.purpose || data.purpose || '',
           tripType: this.deriveTripTypeFromItinerary(
-            externalTransformedItinerary,
+            externalTransformedItinerary as unknown as Record<string, unknown>[],
             'departureLocation',
             'arrivalLocation',
             'departureDate',
@@ -365,27 +615,48 @@ export class TrfWizardComponent implements OnInit {
    * ngOnChanges (which rebuilds the form on non-first initialData changes) picks it up.
    */
   private loadLinkedAccommodationForEdit(trfId: number): void {
+    // AccommodationService.getAllRequests() is typed Observable<any> at its
+    // own declaration (out of scope to fix here) - this interface describes
+    // only the fields this call site actually reads off each row.
+    interface LinkedAccommodationRow {
+      trf?: number;
+      additional_data?: {
+        requestor_gender?: string;
+        location?: string;
+        requested_check_in_date?: string;
+        flight_arrival_time?: string;
+        requested_check_out_date?: string;
+        flight_departure_time?: string;
+        requested_room_type?: string;
+        special_requests?: string;
+      };
+    }
+
     this.accommodationService.getAllRequests({ page_size: 100 }).subscribe({
-      next: (response: any) => {
-        const results = response?.results || response || [];
-        const linked = (Array.isArray(results) ? results : []).find(
-          (req: any) => req.trf === trfId
-        );
+      next: (response: { results?: LinkedAccommodationRow[] } | LinkedAccommodationRow[]) => {
+        const results = (Array.isArray(response) ? response : response?.results) || [];
+        const linked = results.find(req => req.trf === trfId);
         if (!linked) {
           return;
         }
         const additionalData = linked.additional_data || {};
         this.domesticTravelData = {
           ...this.domesticTravelData,
+          // gender/location/roomType are backend free-text that this form's
+          // AccommodationDetails narrows to specific literal unions - trust
+          // the backend value the same way the rest of this file already
+          // trusts loosely-typed API responses (see TrfBackendResponse's own
+          // doc comment) rather than validating every possible literal here.
           accommodation: {
             required: true,
-            gender: additionalData.requestor_gender || '',
-            location: additionalData.location || '',
+            gender: (additionalData.requestor_gender || '') as AccommodationDetails['gender'],
+            location: (additionalData.location || '') as AccommodationDetails['location'],
             checkInDate: additionalData.requested_check_in_date || '',
             checkInTime: additionalData.flight_arrival_time || '',
             checkOutDate: additionalData.requested_check_out_date || '',
             checkOutTime: additionalData.flight_departure_time || '',
-            roomType: additionalData.requested_room_type || '',
+            roomType: (additionalData.requested_room_type ||
+              '') as AccommodationDetails['roomType'],
             specialRequests: additionalData.special_requests || '',
           },
         };
@@ -402,12 +673,18 @@ export class TrfWizardComponent implements OnInit {
    * loadLinkedAccommodationForEdit above.
    */
   private loadLinkedTransportForEdit(trfId: number): void {
+    // TransportService.getAllRequests() is typed Observable<any> at its own
+    // declaration (out of scope to fix here) - this interface describes
+    // only the fields this call site actually reads off each row.
+    interface LinkedTransportRow {
+      trfId?: number | string;
+      transportDetails?: TransportJourney[];
+    }
+
     this.transportService.getAllRequests({ page_size: 100 }).subscribe({
-      next: (response: any) => {
-        const results = response?.results || response || [];
-        const linked = (Array.isArray(results) ? results : []).find(
-          (req: any) => Number(req.trfId) === trfId
-        );
+      next: (response: { results?: LinkedTransportRow[] } | LinkedTransportRow[]) => {
+        const results = (Array.isArray(response) ? response : response?.results) || [];
+        const linked = results.find(req => Number(req.trfId) === trfId);
         if (!linked) {
           return;
         }
@@ -415,7 +692,6 @@ export class TrfWizardComponent implements OnInit {
           ...this.domesticTravelData,
           transport: {
             required: true,
-            purpose: linked.purpose || '',
             journeys: linked.transportDetails || [],
           },
         };
@@ -429,7 +705,7 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Handle requestor form submission
    */
-  onRequestorSubmit(data: any): void {
+  onRequestorSubmit(data: RequestorInformation): void {
     this.requestorData = data;
     this.completedSteps[0] = true;
     this.currentStep = 2; // Move to travel details
@@ -438,20 +714,26 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Handle travel details form submission
    */
-  onTravelDetailsSubmit(data: any): void {
+  onTravelDetailsSubmit(
+    data:
+      | DomesticTravelSpecificDetails
+      | OverseasTravelDetails
+      | HomeLeaveDetails
+      | ExternalPartiesDetails
+  ): void {
     // Save the data based on travel type
     switch (this.selectedTravelType) {
       case 'Domestic':
-        this.domesticTravelData = data;
+        this.domesticTravelData = data as DomesticTravelSpecificDetails;
         break;
       case 'Overseas':
-        this.overseasTravelData = data;
+        this.overseasTravelData = data as OverseasTravelDetails;
         break;
       case 'Home Leave':
-        this.homeLeaveData = data;
+        this.homeLeaveData = data as HomeLeaveDetails;
         break;
       case 'External Parties':
-        this.externalPartiesData = data;
+        this.externalPartiesData = data as ExternalPartiesDetails;
         break;
     }
     this.completedSteps[1] = true;
@@ -701,7 +983,14 @@ export class TrfWizardComponent implements OnInit {
 
     if (this.isEditMode && this.trfId) {
       // Update existing TRF
-      this.trfService.updateTrf(this.trfId, combinedData.mainTrf).subscribe({
+      // TrfService.updateTrf() is typed to take TravelRequestForm - the same
+      // stale/mock model noted at loadExistingTrf() above, not what this
+      // file actually builds - cast at this boundary rather than fixing
+      // trf.service.ts's typing here.
+      const mainTrfPayload = combinedData.mainTrf as unknown as Parameters<
+        typeof this.trfService.updateTrf
+      >[1];
+      this.trfService.updateTrf(this.trfId, mainTrfPayload).subscribe({
         next: () => {
           // For edit mode, we might need to delete and recreate nested resources
           // This is a simplified approach - ideally, you'd update existing ones
@@ -720,7 +1009,7 @@ export class TrfWizardComponent implements OnInit {
                       this.toastService.success('TRF updated and submitted successfully!');
                       this.router.navigate(['/trf']);
                     },
-                    error: (error: any) => {
+                    error: (error: HttpErrorResponse) => {
                       this.isSubmitting = false;
 
                       let errorMessage = 'Error submitting TRF to workflow: ';
@@ -752,7 +1041,7 @@ export class TrfWizardComponent implements OnInit {
                 this.router.navigate(['/trf']);
               }
             },
-            error: (error: any) => {
+            error: (error: HttpErrorResponse) => {
               this.isSubmitting = false;
               this.submitError = this.errorHandler.getErrorMessage(
                 error,
@@ -762,7 +1051,7 @@ export class TrfWizardComponent implements OnInit {
             },
           });
         },
-        error: (error: any) => {
+        error: (error: HttpErrorResponse) => {
           this.isSubmitting = false;
           this.submitError = this.errorHandler.getErrorMessage(error, 'Error updating TRF');
           this.toastService.error(this.submitError);
@@ -771,7 +1060,7 @@ export class TrfWizardComponent implements OnInit {
     } else {
       // Create new TRF
       this.trfService.createTravelRequest(combinedData.mainTrf).subscribe({
-        next: (createdTrf: any) => {
+        next: (createdTrf: { id: number }) => {
           // Step 2: Create nested resources (itinerary, meals, etc.)
           from(this.createNestedResources(createdTrf.id, combinedData, isDraft)).subscribe({
             next: () => {
@@ -788,7 +1077,7 @@ export class TrfWizardComponent implements OnInit {
                       this.toastService.success('TRF submitted successfully!');
                       this.router.navigate(['/trf']);
                     },
-                    error: (error: any) => {
+                    error: (error: HttpErrorResponse) => {
                       this.isSubmitting = false;
                       this.submitError = this.errorHandler.getErrorMessage(
                         error,
@@ -803,7 +1092,7 @@ export class TrfWizardComponent implements OnInit {
                 this.router.navigate(['/trf']);
               }
             },
-            error: (error: any) => {
+            error: (error: HttpErrorResponse) => {
               this.isSubmitting = false;
               this.submitError = this.errorHandler.getErrorMessage(
                 error,
@@ -813,7 +1102,7 @@ export class TrfWizardComponent implements OnInit {
             },
           });
         },
-        error: (error: any) => {
+        error: (error: HttpErrorResponse) => {
           this.isSubmitting = false;
           this.submitError = this.errorHandler.getErrorMessage(error, 'Error creating TRF');
           this.toastService.error(this.submitError);
@@ -825,9 +1114,9 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Prepare TRF data for submission
    */
-  private prepareTrfData(isDraft: boolean): any {
+  private prepareTrfData(isDraft: boolean): PreparedTrfData {
     // Main TRF data
-    const mainTrf: any = {
+    const mainTrf: Record<string, unknown> = {
       requestor_name: this.requestorData.fullName,
       staff_id: this.requestorData.staffId,
       department: this.requestorData.department,
@@ -852,20 +1141,31 @@ export class TrfWizardComponent implements OnInit {
       case 'External Parties':
         return this.prepareExternalPartiesData(mainTrf, isDraft);
       default:
-        return { mainTrf, itinerarySegments: [], mealSelections: [] };
+        return {
+          mainTrf,
+          itinerarySegments: [],
+          mealSelections: [],
+          passportDetails: null,
+          bankDetails: null,
+          advanceAmounts: [],
+        };
     }
   }
 
   /**
    * Prepare Domestic travel data
    */
-  private prepareDomesticData(mainTrf: any, _isDraft: boolean): any {
-    mainTrf.purpose = this.domesticTravelData?.purposeOfTravel || '';
-    mainTrf.additional_comments = this.approvalForm?.getFormData()?.additionalComments || '';
+  private prepareDomesticData(
+    mainTrf: Record<string, unknown>,
+    _isDraft: boolean
+  ): PreparedTrfData {
+    mainTrf['purpose'] = this.domesticTravelData?.purposeOfTravel || '';
+    mainTrf['additional_comments'] = this.approvalForm?.getFormData()?.additionalComments || '';
 
     return {
       mainTrf,
-      itinerarySegments: this.domesticTravelData?.itinerary || [],
+      itinerarySegments: (this.domesticTravelData?.itinerary ||
+        []) as unknown as NestedItineraryRow[],
       mealSelections: this.domesticTravelData?.mealProvisions?.dailySelections || [],
       passportDetails: null,
       bankDetails: null,
@@ -878,14 +1178,18 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Prepare Overseas travel data
    */
-  private prepareOverseasData(mainTrf: any, _isDraft: boolean): any {
-    mainTrf.purpose = this.overseasTravelData?.purpose || '';
-    mainTrf.additional_comments = this.approvalForm?.getFormData()?.additionalComments || '';
-    mainTrf.advance_consent_accepted = this.overseasTravelData?.advanceConsentAccepted || false;
+  private prepareOverseasData(
+    mainTrf: Record<string, unknown>,
+    _isDraft: boolean
+  ): PreparedTrfData {
+    mainTrf['purpose'] = this.overseasTravelData?.purpose || '';
+    mainTrf['additional_comments'] = this.approvalForm?.getFormData()?.additionalComments || '';
+    mainTrf['advance_consent_accepted'] = this.overseasTravelData?.advanceConsentAccepted || false;
 
     return {
       mainTrf,
-      itinerarySegments: this.overseasTravelData?.itinerary || [],
+      itinerarySegments: (this.overseasTravelData?.itinerary ||
+        []) as unknown as NestedItineraryRow[],
       mealSelections: [],
       passportDetails: null,
       bankDetails: this.overseasTravelData?.advanceBankDetails || null,
@@ -896,14 +1200,17 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Prepare Home Leave data
    */
-  private prepareHomeLeaveData(mainTrf: any, _isDraft: boolean): any {
-    mainTrf.purpose = this.homeLeaveData?.purpose || '';
-    mainTrf.additional_comments = this.approvalForm?.getFormData()?.additionalComments || '';
-    mainTrf.advance_consent_accepted = this.homeLeaveData?.advanceConsentAccepted || false;
+  private prepareHomeLeaveData(
+    mainTrf: Record<string, unknown>,
+    _isDraft: boolean
+  ): PreparedTrfData {
+    mainTrf['purpose'] = this.homeLeaveData?.purpose || '';
+    mainTrf['additional_comments'] = this.approvalForm?.getFormData()?.additionalComments || '';
+    mainTrf['advance_consent_accepted'] = this.homeLeaveData?.advanceConsentAccepted || false;
 
     return {
       mainTrf,
-      itinerarySegments: this.homeLeaveData?.itinerary || [],
+      itinerarySegments: (this.homeLeaveData?.itinerary || []) as unknown as NestedItineraryRow[],
       mealSelections: [],
       passportDetails: this.homeLeaveData?.passportDetails || null,
       bankDetails: this.homeLeaveData?.advanceBankDetails || null,
@@ -914,20 +1221,24 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Prepare External Parties data
    */
-  private prepareExternalPartiesData(mainTrf: any, _isDraft: boolean): any {
-    mainTrf.purpose = this.externalPartiesData?.purpose || '';
-    mainTrf.additional_comments = this.approvalForm?.getFormData()?.additionalComments || '';
+  private prepareExternalPartiesData(
+    mainTrf: Record<string, unknown>,
+    _isDraft: boolean
+  ): PreparedTrfData {
+    mainTrf['purpose'] = this.externalPartiesData?.purpose || '';
+    mainTrf['additional_comments'] = this.approvalForm?.getFormData()?.additionalComments || '';
 
     // Add external party specific fields - CORRECTED FIELD NAMES
-    mainTrf.external_full_name = this.externalPartiesData?.externalFullName || '';
-    mainTrf.external_organization = this.externalPartiesData?.externalOrganization || '';
-    mainTrf.external_ref_to_authority_letter =
+    mainTrf['external_full_name'] = this.externalPartiesData?.externalFullName || '';
+    mainTrf['external_organization'] = this.externalPartiesData?.externalOrganization || '';
+    mainTrf['external_ref_to_authority_letter'] =
       this.externalPartiesData?.externalRefToAuthorityLetter || '';
-    mainTrf.external_cost_center = this.externalPartiesData?.externalCostCenter || '';
+    mainTrf['external_cost_center'] = this.externalPartiesData?.externalCostCenter || '';
 
     return {
       mainTrf,
-      itinerarySegments: this.externalPartiesData?.itinerary || [],
+      itinerarySegments: (this.externalPartiesData?.itinerary ||
+        []) as unknown as NestedItineraryRow[],
       mealSelections: [],
       passportDetails: null,
       bankDetails: null,
@@ -938,12 +1249,12 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Convert Date object or ISO string to YYYY-MM-DD format
    */
-  private formatDateForAPI(date: any): string {
+  private formatDateForAPI(date: string | Date | null | undefined): string {
     if (!date) return '';
 
     const dateObj = typeof date === 'string' ? new Date(date) : date;
 
-    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+    if (!(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) {
       return '';
     }
 
@@ -958,7 +1269,7 @@ export class TrfWizardComponent implements OnInit {
    * Delete existing nested resources for a TRF (used during update to prevent duplicates)
    */
   private deleteExistingNestedResources(trfId: number): Promise<void> {
-    const promises: Promise<any>[] = [];
+    const promises: Promise<unknown>[] = [];
 
     // Delete all existing nested resources - errors intentionally swallowed
     // (matching the caller's own comment: "some resources might not exist")
@@ -1002,7 +1313,7 @@ export class TrfWizardComponent implements OnInit {
   // eslint-disable-next-line complexity
   private async createNestedResources(
     trfId: number,
-    data: any,
+    data: PreparedTrfData,
     isDraft: boolean
   ): Promise<boolean> {
     // Guard: Ensure trfId is valid
@@ -1019,7 +1330,7 @@ export class TrfWizardComponent implements OnInit {
       }
     }
 
-    const promises: Promise<any>[] = [];
+    const promises: Promise<unknown>[] = [];
 
     // Create itinerary segments SEQUENTIALLY, not in parallel. The
     // backend has no explicit ordering field for segments - it infers
@@ -1062,7 +1373,7 @@ export class TrfWizardComponent implements OnInit {
 
     // Create meal selections (Domestic only)
     if (data.mealSelections && data.mealSelections.length > 0) {
-      data.mealSelections.forEach((meal: any) => {
+      data.mealSelections.forEach(meal => {
         // Skip meals with missing required meal_date
         if (!meal.date) {
           return;
@@ -1118,7 +1429,7 @@ export class TrfWizardComponent implements OnInit {
 
     // Create advance amount items (Overseas, Home Leave)
     if (data.advanceAmounts && data.advanceAmounts.length > 0) {
-      data.advanceAmounts.forEach((amount: any) => {
+      data.advanceAmounts.forEach(amount => {
         const advanceData = {
           trf: trfId,
           date_from: amount.dateFrom || '',
@@ -1194,10 +1505,10 @@ export class TrfWizardComponent implements OnInit {
         // No separate purpose field on this embedded section (see
         // TransportDetails) - reuse the TSR's own purpose so the linked
         // transport request's required `purpose` field is still satisfied.
-        purpose: data.mainTrf?.purpose || '',
+        purpose: data.mainTrf?.['purpose'] || '',
         status: 'Pending',
         trf: trfId,
-        transport_details: (transport.journeys || []).map((j: any) => ({
+        transport_details: (transport.journeys || []).map(j => ({
           date: this.formatDateForAPI(j.date) || j.date,
           day: j.day,
           from: j.from,
@@ -1224,7 +1535,12 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Get travel details for the approval component
    */
-  getTravelDetailsForApproval(): any {
+  getTravelDetailsForApproval():
+    | Partial<DomesticTravelSpecificDetails>
+    | Partial<OverseasTravelDetails>
+    | Partial<HomeLeaveDetails>
+    | Partial<ExternalPartiesDetails>
+    | null {
     switch (this.selectedTravelType) {
       case 'Domestic':
         return this.domesticTravelData;
@@ -1283,7 +1599,7 @@ export class TrfWizardComponent implements OnInit {
    * where the first leg started.
    */
   private deriveTripTypeFromItinerary(
-    itinerary: Array<Record<string, any>>,
+    itinerary: Array<Record<string, unknown>>,
     originKey: string,
     destinationKey: string,
     dateKey: string,
@@ -1305,8 +1621,8 @@ export class TrfWizardComponent implements OnInit {
         if (dateA !== dateB) {
           return dateA < dateB ? -1 : 1;
         }
-        const minutesA = this.parseTimeOfDayMinutes(a.segment?.[timeKey]);
-        const minutesB = this.parseTimeOfDayMinutes(b.segment?.[timeKey]);
+        const minutesA = this.parseTimeOfDayMinutes(a.segment?.[timeKey] as string | undefined);
+        const minutesB = this.parseTimeOfDayMinutes(b.segment?.[timeKey] as string | undefined);
         if (minutesA !== minutesB) {
           return minutesA - minutesB;
         }
@@ -1348,11 +1664,11 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Transform itinerary data from backend format to component format
    */
-  private transformItineraryData(itinerary: any[]): any[] {
+  private transformItineraryData(itinerary: NestedItineraryRow[]): NestedItineraryRow[] {
     // High complexity here is field-name fallback chains (backend snake_case
     // vs several legacy camelCase aliases per field), not branchy logic.
     // eslint-disable-next-line complexity
-    return itinerary.map((segment: any) => ({
+    return itinerary.map(segment => ({
       date: segment.segment_date || segment.date || null,
       day: segment.day_of_week || segment.day || '',
       from: segment.from_location || segment.from || '',
@@ -1368,11 +1684,13 @@ export class TrfWizardComponent implements OnInit {
    * Transform itinerary data specifically for External Parties
    * External Parties component expects different field names
    */
-  private transformExternalPartiesItineraryData(itinerary: any[]): any[] {
+  private transformExternalPartiesItineraryData(
+    itinerary: NestedItineraryRow[]
+  ): NestedItineraryRow[] {
     // High complexity here is field-name fallback chains (backend snake_case
     // vs several legacy camelCase aliases per field), not branchy logic.
     // eslint-disable-next-line complexity
-    const transformed = itinerary.map((segment: any) => {
+    const transformed = itinerary.map(segment => {
       const result = {
         departureDate: segment.segment_date || segment.date || segment.departureDate || null,
         day: segment.day_of_week || segment.day || '',
@@ -1398,10 +1716,10 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Transform meal selections data from backend format to component format
    */
-  private transformMealSelectionsData(mealSelections: any[]): any[] {
-    const transformed = mealSelections.map((meal: any) => {
+  private transformMealSelectionsData(mealSelections: RawMealRow[]): DailyMealSelection[] {
+    const transformed = mealSelections.map(meal => {
       const result = {
-        date: meal.meal_date || meal.date || null,
+        date: meal.meal_date || meal.date || '',
         // Explicitly handle boolean values - backend returns true/false
         breakfast: meal.breakfast === true || meal.breakfast === 'true' || meal.breakfast === 1,
         lunch: meal.lunch === true || meal.lunch === 'true' || meal.lunch === 1,
@@ -1419,7 +1737,9 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Transform bank details from backend format to component format
    */
-  private transformBankDetails(bankDetail: any): any {
+  private transformBankDetails(
+    bankDetail: RawBankDetailRow | null | undefined
+  ): AdvanceBankDetails {
     if (!bankDetail || Object.keys(bankDetail).length === 0) {
       return {
         bankName: '',
@@ -1442,14 +1762,14 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Transform advance amounts from backend format to component format
    */
-  private transformAdvanceAmounts(advanceAmounts: any[]): any[] {
+  private transformAdvanceAmounts(advanceAmounts: RawAdvanceAmountRow[]): AdvanceAmountItem[] {
     if (!advanceAmounts || advanceAmounts.length === 0) {
       return [];
     }
 
-    return advanceAmounts.map((item: any) => ({
-      dateFrom: item.date_from || item.dateFrom || null,
-      dateTo: item.date_to || item.dateTo || null,
+    return advanceAmounts.map(item => ({
+      dateFrom: item.date_from || item.dateFrom || '',
+      dateTo: item.date_to || item.dateTo || '',
       lh: item.lh || 0,
       ma: item.ma || 0,
       oa: item.oa || 0,
@@ -1463,7 +1783,9 @@ export class TrfWizardComponent implements OnInit {
   /**
    * Extract passport file info from passport details for upload component
    */
-  private extractPassportFileInfo(passportDetails: any): any {
+  private extractPassportFileInfo(
+    passportDetails: RawPassportRow | RawPassportRow[] | null | undefined
+  ): PassportUploadDetails {
     if (!passportDetails) {
       return { file: null, fileName: '', fileUrl: '' };
     }
@@ -1493,7 +1815,9 @@ export class TrfWizardComponent implements OnInit {
    * vs legacy camelCase aliases per field), not branchy logic.
    */
   // eslint-disable-next-line complexity
-  private transformPassportDetails(passportDetails: any): any {
+  private transformPassportDetails(
+    passportDetails: RawPassportRow | RawPassportRow[] | null | undefined
+  ): TransformedPassportDetails {
     // Backend returns array, we need first element
     if (Array.isArray(passportDetails) && passportDetails.length > 0) {
       const detail = passportDetails[0];
