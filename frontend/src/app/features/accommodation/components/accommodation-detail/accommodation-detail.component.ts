@@ -6,6 +6,7 @@ import { AccommodationService } from '../../services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { WorkflowService } from '../../../../core/services/workflow.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
@@ -69,6 +70,7 @@ export class AccommodationDetailComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
+    private authService: AuthService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService,
     private errorHandler: HttpErrorHandlerService
@@ -164,11 +166,42 @@ export class AccommodationDetailComponent implements OnInit {
     });
   }
 
+  /**
+   * The signed-in user has a pending, actionable workflow step on this
+   * request right now - i.e. they're the one being asked to approve/reject
+   * it. Reuses the same can_action signal the approval-actions UI already
+   * trusts, rather than a separate role check.
+   */
+  get isCurrentApprover(): boolean {
+    return !!this.currentStepExecution;
+  }
+
+  /**
+   * The signed-in user created this request. Owner-only actions
+   * (Cancel/Delete) are gated on this so a viewer with read access - an
+   * approver, an admin browsing, anyone else - can't act on someone
+   * else's request. Accommodation requests have no owning User FK on the
+   * backend (see docs/CODEBASE_REFACTOR_ROADMAP.md item 6) - ownership is
+   * determined the same way the backend's own get_queryset does, by
+   * matching staff_id or full name against the current user.
+   */
+  get isOwner(): boolean {
+    if (!this.request) return false;
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) return false;
+    return (
+      (!!currentUser.staff_id && currentUser.staff_id === this.request.requestorId) ||
+      currentUser.name === this.request.requestorName
+    );
+  }
+
   canCancel(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
     return this.request ? isCancellable(this.request.status) : false;
   }
 
   canDelete(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
     return this.request ? isDeletable(this.request.status) : false;
   }
 
@@ -204,7 +237,9 @@ export class AccommodationDetailComponent implements OnInit {
               this.navigateBack();
             },
             error: err => {
-              this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to cancel request'));
+              this.toastService.error(
+                this.errorHandler.getErrorMessage(err, 'Failed to cancel request')
+              );
             },
           });
         }
@@ -220,7 +255,9 @@ export class AccommodationDetailComponent implements OnInit {
             this.navigateBack();
           },
           error: err => {
-            this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to delete request'));
+            this.toastService.error(
+              this.errorHandler.getErrorMessage(err, 'Failed to delete request')
+            );
           },
         });
       }
@@ -251,7 +288,7 @@ export class AccommodationDetailComponent implements OnInit {
   formatDateLong(dateValue: Date | string | null | undefined): string {
     if (!dateValue) return 'N/A';
     const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
-    if (isNaN(date.getTime())) return 'Invalid Date';
+    if (Number.isNaN(date.getTime())) return 'Invalid Date';
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -263,7 +300,7 @@ export class AccommodationDetailComponent implements OnInit {
   formatDateWithOrdinal(dateValue: Date | string | null | undefined): string {
     if (!dateValue) return 'N/A';
     const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
-    if (isNaN(date.getTime())) return 'Invalid Date';
+    if (Number.isNaN(date.getTime())) return 'Invalid Date';
 
     const day = date.getDate();
     const ordinal = this.getOrdinal(day);
