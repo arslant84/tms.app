@@ -1,31 +1,60 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, type OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import type { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TrfService } from '../../services/trf.service';
-import { AccommodationService, AccommodationRequest } from '../../../accommodation/services/accommodation.service';
+import {
+  AccommodationService,
+  type AccommodationRequest,
+} from '../../../accommodation/services/accommodation.service';
 import { TransportService } from '../../../transport/services/transport.service';
-import { TransportRequestForm } from '../../../transport/models/transport.model';
+import type { TransportRequestForm } from '../../../transport/models/transport.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { WorkflowService } from '../../../../core/services/workflow.service';
 import { RbacService } from '../../../../core/services/rbac.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
-import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
+import type {
+  WorkflowInstance,
+  WorkflowInstanceList,
+  WorkflowStepExecution,
+} from '../../../../core/models/workflow.models';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
+import { firstTruthy } from '../../../../shared/utils/first-truthy';
+import type {
+  TrfDetailRawResponse,
+  TrfViewData,
+  TravelTypeFields,
+  TrfFlightSegment,
+  TrfFlightDetails,
+  TrfItineraryRow,
+  TrfMealRow,
+  TrfBankDetails,
+  TrfAdvanceAmountRow,
+  TrfPassportRow,
+  TrfApprovalStepRow,
+} from './trf-detail.types';
 
 @Component({
   selector: 'app-trf-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, WorkflowStatusComponent, ApprovalActionsComponent, LoadingSpinnerComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    WorkflowStatusComponent,
+    ApprovalActionsComponent,
+    LoadingSpinnerComponent,
+  ],
   templateUrl: './trf-detail.component.html',
-  styleUrls: ['./trf-detail.component.scss']
+  styleUrls: ['./trf-detail.component.scss'],
 })
 export class TrfDetailComponent implements OnInit {
-  trfData: any = null;
+  trfData: TrfViewData | null = null;
   loading: boolean = true;
   error: string = '';
   trfId!: number;
@@ -56,6 +85,7 @@ export class TrfDetailComponent implements OnInit {
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
     private rbacService: RbacService,
+    private authService: AuthService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService,
     private errorHandler: HttpErrorHandlerService
@@ -77,24 +107,30 @@ export class TrfDetailComponent implements OnInit {
     this.error = '';
 
     // Check if user has admin view permissions for TRF module
-    const hasAdminView = this.rbacService.hasPermission('view_all_trf') ||
-                         this.rbacService.hasPermission('approve_trf') ||
-                         this.rbacService.hasPermission('manage_trf');
+    const hasAdminView =
+      this.rbacService.hasPermission('view_all_trf') ||
+      this.rbacService.hasPermission('approve_trf') ||
+      this.rbacService.hasPermission('manage_trf');
 
-    // Fetch TRF details from the backend using TrfService
+    // Fetch TRF details from the backend using TrfService. TrfService
+    // declares this Observable<TravelRequestForm>, but that model doesn't
+    // match the actual raw backend response (snake_case fields, nested
+    // travel-type details, etc.) - a pre-existing mismatch, not introduced
+    // here. Cast at the boundary to the shape this page actually receives.
     this.trfService.getTrfById(this.trfId, false, hasAdminView).subscribe({
-      next: (response: any) => {
+      next: response => {
+        const raw = response as unknown as TrfDetailRawResponse;
         // Backend returns { trf: { ...data } }, so extract the trf object
-        const data = response.trf || response;
+        const data = raw.trf || raw;
         this.trfData = this.transformTrfData(data);
         this.loading = false;
         this.loadLinkedAccommodation();
         this.loadLinkedTransport();
       },
-      error: (err) => {
-        this.error = 'Failed to load TRF details: ' + (err.message || 'Unknown error');
+      error: (err: { message?: string }) => {
+        this.error = `Failed to load TRF details: ${err.message || 'Unknown error'}`;
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -106,15 +142,14 @@ export class TrfDetailComponent implements OnInit {
    */
   private loadLinkedAccommodation(): void {
     this.accommodationService.getAllRequests({ page_size: 100 }).subscribe({
-      next: (response: any) => {
-        const results = response?.results || response || [];
-        this.linkedAccommodation = (Array.isArray(results) ? results : [])
-          .find((req: AccommodationRequest) => req.trf === this.trfId) || null;
+      next: (response: AccommodationRequest[] | { results?: AccommodationRequest[] }) => {
+        const results = Array.isArray(response) ? response : response?.results || [];
+        this.linkedAccommodation = results.find(req => req.trf === this.trfId) || null;
       },
       error: () => {
         // Non-critical - the rest of the TRF detail page still works without it
         this.linkedAccommodation = null;
-      }
+      },
     });
   }
 
@@ -125,93 +160,193 @@ export class TrfDetailComponent implements OnInit {
    */
   private loadLinkedTransport(): void {
     this.transportService.getAllRequests({ page_size: 100 }).subscribe({
-      next: (response: any) => {
-        const results = response?.results || response || [];
-        this.linkedTransport = (Array.isArray(results) ? results : [])
-          .find((req: TransportRequestForm) => Number(req.trfId) === this.trfId) || null;
+      next: (response: TransportRequestForm[] | { results?: TransportRequestForm[] }) => {
+        const results = Array.isArray(response) ? response : response?.results || [];
+        this.linkedTransport = results.find(req => Number(req.trfId) === this.trfId) || null;
       },
       error: () => {
         // Non-critical - the rest of the TRF detail page still works without it
         this.linkedTransport = null;
-      }
+      },
     });
   }
 
+  private extractDomesticFields(data: TrfDetailRawResponse): TravelTypeFields {
+    const details = data.domesticTravelDetails || {};
+    return {
+      itinerary: firstTruthy<TrfItineraryRow[]>(
+        [],
+        details.itinerary,
+        data.itinerary_segments,
+        data.itinerary
+      ),
+      mealSelections: firstTruthy<TrfMealRow[]>(
+        [],
+        details.mealProvision?.dailyMealSelections,
+        data.daily_meals,
+        data.daily_meal_selections,
+        data.mealSelections
+      ),
+      bankDetails: null,
+      advanceAmounts: [],
+      purpose: firstTruthy('', details.purpose, data.purpose),
+    };
+  }
+
+  private extractOverseasFields(data: TrfDetailRawResponse): TravelTypeFields {
+    const details = data.overseasTravelDetails || {};
+    return {
+      itinerary: firstTruthy<TrfItineraryRow[]>(
+        [],
+        details.itinerary,
+        data.itinerary_segments,
+        data.itinerary
+      ),
+      mealSelections: [],
+      bankDetails: firstTruthy<TrfBankDetails | null>(
+        null,
+        details.advanceBankDetails,
+        data.advance_bank_details,
+        data.bankDetails
+      ),
+      advanceAmounts: firstTruthy<TrfAdvanceAmountRow[]>(
+        [],
+        details.advanceAmountRequested,
+        data.advance_amount_items,
+        data.advanceAmounts
+      ),
+      purpose: firstTruthy('', details.purpose, data.purpose),
+    };
+  }
+
+  private extractExternalPartiesFields(data: TrfDetailRawResponse): TravelTypeFields {
+    const details = data.externalPartiesTravelDetails || {};
+    return {
+      itinerary: firstTruthy<TrfItineraryRow[]>(
+        [],
+        details.itinerary,
+        data.itinerary_segments,
+        data.itinerary
+      ),
+      mealSelections: firstTruthy<TrfMealRow[]>(
+        [],
+        details.mealProvision?.dailyMealSelections,
+        data.daily_meals,
+        data.daily_meal_selections,
+        data.mealSelections
+      ),
+      bankDetails: null,
+      advanceAmounts: [],
+      purpose: firstTruthy('', details.purpose, data.purpose),
+    };
+  }
+
   /**
-   * Transform backend data to match the view structure
+   * Transform backend data to match the view structure. Itinerary/meal/
+   * bank-detail/advance-amount extraction is delegated to per-travel-type
+   * helpers above - each travel type nests these under a different key
+   * (domesticTravelDetails/overseasTravelDetails/
+   * externalPartiesTravelDetails), so they can't be read generically.
    */
-  private transformTrfData(data: any): any {
-    const travelType = data.travel_type || data.travelType;
+  private transformTrfData(data: TrfDetailRawResponse): TrfViewData {
+    const travelType = firstTruthy('', data.travel_type, data.travelType);
 
-    // Extract itinerary from the correct nested location based on travel type
-    let itinerary: any[] = [];
-    let mealSelections: any[] = [];
-    let passportDetails: any = null;
-    let bankDetails: any = null;
-    let advanceAmounts: any[] = [];
-    let purpose = data.purpose || '';
-
-    // Backend returns nested structures based on travel type
+    let travelTypeFields: TravelTypeFields = {
+      itinerary: [],
+      mealSelections: [],
+      bankDetails: null,
+      advanceAmounts: [],
+      purpose: data.purpose ?? '',
+    };
     if (travelType === 'Domestic') {
-      const domesticDetails = data.domesticTravelDetails || {};
-      itinerary = domesticDetails.itinerary || data.itinerary_segments || data.itinerary || [];
-      mealSelections = domesticDetails.mealProvision?.dailyMealSelections || data.daily_meals || data.daily_meal_selections || data.mealSelections || [];
-      purpose = domesticDetails.purpose || data.purpose || '';
+      travelTypeFields = this.extractDomesticFields(data);
     } else if (travelType === 'Overseas' || travelType === 'Home Leave') {
-      const overseasDetails = data.overseasTravelDetails || {};
-      itinerary = overseasDetails.itinerary || data.itinerary_segments || data.itinerary || [];
-      bankDetails = overseasDetails.advanceBankDetails || data.advance_bank_details || data.bankDetails;
-      advanceAmounts = overseasDetails.advanceAmountRequested || data.advance_amount_items || data.advanceAmounts || [];
-      purpose = overseasDetails.purpose || data.purpose || '';
+      travelTypeFields = this.extractOverseasFields(data);
     } else if (travelType === 'External Parties') {
-      const externalDetails = data.externalPartiesTravelDetails || {};
-      itinerary = externalDetails.itinerary || data.itinerary_segments || data.itinerary || [];
-      mealSelections = externalDetails.mealProvision?.dailyMealSelections || data.daily_meals || data.daily_meal_selections || data.mealSelections || [];
-      purpose = externalDetails.purpose || data.purpose || '';
+      travelTypeFields = this.extractExternalPartiesFields(data);
     }
 
     // Passport details are returned at the top level (passport_details) regardless
     // of travel type - Domestic and External Parties can upload one too, not just
     // Overseas/Home Leave.
-    passportDetails = data.passport_details || data.passportDetails;
-
+    const passportDetails = firstTruthy<TrfPassportRow[]>(
+      [],
+      data.passport_details,
+      data.passportDetails
+    );
 
     // Extract external party info from nested structure
-    const externalRequestorInfo = data.externalPartyRequestorInfo || {};
+    const externalRequestorInfo = data.externalPartyRequestorInfo ?? {};
 
     return {
       id: data.id,
-      requestNumber: data.request_number || data.requestNumber,
-      travelType: travelType,
-      status: data.status,
-      requestorName: data.requestor_name || data.requestorName,
-      staffId: data.staff_id || data.staffId,
-      department: data.department,
-      position: data.position,
-      costCenter: data.cost_center || data.costCenter,
-      telEmail: data.tel_email || data.telEmail,
-      purpose: purpose,
-      additionalComments: data.additional_comments || data.additionalComments,
-      estimatedCost: data.estimated_cost || data.estimatedCost || 0,
+      requestNumber: firstTruthy('', data.request_number, data.requestNumber),
+      travelType,
+      status: data.status ?? '',
+      requestorName: firstTruthy('', data.requestor_name, data.requestorName),
+      createdBy: firstTruthy<number | null>(null, data.created_by, data.createdBy),
+      staffId: firstTruthy('', data.staff_id, data.staffId),
+      department: data.department ?? '',
+      position: data.position ?? '',
+      costCenter: firstTruthy('', data.cost_center, data.costCenter),
+      telEmail: firstTruthy('', data.tel_email, data.telEmail),
+      purpose: travelTypeFields.purpose,
+      additionalComments: firstTruthy('', data.additional_comments, data.additionalComments),
+      estimatedCost: firstTruthy<number | string>(0, data.estimated_cost, data.estimatedCost),
       // External party fields - from nested structure or top level
-      externalPartyName: externalRequestorInfo.externalFullName || data.external_full_name || data.external_party_name || data.externalPartyName,
-      externalPartyOrganization: externalRequestorInfo.externalOrganization || data.external_organization || data.external_party_organization || data.externalPartyOrganization,
-      externalRefToAuthorityLetter: externalRequestorInfo.externalRefToAuthorityLetter || data.external_ref_to_authority_letter || data.externalRefToAuthorityLetter,
-      externalCostCenter: externalRequestorInfo.externalCostCenter || data.external_cost_center || data.externalCostCenter,
+      externalPartyName: firstTruthy(
+        '',
+        externalRequestorInfo.externalFullName,
+        data.external_full_name,
+        data.external_party_name,
+        data.externalPartyName
+      ),
+      externalPartyOrganization: firstTruthy(
+        '',
+        externalRequestorInfo.externalOrganization,
+        data.external_organization,
+        data.external_party_organization,
+        data.externalPartyOrganization
+      ),
+      externalRefToAuthorityLetter: firstTruthy(
+        '',
+        externalRequestorInfo.externalRefToAuthorityLetter,
+        data.external_ref_to_authority_letter,
+        data.externalRefToAuthorityLetter
+      ),
+      externalCostCenter: firstTruthy(
+        '',
+        externalRequestorInfo.externalCostCenter,
+        data.external_cost_center,
+        data.externalCostCenter
+      ),
       // Nested data extracted based on travel type
-      itinerary: itinerary,
-      mealSelections: mealSelections,
-      mealProcessingStatus: data.meal_processing_status || data.mealProcessingStatus,
-      passportDetails: passportDetails,
-      bankDetails: bankDetails,
-      advanceAmounts: advanceAmounts,
+      itinerary: travelTypeFields.itinerary,
+      mealSelections: travelTypeFields.mealSelections,
+      mealProcessingStatus: firstTruthy('', data.meal_processing_status, data.mealProcessingStatus),
+      passportDetails,
+      bankDetails: travelTypeFields.bankDetails,
+      advanceAmounts: travelTypeFields.advanceAmounts,
       advanceConsentAccepted: data.advance_consent_accepted ?? data.advanceConsentAccepted ?? false,
-      advanceConsentAcceptedAt: data.advance_consent_accepted_at || data.advanceConsentAcceptedAt,
-      approvalSteps: data.approval_steps || data.approvalSteps || data.approvalWorkflow || [],
-      createdAt: data.created_at || data.createdAt,
-      updatedAt: data.updated_at || data.updatedAt,
-      submittedAt: data.submitted_at || data.submittedAt,
-      flightDetails: data.flight_details || data.flightDetails || null
+      advanceConsentAcceptedAt: firstTruthy(
+        '',
+        data.advance_consent_accepted_at,
+        data.advanceConsentAcceptedAt
+      ),
+      approvalSteps: firstTruthy<TrfApprovalStepRow[]>(
+        [],
+        data.approval_steps,
+        data.approvalSteps,
+        data.approvalWorkflow
+      ),
+      createdAt: firstTruthy('', data.created_at, data.createdAt),
+      updatedAt: firstTruthy('', data.updated_at, data.updatedAt),
+      submittedAt: firstTruthy('', data.submitted_at, data.submittedAt),
+      flightDetails: firstTruthy<TrfFlightDetails | null>(
+        null,
+        data.flight_details,
+        data.flightDetails
+      ),
     };
   }
 
@@ -226,8 +361,7 @@ export class TrfDetailComponent implements OnInit {
    * Check if TRF is overseas or home leave
    */
   get isOverseas(): boolean {
-    return this.trfData?.travelType === 'Overseas' ||
-           this.trfData?.travelType === 'Home Leave';
+    return this.trfData?.travelType === 'Overseas' || this.trfData?.travelType === 'Home Leave';
   }
 
   /**
@@ -246,11 +380,32 @@ export class TrfDetailComponent implements OnInit {
   }
 
   /**
+   * The signed-in user has a pending, actionable workflow step on this TRF
+   * right now - i.e. they're the one being asked to approve/reject it.
+   * Reuses the same can_action signal the approval-actions UI already
+   * trusts, rather than a separate role check.
+   */
+  get isCurrentApprover(): boolean {
+    return !!this.currentStepExecution;
+  }
+
+  /**
+   * The signed-in user created this TRF. Owner-only actions (Edit/Cancel/
+   * Delete) are gated on this so a viewer with read access - an approver,
+   * an admin browsing, anyone else - can't act on someone else's request.
+   */
+  get isOwner(): boolean {
+    const currentUserId = this.authService.getCurrentUserId();
+    return currentUserId != null && this.trfData?.createdBy === currentUserId;
+  }
+
+  /**
    * Check if TRF can be edited based on status
    * Once approved by any approval workflow, requests cannot be edited
    * Only allow editing for: Draft, Rejected, and Pending (before any approval)
    */
   canEdit(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
     if (!this.trfData?.status) return false;
 
     const status = this.trfData.status;
@@ -278,6 +433,7 @@ export class TrfDetailComponent implements OnInit {
    * Check if TRF can be cancelled based on status
    */
   canCancel(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
     const status = this.trfData?.status || '';
     // Allow cancel for any status that contains 'Pending' and is not approved
     if (status.includes('Pending')) {
@@ -292,6 +448,7 @@ export class TrfDetailComponent implements OnInit {
    * Only allow deletion for Draft and Rejected statuses
    */
   canDelete(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
     if (!this.trfData?.status) return false;
     return this.DELETABLE_STATUSES.includes(this.trfData.status);
   }
@@ -302,7 +459,6 @@ export class TrfDetailComponent implements OnInit {
   getStatusClass(): string {
     return this.statusUtils.getStatusBadgeClass(this.trfData?.status);
   }
-
 
   /**
    * Format time for display. ETD/ETA are free-text fields (a requestor may write
@@ -323,7 +479,10 @@ export class TrfDetailComponent implements OnInit {
   /**
    * Format flight date and time for display
    */
-  formatFlightDateTime(date: string | Date | null | undefined, time: string | null | undefined): string {
+  formatFlightDateTime(
+    date: string | Date | null | undefined,
+    time: string | null | undefined
+  ): string {
     if (!date) return 'N/A';
     const formattedDate = this.dateUtils.formatDate(date);
     if (formattedDate === 'N/A' || formattedDate === 'Invalid Date') return formattedDate;
@@ -338,14 +497,12 @@ export class TrfDetailComponent implements OnInit {
    * (connections); this splits the flat segments list for the Outbound
    * and Return tables on the Flight Processing Details card.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getSegmentsByDirection(direction: 'OUTBOUND' | 'RETURN'): any[] {
+  getSegmentsByDirection(direction: 'OUTBOUND' | 'RETURN'): TrfFlightSegment[] {
     const segments = this.trfData?.flightDetails?.segments;
     if (!segments) {
       return [];
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return segments.filter((seg: any) => seg.direction === direction);
+    return segments.filter(seg => seg.direction === direction);
   }
 
   /**
@@ -354,18 +511,20 @@ export class TrfDetailComponent implements OnInit {
   formatNumber(num: number | string | null | undefined, decimals: number = 0): string {
     if (num === null || num === undefined || String(num).trim() === '') return 'N/A';
     const parsedNum = Number(num);
-    return isNaN(parsedNum) ? String(num) : parsedNum.toLocaleString(undefined, {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals
-    });
+    return Number.isNaN(parsedNum)
+      ? String(num)
+      : parsedNum.toLocaleString(undefined, {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        });
   }
 
   /**
    * Calculate meal totals
    */
-  getMealTotal(mealType: string): number {
+  getMealTotal(mealType: keyof TrfMealRow): number {
     if (!this.trfData?.mealSelections) return 0;
-    return this.trfData.mealSelections.reduce((acc: number, meal: any) => {
+    return this.trfData.mealSelections.reduce((acc: number, meal: TrfMealRow) => {
       return acc + (meal[mealType] ? 1 : 0);
     }, 0);
   }
@@ -385,7 +544,7 @@ export class TrfDetailComponent implements OnInit {
     if (!this.canEdit()) {
       this.toastService.error(
         'This travel request cannot be edited because it has been approved. ' +
-        'Approved requests can only be viewed, not modified.'
+          'Approved requests can only be viewed, not modified.'
       );
       return;
     }
@@ -400,19 +559,21 @@ export class TrfDetailComponent implements OnInit {
     this.confirmationService
       .confirmCancel('Are you sure you want to cancel this TRF? This action cannot be undone.')
       .subscribe(confirmed => {
-      if (confirmed) {
-        // Call the cancel action endpoint using TrfService
-        this.trfService.cancelTrf(this.trfId).subscribe({
-          next: () => {
-            this.toastService.success('TRF cancelled successfully');
-            this.router.navigate(['/trf']);
-          },
-          error: (err) => {
-            this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to cancel TRF'));
-          }
-        });
-      }
-    });
+        if (confirmed) {
+          // Call the cancel action endpoint using TrfService
+          this.trfService.cancelTrf(this.trfId).subscribe({
+            next: () => {
+              this.toastService.success('TRF cancelled successfully');
+              this.router.navigate(['/trf']);
+            },
+            error: err => {
+              this.toastService.error(
+                this.errorHandler.getErrorMessage(err, 'Failed to cancel TRF')
+              );
+            },
+          });
+        }
+      });
   }
 
   /**
@@ -427,9 +588,9 @@ export class TrfDetailComponent implements OnInit {
             this.toastService.success('TRF deleted successfully');
             this.router.navigate(['/trf']);
           },
-          error: (err) => {
+          error: err => {
             this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to delete TRF'));
-          }
+          },
         });
       }
     });
@@ -449,9 +610,9 @@ export class TrfDetailComponent implements OnInit {
         window.URL.revokeObjectURL(url);
         this.toastService.success('PDF exported successfully');
       },
-      error: (err: any) => {
+      error: (err: HttpErrorResponse) => {
         this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to export PDF'));
-      }
+      },
     });
   }
 
@@ -460,40 +621,37 @@ export class TrfDetailComponent implements OnInit {
   loadWorkflow(): void {
     this.workflowLoading = true;
 
-    this.workflowService.getInstances({
-      entity_type: 'travelrequest',
-      object_id: this.trfId
-    }).subscribe({
-      next: (response: any) => {
-        // Handle both paginated response and array response
-        const instances = Array.isArray(response) ? response : (response.results || []);
+    this.workflowService
+      .getInstances({
+        entity_type: 'travelrequest',
+        object_id: this.trfId,
+      })
+      .subscribe({
+        next: (instances: WorkflowInstanceList[]) => {
+          // Find workflow instance for this specific TRF - check multiple fields
+          const instance = instances.find(
+            i => i.object_id === this.trfId || i.entity_info?.id === this.trfId
+          );
 
-        // Find workflow instance for this specific TRF - check multiple fields
-        const instance = instances.find((i: any) =>
-          i.object_id === this.trfId ||
-          i.entity_info?.id === this.trfId ||
-          i.entity_id === this.trfId
-        );
-
-        if (instance && instance.id) {
-          this.workflowService.getInstance(instance.id).subscribe({
-            next: (workflow) => {
-              this.workflow = workflow;
-              this.updateCurrentStepExecution();
-              this.workflowLoading = false;
-            },
-            error: (err) => {
-              this.workflowLoading = false;
-            }
-          });
-        } else {
+          if (instance?.id) {
+            this.workflowService.getInstance(instance.id).subscribe({
+              next: workflow => {
+                this.workflow = workflow;
+                this.updateCurrentStepExecution();
+                this.workflowLoading = false;
+              },
+              error: () => {
+                this.workflowLoading = false;
+              },
+            });
+          } else {
+            this.workflowLoading = false;
+          }
+        },
+        error: () => {
           this.workflowLoading = false;
-        }
-      },
-      error: (err) => {
-        this.workflowLoading = false;
-      }
-    });
+        },
+      });
   }
 
   updateCurrentStepExecution(): void {
@@ -502,11 +660,13 @@ export class TrfDetailComponent implements OnInit {
       return;
     }
 
-    this.currentStepExecution = this.workflow.step_executions.find(
-      step => step.status === 'pending' &&
-              step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
-              step.can_action === true
-    ) || null;
+    this.currentStepExecution =
+      this.workflow.step_executions.find(
+        step =>
+          step.status === 'pending' &&
+          step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
+          step.can_action === true
+      ) || null;
   }
 
   onWorkflowApproved(): void {
