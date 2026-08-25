@@ -12,7 +12,6 @@ import {
   DomesticTravelDetailsComponent,
   type DomesticTravelSpecificDetails,
   type AccommodationDetails,
-  type TransportDetails,
   type TransportJourney,
   type ItinerarySegment as DomesticItinerarySegment,
   type PassportUploadDetails,
