@@ -17,7 +17,17 @@
     "moduleResolution": "bundler",
     "importHelpers": true,
     "target": "ES2022",
-    "module": "ES2022"
+    "module": "ES2022",
+    // Neither tsconfig.app.json (types: [], sees only main.ts) nor
+    // tsconfig.spec.json (types: [jasmine], sees *.spec.ts) is wired up via
+    // "references" here, so when a .spec.ts file is opened directly the
+    // editor's TS language server falls back to this root config - which
+    // used to declare no jasmine globals, so every spec file in the repo
+    // showed "Cannot find name describe/it/expect" in the Problems panel
+    // even though `ng test`/tsconfig.spec.json (the actual source of truth)
+    // compiled them fine. Doesn't affect the real app build - tsconfig.app.json
+    // already explicitly overrides this back to types: [].
+    "types": ["jasmine"]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
