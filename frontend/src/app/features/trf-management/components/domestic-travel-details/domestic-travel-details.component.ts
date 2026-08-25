@@ -187,7 +187,13 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     { key: 'remarks', label: 'Remarks', type: 'text', colSpan: 8 },
   ];
   tripTypeValue: 'One Way' | 'Round Trip' = 'Round Trip';
-  itinerarySegments: ItinerarySegment[] = [];
+  // ItineraryEditorComponent is shared across several travel-detail forms
+  // with different segment shapes, so its own segmentsChange/initialSegments
+  // are typed Record<string, unknown>[] generically - an index-signature
+  // type isn't assignable to a concrete interface with named required
+  // properties, so this field has to match that generic shape rather than
+  // ItinerarySegment[]. See onItinerarySegmentsChange below.
+  itinerarySegments: Record<string, unknown>[] = [];
   itineraryDates: (string | null)[] = [];
   mealSelections: DailyMealSelection[] = [];
 
@@ -243,7 +249,9 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
       min: 1,
     },
   ];
-  transportSegments: TransportJourney[] = [];
+  // Same constraint as itinerarySegments above - matches the shared
+  // ItineraryEditorComponent's generic Record<string, unknown>[] contract.
+  transportSegments: Record<string, unknown>[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -300,7 +308,10 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
       }),
     });
 
-    this.transportSegments = transport?.journeys || [];
+    // See the getFormData() cast note above - the shared editor's
+    // Record<string, unknown>[] contract vs. this form's concrete
+    // TransportJourney[] input data.
+    this.transportSegments = (transport?.journeys as unknown as Record<string, unknown>[]) || [];
 
     this.tripTypeValue = this.initialData.tripType || 'Round Trip';
 
@@ -339,7 +350,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     }
   }
 
-  onItinerarySegmentsChange(segments: ItinerarySegment[]): void {
+  onItinerarySegmentsChange(segments: Record<string, unknown>[]): void {
     this.itinerarySegments = segments;
   }
 
@@ -379,7 +390,7 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     this.mealSelections = selections;
   }
 
-  onTransportSegmentsChange(segments: TransportJourney[]): void {
+  onTransportSegmentsChange(segments: Record<string, unknown>[]): void {
     this.transportSegments = segments;
   }
 
@@ -418,9 +429,18 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
   getFormData(): DomesticTravelSpecificDetails {
     return {
       ...this.travelForm.value,
-      itinerary: this.itinerarySegments,
+      // itinerarySegments/transportSegments come back from the shared,
+      // generically-typed ItineraryEditorComponent (Record<string, unknown>[]
+      // - see the field declarations above) - this cast asserts they actually
+      // have the shape this form's own field configs (itineraryFields,
+      // transportJourneyFields) define, which is true at runtime but not
+      // something the generic editor's type can express.
+      itinerary: this.itinerarySegments as unknown as ItinerarySegment[],
       mealProvisions: { dailySelections: this.mealSelections },
-      transport: { ...this.travelForm.value.transport, journeys: this.transportSegments },
+      transport: {
+        ...this.travelForm.value.transport,
+        journeys: this.transportSegments as unknown as TransportJourney[],
+      },
       passportUpload: {
         file: this.passportFile,
         fileName: this.passportFileName,
