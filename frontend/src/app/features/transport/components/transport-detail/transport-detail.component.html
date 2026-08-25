@@ -34,6 +34,19 @@
           <i class="bi bi-file-earmark-pdf"></i>
           Export PDF
         </button>
+
+        <!-- Approver viewing a request pending their action: Approve/Reject
+             (and Skip/Delegate, if applicable) instead of owner-only actions. -->
+        <app-approval-actions
+          *ngIf="isCurrentApprover && !workflowLoading"
+          [stepExecution]="currentStepExecution!"
+          [compact]="true"
+          (approved)="onWorkflowApproved()"
+          (rejected)="onWorkflowRejected()"
+          (delegated)="onWorkflowDelegated()"
+        >
+        </app-approval-actions>
+
         <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
           <i class="bi bi-pencil"></i>
           Edit
@@ -42,7 +55,7 @@
           <i class="bi bi-x-circle"></i>
           Cancel
         </button>
-        <button class="btn btn-danger" (click)="onDelete()">
+        <button class="btn btn-danger" (click)="onDelete()" *ngIf="canDelete()">
           <i class="bi bi-trash"></i>
           Delete
         </button>
@@ -280,19 +293,11 @@
           <p class="text-muted mt-2">Loading workflow status...</p>
         </div>
 
-        <!-- Workflow Status Timeline -->
+        <!-- Workflow Status Timeline. Approve/Reject/Skip/Delegate now live
+             in the page header (app-approval-actions there), not duplicated
+             here. -->
         <app-workflow-status *ngIf="workflow && !workflowLoading" [workflowInstance]="workflow">
         </app-workflow-status>
-
-        <!-- Approval Action Buttons -->
-        <app-approval-actions
-          *ngIf="currentStepExecution && !workflowLoading"
-          [stepExecution]="currentStepExecution"
-          (approved)="onWorkflowApproved()"
-          (rejected)="onWorkflowRejected()"
-          (delegated)="onWorkflowDelegated()"
-        >
-        </app-approval-actions>
 
         <!-- No Workflow Message -->
         <div *ngIf="!workflow && !workflowLoading" class="alert alert-info">
