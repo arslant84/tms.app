@@ -14,16 +14,12 @@ import {
   type AccommodationDetails,
   type TransportJourney,
   type ItinerarySegment as DomesticItinerarySegment,
-  type PassportUploadDetails,
 } from '../domestic-travel-details/domestic-travel-details.component';
 import {
   OverseasTravelDetailsComponent,
   type OverseasTravelDetails,
-  type AdvanceBankDetails,
-  type AdvanceAmountItem,
   type ItinerarySegment as OverseasItinerarySegment,
 } from '../overseas-travel-details/overseas-travel-details.component';
-import type { DailyMealSelection } from '../../../../shared/components/meal-provision/meal-provision.component';
 import {
   HomeLeaveDetailsComponent,
   type HomeLeaveDetails,
@@ -54,6 +50,17 @@ import type {
   TransformedPassportDetails,
   PreparedTrfData,
 } from './trf-wizard.types';
+import {
+  formatDateForAPI,
+  deriveTripTypeFromItinerary,
+  transformItineraryData,
+  transformExternalPartiesItineraryData,
+  transformMealSelectionsData,
+  transformBankDetails,
+  transformAdvanceAmounts,
+  extractPassportFileInfo,
+  transformPassportDetails,
+} from './trf-data-mapper';
 
 @Component({
   selector: 'app-trf-wizard',
@@ -251,16 +258,14 @@ export class TrfWizardComponent implements OnInit {
           data.daily_meal_selections ||
           data.mealSelections ||
           [];
-        const domesticPassport = this.extractPassportFileInfo(
+        const domesticPassport = extractPassportFileInfo(
           (data.passport_details || data.passportDetails) as RawPassportRow | RawPassportRow[]
         );
 
-        const domesticItinerary = this.transformItineraryData(
-          itineraryData as NestedItineraryRow[]
-        );
+        const domesticItinerary = transformItineraryData(itineraryData as NestedItineraryRow[]);
         this.domesticTravelData = {
           purposeOfTravel: domesticDetails.purpose || data.purpose || '',
-          tripType: this.deriveTripTypeFromItinerary(
+          tripType: deriveTripTypeFromItinerary(
             domesticItinerary as unknown as Record<string, unknown>[],
             'from',
             'to',
@@ -268,7 +273,7 @@ export class TrfWizardComponent implements OnInit {
           ),
           itinerary: domesticItinerary as unknown as DomesticItinerarySegment[],
           mealProvisions: {
-            dailySelections: this.transformMealSelectionsData(mealData as RawMealRow[]),
+            dailySelections: transformMealSelectionsData(mealData as RawMealRow[]),
           },
           passportUpload: domesticPassport,
         };
@@ -293,26 +298,24 @@ export class TrfWizardComponent implements OnInit {
           data.advance_amount_items ||
           data.advanceAmounts ||
           [];
-        const overseasPassport = this.extractPassportFileInfo(
+        const overseasPassport = extractPassportFileInfo(
           (data.passport_details || data.passportDetails) as RawPassportRow | RawPassportRow[]
         );
 
-        const overseasTransformedItinerary = this.transformItineraryData(
+        const overseasTransformedItinerary = transformItineraryData(
           overseasItinerary as NestedItineraryRow[]
         );
         this.overseasTravelData = {
           purpose: overseasDetails.purpose || data.purpose || '',
-          tripType: this.deriveTripTypeFromItinerary(
+          tripType: deriveTripTypeFromItinerary(
             overseasTransformedItinerary as unknown as Record<string, unknown>[],
             'from',
             'to',
             'date'
           ),
           itinerary: overseasTransformedItinerary as unknown as OverseasItinerarySegment[],
-          advanceBankDetails: this.transformBankDetails(bankDetails as RawBankDetailRow),
-          advanceAmountRequested: this.transformAdvanceAmounts(
-            advanceAmounts as RawAdvanceAmountRow[]
-          ),
+          advanceBankDetails: transformBankDetails(bankDetails as RawBankDetailRow),
+          advanceAmountRequested: transformAdvanceAmounts(advanceAmounts as RawAdvanceAmountRow[]),
           advanceConsentAccepted: data.advance_consent_accepted || false,
           passportUpload: overseasPassport,
         };
@@ -338,23 +341,23 @@ export class TrfWizardComponent implements OnInit {
           data.advance_amount_items ||
           data.advanceAmounts ||
           [];
-        const homeLeavePassport = this.extractPassportFileInfo(passportDetails);
+        const homeLeavePassport = extractPassportFileInfo(passportDetails);
 
-        const homeLeaveTransformedItinerary = this.transformItineraryData(
+        const homeLeaveTransformedItinerary = transformItineraryData(
           homeLeaveItinerary as NestedItineraryRow[]
         );
         this.homeLeaveData = {
           purpose: homeLeaveDetails.purpose || data.purpose || '',
-          tripType: this.deriveTripTypeFromItinerary(
+          tripType: deriveTripTypeFromItinerary(
             homeLeaveTransformedItinerary as unknown as Record<string, unknown>[],
             'from',
             'to',
             'date'
           ),
           itinerary: homeLeaveTransformedItinerary,
-          passportDetails: this.transformPassportDetails(passportDetails),
-          advanceBankDetails: this.transformBankDetails(homeLeaveBank as RawBankDetailRow),
-          advanceAmountRequested: this.transformAdvanceAmounts(
+          passportDetails: transformPassportDetails(passportDetails),
+          advanceBankDetails: transformBankDetails(homeLeaveBank as RawBankDetailRow),
+          advanceAmountRequested: transformAdvanceAmounts(
             homeLeaveAdvanceAmounts as RawAdvanceAmountRow[]
           ),
           advanceConsentAccepted: data.advance_consent_accepted || false,
@@ -369,16 +372,16 @@ export class TrfWizardComponent implements OnInit {
         const externalRequestorInfo = data.externalPartyRequestorInfo || {};
         const externalItinerary =
           externalDetails.itinerary || data.itinerary_segments || data.itinerary || [];
-        const externalPassport = this.extractPassportFileInfo(
+        const externalPassport = extractPassportFileInfo(
           (data.passport_details || data.passportDetails) as RawPassportRow | RawPassportRow[]
         );
 
-        const externalTransformedItinerary = this.transformExternalPartiesItineraryData(
+        const externalTransformedItinerary = transformExternalPartiesItineraryData(
           externalItinerary as NestedItineraryRow[]
         );
         this.externalPartiesData = {
           purpose: externalDetails.purpose || data.purpose || '',
-          tripType: this.deriveTripTypeFromItinerary(
+          tripType: deriveTripTypeFromItinerary(
             externalTransformedItinerary as unknown as Record<string, unknown>[],
             'departureLocation',
             'arrivalLocation',
@@ -1055,25 +1058,6 @@ export class TrfWizardComponent implements OnInit {
   }
 
   /**
-   * Convert Date object or ISO string to YYYY-MM-DD format
-   */
-  private formatDateForAPI(date: string | Date | null | undefined): string {
-    if (!date) return '';
-
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-    if (!(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) {
-      return '';
-    }
-
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  }
-
-  /**
    * Delete existing nested resources for a TRF (used during update to prevent duplicates)
    */
   private deleteExistingNestedResources(trfId: number): Promise<void> {
@@ -1165,7 +1149,7 @@ export class TrfWizardComponent implements OnInit {
 
         const itineraryData = {
           trf: trfId,
-          segment_date: this.formatDateForAPI(date),
+          segment_date: formatDateForAPI(date),
           day_of_week: segment.day || '',
           from_location: from,
           to_location: to,
@@ -1189,7 +1173,7 @@ export class TrfWizardComponent implements OnInit {
 
         const mealData = {
           trf: trfId,
-          meal_date: this.formatDateForAPI(meal.date),
+          meal_date: formatDateForAPI(meal.date),
           breakfast: meal.breakfast || false,
           lunch: meal.lunch || false,
           dinner: meal.dinner || false,
@@ -1275,8 +1259,8 @@ export class TrfWizardComponent implements OnInit {
         additional_data: {
           requestor_gender: acc.gender,
           location: acc.location,
-          requested_check_in_date: this.formatDateForAPI(acc.checkInDate) || acc.checkInDate,
-          requested_check_out_date: this.formatDateForAPI(acc.checkOutDate) || acc.checkOutDate,
+          requested_check_in_date: formatDateForAPI(acc.checkInDate) || acc.checkInDate,
+          requested_check_out_date: formatDateForAPI(acc.checkOutDate) || acc.checkOutDate,
           requested_room_type: acc.roomType,
           flight_arrival_time: acc.checkInTime,
           flight_departure_time: acc.checkOutTime,
@@ -1317,7 +1301,7 @@ export class TrfWizardComponent implements OnInit {
         status: 'Pending',
         trf: trfId,
         transport_details: (transport.journeys || []).map(j => ({
-          date: this.formatDateForAPI(j.date) || j.date,
+          date: formatDateForAPI(j.date) || j.date,
           day: j.day,
           from: j.from,
           to: j.to,
@@ -1390,280 +1374,5 @@ export class TrfWizardComponent implements OnInit {
         this.router.navigate(['/trf']);
       }
     });
-  }
-
-  /**
-   * Trip type ("One Way" vs "Round Trip") is never actually persisted to the
-   * backend - the create wizard's own dropdown drives the itinerary editor's
-   * add/remove-segment gating locally, but nothing sends or stores that
-   * choice server-side (no model field, no serializer field). So on reopen,
-   * data.trip_type/data.tripType is always undefined and every TRF silently
-   * reset to whatever hardcoded default the caller passed, regardless of
-   * what the requestor originally picked.
-   *
-   * Instead of adding a redundant field that could drift from the real
-   * itinerary, derive it the same way flights-processing.component.ts's
-   * isRoundTrip getter already does: a round trip's last leg lands back
-   * where the first leg started.
-   */
-  private deriveTripTypeFromItinerary(
-    itinerary: Array<Record<string, unknown>>,
-    originKey: string,
-    destinationKey: string,
-    dateKey: string,
-    timeKey: string = 'etd'
-  ): 'One Way' | 'Round Trip' {
-    if (!itinerary || itinerary.length < 2) {
-      return 'One Way';
-    }
-    // Sort by date (then time-of-day) rather than trusting array order:
-    // itinerary segments created before a since-fixed race condition
-    // (concurrent, unawaited creation requests) can still be stored with an
-    // id order that doesn't match their actual date order - and same-day
-    // multi-city legs need the time to disambiguate at all.
-    const sorted = [...itinerary]
-      .map((segment, index) => ({ segment, index }))
-      .sort((a, b) => {
-        const dateA = a.segment?.[dateKey] || '';
-        const dateB = b.segment?.[dateKey] || '';
-        if (dateA !== dateB) {
-          return dateA < dateB ? -1 : 1;
-        }
-        const minutesA = this.parseTimeOfDayMinutes(a.segment?.[timeKey] as string | undefined);
-        const minutesB = this.parseTimeOfDayMinutes(b.segment?.[timeKey] as string | undefined);
-        if (minutesA !== minutesB) {
-          return minutesA - minutesB;
-        }
-        return a.index - b.index;
-      })
-      .map(({ segment }) => segment);
-    const origin = sorted[0]?.[originKey];
-    const finalDestination = sorted[sorted.length - 1]?.[destinationKey];
-    return origin && finalDestination && origin === finalDestination ? 'Round Trip' : 'One Way';
-  }
-
-  /**
-   * ETD/ETA on an itinerary segment is free text - a real "HH:MM" or a
-   * vague day-period label ("Morning", "Evening", etc., see the create
-   * form's placeholder). Mirrors flights-processing.component.ts's
-   * parseItineraryTime: normalizes what it can, falls back to the middle
-   * of the day for anything unparseable so same-day legs still sort in a
-   * sensible order instead of colliding.
-   */
-  private parseTimeOfDayMinutes(value?: string): number {
-    if (!value) {
-      return 12 * 60;
-    }
-    const timeMatch = value.trim().match(/^(\d{1,2}):(\d{2})/);
-    if (timeMatch) {
-      return Number(timeMatch[1]) * 60 + Number(timeMatch[2]);
-    }
-    const periodMinutes: Record<string, number> = {
-      morning: 8 * 60,
-      afternoon: 13 * 60,
-      evening: 18 * 60,
-      night: 21 * 60,
-      noon: 12 * 60,
-      midnight: 0,
-    };
-    return periodMinutes[value.trim().toLowerCase()] ?? 12 * 60;
-  }
-
-  /**
-   * Transform itinerary data from backend format to component format
-   */
-  private transformItineraryData(itinerary: NestedItineraryRow[]): NestedItineraryRow[] {
-    // High complexity here is field-name fallback chains (backend snake_case
-    // vs several legacy camelCase aliases per field), not branchy logic.
-    // eslint-disable-next-line complexity
-    return itinerary.map(segment => ({
-      date: segment.segment_date || segment.date || null,
-      day: segment.day_of_week || segment.day || '',
-      from: segment.from_location || segment.from || '',
-      to: segment.to_location || segment.to || '',
-      etd: segment.departure_time || segment.etd || '',
-      eta: segment.arrival_time || segment.eta || '',
-      flightNumber: segment.flight_number || segment.flightNumber || '',
-      remarks: segment.remarks || '',
-    }));
-  }
-
-  /**
-   * Transform itinerary data specifically for External Parties
-   * External Parties component expects different field names
-   */
-  private transformExternalPartiesItineraryData(
-    itinerary: NestedItineraryRow[]
-  ): NestedItineraryRow[] {
-    // High complexity here is field-name fallback chains (backend snake_case
-    // vs several legacy camelCase aliases per field), not branchy logic.
-    // eslint-disable-next-line complexity
-    const transformed = itinerary.map(segment => {
-      const result = {
-        departureDate: segment.segment_date || segment.date || segment.departureDate || null,
-        day: segment.day_of_week || segment.day || '',
-        departureTime: segment.departure_time || segment.etd || segment.departureTime || '',
-        departureLocation: segment.from_location || segment.from || segment.departureLocation || '',
-        arrivalDate: segment.arrival_date || segment.date || segment.arrivalDate || null,
-        arrivalTime: segment.arrival_time || segment.eta || segment.arrivalTime || '',
-        arrivalLocation: segment.to_location || segment.to || segment.arrivalLocation || '',
-        modeOfTransport:
-          segment.mode_of_transport ||
-          segment.modeOfTransport ||
-          segment.flight_number ||
-          segment.flightNumber ||
-          '',
-        remarks: segment.remarks || '',
-      };
-      return result;
-    });
-
-    return transformed;
-  }
-
-  /**
-   * Transform meal selections data from backend format to component format
-   */
-  private transformMealSelectionsData(mealSelections: RawMealRow[]): DailyMealSelection[] {
-    const transformed = mealSelections.map(meal => {
-      const result = {
-        date: meal.meal_date || meal.date || '',
-        // Explicitly handle boolean values - backend returns true/false
-        breakfast: meal.breakfast === true || meal.breakfast === 'true' || meal.breakfast === 1,
-        lunch: meal.lunch === true || meal.lunch === 'true' || meal.lunch === 1,
-        dinner: meal.dinner === true || meal.dinner === 'true' || meal.dinner === 1,
-        supper: meal.supper === true || meal.supper === 'true' || meal.supper === 1,
-        refreshment:
-          meal.refreshment === true || meal.refreshment === 'true' || meal.refreshment === 1,
-      };
-      return result;
-    });
-
-    return transformed;
-  }
-
-  /**
-   * Transform bank details from backend format to component format
-   */
-  private transformBankDetails(
-    bankDetail: RawBankDetailRow | null | undefined
-  ): AdvanceBankDetails {
-    if (!bankDetail || Object.keys(bankDetail).length === 0) {
-      return {
-        bankName: '',
-        accountNumber: '',
-        accountName: '',
-        branchAddress: '',
-        currency: 'USD',
-      };
-    }
-
-    return {
-      bankName: bankDetail.bank_name || bankDetail.bankName || '',
-      accountNumber: bankDetail.account_number || bankDetail.accountNumber || '',
-      accountName: bankDetail.account_name || bankDetail.accountName || '',
-      branchAddress: bankDetail.branch_address || bankDetail.branchAddress || '',
-      currency: bankDetail.currency || 'USD',
-    };
-  }
-
-  /**
-   * Transform advance amounts from backend format to component format
-   */
-  private transformAdvanceAmounts(advanceAmounts: RawAdvanceAmountRow[]): AdvanceAmountItem[] {
-    if (!advanceAmounts || advanceAmounts.length === 0) {
-      return [];
-    }
-
-    return advanceAmounts.map(item => ({
-      dateFrom: item.date_from || item.dateFrom || '',
-      dateTo: item.date_to || item.dateTo || '',
-      lh: item.lh || 0,
-      ma: item.ma || 0,
-      oa: item.oa || 0,
-      tr: item.tr || 0,
-      oe: item.oe || 0,
-      usd: item.usd || 0,
-      remarks: item.remarks || '',
-    }));
-  }
-
-  /**
-   * Extract passport file info from passport details for upload component
-   */
-  private extractPassportFileInfo(
-    passportDetails: RawPassportRow | RawPassportRow[] | null | undefined
-  ): PassportUploadDetails {
-    if (!passportDetails) {
-      return { file: null, fileName: '', fileUrl: '' };
-    }
-
-    // Handle array format from backend
-    const detail = Array.isArray(passportDetails) ? passportDetails[0] : passportDetails;
-
-    if (!detail) {
-      return { file: null, fileName: '', fileUrl: '' };
-    }
-
-    const fileUrl =
-      detail.passport_file_url || detail.passportFileUrl || detail.passport_file || '';
-    const fileName = fileUrl ? fileUrl.split('/').pop() || '' : '';
-
-    return {
-      file: null, // File object is not available from backend, only URL
-      fileName: fileName,
-      fileUrl: fileUrl,
-    };
-  }
-
-  /**
-   * Transform passport details from backend format to component format
-   *
-   * High complexity here is field-name fallback chains (backend snake_case
-   * vs legacy camelCase aliases per field), not branchy logic.
-   */
-  // eslint-disable-next-line complexity
-  private transformPassportDetails(
-    passportDetails: RawPassportRow | RawPassportRow[] | null | undefined
-  ): TransformedPassportDetails {
-    // Backend returns array, we need first element
-    if (Array.isArray(passportDetails) && passportDetails.length > 0) {
-      const detail = passportDetails[0];
-      return {
-        fullName: detail.full_name || detail.fullName || '',
-        passportNumber: detail.passport_number || detail.passportNumber || '',
-        nationality: detail.nationality || '',
-        dateOfBirth: detail.date_of_birth || detail.dateOfBirth || null,
-        placeOfBirth: detail.place_of_birth || detail.placeOfBirth || '',
-        passportIssueDate: detail.passport_issue_date || detail.passportIssueDate || null,
-        passportExpiryDate: detail.passport_expiry_date || detail.passportExpiryDate || null,
-      };
-    }
-
-    // If already an object (not array)
-    if (passportDetails && !Array.isArray(passportDetails)) {
-      return {
-        fullName: passportDetails.full_name || passportDetails.fullName || '',
-        passportNumber: passportDetails.passport_number || passportDetails.passportNumber || '',
-        nationality: passportDetails.nationality || '',
-        dateOfBirth: passportDetails.date_of_birth || passportDetails.dateOfBirth || null,
-        placeOfBirth: passportDetails.place_of_birth || passportDetails.placeOfBirth || '',
-        passportIssueDate:
-          passportDetails.passport_issue_date || passportDetails.passportIssueDate || null,
-        passportExpiryDate:
-          passportDetails.passport_expiry_date || passportDetails.passportExpiryDate || null,
-      };
-    }
-
-    // Return empty object if no data
-    return {
-      fullName: '',
-      passportNumber: '',
-      nationality: '',
-      dateOfBirth: null,
-      placeOfBirth: '',
-      passportIssueDate: null,
-      passportExpiryDate: null,
-    };
   }
 }
