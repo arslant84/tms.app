@@ -12,6 +12,7 @@ import { WorkflowService } from '../../../../core/services/workflow.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { RbacService } from '../../../../core/services/rbac.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
 import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
@@ -59,6 +60,7 @@ export class VisaDetailComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private rbacService: RbacService,
+    private authService: AuthService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService,
     private errorHandler: HttpErrorHandlerService
@@ -181,7 +183,29 @@ export class VisaDetailComponent implements OnInit {
     });
   }
 
+  /**
+   * The signed-in user has a pending, actionable workflow step on this
+   * application right now - i.e. they're the one being asked to
+   * approve/reject it. Reuses the same can_action signal the
+   * approval-actions UI already trusts, rather than a separate role check.
+   */
+  get isCurrentApprover(): boolean {
+    return !!this.currentStepExecution;
+  }
+
+  /**
+   * The signed-in user created this application. Owner-only actions
+   * (Edit/Cancel/Delete) are gated on this so a viewer with read access -
+   * an approver, an admin browsing, anyone else - can't act on someone
+   * else's application.
+   */
+  get isOwner(): boolean {
+    const currentUserId = this.authService.getCurrentUserId();
+    return currentUserId != null && this.application?.user === currentUserId;
+  }
+
   canEdit(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
     if (!this.application?.status) return false;
 
     const status = this.application.status;
@@ -206,6 +230,7 @@ export class VisaDetailComponent implements OnInit {
   }
 
   canCancel(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
     const status = this.application?.status || '';
     // Allow cancel for any status that contains 'Pending' and is not approved
     if (status.includes('Pending')) {
@@ -213,6 +238,16 @@ export class VisaDetailComponent implements OnInit {
       return !isApproved;
     }
     return false;
+  }
+
+  /**
+   * Delete was previously always shown regardless of status/ownership -
+   * matching the other three modules' Delete guard (Draft/Rejected only,
+   * owner only), the same gap fixed there.
+   */
+  canDelete(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
+    return this.EDITABLE_STATUSES.includes(this.application?.status || '');
   }
 
   onEdit(): void {
