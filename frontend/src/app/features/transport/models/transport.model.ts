@@ -66,6 +66,10 @@ export interface TransportRequestForm
   updatedAt?: Date | string;
   createdBy?: string;
   updatedBy?: string;
+  /** Id of the User who owns this request (from the detail serializer's
+   * nested `requestor` object) - null on list-view rows, which only send
+   * requestor_name/department, not the full nested user. */
+  requestorId?: number | null;
   bookingDetails?: TransportBookingDetails;
 }
 
@@ -130,7 +134,7 @@ interface TransportBackendData {
   id?: string | number;
   request_number?: string;
   requestor_name?: string;
-  requestor?: { get_full_name?: string; department?: string | { name?: string } };
+  requestor?: { id?: number; get_full_name?: string; department?: string | { name?: string } };
   staff_id?: string;
   department?: string | { name?: string };
   position?: string;
@@ -240,6 +244,7 @@ function mapRequestorInfo(backendData: TransportBackendData) {
     staffId: backendData.staff_id || '',
     department: extractDepartmentName(backendData.department || backendData.requestor?.department),
     position: backendData.position || '',
+    requestorId: backendData.requestor?.id ?? null,
   };
 }
 

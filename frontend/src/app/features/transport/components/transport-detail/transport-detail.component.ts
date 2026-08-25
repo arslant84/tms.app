@@ -1,15 +1,21 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, type OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import type { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TransportService } from '../../services/transport.service';
-import { TransportRequestForm } from '../../models/transport.model';
+import type { TransportRequestForm } from '../../models/transport.model';
 import { WorkflowService } from '../../../../core/services/workflow.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
-import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
+import type {
+  WorkflowInstance,
+  WorkflowInstanceList,
+  WorkflowStepExecution,
+} from '../../../../core/models/workflow.models';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
@@ -18,9 +24,15 @@ import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handl
 @Component({
   selector: 'app-transport-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ApprovalActionsComponent, WorkflowStatusComponent, LoadingSpinnerComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ApprovalActionsComponent,
+    WorkflowStatusComponent,
+    LoadingSpinnerComponent,
+  ],
   templateUrl: './transport-detail.component.html',
-  styleUrls: ['./transport-detail.component.scss']
+  styleUrls: ['./transport-detail.component.scss'],
 })
 export class TransportDetailComponent implements OnInit {
   request: TransportRequestForm | null = null;
@@ -49,6 +61,7 @@ export class TransportDetailComponent implements OnInit {
     private confirmationService: ConfirmationService,
     public workflowService: WorkflowService,
     private appSettingsService: AppSettingsService,
+    private authService: AuthService,
     public dateUtils: DateUtilsService,
     public statusUtils: StatusUtilsService,
     private errorHandler: HttpErrorHandlerService
@@ -69,14 +82,16 @@ export class TransportDetailComponent implements OnInit {
     this.error = '';
 
     this.transportService.getRequestById(this.requestId).subscribe({
-      next: (data) => {
+      next: data => {
         this.request = data;
         this.loading = false;
       },
-      error: (err) => {
-        this.error = 'Failed to load transport request: ' + (err.error?.message || err.message || 'Unknown error');
+      error: err => {
+        this.error =
+          'Failed to load transport request: ' +
+          (err.error?.message || err.message || 'Unknown error');
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -84,41 +99,38 @@ export class TransportDetailComponent implements OnInit {
     this.workflowLoading = true;
 
     // Try to get workflow for this transport request
-    this.workflowService.getInstances({
-      entity_type: 'transportrequest',
-      object_id: this.requestId
-    }).subscribe({
-      next: (response: any) => {
-        // Check if response is an array or paginated object
-        const instances = Array.isArray(response) ? response : (response.results || []);
+    this.workflowService
+      .getInstances({
+        entity_type: 'transportrequest',
+        object_id: this.requestId,
+      })
+      .subscribe({
+        next: (instances: WorkflowInstanceList[]) => {
+          // Find workflow instance for this specific request
+          const instance = instances.find(
+            i => i.object_id === this.requestId || i.entity_info?.id === this.requestId
+          );
 
-        // Find workflow instance for this specific request
-        const instance = instances.find((i: any) =>
-          i.object_id === this.requestId ||
-          i.entity_info?.id === this.requestId ||
-          i.entity_id === this.requestId
-        );
-
-        if (instance && instance.id) {
-          // Load full workflow details
-          this.workflowService.getInstance(instance.id).subscribe({
-            next: (workflow) => {
-              this.workflow = workflow;
-              this.updateCurrentStepExecution();
-              this.workflowLoading = false;
-            },
-            error: (err) => {
-              this.workflowLoading = false;
-            }
-          });
-        } else {
+          if (instance?.id) {
+            // Load full workflow details
+            this.workflowService.getInstance(instance.id).subscribe({
+              next: workflow => {
+                this.workflow = workflow;
+                this.updateCurrentStepExecution();
+                this.workflowLoading = false;
+              },
+              error: () => {
+                this.workflowLoading = false;
+              },
+            });
+          } else {
+            this.workflowLoading = false;
+          }
+        },
+        error: () => {
           this.workflowLoading = false;
-        }
-      },
-      error: (err) => {
-        this.workflowLoading = false;
-      }
-    });
+        },
+      });
   }
 
   updateCurrentStepExecution(): void {
@@ -128,11 +140,13 @@ export class TransportDetailComponent implements OnInit {
     }
 
     // Find the current pending step that the user can action
-    this.currentStepExecution = this.workflow.step_executions.find(
-      step => step.status === 'pending' &&
-              step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
-              step.can_action === true
-    ) || null;
+    this.currentStepExecution =
+      this.workflow.step_executions.find(
+        step =>
+          step.status === 'pending' &&
+          step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
+          step.can_action === true
+      ) || null;
   }
 
   onWorkflowApproved(): void {
@@ -152,7 +166,29 @@ export class TransportDetailComponent implements OnInit {
     this.loadWorkflow();
   }
 
+  /**
+   * The signed-in user has a pending, actionable workflow step on this
+   * request right now - i.e. they're the one being asked to approve/reject
+   * it. Reuses the same can_action signal the approval-actions UI already
+   * trusts, rather than a separate role check.
+   */
+  get isCurrentApprover(): boolean {
+    return !!this.currentStepExecution;
+  }
+
+  /**
+   * The signed-in user created this request. Owner-only actions
+   * (Edit/Cancel/Delete) are gated on this so a viewer with read access -
+   * an approver, an admin browsing, anyone else - can't act on someone
+   * else's request.
+   */
+  get isOwner(): boolean {
+    const currentUserId = this.authService.getCurrentUserId();
+    return currentUserId != null && this.request?.requestorId === currentUserId;
+  }
+
   canEdit(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
     if (!this.request?.status) return false;
 
     const status = this.request.status;
@@ -177,6 +213,7 @@ export class TransportDetailComponent implements OnInit {
   }
 
   canCancel(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
     const status = this.request?.status || '';
     // Allow cancel for any status that contains 'Pending' and is not approved
     if (status.includes('Pending')) {
@@ -187,6 +224,7 @@ export class TransportDetailComponent implements OnInit {
   }
 
   canDelete(): boolean {
+    if (!this.isOwner || this.isCurrentApprover) return false;
     return this.DELETABLE_STATUSES.includes(this.request?.status || '');
   }
 
@@ -238,7 +276,7 @@ export class TransportDetailComponent implements OnInit {
     if (!this.canEdit()) {
       this.toastService.error(
         'This transport request cannot be edited because it has been approved. ' +
-        'Approved requests can only be viewed, not modified.'
+          'Approved requests can only be viewed, not modified.'
       );
       return;
     }
@@ -252,18 +290,20 @@ export class TransportDetailComponent implements OnInit {
         'Are you sure you want to cancel this transport request? This action cannot be undone.'
       )
       .subscribe(confirmed => {
-      if (confirmed) {
-        this.transportService.cancelRequest(this.requestId).subscribe({
-          next: () => {
-            this.toastService.success('Transport request cancelled successfully');
-            this.router.navigate(['/transport']);
-          },
-          error: (err) => {
-            this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to cancel request'));
-          }
-        });
-      }
-    });
+        if (confirmed) {
+          this.transportService.cancelRequest(this.requestId).subscribe({
+            next: () => {
+              this.toastService.success('Transport request cancelled successfully');
+              this.router.navigate(['/transport']);
+            },
+            error: err => {
+              this.toastService.error(
+                this.errorHandler.getErrorMessage(err, 'Failed to cancel request')
+              );
+            },
+          });
+        }
+      });
   }
 
   onDelete(): void {
@@ -274,9 +314,11 @@ export class TransportDetailComponent implements OnInit {
             this.toastService.success('Transport request deleted successfully');
             this.router.navigate(['/transport']);
           },
-          error: (err) => {
-            this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to delete request'));
-          }
+          error: err => {
+            this.toastService.error(
+              this.errorHandler.getErrorMessage(err, 'Failed to delete request')
+            );
+          },
         });
       }
     });
@@ -295,14 +337,14 @@ export class TransportDetailComponent implements OnInit {
         window.URL.revokeObjectURL(url);
         this.toastService.success('PDF exported successfully');
       },
-      error: (err: any) => {
+      error: (err: HttpErrorResponse) => {
         this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to export PDF'));
-      }
+      },
     });
   }
 
   formatCurrency(amount: number | null | undefined, currency?: string | null): string {
-    if (amount === null || amount === undefined || isNaN(amount)) {
+    if (amount === null || amount === undefined || Number.isNaN(amount)) {
       return 'N/A';
     }
 
@@ -313,9 +355,9 @@ export class TransportDetailComponent implements OnInit {
         style: 'currency',
         currency: currencyCode,
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
       }).format(amount);
-    } catch (error) {
+    } catch {
       return `${currencyCode} ${amount.toFixed(2)}`;
     }
   }
