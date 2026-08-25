@@ -27,7 +27,7 @@ describe('trf-data-mapper', () => {
       expect(formatDateForAPI('')).toBe('');
     });
 
-    it('returns empty string for an unparseable date', () => {
+    it('returns empty string for an invalid date', () => {
       expect(formatDateForAPI('not a date')).toBe('');
     });
   });
@@ -189,8 +189,8 @@ describe('trf-data-mapper', () => {
     });
 
     it('prefers snake_case over camelCase', () => {
-      const result = transformBankDetails({ bank_name: 'Maybank', bankName: 'wrong' });
-      expect(result.bankName).toBe('Maybank');
+      const result = transformBankDetails({ bank_name: 'First National Bank', bankName: 'wrong' });
+      expect(result.bankName).toBe('First National Bank');
     });
   });
 
