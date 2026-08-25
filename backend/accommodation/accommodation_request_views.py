@@ -8,7 +8,6 @@ modules in the same split.
 """
 
 import logging
-from datetime import datetime, timedelta
 
 from django.db.models import Q
 from django.utils import timezone
@@ -20,18 +19,15 @@ from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 from accounts.models import AdminActionLog
-from accounts.utils import can_approve, has_permission
+from accounts.utils import has_permission
 
-from .models import (
-    AccommodationBooking,
-    AccommodationRequest,
-    AccommodationRoom,
-    AccommodationStaffHouse,
-)
+from .models import AccommodationRequest
 from .serializers import AccommodationRequestSerializer
 from .services import (
+    assign_accommodation,
     generate_accommodation_request_number,
     generate_accommodation_request_number_with_fallback,
+    process_accommodation_approval_action,
     start_accommodation_workflow,
 )
 
@@ -401,191 +397,28 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
         """Approve an accommodation request using WorkflowEngine"""
-        from django.contrib.contenttypes.models import ContentType
-        from workflows.engine import WorkflowEngine
-        from workflows.models import WorkflowInstance
-
         accommodation_request = self.get_object()
         comments = request.data.get("comments", "")
-
-        try:
-            # Get the workflow instance for this accommodation request
-            content_type = ContentType.objects.get_for_model(accommodation_request)
-            workflow_instance = WorkflowInstance.objects.filter(
-                content_type=content_type,
-                object_id=accommodation_request.id,
-                status="in_progress",
-            ).first()
-
-            if workflow_instance:
-                # Find the current pending step
-                current_step = (
-                    workflow_instance.step_executions.filter(status="pending")
-                    .order_by("workflow_step__step_order")
-                    .first()
-                )
-
-                if current_step:
-                    # Use workflow engine to process approval
-                    WorkflowEngine.process_action(
-                        step_execution_id=current_step.id,
-                        action="approve",
-                        actioned_by=request.user,
-                        comments=comments,
-                    )
-
-                    # Reload to get updated status
-                    accommodation_request.refresh_from_db()
-
-                    serializer = self.get_serializer(accommodation_request)
-                    return Response(serializer.data)
-                else:
-                    return Response(
-                        {"error": "No pending approval step found"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-            else:
-                # Fallback to legacy approval logic
-                if not (
-                    request.user.is_superuser
-                    or can_approve(request.user, "accommodation")
-                ):
-                    return Response(
-                        {
-                            "error": "You do not have permission to approve accommodation requests"
-                        },
-                        status=status.HTTP_403_FORBIDDEN,
-                    )
-
-                logger.warning(
-                    f" No workflow instance found for Accommodation #{accommodation_request.id}, using legacy approval"
-                )
-
-                if accommodation_request.status not in [
-                    "Pending",
-                    "Pending Department Focal",
-                    "Pending HOD",
-                ]:
-                    return Response(
-                        {"error": "Cannot approve request with current status"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                accommodation_request.status = "Approved"
-                accommodation_request.save()
-
-                AdminActionLog.log_action(
-                    user=request.user,
-                    action_type="workflow_step_approved",
-                    description=(
-                        f"Approved accommodation request #{accommodation_request.id} "
-                        "(legacy fallback - no active WorkflowTemplate)"
-                    ),
-                    entity_type="accommodation",
-                    entity_id=accommodation_request.id,
-                    request=request,
-                )
-
-                serializer = self.get_serializer(accommodation_request)
-                return Response(serializer.data)
-
-        except Exception as e:
-            logger.error(f" Error in approve workflow: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
-            return Response(
-                {"error": f"Failed to process approval: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        result = process_accommodation_approval_action(
+            accommodation_request, request, "approve", comments
+        )
+        if result is None:
+            return None
+        data, http_status = result
+        return Response(data, status=http_status)
 
     @action(detail=True, methods=["post"])
     def reject(self, request, pk=None):
         """Reject an accommodation request using WorkflowEngine"""
-        from django.contrib.contenttypes.models import ContentType
-        from workflows.engine import WorkflowEngine
-        from workflows.models import WorkflowInstance
-
         accommodation_request = self.get_object()
         comments = request.data.get("comments", "")
-
-        try:
-            content_type = ContentType.objects.get_for_model(accommodation_request)
-            workflow_instance = WorkflowInstance.objects.filter(
-                content_type=content_type,
-                object_id=accommodation_request.id,
-                status="in_progress",
-            ).first()
-
-            if workflow_instance:
-                current_step = (
-                    workflow_instance.step_executions.filter(status="pending")
-                    .order_by("workflow_step__step_order")
-                    .first()
-                )
-
-                if current_step:
-                    WorkflowEngine.process_action(
-                        step_execution_id=current_step.id,
-                        action="reject",
-                        actioned_by=request.user,
-                        comments=comments,
-                    )
-
-                    accommodation_request.refresh_from_db()
-
-                    serializer = self.get_serializer(accommodation_request)
-                    return Response(serializer.data)
-            else:
-                # Fallback to legacy rejection
-                if not (
-                    request.user.is_superuser
-                    or can_approve(request.user, "accommodation")
-                ):
-                    return Response(
-                        {
-                            "error": "You do not have permission to reject accommodation requests"
-                        },
-                        status=status.HTTP_403_FORBIDDEN,
-                    )
-
-                if accommodation_request.status not in [
-                    "Pending",
-                    "Pending Department Focal",
-                    "Pending HOD",
-                ]:
-                    return Response(
-                        {"error": "Cannot reject request with current status"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                accommodation_request.status = "Rejected"
-                accommodation_request.save()
-
-                AdminActionLog.log_action(
-                    user=request.user,
-                    action_type="workflow_step_rejected",
-                    description=(
-                        f"Rejected accommodation request #{accommodation_request.id} "
-                        "(legacy fallback - no active WorkflowTemplate)"
-                    ),
-                    entity_type="accommodation",
-                    entity_id=accommodation_request.id,
-                    request=request,
-                )
-
-                serializer = self.get_serializer(accommodation_request)
-                return Response(serializer.data)
-
-        except Exception as e:
-            logger.error(f" Error in reject workflow: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
-            return Response(
-                {"error": f"Failed to process rejection: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        result = process_accommodation_approval_action(
+            accommodation_request, request, "reject", comments
+        )
+        if result is None:
+            return None
+        data, http_status = result
+        return Response(data, status=http_status)
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
@@ -642,175 +475,14 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
         """
         accommodation_request = self.get_object()
 
-        # Extract data from request
-        staff_house_id = request.data.get("staff_house")
-        room_id = request.data.get("room")
-        start_date_str = request.data.get("start_date")
-        end_date_str = request.data.get("end_date")
-        notes = request.data.get("notes", "")
-        assigned_room_info = request.data.get("assigned_room_info", "")
-
-        # Validate required fields
-        if not all([staff_house_id, room_id, start_date_str, end_date_str]):
-            return Response(
-                {"error": "staff_house, room, start_date, and end_date are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Parse dates
-        try:
-            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-        except ValueError as e:
-            return Response(
-                {"error": f"Invalid date format. Use YYYY-MM-DD: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Validate date range
-        if end_date < start_date:
-            return Response(
-                {"error": "end_date must be greater than or equal to start_date"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Verify staff house and room exist
-        try:
-            staff_house = AccommodationStaffHouse.objects.get(id=staff_house_id)
-            room = AccommodationRoom.objects.get(id=room_id, staff_house=staff_house)
-        except AccommodationStaffHouse.DoesNotExist:
-            return Response(
-                {"error": f"Staff house with id {staff_house_id} not found"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        except AccommodationRoom.DoesNotExist:
-            return Response(
-                {
-                    "error": f"Room with id {room_id} not found in staff house {staff_house_id}"
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        # Check for existing bookings in the date range
-        current_date = start_date
-        conflicting_dates = []
-        while current_date <= end_date:
-            existing_booking = AccommodationBooking.objects.filter(
-                room=room, date=current_date, status__in=["Confirmed", "Pending"]
-            ).first()
-
-            if existing_booking:
-                conflicting_dates.append(current_date.strftime("%Y-%m-%d"))
-
-            current_date += timedelta(days=1)
-
-        if conflicting_dates:
-            return Response(
-                {
-                    "error": "Room is already booked for the following dates",
-                    "conflicting_dates": conflicting_dates,
-                },
-                status=status.HTTP_409_CONFLICT,
-            )
-
-        # Delete any existing bookings for this request (in case of reassignment)
-        AccommodationBooking.objects.filter(
-            accommodation_request=accommodation_request
-        ).delete()
-
-        # Create daily booking records
-        created_bookings = []
-        current_date = start_date
-
-        try:
-            while current_date <= end_date:
-                booking = AccommodationBooking.objects.create(
-                    staff_house=staff_house,
-                    room=room,
-                    accommodation_request=accommodation_request,
-                    date=current_date,
-                    trf=accommodation_request.trf,
-                    status="Confirmed",
-                    notes=notes or f"TRF Assignment: {assigned_room_info}",
-                )
-                created_bookings.append(booking)
-                current_date += timedelta(days=1)
-
-            # Update accommodation request status
-            accommodation_request.status = "Accommodation Assigned"
-
-            # Update additional_comments with assignment info
-            if accommodation_request.additional_comments:
-                accommodation_request.additional_comments += f"\n\n{assigned_room_info}"
-            else:
-                accommodation_request.additional_comments = assigned_room_info
-
-            accommodation_request.save()
-
-            # Add workflow step execution if workflow is active
-            try:
-                from django.contrib.contenttypes.models import ContentType
-                from workflows.models import StepExecution, WorkflowInstance
-
-                content_type = ContentType.objects.get_for_model(accommodation_request)
-                workflow_instance = WorkflowInstance.objects.filter(
-                    content_type=content_type,
-                    object_id=accommodation_request.id,
-                    status="in_progress",
-                ).first()
-
-                if workflow_instance:
-                    # Find or create accommodation admin step
-                    from workflows.models import WorkflowStep
-
-                    accommodation_step = WorkflowStep.objects.filter(
-                        workflow_definition=workflow_instance.workflow_definition,
-                        step_name="Accommodation Admin",
-                    ).first()
-
-                    if accommodation_step:
-                        StepExecution.objects.create(
-                            workflow_instance=workflow_instance,
-                            workflow_step=accommodation_step,
-                            assigned_role=request.user.role,
-                            status="completed",
-                            action_taken="assign",
-                            actioned_by=request.user,
-                            actioned_at=timezone.now(),
-                            comments=f"Assigned: {assigned_room_info}",
-                        )
-
-                        # Mark workflow as completed
-                        workflow_instance.status = "completed"
-                        workflow_instance.completed_at = timezone.now()
-                        workflow_instance.save()
-            except Exception as e:
-                logger.warning(f" Could not add workflow step execution: {str(e)}")
-                # Don't fail the assignment if workflow update fails
-                pass
-
-            # Prepare response
-            serializer = self.get_serializer(accommodation_request)
-            return Response(
-                {
-                    "message": f"Accommodation assigned successfully. Created {len(created_bookings)} booking records.",
-                    "bookings_created": len(created_bookings),
-                    "date_range": f"{start_date_str} to {end_date_str}",
-                    "accommodation_request": serializer.data,
-                }
-            )
-
-        except Exception as e:
-            # Rollback: delete any created bookings
-            for booking in created_bookings:
-                booking.delete()
-
-            logger.error(f" Error creating booking records: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
-
-            return Response(
-                {"error": f"Failed to create booking records: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        data, http_status = assign_accommodation(
+            accommodation_request,
+            staff_house_id=request.data.get("staff_house"),
+            room_id=request.data.get("room"),
+            start_date_str=request.data.get("start_date"),
+            end_date_str=request.data.get("end_date"),
+            notes=request.data.get("notes", ""),
+            assigned_room_info=request.data.get("assigned_room_info", ""),
+            actioned_by=request.user,
+        )
+        return Response(data, status=http_status)
