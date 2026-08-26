@@ -579,6 +579,13 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
     # Add selected approvers and skipped steps from workflow instance for edit mode
     selected_approvers = serializers.SerializerMethodField()
     skipped_steps = serializers.SerializerMethodField()
+    # Step orders that already have an APPROVED WorkflowStepExecution for the
+    # current/most-recent WorkflowInstance. The edit-mode "Select Approvers"
+    # UI uses this to lock steps that have already been actioned - only
+    # not-yet-approved steps (the current pending step and any future ones)
+    # stay editable on resubmit, matching WorkflowEngine._apply_resubmit_selection's
+    # server-side enforcement of the same rule.
+    approved_step_orders = serializers.SerializerMethodField()
 
     class Meta:
         model = TravelRequest
@@ -622,6 +629,7 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             "externalPartyRequestorInfo",
             "selected_approvers",
             "skipped_steps",
+            "approved_step_orders",
             "created_by",
         ]
         read_only_fields = [
@@ -860,6 +868,39 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
             pass
 
         return {}
+
+    def get_approved_step_orders(self, obj):
+        """
+        Step orders (ints) that already have an APPROVED WorkflowStepExecution
+        under this TRF's most recent WorkflowInstance. Used by the edit-mode
+        "Select Approvers" UI to lock steps that have already been actioned -
+        see the field docstring above and
+        WorkflowEngine._apply_resubmit_selection (backend/workflows/engine.py)
+        for the matching server-side enforcement.
+        """
+        from django.contrib.contenttypes.models import ContentType
+        from workflows.models import WorkflowInstance, WorkflowStepExecution
+
+        try:
+            content_type = ContentType.objects.get_for_model(obj)
+            workflow_instance = (
+                WorkflowInstance.objects.filter(
+                    content_type=content_type, object_id=obj.id
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if workflow_instance:
+                return list(
+                    WorkflowStepExecution.objects.filter(
+                        workflow_instance=workflow_instance, status="approved"
+                    ).values_list("workflow_step__step_order", flat=True)
+                )
+        except Exception:
+            pass
+
+        return []
 
 
 class TravelRequestCreateSerializer(serializers.ModelSerializer):

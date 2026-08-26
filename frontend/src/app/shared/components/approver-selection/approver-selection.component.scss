@@ -31,7 +31,9 @@
     border-left: 3px solid vars.$primary-color;
     border-radius: vars.$radius-md;
     padding: vars.$spacing-4;
-    transition: border-color vars.$transition-fast, box-shadow vars.$transition-fast;
+    transition:
+      border-color vars.$transition-fast,
+      box-shadow vars.$transition-fast;
 
     &:hover {
       border-left-color: vars.$primary-hover;
@@ -107,7 +109,7 @@
     cursor: pointer;
     margin: 0;
 
-    input[type="checkbox"] {
+    input[type='checkbox'] {
       width: 16px;
       height: 16px;
       cursor: pointer;
@@ -142,6 +144,21 @@
     }
   }
 
+  .locked-state {
+    display: flex;
+    align-items: center;
+    padding: vars.$spacing-3;
+    background-color: vars.$gray-100;
+    border: 1px solid vars.$gray-300;
+    border-radius: vars.$radius-sm;
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-sm;
+
+    i {
+      color: vars.$text-secondary;
+    }
+  }
+
   .search-input {
     margin-bottom: vars.$spacing-2;
     font-size: vars.$font-size-sm;
@@ -161,7 +178,9 @@
     .form-select {
       font-size: vars.$font-size-sm;
       border-color: vars.$border-light;
-      transition: border-color vars.$transition-fast, box-shadow vars.$transition-fast;
+      transition:
+        border-color vars.$transition-fast,
+        box-shadow vars.$transition-fast;
 
       &:focus {
         border-color: vars.$primary-color;

@@ -91,6 +91,47 @@ function accommodationDateOrderValidator(group: AbstractControl): ValidationErro
   return null;
 }
 
+/**
+ * Cross-field check: accommodation check-in/check-out must fall within the TSR's
+ * own itinerary date range. This mirrors AccommodationRequestSerializer.validate()
+ * on the backend (accommodation/serializers.py) - today that backend check is the
+ * *only* place this rule is enforced, so a mismatch (e.g. a One Way TSR with a
+ * single itinerary date, but the requestor manually extends checkOutDate to a
+ * later date for a multi-night stay) doesn't surface until the accommodation
+ * POST 400s on submit. At that point it's too late to just fix the field -
+ * TrfSubmissionService.createNestedResources fires the TSR's other nested
+ * resources (meals, transport, ...) concurrently via Promise.all, so that late
+ * failure aborts the TSR's own submit-to-workflow call while sibling requests
+ * that already fired may still have gone through, leaving a confusing
+ * half-created Draft. Surfacing it here lets the user fix it before submitting.
+ */
+function accommodationWithinItineraryValidatorFactory(
+  getItineraryDates: () => (string | null)[]
+): (group: AbstractControl) => ValidationErrors | null {
+  return (group: AbstractControl): ValidationErrors | null => {
+    const checkIn = group.get('checkInDate')?.value;
+    const checkOut = group.get('checkOutDate')?.value;
+    if (!checkIn && !checkOut) {
+      return null;
+    }
+
+    const validDates = getItineraryDates()
+      .filter((d): d is string => !!d)
+      .sort();
+    if (validDates.length === 0) {
+      return null;
+    }
+
+    const first = validDates[0];
+    const last = validDates[validDates.length - 1];
+    const outOfRange =
+      (checkIn && (checkIn < first || checkIn > last)) ||
+      (checkOut && (checkOut < first || checkOut > last));
+
+    return outOfRange ? { outsideItineraryRange: { first, last } } : null;
+  };
+}
+
 /** Mirrors the standalone transport-create form's per-journey fields exactly. */
 export interface TransportJourney {
   date: string;
@@ -308,7 +349,12 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
           roomType: [accommodation?.roomType || ''],
           specialRequests: [accommodation?.specialRequests || ''],
         },
-        { validators: accommodationDateOrderValidator }
+        {
+          validators: [
+            accommodationDateOrderValidator,
+            accommodationWithinItineraryValidatorFactory(() => this.itineraryDates),
+          ],
+        }
       ),
       transport: this.fb.group({
         required: [transport?.required || false],
@@ -366,6 +412,11 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     if (this.travelForm.get('accommodation.required')?.value) {
       this.syncAccommodationDatesFromItinerary();
     }
+    // Re-run accommodationWithinItineraryValidatorFactory even when the
+    // accommodation dates themselves didn't change - the itinerary dates it
+    // checks against just did, and Angular only re-validates a group on its
+    // own value changes, not on an external array captured by closure.
+    this.travelForm.get('accommodation')?.updateValueAndValidity({ emitEvent: false });
   }
 
   /**
@@ -472,12 +523,46 @@ export class DomesticTravelDetailsComponent implements OnInit, OnChanges {
     return this.travelForm.get('transport.required')?.value && this.transportSegments.length === 0;
   }
 
+  /**
+   * Cross-field check: every transport journey date must fall within the TSR's own
+   * itinerary date range. Mirrors accommodationWithinItineraryValidatorFactory above
+   * (see its comment for why this matters) but for transport - previously there was
+   * NO date validation at all for transport journeys, client-side or backend-side, so
+   * an out-of-range journey date would only be caught by whatever happened downstream
+   * (or not caught at all - see TransportRequestCreateSerializer.validate() in
+   * transport/serializers.py, which historically had no itinerary-date check either).
+   */
+  get isTransportOutsideItineraryRange(): boolean {
+    if (!this.travelForm.get('transport.required')?.value) {
+      return false;
+    }
+    const validDates = this.itineraryDates.filter((d): d is string => !!d).sort();
+    if (validDates.length === 0) {
+      return false;
+    }
+    const first = validDates[0];
+    const last = validDates[validDates.length - 1];
+    return this.transportSegments.some(segment => {
+      const date = segment['date'] as string | undefined;
+      return !!date && (date < first || date > last);
+    });
+  }
+
+  get transportItineraryRangeText(): { first: string; last: string } | null {
+    const validDates = this.itineraryDates.filter((d): d is string => !!d).sort();
+    if (validDates.length === 0) {
+      return null;
+    }
+    return { first: validDates[0], last: validDates[validDates.length - 1] };
+  }
+
   isValid(): boolean {
     return (
       this.travelForm.valid &&
       !this.isItineraryIncomplete &&
       !this.isItineraryOutOfOrder &&
       !this.isTransportIncomplete &&
+      !this.isTransportOutsideItineraryRange &&
       (!this.tripItineraryEditor || this.tripItineraryEditor.form.valid) &&
       (!this.transportJourneyEditor || this.transportJourneyEditor.form.valid)
     );

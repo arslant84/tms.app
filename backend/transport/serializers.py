@@ -307,6 +307,55 @@ class TransportRequestCreateSerializer(serializers.ModelSerializer):
                         }
                     )
 
+        # Validate journey dates fall within the linked TSR's itinerary date range.
+        # Mirrors AccommodationRequestSerializer.validate() (accommodation/
+        # serializers.py) - previously transport had no such check at all, so an
+        # out-of-range journey date wouldn't 400 here; it would either silently
+        # link a transport request with a date outside the TSR's own itinerary,
+        # or (depending on what else changed in the same submission) fail for a
+        # completely different, unrelated reason with a confusing error. This
+        # keeps the rule enforced consistently regardless of client, matching
+        # the frontend's isTransportOutsideItineraryRange check in
+        # domestic-travel-details.component.ts.
+        trf = data.get("trf")
+        if trf and transport_details:
+            from datetime import datetime
+
+            from trf.models import TrfItinerarySegment
+
+            itinerary_segments = (
+                TrfItinerarySegment.objects.filter(trf=trf)
+                .exclude(segment_date__isnull=True)
+                .order_by("segment_date")
+            )
+            if itinerary_segments.exists():
+                tsr_start_date = itinerary_segments.first().segment_date
+                tsr_end_date = itinerary_segments.last().segment_date
+
+                for i, detail in enumerate(transport_details):
+                    date_str = detail.get("date")
+                    if not date_str:
+                        continue
+                    try:
+                        journey_date = datetime.strptime(
+                            str(date_str), "%Y-%m-%d"
+                        ).date()
+                    except ValueError:
+                        raise serializers.ValidationError(
+                            {
+                                "transport_details": f"Detail #{i+1}: Invalid date format. Use YYYY-MM-DD"
+                            }
+                        )
+
+                    if journey_date < tsr_start_date or journey_date > tsr_end_date:
+                        raise serializers.ValidationError(
+                            {
+                                "transport_details": f"Detail #{i+1}: Journey date ({date_str}) must be "
+                                f"within TSR itinerary dates ({tsr_start_date.strftime('%Y-%m-%d')} to "
+                                f"{tsr_end_date.strftime('%Y-%m-%d')})"
+                            }
+                        )
+
         return data
 
     def create(self, validated_data):

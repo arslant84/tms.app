@@ -231,7 +231,9 @@ export class TrfSubmissionService {
     isDraft: boolean,
     isEditMode: boolean,
     requestorData: Partial<RequestorInformation>,
-    passportFile: File | null
+    passportFile: File | null,
+    hasLinkedAccommodation: boolean = false,
+    hasLinkedTransport: boolean = false
   ): Promise<boolean> {
     // Guard: Ensure trfId is valid
     if (!trfId || typeof trfId !== 'number' || trfId <= 0) {
@@ -364,17 +366,21 @@ export class TrfSubmissionService {
       });
     }
 
-    // Create linked accommodation request (Domestic only, opt-in) - only on a brand
-    // new TRF's first real submission, not on draft-save and not on edit-mode
-    // resubmission (unlike the other nested resources here, an already-submitted
-    // accommodation request may already be Assigned/processed by Accommodation Admin -
-    // blindly delete-and-recreate on every edit, like itinerary/meals do, would risk
-    // destroying that. Editing accommodation details after first submission doesn't
-    // propagate to the linked request yet - a known limitation, not a duplicate/data
-    // loss risk). Reuses the existing AccommodationRequestViewSet create+submit
-    // actions exactly as the standalone accommodation-create form does - no new
-    // backend endpoints.
-    if (!isDraft && !isEditMode && data.accommodation?.required) {
+    // Create linked accommodation request (Domestic only, opt-in) - only on the
+    // first real submission that produces one, i.e. only when this TRF doesn't
+    // already have a linked accommodation request. Not gated on isEditMode:
+    // editing a Draft to add "Requires Accommodation" and then submitting for
+    // the first time is isEditMode=true but hasLinkedAccommodation=false, and
+    // must still create it. What this guard protects against is re-creating an
+    // already-submitted accommodation request on a later edit - it may already
+    // be Assigned/processed by Accommodation Admin, so blindly delete-and-recreate
+    // on every edit, like itinerary/meals do, would risk destroying that.
+    // Editing accommodation details after first submission doesn't propagate to
+    // the linked request yet - a known limitation, not a duplicate/data loss
+    // risk. Reuses the existing AccommodationRequestViewSet create+submit actions
+    // exactly as the standalone accommodation-create form does - no new backend
+    // endpoints.
+    if (!isDraft && !hasLinkedAccommodation && data.accommodation?.required) {
       const acc = data.accommodation;
       const accommodationData = {
         requestor_name: requestorData.fullName,
@@ -400,19 +406,25 @@ export class TrfSubmissionService {
       );
     }
 
-    // Create linked transport request (Domestic only, opt-in) - only on a brand new
-    // TRF's first real submission, same guarding as accommodation above and for the
-    // same reason (an already-submitted transport request may already be Assigned/
-    // processed by Transport Admin). Unlike accommodation, Transport's own
-    // WorkflowTemplate stays active for ad-hoc requests - setting `trf` here is what
-    // makes TransportRequestViewSet skip starting a separate workflow for this one,
-    // so it rides the TSR's approval instead (see
+    // Create linked transport request (Domestic only, opt-in) - only when this TRF
+    // doesn't already have a linked transport request, same guarding as accommodation
+    // above and for the same reason (an already-submitted transport request may
+    // already be Assigned/processed by Transport Admin). Not gated on isEditMode -
+    // see the accommodation block's comment above for why: a Draft being completed
+    // and submitted for the first time is isEditMode=true but hasLinkedTransport=
+    // false, and must still create the transport request (previously it silently
+    // never did, so a TSR saved as a Draft with "Requires Transport" checked, then
+    // reopened later to finish and submit, would submit successfully with zero
+    // linked transport and no error shown anywhere). Unlike accommodation,
+    // Transport's own WorkflowTemplate stays active for ad-hoc requests - setting
+    // `trf` here is what makes TransportRequestViewSet skip starting a separate
+    // workflow for this one, so it rides the TSR's approval instead (see
     // WorkflowEngine._cascade_status_to_linked_transport). Matches the standalone
     // transport-create form's own single-call pattern exactly (status: 'Pending' sent
     // directly in the create payload - transport-create.component.ts does the same,
     // unlike accommodation-create's create-then-submit two-call pattern) - no new
     // backend endpoints.
-    if (!isDraft && !isEditMode && data.transport?.required) {
+    if (!isDraft && !hasLinkedTransport && data.transport?.required) {
       const transport = data.transport;
       const transportData = {
         requestor_name: requestorData.fullName,

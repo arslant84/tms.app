@@ -32,77 +32,88 @@
       </div>
 
       <div class="step-content">
-        <!-- Skip option for skippable steps -->
-        <div *ngIf="canSkipStep(step)" class="skip-option">
-          <label class="skip-checkbox">
-            <input
-              type="checkbox"
-              [checked]="isStepSkipped(step.step_order)"
-              (change)="onSkipToggle(step.step_order, $any($event.target).checked)"
-            />
-            <span class="skip-label">
-              <i class="bi bi-skip-forward me-1"></i>
-              Skip this approver
-            </span>
-          </label>
-          <span class="skip-hint">
-            (Approver is unavailable or not designated for this request)
+        <!-- Locked state: this step has already been approved, so its
+             assignment is historical and can no longer be changed here. -->
+        <div *ngIf="isStepLocked(step.step_order)" class="locked-state">
+          <i class="bi bi-lock-fill me-2"></i>
+          <span>
+            This step has already been approved by {{ getLockedApproverLabel(step) }} and can no
+            longer be changed.
           </span>
         </div>
 
-        <!-- Skipped state display -->
-        <div *ngIf="isStepSkipped(step.step_order)" class="skipped-state">
-          <i class="bi bi-skip-forward-fill me-2"></i>
-          <span>This step will be skipped</span>
-        </div>
-
-        <!-- Approver selection (hidden when step is skipped) -->
-        <ng-container *ngIf="!isStepSkipped(step.step_order)">
-          <!-- Search input for steps with many approvers -->
-          <input
-            *ngIf="step.eligible_approvers.length > 5"
-            type="text"
-            class="form-control form-control-sm search-input"
-            placeholder="Search by name, email, department..."
-            [(ngModel)]="searchTerms[step.step_order]"
-          />
-
-          <!-- Approver selection dropdown -->
-          <div *ngIf="!hasNoApprovers(step); else noApprovers" class="approver-dropdown">
-            <select
-              class="form-select"
-              [ngModel]="selections[step.step_order]"
-              (ngModelChange)="onApproverSelect(step.step_order, $event)"
-              [required]="step.is_required && required"
-              [class.is-invalid]="required && step.is_required && !selections[step.step_order]"
-            >
-              <option [ngValue]="null">-- Select Approver --</option>
-              <option
-                *ngFor="let approver of filterApprovers(step)"
-                [ngValue]="approver.id"
-              >
-                {{ approver.full_name }} ({{ approver.email }})
-                <ng-container *ngIf="approver.department"> - {{ approver.department }}</ng-container>
-              </option>
-            </select>
-
-            <!-- Selected approver preview -->
-            <div *ngIf="getSelectedApprover(step)" class="selected-approver">
-              <i class="bi bi-check-circle-fill text-success me-1"></i>
-              <span class="approver-name">{{ getSelectedApprover(step)?.full_name }}</span>
-              <span *ngIf="getSelectedApprover(step)?.role" class="approver-role">
-                {{ getSelectedApprover(step)?.role }}
+        <ng-container *ngIf="!isStepLocked(step.step_order)">
+          <!-- Skip option for skippable steps -->
+          <div *ngIf="canSkipStep(step)" class="skip-option">
+            <label class="skip-checkbox">
+              <input
+                type="checkbox"
+                [checked]="isStepSkipped(step.step_order)"
+                (change)="onSkipToggle(step.step_order, $any($event.target).checked)"
+              />
+              <span class="skip-label">
+                <i class="bi bi-skip-forward me-1"></i>
+                Skip this approver
               </span>
-            </div>
+            </label>
+            <span class="skip-hint">
+              (Approver is unavailable or not designated for this request)
+            </span>
           </div>
 
-          <!-- No approvers available -->
-          <ng-template #noApprovers>
-            <div class="no-approvers-warning">
-              <i class="bi bi-exclamation-circle me-1"></i>
-              <small>No eligible approvers found for this step.</small>
+          <!-- Skipped state display -->
+          <div *ngIf="isStepSkipped(step.step_order)" class="skipped-state">
+            <i class="bi bi-skip-forward-fill me-2"></i>
+            <span>This step will be skipped</span>
+          </div>
+
+          <!-- Approver selection (hidden when step is skipped) -->
+          <ng-container *ngIf="!isStepSkipped(step.step_order)">
+            <!-- Search input for steps with many approvers -->
+            <input
+              *ngIf="step.eligible_approvers.length > 5"
+              type="text"
+              class="form-control form-control-sm search-input"
+              placeholder="Search by name, email, department..."
+              [(ngModel)]="searchTerms[step.step_order]"
+            />
+
+            <!-- Approver selection dropdown -->
+            <div *ngIf="!hasNoApprovers(step); else noApprovers" class="approver-dropdown">
+              <select
+                class="form-select"
+                [ngModel]="selections[step.step_order]"
+                (ngModelChange)="onApproverSelect(step.step_order, $event)"
+                [required]="step.is_required && required"
+                [class.is-invalid]="required && step.is_required && !selections[step.step_order]"
+              >
+                <option [ngValue]="null">-- Select Approver --</option>
+                <option *ngFor="let approver of filterApprovers(step)" [ngValue]="approver.id">
+                  {{ approver.full_name }} ({{ approver.email }})
+                  <ng-container *ngIf="approver.department">
+                    - {{ approver.department }}</ng-container
+                  >
+                </option>
+              </select>
+
+              <!-- Selected approver preview -->
+              <div *ngIf="getSelectedApprover(step)" class="selected-approver">
+                <i class="bi bi-check-circle-fill text-success me-1"></i>
+                <span class="approver-name">{{ getSelectedApprover(step)?.full_name }}</span>
+                <span *ngIf="getSelectedApprover(step)?.role" class="approver-role">
+                  {{ getSelectedApprover(step)?.role }}
+                </span>
+              </div>
             </div>
-          </ng-template>
+
+            <!-- No approvers available -->
+            <ng-template #noApprovers>
+              <div class="no-approvers-warning">
+                <i class="bi bi-exclamation-circle me-1"></i>
+                <small>No eligible approvers found for this step.</small>
+              </div>
+            </ng-template>
+          </ng-container>
         </ng-container>
       </div>
     </div>

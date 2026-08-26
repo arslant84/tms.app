@@ -22,7 +22,8 @@
     [currentStep]="currentStep"
     [steps]="stepLabels"
     [completedSteps]="completedSteps"
-    (stepClick)="onStepClick($event)">
+    (stepClick)="onStepClick($event)"
+  >
   </app-trf-stepper>
 
   <!-- Form Content -->
@@ -34,7 +35,8 @@
     <div class="step-content" [hidden]="currentStep !== 1">
       <app-requestor-information
         [initialData]="requestorData"
-        (formSubmit)="onRequestorSubmit($event)">
+        (formSubmit)="onRequestorSubmit($event)"
+      >
       </app-requestor-information>
     </div>
 
@@ -44,25 +46,29 @@
         *ngIf="selectedTravelType === 'Domestic'"
         [initialData]="domesticTravelData"
         (formSubmit)="onTravelDetailsSubmit($event)"
-        (backClick)="onPrevious()">
+        (backClick)="onPrevious()"
+      >
       </app-domestic-travel-details>
       <app-overseas-travel-details
         *ngIf="selectedTravelType === 'Overseas'"
         [initialData]="overseasTravelData"
         (formSubmit)="onTravelDetailsSubmit($event)"
-        (backClick)="onPrevious()">
+        (backClick)="onPrevious()"
+      >
       </app-overseas-travel-details>
       <app-home-leave-details
         *ngIf="selectedTravelType === 'Home Leave'"
         [initialData]="homeLeaveData"
         (formSubmit)="onTravelDetailsSubmit($event)"
-        (backClick)="onPrevious()">
+        (backClick)="onPrevious()"
+      >
       </app-home-leave-details>
       <app-external-parties-details
         *ngIf="selectedTravelType === 'External Parties'"
         [initialData]="externalPartiesData"
         (formSubmit)="onTravelDetailsSubmit($event)"
-        (backClick)="onPrevious()">
+        (backClick)="onPrevious()"
+      >
       </app-external-parties-details>
     </div>
 
@@ -78,8 +84,10 @@
         [travelDetails]="getTravelDetailsForApproval()"
         [initialData]="approvalData"
         [requesterStaffId]="requestorData.staffId"
+        [isEditMode]="isEditMode"
         (formSubmit)="onSubmit()"
-        (backClick)="onPrevious()">
+        (backClick)="onPrevious()"
+      >
       </app-approval-submission>
     </div>
 
@@ -96,7 +104,8 @@
       type="button"
       class="btn btn-danger me-2"
       (click)="onCancel()"
-      [disabled]="isSubmitting">
+      [disabled]="isSubmitting"
+    >
       <i class="bi bi-x-circle me-1"></i>
       Cancel
     </button>
@@ -105,7 +114,8 @@
       type="button"
       class="btn btn-secondary"
       (click)="onSaveDraft()"
-      [disabled]="isSubmitting">
+      [disabled]="isSubmitting"
+    >
       <i class="bi bi-save me-1"></i>
       Save Draft
     </button>

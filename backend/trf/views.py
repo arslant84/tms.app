@@ -531,10 +531,12 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         # which lets it reach this action again even though its
         # WorkflowInstance never actually stopped. In that case, don't
         # overwrite status with a generic "Pending" - the duplicate-start
-        # guard in WorkflowRouter/WorkflowEngine below returns the existing
-        # instance as-is without correcting it, so a generic "Pending" would
-        # persist and hide which step it's actually still waiting on.
-        # Instead, resync status to the real current step.
+        # guard in WorkflowRouter/WorkflowEngine below now merges any
+        # newly-submitted selected_approvers/skipped_steps into the existing
+        # instance (for not-yet-approved steps only - see
+        # WorkflowEngine._apply_resubmit_selection), but it still doesn't
+        # change workflow_instance.current_step_order or the entity status
+        # by itself. Resync status to the real current step here regardless.
         from django.contrib.contenttypes.models import ContentType
         from workflows.engine import WorkflowEngine
         from workflows.models import WorkflowInstance, WorkflowStep
