@@ -91,7 +91,7 @@ class WorkflowEngine:
                 existing_instance.status,
             )
             WorkflowEngine._apply_resubmit_selection(
-                existing_instance, selected_approvers, skipped_steps
+                existing_instance, selected_approvers, skipped_steps, initiated_by
             )
             return existing_instance
 
@@ -538,6 +538,7 @@ class WorkflowEngine:
         workflow_instance: WorkflowInstance,
         selected_approvers: Optional[Dict[int, int]],
         skipped_steps: Optional[Dict[int, str]],
+        initiated_by: Optional[User] = None,
     ) -> None:
         """Merge newly-submitted selected_approvers/skipped_steps into an
         already-active WorkflowInstance's additional_data on resubmit, and
@@ -617,6 +618,27 @@ class WorkflowEngine:
                 additional_data["skipped_steps"] = existing_skipped
                 workflow_instance.additional_data = additional_data
                 workflow_instance.save(update_fields=["additional_data"])
+
+                # If the currently-pending step is now in skipped_steps, auto-skip
+                # it immediately and advance the workflow. _start_step handles the
+                # existing_execution case (marks it skipped, calls _handle_step_approval).
+                updated_skipped = additional_data.get("skipped_steps", {})
+                if (
+                    pending_execution
+                    and pending_execution.workflow_step.step_order not in approved_orders
+                    and pending_execution.workflow_step.can_skip
+                    and initiated_by
+                    and (
+                        str(pending_execution.workflow_step.step_order) in updated_skipped
+                        or pending_execution.workflow_step.step_order in updated_skipped
+                    )
+                ):
+                    WorkflowEngine._start_step(
+                        workflow_instance, pending_execution.workflow_step, initiated_by
+                    )
+                    # _start_step advanced the workflow and updated the entity status;
+                    # the resync block below is no longer needed for this case.
+                    return
 
                 # The currently-active step's real assignee lives on the
                 # WorkflowStepExecution row, not additional_data - re-resolve
