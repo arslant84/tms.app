@@ -237,3 +237,120 @@ class TestTransportRequestUpdate:
         assert response.status_code == status.HTTP_200_OK
         tr.refresh_from_db()
         assert tr.status == "Completed"
+
+
+@pytest.mark.django_db
+class TestVehicleAssignmentDriverContact:
+    """Regression test: VehicleAssignment.driver_contact has no blank=True
+    on the model, but the Transport Processing admin page's "Driver
+    Contact" input has no required marker (unlike Vehicle Number/Driver
+    Name) and always sends '' when left empty - every "process this
+    request" attempt without a driver contact 400'd with "This field may
+    not be blank." VehicleAssignmentSerializer now explicitly allows blank."""
+
+    def test_vehicle_assignment_accepts_blank_driver_contact(
+        self, api_client, admin_user
+    ):
+        from transport.models import TransportRequest
+
+        tr = TransportRequest.objects.create(
+            requestor=admin_user,
+            requestor_name=admin_user.name,
+            staff_id="S1",
+            department="IT",
+            position="Dev",
+            purpose="Blank driver contact test",
+            status="Approved",
+            transport_details=[
+                {
+                    "date": "2026-09-01",
+                    "day": "Tuesday",
+                    "from": "A",
+                    "to": "B",
+                    "departure_time": "09:00",
+                    "number_of_passengers": 1,
+                }
+            ],
+        )
+
+        api_client.force_authenticate(user=admin_user)
+        response = api_client.post(
+            "/api/transport/vehicle-assignments/",
+            {
+                "transport_request": tr.id,
+                "vehicle_number": "ABC-1",
+                "driver_name": "Driver",
+                "driver_contact": "",
+                "driver_license": "",
+                "vehicle_capacity": 4,
+                "status": "Assigned",
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+
+
+@pytest.mark.django_db
+class TestTransportProcessingOneShotComplete:
+    """Regression coverage for the simplified Transport Processing flow:
+    filling in booking details now completes the request in one action -
+    there is no separate "Processing" intermediate stage/status to action
+    afterwards (see transport-processing.component.ts's
+    handleCompleteProcessing)."""
+
+    def test_assign_vehicle_then_update_then_complete_succeeds_end_to_end(
+        self, api_client, admin_user
+    ):
+        from transport.models import TransportRequest
+
+        tr = TransportRequest.objects.create(
+            requestor=admin_user,
+            requestor_name=admin_user.name,
+            staff_id="S1",
+            department="IT",
+            position="Dev",
+            purpose="One-shot complete flow test",
+            status="Approved",
+            transport_details=[
+                {
+                    "date": "2026-09-01",
+                    "day": "Tuesday",
+                    "from": "A",
+                    "to": "B",
+                    "departure_time": "09:00",
+                    "number_of_passengers": 1,
+                }
+            ],
+        )
+
+        api_client.force_authenticate(user=admin_user)
+
+        assign_response = api_client.post(
+            "/api/transport/vehicle-assignments/",
+            {
+                "transport_request": tr.id,
+                "vehicle_number": "XYZ-1",
+                "driver_name": "Driver",
+                "driver_contact": "",
+                "driver_license": "",
+                "vehicle_capacity": 4,
+                "status": "Assigned",
+            },
+            format="json",
+        )
+        assert assign_response.status_code == status.HTTP_201_CREATED
+
+        update_response = api_client.patch(
+            f"/api/transport/requests/{tr.id}/",
+            {"booking_details": {"vehicle_number": "XYZ-1", "driver_name": "Driver"}},
+            format="json",
+        )
+        assert update_response.status_code == status.HTTP_200_OK
+
+        complete_response = api_client.post(
+            f"/api/transport/requests/{tr.id}/complete/", {}
+        )
+        assert complete_response.status_code == status.HTTP_200_OK
+        tr.refresh_from_db()
+        assert tr.status == "Completed"

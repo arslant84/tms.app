@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { VisaService, VisaApplication } from '../../../visa/services/visa.service';
+import { VisaService } from '../../../visa/services/visa.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
@@ -26,6 +26,15 @@ interface PendingVisa {
   passportNumber: string;
 }
 
+interface VisaProcessingDetails {
+  visa_number?: string;
+  visa_valid_from?: string;
+  visa_valid_to?: string;
+  processing_notes?: string;
+  completed_by_admin?: boolean;
+  completed_at?: string;
+}
+
 interface CompletedVisa {
   id: number;
   request_number: string;
@@ -37,7 +46,28 @@ interface CompletedVisa {
   status: string;
   completedDate: string;
   notes?: string;
-  processing_details?: any;
+  processing_details?: VisaProcessingDetails;
+}
+
+interface VisaApplicationApiResponse {
+  id: number;
+  request_number?: string;
+  requestor_name?: string;
+  department?: string;
+  staff_id?: string;
+  destination?: string;
+  visa_type?: string;
+  travel_purpose?: string;
+  trip_start_date?: string;
+  trip_end_date?: string;
+  status: string;
+  submitted_date?: string;
+  created_at?: string;
+  passport_number?: string;
+  processing_completed_at?: string;
+  updated_at?: string;
+  additional_comments?: string;
+  processing_details?: VisaProcessingDetails;
 }
 
 @Component({
@@ -45,10 +75,10 @@ interface CompletedVisa {
   standalone: true,
   imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './visa-processing.component.html',
-  styleUrl: './visa-processing.component.scss'
+  styleUrl: './visa-processing.component.scss',
 })
 export class VisaProcessingComponent implements OnInit {
-  activeTab: 'pending' | 'processing' | 'completed' = 'pending';
+  activeTab: 'pending' | 'completed' = 'pending';
 
   // Pending Visas
   pendingVisas: PendingVisa[] = [];
@@ -90,12 +120,16 @@ export class VisaProcessingComponent implements OnInit {
     this.errorPending = null;
 
     this.visaService.getAllApplications({ adminView: true, page_size: 1000 }).subscribe({
-      next: (response: any) => {
-        const all = response.results || response;
+      next: (
+        response: { results?: VisaApplicationApiResponse[] } | VisaApplicationApiResponse[]
+      ) => {
+        const all: VisaApplicationApiResponse[] = Array.isArray(response)
+          ? response
+          : response.results || [];
 
         this.pendingVisas = all
-          .filter((app: any) => app.status === 'Approved')
-          .map((app: any) => ({
+          .filter((app: VisaApplicationApiResponse) => app.status === 'Approved')
+          .map((app: VisaApplicationApiResponse) => ({
             id: app.id,
             request_number: app.request_number || `VIS-${app.id}`,
             requestorName: app.requestor_name || 'N/A',
@@ -107,24 +141,24 @@ export class VisaProcessingComponent implements OnInit {
             tripStartDate: app.trip_start_date || 'N/A',
             tripEndDate: app.trip_end_date || 'N/A',
             status: app.status,
-            submittedDate: app.submitted_date || app.created_at,
-            passportNumber: app.passport_number || 'N/A'
+            submittedDate: app.submitted_date || app.created_at || '',
+            passportNumber: app.passport_number || 'N/A',
           }));
 
         this.completedVisas = all
-          .filter((app: any) => app.status === 'Completed')
-          .map((app: any) => ({
+          .filter((app: VisaApplicationApiResponse) => app.status === 'Completed')
+          .map((app: VisaApplicationApiResponse) => ({
             id: app.id,
             request_number: app.request_number || `VIS-${app.id}`,
             requestorName: app.requestor_name || 'N/A',
             destination: app.destination || 'N/A',
             visaType: app.visa_type || 'N/A',
             status: app.status,
-            completedDate: app.processing_completed_at || app.updated_at,
+            completedDate: app.processing_completed_at || app.updated_at || '',
             notes: app.additional_comments,
             staffId: app.staff_id || 'N/A',
             department: app.department || 'N/A',
-            processing_details: app.processing_details
+            processing_details: app.processing_details,
           }));
 
         this.isLoadingPending = false;
@@ -136,16 +170,8 @@ export class VisaProcessingComponent implements OnInit {
         this.completedVisas = [];
         this.isLoadingPending = false;
         this.isLoadingCompleted = false;
-      }
+      },
     });
-  }
-
-  /**
-   * Select visa application for processing
-   */
-  selectApplication(application: PendingVisa): void {
-    this.selectedApplication = application;
-    this.resetFormFields();
   }
 
   /**
@@ -159,130 +185,9 @@ export class VisaProcessingComponent implements OnInit {
   }
 
   /**
-   * Mark visa as processing started
-   */
-  startProcessing(): void {
-    if (!this.selectedApplication) {
-      this.toastService.error('No application selected');
-      return;
-    }
-
-    this.isProcessing = true;
-
-    this.visaService.updateApplication(this.selectedApplication.id, {
-      status: 'Processing',
-      processing_started_at: new Date().toISOString()
-    }).subscribe({
-      next: () => {
-        this.toastService.success(`Processing started for ${this.selectedApplication!.requestorName}`);
-        this.loadAll();
-        this.selectedApplication = null;
-        this.resetFormFields();
-        this.isProcessing = false;
-      },
-      error: (err) => {
-        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to start processing'));
-        this.isProcessing = false;
-      }
-    });
-  }
-
-  /**
-   * Complete visa processing
-   */
-  completeProcessing(): void {
-    if (!this.selectedApplication) {
-      this.toastService.error('No application selected');
-      return;
-    }
-
-    this.confirmationService.confirm({
-      title: 'Complete Processing',
-      message: `Mark visa application ${this.selectedApplication.request_number} as completed?`,
-      confirmText: 'Complete',
-      type: 'success'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-      this.executeCompleteProcessing();
-    });
-  }
-
-  private executeCompleteProcessing(): void {
-    if (!this.selectedApplication) return;
-    this.isProcessing = true;
-
-    const completionData: any = {};
-
-    if (this.processingNotes.trim()) {
-      completionData.additional_comments = this.processingNotes;
-    }
-
-    // Add visa details if provided
-    if (this.visaNumber || this.visaIssueDate || this.visaExpiryDate) {
-      completionData.processing_details = {
-        visa_number: this.visaNumber,
-        visa_issue_date: this.visaIssueDate,
-        visa_expiry_date: this.visaExpiryDate,
-        completed_by_admin: true,
-        completed_at: new Date().toISOString()
-      };
-    }
-
-    this.visaService.completeApplication(this.selectedApplication.id, completionData).subscribe({
-      next: (response) => {
-        this.toastService.success(`Visa application for ${this.selectedApplication!.requestorName} marked as completed`);
-
-        // Clear selected application first
-        const appName = this.selectedApplication!.requestorName;
-        this.selectedApplication = null;
-        this.resetFormFields();
-
-        this.loadAll();
-
-        this.isProcessing = false;
-      },
-      error: (err) => {
-        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to complete processing'));
-        this.isProcessing = false;
-      }
-    });
-  }
-
-  /**
-   * Reject visa application (Unable to process)
-   */
-  rejectApplication(): void {
-    if (!this.selectedApplication) {
-      this.toastService.error('No application selected');
-      return;
-    }
-
-    const reason = prompt('Please provide a reason for rejecting this visa application:');
-    if (!reason || !reason.trim()) {
-      return;
-    }
-
-    this.isProcessing = true;
-
-    this.visaService.rejectApplication(this.selectedApplication.id, reason).subscribe({
-      next: () => {
-        this.toastService.success(`Visa application ${this.selectedApplication!.request_number} rejected`);
-        this.loadAll();
-        this.selectedApplication = null;
-        this.resetFormFields();
-        this.isProcessing = false;
-      },
-      error: (err) => {
-        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to reject application'));
-        this.isProcessing = false;
-      }
-    });
-  }
-
-  /**
    * Switch tab
    */
-  switchTab(tab: 'pending' | 'processing' | 'completed'): void {
+  switchTab(tab: 'pending' | 'completed'): void {
     this.activeTab = tab;
   }
 
@@ -315,22 +220,27 @@ export class VisaProcessingComponent implements OnInit {
       return;
     }
 
-    this.confirmationService.confirm({
-      title: 'Complete Processing',
-      message: `Mark visa application ${this.selectedApplication.request_number} as completed?`,
-      confirmText: 'Complete',
-      type: 'success'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-      this.executeCompleteProcessingFromDialog();
-    });
+    this.confirmationService
+      .confirm({
+        title: 'Complete Processing',
+        message: `Mark visa application ${this.selectedApplication.request_number} as completed?`,
+        confirmText: 'Complete',
+        type: 'success',
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.executeCompleteProcessingFromDialog();
+      });
   }
 
   private executeCompleteProcessingFromDialog(): void {
     if (!this.selectedApplication) return;
     this.isProcessing = true;
 
-    const completionData: any = {};
+    const completionData: {
+      additional_comments?: string;
+      processing_details?: VisaProcessingDetails;
+    } = {};
 
     if (this.processingNotes.trim()) {
       completionData.additional_comments = this.processingNotes;
@@ -344,23 +254,27 @@ export class VisaProcessingComponent implements OnInit {
         visa_valid_to: this.visaExpiryDate,
         processing_notes: this.processingNotes,
         completed_by_admin: true,
-        completed_at: new Date().toISOString()
+        completed_at: new Date().toISOString(),
       };
     }
 
     this.visaService.completeApplication(this.selectedApplication.id, completionData).subscribe({
-      next: (response) => {
-        this.toastService.success(`Visa application for ${this.selectedApplication!.requestorName} marked as completed`);
+      next: () => {
+        this.toastService.success(
+          `Visa application for ${this.selectedApplication!.requestorName} marked as completed`
+        );
 
         this.closeProcessingDialog();
         this.loadAll();
 
         this.isProcessing = false;
       },
-      error: (err) => {
-        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to complete processing'));
+      error: err => {
+        this.toastService.error(
+          this.errorHandler.getErrorMessage(err, 'Failed to complete processing')
+        );
         this.isProcessing = false;
-      }
+      },
     });
   }
 

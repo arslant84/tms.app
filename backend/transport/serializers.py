@@ -43,6 +43,12 @@ class VehicleAssignmentSerializer(serializers.ModelSerializer):
     """Serializer for vehicle assignments"""
 
     assigned_by_user = UserSerializer(source="assigned_by", read_only=True)
+    # The model field has no blank=True, but the Transport Processing admin
+    # page's "Driver Contact" input has no required marker (unlike Vehicle
+    # Number/Driver Name) and the frontend always sends '' when left empty -
+    # without this override every processing attempt without a driver
+    # contact 400'd with "This field may not be blank."
+    driver_contact = serializers.CharField(required=False, allow_blank=True, default="")
 
     class Meta:
         model = VehicleAssignment
