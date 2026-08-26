@@ -657,17 +657,17 @@ class WorkflowEngine:
         """Create and start a workflow step execution"""
         # Check if this step's approver selection was marked "skip" by the
         # requester (i.e. they deliberately left it unselected rather than
-        # forcing a specific approver). IMPORTANT: this does NOT mean the
-        # step itself is bypassed. The step still requires a real approval
-        # decision from an eligible approver - "skip" only means no specific
-        # person is force-assigned, so we fall through to the normal
-        # role/permission-based assignment logic below instead of
-        # auto-approving/auto-advancing past the step. See the incident
-        # where a 2-step workflow with step 1's approver skipped was
-        # incorrectly marked fully Approved without step 2 ever being
-        # actioned - that was this auto-advance behavior compounding across
-        # steps (and, for single-step workflows, completing the whole
-        # workflow with no approver ever acting on it at all).
+        # forcing a specific approver). A step marked "skip" is treated as
+        # bypassed: it's auto-skipped and the workflow advances to the next
+        # step (or completes, if it was the last one) without waiting for a
+        # real approval decision. (An earlier version of this logic only
+        # bypassed the step in the narrower no-fallback-approver-exists case
+        # and otherwise routed to a fallback approver, following a past
+        # incident where skip-driven auto-advance compounded across steps in
+        # a 2-step workflow and left it fully Approved without step 2 ever
+        # being actioned - the product decision is now that skip should
+        # always bypass the step, so callers must not mark a step "skip"
+        # unless they genuinely want it bypassed.)
         skipped_steps = (workflow_instance.additional_data or {}).get(
             "skipped_steps", {}
         )
@@ -682,17 +682,7 @@ class WorkflowEngine:
             step_order_str in skipped_steps or step.step_order in skipped_steps
         )
         if step_approver_unselected:
-            if step.can_skip:
-                skip_reason = (
-                    skipped_steps.get(step_order_str)
-                    or skipped_steps.get(step.step_order)
-                    or "Approver not pre-selected by requester"
-                )
-                logger.info(
-                    f"Step '{step.step_name}' has no pre-selected approver (requester skipped selection: "
-                    f"{skip_reason}). Routing to an eligible approver instead of auto-approving the step."
-                )
-            else:
+            if not step.can_skip:
                 logger.warning(
                     f"Step '{step.step_name}' marked for skip but can_skip=False. Proceeding normally."
                 )
@@ -704,17 +694,18 @@ class WorkflowEngine:
 
         # Resolve who this step should be assigned to (user-selected approver,
         # else approver_user/approver_permission/approver_role fallback chain).
-        assigned_user = WorkflowEngine._resolve_step_assignee(workflow_instance, step)
+        # Only needed when the step isn't being auto-skipped below.
+        assigned_user = None
+        if not (step_approver_unselected and step.can_skip):
+            assigned_user = WorkflowEngine._resolve_step_assignee(
+                workflow_instance, step
+            )
 
-        # If the requester explicitly skipped this step's approver selection
-        # AND no fallback approver could be resolved either (nobody holds the
-        # role/permission), there is nobody who could ever action it - leaving
-        # it "pending" with no assignee would strand the workflow forever.
-        # Auto-skip it and advance instead. This is narrower than the
-        # auto-advance-on-skip behavior from the past incident referenced
-        # above: that bug fired on skip alone, even when a real fallback
-        # approver existed; this only fires when NO approver exists at all.
-        if step_approver_unselected and step.can_skip and assigned_user is None:
+        # The requester explicitly skipped this step's approver selection -
+        # auto-skip it and advance the workflow to the next step (or
+        # complete it, if this was the last one) rather than waiting for a
+        # real approval decision. See the docstring above.
+        if step_approver_unselected and step.can_skip:
             if existing_execution and existing_execution.status not in (
                 "pending",
                 "waiting",
@@ -722,10 +713,14 @@ class WorkflowEngine:
                 # Already processed - don't re-process.
                 return existing_execution
 
+            skip_reason = (
+                skipped_steps.get(step_order_str)
+                or skipped_steps.get(step.step_order)
+                or "Approver not pre-selected by requester"
+            )
             logger.info(
                 f"Step '{step.step_name}' (order {step.step_order}) was skipped by the "
-                "requester and no eligible fallback approver exists - auto-skipping and "
-                "advancing the workflow instead of leaving it stuck with no assignee."
+                f"requester ({skip_reason}) - auto-skipping and advancing the workflow."
             )
 
             if existing_execution:
@@ -733,7 +728,7 @@ class WorkflowEngine:
                 step_execution.status = "skipped"
                 step_execution.assigned_to = None
                 step_execution.action_date = timezone.now()
-                step_execution.comments = "Auto-skipped: no eligible approver available"
+                step_execution.comments = f"Auto-skipped: {skip_reason}"
                 step_execution.save()
             else:
                 step_execution = WorkflowStepExecution.objects.create(
@@ -742,14 +737,14 @@ class WorkflowEngine:
                     status="skipped",
                     assigned_to=None,
                     action_date=timezone.now(),
-                    comments="Auto-skipped: no eligible approver available",
+                    comments=f"Auto-skipped: {skip_reason}",
                 )
 
             WorkflowAuditLog.objects.create(
                 workflow_instance=workflow_instance,
                 action_type="skipped",
                 action_description=(
-                    f"Step '{step.step_name}' auto-skipped - no eligible approver found"
+                    f"Step '{step.step_name}' auto-skipped by requester ({skip_reason})"
                 ),
                 performed_by=initiator,
             )
