@@ -82,11 +82,16 @@ class WorkflowEngine:
         if existing_instance:
             logger.warning(
                 "Workflow already active for %s #%s (instance #%s, status=%s). "
-                "Ignoring duplicate start_workflow call.",
+                "Applying any newly-submitted selected_approvers/skipped_steps "
+                "to not-yet-approved steps instead of creating a duplicate "
+                "WorkflowInstance.",
                 module_name,
                 entity.id,
                 existing_instance.id,
                 existing_instance.status,
+            )
+            WorkflowEngine._apply_resubmit_selection(
+                existing_instance, selected_approvers, skipped_steps
             )
             return existing_instance
 
@@ -464,70 +469,17 @@ class WorkflowEngine:
     # Private helper methods
 
     @staticmethod
-    def _start_step(
-        workflow_instance: WorkflowInstance, step: WorkflowStep, initiator: User
-    ):
-        """Create and start a workflow step execution"""
-        # Check if this step is marked for skip (user indicated approver not available)
-        skipped_steps = (workflow_instance.additional_data or {}).get(
-            "skipped_steps", {}
-        )
-        step_order_str = str(step.step_order)
+    def _resolve_step_assignee(
+        workflow_instance: WorkflowInstance, step: WorkflowStep
+    ) -> Optional[User]:
+        """Resolve which user a step should currently be assigned to.
 
-        logger.info(
-            f"_start_step: workflow={workflow_instance.id}, step={step.step_name}, step_order={step.step_order}, can_skip={step.can_skip}"
-        )
-        logger.info(f"_start_step: skipped_steps from additional_data: {skipped_steps}")
-        logger.info(
-            f"_start_step: checking if step_order {step.step_order} (str: '{step_order_str}') is in skipped_steps"
-        )
-
-        if step_order_str in skipped_steps or step.step_order in skipped_steps:
-            # Step is marked for skip - verify it's allowed and auto-skip
-            if step.can_skip:
-                skip_reason = (
-                    skipped_steps.get(step_order_str)
-                    or skipped_steps.get(step.step_order)
-                    or "Approver not available"
-                )
-                logger.info(
-                    f"Auto-skipping step '{step.step_name}' - marked as skipped by requester: {skip_reason}"
-                )
-
-                # Create skipped step execution
-                step_execution = WorkflowStepExecution.objects.create(
-                    workflow_instance=workflow_instance,
-                    workflow_step=step,
-                    assigned_to=None,
-                    status="skipped",
-                    actioned_by=initiator,
-                    action_date=timezone.now(),
-                    comments=f"Skipped during submission: {skip_reason}",
-                )
-
-                # Log the skip
-                WorkflowAuditLog.objects.create(
-                    workflow_instance=workflow_instance,
-                    action_type="skipped",
-                    action_description=f"Step '{step.step_name}' skipped by requester: {skip_reason}",
-                    performed_by=initiator,
-                )
-
-                # Move to next step
-                return WorkflowEngine._handle_step_approval(
-                    workflow_instance, step_execution, initiator
-                )
-            else:
-                logger.warning(
-                    f"Step '{step.step_name}' marked for skip but can_skip=False. Proceeding normally."
-                )
-
-        # Check if a step execution already exists for this step
-        existing_execution = WorkflowStepExecution.objects.filter(
-            workflow_instance=workflow_instance, workflow_step=step
-        ).first()
-
-        # Check for user-selected approver first (highest priority)
+        Priority: requester-selected approver (additional_data.selected_approvers)
+        > step.approver_user > step.approver_permission > step.approver_role.
+        Shared by _start_step (when a step first activates) and
+        _apply_resubmit_selection (when a still-pending step's selection is
+        changed on resubmit), so both paths compute the assignee identically.
+        """
         assigned_user = None
         selected_approvers = (workflow_instance.additional_data or {}).get(
             "selected_approvers", {}
@@ -578,6 +530,157 @@ class WorkflowEngine:
                     else None
                 ),
             )
+
+        return assigned_user
+
+    @staticmethod
+    def _apply_resubmit_selection(
+        workflow_instance: WorkflowInstance,
+        selected_approvers: Optional[Dict[int, int]],
+        skipped_steps: Optional[Dict[int, str]],
+    ) -> None:
+        """Merge newly-submitted selected_approvers/skipped_steps into an
+        already-active WorkflowInstance's additional_data on resubmit.
+
+        Steps whose WorkflowStepExecution is already 'approved' are left
+        completely untouched - they're resolved and historical, and the
+        product decision is that once a step's approver has actually
+        approved it, that step becomes locked. All other steps (the current
+        pending step, and any future/not-yet-started steps) are editable:
+
+        - Future steps: only additional_data needs to change. _start_step
+          reads selected_approvers/skipped_steps from additional_data at the
+          moment it actually activates the step, so an updated entry there
+          is picked up automatically whenever that later happens.
+        - The current pending step: additional_data alone isn't enough,
+          because _is_user_authorized/process_action check the actual
+          WorkflowStepExecution.assigned_to field (set once when the step
+          was activated), not additional_data. So the pending step's
+          assigned_to is re-resolved and updated here too, matching
+          whatever _start_step would have assigned had the new selection
+          been in place when the step activated.
+        """
+        if not selected_approvers and not skipped_steps:
+            return
+
+        approved_orders = set(
+            WorkflowStepExecution.objects.filter(
+                workflow_instance=workflow_instance, status="approved"
+            ).values_list("workflow_step__step_order", flat=True)
+        )
+
+        additional_data = dict(workflow_instance.additional_data or {})
+        existing_selected = dict(additional_data.get("selected_approvers", {}))
+        existing_skipped = dict(additional_data.get("skipped_steps", {}))
+
+        changed = False
+
+        if selected_approvers:
+            for step_order, user_id in selected_approvers.items():
+                if int(step_order) in approved_orders:
+                    continue
+                existing_selected[str(step_order)] = user_id
+                # A step can't be both selected and skipped
+                existing_skipped.pop(str(step_order), None)
+                changed = True
+
+        if skipped_steps:
+            for step_order, reason in skipped_steps.items():
+                if int(step_order) in approved_orders:
+                    continue
+                existing_skipped[str(step_order)] = reason
+                existing_selected.pop(str(step_order), None)
+                changed = True
+
+        if not changed:
+            return
+
+        additional_data["selected_approvers"] = existing_selected
+        additional_data["skipped_steps"] = existing_skipped
+        workflow_instance.additional_data = additional_data
+        workflow_instance.save(update_fields=["additional_data"])
+
+        # The currently-active step's real assignee lives on the
+        # WorkflowStepExecution row, not additional_data - re-resolve and
+        # apply it now if the new selection changes it.
+        pending_execution = (
+            WorkflowStepExecution.objects.filter(
+                workflow_instance=workflow_instance, status="pending"
+            )
+            .select_related("workflow_step")
+            .first()
+        )
+        if pending_execution and pending_execution.workflow_step.step_order not in (
+            approved_orders
+        ):
+            new_assignee = WorkflowEngine._resolve_step_assignee(
+                workflow_instance, pending_execution.workflow_step
+            )
+            if new_assignee != pending_execution.assigned_to:
+                pending_execution.assigned_to = new_assignee
+                pending_execution.save(update_fields=["assigned_to"])
+                logger.info(
+                    "Resubmit updated pending step '%s' (order %s) assignee to %s",
+                    pending_execution.workflow_step.step_name,
+                    pending_execution.workflow_step.step_order,
+                    new_assignee.email if new_assignee else None,
+                )
+
+    @staticmethod
+    def _start_step(
+        workflow_instance: WorkflowInstance, step: WorkflowStep, initiator: User
+    ):
+        """Create and start a workflow step execution"""
+        # Check if this step's approver selection was marked "skip" by the
+        # requester (i.e. they deliberately left it unselected rather than
+        # forcing a specific approver). IMPORTANT: this does NOT mean the
+        # step itself is bypassed. The step still requires a real approval
+        # decision from an eligible approver - "skip" only means no specific
+        # person is force-assigned, so we fall through to the normal
+        # role/permission-based assignment logic below instead of
+        # auto-approving/auto-advancing past the step. See the incident
+        # where a 2-step workflow with step 1's approver skipped was
+        # incorrectly marked fully Approved without step 2 ever being
+        # actioned - that was this auto-advance behavior compounding across
+        # steps (and, for single-step workflows, completing the whole
+        # workflow with no approver ever acting on it at all).
+        skipped_steps = (workflow_instance.additional_data or {}).get(
+            "skipped_steps", {}
+        )
+        step_order_str = str(step.step_order)
+
+        logger.info(
+            f"_start_step: workflow={workflow_instance.id}, step={step.step_name}, step_order={step.step_order}, can_skip={step.can_skip}"
+        )
+        logger.info(f"_start_step: skipped_steps from additional_data: {skipped_steps}")
+
+        step_approver_unselected = (
+            step_order_str in skipped_steps or step.step_order in skipped_steps
+        )
+        if step_approver_unselected:
+            if step.can_skip:
+                skip_reason = (
+                    skipped_steps.get(step_order_str)
+                    or skipped_steps.get(step.step_order)
+                    or "Approver not pre-selected by requester"
+                )
+                logger.info(
+                    f"Step '{step.step_name}' has no pre-selected approver (requester skipped selection: "
+                    f"{skip_reason}). Routing to an eligible approver instead of auto-approving the step."
+                )
+            else:
+                logger.warning(
+                    f"Step '{step.step_name}' marked for skip but can_skip=False. Proceeding normally."
+                )
+
+        # Check if a step execution already exists for this step
+        existing_execution = WorkflowStepExecution.objects.filter(
+            workflow_instance=workflow_instance, workflow_step=step
+        ).first()
+
+        # Resolve who this step should be assigned to (user-selected approver,
+        # else approver_user/approver_permission/approver_role fallback chain).
+        assigned_user = WorkflowEngine._resolve_step_assignee(workflow_instance, step)
 
         if existing_execution:
             # If step already exists and is pending, it's a race condition - skip

@@ -42,7 +42,9 @@
             </div>
             <div class="detail-item">
               <span class="detail-label">Purpose:</span>
-              <span class="detail-value">{{ travelDetails?.purposeOfTravel || travelDetails?.purpose || 'N/A' }}</span>
+              <span class="detail-value">{{
+                travelDetails?.purposeOfTravel || travelDetails?.purpose || 'N/A'
+              }}</span>
             </div>
             <div class="detail-item">
               <span class="detail-label">Itinerary Segments:</span>
@@ -93,13 +95,15 @@
         >
           <div class="timeline-marker">
             <div class="marker-circle">
-              <i class="bi"
-                 [ngClass]="{
-                   'bi-check-circle-fill': step.status === 'Approved',
-                   'bi-x-circle-fill': step.status === 'Rejected',
-                   'bi-circle-fill': step.status === 'Current',
-                   'bi-circle': step.status === 'Pending' || step.status === 'Not Started'
-                 }"></i>
+              <i
+                class="bi"
+                [ngClass]="{
+                  'bi-check-circle-fill': step.status === 'Approved',
+                  'bi-x-circle-fill': step.status === 'Rejected',
+                  'bi-circle-fill': step.status === 'Current',
+                  'bi-circle': step.status === 'Pending' || step.status === 'Not Started',
+                }"
+              ></i>
             </div>
             <div class="marker-line" *ngIf="!isLast"></div>
           </div>
@@ -130,14 +134,18 @@
     </div>
     <div class="card-body">
       <p class="text-muted mb-3">
-        Choose specific approvers for each step of the workflow. If not selected, approvers will be assigned automatically.
+        Choose specific approvers for each step of the workflow. If not selected, approvers will be
+        assigned automatically. Once a step has been approved it is locked and can no longer be
+        changed here.
       </p>
       <app-approver-selection
         [entityType]="entityType"
         [required]="false"
         [showTitle]="false"
+        [isEditMode]="isEditMode"
         [initialSelections]="initialData.selected_approvers || {}"
         [initialSkippedSteps]="initialData.skipped_steps || {}"
+        [approvedStepOrders]="approvedStepOrders"
         [staffId]="requesterStaffId"
         (selectionChange)="onApproverSelectionChange($event)"
         (validityChange)="onApproverValidityChange($event)"
@@ -174,8 +182,8 @@
         <div class="alert alert-info">
           <i class="bi bi-info-circle-fill"></i>
           <div>
-            <strong>Note:</strong> Once submitted, your travel request will be routed through the approval workflow.
-            You will receive email notifications at each approval stage.
+            <strong>Note:</strong> Once submitted, your travel request will be routed through the
+            approval workflow. You will receive email notifications at each approval stage.
           </div>
         </div>
 

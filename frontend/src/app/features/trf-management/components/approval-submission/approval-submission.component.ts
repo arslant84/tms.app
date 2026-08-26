@@ -1,13 +1,35 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, type OnInit, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, type FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
-import { WorkflowService, ApproverSelection } from '../../../../core/services/workflow.service';
-import { WorkflowTemplate, WorkflowStep } from '../../../../core/models/workflow.models';
-import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
+import {
+  WorkflowService,
+  type ApproverSelection,
+} from '../../../../core/services/workflow.service';
+import type { WorkflowTemplate } from '../../../../core/models/workflow.models';
+import {
+  ApproverSelectionComponent,
+  type SkippedStepsSelection,
+} from '../../../../shared/components/approver-selection/approver-selection.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+
+interface RequestorSummary {
+  fullName?: string;
+  department?: string;
+  position?: string;
+  staffId?: string;
+}
+
+interface TravelDetailsSummary {
+  itinerary?: unknown[];
+  mealProvisions?: { dailySelections?: unknown[] };
+  accommodation?: unknown;
+  companyTransportation?: unknown[];
+  purpose?: string;
+  purposeOfTravel?: string;
+}
 
 export interface ApprovalStep {
   role: string;
@@ -21,6 +43,8 @@ export interface ApprovalSubmissionData {
   additionalComments: string;
   selected_approvers?: ApproverSelection;
   skipped_steps?: SkippedStepsSelection;
+  /** Step orders (ints) that already have an APPROVED WorkflowStepExecution - see trf-wizard.types.ts. */
+  approved_step_orders?: number[];
 }
 
 @Component({
@@ -28,14 +52,14 @@ export interface ApprovalSubmissionData {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent, LoadingSpinnerComponent],
   templateUrl: './approval-submission.component.html',
-  styleUrls: ['./approval-submission.component.scss']
+  styleUrls: ['./approval-submission.component.scss'],
 })
 export class ApprovalSubmissionComponent implements OnInit {
   @ViewChild(ApproverSelectionComponent) approverSelectionComponent?: ApproverSelectionComponent;
 
   @Input() travelType: 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties' | null = null;
-  @Input() requestorData: any = null;
-  @Input() travelDetails: any = null;
+  @Input() requestorData: RequestorSummary | null = null;
+  @Input() travelDetails: TravelDetailsSummary | null = null;
   @Input() initialData: Partial<ApprovalSubmissionData> = {};
   @Input() approvalWorkflow: ApprovalStep[] = [];
   @Input() entityType: string = 'travelrequest';
@@ -45,6 +69,16 @@ export class ApprovalSubmissionComponent implements OnInit {
    * in edit mode to ensure approvers are filtered by the original requester's department.
    */
   @Input() requesterStaffId?: string;
+  /**
+   * True when this form is restoring an existing TRF's prior state (as
+   * opposed to a brand new submission with no prior state to show). Passed
+   * down to <app-approver-selection> to gate its single-eligible-approver
+   * auto-fill convenience: that default is fine for a fresh form, but on an
+   * edit-mode reload it must not silently fill in a guessed approver for a
+   * step the requester genuinely left unselected before - see
+   * ApproverSelectionComponent.loadEligibleApprovers().
+   */
+  @Input() isEditMode: boolean = false;
 
   @Output() formSubmit = new EventEmitter<ApprovalSubmissionData>();
   @Output() backClick = new EventEmitter<void>();
@@ -55,6 +89,8 @@ export class ApprovalSubmissionComponent implements OnInit {
   selectedApprovers: ApproverSelection = {};
   skippedSteps: SkippedStepsSelection = {};
   approverSelectionValid: boolean = true;
+  /** Step orders already approved (and therefore locked) - see approver-selection.component.ts. */
+  approvedStepOrders: number[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -72,8 +108,7 @@ export class ApprovalSubmissionComponent implements OnInit {
     this.entityType = this.resolveWorkflowEntityType();
 
     // Determine if international travel
-    this.isInternationalTravel =
-      this.travelType === 'Overseas' || this.travelType === 'Home Leave';
+    this.isInternationalTravel = this.travelType === 'Overseas' || this.travelType === 'Home Leave';
 
     // Initialize selectedApprovers from initialData if available (edit mode)
     if (this.initialData?.selected_approvers) {
@@ -85,13 +120,19 @@ export class ApprovalSubmissionComponent implements OnInit {
       this.skippedSteps = this.initialData.skipped_steps;
     }
 
+    // Step orders already approved (and therefore locked) - see
+    // ApproverSelectionComponent.approvedStepOrders.
+    if (this.initialData?.approved_step_orders) {
+      this.approvedStepOrders = this.initialData.approved_step_orders;
+    }
+
     this.initForm();
     this.initializeApprovalWorkflow();
   }
 
   private initForm(): void {
     this.approvalForm = this.fb.group({
-      additionalComments: [this.initialData.additionalComments || '']
+      additionalComments: [this.initialData.additionalComments || ''],
     });
   }
 
@@ -102,10 +143,10 @@ export class ApprovalSubmissionComponent implements OnInit {
    */
   private resolveWorkflowEntityType(): string {
     const map: Record<string, string> = {
-      'Domestic': 'travelrequest_domestic',
-      'Overseas': 'travelrequest_overseas',
+      Domestic: 'travelrequest_domestic',
+      Overseas: 'travelrequest_overseas',
       'Home Leave': 'travelrequest_homeleave',
-      'External Parties': 'travelrequest_external'
+      'External Parties': 'travelrequest_external',
     };
     return (this.travelType && map[this.travelType]) || 'travelrequest';
   }
@@ -120,35 +161,37 @@ export class ApprovalSubmissionComponent implements OnInit {
     // to the shared "travelrequest" template if no sub-type-specific one is
     // configured yet (see docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md).
     this.isLoadingWorkflow = true;
-    this.workflowService.getTemplates({
-      entity_type: this.entityType,
-      fallback_entity_type: 'travelrequest',
-      is_active: true
-    }).subscribe({
-      next: (templates: WorkflowTemplate[]) => {
-        this.isLoadingWorkflow = false;
-        if (templates && templates.length > 0) {
-          const template = templates[0];
-          // Convert workflow template steps to approval steps for display
-          this.approvalWorkflow = this.convertTemplateToApprovalSteps(template);
-        } else {
-          // Fallback: No workflow template configured - show generic message
+    this.workflowService
+      .getTemplates({
+        entity_type: this.entityType,
+        fallback_entity_type: 'travelrequest',
+        is_active: true,
+      })
+      .subscribe({
+        next: (templates: WorkflowTemplate[]) => {
+          this.isLoadingWorkflow = false;
+          if (templates && templates.length > 0) {
+            const template = templates[0];
+            // Convert workflow template steps to approval steps for display
+            this.approvalWorkflow = this.convertTemplateToApprovalSteps(template);
+          } else {
+            // Fallback: No workflow template configured - show generic message
+            this.approvalWorkflow = this.createFallbackWorkflow();
+          }
+        },
+        error: error => {
+          this.isLoadingWorkflow = false;
+          console.error('Error fetching workflow template:', error);
+          // Fallback on error
           this.approvalWorkflow = this.createFallbackWorkflow();
-        }
-      },
-      error: (error) => {
-        this.isLoadingWorkflow = false;
-        console.error('Error fetching workflow template:', error);
-        // Fallback on error
-        this.approvalWorkflow = this.createFallbackWorkflow();
-      }
-    });
+        },
+      });
   }
 
   private convertTemplateToApprovalSteps(template: WorkflowTemplate): ApprovalStep[] {
     const requestorName = this.requestorData?.fullName || 'Requestor';
     const steps: ApprovalStep[] = [
-      { role: 'Requestor', name: requestorName, status: 'Current', date: new Date() }
+      { role: 'Requestor', name: requestorName, status: 'Current', date: new Date() },
     ];
 
     // Add steps from workflow template
@@ -160,7 +203,7 @@ export class ApprovalSubmissionComponent implements OnInit {
         steps.push({
           role: step.step_name,
           name: `Pending ${step.step_name}`,
-          status: 'Pending'
+          status: 'Pending',
         });
       }
     }
@@ -172,7 +215,7 @@ export class ApprovalSubmissionComponent implements OnInit {
     const requestorName = this.requestorData?.fullName || 'Requestor';
     return [
       { role: 'Requestor', name: requestorName, status: 'Current', date: new Date() },
-      { role: 'Approval', name: 'Pending Approval', status: 'Pending' }
+      { role: 'Approval', name: 'Pending Approval', status: 'Pending' },
     ];
   }
 
@@ -182,14 +225,13 @@ export class ApprovalSubmissionComponent implements OnInit {
 
   getTravelTypeIcon(): string {
     const iconMap: { [key: string]: string } = {
-      'Domestic': 'bi-building',
-      'Overseas': 'bi-globe',
+      Domestic: 'bi-building',
+      Overseas: 'bi-globe',
       'Home Leave': 'bi-house-door',
-      'External Parties': 'bi-people'
+      'External Parties': 'bi-people',
     };
     return iconMap[this.travelType || ''] || 'bi-airplane';
   }
-
 
   onApproverSelectionChange(selection: ApproverSelection): void {
     this.selectedApprovers = selection;
@@ -208,7 +250,7 @@ export class ApprovalSubmissionComponent implements OnInit {
       const submissionData: ApprovalSubmissionData = {
         ...this.approvalForm.value,
         selected_approvers: this.selectedApprovers,
-        skipped_steps: this.skippedSteps
+        skipped_steps: this.skippedSteps,
       };
       this.formSubmit.emit(submissionData);
     } else {
@@ -225,7 +267,7 @@ export class ApprovalSubmissionComponent implements OnInit {
     return {
       ...this.approvalForm.value,
       selected_approvers: this.selectedApprovers,
-      skipped_steps: this.skippedSteps
+      skipped_steps: this.skippedSteps,
     };
   }
 

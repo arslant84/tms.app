@@ -48,6 +48,12 @@ export interface TrfBackendResponse {
   additionalComments?: string;
   selected_approvers?: ApproverSelection;
   skipped_steps?: SkippedStepsSelection;
+  /**
+   * Step orders (ints) that already have an APPROVED WorkflowStepExecution.
+   * Drives per-step lock state in the edit-mode "Select Approvers" UI - see
+   * TravelRequestSerializer.get_approved_step_orders (backend/trf/serializers.py).
+   */
+  approved_step_orders?: number[];
   domesticTravelDetails?: TrfBackendDetail;
   overseasTravelDetails?: TrfBackendDetail;
   externalPartiesTravelDetails?: TrfBackendDetail;

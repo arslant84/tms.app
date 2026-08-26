@@ -75,6 +75,15 @@ export class TrfWizardComponent implements OnInit {
   trfId: number | null = null;
   existingTrfData: TrfBackendResponse | null = null;
   isLoadingTrf: boolean = false;
+  // Whether this TRF already has a linked accommodation/transport request
+  // (fetched via loadLinkedAccommodation/loadLinkedTransport below). This is
+  // distinct from isEditMode: a Draft TRF that's being edited for the very
+  // first "real" submission is still isEditMode=true but has no linked
+  // accommodation/transport yet, and createNestedResources() must still be
+  // allowed to create them then - see hasLinkedAccommodation/hasLinkedTransport
+  // usage in submitTrf() below.
+  hasLinkedAccommodation: boolean = false;
+  hasLinkedTransport: boolean = false;
 
   // Travel type - determined by route
   selectedTravelType: 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties' | null = null;
@@ -180,11 +189,13 @@ export class TrfWizardComponent implements OnInit {
           this.trfEditLoader.loadLinkedAccommodation(data.id).subscribe(accommodation => {
             if (accommodation) {
               this.domesticTravelData = { ...this.domesticTravelData, accommodation };
+              this.hasLinkedAccommodation = true;
             }
           });
           this.trfEditLoader.loadLinkedTransport(data.id).subscribe(transport => {
             if (transport) {
               this.domesticTravelData = { ...this.domesticTravelData, transport };
+              this.hasLinkedTransport = true;
             }
           });
         }
@@ -515,7 +526,9 @@ export class TrfWizardComponent implements OnInit {
               isDraft,
               this.isEditMode,
               this.requestorData,
-              passportFile
+              passportFile,
+              this.hasLinkedAccommodation,
+              this.hasLinkedTransport
             )
           ).subscribe({
             next: () => {

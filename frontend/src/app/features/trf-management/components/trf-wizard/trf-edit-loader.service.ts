@@ -109,6 +109,7 @@ export class TrfEditLoaderService {
       additionalComments: data.additional_comments || data.additionalComments || '',
       selected_approvers: data.selected_approvers || {},
       skipped_steps: data.skipped_steps || {},
+      approved_step_orders: data.approved_step_orders || [],
     };
   }
 

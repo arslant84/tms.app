@@ -157,8 +157,10 @@
               formControlName="checkInDate"
               [ngClass]="{
                 'is-invalid':
-                  travelForm.get('accommodation.checkInDate')?.invalid &&
-                  travelForm.get('accommodation.checkInDate')?.touched,
+                  (travelForm.get('accommodation.checkInDate')?.invalid &&
+                    travelForm.get('accommodation.checkInDate')?.touched) ||
+                  (travelForm.get('accommodation')?.errors?.['outsideItineraryRange'] &&
+                    travelForm.get('accommodation.checkInDate')?.touched),
               }"
             />
             <div
@@ -195,6 +197,8 @@
                   (travelForm.get('accommodation.checkOutDate')?.invalid &&
                     travelForm.get('accommodation.checkOutDate')?.touched) ||
                   (travelForm.get('accommodation')?.errors?.['checkOutBeforeCheckIn'] &&
+                    travelForm.get('accommodation.checkOutDate')?.touched) ||
+                  (travelForm.get('accommodation')?.errors?.['outsideItineraryRange'] &&
                     travelForm.get('accommodation.checkOutDate')?.touched),
               }"
             />
@@ -215,6 +219,19 @@
               "
             >
               Check-out date can't be earlier than check-in date
+            </div>
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="
+                travelForm.get('accommodation')?.errors?.['outsideItineraryRange'] &&
+                travelForm.get('accommodation.checkOutDate')?.touched
+              "
+            >
+              Check-in/Check-out must fall within your itinerary dates ({{
+                travelForm.get('accommodation')?.errors?.['outsideItineraryRange']?.first
+              }}
+              to
+              {{ travelForm.get('accommodation')?.errors?.['outsideItineraryRange']?.last }})
             </div>
           </div>
 
@@ -279,6 +296,12 @@
           </app-itinerary-editor>
           <div class="invalid-feedback d-block" *ngIf="isTransportIncomplete">
             At least one journey is required
+          </div>
+          <div class="invalid-feedback d-block" *ngIf="isTransportOutsideItineraryRange">
+            All journey dates must fall within your itinerary dates
+            <ng-container *ngIf="transportItineraryRangeText as range">
+              ({{ range.first }} to {{ range.last }})
+            </ng-container>
           </div>
         </div>
       </div>

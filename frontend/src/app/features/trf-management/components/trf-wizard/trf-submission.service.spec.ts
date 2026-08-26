@@ -155,7 +155,7 @@ describe('TrfSubmissionService', () => {
       await expectAsync(promise).toBeResolvedTo(true);
     });
 
-    it('creates a linked accommodation request only when not a draft and not in edit mode', async () => {
+    it('creates a linked accommodation request when not a draft and no accommodation is linked yet', async () => {
       const promise = service.createNestedResources(
         123,
         {
@@ -227,6 +227,207 @@ describe('TrfSubmissionService', () => {
       );
 
       httpMock.expectNone(req => req.url.includes('/accommodation'));
+      await expectAsync(promise).toBeResolvedTo(true);
+    });
+
+    it('still creates a linked accommodation request in edit mode when finishing a Draft that has none yet', async () => {
+      // Regression test: this is the isEditMode=true, hasLinkedAccommodation=false
+      // case - e.g. a TRF saved as a Draft, reopened later, "Requires
+      // Accommodation" ticked, then submitted. Previously the `!isEditMode`
+      // guard alone skipped creation here, silently dropping the accommodation
+      // request with no error shown anywhere.
+      const promise = service.createNestedResources(
+        123,
+        {
+          mainTrf: {},
+          itinerarySegments: [],
+          mealSelections: [],
+          passportDetails: null,
+          bankDetails: null,
+          advanceAmounts: [],
+          accommodation: {
+            required: true,
+            gender: '',
+            location: '',
+            checkInDate: '',
+            checkInTime: '',
+            checkOutDate: '',
+            checkOutTime: '',
+            roomType: '',
+            specialRequests: '',
+          },
+        },
+        false, // not a draft
+        true, // edit mode
+        { fullName: 'Jane Doe' },
+        null,
+        false, // hasLinkedAccommodation - none yet
+        false
+      );
+
+      const createReq = httpMock.expectOne(
+        req => req.method === 'POST' && req.url.includes('/accommodation')
+      );
+      createReq.flush({ id: 999 });
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const submitReq = httpMock.expectOne(req => req.url.includes('999'));
+      submitReq.flush({});
+
+      await expectAsync(promise).toBeResolvedTo(true);
+    });
+
+    it('does not re-create a linked accommodation request when one is already linked', async () => {
+      const promise = service.createNestedResources(
+        123,
+        {
+          mainTrf: {},
+          itinerarySegments: [],
+          mealSelections: [],
+          passportDetails: null,
+          bankDetails: null,
+          advanceAmounts: [],
+          accommodation: {
+            required: true,
+            gender: '',
+            location: '',
+            checkInDate: '',
+            checkInTime: '',
+            checkOutDate: '',
+            checkOutTime: '',
+            roomType: '',
+            specialRequests: '',
+          },
+        },
+        false, // not a draft
+        true, // edit mode
+        { fullName: 'Jane Doe' },
+        null,
+        true, // hasLinkedAccommodation - already exists
+        false
+      );
+
+      httpMock.expectNone(req => req.url.includes('/accommodation'));
+      await expectAsync(promise).toBeResolvedTo(true);
+    });
+
+    it('creates a linked transport request when not a draft and no transport is linked yet', async () => {
+      const promise = service.createNestedResources(
+        123,
+        {
+          mainTrf: { purpose: 'Business trip' },
+          itinerarySegments: [],
+          mealSelections: [],
+          passportDetails: null,
+          bankDetails: null,
+          advanceAmounts: [],
+          transport: {
+            required: true,
+            journeys: [
+              {
+                date: '2026-01-01',
+                day: '',
+                from: 'KUL',
+                to: 'PEN',
+                departureTime: '09:00',
+                numberOfPassengers: 1,
+              },
+            ],
+          },
+        },
+        false, // not a draft
+        false, // not edit mode
+        { fullName: 'Jane Doe' },
+        null
+      );
+
+      const createReq = httpMock.expectOne(
+        req => req.method === 'POST' && req.url.includes('/transport')
+      );
+      createReq.flush({ id: 888 });
+
+      await expectAsync(promise).toBeResolvedTo(true);
+    });
+
+    it('still creates a linked transport request in edit mode when finishing a Draft that has none yet', async () => {
+      // Regression test mirroring the accommodation one above - this is the
+      // exact bug reported for TSR-20260826-0956-TURKM-YUN7: a Draft TSR with
+      // "Requires Transport" checked, reopened and submitted later, ended up
+      // with zero linked transport because the old `!isEditMode` guard skipped
+      // creation on every edit, not just re-edits of an already-submitted one.
+      const promise = service.createNestedResources(
+        123,
+        {
+          mainTrf: { purpose: 'Business trip' },
+          itinerarySegments: [],
+          mealSelections: [],
+          passportDetails: null,
+          bankDetails: null,
+          advanceAmounts: [],
+          transport: {
+            required: true,
+            journeys: [
+              {
+                date: '2026-01-01',
+                day: '',
+                from: 'KUL',
+                to: 'PEN',
+                departureTime: '09:00',
+                numberOfPassengers: 1,
+              },
+            ],
+          },
+        },
+        false, // not a draft
+        true, // edit mode
+        { fullName: 'Jane Doe' },
+        null,
+        false,
+        false // hasLinkedTransport - none yet
+      );
+
+      const createReq = httpMock.expectOne(
+        req => req.method === 'POST' && req.url.includes('/transport')
+      );
+      createReq.flush({ id: 888 });
+
+      await expectAsync(promise).toBeResolvedTo(true);
+    });
+
+    it('does not re-create a linked transport request when one is already linked', async () => {
+      const promise = service.createNestedResources(
+        123,
+        {
+          mainTrf: { purpose: 'Business trip' },
+          itinerarySegments: [],
+          mealSelections: [],
+          passportDetails: null,
+          bankDetails: null,
+          advanceAmounts: [],
+          transport: {
+            required: true,
+            journeys: [
+              {
+                date: '2026-01-01',
+                day: '',
+                from: 'KUL',
+                to: 'PEN',
+                departureTime: '09:00',
+                numberOfPassengers: 1,
+              },
+            ],
+          },
+        },
+        false, // not a draft
+        true, // edit mode
+        { fullName: 'Jane Doe' },
+        null,
+        false,
+        true // hasLinkedTransport - already exists
+      );
+
+      httpMock.expectNone(req => req.url.includes('/transport'));
       await expectAsync(promise).toBeResolvedTo(true);
     });
   });

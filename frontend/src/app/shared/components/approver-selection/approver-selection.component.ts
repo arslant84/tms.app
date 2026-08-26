@@ -56,6 +56,28 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
    * Default: true
    */
   @Input() allowSkip: boolean = true;
+  /**
+   * True when this component is restoring an existing request's prior state
+   * (as opposed to a brand new submission with no prior state to show).
+   * Gates the loadEligibleApprovers() single-eligible-approver auto-fill
+   * convenience: on a fresh form there's nothing to restore, so silently
+   * pre-selecting the sole eligible approver is a helpful default. On an
+   * edit-mode reload it must NOT run - if the requester genuinely left a
+   * step unselected before, reopening it must show that step as still
+   * unselected/blank, not a guessed approver that happens to be the only
+   * one eligible right now (misleading in general, e.g. with many eligible
+   * approvers where "only one eligible" won't even be true).
+   */
+  @Input() isEditMode: boolean = false;
+  /**
+   * Step orders that already have an APPROVED WorkflowStepExecution. These
+   * steps are locked - rendered read-only, not interactive - because the
+   * backend (WorkflowEngine._apply_resubmit_selection) will not let a
+   * resubmit change an already-approved step's assignment. Steps not in
+   * this list (the current pending step and any future ones) stay fully
+   * editable.
+   */
+  @Input() approvedStepOrders: number[] = [];
   @Output() selectionChange = new EventEmitter<ApproverSelection>();
   @Output() validityChange = new EventEmitter<boolean>();
   @Output() skippedStepsChange = new EventEmitter<SkippedStepsSelection>();
@@ -85,9 +107,21 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
       this.loadEligibleApprovers();
     }
 
-    // Apply initial selections if they change after steps are loaded
-    if (changes['initialSelections'] && this.steps.length > 0) {
-      this.applyInitialSelections();
+    // Apply initial selections/skipped steps if they change after steps are
+    // loaded. Both inputs typically arrive together from the same
+    // edit-mode data fetch, so both must be handled symmetrically here -
+    // previously only initialSelections was reapplied on change, so a step
+    // that should have been restored as "skipped" instead fell through to
+    // loadEligibleApprovers()'s single-eligible-approver auto-select (which
+    // ran earlier, before this late-arriving data showed up) and stuck
+    // with that default approver instead of showing as skipped.
+    if (this.steps.length > 0) {
+      if (changes['initialSelections']) {
+        this.applyInitialSelections();
+      }
+      if (changes['initialSkippedSteps']) {
+        this.applyInitialSkippedSteps();
+      }
     }
   }
 
@@ -122,17 +156,25 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
             // Apply initial skipped steps
             this.applyInitialSkippedSteps();
 
-            // Then, for steps without initial selection or skip, pre-select if only one approver
-            this.steps.forEach(step => {
-              const isSkipped = this.skippedSteps[step.step_order] !== undefined;
-              if (
-                !isSkipped &&
-                this.selections[step.step_order] === undefined &&
-                step.eligible_approvers.length === 1
-              ) {
-                this.selections[step.step_order] = step.eligible_approvers[0].id;
-              }
-            });
+            // Then, for steps without initial selection or skip, pre-select if only one approver.
+            // Only do this for a brand new form with no prior state to show -
+            // on an edit-mode restore, a step the requester genuinely left
+            // unselected before must come back blank, not a guessed approver
+            // (misleading in general: "only one eligible approver" won't hold
+            // once more approvers exist, so a coincidental single-match today
+            // shouldn't silently become "selected" on every future reload).
+            if (!this.isEditMode) {
+              this.steps.forEach(step => {
+                const isSkipped = this.skippedSteps[step.step_order] !== undefined;
+                if (
+                  !isSkipped &&
+                  this.selections[step.step_order] === undefined &&
+                  step.eligible_approvers.length === 1
+                ) {
+                  this.selections[step.step_order] = step.eligible_approvers[0].id;
+                }
+              });
+            }
 
             this.emitSelection();
             this.emitSkippedSteps();
@@ -234,6 +276,16 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
   }
 
   /**
+   * True once this step's approver has actually approved it - the backend
+   * (WorkflowEngine._apply_resubmit_selection) will not let a resubmit
+   * change an already-approved step's assignment, so the UI locks it too
+   * instead of offering controls that would silently have no effect.
+   */
+  isStepLocked(stepOrder: number): boolean {
+    return this.approvedStepOrders.includes(stepOrder);
+  }
+
+  /**
    * Check if a step can be skipped.
    * Always allow skipping when no eligible approvers exist — the user must
    * be able to proceed even if no one matches the department filter.
@@ -295,6 +347,17 @@ export class ApproverSelectionComponent implements OnInit, OnChanges {
   getSelectedApprover(step: WorkflowStepWithApprovers): EligibleApprover | undefined {
     const userId = this.selections[step.step_order];
     return step.eligible_approvers.find(a => a.id === userId);
+  }
+
+  /**
+   * Best-effort display name for a locked (already-approved) step's
+   * approver. The historical approver may no longer appear in this step's
+   * current eligible_approvers list (e.g. department/role changes since
+   * approval), in which case we fall back to a generic message rather than
+   * fabricating a name.
+   */
+  getLockedApproverLabel(step: WorkflowStepWithApprovers): string {
+    return this.getSelectedApprover(step)?.full_name || 'the assigned approver';
   }
 
   hasNoApprovers(step: WorkflowStepWithApprovers): boolean {

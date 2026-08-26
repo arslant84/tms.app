@@ -25,7 +25,7 @@ export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'supper' | 'refreshmen
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './meal-provision.component.html',
-  styleUrls: ['./meal-provision.component.scss']
+  styleUrls: ['./meal-provision.component.scss'],
 })
 export class MealProvisionComponent implements OnChanges {
   /** Raw dates covered by the parent's itinerary (any parseable string/Date). */
@@ -41,7 +41,7 @@ export class MealProvisionComponent implements OnChanges {
     lunch: 0,
     dinner: 0,
     supper: 0,
-    refreshment: 0
+    refreshment: 0,
   };
 
   constructor(
@@ -49,7 +49,7 @@ export class MealProvisionComponent implements OnChanges {
     public dateUtils: DateUtilsService
   ) {
     this.form = this.fb.group({
-      dailySelections: this.fb.array([])
+      dailySelections: this.fb.array([]),
     });
   }
 
@@ -70,7 +70,7 @@ export class MealProvisionComponent implements OnChanges {
       lunch: [data?.lunch || false],
       dinner: [data?.dinner || false],
       supper: [data?.supper || false],
-      refreshment: [data?.refreshment || false]
+      refreshment: [data?.refreshment || false],
     });
 
     formGroup.valueChanges.subscribe(() => {
@@ -146,12 +146,21 @@ export class MealProvisionComponent implements OnChanges {
       lunch: selections.filter((s: DailyMealSelection) => s.lunch).length,
       dinner: selections.filter((s: DailyMealSelection) => s.dinner).length,
       supper: selections.filter((s: DailyMealSelection) => s.supper).length,
-      refreshment: selections.filter((s: DailyMealSelection) => s.refreshment).length
+      refreshment: selections.filter((s: DailyMealSelection) => s.refreshment).length,
     };
   }
 
   private emitSelections(): void {
-    this.selectionsChange.emit(this.dailySelectionsArray.value);
+    // Same staleness issue as updateMealSummary() above: read each control's
+    // own value rather than the FormArray's aggregated .value, which is still
+    // one change behind while a row's own valueChanges handler is running.
+    // Emitting the stale aggregate here (instead of just miscounting the
+    // summary) actually dropped the just-toggled meal for whichever row last
+    // ran through this handler - e.g. selectAllMealType's forEach always
+    // finishes on the last date, so the last-clicked "All X" bulk toggle
+    // silently lost its true value for the final day once submitted.
+    const selections = this.dailySelectionsArray.controls.map(c => c.value as DailyMealSelection);
+    this.selectionsChange.emit(selections);
   }
 
   selectAllMealType(mealType: MealType): void {
