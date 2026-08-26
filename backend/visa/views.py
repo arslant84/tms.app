@@ -115,12 +115,32 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             )
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
-        # For retrieve (viewing details), check view_all permission first, then pending approvals
-        if self.action == "retrieve":
+        # Every action below operates on ONE specific existing application
+        # identified by pk in the URL (via self.get_object()) - they must
+        # get the same view_all/superuser bypass as retrieve, else
+        # get_object() 404s before the action even runs for anyone acting
+        # on an application they didn't personally create - e.g. a visa
+        # admin marking someone else's approved application as completed
+        # from the Visa Processing admin page. None of these write-path
+        # callers ever pass admin_view=true (that param only ever existed
+        # for the list endpoint). See the matching fix in
+        # transport/views.py's TransportRequestViewSet.get_queryset.
+        if self.action in (
+            "retrieve",
+            "update",
+            "partial_update",
+            "destroy",
+            "submit",
+            "complete",
+            "upload_passport",
+            "delete_passport_file",
+            "export_pdf",
+        ):
             # Users with view_all_visa permission can access any application detail (e.g. from Recent Activity)
             if user.is_superuser or can_view_all(user, "visa"):
                 logger.info(
-                    " Retrieve action: User has view_all_visa - allowing full access"
+                    " %s action: User has view_all_visa - allowing full access",
+                    self.action,
                 )
                 return queryset
             pending_approval_ids = (
@@ -130,7 +150,9 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             )
             queryset = queryset.filter(Q(user=user) | Q(id__in=pending_approval_ids))
             logger.info(
-                f" Retrieve action: Filtering to own applications and {len(pending_approval_ids)} pending approval"
+                " %s action: Filtering to own applications and %s pending approval",
+                self.action,
+                len(pending_approval_ids),
             )
             return queryset
 

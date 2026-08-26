@@ -5,6 +5,7 @@ Tests visa application CRUD operations and workflow.
 
 import pytest
 from rest_framework import status
+from visa.models import VisaApplication
 
 
 @pytest.fixture
@@ -117,8 +118,66 @@ class TestVisaApplicationRetrieval:
                 "id"
             ) or create_response.json().get("id")
             if visa_id:
-                response = authenticated_client.get(f"/api/visa/applications/{visa_id}/")
+                response = authenticated_client.get(
+                    f"/api/visa/applications/{visa_id}/"
+                )
                 assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.django_db
+class TestVisaProcessingAdminActions:
+    """Regression coverage: VisaApplicationViewSet.get_queryset only gave
+    the is_superuser/view_all_visa bypass to retrieve and approve/reject.
+    complete/update/partial_update fell through to a fallback filtered to
+    the applicant's own applications, so even a superuser got a 404 trying
+    to complete() an application they didn't personally create - e.g. the
+    Visa Processing admin page's "Mark as Completed" action, which never
+    passes admin_view=true (that param only ever existed for the list
+    endpoint). See the matching fix in transport/views.py."""
+
+    def test_superuser_can_complete_another_users_application(
+        self, api_client, admin_user, regular_user
+    ):
+        visa = VisaApplication.objects.create(
+            user=regular_user,
+            requestor_name=regular_user.name,
+            staff_id="S1",
+            department="IT",
+            destination="Some Country",
+            travel_purpose="Business",
+            visa_type="Business",
+            status="Approved",
+        )
+
+        api_client.force_authenticate(user=admin_user)
+        response = api_client.post(f"/api/visa/applications/{visa.id}/complete/", {})
+
+        assert response.status_code == status.HTTP_200_OK
+        visa.refresh_from_db()
+        assert visa.status == "Completed"
+
+    def test_superuser_can_update_another_users_application(
+        self, api_client, admin_user, regular_user
+    ):
+        visa = VisaApplication.objects.create(
+            user=regular_user,
+            requestor_name=regular_user.name,
+            staff_id="S1",
+            department="IT",
+            destination="Some Country",
+            travel_purpose="Business",
+            visa_type="Business",
+            status="Approved",
+        )
+
+        api_client.force_authenticate(user=admin_user)
+        response = api_client.patch(
+            f"/api/visa/applications/{visa.id}/",
+            {"additional_comments": "Updated by admin"},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
 
 
 @pytest.mark.django_db

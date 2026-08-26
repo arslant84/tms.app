@@ -7,13 +7,13 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 
 from utils.request_id_generator import generate_request_id
+from utils.viewset_mixins import StandardResultsPagination
 from workflows.router import WorkflowRouter
 
 from .models import TransportApprovalStep, TransportRequest, VehicleAssignment
@@ -35,7 +35,15 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
     """
 
     permission_classes = [IsAuthenticated]
-    pagination_class = PageNumberPagination
+    # Was plain DRF PageNumberPagination, which ignores the client's
+    # ?page_size= entirely (it has no page_size_query_param configured) and
+    # always returns exactly PAGE_SIZE=10 regardless of what's requested.
+    # Callers like the Transport Processing admin page ask for page_size=1000
+    # expecting "all requests" - silently capping at page 1/10 items hid most
+    # approved requests from that page. StandardResultsPagination (the
+    # project-wide default other viewsets already get automatically) honors
+    # page_size, capped at 100.
+    pagination_class = StandardResultsPagination
 
     # Search across key fields
     search_fields = [
@@ -111,12 +119,35 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             )
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
-        # For retrieve (viewing details), check view_all permission first, then pending approvals
-        if self.action == "retrieve":
+        # Every action below operates on ONE specific existing request
+        # identified by pk in the URL (via self.get_object()) and already
+        # enforces its own, finer-grained authorization internally (e.g.
+        # complete() requires transport admin, cancel() requires owner-or-
+        # admin, submit() requires the requestor) - none of them rely on
+        # get_queryset() for security, only for looking the object up. They
+        # must get the same view_all/superuser bypass as retrieve, else
+        # get_object() 404s before ever reaching that internal check for
+        # anyone acting on a request they didn't personally create - e.g. a
+        # transport admin completing someone else's approved request, or
+        # Transport Processing's "assign vehicle" booking-details PATCH.
+        # None of these write-path callers ever pass admin_view=true (that
+        # param only ever existed for the list endpoint).
+        if self.action in (
+            "retrieve",
+            "update",
+            "partial_update",
+            "destroy",
+            "submit",
+            "cancel",
+            "complete",
+            "reject_old",
+            "export_pdf",
+        ):
             # Users with view_all_transport permission can access any request detail (e.g. from Recent Activity)
             if user.is_superuser or can_view_all(user, "transport"):
                 logger.info(
-                    " Retrieve action: User has view_all_transport - allowing full access"
+                    " %s action: User has view_all_transport - allowing full access",
+                    self.action,
                 )
                 return queryset
             pending_approval_ids = (
@@ -128,7 +159,9 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 Q(requestor=user) | Q(id__in=pending_approval_ids)
             )
             logger.info(
-                f" Retrieve action: Filtering to own requests and {len(pending_approval_ids)} pending approval"
+                " %s action: Filtering to own requests and %s pending approval",
+                self.action,
+                len(pending_approval_ids),
             )
             return queryset
 
@@ -207,8 +240,15 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 | Q(requestor__name__icontains=search)
             )
 
-        return queryset.select_related("requestor", "trf").prefetch_related(
-            "approval_steps", "vehicle_assignments"
+        # Explicit ordering: TransportRequest has no Meta.ordering, so without
+        # this, row order (and therefore which rows land on which page) is
+        # undefined and can vary between two otherwise-identical requests -
+        # unsafe under pagination, where the client relies on page 1 meaning
+        # the same rows each time.
+        return (
+            queryset.select_related("requestor", "trf")
+            .prefetch_related("approval_steps", "vehicle_assignments")
+            .order_by("-created_at", "-id")
         )
 
     def get_serializer_class(self):
