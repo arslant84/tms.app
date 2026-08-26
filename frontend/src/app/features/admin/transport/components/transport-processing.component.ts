@@ -27,11 +27,15 @@ interface BookingDetails {
   styleUrl: './transport-processing.component.scss',
 })
 export class TransportProcessingComponent implements OnInit {
-  activeTab: 'approved' | 'processing' | 'completed' = 'approved';
+  activeTab: 'pending' | 'completed' = 'pending';
 
-  // Transport Requests by status
-  approvedRequests: TransportRequest[] = [];
-  processingRequests: TransportRequest[] = [];
+  // Transport Requests by status. There is no separate "Processing" stage
+  // any more - filling in booking details completes the request in one
+  // action (see handleCompleteProcessing), so a request is either still
+  // waiting to be processed or already Completed. pendingRequests also
+  // covers older requests that already have a vehicle assigned from before
+  // this change, so they remain reachable to finish off.
+  pendingRequests: TransportRequest[] = [];
   completedRequests: TransportRequest[] = [];
 
   // Loading states
@@ -84,40 +88,16 @@ export class TransportProcessingComponent implements OnInit {
       next: (response: { results?: TransportRequest[] } | TransportRequest[]) => {
         const allRequests = (Array.isArray(response) ? response : response.results) || [];
 
-        // Filter approved requests - those approved by HOD and ready for transport admin
-        this.approvedRequests = allRequests.filter((req: TransportRequest) => {
-          const status = req.status || '';
-          const statusLower = status.toLowerCase();
-          const hasVehicleAssignment =
-            req.vehicle_assignments && req.vehicle_assignments.length > 0;
-
-          // Include requests that are approved, not completed/rejected, and don't have a vehicle assigned yet
-          const isApproved =
-            statusLower.includes('approved') &&
-            !statusLower.includes('processing') &&
+        // Anything approved and not yet completed - including older requests
+        // that already have a vehicle assigned from before completing was
+        // folded into the same action (see hasVehicleAssignment()).
+        this.pendingRequests = allRequests.filter((req: TransportRequest) => {
+          const statusLower = (req.status || '').toLowerCase();
+          return (
+            (statusLower.includes('approved') || statusLower.includes('processing')) &&
             !statusLower.includes('completed') &&
-            !statusLower.includes('rejected') &&
-            !hasVehicleAssignment; // Not yet processed
-          return isApproved;
-        });
-
-        // Filter processing requests - those with vehicle assignments (being processed)
-        this.processingRequests = allRequests.filter((req: TransportRequest) => {
-          const status = req.status || '';
-          const statusLower = status.toLowerCase();
-          const hasVehicleAssignment =
-            req.vehicle_assignments && req.vehicle_assignments.length > 0;
-
-          // Exclude completed requests from processing tab
-          const isCompleted = statusLower === 'completed';
-
-          // Show in processing if:
-          // 1. Status includes "processing", OR
-          // 2. Request has vehicle assignment (vehicle assigned = being processed)
-          // BUT NOT if status is "Completed"
-          const isProcessing =
-            !isCompleted && (statusLower.includes('processing') || hasVehicleAssignment);
-          return isProcessing;
+            !statusLower.includes('rejected')
+          );
         });
 
         // Filter completed requests
@@ -149,8 +129,12 @@ export class TransportProcessingComponent implements OnInit {
   }
 
   /**
-   * Handle completing transport processing with booking details
-   * Assigns vehicle details and saves booking details to request
+   * Handle completing transport processing with booking details.
+   * Assigns vehicle details, saves booking details, and immediately marks
+   * the request Completed in one action - there is no separate "Processing"
+   * step to action afterwards. (The Processing tab/status still exists for
+   * any older requests that only had a vehicle assigned before this
+   * simplification, but nothing new lands there.)
    */
   handleCompleteProcessing(): void {
     if (!this.selectedRequest) return;
@@ -182,28 +166,34 @@ export class TransportProcessingComponent implements OnInit {
       status: 'Assigned', // Initial status
     };
 
+    const requestId = this.selectedRequest.id;
+
     // First, assign vehicle (creates VehicleAssignment entry)
-    this.transportService.assignVehicle(this.selectedRequest.id, vehicleData).subscribe({
+    this.transportService.assignVehicle(requestId, vehicleData).subscribe({
       next: () => {
-        // Then, update transport request with booking details
+        // Then, save booking details on the request itself
         this.transportService
-          .updateRequest(this.selectedRequest!.id, {
-            booking_details: bookingDetails,
-          })
+          .updateRequest(requestId, { booking_details: bookingDetails })
           .subscribe({
             next: () => {
-              this.toastService.success(
-                `Vehicle assigned and booking details saved! Request moved to processing.`
-              );
-              this.showCompletingDialog = false;
-              this.selectedRequest = null;
-              this.resetBookingForm();
-
-              // Refresh to show the request in the Processing tab
-              setTimeout(() => {
-                this.fetchTransportRequests();
-                this.isLoading = false;
-              }, 500);
+              // Finally, mark the request Completed - complete() requires a
+              // vehicle_assignment to exist, which the step above just created.
+              this.transportService.completeRequest(requestId).subscribe({
+                next: () => {
+                  this.toastService.success('Transport request completed successfully!');
+                  this.finishCompleteProcessing();
+                },
+                error: err => {
+                  console.error('❌ Failed to mark request as completed:', err);
+                  this.toastService.error(
+                    this.errorHandler.getErrorMessage(
+                      err,
+                      'Booking details saved but failed to mark request as completed'
+                    )
+                  );
+                  this.finishCompleteProcessing();
+                },
+              });
             },
             error: err => {
               console.error('❌ Failed to save booking details:', err);
@@ -213,8 +203,7 @@ export class TransportProcessingComponent implements OnInit {
                   'Vehicle assigned but failed to save booking details'
                 )
               );
-              this.isLoading = false;
-              this.fetchTransportRequests(); // Still refresh to show vehicle assignment
+              this.finishCompleteProcessing();
             },
           });
       },
@@ -224,6 +213,18 @@ export class TransportProcessingComponent implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  /** Shared cleanup for handleCompleteProcessing's terminal (success or partial-failure) paths. */
+  private finishCompleteProcessing(): void {
+    this.showCompletingDialog = false;
+    this.selectedRequest = null;
+    this.resetBookingForm();
+
+    setTimeout(() => {
+      this.fetchTransportRequests();
+      this.isLoading = false;
+    }, 500);
   }
 
   /**
@@ -264,9 +265,19 @@ export class TransportProcessingComponent implements OnInit {
   }
 
   /**
+   * True for older requests that already had a vehicle assigned before
+   * completing was folded into the same action as processing - these can
+   * be finished directly via completeTransport() instead of reopening the
+   * booking form.
+   */
+  hasVehicleAssignment(request: TransportRequest): boolean {
+    return !!(request.vehicle_assignments && request.vehicle_assignments.length > 0);
+  }
+
+  /**
    * Switch active tab
    */
-  switchTab(tab: 'approved' | 'processing' | 'completed'): void {
+  switchTab(tab: 'pending' | 'completed'): void {
     this.activeTab = tab;
   }
 

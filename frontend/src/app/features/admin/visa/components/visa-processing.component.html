@@ -38,16 +38,6 @@
     </div>
     <div class="stat-card">
       <div class="stat-card-header">
-        <span class="stat-card-title">Processing</span>
-        <i class="bi bi-clock stat-icon"></i>
-      </div>
-      <div class="stat-card-content">
-        <div class="stat-value">0</div>
-        <p class="stat-description">Currently being processed</p>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-card-header">
         <span class="stat-card-title">Completed</span>
         <i class="bi bi-file-earmark-check stat-icon"></i>
       </div>
@@ -69,13 +59,6 @@
           (click)="switchTab('pending')"
         >
           Ready for Processing ({{ pendingVisas.length }})
-        </button>
-        <button
-          class="tab-nav-button"
-          [class.active]="activeTab === 'processing'"
-          (click)="switchTab('processing')"
-        >
-          Processing (0)
         </button>
         <button
           class="tab-nav-button"
@@ -236,27 +219,6 @@
         </div>
       </div>
 
-      <!-- Processing Tab Content -->
-      <div *ngIf="activeTab === 'processing'" class="tab-panel">
-        <div class="empty-state">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h3>No visa applications in processing</h3>
-          <p>All processing is completed immediately.</p>
-        </div>
-      </div>
-
       <!-- Completed Tab Content -->
       <div *ngIf="activeTab === 'completed'" class="tab-panel">
         <!-- Loading State -->
@@ -329,7 +291,7 @@
                 </td>
                 <td>
                   <span *ngIf="visa.processing_details?.visa_number" class="fw-medium">{{
-                    visa.processing_details.visa_number
+                    visa.processing_details!.visa_number
                   }}</span>
                   <span *ngIf="!visa.processing_details?.visa_number" class="text-muted">N/A</span>
                 </td>
@@ -341,11 +303,11 @@
                     "
                   >
                     <span class="fw-medium">{{
-                      dateUtils.formatDate(visa.processing_details.visa_valid_from)
+                      dateUtils.formatDate(visa.processing_details!.visa_valid_from)
                     }}</span>
                     <span class="text-muted"> to </span>
                     <span class="fw-medium">{{
-                      dateUtils.formatDate(visa.processing_details.visa_valid_to)
+                      dateUtils.formatDate(visa.processing_details!.visa_valid_to)
                     }}</span>
                   </div>
                   <span *ngIf="!visa.processing_details?.visa_valid_from" class="text-muted"

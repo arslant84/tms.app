@@ -31,17 +31,10 @@
       <div class="tabs-nav">
         <button
           class="tab-nav-button"
-          [class.active]="activeTab === 'approved'"
-          (click)="switchTab('approved')"
+          [class.active]="activeTab === 'pending'"
+          (click)="switchTab('pending')"
         >
-          Approved Requests ({{ approvedRequests.length }})
-        </button>
-        <button
-          class="tab-nav-button"
-          [class.active]="activeTab === 'processing'"
-          (click)="switchTab('processing')"
-        >
-          Processing ({{ processingRequests.length }})
+          Pending Processing ({{ pendingRequests.length }})
         </button>
         <button
           class="tab-nav-button"
@@ -82,10 +75,10 @@
         <button class="btn btn-primary retry" (click)="fetchTransportRequests()">Retry</button>
       </div>
 
-      <!-- Approved Tab Content -->
-      <div *ngIf="activeTab === 'approved' && !isLoading && !error" class="tab-panel">
+      <!-- Pending Processing Tab Content -->
+      <div *ngIf="activeTab === 'pending' && !isLoading && !error" class="tab-panel">
         <!-- Empty State -->
-        <div *ngIf="approvedRequests.length === 0" class="empty-state">
+        <div *ngIf="pendingRequests.length === 0" class="empty-state">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -103,9 +96,9 @@
           <p>No approved transport requests awaiting processing.</p>
         </div>
 
-        <!-- Approved Requests List -->
-        <div *ngIf="approvedRequests.length > 0" class="requests-list">
-          <div *ngFor="let request of approvedRequests" class="request-item">
+        <!-- Pending Requests List -->
+        <div *ngIf="pendingRequests.length > 0" class="requests-list">
+          <div *ngFor="let request of pendingRequests" class="request-item">
             <div class="request-content">
               <div class="request-main">
                 <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
@@ -156,90 +149,12 @@
                 >
                   <i class="bi bi-eye"></i>
                 </button>
+                <!-- Older requests that already have a vehicle assigned
+                     (from before completing was folded into one action)
+                     complete directly; everything else opens the booking
+                     form first. -->
                 <button
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="openProcessingDialog(request)"
-                  title="Start Processing"
-                >
-                  <i class="bi bi-play-circle"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Processing Tab Content -->
-      <div *ngIf="activeTab === 'processing' && !isLoading && !error" class="tab-panel">
-        <!-- Empty State -->
-        <div *ngIf="processingRequests.length === 0" class="empty-state">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"
-            />
-          </svg>
-          <h3>No requests in processing</h3>
-          <p>No transport requests currently being processed.</p>
-        </div>
-
-        <!-- Processing Requests List -->
-        <div *ngIf="processingRequests.length > 0" class="requests-list">
-          <div *ngFor="let request of processingRequests" class="request-item">
-            <div class="request-content">
-              <div class="request-main">
-                <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
-                <div class="text-muted small">
-                  {{ request.department || 'N/A' }} • ID:
-                  <a
-                    href="javascript:void(0)"
-                    (click)="viewRequest(request.id)"
-                    class="text-decoration-none"
-                    >{{ request.request_number || request.id }}</a
-                  >
-                </div>
-                <div class="text-muted small mt-1">
-                  <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}
-                </div>
-                <div class="text-muted small">
-                  {{ formatTransportDetails(request) }}
-                </div>
-                <div class="mt-2">
-                  <span class="badge badge-warning">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      class="badge-icon"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    {{ request.status }}
-                  </span>
-                </div>
-              </div>
-              <div class="action-buttons">
-                <button
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="openDetailsDialog(request)"
-                  title="View Details"
-                >
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button
+                  *ngIf="hasVehicleAssignment(request)"
                   class="btn btn-sm btn-outline-primary btn-icon"
                   (click)="completeTransport(request)"
                   [disabled]="isProcessing"
@@ -247,6 +162,14 @@
                 >
                   <i class="bi bi-check-circle" *ngIf="!isProcessing"></i>
                   <app-loading-spinner size="sm" *ngIf="isProcessing"></app-loading-spinner>
+                </button>
+                <button
+                  *ngIf="!hasVehicleAssignment(request)"
+                  class="btn btn-sm btn-outline-primary btn-icon"
+                  (click)="openProcessingDialog(request)"
+                  title="Process & Complete"
+                >
+                  <i class="bi bi-play-circle"></i>
                 </button>
               </div>
             </div>
@@ -345,13 +268,13 @@
   <div class="modal-dialog">
     <div class="modal-content" *ngIf="selectedRequest">
       <div class="modal-header">
-        <h5 class="modal-title">Start Transport Processing</h5>
+        <h5 class="modal-title">Process Transport Request</h5>
         <button type="button" class="btn-close" (click)="closeDialogs()"></button>
       </div>
       <div class="modal-body">
         <p class="mb-3">
-          You are about to start processing this transport request. Please provide vehicle and
-          booking details.
+          You are about to process this transport request. Please provide vehicle and booking
+          details - the request will be marked Completed once submitted.
         </p>
         <div class="info-panel">
           <div class="mb-2"><strong>Staff Name:</strong> {{ selectedRequest.requestorName }}</div>
@@ -372,7 +295,7 @@
         <button type="button" class="btn btn-secondary" (click)="closeDialogs()">Cancel</button>
         <button type="button" class="btn btn-primary" (click)="handleStartProcessing()">
           <i class="bi bi-arrow-right me-1"></i>
-          Continue to Booking Form
+          Continue to Booking Details
         </button>
       </div>
     </div>
@@ -388,12 +311,12 @@
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content" *ngIf="selectedRequest">
       <div class="modal-header">
-        <h5 class="modal-title">Complete Transport Processing</h5>
+        <h5 class="modal-title">Complete Transport Request</h5>
         <button type="button" class="btn-close" (click)="closeDialogs()"></button>
       </div>
       <div class="modal-body">
         <p class="text-muted">
-          Provide booking details to complete the transport request processing.
+          Provide booking details below - the request will be marked Completed immediately.
         </p>
 
         <!-- Request Info -->
@@ -474,11 +397,11 @@
         >
           <span *ngIf="!isLoading">
             <i class="bi bi-check-circle me-1"></i>
-            Assign Vehicle & Start Processing
+            Complete Transport Request
           </span>
           <span *ngIf="isLoading">
             <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
-            Assigning...
+            Completing...
           </span>
         </button>
       </div>
