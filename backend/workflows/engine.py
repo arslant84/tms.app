@@ -706,6 +706,58 @@ class WorkflowEngine:
         # else approver_user/approver_permission/approver_role fallback chain).
         assigned_user = WorkflowEngine._resolve_step_assignee(workflow_instance, step)
 
+        # If the requester explicitly skipped this step's approver selection
+        # AND no fallback approver could be resolved either (nobody holds the
+        # role/permission), there is nobody who could ever action it - leaving
+        # it "pending" with no assignee would strand the workflow forever.
+        # Auto-skip it and advance instead. This is narrower than the
+        # auto-advance-on-skip behavior from the past incident referenced
+        # above: that bug fired on skip alone, even when a real fallback
+        # approver existed; this only fires when NO approver exists at all.
+        if step_approver_unselected and step.can_skip and assigned_user is None:
+            if existing_execution and existing_execution.status not in (
+                "pending",
+                "waiting",
+            ):
+                # Already processed - don't re-process.
+                return existing_execution
+
+            logger.info(
+                f"Step '{step.step_name}' (order {step.step_order}) was skipped by the "
+                "requester and no eligible fallback approver exists - auto-skipping and "
+                "advancing the workflow instead of leaving it stuck with no assignee."
+            )
+
+            if existing_execution:
+                step_execution = existing_execution
+                step_execution.status = "skipped"
+                step_execution.assigned_to = None
+                step_execution.action_date = timezone.now()
+                step_execution.comments = "Auto-skipped: no eligible approver available"
+                step_execution.save()
+            else:
+                step_execution = WorkflowStepExecution.objects.create(
+                    workflow_instance=workflow_instance,
+                    workflow_step=step,
+                    status="skipped",
+                    assigned_to=None,
+                    action_date=timezone.now(),
+                    comments="Auto-skipped: no eligible approver available",
+                )
+
+            WorkflowAuditLog.objects.create(
+                workflow_instance=workflow_instance,
+                action_type="skipped",
+                action_description=(
+                    f"Step '{step.step_name}' auto-skipped - no eligible approver found"
+                ),
+                performed_by=initiator,
+            )
+
+            return WorkflowEngine._handle_step_approval(
+                workflow_instance, step_execution, initiator
+            )
+
         if existing_execution:
             # If step already exists and is pending, it's a race condition - skip
             if existing_execution.status == "pending":
