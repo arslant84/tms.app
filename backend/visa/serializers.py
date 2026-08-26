@@ -98,6 +98,7 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
     passport_file_url = serializers.SerializerMethodField()
     selected_approvers = serializers.SerializerMethodField()
     skipped_steps = serializers.SerializerMethodField()
+    approved_step_orders = serializers.SerializerMethodField()
 
     class Meta:
         model = VisaApplication
@@ -164,6 +165,7 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
             # Approver selections and skipped steps
             "selected_approvers",
             "skipped_steps",
+            "approved_step_orders",
         ]
         read_only_fields = [
             "id",
@@ -175,6 +177,7 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
             "passport_file_url",
             "selected_approvers",
             "skipped_steps",
+            "approved_step_orders",
         ]
 
     def get_selected_approvers(self, obj):
@@ -224,6 +227,39 @@ class VisaApplicationDetailSerializer(serializers.ModelSerializer):
         except Exception:
             pass
         return {}
+
+    def get_approved_step_orders(self, obj):
+        """
+        Step orders (ints) that already have an APPROVED WorkflowStepExecution
+        under this visa application's most recent WorkflowInstance. Used by
+        the edit-mode "Select Approvers" UI to lock steps that have already
+        been actioned - see trf/serializers.py's get_approved_step_orders and
+        WorkflowEngine._apply_resubmit_selection (backend/workflows/engine.py)
+        for the matching server-side enforcement.
+        """
+        from django.contrib.contenttypes.models import ContentType
+        from workflows.models import WorkflowInstance, WorkflowStepExecution
+
+        try:
+            content_type = ContentType.objects.get_for_model(obj)
+            workflow_instance = (
+                WorkflowInstance.objects.filter(
+                    content_type=content_type, object_id=obj.id
+                )
+                .order_by("-created_at")
+                .first()
+            )
+
+            if workflow_instance:
+                return list(
+                    WorkflowStepExecution.objects.filter(
+                        workflow_instance=workflow_instance, status="approved"
+                    ).values_list("workflow_step__step_order", flat=True)
+                )
+        except Exception:
+            pass
+
+        return []
 
     def get_passport_file_url(self, obj):
         """Return the full URL for the passport file if it exists"""

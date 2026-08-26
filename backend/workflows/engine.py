@@ -540,7 +540,9 @@ class WorkflowEngine:
         skipped_steps: Optional[Dict[int, str]],
     ) -> None:
         """Merge newly-submitted selected_approvers/skipped_steps into an
-        already-active WorkflowInstance's additional_data on resubmit.
+        already-active WorkflowInstance's additional_data on resubmit, and
+        resync the entity's own status field to match its actual current
+        step.
 
         Steps whose WorkflowStepExecution is already 'approved' are left
         completely untouched - they're resolved and historical, and the
@@ -559,50 +561,25 @@ class WorkflowEngine:
           assigned_to is re-resolved and updated here too, matching
           whatever _start_step would have assigned had the new selection
           been in place when the step activated.
-        """
-        if not selected_approvers and not skipped_steps:
-            return
 
+        Status resync: every module's own `submit`/resubmit view sets the
+        entity's status to a generic "Pending" (or similar) *before* calling
+        start_workflow_for_request, on the assumption that the workflow
+        engine will correct it to the real "Pending <Role>" value - which is
+        exactly what _start_step does via _update_entity_status_from_step
+        when a step first activates. But a resubmit never re-activates the
+        already-pending step (_start_step isn't called again for it), so
+        without this call here the entity is left stuck on that generic
+        placeholder status instead of the step's real one. This runs
+        unconditionally (even with no selection change) since the bug is in
+        the status field itself, not just in stale approver assignments.
+        """
         approved_orders = set(
             WorkflowStepExecution.objects.filter(
                 workflow_instance=workflow_instance, status="approved"
             ).values_list("workflow_step__step_order", flat=True)
         )
 
-        additional_data = dict(workflow_instance.additional_data or {})
-        existing_selected = dict(additional_data.get("selected_approvers", {}))
-        existing_skipped = dict(additional_data.get("skipped_steps", {}))
-
-        changed = False
-
-        if selected_approvers:
-            for step_order, user_id in selected_approvers.items():
-                if int(step_order) in approved_orders:
-                    continue
-                existing_selected[str(step_order)] = user_id
-                # A step can't be both selected and skipped
-                existing_skipped.pop(str(step_order), None)
-                changed = True
-
-        if skipped_steps:
-            for step_order, reason in skipped_steps.items():
-                if int(step_order) in approved_orders:
-                    continue
-                existing_skipped[str(step_order)] = reason
-                existing_selected.pop(str(step_order), None)
-                changed = True
-
-        if not changed:
-            return
-
-        additional_data["selected_approvers"] = existing_selected
-        additional_data["skipped_steps"] = existing_skipped
-        workflow_instance.additional_data = additional_data
-        workflow_instance.save(update_fields=["additional_data"])
-
-        # The currently-active step's real assignee lives on the
-        # WorkflowStepExecution row, not additional_data - re-resolve and
-        # apply it now if the new selection changes it.
         pending_execution = (
             WorkflowStepExecution.objects.filter(
                 workflow_instance=workflow_instance, status="pending"
@@ -610,21 +587,68 @@ class WorkflowEngine:
             .select_related("workflow_step")
             .first()
         )
-        if pending_execution and pending_execution.workflow_step.step_order not in (
-            approved_orders
+
+        if selected_approvers or skipped_steps:
+            additional_data = dict(workflow_instance.additional_data or {})
+            existing_selected = dict(additional_data.get("selected_approvers", {}))
+            existing_skipped = dict(additional_data.get("skipped_steps", {}))
+
+            changed = False
+
+            if selected_approvers:
+                for step_order, user_id in selected_approvers.items():
+                    if int(step_order) in approved_orders:
+                        continue
+                    existing_selected[str(step_order)] = user_id
+                    # A step can't be both selected and skipped
+                    existing_skipped.pop(str(step_order), None)
+                    changed = True
+
+            if skipped_steps:
+                for step_order, reason in skipped_steps.items():
+                    if int(step_order) in approved_orders:
+                        continue
+                    existing_skipped[str(step_order)] = reason
+                    existing_selected.pop(str(step_order), None)
+                    changed = True
+
+            if changed:
+                additional_data["selected_approvers"] = existing_selected
+                additional_data["skipped_steps"] = existing_skipped
+                workflow_instance.additional_data = additional_data
+                workflow_instance.save(update_fields=["additional_data"])
+
+                # The currently-active step's real assignee lives on the
+                # WorkflowStepExecution row, not additional_data - re-resolve
+                # and apply it now if the new selection changes it.
+                if (
+                    pending_execution
+                    and pending_execution.workflow_step.step_order
+                    not in (approved_orders)
+                ):
+                    new_assignee = WorkflowEngine._resolve_step_assignee(
+                        workflow_instance, pending_execution.workflow_step
+                    )
+                    if new_assignee != pending_execution.assigned_to:
+                        pending_execution.assigned_to = new_assignee
+                        pending_execution.save(update_fields=["assigned_to"])
+                        logger.info(
+                            "Resubmit updated pending step '%s' (order %s) assignee to %s",
+                            pending_execution.workflow_step.step_name,
+                            pending_execution.workflow_step.step_order,
+                            new_assignee.email if new_assignee else None,
+                        )
+
+        # Always resync the entity's status to match its real current step,
+        # regardless of whether the approver selection itself changed - see
+        # the docstring's "Status resync" note above.
+        if (
+            pending_execution
+            and pending_execution.workflow_step.step_order not in approved_orders
         ):
-            new_assignee = WorkflowEngine._resolve_step_assignee(
+            WorkflowEngine._update_entity_status_from_step(
                 workflow_instance, pending_execution.workflow_step
             )
-            if new_assignee != pending_execution.assigned_to:
-                pending_execution.assigned_to = new_assignee
-                pending_execution.save(update_fields=["assigned_to"])
-                logger.info(
-                    "Resubmit updated pending step '%s' (order %s) assignee to %s",
-                    pending_execution.workflow_step.step_name,
-                    pending_execution.workflow_step.step_order,
-                    new_assignee.email if new_assignee else None,
-                )
 
     @staticmethod
     def _start_step(
