@@ -255,12 +255,18 @@ def unified_approvals(request):
                 item["travelType"] = getattr(trf, "travel_type", "")
                 all_items.append(item)
 
-    # 2. Transport Requests
+    # 2. Transport Requests - exclude TSR-embedded ones (trf is set). Those
+    # ride entirely on their linked TSR's own approval workflow and never get
+    # a WorkflowInstance of their own (see WorkflowEngine's transport
+    # cascade), so they are never independently approvable here - listing
+    # them let a superuser's blanket bypass in _batch_approvable_ids show
+    # them as actionable when clicking Approve always 400s with "No pending
+    # approval step found".
     if not item_type or item_type == "transport":
         transports = list(
-            TransportRequest.objects.filter(approval_status_filter).order_by(
-                "-submitted_at"
-            )
+            TransportRequest.objects.filter(
+                approval_status_filter, trf__isnull=True
+            ).order_by("-submitted_at")
         )
         approvable_transport_ids = _batch_approvable_ids(transports, user)
         for transport in transports:
