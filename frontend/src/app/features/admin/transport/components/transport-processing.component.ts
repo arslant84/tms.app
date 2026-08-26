@@ -75,8 +75,12 @@ export class TransportProcessingComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
 
-    // Fetch all requests and filter on client side for better reliability
-    this.transportService.getAllRequests({ page_size: 1000 }).subscribe({
+    // Fetch all requests and filter on client side for better reliability.
+    // adminView: true is required so the backend returns every user's
+    // requests instead of scoping to just the signed-in admin's own ones
+    // (see TransportRequestViewSet.get_queryset's admin_view param) - without
+    // it, this page silently only showed the admin's own approved requests.
+    this.transportService.getAllRequests({ page_size: 1000, adminView: true }).subscribe({
       next: (response: { results?: TransportRequest[] } | TransportRequest[]) => {
         const allRequests = (Array.isArray(response) ? response : response.results) || [];
 
