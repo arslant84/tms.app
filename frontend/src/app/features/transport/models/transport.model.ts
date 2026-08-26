@@ -61,6 +61,8 @@ export interface TransportRequestForm
   vehicle_assignments?: unknown[]; // Vehicle assignments for transport processing
   selected_approvers?: { [stepOrder: number]: number }; // Selected approvers for workflow steps
   skipped_steps?: { [stepOrder: number]: string | null }; // Skipped workflow steps
+  /** Step orders (ints) that already have an APPROVED WorkflowStepExecution - see trf-wizard.types.ts. */
+  approved_step_orders?: number[];
   createdAt?: Date | string;
   submittedAt?: Date | string;
   updatedAt?: Date | string;
@@ -150,6 +152,7 @@ interface TransportBackendData {
   vehicle_assignments?: unknown[];
   selected_approvers?: { [stepOrder: number]: number };
   skipped_steps?: { [stepOrder: number]: string | null };
+  approved_step_orders?: number[];
   booking_details?: {
     vehicle_number?: string;
     driver_name?: string;
@@ -256,6 +259,7 @@ function mapWorkflowFields(backendData: TransportBackendData) {
     ),
     selected_approvers: backendData.selected_approvers || {},
     skipped_steps: backendData.skipped_steps || {},
+    approved_step_orders: backendData.approved_step_orders || [],
   };
 }
 

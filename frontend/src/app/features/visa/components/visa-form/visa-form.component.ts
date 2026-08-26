@@ -7,18 +7,41 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
-import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
+import {
+  ApproverSelectionComponent,
+  SkippedStepsSelection,
+} from '../../../../shared/components/approver-selection/approver-selection.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
 import { PassportUploadComponent } from '../../../../shared/components/passport-upload/passport-upload.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
 
+/**
+ * Shape of VisaService.getApplicationById's response as actually used here.
+ * `user` is loosely typed because the backend sometimes nests it as
+ * `{ id }` (department-filtering lookups) rather than the plain
+ * `number | null` declared on VisaApplication.
+ */
+interface VisaApplicationLoadResponse extends Omit<Partial<VisaApplication>, 'user'> {
+  user?: number | { id: number } | null;
+  selected_approvers?: ApproverSelection;
+  skipped_steps?: SkippedStepsSelection;
+  approved_step_orders?: number[];
+}
+
 @Component({
   selector: 'app-visa-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent, LoadingSpinnerComponent, FormSectionCardComponent, PassportUploadComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ApproverSelectionComponent,
+    LoadingSpinnerComponent,
+    FormSectionCardComponent,
+    PassportUploadComponent,
+  ],
   templateUrl: './visa-form.component.html',
-  styleUrl: './visa-form.component.scss'
+  styleUrl: './visa-form.component.scss',
 })
 export class VisaFormComponent implements OnInit {
   @ViewChild(ApproverSelectionComponent) approverSelectionComponent?: ApproverSelectionComponent;
@@ -38,13 +61,24 @@ export class VisaFormComponent implements OnInit {
   initialSkippedSteps: SkippedStepsSelection = {};
   requesterId?: number; // Original user ID for department-based approver filtering
   requesterStaffId?: string; // Fallback: staff ID for department lookup
+  /** Step orders already approved (and therefore locked) - see approver-selection.component.ts. */
+  approvedStepOrders: number[] = [];
 
   // Passport file upload properties
   passportFile: File | null = null;
   passportFileName: string | null = null;
   passportFileUrl: string | null = null;
 
-  visaTypes = ['Tourist', 'Business', 'Work', 'Student', 'Transit', 'Diplomatic', 'Official', 'Other'];
+  visaTypes = [
+    'Tourist',
+    'Business',
+    'Work',
+    'Student',
+    'Transit',
+    'Diplomatic',
+    'Official',
+    'Other',
+  ];
   entryTypes = ['Single Entry', 'Multiple Entry', 'Transit'];
   maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
 
@@ -75,7 +109,7 @@ export class VisaFormComponent implements OnInit {
     approximately_arrival_date: 'Approximate Arrival Date',
     duration_of_stay: 'Duration of Stay',
     trf_reference_number: 'TRF Reference Number',
-    status: 'Status'
+    status: 'Status',
   };
 
   constructor(
@@ -114,7 +148,7 @@ export class VisaFormComponent implements OnInit {
       department: userDefaults.department,
       position: userDefaults.position,
       email: userDefaults.email,
-      contact_telephone: userDefaults.phone
+      contact_telephone: userDefaults.phone,
     });
   }
 
@@ -169,7 +203,7 @@ export class VisaFormComponent implements OnInit {
 
       // Additional
       additional_comments: [''],
-      supporting_documents_notes: ['']
+      supporting_documents_notes: [''],
     });
   }
 
@@ -178,14 +212,15 @@ export class VisaFormComponent implements OnInit {
 
     this.isLoading = true;
     this.visaService.getApplicationById(this.applicationId).subscribe({
-      next: (application: any) => {
+      next: (application: VisaApplicationLoadResponse) => {
         // Check if application can be edited based on status
         // Allow editing for Draft, Rejected, Submitted, or any Pending status
         const status = application.status || '';
-        const canEdit = status === 'Draft' ||
-                        status === 'Rejected' ||
-                        status === 'Submitted' ||
-                        status.startsWith('Pending');
+        const canEdit =
+          status === 'Draft' ||
+          status === 'Rejected' ||
+          status === 'Submitted' ||
+          status.startsWith('Pending');
 
         if (status && !canEdit) {
           const errorMsg = `This visa application cannot be edited because its status is "${status}". Completed, Approved, Processing, and Cancelled applications cannot be modified.`;
@@ -209,9 +244,9 @@ export class VisaFormComponent implements OnInit {
         }
         // Set the user ID for proper department-based approver filtering
         // This ensures approvers are filtered by the original user's department
-        if (application.user && application.user.id) {
+        if (application.user && typeof application.user === 'object') {
           this.requesterId = application.user.id;
-        } else if (application.user && typeof application.user === 'number') {
+        } else if (typeof application.user === 'number') {
           this.requesterId = application.user;
         }
 
@@ -220,24 +255,31 @@ export class VisaFormComponent implements OnInit {
           this.requesterStaffId = application.staff_id;
         }
 
-        // Load saved approver selections for edit mode
-        if (application.selected_approvers) {
-          this.initialApproverSelections = application.selected_approvers;
-          this.selectedApprovers = application.selected_approvers;
-        }
-
-        // Load saved skipped steps for edit mode
-        if (application.skipped_steps) {
-          this.initialSkippedSteps = application.skipped_steps;
-          this.skippedSteps = application.skipped_steps;
-        }
+        this.applyApproverSelectionState(application);
         this.isLoading = false;
       },
-      error: (error) => {
+      error: () => {
         this.toastService.error('Failed to load visa application');
         this.isLoading = false;
-      }
+      },
     });
+  }
+
+  /** Load saved approver selections/skipped steps/approved step orders for edit mode. */
+  private applyApproverSelectionState(application: VisaApplicationLoadResponse): void {
+    if (application.selected_approvers) {
+      this.initialApproverSelections = application.selected_approvers;
+      this.selectedApprovers = application.selected_approvers;
+    }
+
+    if (application.skipped_steps) {
+      this.initialSkippedSteps = application.skipped_steps;
+      this.skippedSteps = application.skipped_steps;
+    }
+
+    if (application.approved_step_orders) {
+      this.approvedStepOrders = application.approved_step_orders;
+    }
   }
 
   onSubmit(): void {
@@ -266,35 +308,39 @@ export class VisaFormComponent implements OnInit {
     // Remove skipped_steps from formData - it will be sent via submit endpoint
     const skippedStepsForSubmit = this.skippedSteps;
     const selectedApproversForSubmit = this.selectedApprovers;
-    delete (formData as any).skipped_steps;
-    delete (formData as any).selected_approvers;
+    delete formData.skipped_steps;
+    delete formData.selected_approvers;
     formData.status = 'Draft'; // Save as draft first, then submit
 
-    const saveOperation = this.isEditMode && this.applicationId
-      ? this.visaService.updateApplication(this.applicationId, formData)
-      : this.visaService.createApplication(formData);
+    const saveOperation =
+      this.isEditMode && this.applicationId
+        ? this.visaService.updateApplication(this.applicationId, formData)
+        : this.visaService.createApplication(formData);
 
     saveOperation.subscribe({
-      next: (response: any) => {
-        const savedId = response.id || this.applicationId;
+      next: (response: VisaApplication) => {
+        const savedId = response.id;
         // Upload passport file if one was selected
         if (this.passportFile && savedId) {
           this.uploadPassportFileToServer(savedId);
         }
         // Now submit for approval with approver selections
-        this.visaService.submitApplication(savedId, selectedApproversForSubmit, skippedStepsForSubmit).subscribe({
-          next: () => {
-            this.toastService.success(`Visa application submitted successfully`);
-            this.router.navigate(['/visa']);
-          },
-          error: (submitError) => {
-            this.isSubmitting = false;
-            this.toastService.error(submitError.error?.error || 'Failed to submit visa application');
-          }
-        });
+        this.visaService
+          .submitApplication(savedId, selectedApproversForSubmit, skippedStepsForSubmit)
+          .subscribe({
+            next: () => {
+              this.toastService.success(`Visa application submitted successfully`);
+              this.router.navigate(['/visa']);
+            },
+            error: submitError => {
+              this.isSubmitting = false;
+              this.toastService.error(
+                submitError.error?.error || 'Failed to submit visa application'
+              );
+            },
+          });
       },
-      error: (error) => {
-
+      error: error => {
         // Handle validation errors from backend
         if (error.status === 400 && error.error) {
           const errors = error.error;
@@ -323,12 +369,16 @@ export class VisaFormComponent implements OnInit {
 
           this.toastService.error(errorMessage, true, 10000);
         } else {
-          const errorMsg = error?.error?.message || error?.error?.detail || error?.message || 'Failed to save visa application';
+          const errorMsg =
+            error?.error?.message ||
+            error?.error?.detail ||
+            error?.message ||
+            'Failed to save visa application';
           this.toastService.error(errorMsg);
         }
 
         this.isSubmitting = false;
-      }
+      },
     });
   }
 
@@ -337,12 +387,13 @@ export class VisaFormComponent implements OnInit {
     const formData = this.prepareFormData();
     formData.status = 'Draft';
 
-    const saveOperation = this.isEditMode && this.applicationId
-      ? this.visaService.updateApplication(this.applicationId, formData)
-      : this.visaService.createApplication(formData);
+    const saveOperation =
+      this.isEditMode && this.applicationId
+        ? this.visaService.updateApplication(this.applicationId, formData)
+        : this.visaService.createApplication(formData);
 
     saveOperation.subscribe({
-      next: (response: any) => {
+      next: (response: VisaApplication) => {
         const savedId = response.id || this.applicationId;
         // Upload passport file if one was selected
         if (this.passportFile && savedId) {
@@ -351,8 +402,7 @@ export class VisaFormComponent implements OnInit {
         this.toastService.success('Visa application saved as draft successfully');
         this.router.navigate(['/visa']);
       },
-      error: (error) => {
-
+      error: error => {
         // Handle validation errors from backend
         if (error.status === 400 && error.error) {
           const errors = error.error;
@@ -381,21 +431,27 @@ export class VisaFormComponent implements OnInit {
 
           this.toastService.error(errorMessage, true, 10000);
         } else {
-          const errorMsg = error?.error?.message || error?.error?.detail || error?.message || 'Failed to save draft';
+          const errorMsg =
+            error?.error?.message ||
+            error?.error?.detail ||
+            error?.message ||
+            'Failed to save draft';
           this.toastService.error(errorMsg);
         }
 
         this.isSubmitting = false;
-      }
+      },
     });
   }
 
   onCancel(): void {
-    this.confirmationService.confirmCancel('Are you sure you want to cancel? All unsaved changes will be lost.').subscribe(confirmed => {
-      if (confirmed) {
-        this.router.navigate(['/visa']);
-      }
-    });
+    this.confirmationService
+      .confirmCancel('Are you sure you want to cancel? All unsaved changes will be lost.')
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.router.navigate(['/visa']);
+        }
+      });
   }
 
   // Approver selection event handlers
@@ -411,13 +467,20 @@ export class VisaFormComponent implements OnInit {
     this.skippedSteps = skippedSteps;
   }
 
-  prepareFormData(): Partial<VisaApplication> & { selected_approvers?: ApproverSelection } {
+  prepareFormData(): Partial<VisaApplication> & {
+    selected_approvers?: ApproverSelection;
+    skipped_steps?: SkippedStepsSelection;
+  } {
     const formValue = this.visaForm.value;
 
     // List of date fields that should be null instead of empty strings
     const dateFields = [
-      'trip_start_date', 'trip_end_date', 'passport_expiry_date',
-      'passport_date_of_issuance', 'date_of_birth', 'approximately_arrival_date'
+      'trip_start_date',
+      'trip_end_date',
+      'passport_expiry_date',
+      'passport_date_of_issuance',
+      'date_of_birth',
+      'approximately_arrival_date',
     ];
 
     // Convert empty strings to null for date fields
@@ -447,10 +510,11 @@ export class VisaFormComponent implements OnInit {
     return formValue;
   }
 
-
   scrollToFirstInvalidField(): void {
     // Find the first invalid control
-    const firstInvalidControl = document.querySelector('.form-control.ng-invalid, .form-select.ng-invalid');
+    const firstInvalidControl = document.querySelector(
+      '.form-control.ng-invalid, .form-select.ng-invalid'
+    );
 
     if (firstInvalidControl) {
       // Scroll to the field with offset for header
@@ -487,9 +551,9 @@ export class VisaFormComponent implements OnInit {
         next: () => {
           this.toastService.success('Passport file removed');
         },
-        error: (error) => {
+        error: () => {
           this.toastService.error('Failed to remove passport file');
-        }
+        },
       });
     }
 
@@ -505,9 +569,9 @@ export class VisaFormComponent implements OnInit {
       next: () => {
         // File uploaded successfully - no additional toast needed as form save toast is shown
       },
-      error: (error) => {
+      error: () => {
         this.toastService.error('Failed to upload passport file');
-      }
+      },
     });
   }
 }

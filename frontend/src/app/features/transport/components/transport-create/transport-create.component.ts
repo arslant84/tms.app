@@ -13,17 +13,29 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { AuthService } from '../../../../core/services/auth.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
-import { TransportRequestForm, TransportDetail, toBackendFormat } from '../../models/transport.model';
-import { ApproverSelectionComponent, SkippedStepsSelection } from '../../../../shared/components/approver-selection/approver-selection.component';
+import {
+  TransportRequestForm,
+  TransportDetail,
+  toBackendFormat,
+} from '../../models/transport.model';
+import {
+  ApproverSelectionComponent,
+  SkippedStepsSelection,
+} from '../../../../shared/components/approver-selection/approver-selection.component';
 import { ApproverSelection } from '../../../../core/services/workflow.service';
 import { FormSectionCardComponent } from '../../../../shared/components/form-section-card/form-section-card.component';
 
 @Component({
   selector: 'app-transport-create',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ApproverSelectionComponent, FormSectionCardComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ApproverSelectionComponent,
+    FormSectionCardComponent,
+  ],
   templateUrl: './transport-create.component.html',
-  styleUrls: ['./transport-create.component.scss']
+  styleUrls: ['./transport-create.component.scss'],
 })
 export class TransportCreateComponent implements OnInit {
   @ViewChild(ApproverSelectionComponent) approverSelectionComponent?: ApproverSelectionComponent;
@@ -42,6 +54,8 @@ export class TransportCreateComponent implements OnInit {
   initialApproverSelections: ApproverSelection = {};
   initialSkippedSteps: SkippedStepsSelection = {};
   requesterStaffId?: string; // Staff ID for department-based approver filtering
+  /** Step orders already approved (and therefore locked) - see approver-selection.component.ts. */
+  approvedStepOrders: number[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -85,7 +99,7 @@ export class TransportCreateComponent implements OnInit {
       transportDetails: this.fb.array([], Validators.required),
 
       // Additional information
-      additionalComments: ['']
+      additionalComments: [''],
     });
 
     // Add first transport detail by default
@@ -100,20 +114,18 @@ export class TransportCreateComponent implements OnInit {
       requestorName: userDefaults.fullName,
       staffId: userDefaults.staffId,
       department: userDefaults.department,
-      position: userDefaults.position
+      position: userDefaults.position,
     });
   }
 
   loadRequestData(id: number): void {
     this.loading = true;
     this.transportService.getRequestById(id).subscribe({
-      next: (request) => {
+      next: request => {
         // Check if request can be edited based on status
         // Allow editing for Draft, Rejected, or any Pending status
         const status = request.status || '';
-        const canEdit = status === 'Draft' ||
-                        status === 'Rejected' ||
-                        status.startsWith('Pending');
+        const canEdit = status === 'Draft' || status === 'Rejected' || status.startsWith('Pending');
 
         if (status && !canEdit) {
           const errorMsg = `This transport request cannot be edited because its status is "${status}". Only Draft, Rejected, or Pending requests can be edited.`;
@@ -134,20 +146,23 @@ export class TransportCreateComponent implements OnInit {
           department: request.department,
           position: request.position || '',
           purpose: request.purpose,
-          additionalComments: request.additionalComments || ''
+          additionalComments: request.additionalComments || '',
         });
 
         // Clear default transport detail and load existing ones
         this.transportDetails.clear();
         if (request.transportDetails && request.transportDetails.length > 0) {
-          request.transportDetails.forEach((detail: any) => {
+          request.transportDetails.forEach((detail: TransportDetail) => {
             const detailGroup = this.fb.group({
               date: [detail.date, Validators.required],
               day: [detail.day || ''],
               from: [detail.from, Validators.required],
               to: [detail.to, Validators.required],
               departureTime: [detail.departureTime, Validators.required],
-              numberOfPassengers: [detail.numberOfPassengers || 1, [Validators.required, Validators.min(1)]]
+              numberOfPassengers: [
+                detail.numberOfPassengers || 1,
+                [Validators.required, Validators.min(1)],
+              ],
             });
             this.transportDetails.push(detailGroup);
           });
@@ -163,26 +178,33 @@ export class TransportCreateComponent implements OnInit {
           this.requesterStaffId = request.staffId;
         }
 
-        // Load saved approver selections for edit mode
-        if (request.selected_approvers && Object.keys(request.selected_approvers).length > 0) {
-          this.initialApproverSelections = request.selected_approvers;
-          this.selectedApprovers = request.selected_approvers;
-        }
-
-        // Load saved skipped steps for edit mode
-        if (request.skipped_steps && Object.keys(request.skipped_steps).length > 0) {
-          this.initialSkippedSteps = request.skipped_steps;
-          this.skippedSteps = request.skipped_steps;
-        }
+        this.applyApproverSelectionState(request);
 
         this.loading = false;
       },
-      error: (error) => {
+      error: () => {
         this.toastService.error('Failed to load transport request');
         this.loading = false;
         this.router.navigate(['/transport']);
-      }
+      },
     });
+  }
+
+  /** Load saved approver selections/skipped steps/approved step orders for edit mode. */
+  private applyApproverSelectionState(request: TransportRequestForm): void {
+    if (request.selected_approvers && Object.keys(request.selected_approvers).length > 0) {
+      this.initialApproverSelections = request.selected_approvers;
+      this.selectedApprovers = request.selected_approvers;
+    }
+
+    if (request.skipped_steps && Object.keys(request.skipped_steps).length > 0) {
+      this.initialSkippedSteps = request.skipped_steps;
+      this.skippedSteps = request.skipped_steps;
+    }
+
+    if (request.approved_step_orders) {
+      this.approvedStepOrders = request.approved_step_orders;
+    }
   }
 
   get transportDetails(): FormArray {
@@ -196,7 +218,7 @@ export class TransportCreateComponent implements OnInit {
       from: ['', Validators.required],
       to: ['', Validators.required],
       departureTime: ['', Validators.required],
-      numberOfPassengers: [1, [Validators.required, Validators.min(1)]]
+      numberOfPassengers: [1, [Validators.required, Validators.min(1)]],
     });
   }
 
@@ -212,8 +234,8 @@ export class TransportCreateComponent implements OnInit {
     }
   }
 
-  onDateChange(index: number, event: any): void {
-    const date = event.target.value;
+  onDateChange(index: number, event: Event): void {
+    const date = (event.target as HTMLInputElement).value;
     if (date) {
       const dateObj = new Date(date);
       const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
@@ -244,27 +266,28 @@ export class TransportCreateComponent implements OnInit {
     this.submitting = true;
     const formData: Partial<TransportRequestForm> = {
       ...this.transportForm.value,
-      status: 'Pending' // Let workflow system determine actual status
+      status: 'Pending', // Let workflow system determine actual status
     };
 
     const backendData = toBackendFormat(formData);
 
     // Include selected approvers if any were selected
     if (Object.keys(this.selectedApprovers).length > 0) {
-      (backendData as any).selected_approvers = this.selectedApprovers;
+      backendData['selected_approvers'] = this.selectedApprovers;
     }
 
     // Include skipped steps if any were skipped
     if (Object.keys(this.skippedSteps).length > 0) {
-      (backendData as any).skipped_steps = this.skippedSteps;
+      backendData['skipped_steps'] = this.skippedSteps;
     }
 
-    const saveOperation = this.isEditMode && this.requestId
-      ? this.transportService.updateRequest(this.requestId, backendData)
-      : this.transportService.createRequest(backendData);
+    const saveOperation =
+      this.isEditMode && this.requestId
+        ? this.transportService.updateRequest(this.requestId, backendData)
+        : this.transportService.createRequest(backendData);
 
     saveOperation.subscribe({
-      next: (response) => {
+      next: () => {
         this.submitting = false;
         const message = this.isEditMode
           ? 'Transport request updated successfully'
@@ -273,31 +296,38 @@ export class TransportCreateComponent implements OnInit {
         // Redirect to transport list instead of detail page to avoid loading issues
         this.router.navigate(['/transport']);
       },
-      error: (err) => {
+      error: err => {
         this.submitting = false;
-        const errorMessage = err.error?.message || err.error?.detail || err.message || 'Failed to create transport request';
+        const errorMessage =
+          err.error?.message ||
+          err.error?.detail ||
+          err.message ||
+          'Failed to create transport request';
         this.toastService.error(errorMessage);
-      }
+      },
     });
   }
 
   onSaveDraft(): void {
     if (!this.transportForm.get('purpose')?.value || this.transportDetails.length === 0) {
-      this.toastService.warning('Please provide at least a purpose and one transport detail to save as draft');
+      this.toastService.warning(
+        'Please provide at least a purpose and one transport detail to save as draft'
+      );
       return;
     }
 
     this.submitting = true;
     const formData: Partial<TransportRequestForm> = {
       ...this.transportForm.value,
-      status: 'Draft'
+      status: 'Draft',
     };
 
     const backendData = toBackendFormat(formData);
 
-    const saveOperation = this.isEditMode && this.requestId
-      ? this.transportService.updateRequest(this.requestId, backendData)
-      : this.transportService.createRequest(backendData);
+    const saveOperation =
+      this.isEditMode && this.requestId
+        ? this.transportService.updateRequest(this.requestId, backendData)
+        : this.transportService.createRequest(backendData);
 
     saveOperation.subscribe({
       next: () => {
@@ -305,20 +335,23 @@ export class TransportCreateComponent implements OnInit {
         this.toastService.success('Draft saved successfully');
         this.router.navigate(['/transport']);
       },
-      error: (err) => {
+      error: err => {
         this.submitting = false;
-        const errorMessage = err.error?.message || err.error?.detail || err.message || 'Failed to save draft';
+        const errorMessage =
+          err.error?.message || err.error?.detail || err.message || 'Failed to save draft';
         this.toastService.error(errorMessage);
-      }
+      },
     });
   }
 
   onCancel(): void {
-    this.confirmationService.confirmCancel('Are you sure you want to cancel? All unsaved changes will be lost.').subscribe(confirmed => {
-      if (confirmed) {
-        this.router.navigate(['/transport']);
-      }
-    });
+    this.confirmationService
+      .confirmCancel('Are you sure you want to cancel? All unsaved changes will be lost.')
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.router.navigate(['/transport']);
+        }
+      });
   }
 
   // Helper methods for template
