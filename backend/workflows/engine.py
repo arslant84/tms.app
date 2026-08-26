@@ -91,7 +91,7 @@ class WorkflowEngine:
                 existing_instance.status,
             )
             WorkflowEngine._apply_resubmit_selection(
-                existing_instance, selected_approvers, skipped_steps
+                existing_instance, selected_approvers, skipped_steps, initiated_by
             )
             return existing_instance
 
@@ -538,6 +538,7 @@ class WorkflowEngine:
         workflow_instance: WorkflowInstance,
         selected_approvers: Optional[Dict[int, int]],
         skipped_steps: Optional[Dict[int, str]],
+        initiated_by: Optional[User] = None,
     ) -> None:
         """Merge newly-submitted selected_approvers/skipped_steps into an
         already-active WorkflowInstance's additional_data on resubmit, and
@@ -553,14 +554,22 @@ class WorkflowEngine:
         - Future steps: only additional_data needs to change. _start_step
           reads selected_approvers/skipped_steps from additional_data at the
           moment it actually activates the step, so an updated entry there
-          is picked up automatically whenever that later happens.
+          is picked up automatically whenever that later happens - including
+          _start_step's own skip-bypass handling below.
         - The current pending step: additional_data alone isn't enough,
           because _is_user_authorized/process_action check the actual
           WorkflowStepExecution.assigned_to field (set once when the step
-          was activated), not additional_data. So the pending step's
-          assigned_to is re-resolved and updated here too, matching
-          whatever _start_step would have assigned had the new selection
-          been in place when the step activated.
+          was activated), not additional_data. So the pending step is
+          re-resolved here too, matching whatever _start_step would have
+          done had the new selection been in place when the step activated:
+          if it's now marked "skip", _start_step's own skip-always-bypasses
+          semantics apply here too (auto-skip it and advance to the next
+          step, or complete the workflow) via the same _handle_step_approval
+          helper _start_step itself uses - a plain resubmit never
+          re-activates the already-pending step, so without this the step
+          stayed "pending" with just a reassigned approver forever, even
+          though a freshly-started workflow would have bypassed it outright.
+          Otherwise, just its assignee is re-resolved and updated.
 
         Status resync: every module's own `submit`/resubmit view sets the
         entity's status to a generic "Pending" (or similar) *before* calling
@@ -568,11 +577,12 @@ class WorkflowEngine:
         engine will correct it to the real "Pending <Role>" value - which is
         exactly what _start_step does via _update_entity_status_from_step
         when a step first activates. But a resubmit never re-activates the
-        already-pending step (_start_step isn't called again for it), so
-        without this call here the entity is left stuck on that generic
-        placeholder status instead of the step's real one. This runs
-        unconditionally (even with no selection change) since the bug is in
-        the status field itself, not just in stale approver assignments.
+        already-pending step, so without a resync here the entity is left
+        stuck on that generic placeholder status instead of the step's real
+        one. This runs unconditionally (even with no selection change) since
+        the bug is in the status field itself, not just in stale approver
+        assignments - unless the skip-bypass path above already handled the
+        resync itself by advancing to a new step.
         """
         approved_orders = set(
             WorkflowStepExecution.objects.filter(
@@ -618,37 +628,77 @@ class WorkflowEngine:
                 workflow_instance.additional_data = additional_data
                 workflow_instance.save(update_fields=["additional_data"])
 
-                # The currently-active step's real assignee lives on the
-                # WorkflowStepExecution row, not additional_data - re-resolve
-                # and apply it now if the new selection changes it.
-                if (
-                    pending_execution
-                    and pending_execution.workflow_step.step_order
-                    not in (approved_orders)
-                ):
-                    new_assignee = WorkflowEngine._resolve_step_assignee(
-                        workflow_instance, pending_execution.workflow_step
-                    )
-                    if new_assignee != pending_execution.assigned_to:
-                        pending_execution.assigned_to = new_assignee
-                        pending_execution.save(update_fields=["assigned_to"])
-                        logger.info(
-                            "Resubmit updated pending step '%s' (order %s) assignee to %s",
-                            pending_execution.workflow_step.step_name,
-                            pending_execution.workflow_step.step_order,
-                            new_assignee.email if new_assignee else None,
-                        )
-
-        # Always resync the entity's status to match its real current step,
-        # regardless of whether the approver selection itself changed - see
-        # the docstring's "Status resync" note above.
+        # The pending step may now be marked "skip" - either just now above,
+        # or from an earlier resubmit that predates this bypass handling. In
+        # either case, bypass it exactly as _start_step does for a freshly
+        # activated step: mark it skipped and advance, instead of merely
+        # reassigning its approver and leaving it pending forever.
         if (
             pending_execution
             and pending_execution.workflow_step.step_order not in approved_orders
         ):
-            WorkflowEngine._update_entity_status_from_step(
-                workflow_instance, pending_execution.workflow_step
+            step = pending_execution.workflow_step
+            step_order_str = str(step.step_order)
+            current_skipped = (workflow_instance.additional_data or {}).get(
+                "skipped_steps", {}
             )
+            step_marked_skip = (
+                step_order_str in current_skipped or step.step_order in current_skipped
+            )
+
+            if step_marked_skip and step.can_skip:
+                skip_reason = (
+                    current_skipped.get(step_order_str)
+                    or current_skipped.get(step.step_order)
+                    or "Approver not pre-selected by requester"
+                )
+                logger.info(
+                    "Resubmit marked pending step '%s' (order %s) as skip - "
+                    "auto-skipping and advancing the workflow.",
+                    step.step_name,
+                    step.step_order,
+                )
+                pending_execution.status = "skipped"
+                pending_execution.assigned_to = None
+                pending_execution.action_date = timezone.now()
+                pending_execution.comments = f"Auto-skipped: {skip_reason}"
+                pending_execution.save()
+
+                WorkflowAuditLog.objects.create(
+                    workflow_instance=workflow_instance,
+                    action_type="skipped",
+                    action_description=(
+                        f"Step '{step.step_name}' auto-skipped by requester ({skip_reason})"
+                    ),
+                    performed_by=initiated_by,
+                )
+
+                WorkflowEngine._handle_step_approval(
+                    workflow_instance, pending_execution, initiated_by
+                )
+                return
+
+            # Not (or no longer) skipped - the currently-active step's real
+            # assignee lives on the WorkflowStepExecution row, not
+            # additional_data, so re-resolve and apply it now if the new
+            # selection changes it.
+            new_assignee = WorkflowEngine._resolve_step_assignee(
+                workflow_instance, step
+            )
+            if new_assignee != pending_execution.assigned_to:
+                pending_execution.assigned_to = new_assignee
+                pending_execution.save(update_fields=["assigned_to"])
+                logger.info(
+                    "Resubmit updated pending step '%s' (order %s) assignee to %s",
+                    step.step_name,
+                    step.step_order,
+                    new_assignee.email if new_assignee else None,
+                )
+
+            # Always resync the entity's status to match its real current
+            # step, regardless of whether the approver selection itself
+            # changed - see the docstring's "Status resync" note above.
+            WorkflowEngine._update_entity_status_from_step(workflow_instance, step)
 
     @staticmethod
     def _start_step(
