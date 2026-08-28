@@ -59,9 +59,6 @@ CACHES = {
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 
-# Static files - Use WhiteNoise for static file serving
-MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-
 # MinIO / S3-compatible object storage for media files
 AWS_ACCESS_KEY_ID = config('MINIO_ACCESS_KEY', default='')
 AWS_SECRET_ACCESS_KEY = config('MINIO_SECRET_KEY', default='')

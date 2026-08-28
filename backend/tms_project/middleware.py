@@ -15,26 +15,6 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
-class DebugMeEndpointMiddleware:
-    """Temporary: log every request that reaches /api/users/me/ with cookie info."""
-
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        if request.path == '/api/users/me/':
-            has_access = bool(request.COOKIES.get('access_token'))
-            has_refresh = bool(request.COOKIES.get('refresh_token'))
-            proto = request.META.get('HTTP_X_FORWARDED_PROTO', 'not-set')
-            logger.warning(
-                f"[DEBUG /me/] method={request.method} "
-                f"access_cookie={'YES' if has_access else 'NO'} "
-                f"refresh_cookie={'YES' if has_refresh else 'NO'} "
-                f"x-forwarded-proto={proto} "
-                f"host={request.get_host()}"
-            )
-        return self.get_response(request)
-
 # Cache timeout for settings (5 minutes)
 SETTINGS_CACHE_TIMEOUT = 300
 
