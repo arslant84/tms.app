@@ -25,7 +25,6 @@ graph TD
             VISA["visa<br/>Visa Applications"]
             ACC2["accommodation<br/>Hotel/Housing"]
             TRANS["transport<br/>Ground Transport"]
-            COMB["combined_request<br/>Multi-modal Requests"]
             WF["workflows<br/>Approval Workflows"]
             NOTIF["notifications<br/>Email & In-app Alerts"]
             REP["reports<br/>Analytics & Exports"]
@@ -34,10 +33,16 @@ graph TD
         end
     end
 
+    subgraph Async["Background Processing"]
+        CELERY["Celery Workers<br/>emails · pdfs · default queues"]
+        REDIS[("Redis<br/>Celery broker/result backend + Django cache")]
+    end
+
     subgraph Data["Data Layer"]
         PG[("PostgreSQL 15<br/>Primary Database")]
         BACKUP["pg_dump backups<br/>backend/backups/"]
         LOGS["SIEM Log Files<br/>backend/logs/security.json"]
+        MEDIA[("MinIO / S3-compatible<br/>Object Storage — media files")]
     end
 
     subgraph Security["Security Controls"]
@@ -56,6 +61,11 @@ graph TD
     ADMIN --> PG
     PG --> BACKUP
     Apps --> LOGS
+    Apps -->|"async: email, PDF export,<br/>bulk import, bulk approve"| CELERY
+    CELERY --> REDIS
+    CELERY --> PG
+    Apps -->|"session/cache reads"| REDIS
+    Apps --> MEDIA
     ACC --> TOTP
     ACC --> JWT
     ACC --> ENC
@@ -142,7 +152,6 @@ graph LR
             VI["/api/visa/"]
             AC["/api/accommodation/"]
             TP["/api/transport/"]
-            CB["/api/combined/"]
         end
         subgraph Ops["Operations"]
             WF["/api/workflows/"]
@@ -194,7 +203,9 @@ graph TD
     TRV --> DATA
 ```
 
-This diagram simplifies to 4 abstract role categories for readability — the real system is more granular: `accounts.Role` ↔ `accounts.Permission` via a `RolePermission` join table, 57 named permissions as of 2026-07-23 (down from 65 earlier the same day — Fix 9 deleted 7: 5 duplicates consolidated into existing permissions, plus `access_debug_endpoints`/`manage_document_templates` as dead code) (`approve_trf`, `manage_bookings`, `view_all_visa`, etc.), checked via helpers in `accounts/utils.py` (`has_permission`, `can_approve`, `can_view_all`, `can_manage`, `is_module_admin`).
+This diagram simplifies to 4 abstract role categories for readability — the real system is more granular: `accounts.Role` ↔ `accounts.Permission` via a `RolePermission` join table, 51 named permissions as of 2026-08-19 (down from 57 on 2026-07-23 — migration `0044_remove_combined_request_permissions.py` deleted the 6 `combined_request`-specific permissions, `view_admin_combined`/`manage_combined_requests`/`process_combined_requests`/`create_combined`/`approve_combined`/`view_all_combined`, when the module itself was removed; 57 was itself down from 65 earlier on 2026-07-23 — Fix 9 deleted 7: 5 duplicates consolidated into existing permissions, plus `access_debug_endpoints`/`manage_document_templates` as dead code) (`approve_trf`, `manage_bookings`, `view_all_visa`, etc.), checked via helpers in `accounts/utils.py` (`has_permission`, `can_approve`, `can_view_all`, `can_manage`, `is_module_admin`).
+
+**Note (2026-08-19):** the `combined_request` module referenced throughout the permission-history entries below was subsequently **removed entirely** — see `docs/COMBINED_REQUEST_MODULE_REMOVAL_ROADMAP.md`. The entries are kept as a historical record of the permission-system fixes at the time; none of the `combined`/`combinedrequest` permissions, roles, or endpoints they describe still exist.
 
 **Permission-system audit history (2026-07-23/24, see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fixes 5-6, 9, 15):**
 - ~~5 orphaned `combined_request` permissions~~ — `approve_combined`, `manage_combined_requests`, `process_combined_requests`, `view_admin_combined`, `view_all_combined` had **0 roles assigned**. Fixed (Fix 6, migration `0037`): `approve_combined` now follows the identical pattern used by `approve_trf`/`approve_visa`/`approve_transport`/`approve_accommodation` (`Department Focal`, `Line Manager`, `HOD`, `System Administrator`); the other 4 go to `System Administrator` only, since there's no single existing "combined admin" role the way each other module has one.
@@ -253,9 +264,12 @@ graph LR
     subgraph Prod["Production Server"]
         NG["Nginx (reverse proxy)<br/>TLS termination<br/>rate limiting"]
         GN["Gunicorn WSGI<br/>Django application"]
+        CW["Celery Worker(s)<br/>queues: default · emails · pdfs"]
+        RD[("Redis<br/>Celery broker/result backend<br/>+ Django cache")]
         PG2[("PostgreSQL 15")]
+        S3[("MinIO / S3-compatible<br/>Object Storage — media files")]
         FS["File System<br/>backend/backups/<br/>backend/logs/"]
-        CRON["Task Scheduler / Cron<br/>backup_db — daily<br/>disable_inactive_accounts — weekly<br/>cleanup_expired_data — monthly<br/>send_step_reminders — hourly"]
+        CRON["Task Scheduler / Cron<br/>backup_db — daily<br/>disable_inactive_accounts — weekly<br/>cleanup_expired_data — monthly<br/>check_uptime — every 5 min"]
     end
 
     subgraph Build["Build / CI"]
@@ -267,12 +281,21 @@ graph LR
     NG -->|proxy_pass| GN
     GN --> PG2
     GN --> FS
+    GN --> RD
+    GN -->|"apply_async"| CW
+    CW --> RD
+    CW --> PG2
+    GN --> S3
     CRON --> GN
     GHA --> ANG
     ANG -->|deploy| FS
 ```
 
-The four `CRON` jobs above are real, tested Django management commands (`backend/accounts/management/commands/`, `backend/workflows/management/commands/`). `python manage.py install_cron` (added 2026-07-23, `accounts` app) installs the schedule shown here directly into the current user's crontab — idempotent (re-running updates rather than duplicates the entries, via a comment tag) and safe to re-run after re-deploying the repo. `send_step_reminders` (added 2026-07-29, `workflows` app — see §7.3) was added as a 4th job rather than given its own scheduler, reusing this same mechanism. `backend/scripts/crontab.example` still documents the exact schedule as a manual fallback (`crontab backend/scripts/crontab.example`, paths adjusted) for hosts where running Django management commands directly isn't an option. Installing either still has to happen once per deployment host — a code commit can't reach into the host's crontab on its own — but the previous state (`crontab.example` was the *only* path, requiring a manual copy-paste an operator could simply forget) is closed.
+The four `CRON` jobs above are real, tested Django management commands (`backend/accounts/management/commands/`, `backend/workflows/management/commands/`). `python manage.py install_cron` (added 2026-07-23, `accounts` app) installs the schedule shown here directly into the current user's crontab — idempotent (re-running updates rather than duplicates the entries, via a comment tag) and safe to re-run after re-deploying the repo. `backend/scripts/crontab.example` still documents the exact schedule as a manual fallback (`crontab backend/scripts/crontab.example`, paths adjusted) for hosts where running Django management commands directly isn't an option. Installing either still has to happen once per deployment host — a code commit can't reach into the host's crontab on its own — but the previous state (`crontab.example` was the *only* path, requiring a manual copy-paste an operator could simply forget) is closed.
+
+**`send_step_reminders` and the SLA/reminder feature it served were removed entirely (2026-08-21)** — see migration `workflows/0018_remove_sla_tracking.py` and `notifications/migrations/0008_remove_approval_reminder_template.py`. `install_cron` explicitly un-installs any stale `send_step_reminders` crontab entry left over from a pre-2026-08-21 deployment (`LEGACY_JOB_NAMES` in the command). `check_uptime` (every 5 minutes) replaced it as the 4th job — an external liveness probe added after an August 2026 outage where the app process stayed "running" while every request 500'd, with nothing polling for that distinction.
+
+**Celery was introduced 2026-08-2x** to move slow, request-blocking work off the Gunicorn worker thread: bulk CSV user import (`accounts.tasks.process_bulk_user_import` — previously caused 502s on large uploads by exceeding the 30s Gunicorn timeout), notification email sending (`notifications.tasks.send_notification_email`, queue `emails`), TRF PDF export (`trf.tasks.export_trf_pdf`, queue `pdfs`, result cached in Redis for 10 minutes), and bulk approve/reject (`approvals.tasks.bulk_approve_task`). Redis (`Memurai` in the Windows dev environment) serves as both the Celery broker/result backend and the Django cache backend. **This supersedes the "no Celery anywhere in this codebase" statements elsewhere in this document (§7.3, §8) — those describe the pre-Celery design and are kept below as historical context, not current state.**
 
 ---
 
@@ -288,7 +311,6 @@ flowchart TD
         VISA2[visa]
         TRANS2[transport]
         ACC2[accommodation]
-        COMB2[combined_request]
     end
 
     WF["workflows<br/>WorkflowRouter + WorkflowEngine<br/>§7.1"]
@@ -313,11 +335,11 @@ flowchart TD
 
 `core/` is not a domain app in its own right — it's a single shared utility (`email_settings_loader.py`) that loads SMTP configuration from the `ApplicationSetting` table into Django settings at runtime, used by the notifications pipeline (§7.3). It has no models, views, or migrations of its own.
 
-**Why only `trf -.-> bookings` is drawn here:** this is a bird's-eye, app-to-app diagram, so an edge only appears when one app's action creates or touches a record in a *different* app. All five domain apps have their own manual, admin-triggered "fulfill an approved request" action — `trf`'s `book_flight`, `accommodation`'s `assign`, `transport`'s `complete`, `visa`'s `complete`, `combined_request`'s `process_module` (see §7.2 for `book_flight` specifically) — none of them are automatic on approval, all five are equally "not the default path, fires only under a specific admin action." `trf` is the only one of the five where that action writes into a *separate* app: `book_flight` creates a `FlightBooking` row in `bookings`, a different Django app entirely. `accommodation`'s `assign` creates an `AccommodationBooking` — but that model lives in `accommodation/models.py` itself, same app. `transport`'s `complete` can create a `VehicleAssignment` — also defined in `transport/models.py`, same app. `visa`'s `complete` and `combined_request`'s `process_module` don't create a new record at all, they just mutate the request's own fields. So the dotted `trf -.-> bookings` edge isn't marking TRF as uniquely having a manual post-approval step — every app has one — it's marking TRF as the only one whose post-approval step crosses an app boundary, which is the only kind of edge this particular diagram draws.
+**Why only `trf -.-> bookings` is drawn here:** this is a bird's-eye, app-to-app diagram, so an edge only appears when one app's action creates or touches a record in a *different* app. All four domain apps have their own manual, admin-triggered "fulfill an approved request" action — `trf`'s `book_flight`, `accommodation`'s `assign`, `transport`'s `complete`, `visa`'s `complete` (see §7.2 for `book_flight` specifically) — none of them are automatic on approval, all four are equally "not the default path, fires only under a specific admin action." `trf` is the only one of the four where that action writes into a *separate* app: `book_flight` creates a `FlightBooking` row in `bookings`, a different Django app entirely. `accommodation`'s `assign` creates an `AccommodationBooking` — but that model lives in `accommodation/models.py` itself, same app. `transport`'s `complete` can create a `VehicleAssignment` — also defined in `transport/models.py`, same app. `visa`'s `complete` doesn't create a new record at all, it just mutates the request's own fields. So the dotted `trf -.-> bookings` edge isn't marking TRF as uniquely having a manual post-approval step — every app has one — it's marking TRF as the only one whose post-approval step crosses an app boundary, which is the only kind of edge this particular diagram draws.
 
 ### 7.1 Request Submission & Approval
 
-This is the one recurring data flow that spans five separate domain apps: **`trf`, `visa`, `transport`, `accommodation`, and `combined_request` all submit through the identical create → submit → workflow → approve/reject pipeline**, via the same shared `workflows` components (`WorkflowRouter`, `WorkflowEngine`) and the same `approvals`/notification layers. TRF was traced first because it was the app under investigation at the time, but the pattern below is generic and verified against all five apps' `views.py`, not just TRF's.
+This is the one recurring data flow that spans four separate domain apps: **`trf`, `visa`, `transport`, and `accommodation` all submit through the identical create → submit → workflow → approve/reject pipeline**, via the same shared `workflows` components (`WorkflowRouter`, `WorkflowEngine`) and the same `approvals`/notification layers. TRF was traced first because it was the app under investigation at the time, but the pattern below is generic and verified against all four apps' `views.py`, not just TRF's. (A fifth app, `combined_request`, ran through this same pipeline until it was removed entirely on 2026-08-19 — see the §4 note and `docs/COMBINED_REQUEST_MODULE_REMOVAL_ROADMAP.md`.)
 
 ```mermaid
 flowchart TD
@@ -326,7 +348,7 @@ flowchart TD
     WR["WorkflowRouter.start_workflow_for_request<br/>workflows/router.py<br/>entity_type identifies which app's WorkflowTemplate to use"]
     WE1["WorkflowEngine.start_workflow<br/>workflows/engine.py<br/>creates WorkflowInstance + first WorkflowStepExecution"]
     N1["NotificationService.create_notification<br/>notify_workflow_started"]
-    LEG["No active WorkflowTemplate?<br/>Fallback: some apps (trf, transport,<br/>combined_request) eagerly create a legacy<br/>&lt;App&gt;ApprovalStep; visa/accommodation just<br/>leave status=Pending and defer to approve()'s<br/>own fallback"]
+    LEG["No active WorkflowTemplate?<br/>Fallback: some apps (trf, transport)<br/>eagerly create a legacy<br/>&lt;App&gt;ApprovalStep; visa/accommodation just<br/>leave status=Pending and defer to approve()'s<br/>own fallback"]
 
     A["Approver acts: approve()/reject()<br/>&lt;app&gt;/views.py"]
     AB["Bulk approve UI<br/>approvals.bulk_approve — approvals/views.py"]
@@ -359,13 +381,10 @@ flowchart TD
 | `visa` | `VisaApplication` | `visaapplication` | `VisaApprovalStep` (created lazily, at approve time) |
 | `transport` | `TransportRequest` | `transportrequest` | `TransportApprovalStep` (created eagerly at submit) |
 | `accommodation` | `AccommodationRequest` | `accommodation` | none — status just stays `Pending` if no template |
-| `combined_request` | `CombinedRequest` | `combinedrequest` | `CombinedRequestApprovalStep` (created eagerly at submit) |
-
-`combined_request` is the multi-modal variant: its `CombinedRequest` model inlines travel/visa/accommodation/transport fields directly (with per-module inclusion flags and per-module status fields) rather than creating child records in the other four apps — but it runs through this exact same `WorkflowRouter`/`WorkflowEngine` pipeline as its own independent workflow.
 
 **`trf` is the one app where `entity_type` isn't a single fixed string** (added 2026-07-31, see `docs/TSR_SUBMODULE_WORKFLOW_ROADMAP.md`): `TravelRequest.workflow_entity_type` resolves `travel_type` (`Domestic`/`Overseas`/`Home Leave`/`External Parties`) to `travelrequest_domestic`/`travelrequest_overseas`/`travelrequest_homeleave`/`travelrequest_external` respectively, so each travel type can have its own dedicated `WorkflowTemplate`, configured the same way as any other module in `enhanced-workflow-config.component.ts`. `WorkflowTemplate.get_active_for(entity_type, fallback)` — the single method both `WorkflowRouter.start_workflow_for_request` and `WorkflowEngine.start_workflow` now call, replacing what used to be independently duplicated in each — tries the specific sub-type first and falls back to the shared `travelrequest` template if no dedicated one is configured yet, so this is additive: every TRF submission routes through the same shared template until an admin explicitly creates a sub-type-specific one. The same two-tier lookup was also added to the `eligible-approvers`/`templates` endpoints the frontend queries *before* submission (workflow-step preview, approver-selection dropdowns) and to `WorkflowInstanceViewSet`'s `entity_type` filter (so a TRF's own detail page can still find its `WorkflowInstance` regardless of which specific template it used) — all four call sites needed the same fallback independently, since none of them shared code with each other originally.
 
-All three approval entry points (single-item `approve`/`reject`, `bulk_approve`, `take_action`) converge on `WorkflowEngine.process_action` as of 2026-07-22 — see `docs/APPROVAL_WORKFLOW_FIX_ROADMAP.md` for the fix history — and this applies uniformly across all five apps, since `bulk_approve`'s `type_model_map` already covers `trf`, `transport`, `visa`, `accommodation`, and `combined`. `bulk_approve` additionally writes its own bulk-specific `AdminActionLog` entry (`workflow_bulk_approve`/`workflow_bulk_reject`) alongside the per-step entry `process_action` writes, to record that the action came from the bulk UI. `take_action`'s `delegate` branch is the one remaining exception — it's intentionally *not* routed through `WorkflowEngine.delegate_step`, because that method requires the acting user to be the step's current assignee, whereas `take_action` allows a workflow admin to delegate on someone else's behalf; consolidating it would have silently removed that admin capability.
+All three approval entry points (single-item `approve`/`reject`, `bulk_approve`, `take_action`) converge on `WorkflowEngine.process_action` as of 2026-07-22 — see `docs/APPROVAL_WORKFLOW_FIX_ROADMAP.md` for the fix history — and this applies uniformly across all four apps, since `bulk_approve`'s `type_model_map` covers `trf`, `transport`, `visa`, and `accommodation`. `bulk_approve` runs as a Celery task (`approvals.tasks.bulk_approve_task`, added 2026-08-2x — see §6) rather than inline in the request thread, and additionally writes its own bulk-specific `AdminActionLog` entry (`workflow_bulk_approve`/`workflow_bulk_reject`) alongside the per-step entry `process_action` writes, to record that the action came from the bulk UI. `take_action`'s `delegate` branch is the one remaining exception — it's intentionally *not* routed through `WorkflowEngine.delegate_step`, because that method requires the acting user to be the step's current assignee, whereas `take_action` allows a workflow admin to delegate on someone else's behalf; consolidating it would have silently removed that admin capability.
 
 **Resolved (2026-07-22):**
 
@@ -377,6 +396,14 @@ All three approval entry points (single-item `approve`/`reject`, `bulk_approve`,
 - ~~Legacy-fallback branches wrote no audit trail~~ (found 2026-07-23, follow-up to the item above: the permission check was fixed, but none of the 10 fallback branches called `AdminActionLog.log_action()` — audit logging only happened inside `WorkflowEngine.process_action`, the real-template path. `accommodation` was the worst of the five here too: unlike `trf`/`visa`/`transport`/`combined_request`, it has no `ApprovalStep`-equivalent model at all, so its fallback path left literally no record of who approved/rejected a request, or when.) Fixed by adding an `AdminActionLog.log_action(action_type="workflow_step_approved"/"workflow_step_rejected", ...)` call to all 10 fallback branches, matching the `action_type` values `WorkflowEngine.process_action` already uses. See `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 12.
 - ~~TRF's approval steps couldn't be skipped, unlike every other request type~~ (found 2026-07-23: `WorkflowStep.can_skip` — which controls whether the shared `ApproverSelectionComponent` shows a "Skip this approver" option — was `False` for both of TRF's active steps, while `accommodation`/`transportrequest`/`visaapplication`/`combinedrequest` all had it `True` on every step. Not a frontend bug: the same component renders identically for all 5 apps, purely reflecting this backend data. Migration `0009_enable_can_skip_for_all_steps` originally set this `True` everywhere, and `0011_fix_combined_request_can_skip` already had to re-apply it once for `combinedrequest` after its steps drifted back to `False` — TRF drifting the same way is the same class of regression, not a new one.) Fixed via `workflows/migrations/0012_fix_travelrequest_can_skip.py`, matching `0011`'s pattern exactly.
 - ~~"Downstream requests are not auto-created on approval"~~ — previously listed here as a deferred product decision (bookings/visa/accommodation/transport records are submitted independently after TRF approval, no auto-creation). Re-examined 2026-07-23: confirmed with the user this isn't needed — closing as a settled "no" rather than an open item. While checking for evidence this was ever planned, found `frontend/src/app/features/requests/travel/travel-request-wizard.component.ts` — an orphaned, unreachable TRF form (not in `app.routes.ts`, called no backend endpoint, field names didn't match the real `TravelRequest` model) with "Requires Accommodation"/"Requires Local Transport" checkboxes that never did anything even when presumably in use. Removed as dead code rather than kept as a stale signal of intent — the real, connected TRF form (`trf-management`) has no such fields at all, confirming the current design deliberately doesn't do this.
+
+**Resolved (2026-08-25/26 — skip and resubmit behavior, `workflows/engine.py`):**
+
+- ~~A step marked skippable with no fallback approver assigned got permanently stuck pending, with no assignee~~ — `_start_step` now auto-skips it instead.
+- **Product decision:** skip now always bypasses a step and auto-advances the workflow, even when a real fallback approver does exist for it — previously it only auto-advanced when no fallback existed at all. Applies uniformly to TRF/Transport/Visa/Accommodation via the shared engine.
+- ~~Resubmitting a request left its status stuck on a generic "Pending" instead of resyncing to "Pending &lt;Role&gt;"~~ — fixed; also extended TRF's edit-mode "Select Approvers" locking to visa/transport (`transport/serializers.py`, `visa/serializers.py`).
+- ~~Resubmitting a request with an already-active `WorkflowInstance` ignored changes to selected approvers/skipped steps~~ — now merges the changes into not-yet-approved steps (already-approved steps stay locked).
+- ~~The skip-bypass fix above didn't apply to an already-pending step on resubmit~~ — `_apply_resubmit_selection` now mirrors `_start_step`'s bypass.
 
 ### 7.2 Downstream Fulfillment (Flight, Accommodation, Vehicle)
 
@@ -398,11 +425,13 @@ Hotel/accommodation needs are handled entirely by the `accommodation` app (staff
 - ~~`bookings.HotelBooking` model, `HotelBookingViewSet`, and a `book_hotel` permission-check reference with no implementing action~~ — **removed 2026-07-23** (`docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 10). `HotelBooking` had a `trf` ForeignKey (so an earlier draft of this doc claiming "no TRF-approval linkage at all" was wrong), but the model had **0 rows ever created** and its ViewSet/serializers/frontend service methods (`createHotelBooking`, `getAllHotelBookings`, etc.) had **0 real callers** — confirmed via DB query and a full frontend grep before touching anything, same standard as the `insights` cleanup (§7.4). Removed the model, ViewSet, serializers, URL registration, admin registration, the dead `book_hotel` action-name reference and unreachable `'Hotel Booked'` status in `trf/views.py`/`utils/constants.py`, the now-always-zero hotel cost/count terms in `reports`/`insights`, and the dead frontend interfaces/methods.
 - ~~Gap: `bookings`' own create endpoint wasn't gated on TRF status or caller identity~~ — **fixed 2026-07-23** (`docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 1 for the status check, Fix 8 for the authorization check). `FlightBookingCreateSerializer.validate_trf` now checks `BOOKABLE_STATUSES`, and `FlightBookingViewSet.perform_create` now rejects anyone who isn't a superuser or booking/TRF admin — booking is an admin/travel-desk function throughout this app (matching `book_flight`'s own `admin/book-flight` naming), confirmed via the frontend: every real caller of booking creation lives under `features/admin/flights/`, no self-service booking UI exists anywhere.
 
-**`accommodation.AccommodationBooking`** — a real, actively-used model (`accommodation/models.py:62`), *distinct* from `AccommodationRequest`. `AccommodationRequest` is the traveller's request; `AccommodationBooking` is the actual room/date fulfillment record created against it. The `assign` action (`accommodation/views.py:1260`, `POST` detail action) takes a `staff_house`/`room`/date range, creates one `AccommodationBooking` row per night (FK to `AccommodationStaffHouse`, `AccommodationRoom`, and the originating `AccommodationRequest` via `related_name='bookings'`), and sets `AccommodationRequest.status = 'Accommodation Assigned'`. Routed at `/api/accommodation/bookings/` (`AccommodationBookingViewSet`, `accommodation/urls.py`). **21 rows in this environment** — actively used, not dormant.
+**`accommodation.AccommodationBooking`** — a real, actively-used model (`accommodation/models.py:62`), *distinct* from `AccommodationRequest`. `AccommodationRequest` is the traveller's request; `AccommodationBooking` is the actual room/date fulfillment record created against it. The `assign` action (`accommodation/accommodation_request_views.py:462`, `POST` detail action; core logic extracted into `assign_accommodation()` in `accommodation/services.py:261` as part of the 2026-08-25 `accommodation/views.py` split into `accommodation_booking_views.py` / `accommodation_request_views.py` / `accommodation_room_views.py` / `services.py` / `pdf_export.py`) takes a `staff_house`/`room`/date range, creates one `AccommodationBooking` row per night (FK to `AccommodationStaffHouse`, `AccommodationRoom`, and the originating `AccommodationRequest` via `related_name='bookings'`), and sets `AccommodationRequest.status = 'Accommodation Assigned'`. Routed at `/api/accommodation/bookings/` (`AccommodationBookingViewSet`, `accommodation/urls.py`). **21 rows in this environment** — actively used, not dormant. Behavior is unchanged by the split — it's a pure file/module move.
 
-**`transport.VehicleAssignment`** — likewise real and distinct from `TransportRequest` (`transport/models.py:139`). Unlike `book_flight`/`assign`, it isn't created by the `complete` action itself: a `VehicleAssignment` (vehicle number/type, driver name/contact/license) is created independently via `VehicleAssignmentViewSet` (`/api/transport/vehicle-assignments/`), and `TransportRequest`'s `complete` action (`transport/views.py:902`) then *requires* `transport_request.vehicle_assignments.exists()` to be true before it will mark the request `'Completed'` — completion is gated on assignment, not the same action. **4 rows in this environment.**
+**`transport.VehicleAssignment`** — likewise real and distinct from `TransportRequest` (`transport/models.py:139`). Unlike `book_flight`/`assign`, it isn't created by the `complete` action itself: a `VehicleAssignment` (vehicle number/type, driver name/contact/license) is created independently via `VehicleAssignmentViewSet` (`/api/transport/vehicle-assignments/`), and `TransportRequest`'s `complete` action (`transport/views.py:960` — moved from `:902` on 2026-08-27 when `8f15ca65` added the admin `is_superuser`/queryset-bypass fix below) then *requires* `transport_request.vehicle_assignments.exists()` to be true before it will mark the request `'Completed'` — completion is gated on assignment, not the same action. **4 rows in this environment.**
 
 Both are called from real frontend code (`accommodation.service.ts`, `transport.service.ts`, `transport-admin.component.ts`, `transport-processing.component.ts`) — not orphaned like the old `travel-request-wizard.component.ts` (§7.1) or `bookings.HotelBooking` above. If a future audit can't find these two model names by grepping this document, that's this document's gap to fix (as done here), not evidence the models don't exist — verify against `models.py`, migrations, and row counts directly before concluding otherwise.
+
+**Transport/Visa admin "Processing" stage removed (2026-08-27, see `fdae18cb`):** both admin UIs previously exposed a three-stage flow (Approved → Processing → Completed) at the frontend layer — filling in vehicle/booking details put a transport request into a distinct "processing" bucket before a separate "Complete Transport" click finalized it, and visa's admin page had a parallel "Processing" tab that was always empty (dead UI, no backend intermediate status ever backed it). Both admin pages are now Pending/Completed only: `TransportProcessingComponent.handleCompleteProcessing()` chains vehicle assignment, request update, and completion into a single action. Note this was **frontend bucketing logic only** — `TransportRequest`/`VisaApplication` status has always been workflow-driven with no fixed "Processing" enum value, so nothing in the backend model or the `complete`/`assign_vehicle` actions changed. Two companion fixes landed the same window: `8f15ca65` gave transport/visa admin detail actions (`complete`, `assign_vehicle`, etc. — not just `retrieve`/`approve`/`reject`) the same superuser/admin queryset bypass already used elsewhere, fixing a 404 when an admin acted on another user's request; `0b03fb63` excluded TSR-embedded transport sub-requests from the unified approvals queue (they were never independently approvable) and fixed the Transport Processing page missing `adminView: true` on its list call.
 
 **Meal Admin** (`docs/MEAL_ADMIN_MODULE_ROADMAP.md`, added 2026-08-03) follows the same
 "downstream fulfillment, not a workflow step" pattern as `book_flight` above, at an even
@@ -427,7 +456,7 @@ flowchart TD
     NS["NotificationService.create_notification<br/>notifications/services.py:24"]
     PREF{"UserNotificationPreference<br/>in_app_notifications_enabled?"}
     ROW[("UserNotification row<br/>created synchronously, in-request")]
-    THREAD["send_email_async<br/>bounded ThreadPoolExecutor (max 8 workers)<br/>+ BoundedSemaphore(200) backpressure<br/>— no Celery anywhere in this codebase"]
+    TASK["send_notification_email<br/>Celery task, queue=emails<br/>notifications/tasks.py<br/>3 retries, exponential backoff"]
     EMAIL["send_email_notification<br/>renders NotificationTemplate (markdown to HTML)<br/>Django send_mail()"]
     KILL["ApplicationSetting: enable_email_notifications<br/>global kill switch"]
     CFG["core.email_settings_loader<br/>loads SMTP config from ApplicationSetting into settings at runtime"]
@@ -436,7 +465,7 @@ flowchart TD
     CALLER --> NS --> PREF
     PREF -->|"disabled"| STOP1["no row created, returns None"]
     PREF -->|"enabled"| ROW --> API
-    NS -->|"send_email=True and allowed by prefs/subscription"| THREAD --> EMAIL
+    NS -->|"send_email=True and allowed by prefs/subscription"| TASK --> EMAIL
     EMAIL --> KILL
     CFG --> EMAIL
 ```
@@ -444,12 +473,13 @@ flowchart TD
 Key facts:
 
 - The `UserNotification` DB write is synchronous, inline in the request/response cycle.
-- Email is asynchronous, via a **bounded, in-process `ThreadPoolExecutor`** (`notifications/services.py` — `EMAIL_EXECUTOR_MAX_WORKERS = 8`, `EMAIL_QUEUE_MAX_SIZE = 200`), not a task queue — there is no Celery anywhere in this codebase, and this is a deliberate choice, not an oversight (see the "Notification concurrency" note below). Each pool thread closes its own DB connection in a `finally` block afterward, since it falls outside Django's `request_finished` signal.
-- Submission is gated by a `threading.BoundedSemaphore(200)`: if 200 email sends are already in flight or queued, a new submission is **rejected immediately** (never blocks the calling HTTP request) and the notification is marked with `email_error = 'Email queue saturated - send dropped'` instead of silently spawning another thread.
+- Email is asynchronous, dispatched via a **Celery task** (`notifications.tasks.send_notification_email`, queue `emails`, `ignore_result=True` since nothing reads its result) — see the "Email delivery: from in-process threads to Celery" note below for how this superseded the earlier thread-pool design.
 - SMTP configuration is DB-backed (`core.email_settings_loader`), not static `settings.py` — editable via admin without an app restart.
 - `WorkflowNotifications` (used throughout §7.1) is just a caller into this same `NotificationService` API — there's no separate delivery mechanism for workflow notifications specifically.
 
-**Notification concurrency (fixed 2026-07-23, see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 7):** `send_email_async` used to spawn one raw, uncapped `threading.Thread` per email. `NotificationService.notify_role`/`notify_users` loop over recipients and call this per-user — `notify_role('HOD', ...)` with N HODs fired N concurrent unbounded threads all opening SMTP connections at once, with no backpressure and no bound. Replaced with the bounded executor + semaphore described above. This is a lighter-weight fix than adopting a full task queue (Celery/RQ/Django-Q) — deliberately, since this deployment has no broker or worker-process infrastructure today (§6), and adding one is a real infrastructure investment that should be a deliberate choice, not an inferred one. If email volume grows enough that a 200-item bounded queue starts rejecting sends regularly, that's the signal to revisit and adopt a real task queue instead of raising the constants further.
+**Notification concurrency (fixed 2026-07-23, see `docs/APP_WIDE_GAPS_FIX_ROADMAP.md` Fix 7):** `send_email_async` used to spawn one raw, uncapped `threading.Thread` per email. `NotificationService.notify_role`/`notify_users` loop over recipients and call this per-user — `notify_role('HOD', ...)` with N HODs fired N concurrent unbounded threads all opening SMTP connections at once, with no backpressure and no bound. Fixed at the time with a bounded, in-process `ThreadPoolExecutor` (max 8 workers) plus a `threading.BoundedSemaphore(200)` for backpressure — a lighter-weight fix than adopting a full task queue, deliberately, since this deployment had no broker or worker-process infrastructure at the time.
+
+**Email delivery: from in-process threads to Celery (2026-08-2x):** the thread-pool/semaphore design above was later replaced by `notifications.tasks.send_notification_email`, a proper Celery task with retry/backoff (see §6 for the broader Celery adoption — bulk import, PDF export, bulk approve). The task is deliberately `ignore_result=True`: nothing in this codebase reads its result, and without that flag `apply_async()` also has to reach the Redis *result* backend to initialize state tracking — a transient Redis blip during dispatch was observed turning an otherwise-successful request (workflow started, notification created) into a failed one, purely because of result-backend bookkeeping for a fire-and-forget task. This is the reason the standalone thread-pool/semaphore design is now superseded rather than still current — treat the bounded-executor description above as historical context for *why* the concurrency problem existed, not as the current delivery mechanism.
 
 **Frontend URL trailing-slash bug (fixed 2026-07-24, see Fix 16):** `notifications.service.ts`'s `getTemplates`/`getEventTypes`/`createTemplate` built URLs without a trailing slash. Django's DRF router only matches `/api/notifications/templates/` (with slash) — the no-slash version doesn't match any `/api/*` pattern and falls through to the SPA catch-all route, silently serving the built Angular `index.html` with a `200` status. The frontend then failed to parse HTML as JSON and surfaced a generic "Failed to load" toast, which read exactly like a permission error but wasn't one — confirmed by checking `Content-Type` on the actual response, not just the status code. `workflows.service.ts` had the identical bug. Fixed by adding the trailing slash to both services' base URL constants.
 
@@ -465,7 +495,7 @@ Key facts:
 
 **Remaining Fix 18 gaps closed (2026-07-29, see Fix 19):**
 - **`workflow_completed`/`workflow_cancelled`:** created the missing `workflow_cancelled` `NotificationTemplate` (`notifications/migrations/0006_add_workflow_cancelled_template.py`), added both event types to the two default-config generators, backfilled configs for all 10 existing active steps. Both event types are now fully config-driven like every other one.
-- **`reminder`:** implemented end-to-end rather than left as a no-op. A pending step gets exactly one reminder when its `sla_due_date` is within 24 hours (or already passed) — the same threshold the frontend's `isOverdueSoon()` already uses — tracked via a new `WorkflowStepExecution.reminder_sent_at` field. New management command `send_step_reminders` (`workflows/management/commands/`) dispatches through the same `trigger_configured_notifications()` path as every other event type; no Celery/APScheduler added, matching this project's deliberate no-background-worker stance — it's registered as an hourly job in `install_cron` (§7.5's self-installing crontab), the same mechanism already used for `disable_inactive_accounts`/`cleanup_expired_data`. Fixed a latent bug found in the process: the `approval_reminder` template referenced 3 variables (`reminderType`/`statusMessage`/`reminderMessage`) that the rendering context never populates — it had never been exercised dynamically before this command started calling it.
+- **`reminder`:** implemented end-to-end rather than left as a no-op. A pending step got exactly one reminder when its `sla_due_date` was within 24 hours (or already passed) — the same threshold the frontend's `isOverdueSoon()` used — tracked via a `WorkflowStepExecution.reminder_sent_at` field. Management command `send_step_reminders` (`workflows/management/commands/`) dispatched through the same `trigger_configured_notifications()` path as every other event type, registered as an hourly cron job. **Removed entirely 2026-08-21** — see `workflows/migrations/0018_remove_sla_tracking.py` (drops `reminder_sent_at`/`sla_due_date` and related fields) and `notifications/migrations/0008_remove_approval_reminder_template.py`. `install_cron` explicitly un-installs the `send_step_reminders` crontab entry on any host that still has it from before this removal (§6). The SLA/reminder feature and its "no Celery/APScheduler added, matching this project's no-background-worker stance" rationale are both now historical — the project adopted Celery shortly after (§6) for unrelated reasons (bulk import timeouts), and the reminder feature was removed as a product decision independent of that, not superseded by it.
 - **`enhanced-workflow-config.component.ts`'s "toggle active" action** was silently wiping a workflow's notification configs on every toggle (re-PUT omitted `notification_configs`, and `WorkflowTemplateCreateSerializer.update()` deletes/recreates all steps on every update). Fixed to include it, matching how `saveWorkflow()`/`editWorkflow()` already do.
 - **`workflow-configuration.component.ts`/`workflows.service.ts`** (the second, orphaned, unrouted workflow-config screen flagged in Fix 18) — deleted entirely, after confirming with the user that the live workflow-configuration system (`enhanced-workflow-config.component.ts`, embedded in `system-settings.component.html`, routed at `/admin/settings`) is unaffected.
 
@@ -542,6 +572,9 @@ The four dead signal modules that used to exist in `trf`, `accommodation`, `tran
 | Backend | whitenoise | Static file serving |
 | Backend | psycopg2 | PostgreSQL driver |
 | Backend | python-crontab | Self-installing maintenance-job schedule (`manage.py install_cron`, §6) |
+| Backend | celery | Background task queue — email, PDF export, bulk import, bulk approve (§6) |
+| Backend | redis | Celery broker/result backend + Django cache backend (§6) |
+| Backend | django-storages[s3] + boto3 | MinIO/S3-compatible object storage for production media files (§6) |
 | Database | PostgreSQL 15 | Primary datastore |
 | DevSecOps | black + isort | Python formatting |
 | DevSecOps | flake8 | Python linting |
