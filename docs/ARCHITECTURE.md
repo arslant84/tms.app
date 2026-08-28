@@ -39,7 +39,7 @@ graph TD
     end
 
     subgraph Data["Data Layer"]
-        PG[("PostgreSQL 15<br/>Primary Database")]
+        PG[("PostgreSQL 14<br/>Primary Database")]
         BACKUP["pg_dump backups<br/>backend/backups/"]
         LOGS["SIEM Log Files<br/>backend/logs/security.json"]
         MEDIA[("MinIO / S3-compatible<br/>Object Storage — media files")]
@@ -255,6 +255,12 @@ graph TD
     PC --> LS --> CI --> SCAN
 ```
 
+**Rate limiting is Django/DRF-level, not Nginx.** Earlier drafts of §6's deployment diagram attributed "rate limiting" to the Nginx node — checked against this host's actual nginx config (no `limit_req`/`limit_conn` anywhere in `/etc/nginx`) and corrected. The real rate limiting lives in the application layer: self-registration (3/hr/IP, §7.5), MFA verify (5/min/IP, §2), and the account lockout / failed-login throttle above are all DRF throttle classes, not a reverse-proxy control.
+
+**Production middleware audit (2026-08-28):** the effective `MIDDLEWARE` list under `tms_project.settings.production` was loaded directly (not just read from source) to check for drift:
+- **`whitenoise.middleware.WhiteNoiseMiddleware` is registered twice.** `settings/base.py` already lists it (after `SecurityHeadersMiddleware`); `settings/production.py` additionally does `MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')`, so production runs it twice per request. Confirmed by instantiating `settings.MIDDLEWARE` under the production settings module — it appears at both index 1 and index 4. Not a security issue, just redundant work; the fix is deleting the `insert()` line in `production.py` since `base.py` already covers it.
+- **An undocumented, explicitly temporary middleware is active in production:** `tms_project.middleware.DebugMeEndpointMiddleware`, docstring "Temporary: log every request that reaches `/api/users/me/` with cookie info," sits at index 0 — ahead of `WhiteNoise` and `SecurityHeadersMiddleware`. It logs at `WARNING` level, on every hit to `/api/users/me/` (a high-frequency endpoint), whether the `access_token`/`refresh_token` cookies are present (booleans only — it does not log cookie values) plus host and `X-Forwarded-Proto`. Not a secrets leak, but it wasn't in the Middleware Stack list in §1's diagram, is marked for removal in its own docstring, and generates continuous log noise. Left in place pending a decision on removal; not touched by this audit.
+
 ---
 
 ## 6. Deployment Topology
@@ -262,11 +268,11 @@ graph TD
 ```mermaid
 graph LR
     subgraph Prod["Production Server"]
-        NG["Nginx (reverse proxy)<br/>TLS termination<br/>rate limiting"]
+        NG["Nginx (reverse proxy)<br/>TLS termination"]
         GN["Gunicorn WSGI<br/>Django application"]
         CW["Celery Worker(s)<br/>queues: default · emails · pdfs"]
         RD[("Redis<br/>Celery broker/result backend<br/>+ Django cache")]
-        PG2[("PostgreSQL 15")]
+        PG2[("PostgreSQL 14")]
         S3[("MinIO / S3-compatible<br/>Object Storage — media files")]
         FS["File System<br/>backend/backups/<br/>backend/logs/"]
         CRON["Task Scheduler / Cron<br/>backup_db — daily<br/>disable_inactive_accounts — weekly<br/>cleanup_expired_data — monthly<br/>check_uptime — every 5 min"]
@@ -294,6 +300,8 @@ graph LR
 The four `CRON` jobs above are real, tested Django management commands (`backend/accounts/management/commands/`, `backend/workflows/management/commands/`). `python manage.py install_cron` (added 2026-07-23, `accounts` app) installs the schedule shown here directly into the current user's crontab — idempotent (re-running updates rather than duplicates the entries, via a comment tag) and safe to re-run after re-deploying the repo. `backend/scripts/crontab.example` still documents the exact schedule as a manual fallback (`crontab backend/scripts/crontab.example`, paths adjusted) for hosts where running Django management commands directly isn't an option. Installing either still has to happen once per deployment host — a code commit can't reach into the host's crontab on its own — but the previous state (`crontab.example` was the *only* path, requiring a manual copy-paste an operator could simply forget) is closed.
 
 **`send_step_reminders` and the SLA/reminder feature it served were removed entirely (2026-08-21)** — see migration `workflows/0018_remove_sla_tracking.py` and `notifications/migrations/0008_remove_approval_reminder_template.py`. `install_cron` explicitly un-installs any stale `send_step_reminders` crontab entry left over from a pre-2026-08-21 deployment (`LEGACY_JOB_NAMES` in the command). `check_uptime` (every 5 minutes) replaced it as the 4th job — an external liveness probe added after an August 2026 outage where the app process stayed "running" while every request 500'd, with nothing polling for that distinction.
+
+**Production deployment audit (2026-08-28):** this host's crontab still had the pre-removal `@hourly send_step_reminders` entry — `install_cron`'s un-install logic only runs when the command is re-run, and it hadn't been since the 2026-08-21 removal. Every hourly run had been failing with `Unknown command: 'send_step_reminders'` (visible in `backend/logs/cron_send_step_reminders.log`) since the code was deleted. This is a per-host gap, not a bug in `install_cron` itself — re-running `python manage.py install_cron` on an already-deployed host clears it. Verified against this host's actual `crontab -l` and Postgres is **14.24** here (not 15 as stated elsewhere in earlier drafts of this doc) — corrected throughout.
 
 **Celery was introduced 2026-08-2x** to move slow, request-blocking work off the Gunicorn worker thread: bulk CSV user import (`accounts.tasks.process_bulk_user_import` — previously caused 502s on large uploads by exceeding the 30s Gunicorn timeout), notification email sending (`notifications.tasks.send_notification_email`, queue `emails`), TRF PDF export (`trf.tasks.export_trf_pdf`, queue `pdfs`, result cached in Redis for 10 minutes), and bulk approve/reject (`approvals.tasks.bulk_approve_task`). Redis (`Memurai` in the Windows dev environment) serves as both the Celery broker/result backend and the Django cache backend. **This supersedes the "no Celery anywhere in this codebase" statements elsewhere in this document (§7.3, §8) — those describe the pre-Celery design and are kept below as historical context, not current state.**
 
@@ -575,7 +583,7 @@ The four dead signal modules that used to exist in `trf`, `accommodation`, `tran
 | Backend | celery | Background task queue — email, PDF export, bulk import, bulk approve (§6) |
 | Backend | redis | Celery broker/result backend + Django cache backend (§6) |
 | Backend | django-storages[s3] + boto3 | MinIO/S3-compatible object storage for production media files (§6) |
-| Database | PostgreSQL 15 | Primary datastore |
+| Database | PostgreSQL 14 | Primary datastore |
 | DevSecOps | black + isort | Python formatting |
 | DevSecOps | flake8 | Python linting |
 | DevSecOps | bandit | Python security scan |
