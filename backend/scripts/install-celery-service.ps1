@@ -36,8 +36,7 @@ if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Adm
     exit 1
 }
 
-$repoRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$backendDir = Join-Path $repoRoot 'backend'
+$backendDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 $venvPython = Join-Path $backendDir 'venv\Scripts\python.exe'
 $serviceName = 'TMS-Celery-Worker'
 

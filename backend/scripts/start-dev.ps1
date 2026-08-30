@@ -23,8 +23,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
-$backendDir = Join-Path $repoRoot 'backend'
+$backendDir = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 $venvPython = Join-Path $backendDir 'venv\Scripts\python.exe'
 
 Write-Host "== Starting Memurai (Redis) ==" -ForegroundColor Cyan
