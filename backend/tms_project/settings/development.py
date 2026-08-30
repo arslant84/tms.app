@@ -52,6 +52,22 @@ CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] = (
 # Uncomment to print emails to console instead of sending them:
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+# Caching — Redis, same backend as production (base.py has no CACHES setting
+# at all, so without this Django silently falls back to per-process LocMemCache,
+# which the Celery worker and the Django server can't share — e.g. the async
+# TRF PDF export flow caches bytes under a task_id key from the worker process,
+# then 404s when the web server looks the same key up in its own, separate,
+# empty LocMemCache).
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
 # Disable rate limiting in development so test/form submissions are never blocked
 RATELIMIT_ENABLE = False
 
