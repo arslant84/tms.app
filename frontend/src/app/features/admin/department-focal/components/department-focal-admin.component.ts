@@ -1,31 +1,15 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
-import { TrfService } from '../../../trf-management/services/trf.service';
-
-interface ArrangementStatus {
-  flight?: string;
-  meal?: string;
-  transport?: string;
-  accommodation?: string;
-  visa?: string;
-}
-
-interface DepartmentFocalRequest {
-  id: number;
-  request_number?: string;
-  requestor_name?: string;
-  department?: string;
-  travel_type?: string;
-  status?: string;
-  created_at?: string;
-  arrangement_status?: ArrangementStatus;
-  is_fully_arranged?: boolean;
-}
+import {
+  DepartmentFocalRequest,
+  DepartmentFocalService,
+} from '../services/department-focal.service';
 
 /**
  * Read-only queue for the Department Focal role: their own department's
@@ -57,7 +41,7 @@ export class DepartmentFocalAdminComponent implements OnInit {
   loading = true;
   error = '';
 
-  private trfService = inject(TrfService);
+  private departmentFocalService = inject(DepartmentFocalService);
   private statusUtils = inject(StatusUtilsService);
   private errorHandler = inject(HttpErrorHandlerService);
   router = inject(Router);
@@ -70,20 +54,20 @@ export class DepartmentFocalAdminComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    this.trfService
-      .getDepartmentFocalQueue({
+    this.departmentFocalService
+      .getQueue({
         page: this.currentPage,
         page_size: this.pageSize,
         search: this.filterCriteria.search || undefined,
-        ready: this.filterCriteria.readyOnly ? 'true' : undefined,
+        ready: this.filterCriteria.readyOnly,
       })
       .subscribe({
         next: response => {
-          this.requests = response.results || response;
+          this.requests = response.results || [];
           this.totalRequests = response.count || this.requests.length;
           this.loading = false;
         },
-        error: err => {
+        error: (err: HttpErrorResponse) => {
           this.error = this.errorHandler.getErrorMessage(
             err,
             'Failed to load department travel arrangements'
