@@ -12,7 +12,6 @@ from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 
-from utils.request_id_generator import generate_request_id
 from utils.viewset_mixins import StandardResultsPagination
 from workflows.router import WorkflowRouter
 
@@ -305,21 +304,14 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             # Generate request number if submitting directly (not Draft)
             if not validated_data.get("request_number"):
                 try:
-                    from utils.request_id_generator import (
-                        extract_context_from_transport,
-                        generate_request_id,
+                    from transport.services import (
+                        generate_unique_transport_request_number,
                     )
 
-                    # Extract context from transport_details
-                    transport_details = validated_data.get("transport_details", [])
-                    context = (
-                        extract_context_from_transport(transport_details)
-                        if transport_details
-                        else "TRN"
+                    request_number = generate_unique_transport_request_number(
+                        transport_details=validated_data.get("transport_details", []),
+                        applicant_name=validated_data["requestor_name"],
                     )
-
-                    # Generate unique request number
-                    request_number = generate_request_id("TRN", context)
                     extra_kwargs["request_number"] = request_number
                     logger.info(
                         f" Generated request number during creation: {request_number}"
@@ -404,19 +396,15 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             # Generate request number if doesn't exist
             if not transport_request.request_number:
                 try:
-                    from utils.request_id_generator import (
-                        extract_context_from_transport,
-                        generate_request_id,
+                    from transport.services import (
+                        generate_unique_transport_request_number,
                     )
 
-                    transport_details = transport_request.transport_details or []
-                    context = (
-                        extract_context_from_transport(transport_details)
-                        if transport_details
-                        else "TRN"
-                    )
-                    transport_request.request_number = generate_request_id(
-                        "TRN", context
+                    transport_request.request_number = (
+                        generate_unique_transport_request_number(
+                            transport_details=transport_request.transport_details or [],
+                            applicant_name=transport_request.requestor_name,
+                        )
                     )
                     logger.info(
                         f" Generated request number: {transport_request.request_number}"
@@ -529,26 +517,12 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # Generate request number if it doesn't exist
         if not transport_request.request_number:
             try:
-                # Extract context from transport_details JSON (first destination)
-                from utils.request_id_generator import extract_context_from_transport
+                from transport.services import generate_unique_transport_request_number
 
-                # transport_details is a JSON array, convert to list format for extraction
-                transport_details = transport_request.transport_details or []
-
-                logger.debug(
-                    f" Transport details for TRN #{transport_request.id}: {transport_details}"
+                request_number = generate_unique_transport_request_number(
+                    transport_details=transport_request.transport_details or [],
+                    applicant_name=transport_request.requestor_name,
                 )
-
-                # Extract context (first destination from transport_details)
-                context = (
-                    extract_context_from_transport(transport_details)
-                    if transport_details
-                    else "TRN"
-                )
-                logger.debug(f" Extracted context: {context}")
-
-                # Generate unique request number
-                request_number = generate_request_id("TRN", context)
                 transport_request.request_number = request_number
                 logger.info(f" Generated request number: {request_number}")
             except Exception as e:

@@ -35,10 +35,6 @@ from accounts.models import AdminActionLog
 from accounts.utils import can_approve
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
-from utils.request_id_generator import (
-    extract_context_from_location,
-    generate_request_id,
-)
 from workflows.engine import WorkflowEngine
 from workflows.models import WorkflowInstance
 from workflows.router import WorkflowRouter
@@ -48,22 +44,38 @@ from .serializers import AccommodationRequestSerializer
 logger = logging.getLogger(__name__)
 
 
-def generate_accommodation_request_number(additional_data):
+def generate_accommodation_request_number(additional_data, applicant_name):
     """
-    Generate a request number from `additional_data.location`, resolved
-    through `extract_context_from_location`. Used by perform_create/
+    ACCOM-{Location}-{CheckInDate}-{ApplicantName}-{ApplicationDate},
+    unique. Location and check-in date both come from `additional_data`
+    (there's no dedicated model field for either). Used by perform_create/
     perform_update. Returns None (and logs) on failure, matching those
     call sites' "will be generated later if needed" behavior - the
     caller simply doesn't set request_number in that case.
     """
+    from accommodation.models import AccommodationRequest
+    from django.utils import timezone
+    from utils.request_id_generator import (
+        build_accommodation_request_id,
+        ensure_unique_request_number,
+        parse_iso_date_safe,
+    )
+
     try:
-        location = (
-            additional_data.get("location", "")
-            if isinstance(additional_data, dict)
-            else ""
+        is_dict = isinstance(additional_data, dict)
+        location = additional_data.get("location", "") if is_dict else ""
+        check_in_date = (
+            parse_iso_date_safe(additional_data.get("requested_check_in_date"))
+            if is_dict
+            else None
         )
-        context = extract_context_from_location(location) if location else "ACCOM"
-        request_number = generate_request_id("ACCOM", context)
+        candidate = build_accommodation_request_id(
+            location=location,
+            applicant_name=applicant_name,
+            check_in_date=check_in_date,
+            application_date=timezone.now(),
+        )
+        request_number = ensure_unique_request_number(AccommodationRequest, candidate)
         logger.info(f" Generated request number: {request_number}")
         return request_number
     except Exception as e:
@@ -73,27 +85,36 @@ def generate_accommodation_request_number(additional_data):
 
 def generate_accommodation_request_number_with_fallback(accommodation_request):
     """
-    Generate a request number for the `submit` action, using the raw
-    `additional_data.location` string as context (not resolved through
-    `extract_context_from_location`, unlike
-    `generate_accommodation_request_number` above - this is a real
-    pre-existing difference between the two call sites, preserved as-is).
-    Always returns a string: falls back to a simple timestamp-based
-    format on any failure, rather than leaving request_number unset.
+    Generate a request number for the `submit` action. Always returns a
+    string: falls back to a simple timestamp-based format on any failure,
+    rather than leaving request_number unset.
     """
+    from accommodation.models import AccommodationRequest
+    from django.utils import timezone
+    from utils.request_id_generator import (
+        build_accommodation_request_id,
+        ensure_unique_request_number,
+        parse_iso_date_safe,
+    )
+
     try:
-        context = "ACCOM"
+        location = ""
+        check_in_date = None
         if accommodation_request.additional_data and isinstance(
             accommodation_request.additional_data, dict
         ):
             location = accommodation_request.additional_data.get("location", "")
-            if location:
-                context = location
+            check_in_date = parse_iso_date_safe(
+                accommodation_request.additional_data.get("requested_check_in_date")
+            )
 
-        logger.debug(
-            f" Extracted context for Accommodation Request #{accommodation_request.id}: {context}"
+        candidate = build_accommodation_request_id(
+            location=location,
+            applicant_name=accommodation_request.requestor_name,
+            check_in_date=check_in_date,
+            application_date=timezone.now(),
         )
-        request_number = generate_request_id("ACCOM", context)
+        request_number = ensure_unique_request_number(AccommodationRequest, candidate)
         logger.info(f" Generated request number: {request_number}")
         return request_number
     except Exception as e:

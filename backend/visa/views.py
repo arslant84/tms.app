@@ -14,7 +14,6 @@ from datetime import datetime
 from accounts.models import AdminActionLog
 from accounts.utils import can_approve, can_view_all, has_permission
 from utils import error_response, not_found_response, success_response
-from utils.request_id_generator import generate_request_id
 from workflows.router import WorkflowRouter
 
 from .models import VisaApplication, VisaApprovalStep, VisaDocument
@@ -280,16 +279,13 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         # Generate request number if submitting (not Draft)
         if status_value not in ["Draft"]:
             try:
-                # Extract context from destination field
-                destination = serializer.validated_data.get("destination", "")
-                context = (
-                    destination if destination else "VIS"
-                )  # Let generate_request_id handle validation
+                from visa.services import generate_unique_visa_request_number
 
-                logger.debug(f" Extracted context for Visa Application: {context}")
-
-                # Generate unique request number (will auto-validate and limit context to 5 chars)
-                request_number = generate_request_id("VIS", context)
+                request_number = generate_unique_visa_request_number(
+                    destination=serializer.validated_data.get("destination", ""),
+                    trip_start_date=serializer.validated_data.get("trip_start_date"),
+                    applicant_name=serializer.validated_data.get("requestor_name", ""),
+                )
                 extra_kwargs["request_number"] = request_number
                 logger.info(f" Generated request number: {request_number}")
             except Exception as e:
@@ -709,8 +705,13 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         # Generate request number if it doesn't exist
         if not visa.request_number:
             try:
-                destination = visa.destination or "VIS"
-                request_number = generate_request_id("VIS", destination)
+                from visa.services import generate_unique_visa_request_number
+
+                request_number = generate_unique_visa_request_number(
+                    destination=visa.destination,
+                    trip_start_date=visa.trip_start_date,
+                    applicant_name=visa.requestor_name,
+                )
                 visa.request_number = request_number
                 logger.info(f" Generated request number: {request_number}")
             except Exception as e:
@@ -865,20 +866,17 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             and not instance.request_number
         ):
             try:
-                # Extract context from destination field
-                destination = serializer.validated_data.get(
-                    "destination", instance.destination
-                )
-                context = (
-                    destination if destination else "VIS"
-                )  # Let generate_request_id handle validation
+                from visa.services import generate_unique_visa_request_number
 
-                logger.debug(
-                    f" Extracted context for Visa Application #{instance.id}: {context}"
+                request_number = generate_unique_visa_request_number(
+                    destination=serializer.validated_data.get(
+                        "destination", instance.destination
+                    ),
+                    trip_start_date=serializer.validated_data.get(
+                        "trip_start_date", instance.trip_start_date
+                    ),
+                    applicant_name=instance.requestor_name,
                 )
-
-                # Generate unique request number (will auto-validate and limit context to 5 chars)
-                request_number = generate_request_id("VIS", context)
                 extra_kwargs["request_number"] = request_number
                 logger.info(f" Generated request number: {request_number}")
             except Exception as e:

@@ -25,10 +25,6 @@ from utils.api_response import (
     validation_error_response,
 )
 from utils.constants import BOOKABLE_STATUSES
-from utils.request_id_generator import (
-    extract_context_from_itinerary,
-    generate_request_id,
-)
 from workflows.router import WorkflowRouter
 
 from .models import (
@@ -529,27 +525,9 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         # Generate request number if it doesn't exist
         if not trf.request_number:
             try:
-                # Get itinerary segments to extract context
-                itinerary_segments = list(
-                    trf.trfitinerarysegment_set.all().values(
-                        "to_location", "from_location", "departure_time", "arrival_time"
-                    )
-                )
+                from trf.services import generate_unique_tsr_request_number
 
-                logger.debug(
-                    f" Itinerary segments for TRF #{trf.id}: {itinerary_segments}"
-                )
-
-                # Extract context from itinerary (first destination)
-                context = (
-                    extract_context_from_itinerary(itinerary_segments)
-                    if itinerary_segments
-                    else "TRF"
-                )
-                logger.debug(f" Extracted context: {context}")
-
-                # Generate unique request number
-                request_number = generate_request_id("TSR", context)
+                request_number = generate_unique_tsr_request_number(trf)
                 trf.request_number = request_number
                 logger.info(f" Generated request number: {request_number}")
             except Exception as e:
