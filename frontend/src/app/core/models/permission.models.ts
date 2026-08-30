@@ -29,6 +29,8 @@ export enum Permission {
   PROCESS_MEAL = 'process_meal',
   MANAGE_MEAL = 'manage_meal',
 
+  VIEW_ADMIN_DEPARTMENT_FOCAL = 'view_admin_department_focal',
+
   // ============================================================================
   // REQUEST CREATION
   // ============================================================================
@@ -149,6 +151,8 @@ export const PERMISSION_CATEGORIES: Record<Permission, PermissionCategory> = {
   [Permission.PROCESS_MEAL]: PermissionCategory.MODULE_ACCESS,
   [Permission.MANAGE_MEAL]: PermissionCategory.MODULE_ACCESS,
 
+  [Permission.VIEW_ADMIN_DEPARTMENT_FOCAL]: PermissionCategory.MODULE_ACCESS,
+
   // Reporting
   [Permission.VIEW_ALL_TRF]: PermissionCategory.REPORTING,
   [Permission.VIEW_ALL_TRANSPORT]: PermissionCategory.REPORTING,
@@ -237,6 +241,7 @@ export const PermissionGroups = {
     Permission.VIEW_ADMIN_VISA,
     Permission.VIEW_ADMIN_FLIGHTS,
     Permission.VIEW_ADMIN_MEAL,
+    Permission.VIEW_ADMIN_DEPARTMENT_FOCAL,
   ],
 
   /**

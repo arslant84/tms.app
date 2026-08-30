@@ -80,6 +80,19 @@
       <span class="nav-label">Meal Admin</span>
     </a>
 
+    <!-- Department Focal -->
+    <a
+      *ngIf="hasDepartmentFocalPermission"
+      routerLink="/admin/department-focal"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: false }"
+      class="nav-item"
+      [attr.title]="'Department Focal'"
+    >
+      <i class="bi bi-building-check"></i>
+      <span class="nav-label">Department Focal</span>
+    </a>
+
     <!-- Approvals Queue -->
     <a
       *ngIf="hasApprovalPermissions"

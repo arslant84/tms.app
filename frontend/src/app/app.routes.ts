@@ -16,6 +16,7 @@ import { AccommodationProcessingComponent } from './features/admin/accommodation
 import { VisaAdminComponent } from './features/admin/visa/components/visa-admin.component';
 import { VisaProcessingComponent } from './features/admin/visa/components/visa-processing.component';
 import { MealAdminComponent } from './features/admin/meal/components/meal-admin.component';
+import { DepartmentFocalAdminComponent } from './features/admin/department-focal/components/department-focal-admin.component';
 import { SystemSettingsComponent } from './features/admin/settings/system-settings.component';
 import { TmsApp_Admin_SystemSettings_NotificationTemplatesComponent } from './features/admin/settings/notification-templates/notification-templates.component';
 
@@ -136,6 +137,12 @@ export const routes: Routes = [
             children: [{ path: '', component: MealAdminComponent }],
           },
           {
+            path: 'department-focal',
+            canActivate: [AdminMenuGuard],
+            data: { adminModule: 'department-focal' },
+            children: [{ path: '', component: DepartmentFocalAdminComponent }],
+          },
+          {
             path: 'settings',
             component: SystemSettingsComponent,
             canActivate: [PermissionGuard],
@@ -158,6 +165,7 @@ export const routes: Routes = [
             Permission.VIEW_ADMIN_VISA,
             Permission.VIEW_ADMIN_TRANSPORT,
             Permission.VIEW_ADMIN_MEAL,
+            Permission.VIEW_ADMIN_DEPARTMENT_FOCAL,
             Permission.MANAGE_USERS,
             Permission.GENERATE_ADMIN_REPORTS,
             Permission.EXPORT_DATA,

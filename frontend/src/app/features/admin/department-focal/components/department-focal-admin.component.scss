@@ -1,0 +1,270 @@
+// Using Unified Design System
+@use 'sass:color';
+@use '../../../../../styles/variables' as vars;
+
+// =========== CONTAINER ==========
+.department-focal-admin-page {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: vars.$spacing-8;
+  box-sizing: border-box;
+  background-color: vars.$gray-100;
+  min-height: calc(100vh - 100px);
+}
+
+// ========== PAGE HEADER ==========
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: vars.$spacing-8;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  @media (width <= 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-content {
+    .page-title {
+      font-size: vars.$font-size-3xl;
+      font-weight: vars.$font-weight-bold;
+      color: vars.$gray-800;
+      letter-spacing: -0.025em;
+      margin: 0 0 vars.$spacing-2;
+      display: flex;
+      align-items: center;
+
+      i {
+        color: vars.$primary-color;
+      }
+    }
+
+    .page-subtitle {
+      color: vars.$gray-500;
+      font-size: vars.$font-size-sm;
+      margin: 0;
+    }
+  }
+}
+
+// ========== CARD ==========
+.card {
+  background: vars.$white;
+  border: 1px solid vars.$gray-200;
+  border-radius: vars.$radius-lg;
+  box-shadow: vars.$shadow-base;
+  overflow: hidden;
+
+  .card-header {
+    padding: vars.$spacing-6;
+    border-bottom: 1px solid vars.$gray-200;
+    background-color: vars.$white;
+
+    .card-header-content {
+      .card-title-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: vars.$spacing-1;
+
+        .card-title {
+          font-size: vars.$font-size-md;
+          font-weight: vars.$font-weight-semibold;
+          color: vars.$gray-800;
+          margin: 0;
+        }
+
+        i {
+          color: vars.$gray-500;
+          font-size: vars.$font-size-md;
+        }
+      }
+
+      .card-description {
+        font-size: vars.$font-size-sm;
+        color: vars.$gray-500;
+        margin: 0;
+      }
+    }
+  }
+
+  .card-body {
+    padding: vars.$spacing-6;
+    background-color: vars.$white;
+  }
+}
+
+// ========== TABLES ==========
+.table-responsive {
+  .table {
+    margin: 0;
+    width: 100%;
+    border-collapse: collapse;
+
+    thead th {
+      padding: vars.$spacing-3 vars.$spacing-4;
+    }
+
+    tbody {
+      tr {
+        border-bottom: 1px solid vars.$gray-200;
+        transition: background-color 0.15s ease;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background-color: vars.$gray-50;
+        }
+
+        td {
+          padding: vars.$spacing-4;
+          font-size: vars.$font-size-sm;
+          color: vars.$gray-700;
+          border: none;
+          vertical-align: middle;
+        }
+
+        a.fw-medium {
+          font-family: vars.$font-mono;
+          font-weight: vars.$font-weight-semibold;
+          color: vars.$primary-color;
+          cursor: pointer;
+
+          &:hover {
+            color: color.adjust(vars.$primary-color, $lightness: -10%);
+          }
+        }
+      }
+    }
+  }
+}
+
+// ========== BADGES ==========
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: vars.$spacing-1 0.625rem;
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-medium;
+  border-radius: vars.$radius-md;
+  white-space: nowrap;
+
+  i {
+    font-size: vars.$font-size-xs;
+  }
+}
+
+// Status badge colors come from the global "Unified Badge Styles" in
+// styles.scss - no local overrides here so this matches every other
+// admin/list/detail screen.
+
+// Action buttons: see global .action-buttons/.btn-icon in buttons.scss
+
+// ========== LOADING STATE ==========
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: vars.$spacing-12 vars.$spacing-4;
+  text-align: center;
+
+  p {
+    color: vars.$gray-500;
+    margin: 0;
+  }
+}
+
+// ========== EMPTY STATE ==========
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: vars.$spacing-12 vars.$spacing-4;
+  text-align: center;
+
+  i {
+    font-size: 3rem;
+    color: vars.$gray-500;
+    margin-bottom: vars.$spacing-4;
+  }
+
+  p {
+    color: vars.$gray-500;
+    margin: 0;
+  }
+}
+
+// ========== PAGINATION ==========
+.pagination-container {
+  padding: vars.$spacing-6;
+  border-top: 1px solid vars.$gray-200;
+
+  .pagination {
+    margin-bottom: 0;
+
+    .page-item {
+      .page-link {
+        color: vars.$primary-color;
+        border-color: vars.$gray-200;
+        padding: vars.$spacing-2 vars.$spacing-3;
+        font-size: vars.$font-size-sm;
+        cursor: pointer;
+
+        &:hover {
+          background-color: vars.$primary-lightest;
+          border-color: vars.$primary-color;
+        }
+      }
+
+      &.active .page-link {
+        background-color: vars.$primary-color;
+        border-color: vars.$primary-color;
+        color: vars.$white;
+
+        &:hover {
+          background-color: vars.$primary-hover;
+          border-color: vars.$primary-hover;
+        }
+      }
+
+      &.disabled .page-link {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+    }
+  }
+
+  .pagination-info {
+    color: vars.$gray-500;
+    font-size: vars.$font-size-sm;
+  }
+}
+
+// ========== RESPONSIVE ==========
+@media (width <= 768px) {
+  .department-focal-admin-page {
+    padding: vars.$spacing-4;
+  }
+
+  .page-header {
+    .header-content .page-title {
+      font-size: vars.$font-size-xl;
+    }
+  }
+
+  .table-responsive {
+    font-size: 0.8rem;
+
+    .btn-icon {
+      margin: 0.125rem;
+    }
+  }
+}

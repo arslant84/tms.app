@@ -679,6 +679,12 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             logger.warning(f" Error updating workflow instance: {str(e)}")
             # Don't fail the completion if workflow update fails
 
+        from trf.services import find_trf_for_visa, notify_department_focal_if_ready
+
+        linked_trf = find_trf_for_visa(visa)
+        if linked_trf:
+            notify_department_focal_if_ready(linked_trf)
+
         serializer = VisaApplicationDetailSerializer(visa)
         return Response(serializer.data)
 

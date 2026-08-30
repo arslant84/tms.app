@@ -1022,6 +1022,11 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 transport_request.id,
             )
 
+        if transport_request.trf:
+            from trf.services import notify_department_focal_if_ready
+
+            notify_department_focal_if_ready(transport_request.trf)
+
         serializer = TransportRequestDetailSerializer(transport_request)
         return Response(serializer.data)
 

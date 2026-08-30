@@ -59,6 +59,14 @@ class TravelRequest(models.Model):
         help_text="Requestor acknowledged the advance amount refund/deduction Terms and Conditions (Overseas/Home Leave only).",
     )
     advance_consent_accepted_at = models.DateTimeField(blank=True, null=True)
+    department_focal_notified = models.BooleanField(
+        default=False,
+        help_text=(
+            "Whether the Department Focal has already been notified that this "
+            "request's travel arrangements are fully complete — prevents "
+            "re-notifying on every subsequent save once notified."
+        ),
+    )
 
     # ForeignKey to User who created the request
     created_by = models.ForeignKey(
@@ -98,6 +106,17 @@ class TravelRequest(models.Model):
         existing shared one.
         """
         return self.WORKFLOW_ENTITY_TYPE_MAP.get(self.travel_type, "travelrequest")
+
+    @property
+    def is_fully_arranged(self) -> bool:
+        """
+        True once every downstream arrangement this specific request actually
+        needed (flight/meal/transport/accommodation) is complete. See
+        trf.services.check_is_fully_arranged for the per-module rules.
+        """
+        from trf.services import check_is_fully_arranged
+
+        return check_is_fully_arranged(self)
 
 
 class TrfAdvanceAmountRequestedItem(models.Model):
