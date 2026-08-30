@@ -14,6 +14,46 @@ import logging
 logger = logging.getLogger("trf")
 
 
+def generate_unique_tsr_request_number(trf) -> str:
+    """
+    TSR-{TypeCode}-{FlightDate}-{ApplicantName}-{ApplicationDate}, unique
+    per accounts. FlightDate is the earliest itinerary segment's date (a
+    TRF may span several legs, e.g. an onward + return flight - the first
+    one is what's meaningful for "when does this trip start" searches).
+    ApplicantName is external_full_name for External Parties travel (that
+    travel_type has no employee requestor_name), requestor_name otherwise.
+    """
+    from django.utils import timezone
+    from trf.models import TrfItinerarySegment
+    from utils.request_id_generator import (
+        build_tsr_request_id,
+        ensure_unique_request_number,
+    )
+
+    first_segment = (
+        TrfItinerarySegment.objects.filter(trf=trf, segment_date__isnull=False)
+        .order_by("segment_date")
+        .first()
+    )
+    flight_date = first_segment.segment_date if first_segment else None
+
+    applicant_name = (
+        trf.external_full_name
+        if trf.travel_type == "External Parties"
+        else trf.requestor_name
+    )
+
+    candidate = build_tsr_request_id(
+        travel_type=trf.travel_type,
+        flight_date=flight_date,
+        applicant_name=applicant_name,
+        application_date=timezone.now(),
+    )
+    from trf.models import TravelRequest
+
+    return ensure_unique_request_number(TravelRequest, candidate)
+
+
 def find_trf_for_visa(visa):
     """
     Reverse of get_linked_visa_applications: given a VisaApplication, find

@@ -302,7 +302,8 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             # Generate request number if submitting directly (not Draft)
             if not serializer.validated_data.get("request_number"):
                 request_number = generate_accommodation_request_number(
-                    serializer.validated_data.get("additional_data", {})
+                    serializer.validated_data.get("additional_data", {}),
+                    serializer.validated_data.get("requestor_name", ""),
                 )
                 if request_number:
                     extra_kwargs["request_number"] = request_number
@@ -330,7 +331,10 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             accommodation_request = self.get_object()
             if not accommodation_request.request_number:
                 request_number = generate_accommodation_request_number(
-                    serializer.validated_data.get("additional_data", {})
+                    serializer.validated_data.get("additional_data", {}),
+                    serializer.validated_data.get(
+                        "requestor_name", accommodation_request.requestor_name
+                    ),
                 )
                 if request_number:
                     extra_kwargs["request_number"] = request_number
