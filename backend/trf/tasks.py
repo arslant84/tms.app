@@ -41,7 +41,7 @@ def export_trf_pdf(self, trf_id):
     try:
         pdf_bytes = _build_pdf_bytes(trf)
     except Exception as exc:
-        countdown = 30 * (2 ** self.request.retries)
+        countdown = 30 * (2**self.request.retries)
         logger.warning(
             "export_trf_pdf: PDF generation failed for TRF %s (attempt %d), "
             "retrying in %ds: %s",
@@ -69,7 +69,6 @@ def _build_pdf_bytes(trf):
     """
     from reportlab.lib.units import inch
     from reportlab.platypus import Paragraph, Spacer
-
     from trf.models import (
         TrfAdvanceAmountRequestedItem,
         TrfAdvanceBankDetail,
@@ -147,45 +146,66 @@ def _build_pdf_bytes(trf):
     elements.append(pdf_export.make_table(travel_data, [2 * inch, 5 * inch]))
 
     # Itinerary
-    itinerary_segments = TrfItinerarySegment.objects.filter(trf=trf).order_by("segment_date")
+    itinerary_segments = TrfItinerarySegment.objects.filter(trf=trf).order_by(
+        "segment_date"
+    )
     if itinerary_segments.exists():
         elements.extend(pdf_export.section_heading("Itinerary", styles))
         itinerary_data = [["Date", "From", "To", "Departure", "Arrival", "Remarks"]]
         for seg in itinerary_segments:
-            itinerary_data.append([
-                seg.segment_date.strftime("%Y-%m-%d") if seg.segment_date else "-",
-                seg.from_location or "-",
-                seg.to_location or "-",
-                seg.departure_time or "-",
-                seg.arrival_time or "-",
-                (seg.remarks or "-")[:30],
-            ])
-        elements.append(pdf_export.make_table(
-            itinerary_data,
-            [1 * inch, 1.2 * inch, 1.2 * inch, 0.9 * inch, 0.9 * inch, 1.8 * inch],
-        ))
+            itinerary_data.append(
+                [
+                    seg.segment_date.strftime("%Y-%m-%d") if seg.segment_date else "-",
+                    seg.from_location or "-",
+                    seg.to_location or "-",
+                    seg.departure_time or "-",
+                    seg.arrival_time or "-",
+                    (seg.remarks or "-")[:30],
+                ]
+            )
+        elements.append(
+            pdf_export.make_table(
+                itinerary_data,
+                [1 * inch, 1.2 * inch, 1.2 * inch, 0.9 * inch, 0.9 * inch, 1.8 * inch],
+            )
+        )
 
     # Meal Provision
-    meal_selections = TrfDailyMealSelection.objects.filter(trf=trf).order_by("meal_date")
+    meal_selections = TrfDailyMealSelection.objects.filter(trf=trf).order_by(
+        "meal_date"
+    )
     if meal_selections.exists():
         elements.extend(pdf_export.section_heading("Meal Provision", styles))
         meal_status = (trf.meal_processing_status or "Pending").title()
-        elements.append(Paragraph(f"<b>Processing Status:</b> {meal_status}", normal_style))
+        elements.append(
+            Paragraph(f"<b>Processing Status:</b> {meal_status}", normal_style)
+        )
         elements.append(Spacer(1, 6))
         meal_data = [["Date", "Breakfast", "Lunch", "Dinner", "Supper", "Refreshment"]]
         for meal in meal_selections:
-            meal_data.append([
-                meal.meal_date.strftime("%Y-%m-%d") if meal.meal_date else "-",
-                "Yes" if meal.breakfast else "-",
-                "Yes" if meal.lunch else "-",
-                "Yes" if meal.dinner else "-",
-                "Yes" if meal.supper else "-",
-                "Yes" if meal.refreshment else "-",
-            ])
-        elements.append(pdf_export.make_table(
-            meal_data,
-            [1.2 * inch, 1.1 * inch, 1.1 * inch, 1.1 * inch, 1.1 * inch, 1.4 * inch],
-        ))
+            meal_data.append(
+                [
+                    meal.meal_date.strftime("%Y-%m-%d") if meal.meal_date else "-",
+                    "Yes" if meal.breakfast else "-",
+                    "Yes" if meal.lunch else "-",
+                    "Yes" if meal.dinner else "-",
+                    "Yes" if meal.supper else "-",
+                    "Yes" if meal.refreshment else "-",
+                ]
+            )
+        elements.append(
+            pdf_export.make_table(
+                meal_data,
+                [
+                    1.2 * inch,
+                    1.1 * inch,
+                    1.1 * inch,
+                    1.1 * inch,
+                    1.1 * inch,
+                    1.4 * inch,
+                ],
+            )
+        )
 
     # Embedded Accommodation
     from accommodation.models import AccommodationBooking, AccommodationRequest
@@ -216,27 +236,33 @@ def _build_pdf_bytes(trf):
     if transport_requests.exists():
         elements.extend(pdf_export.section_heading("Transport", styles))
         for transport_req in transport_requests:
-            elements.append(Paragraph(
-                f"<b>Request Number:</b> {transport_req.request_number or '-'} "
-                f"&nbsp;&nbsp; <b>Status:</b> {transport_req.status or '-'}",
-                normal_style,
-            ))
+            elements.append(
+                Paragraph(
+                    f"<b>Request Number:</b> {transport_req.request_number or '-'} "
+                    f"&nbsp;&nbsp; <b>Status:</b> {transport_req.status or '-'}",
+                    normal_style,
+                )
+            )
             elements.append(Spacer(1, 6))
             journeys = transport_req.transport_details or []
             if journeys:
                 journey_data = [["Date", "From", "To", "Departure", "Passengers"]]
                 for journey in journeys:
-                    journey_data.append([
-                        journey.get("date", "-"),
-                        journey.get("from", "-"),
-                        journey.get("to", "-"),
-                        journey.get("departureTime", "-"),
-                        str(journey.get("numberOfPassengers", "-")),
-                    ])
-                elements.append(pdf_export.make_table(
-                    journey_data,
-                    [1.2 * inch, 1.5 * inch, 1.5 * inch, 1.2 * inch, 1.1 * inch],
-                ))
+                    journey_data.append(
+                        [
+                            journey.get("date", "-"),
+                            journey.get("from", "-"),
+                            journey.get("to", "-"),
+                            journey.get("departureTime", "-"),
+                            str(journey.get("numberOfPassengers", "-")),
+                        ]
+                    )
+                elements.append(
+                    pdf_export.make_table(
+                        journey_data,
+                        [1.2 * inch, 1.5 * inch, 1.5 * inch, 1.2 * inch, 1.1 * inch],
+                    )
+                )
 
     # Bank Details
     try:
@@ -254,30 +280,103 @@ def _build_pdf_bytes(trf):
         pass
 
     # Advance Amount Requested
-    advance_items = TrfAdvanceAmountRequestedItem.objects.filter(trf=trf).order_by("date_from")
+    advance_items = TrfAdvanceAmountRequestedItem.objects.filter(trf=trf).order_by(
+        "date_from"
+    )
     if advance_items.exists():
         elements.extend(pdf_export.section_heading("Advance Amount Requested", styles))
         advance_data = [["From", "To", "LH", "MA", "OA", "TR", "OE", "USD", "Remarks"]]
         total_usd = 0
+        period_from = None
+        period_to = None
         for item in advance_items:
             total_usd += item.usd or 0
-            advance_data.append([
-                item.date_from.strftime("%Y-%m-%d") if item.date_from else "-",
-                item.date_to.strftime("%Y-%m-%d") if item.date_to else "-",
-                f"{item.lh:,.2f}",
-                f"{item.ma:,.2f}",
-                f"{item.oa:,.2f}",
-                f"{item.tr:,.2f}",
-                f"{item.oe:,.2f}",
-                f"{item.usd:,.2f}",
-                (item.remarks or "-")[:30],
-            ])
+            if item.date_from and (period_from is None or item.date_from < period_from):
+                period_from = item.date_from
+            if item.date_to and (period_to is None or item.date_to > period_to):
+                period_to = item.date_to
+            advance_data.append(
+                [
+                    item.date_from.strftime("%Y-%m-%d") if item.date_from else "-",
+                    item.date_to.strftime("%Y-%m-%d") if item.date_to else "-",
+                    f"{item.lh:,.2f}",
+                    f"{item.ma:,.2f}",
+                    f"{item.oa:,.2f}",
+                    f"{item.tr:,.2f}",
+                    f"{item.oe:,.2f}",
+                    f"{item.usd:,.2f}",
+                    (item.remarks or "-")[:30],
+                ]
+            )
         advance_data.append(["", "", "", "", "", "", "Total:", f"{total_usd:,.2f}", ""])
-        elements.append(pdf_export.make_table(
-            advance_data,
-            [0.8*inch, 0.8*inch, 0.6*inch, 0.6*inch, 0.6*inch,
-             0.6*inch, 0.6*inch, 0.7*inch, 1.7*inch],
-        ))
+        elements.append(
+            pdf_export.make_table(
+                advance_data,
+                [
+                    0.8 * inch,
+                    0.8 * inch,
+                    0.6 * inch,
+                    0.6 * inch,
+                    0.6 * inch,
+                    0.6 * inch,
+                    0.6 * inch,
+                    0.7 * inch,
+                    1.7 * inch,
+                ],
+            )
+        )
+
+        # Advance T&C acknowledgement — the actual text the requestor agreed to
+        # (previously only a bare "Yes/No" summary row appeared in the PDF at
+        # all, in the Travel Details table above; this is the real wording
+        # from advance-amount-editor.component.html, with the same values
+        # substituted in, mirrored here so the PDF matches what was shown
+        # on-screen at submission time).
+        if (
+            trf.travel_type in ("Overseas", "Home Leave")
+            and trf.advance_consent_accepted
+        ):
+            elements.append(Spacer(1, 10))
+            elements.extend(
+                pdf_export.section_heading(
+                    "Advance Terms & Conditions Acknowledgement", styles
+                )
+            )
+            period_from_str = period_from.strftime("%Y-%m-%d") if period_from else "-"
+            period_to_str = period_to.strftime("%Y-%m-%d") if period_to else "-"
+            elements.append(
+                Paragraph(
+                    f"I, {trf.requestor_name or '-'}, hereby acknowledge the above Terms and "
+                    f"Conditions and express my willingness that should there be any excess from "
+                    f"actual expenditure as per approved Staff Expense Claim Form vs the advance "
+                    f"of USD {total_usd:,.2f} (advance amount) or in case of non utilization of "
+                    f"the advance amount which I received for my official travel or purpose from "
+                    f"{period_from_str} to {period_to_str}, the excess or unutilized advanced "
+                    f"amount shall be refunded to PETRONAS Carigali (Turkmenistan) Sdn Bhd "
+                    f'("PC(T)SB/Company") by way of deduction from my salary. I also agree that '
+                    f"the deduction of the excess advance or unutilized advance amount may be "
+                    f"made either in full or in part at PC(T)SB's discretion.",
+                    normal_style,
+                )
+            )
+            elements.append(Spacer(1, 6))
+            elements.append(
+                Paragraph(
+                    "I also agree that PC(T)SB reserves the right to instruct me to refund in "
+                    "cash the excess advance or unutilized advance amount either in full or in "
+                    "part.",
+                    normal_style,
+                )
+            )
+            elements.append(Spacer(1, 6))
+            accepted_at = (
+                trf.advance_consent_accepted_at.strftime("%Y-%m-%d %H:%M")
+                if trf.advance_consent_accepted_at
+                else "-"
+            )
+            elements.append(
+                Paragraph(f"<b>Accepted:</b> Yes ({accepted_at})", normal_style)
+            )
 
     # Flight Booking Details
     flight_bookings = trf.flight_bookings.all().order_by("departure_time")
@@ -291,30 +390,68 @@ def _build_pdf_bytes(trf):
                 ["Status", booking.status or "-"],
             ]
             elements.append(pdf_export.make_table(summary_data, [2 * inch, 5 * inch]))
-            segment_data = [["Leg", "Flight No.", "Departure", "Arrival", "Departure Time", "Arrival Time"]]
+            segment_data = [
+                [
+                    "Leg",
+                    "Flight No.",
+                    "Departure",
+                    "Arrival",
+                    "Departure Time",
+                    "Arrival Time",
+                ]
+            ]
             for seg in booking.segments.all():
                 label = f"{seg.get_direction_display()} {seg.sequence}"
-                segment_data.append([
-                    label,
-                    seg.flight_number or "-",
-                    seg.departure_airport or "-",
-                    seg.arrival_airport or "-",
-                    seg.departure_time.strftime("%Y-%m-%d %H:%M") if seg.departure_time else "-",
-                    seg.arrival_time.strftime("%Y-%m-%d %H:%M") if seg.arrival_time else "-",
-                ])
+                segment_data.append(
+                    [
+                        label,
+                        seg.flight_number or "-",
+                        seg.departure_airport or "-",
+                        seg.arrival_airport or "-",
+                        (
+                            seg.departure_time.strftime("%Y-%m-%d %H:%M")
+                            if seg.departure_time
+                            else "-"
+                        ),
+                        (
+                            seg.arrival_time.strftime("%Y-%m-%d %H:%M")
+                            if seg.arrival_time
+                            else "-"
+                        ),
+                    ]
+                )
             if len(segment_data) == 1:
-                segment_data.append([
-                    "Outbound 1",
-                    booking.flight_number or "-",
-                    booking.departure_airport or "-",
-                    booking.arrival_airport or "-",
-                    booking.departure_time.strftime("%Y-%m-%d %H:%M") if booking.departure_time else "-",
-                    booking.arrival_time.strftime("%Y-%m-%d %H:%M") if booking.arrival_time else "-",
-                ])
-            elements.append(pdf_export.make_table(
-                segment_data,
-                [0.9*inch, 0.9*inch, 1.4*inch, 1.4*inch, 1.4*inch, 1.4*inch],
-            ))
+                segment_data.append(
+                    [
+                        "Outbound 1",
+                        booking.flight_number or "-",
+                        booking.departure_airport or "-",
+                        booking.arrival_airport or "-",
+                        (
+                            booking.departure_time.strftime("%Y-%m-%d %H:%M")
+                            if booking.departure_time
+                            else "-"
+                        ),
+                        (
+                            booking.arrival_time.strftime("%Y-%m-%d %H:%M")
+                            if booking.arrival_time
+                            else "-"
+                        ),
+                    ]
+                )
+            elements.append(
+                pdf_export.make_table(
+                    segment_data,
+                    [
+                        0.9 * inch,
+                        0.9 * inch,
+                        1.4 * inch,
+                        1.4 * inch,
+                        1.4 * inch,
+                        1.4 * inch,
+                    ],
+                )
+            )
 
     # Approval History — prefer modern WorkflowEngine steps, fall back to legacy
     approval_steps = TrfApprovalStep.objects.filter(trf=trf).order_by("created_at")
@@ -322,15 +459,23 @@ def _build_pdf_bytes(trf):
         elements.extend(pdf_export.section_heading("Approval History", styles))
         approval_data = [["Role", "Status", "Date", "Comments"]]
         for step in approval_steps:
-            approval_data.append([
-                step.step_role or "-",
-                step.status or "-",
-                step.step_date.strftime("%Y-%m-%d %H:%M") if step.step_date else "-",
-                (step.comments or "-")[:50],
-            ])
-        elements.append(pdf_export.make_table(
-            approval_data, [1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch]
-        ))
+            approval_data.append(
+                [
+                    step.step_role or "-",
+                    step.status or "-",
+                    (
+                        step.step_date.strftime("%Y-%m-%d %H:%M")
+                        if step.step_date
+                        else "-"
+                    ),
+                    (step.comments or "-")[:50],
+                ]
+            )
+        elements.append(
+            pdf_export.make_table(
+                approval_data, [1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch]
+            )
+        )
     else:
         from django.contrib.contenttypes.models import ContentType
         from workflows.models import WorkflowInstance
@@ -349,16 +494,24 @@ def _build_pdf_bytes(trf):
                 elements.extend(pdf_export.section_heading("Approval History", styles))
                 approval_data = [["Role", "Status", "Date", "Comments"]]
                 for execution in step_executions:
-                    approval_data.append([
-                        (execution.workflow_step.step_name or "-")[:22],
-                        execution.status or "-",
-                        execution.action_date.strftime("%Y-%m-%d %H:%M") if execution.action_date else "-",
-                        (execution.comments or "-")[:40],
-                    ])
-                elements.append(pdf_export.make_table(
-                    approval_data,
-                    [2 * inch, 1 * inch, 1.5 * inch, 2.7 * inch],
-                ))
+                    approval_data.append(
+                        [
+                            (execution.workflow_step.step_name or "-")[:22],
+                            execution.status or "-",
+                            (
+                                execution.action_date.strftime("%Y-%m-%d %H:%M")
+                                if execution.action_date
+                                else "-"
+                            ),
+                            (execution.comments or "-")[:40],
+                        ]
+                    )
+                elements.append(
+                    pdf_export.make_table(
+                        approval_data,
+                        [2 * inch, 1 * inch, 1.5 * inch, 2.7 * inch],
+                    )
+                )
 
     pdf_export.build(doc, elements)
     buffer.seek(0)
