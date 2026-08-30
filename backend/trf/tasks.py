@@ -4,6 +4,7 @@ Celery tasks for the TRF app.
 
 import io
 import logging
+import re
 
 from celery import shared_task
 from django.core.cache import cache
@@ -453,65 +454,87 @@ def _build_pdf_bytes(trf):
                 )
             )
 
-    # Approval History — prefer modern WorkflowEngine steps, fall back to legacy
-    approval_steps = TrfApprovalStep.objects.filter(trf=trf).order_by("created_at")
-    if approval_steps.exists():
+    # Approval History — prefer modern WorkflowEngine steps, fall back to legacy.
+    # TRF writes to both TrfApprovalStep (legacy) and WorkflowStepExecution
+    # (modern) on every approval action, so legacy rows almost always exist
+    # too; the modern rows are checked first because only they record who
+    # actually actioned each step (actioned_by) — TrfApprovalStep never did,
+    # only the role. Checking legacy first (as this used to) meant the
+    # richer modern path was effectively never reached for TRF exports.
+    from django.contrib.contenttypes.models import ContentType
+    from workflows.models import WorkflowInstance
+
+    content_type = ContentType.objects.get_for_model(trf)
+    workflow_instance = (
+        WorkflowInstance.objects.filter(content_type=content_type, object_id=trf.id)
+        .order_by("-created_at")
+        .first()
+    )
+    step_executions = (
+        workflow_instance.step_executions.select_related(
+            "workflow_step", "actioned_by"
+        ).order_by("workflow_step__step_order")
+        if workflow_instance
+        else None
+    )
+
+    if step_executions is not None and step_executions.exists():
         elements.extend(pdf_export.section_heading("Approval History", styles))
-        approval_data = [["Role", "Status", "Date", "Comments"]]
-        for step in approval_steps:
+        approval_data = [["Approver", "Role", "Status", "Date", "Comments"]]
+        for execution in step_executions:
+            # WorkflowStep.step_name is always "Step N: <Role> Approval"
+            # (e.g. "Step 2: HOD Approval") — strip that boilerplate down to
+            # just the role, matching the legacy TrfApprovalStep.step_role
+            # convention this table used to show exclusively.
+            step_name = execution.workflow_step.step_name or ""
+            role_display = re.sub(r"^Step \d+:\s*", "", step_name)
+            role_display = re.sub(r"\s*Approval$", "", role_display).strip()
             approval_data.append(
                 [
-                    step.step_role or "-",
-                    step.status or "-",
+                    (execution.actioned_by.name if execution.actioned_by else "-"),
+                    (role_display or step_name or "-")[:22],
+                    execution.status or "-",
                     (
-                        step.step_date.strftime("%Y-%m-%d %H:%M")
-                        if step.step_date
+                        execution.action_date.strftime("%Y-%m-%d %H:%M")
+                        if execution.action_date
                         else "-"
                     ),
-                    (step.comments or "-")[:50],
+                    (execution.comments or "-")[:40],
                 ]
             )
         elements.append(
             pdf_export.make_table(
-                approval_data, [1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch]
+                approval_data,
+                [1.5 * inch, 1.5 * inch, 0.8 * inch, 1.3 * inch, 2.1 * inch],
             )
         )
     else:
-        from django.contrib.contenttypes.models import ContentType
-        from workflows.models import WorkflowInstance
-
-        content_type = ContentType.objects.get_for_model(trf)
-        workflow_instance = (
-            WorkflowInstance.objects.filter(content_type=content_type, object_id=trf.id)
-            .order_by("-created_at")
-            .first()
-        )
-        if workflow_instance:
-            step_executions = workflow_instance.step_executions.select_related(
-                "workflow_step", "actioned_by"
-            ).order_by("workflow_step__step_order")
-            if step_executions.exists():
-                elements.extend(pdf_export.section_heading("Approval History", styles))
-                approval_data = [["Role", "Status", "Date", "Comments"]]
-                for execution in step_executions:
-                    approval_data.append(
-                        [
-                            (execution.workflow_step.step_name or "-")[:22],
-                            execution.status or "-",
-                            (
-                                execution.action_date.strftime("%Y-%m-%d %H:%M")
-                                if execution.action_date
-                                else "-"
-                            ),
-                            (execution.comments or "-")[:40],
-                        ]
-                    )
-                elements.append(
-                    pdf_export.make_table(
-                        approval_data,
-                        [2 * inch, 1 * inch, 1.5 * inch, 2.7 * inch],
-                    )
+        approval_steps = TrfApprovalStep.objects.filter(trf=trf).order_by("created_at")
+        if approval_steps.exists():
+            elements.extend(pdf_export.section_heading("Approval History", styles))
+            # TrfApprovalStep never recorded who actioned a step, only their
+            # role, so "Approver" is always "-" here.
+            approval_data = [["Approver", "Role", "Status", "Date", "Comments"]]
+            for step in approval_steps:
+                approval_data.append(
+                    [
+                        "-",
+                        step.step_role or "-",
+                        step.status or "-",
+                        (
+                            step.step_date.strftime("%Y-%m-%d %H:%M")
+                            if step.step_date
+                            else "-"
+                        ),
+                        (step.comments or "-")[:50],
+                    ]
                 )
+            elements.append(
+                pdf_export.make_table(
+                    approval_data,
+                    [1.3 * inch, 1.2 * inch, 1 * inch, 1.4 * inch, 2.3 * inch],
+                )
+            )
 
     pdf_export.build(doc, elements)
     buffer.seek(0)
