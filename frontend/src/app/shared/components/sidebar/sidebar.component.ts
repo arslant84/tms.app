@@ -83,6 +83,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
     return this.rbacService.canAccessAdminMenu('meal');
   }
 
+  get hasDepartmentFocalPermission(): boolean {
+    return this.rbacService.canAccessAdminMenu('department-focal');
+  }
+
   get hasReportPermissions(): boolean {
     // Reports accessible to users with report permissions
     return this.rbacService.hasReportPermissions();

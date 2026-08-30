@@ -339,6 +339,8 @@ class TravelRequestSerializer(serializers.ModelSerializer):
     home_leave_details = serializers.SerializerMethodField()
     domestic_travel_details = serializers.SerializerMethodField()
     external_parties_travel_details = serializers.SerializerMethodField()
+    arrangement_status = serializers.SerializerMethodField()
+    is_fully_arranged = serializers.SerializerMethodField()
 
     class Meta:
         model = TravelRequest
@@ -375,6 +377,8 @@ class TravelRequestSerializer(serializers.ModelSerializer):
             "home_leave_details",
             "domestic_travel_details",
             "external_parties_travel_details",
+            "arrangement_status",
+            "is_fully_arranged",
         ]
         read_only_fields = [
             "id",
@@ -393,6 +397,20 @@ class TravelRequestSerializer(serializers.ModelSerializer):
     def get_has_meal_provision(self, obj):
         """Check if TRF has any daily meal selections requested"""
         return obj.trfdailymealselection_set.exists()
+
+    def get_arrangement_status(self, obj):
+        """
+        Per-module fulfillment status (flight/meal/transport/accommodation/
+        visa) - "Not applicable" for modules this request never needed. See
+        trf.services.module_status_summary.
+        """
+        from trf.services import module_status_summary
+
+        return module_status_summary(obj)
+
+    def get_is_fully_arranged(self, obj):
+        """True once every module this request needed is complete."""
+        return obj.is_fully_arranged
 
     def get_flight_details(self, obj):
         """Get flight booking details if exists"""

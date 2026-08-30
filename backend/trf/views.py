@@ -346,6 +346,47 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(meal_processing_status=meal_status_filter)
             return queryset
 
+        # Department Focal queue: read-only visibility into their own
+        # department's requests and every arrangement module they needed
+        # (flight/meal/transport/accommodation/visa) — full status per
+        # module, not just an all-or-nothing gate, so the Focal can see
+        # what's still pending as well as what's done. Pass ?ready=true to
+        # narrow to only fully-arranged requests (used by the notification
+        # helper's definition of "done"; the queue itself defaults to
+        # showing everything).
+        department_focal_queue = (
+            self.request.query_params.get("department_focal_queue", "false").lower()
+            == "true"
+        )
+        if department_focal_queue:
+            if not (
+                user.is_superuser or has_permission(user, "view_admin_department_focal")
+            ):
+                from rest_framework.exceptions import PermissionDenied
+
+                raise PermissionDenied(
+                    "You do not have permission to view the Department Focal queue."
+                )
+            own_department = (
+                (user.department.name if user.department else "").strip().lower()
+            )
+            candidates = (
+                queryset.filter(department__iexact=own_department)
+                .exclude(status="Draft")
+                .order_by("-created_at")
+                if own_department
+                else queryset.none()
+            )
+            ready_only = (
+                self.request.query_params.get("ready", "false").lower() == "true"
+            )
+            if not ready_only:
+                return candidates
+            ready_ids = [t.id for t in candidates if t.is_fully_arranged]
+            return TravelRequest.objects.filter(id__in=ready_ids).order_by(
+                "-created_at"
+            )
+
         # For retrieve (viewing details), check view_all permission first, then pending approvals
         if self.action == "retrieve":
             # Users with view_all_trf permission can access any TRF detail (e.g. from Recent Activity)
@@ -1051,6 +1092,10 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         trf = self.get_object()
         trf.meal_processing_status = new_status
         trf.save(update_fields=["meal_processing_status"])
+
+        from trf.services import notify_department_focal_if_ready
+
+        notify_department_focal_if_ready(trf)
 
         serializer = self.get_serializer(trf)
         return success_response(

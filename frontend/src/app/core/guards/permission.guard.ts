@@ -100,6 +100,7 @@ export const AdminMenuGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => 
     | 'visa'
     | 'flights'
     | 'meal'
+    | 'department-focal'
     | undefined;
 
   // If no module specified, deny access

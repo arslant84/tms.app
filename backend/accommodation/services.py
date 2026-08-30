@@ -407,6 +407,11 @@ def assign_accommodation(
             logger.warning(f" Could not add workflow step execution: {str(e)}")
             # Don't fail the assignment if workflow update fails
 
+        if accommodation_request.trf:
+            from trf.services import notify_department_focal_if_ready
+
+            notify_department_focal_if_ready(accommodation_request.trf)
+
         return (
             {
                 "message": f"Accommodation assigned successfully. Created {len(created_bookings)} booking records.",

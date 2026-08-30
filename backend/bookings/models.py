@@ -258,6 +258,10 @@ class FlightBooking(models.Model):
         self.ticketing_date = timezone.now()
         self.save(update_fields=["status", "ticket_number", "ticketing_date"])
 
+        from trf.services import notify_department_focal_if_ready
+
+        notify_department_focal_if_ready(self.trf)
+
     def cancel_booking(self, reason=None):
         """Cancel the booking and revert the parent TRF's status if this
         booking was what put it into Flight Booked."""
