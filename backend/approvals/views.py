@@ -106,9 +106,20 @@ def unified_approvals(request):
         content_type = ContentType.objects.get_for_model(entities[0].__class__)
         entity_ids_str = [str(e.id) for e in entities]
 
-        # Query 1 — in-progress workflow instances
+        # Query 1 — in-progress workflow instances. Keyed by str(object_id) -
+        # WorkflowInstance.object_id is a PositiveIntegerField, so without
+        # the str() this dict (and everything built from its keys below:
+        # entity_step_map, the approvable set, needs_delegation/obj_by_step)
+        # would carry int object_ids, while the caller two callers down
+        # (the `if str(transport.id) in approvable_transport_ids:` checks
+        # in unified_approvals) always test membership with a str. Python's
+        # `'127' in {127}` is False even though they "look" the same, so
+        # every non-superuser's own pending approvals silently vanished
+        # from their queue - only the user.is_superuser branch above
+        # happened to already build its set with `str(e.id)`, so this only
+        # ever affected real approvers, never a superuser testing the flow.
         instances = {
-            wi.object_id: wi
+            str(wi.object_id): wi
             for wi in WorkflowInstance.objects.filter(
                 content_type=content_type,
                 object_id__in=entity_ids_str,

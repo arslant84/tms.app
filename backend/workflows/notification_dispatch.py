@@ -32,6 +32,42 @@ _ENTITY_TYPE_ROUTE_SEGMENT = {
     "accommodationrequest": "accommodation",
 }
 
+# Recipient types selectable in the Notification Config screen that resolve
+# to a fulfillment-admin Role, but only when the linked TSR actually needs
+# that service - see _entity_needs_service() below. Role names match what's
+# actually seeded in accounts (Role.objects) today; "Flight Admin" isn't
+# included here since it's unconditional for every TSR that reaches
+# approval and is configured directly as a plain 'role_<id>' recipient
+# instead.
+_SERVICE_ADMIN_ROLE_BY_RECIPIENT_TYPE = {
+    "meal_admin_if_needed": "Meal Admin",
+    "accommodation_admin_if_needed": "Accommodation Admin",
+    "transport_admin_if_needed": "Transport Admin",
+}
+
+
+def _entity_needs_service(recipient_type, entity):
+    """
+    Whether `entity` (a TravelRequest) actually needs the fulfillment
+    service `recipient_type` refers to - the same existence checks
+    trf/services.py::module_status_summary() uses to decide which modules a
+    request needs arranging. Safe to call with any entity type; returns
+    False for anything that isn't a TravelRequest (or lacks the relevant
+    relation), rather than raising.
+    """
+    try:
+        if recipient_type == "meal_admin_if_needed":
+            from trf.models import TrfDailyMealSelection
+
+            return TrfDailyMealSelection.objects.filter(trf=entity).exists()
+        if recipient_type == "accommodation_admin_if_needed":
+            return entity.accommodation_requests.exists()
+        if recipient_type == "transport_admin_if_needed":
+            return entity.transport_requests.exists()
+    except AttributeError:
+        return False
+    return False
+
 
 def _get_event_type(event_name):
     """Get NotificationEventType by name, returns None if not found"""
@@ -362,6 +398,48 @@ def _send_default_notification(step_execution, event_type):
                     send_email=True,
                 )
 
+        elif event_type == "fully_arranged":
+            # Notify the request's own Department Focal(s) - matches the
+            # wording trf/services.py::notify_department_focal_if_ready()
+            # used before it was moved onto this config-driven path.
+            department = getattr(workflow_instance.content_object, "department", None)
+            if department:
+                from accounts.models import User
+
+                focals = User.objects.filter(
+                    role__name="Department Focal",
+                    department__name__iexact=department.strip(),
+                    is_active=True,
+                )
+                for focal in focals:
+                    NotificationService.create_notification(
+                        user=focal,
+                        title=f"Travel Arrangements Completed — {entity_id}",
+                        message=(
+                            f"All travel arrangements for "
+                            f"{workflow_instance.initiated_by.get_full_name()}'s "
+                            f"request {entity_id} are now complete."
+                        ),
+                        event_type=_get_event_type("WORKFLOW_UPDATED"),
+                        priority="normal",
+                        action_url=_get_action_url(
+                            workflow_instance.workflow_template.entity_type,
+                            workflow_instance.object_id,
+                        ),
+                        additional_data={
+                            "requestorName": workflow_instance.initiated_by.get_full_name(),
+                            "requestType": _get_display_request_type(
+                                workflow_instance.workflow_template.entity_type
+                            ),
+                            "entityId": entity_id,
+                            "actionUrl": _get_action_url(
+                                workflow_instance.workflow_template.entity_type,
+                                workflow_instance.object_id,
+                            ),
+                        },
+                        send_email=True,
+                    )
+
         logger.info(
             f" Sent default notification for event '{event_type}' on step '{step_execution.workflow_step.step_name}'"
         )
@@ -431,6 +509,58 @@ def _resolve_recipients(recipient_types, custom_recipients, step_execution):
                 recipients.update(users)
             except Exception as e:
                 logger.warning(f" Failed to resolve role {role_id}: {str(e)}")
+
+        elif recipient_type in _SERVICE_ADMIN_ROLE_BY_RECIPIENT_TYPE:
+            # Fulfillment-admin recipient, conditional on the linked TSR
+            # actually needing that service (e.g. only notify Meal Admin if
+            # the request has meal selections) - same existence checks
+            # trf/services.py::module_status_summary() uses to decide which
+            # modules a request needs arranging. Unlike 'role_<id>', this is
+            # a named, reusable recipient type (selectable in the
+            # Notification Config screen's recipient picker) rather than a
+            # one-off rule, so it works for any workflow step, not just the
+            # ones seeded today.
+            entity = step_execution.workflow_instance.content_object
+            if entity is not None and _entity_needs_service(recipient_type, entity):
+                try:
+                    from accounts.models import Role
+
+                    role_name = _SERVICE_ADMIN_ROLE_BY_RECIPIENT_TYPE[recipient_type]
+                    role = Role.objects.filter(name=role_name).first()
+                    if role:
+                        recipients.update(
+                            User.objects.filter(role=role, status="Active")
+                        )
+                    else:
+                        logger.warning(
+                            f" Role '{role_name}' not found for recipient type '{recipient_type}'"
+                        )
+                except Exception as e:
+                    logger.warning(f" Failed to resolve '{recipient_type}': {str(e)}")
+
+        elif recipient_type == "department_focal":
+            # The Department Focal(s) of *this specific request's own
+            # department* - not a company-wide broadcast like 'role_<id>'.
+            # Department Focal has no per-department single-user mapping:
+            # "the" Department Focal for a request is every active user
+            # with that role whose own department matches the request's
+            # department (case-insensitive), same rule
+            # trf/services.py::notify_department_focal_if_ready() has
+            # always used - centralized here so it's one reusable,
+            # admin-selectable recipient type instead of a one-off.
+            entity = step_execution.workflow_instance.content_object
+            department = getattr(entity, "department", None) if entity else None
+            if department:
+                try:
+                    recipients.update(
+                        User.objects.filter(
+                            role__name="Department Focal",
+                            department__name__iexact=department.strip(),
+                            is_active=True,
+                        )
+                    )
+                except Exception as e:
+                    logger.warning(f" Failed to resolve department_focal: {str(e)}")
 
     # Handle custom email addresses
     if custom_recipients:

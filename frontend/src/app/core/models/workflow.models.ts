@@ -86,6 +86,7 @@ export const EVENT_TYPE_OPTIONS = [
   { value: 'workflow_completed', label: 'When All Approvals Complete' },
   { value: 'workflow_cancelled', label: 'When Workflow Cancelled' },
   { value: 'processing_completed', label: 'When Processing Is Marked Complete' },
+  { value: 'fully_arranged', label: 'When All Services Are Fully Arranged' },
 ];
 
 export interface WorkflowStep {

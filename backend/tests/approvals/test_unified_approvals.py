@@ -172,3 +172,67 @@ class TestUnifiedApprovalsExcludesTsrEmbeddedTransport:
 
         assert response.status_code == 400
         assert "No pending approval step found" in response.data["error"]
+
+
+@pytest.mark.django_db
+class TestUnifiedApprovalsForNonSuperuserApprover:
+    """Regression test: _batch_approvable_ids's non-superuser branch built
+    its `instances` dict keyed by the raw WorkflowInstance.object_id
+    (an int, per its PositiveIntegerField), so the approvable set it
+    returned was int-keyed too - but unified_approvals's own membership
+    check (`if str(transport.id) in approvable_transport_ids`) always
+    tests with a str. `'127' in {127}` is False in Python, so this
+    silently emptied *every* non-superuser approver's own pending-approvals
+    queue, for every module, no matter who the request belonged to - not
+    just self-assigned requests. Only invisible because every other test
+    here (and every fixture that exercises this endpoint) authenticates as
+    admin_user, which is_superuser=True and takes a different, already-str
+    code path that never hit the bug."""
+
+    def test_step_directly_assigned_to_a_non_superuser_is_listed(
+        self, api_client, regular_user, transport_workflow
+    ):
+        """regular_user (is_superuser=False) is both the requester *and*
+        the step's assignee here - mirrors a HOD submitting and then
+        needing to approve their own department's ad-hoc transport
+        request, which is exactly the scenario this bug was found in."""
+        from workflows.router import WorkflowRouter
+
+        tr = TransportRequest.objects.create(
+            requestor=regular_user,
+            requestor_name=regular_user.name,
+            staff_id="S1",
+            department="IT",
+            position="HOD",
+            purpose="Self-assigned approver request",
+            status="Pending",
+            transport_details=[
+                {
+                    "date": "2026-09-01",
+                    "day": "Tuesday",
+                    "from": "A",
+                    "to": "B",
+                    "departureTime": "09:00",
+                    "numberOfPassengers": 1,
+                }
+            ],
+        )
+        instance = WorkflowRouter.start_workflow_for_request(
+            entity=tr, entity_type="transportrequest", initiated_by=regular_user
+        )
+        # transport_workflow's step has approver_user=admin_user (fixed at
+        # fixture-creation time), not regular_user - reassign the live
+        # execution's assignee directly, same as WorkflowEngine would after
+        # a delegation or a role-based resolution landing on this user.
+        step_execution = instance.step_executions.get(status="pending")
+        step_execution.assigned_to = regular_user
+        step_execution.save(update_fields=["assigned_to"])
+
+        api_client.force_authenticate(user=regular_user)
+        response = api_client.get(
+            "/api/admin/approvals/?page=1&limit=100&type=transport"
+        )
+
+        assert response.status_code == 200
+        ids = [item["id"] for item in response.data["data"]]
+        assert str(tr.id) in ids

@@ -178,6 +178,14 @@ class WorkflowStepNotificationConfig(models.Model):
         # workflow_completed, which fires when the approval chain itself
         # finishes, not this separate admin action that happens after.
         ("processing_completed", "When Processing Is Marked Complete"),
+        # Fires once every service a TSR actually needed (flight/meal/
+        # accommodation/transport) is confirmed done - see
+        # trf/services.py::notify_department_focal_if_ready(), which is the
+        # only thing that calls trigger_configured_notifications() for this
+        # event today. Distinct from processing_completed, which fires per
+        # individual module (e.g. "your transport is arranged") rather than
+        # once everything is.
+        ("fully_arranged", "When All Services Are Fully Arranged"),
     ]
 
     workflow_step = models.ForeignKey(
