@@ -193,7 +193,7 @@ class TestNotificationConfigConsistencyAcrossApps:
             f"at all, inconsistent with the others: {missing}"
         )
 
-    def test_every_active_step_has_all_six_event_types_configured(self):
+    def test_every_active_step_has_all_five_event_types_configured(self):
         """Regression test for Fix 19: workflow_completed/workflow_cancelled
         previously had zero configs for every app (not just a
         travelrequest/combinedrequest gap) since nothing ever populated
@@ -202,18 +202,31 @@ class TestNotificationConfigConsistencyAcrossApps:
         ('reminder' was a seventh event type here originally, retired along
         with the SLA due-date/reminder-email feature it powered.)
 
+        'workflow_completed' was later dropped from this "universal" set
+        (see docs/TMS_Responsibility_Matrix.xlsx-driven
+        workflows/0026_seed_approval_stage_notifications): having both a
+        step's own 'approval' event *and* a separate 'workflow_completed'
+        event configured on the same final step both fired on the same
+        moment with near-identical "fully approved" content, double-sending
+        to the requester. 'approval' now covers that role everywhere - using
+        the 'step_approved' template on intermediate steps and the
+        'workflow_completed' *template* (not event) on the final step - see
+        test_every_active_template_final_step_uses_workflow_completed_template
+        below for the replacement invariant.
+
         'processing_completed' (added for Transport/Visa's post-approval
-        admin processing step - see notify_processing_completed) and
+        admin processing step - see notify_processing_completed),
         'workflow_started' (added when notify_workflow_started() became
-        config-driven - see notifications.py) are intentionally excluded
-        from the "every step" check below: unlike the other six,
-        'processing_completed' is only meaningful for the two modules with a
-        distinct complete() action, and 'workflow_started' only ever fires
-        against a workflow's first step (WorkflowNotifications.notify_workflow_started
-        always passes step_order=1's execution to trigger_configured_notifications),
-        so seeding it on every step would create rows that can never be
-        looked up. Both are seeded on a narrower, targeted set of steps
-        instead - see their own tests below."""
+        config-driven - see notifications.py), and 'fully_arranged' (added
+        for the Department Focal / requester "all services arranged" notice
+        - see trf/services.py::notify_department_focal_if_ready) are
+        intentionally excluded from the "every step" check below: unlike
+        the other five, these three only apply to a narrower, targeted set
+        of steps (a workflow's first step for workflow_started, a TSR's
+        final step for fully_arranged, and only the two modules with a
+        distinct complete() action for processing_completed) - seeding them
+        on every step would create rows that can never be looked up. See
+        their own tests below/above."""
         from workflows.models import WorkflowStep, WorkflowStepNotificationConfig
 
         universal_event_types = {
@@ -221,15 +234,16 @@ class TestNotificationConfigConsistencyAcrossApps:
             "approval",
             "rejection",
             "delegation",
-            "workflow_completed",
             "workflow_cancelled",
         }
         all_event_types = {
             choice[0] for choice in WorkflowStepNotificationConfig.EVENT_TYPE_CHOICES
         }
         assert all_event_types == universal_event_types | {
+            "workflow_completed",
             "processing_completed",
             "workflow_started",
+            "fully_arranged",
         }
 
         for step in WorkflowStep.objects.filter(
@@ -244,6 +258,37 @@ class TestNotificationConfigConsistencyAcrossApps:
             assert missing == set(), (
                 f"Step '{step.step_name}' on "
                 f"'{step.workflow_template.name}' is missing configs for: {missing}"
+            )
+
+    def test_every_active_template_final_step_uses_workflow_completed_template(self):
+        """Companion to the five-universal-event-types check above: every
+        active template's *final* step must have an 'approval' config using
+        the 'workflow_completed' template specifically - the requester's
+        "fully approved" message. Non-final steps' 'approval' config should
+        use 'step_approved' instead (progress wording, not "fully
+        approved") - see workflows/0026_seed_approval_stage_notifications."""
+        from workflows.models import (
+            WorkflowStep,
+            WorkflowStepNotificationConfig,
+            WorkflowTemplate,
+        )
+
+        for template in WorkflowTemplate.objects.filter(is_active=True):
+            last_step = (
+                WorkflowStep.objects.filter(workflow_template=template, is_active=True)
+                .order_by("-step_order")
+                .first()
+            )
+            if not last_step:
+                continue
+            has_final_config = WorkflowStepNotificationConfig.objects.filter(
+                workflow_step=last_step,
+                event_type="approval",
+                notification_template__name="workflow_completed",
+            ).exists()
+            assert has_final_config, (
+                f"Final step '{last_step.step_name}' on '{template.name}' has no "
+                f"'approval' config using the 'workflow_completed' template"
             )
 
     def test_every_active_template_first_step_has_workflow_started_configured(self):

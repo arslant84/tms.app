@@ -86,6 +86,35 @@ export class StepNotificationConfigComponent implements OnInit {
       { value: 'previous_approvers', label: 'Previous Approvers', category: 'Workflow' },
       { value: 'next_approvers', label: 'Next Approvers', category: 'Workflow' },
       { value: 'all_stakeholders', label: 'All Stakeholders', category: 'Workflow' },
+      {
+        value: 'department_focal',
+        label: "Department Focal (requester's department)",
+        category: 'Workflow',
+      },
+    ];
+
+    // Fulfillment-admin recipients, conditional on the request actually
+    // needing that service (e.g. only sent to Meal Admin if the request
+    // has meal selections) - see _entity_needs_service() in
+    // workflows/notification_dispatch.py. Use these on a TSR's final
+    // approval step alongside a plain 'role_<id>' entry for an
+    // unconditional admin like Flight/Ticketing Admin.
+    const conditionalServiceOptions: { value: RecipientType; label: string; category: string }[] = [
+      {
+        value: 'meal_admin_if_needed',
+        label: 'Meal Admin (if meal selected)',
+        category: 'Fulfillment Admins (conditional)',
+      },
+      {
+        value: 'accommodation_admin_if_needed',
+        label: 'Accommodation Admin (if accommodation selected)',
+        category: 'Fulfillment Admins (conditional)',
+      },
+      {
+        value: 'transport_admin_if_needed',
+        label: 'Transport Admin (if transport selected)',
+        category: 'Fulfillment Admins (conditional)',
+      },
     ];
 
     // Dynamic role-based recipient types
@@ -102,7 +131,12 @@ export class StepNotificationConfigComponent implements OnInit {
     ];
 
     // Combine all options
-    this.recipientTypeOptions = [...genericOptions, ...roleOptions, ...customOption];
+    this.recipientTypeOptions = [
+      ...genericOptions,
+      ...conditionalServiceOptions,
+      ...roleOptions,
+      ...customOption,
+    ];
   }
 
   getEmptyForm(): Partial<WorkflowStepNotificationConfig> {

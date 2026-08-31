@@ -162,11 +162,21 @@ def check_is_fully_arranged(trf) -> bool:
 
 def notify_department_focal_if_ready(trf) -> None:
     """
-    Best-effort: notify every Department Focal for trf's department once all
-    of its arrangements are complete. Safe to call from any of the four
+    Best-effort: notify trf's department's Department Focal(s) once all of
+    its arrangements are complete. Safe to call from any of the four
     completion touchpoints (flight ticketing, meal status update, transport
     complete, accommodation assign) — a no-op if already notified or not yet
     fully arranged.
+
+    Fires the 'fully_arranged' workflow event through the same
+    admin-configurable notification dispatch every other event in the app
+    uses (see workflows/notification_dispatch.py's trigger_configured_notifications
+    and its 'department_focal' recipient type) - who gets notified, the
+    email wording, and whether this is even active at all are editable via
+    the Notification Config screen (per workflow template's final step),
+    not hardcoded here. This function's only remaining job is the "is it
+    actually fully arranged yet" check and once-only gating - genuine
+    business logic, not something that belongs in a config screen.
     """
     if trf.department_focal_notified:
         return
@@ -175,26 +185,32 @@ def notify_department_focal_if_ready(trf) -> None:
         return
 
     try:
-        from accounts.models import User
-        from notifications.services import NotificationService
+        from django.contrib.contenttypes.models import ContentType
+        from workflows.models import WorkflowInstance
+        from workflows.notification_dispatch import trigger_configured_notifications
 
-        focals = User.objects.filter(
-            role__name="Department Focal",
-            department__name__iexact=(trf.department or "").strip(),
-            is_active=True,
+        content_type = ContentType.objects.get_for_model(trf)
+        workflow_instance = (
+            WorkflowInstance.objects.filter(content_type=content_type, object_id=trf.id)
+            .order_by("-started_at")
+            .first()
         )
-        for focal in focals:
-            NotificationService.create_notification(
-                user=focal,
-                title=f"Travel arrangements completed — {trf.request_number}",
-                message=(
-                    f"All travel arrangements for {trf.requestor_name}'s "
-                    f"request {trf.request_number} are now complete."
-                ),
-                action_url=f"/trf/{trf.id}",
-                content_object=trf,
-                send_email=True,
+        step_execution = (
+            workflow_instance.step_executions.order_by(
+                "-workflow_step__step_order"
+            ).first()
+            if workflow_instance
+            else None
+        )
+        if not step_execution:
+            logger.warning(
+                "No workflow step execution found for TRF #%s - cannot fire "
+                "'fully_arranged' notification",
+                trf.id,
             )
+            return
+
+        trigger_configured_notifications(step_execution, "fully_arranged")
     except Exception:
         logger.exception("Failed to notify Department Focal for TRF #%s", trf.id)
         return
