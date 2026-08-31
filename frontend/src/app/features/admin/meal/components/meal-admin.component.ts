@@ -84,9 +84,13 @@ export class MealAdminComponent implements OnInit {
         search: this.filterCriteria.search || undefined,
       })
       .subscribe({
-        next: response => {
-          this.requests = response.results || response;
-          this.totalRequests = response.count || this.requests.length;
+        next: (raw: unknown) => {
+          const response = raw as
+            | { results?: MealQueueRequest[]; count?: number }
+            | MealQueueRequest[];
+          this.requests = (Array.isArray(response) ? response : response.results) || [];
+          this.totalRequests =
+            (Array.isArray(response) ? undefined : response.count) || this.requests.length;
           this.calculateStats();
           this.loading = false;
         },

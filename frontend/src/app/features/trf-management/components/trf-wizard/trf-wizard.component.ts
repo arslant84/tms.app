@@ -1,42 +1,38 @@
-import { Component, type OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import type { HttpErrorResponse } from '@angular/common/http';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Component, type OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { from } from 'rxjs';
-import { TrfStepperComponent } from '../trf-stepper/trf-stepper.component';
+import { ConfirmationService } from '../../../../core/services/confirmation.service';
+import { RbacService } from '../../../../core/services/rbac.service';
+import { ToastService } from '../../../../core/services/toast.service';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { TrfService } from '../../services/trf.service';
 import {
-  RequestorInformationComponent,
-  type RequestorInformation,
-} from '../requestor-information/requestor-information.component';
+  ApprovalSubmissionComponent,
+  type ApprovalSubmissionData,
+} from '../approval-submission/approval-submission.component';
 import {
   DomesticTravelDetailsComponent,
   type DomesticTravelSpecificDetails,
 } from '../domestic-travel-details/domestic-travel-details.component';
 import {
-  OverseasTravelDetailsComponent,
-  type OverseasTravelDetails,
-} from '../overseas-travel-details/overseas-travel-details.component';
-import {
-  HomeLeaveDetailsComponent,
-  type HomeLeaveDetails,
-} from '../home-leave-details/home-leave-details.component';
-import {
-  ExternalPartiesDetailsComponent,
   type ExternalPartiesDetails,
+  ExternalPartiesDetailsComponent,
 } from '../external-parties-details/external-parties-details.component';
 import {
-  ApprovalSubmissionComponent,
-  type ApprovalSubmissionData,
-} from '../approval-submission/approval-submission.component';
-import { TrfService } from '../../services/trf.service';
-import { ToastService } from '../../../../core/services/toast.service';
-import { ConfirmationService } from '../../../../core/services/confirmation.service';
-import { RbacService } from '../../../../core/services/rbac.service';
-import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
-import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
-import type { TrfBackendResponse, TransformedPassportDetails } from './trf-wizard.types';
-import { TrfSubmissionService } from './trf-submission.service';
+  type OverseasTravelDetails,
+  OverseasTravelDetailsComponent,
+} from '../overseas-travel-details/overseas-travel-details.component';
+import {
+  type RequestorInformation,
+  RequestorInformationComponent,
+} from '../requestor-information/requestor-information.component';
+import { TrfStepperComponent } from '../trf-stepper/trf-stepper.component';
 import { TrfEditLoaderService } from './trf-edit-loader.service';
+import { TrfSubmissionService } from './trf-submission.service';
+import type { TrfBackendResponse } from './trf-wizard.types';
 
 @Component({
   selector: 'app-trf-wizard',
@@ -47,7 +43,6 @@ import { TrfEditLoaderService } from './trf-edit-loader.service';
     RequestorInformationComponent,
     DomesticTravelDetailsComponent,
     OverseasTravelDetailsComponent,
-    HomeLeaveDetailsComponent,
     ExternalPartiesDetailsComponent,
     ApprovalSubmissionComponent,
     LoadingSpinnerComponent,
@@ -59,7 +54,6 @@ export class TrfWizardComponent implements OnInit {
   @ViewChild(RequestorInformationComponent) requestorForm!: RequestorInformationComponent;
   @ViewChild(DomesticTravelDetailsComponent) domesticTravelForm!: DomesticTravelDetailsComponent;
   @ViewChild(OverseasTravelDetailsComponent) overseasTravelForm!: OverseasTravelDetailsComponent;
-  @ViewChild(HomeLeaveDetailsComponent) homeLeaveForm!: HomeLeaveDetailsComponent;
   @ViewChild(ExternalPartiesDetailsComponent) externalPartiesForm!: ExternalPartiesDetailsComponent;
   @ViewChild(ApprovalSubmissionComponent) approvalForm!: ApprovalSubmissionComponent;
 
@@ -86,24 +80,12 @@ export class TrfWizardComponent implements OnInit {
   hasLinkedTransport: boolean = false;
 
   // Travel type - determined by route
-  selectedTravelType: 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties' | null = null;
+  selectedTravelType: 'Domestic' | 'Overseas' | 'External Parties' | null = null;
 
   // Store form data from each step
   requestorData: Partial<RequestorInformation> = {};
   domesticTravelData: Partial<DomesticTravelSpecificDetails> = {};
   overseasTravelData: Partial<OverseasTravelDetails> = {};
-  // The `passportDetails` extension here is a pre-existing bug this typing
-  // just made visible, not something introduced by it: HomeLeaveDetails
-  // (and HomeLeaveDetailsComponent) has no such field - it only knows about
-  // passportUpload (file metadata). prePopulateTravelData() below sets
-  // passportDetails on edit-load, but saveCurrentStepData() immediately
-  // overwrites this whole object with getFormData()'s return the moment the
-  // user reaches step 2, which never carries it forward - so it's silently
-  // discarded before submission regardless. Left exactly as-is (including
-  // the bug) rather than fixed under this typing task.
-  homeLeaveData: Partial<HomeLeaveDetails> & {
-    passportDetails?: TransformedPassportDetails | null;
-  } = {};
   externalPartiesData: Partial<ExternalPartiesDetails> = {};
   approvalData: Partial<ApprovalSubmissionData> = {}; // Store approval & submission data including additionalComments
   approvalSubmissionData: Partial<ApprovalSubmissionData> = {};
@@ -127,8 +109,6 @@ export class TrfWizardComponent implements OnInit {
       this.selectedTravelType = 'Domestic';
     } else if (url.includes('/create/overseas')) {
       this.selectedTravelType = 'Overseas';
-    } else if (url.includes('/create/home-leave')) {
-      this.selectedTravelType = 'Home Leave';
     } else if (url.includes('/create/external-parties')) {
       this.selectedTravelType = 'External Parties';
     }
@@ -202,11 +182,24 @@ export class TrfWizardComponent implements OnInit {
         if (travelTypeData.overseasTravelData) {
           this.overseasTravelData = travelTypeData.overseasTravelData;
         }
-        if (travelTypeData.homeLeaveData) {
-          this.homeLeaveData = travelTypeData.homeLeaveData;
-        }
         if (travelTypeData.externalPartiesData) {
           this.externalPartiesData = travelTypeData.externalPartiesData;
+          // Same reasoning as the Domestic branch above - accommodation/
+          // transport are embedded here the same way as Domestic, and are
+          // likewise linked via AccommodationRequest.trf/TransportRequest.trf
+          // rather than being part of the TRF payload itself.
+          this.trfEditLoader.loadLinkedAccommodation(data.id).subscribe(accommodation => {
+            if (accommodation) {
+              this.externalPartiesData = { ...this.externalPartiesData, accommodation };
+              this.hasLinkedAccommodation = true;
+            }
+          });
+          this.trfEditLoader.loadLinkedTransport(data.id).subscribe(transport => {
+            if (transport) {
+              this.externalPartiesData = { ...this.externalPartiesData, transport };
+              this.hasLinkedTransport = true;
+            }
+          });
         }
 
         this.isLoadingTrf = false;
@@ -231,11 +224,7 @@ export class TrfWizardComponent implements OnInit {
    * Handle travel details form submission
    */
   onTravelDetailsSubmit(
-    data:
-      | DomesticTravelSpecificDetails
-      | OverseasTravelDetails
-      | HomeLeaveDetails
-      | ExternalPartiesDetails
+    data: DomesticTravelSpecificDetails | OverseasTravelDetails | ExternalPartiesDetails
   ): void {
     // Save the data based on travel type
     switch (this.selectedTravelType) {
@@ -244,9 +233,6 @@ export class TrfWizardComponent implements OnInit {
         break;
       case 'Overseas':
         this.overseasTravelData = data as OverseasTravelDetails;
-        break;
-      case 'Home Leave':
-        this.homeLeaveData = data as HomeLeaveDetails;
         break;
       case 'External Parties':
         this.externalPartiesData = data as ExternalPartiesDetails;
@@ -310,14 +296,6 @@ export class TrfWizardComponent implements OnInit {
           this.warnIfItineraryIncomplete(this.overseasTravelForm.isItineraryIncomplete);
           this.warnIfItineraryOutOfOrder(this.overseasTravelForm.isItineraryOutOfOrder);
           this.overseasTravelForm.markAllAsTouched();
-          return false;
-        }
-        break;
-      case 'Home Leave':
-        if (this.homeLeaveForm && !this.homeLeaveForm.isValid()) {
-          this.warnIfItineraryIncomplete(this.homeLeaveForm.isItineraryIncomplete);
-          this.warnIfItineraryOutOfOrder(this.homeLeaveForm.isItineraryOutOfOrder);
-          this.homeLeaveForm.markAllAsTouched();
           return false;
         }
         break;
@@ -411,11 +389,6 @@ export class TrfWizardComponent implements OnInit {
             this.overseasTravelData = this.overseasTravelForm.getFormData();
           }
           break;
-        case 'Home Leave':
-          if (this.homeLeaveForm) {
-            this.homeLeaveData = this.homeLeaveForm.getFormData();
-          }
-          break;
         case 'External Parties':
           if (this.externalPartiesForm) {
             this.externalPartiesData = this.externalPartiesForm.getFormData();
@@ -500,13 +473,16 @@ export class TrfWizardComponent implements OnInit {
       requestorData: this.requestorData,
       domesticTravelData: this.domesticTravelData,
       overseasTravelData: this.overseasTravelData,
-      homeLeaveData: this.homeLeaveData,
       externalPartiesData: this.externalPartiesData,
       additionalComments: this.approvalForm?.getFormData()?.additionalComments || '',
     });
     const passportFile = this.getPassportFileFromTravelForm();
 
     if (this.isEditMode && this.trfId) {
+      // Narrow to a local const: this.trfId is a mutable class property, so
+      // TS can't carry the `if` check's truthiness narrowing into the
+      // .subscribe() callback closures below - a local const can.
+      const trfId = this.trfId;
       // Update existing TRF
       // TrfService.updateTrf() is typed to take TravelRequestForm - the same
       // stale/mock model noted at loadExistingTrf() above, not what this
@@ -515,13 +491,13 @@ export class TrfWizardComponent implements OnInit {
       const mainTrfPayload = combinedData.mainTrf as unknown as Parameters<
         typeof this.trfService.updateTrf
       >[1];
-      this.trfService.updateTrf(this.trfId, mainTrfPayload).subscribe({
+      this.trfService.updateTrf(trfId, mainTrfPayload).subscribe({
         next: () => {
           // For edit mode, we might need to delete and recreate nested resources
           // This is a simplified approach - ideally, you'd update existing ones
           from(
             this.trfSubmission.createNestedResources(
-              this.trfId!,
+              trfId,
               combinedData,
               isDraft,
               this.isEditMode,
@@ -537,40 +513,38 @@ export class TrfWizardComponent implements OnInit {
                 // Get selected approvers and skipped steps from approval form
                 const selectedApprovers = this.approvalSubmissionData?.selected_approvers || {};
                 const skippedSteps = this.approvalSubmissionData?.skipped_steps || {};
-                this.trfService
-                  .submitTrf(this.trfId!, false, selectedApprovers, skippedSteps)
-                  .subscribe({
-                    next: () => {
-                      this.isSubmitting = false;
-                      this.toastService.success('TRF updated and submitted successfully!');
-                      this.router.navigate(['/trf']);
-                    },
-                    error: (error: HttpErrorResponse) => {
-                      this.isSubmitting = false;
+                this.trfService.submitTrf(trfId, false, selectedApprovers, skippedSteps).subscribe({
+                  next: () => {
+                    this.isSubmitting = false;
+                    this.toastService.success('TRF updated and submitted successfully!');
+                    this.router.navigate(['/trf']);
+                  },
+                  error: (error: HttpErrorResponse) => {
+                    this.isSubmitting = false;
 
-                      let errorMessage = 'Error submitting TRF to workflow: ';
-                      if (error.error && typeof error.error === 'object') {
-                        if (error.error.error) {
-                          errorMessage += error.error.error;
-                        } else if (error.error.message) {
-                          errorMessage += error.error.message;
-                        } else if (error.error.detail) {
-                          errorMessage += error.error.detail;
-                        } else {
-                          errorMessage += JSON.stringify(error.error);
-                        }
-                      } else if (error.error && typeof error.error === 'string') {
-                        errorMessage += error.error;
-                      } else if (error.message) {
-                        errorMessage += error.message;
+                    let errorMessage = 'Error submitting TRF to workflow: ';
+                    if (error.error && typeof error.error === 'object') {
+                      if (error.error.error) {
+                        errorMessage += error.error.error;
+                      } else if (error.error.message) {
+                        errorMessage += error.error.message;
+                      } else if (error.error.detail) {
+                        errorMessage += error.error.detail;
                       } else {
-                        errorMessage += 'Unknown error';
+                        errorMessage += JSON.stringify(error.error);
                       }
+                    } else if (error.error && typeof error.error === 'string') {
+                      errorMessage += error.error;
+                    } else if (error.message) {
+                      errorMessage += error.message;
+                    } else {
+                      errorMessage += 'Unknown error';
+                    }
 
-                      this.submitError = errorMessage;
-                      this.toastService.error(this.submitError);
-                    },
-                  });
+                    this.submitError = errorMessage;
+                    this.toastService.error(this.submitError);
+                  },
+                });
               } else {
                 this.isSubmitting = false;
                 this.toastService.success('TRF updated and saved as draft!');
@@ -596,7 +570,8 @@ export class TrfWizardComponent implements OnInit {
     } else {
       // Create new TRF
       this.trfService.createTravelRequest(combinedData.mainTrf).subscribe({
-        next: (createdTrf: { id: number }) => {
+        next: (raw: unknown) => {
+          const createdTrf = raw as { id: number };
           // Step 2: Create nested resources (itinerary, meals, etc.)
           from(
             this.trfSubmission.createNestedResources(
@@ -662,7 +637,6 @@ export class TrfWizardComponent implements OnInit {
   getTravelDetailsForApproval():
     | Partial<DomesticTravelSpecificDetails>
     | Partial<OverseasTravelDetails>
-    | Partial<HomeLeaveDetails>
     | Partial<ExternalPartiesDetails>
     | null {
     switch (this.selectedTravelType) {
@@ -670,8 +644,6 @@ export class TrfWizardComponent implements OnInit {
         return this.domesticTravelData;
       case 'Overseas':
         return this.overseasTravelData;
-      case 'Home Leave':
-        return this.homeLeaveData;
       case 'External Parties':
         return this.externalPartiesData;
       default:
@@ -688,8 +660,6 @@ export class TrfWizardComponent implements OnInit {
         return this.domesticTravelForm?.getPassportFile?.() || null;
       case 'Overseas':
         return this.overseasTravelForm?.getPassportFile?.() || null;
-      case 'Home Leave':
-        return this.homeLeaveForm?.getPassportFile?.() || null;
       case 'External Parties':
         return this.externalPartiesForm?.getPassportFile?.() || null;
       default:

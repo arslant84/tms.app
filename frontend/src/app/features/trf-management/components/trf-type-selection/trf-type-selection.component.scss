@@ -1,6 +1,18 @@
 // Travel Type Selection Component - Using Unified Design System
 @use '../../../../../styles/variables' as vars;
 
+// Adapts to however many travelTypeOptions exist (2, 3, 4+) - cards reflow
+// and stay evenly sized instead of a fixed 2-column split leaving a lone
+// card stranded on its own row when the count is odd.
+.travel-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: vars.$spacing-6;
+  max-width: 1000px;
+  margin: 0 auto;
+  justify-content: center;
+}
+
 .hover-card {
   transition: all 0.2s ease-in-out;
   border: 1px solid vars.$border-light;

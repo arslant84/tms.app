@@ -35,16 +35,6 @@
 
         <!-- Approver viewing a request pending their action: Approve/Reject
              (and Skip/Delegate, if applicable) instead of owner-only actions. -->
-        <app-approval-actions
-          *ngIf="isCurrentApprover && !workflowLoading"
-          [stepExecution]="currentStepExecution!"
-          [compact]="true"
-          (approved)="onWorkflowApproved()"
-          (rejected)="onWorkflowRejected()"
-          (delegated)="onWorkflowDelegated()"
-        >
-        </app-approval-actions>
-
         <button class="btn btn-secondary" (click)="onEdit()" *ngIf="canEdit()">
           <i class="bi bi-pencil"></i>
           Edit
@@ -320,7 +310,7 @@
       </div>
     </div>
 
-    <!-- Passport Document (any travel type - Domestic, External Parties, Overseas, Home Leave can all upload one).
+    <!-- Passport Document (any travel type - Domestic, External Parties, Overseas can all upload one).
          The upload UI only ever captures a file, not passport text fields, so this
          just shows the document itself rather than a form's worth of empty "N/A"s. -->
     <div
@@ -350,7 +340,7 @@
       </div>
     </div>
 
-    <!-- Advance Request (Overseas/Home Leave) -->
+    <!-- Advance Request (Overseas) -->
     <div
       class="detail-card"
       *ngIf="isOverseas && (trfData.bankDetails || trfData.advanceAmounts.length > 0)"
@@ -704,9 +694,8 @@
         </div>
       </div>
 
-      <!-- Workflow Status Timeline (component has its own card). Approve/
-           Reject/Skip/Delegate now live in the page header (app-approval-actions
-           there), not duplicated here. -->
+      <!-- Workflow Status Timeline (read-only; approvals happen via the
+           Approval Queue, not from this page). -->
       <app-workflow-status *ngIf="workflow && !workflowLoading" [workflowInstance]="workflow">
       </app-workflow-status>
 

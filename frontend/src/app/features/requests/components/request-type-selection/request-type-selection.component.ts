@@ -34,13 +34,6 @@ export class RequestTypeSelectionComponent {
       route: '/requests/travel/international',
     },
     {
-      id: 'home-leave',
-      title: 'Home Leave Passage',
-      icon: 'bi bi-house',
-      description: 'For expatriate staff entitled to travel to their home country.',
-      route: '/requests/travel/home-leave',
-    },
-    {
       id: 'external',
       title: 'Business Travel Request for External Parties',
       icon: 'bi bi-person',

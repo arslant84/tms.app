@@ -10,7 +10,6 @@ import type {
   RawBankDetailRow,
   RawAdvanceAmountRow,
   RawPassportRow,
-  TransformedPassportDetails,
 } from './trf-wizard.types';
 
 /**
@@ -262,56 +261,5 @@ export function extractPassportFileInfo(
     file: null, // File object is not available from backend, only URL
     fileName: fileName,
     fileUrl: fileUrl,
-  };
-}
-
-/**
- * Transform passport details from backend format to component format
- *
- * High complexity here is field-name fallback chains (backend snake_case
- * vs legacy camelCase aliases per field), not branchy logic.
- */
-// eslint-disable-next-line complexity
-export function transformPassportDetails(
-  passportDetails: RawPassportRow | RawPassportRow[] | null | undefined
-): TransformedPassportDetails {
-  // Backend returns array, we need first element
-  if (Array.isArray(passportDetails) && passportDetails.length > 0) {
-    const detail = passportDetails[0];
-    return {
-      fullName: detail.full_name || detail.fullName || '',
-      passportNumber: detail.passport_number || detail.passportNumber || '',
-      nationality: detail.nationality || '',
-      dateOfBirth: detail.date_of_birth || detail.dateOfBirth || null,
-      placeOfBirth: detail.place_of_birth || detail.placeOfBirth || '',
-      passportIssueDate: detail.passport_issue_date || detail.passportIssueDate || null,
-      passportExpiryDate: detail.passport_expiry_date || detail.passportExpiryDate || null,
-    };
-  }
-
-  // If already an object (not array)
-  if (passportDetails && !Array.isArray(passportDetails)) {
-    return {
-      fullName: passportDetails.full_name || passportDetails.fullName || '',
-      passportNumber: passportDetails.passport_number || passportDetails.passportNumber || '',
-      nationality: passportDetails.nationality || '',
-      dateOfBirth: passportDetails.date_of_birth || passportDetails.dateOfBirth || null,
-      placeOfBirth: passportDetails.place_of_birth || passportDetails.placeOfBirth || '',
-      passportIssueDate:
-        passportDetails.passport_issue_date || passportDetails.passportIssueDate || null,
-      passportExpiryDate:
-        passportDetails.passport_expiry_date || passportDetails.passportExpiryDate || null,
-    };
-  }
-
-  // Return empty object if no data
-  return {
-    fullName: '',
-    passportNumber: '',
-    nationality: '',
-    dateOfBirth: null,
-    placeOfBirth: '',
-    passportIssueDate: null,
-    passportExpiryDate: null,
   };
 }

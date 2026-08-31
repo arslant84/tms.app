@@ -133,7 +133,7 @@ def _build_pdf_bytes(trf):
             trf.created_at.strftime("%Y-%m-%d %H:%M") if trf.created_at else "-",
         ],
     ]
-    if trf.travel_type in ("Overseas", "Home Leave"):
+    if trf.travel_type == "Overseas":
         travel_data.append(
             [
                 "Advance T&C Accepted",
@@ -333,10 +333,7 @@ def _build_pdf_bytes(trf):
         # from advance-amount-editor.component.html, with the same values
         # substituted in, mirrored here so the PDF matches what was shown
         # on-screen at submission time).
-        if (
-            trf.travel_type in ("Overseas", "Home Leave")
-            and trf.advance_consent_accepted
-        ):
+        if trf.travel_type == "Overseas" and trf.advance_consent_accepted:
             elements.append(Spacer(1, 10))
             elements.extend(
                 pdf_export.section_heading(

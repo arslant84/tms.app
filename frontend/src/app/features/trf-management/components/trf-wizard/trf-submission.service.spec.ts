@@ -26,7 +26,6 @@ describe('TrfSubmissionService', () => {
       requestorData: { fullName: 'Jane Doe', staffId: 'S001', department: 'IT' },
       domesticTravelData: {},
       overseasTravelData: {},
-      homeLeaveData: {},
       externalPartiesData: {},
       additionalComments: '',
       ...overrides,
@@ -108,7 +107,6 @@ describe('TrfSubmissionService', () => {
       const result = service.prepareTrfData(baseParams({ selectedTravelType: null }));
       expect(result.itinerarySegments).toEqual([]);
       expect(result.mealSelections).toEqual([]);
-      expect(result.passportDetails).toBeNull();
     });
   });
 
@@ -121,7 +119,6 @@ describe('TrfSubmissionService', () => {
             mainTrf: {},
             itinerarySegments: [],
             mealSelections: [],
-            passportDetails: null,
             bankDetails: null,
             advanceAmounts: [],
           },
@@ -142,7 +139,6 @@ describe('TrfSubmissionService', () => {
           mainTrf: {},
           itinerarySegments: [{ date: '2026-01-01' }], // missing from/to
           mealSelections: [],
-          passportDetails: null,
           bankDetails: null,
           advanceAmounts: [],
         },
@@ -162,7 +158,6 @@ describe('TrfSubmissionService', () => {
           mainTrf: {},
           itinerarySegments: [],
           mealSelections: [],
-          passportDetails: null,
           bankDetails: null,
           advanceAmounts: [],
           accommodation: {
@@ -205,7 +200,6 @@ describe('TrfSubmissionService', () => {
           mainTrf: {},
           itinerarySegments: [],
           mealSelections: [],
-          passportDetails: null,
           bankDetails: null,
           advanceAmounts: [],
           accommodation: {
@@ -242,7 +236,6 @@ describe('TrfSubmissionService', () => {
           mainTrf: {},
           itinerarySegments: [],
           mealSelections: [],
-          passportDetails: null,
           bankDetails: null,
           advanceAmounts: [],
           accommodation: {
@@ -285,7 +278,6 @@ describe('TrfSubmissionService', () => {
           mainTrf: {},
           itinerarySegments: [],
           mealSelections: [],
-          passportDetails: null,
           bankDetails: null,
           advanceAmounts: [],
           accommodation: {
@@ -319,7 +311,6 @@ describe('TrfSubmissionService', () => {
           mainTrf: { purpose: 'Business trip' },
           itinerarySegments: [],
           mealSelections: [],
-          passportDetails: null,
           bankDetails: null,
           advanceAmounts: [],
           transport: {
@@ -362,7 +353,6 @@ describe('TrfSubmissionService', () => {
           mainTrf: { purpose: 'Business trip' },
           itinerarySegments: [],
           mealSelections: [],
-          passportDetails: null,
           bankDetails: null,
           advanceAmounts: [],
           transport: {
@@ -402,7 +392,6 @@ describe('TrfSubmissionService', () => {
           mainTrf: { purpose: 'Business trip' },
           itinerarySegments: [],
           mealSelections: [],
-          passportDetails: null,
           bankDetails: null,
           advanceAmounts: [],
           transport: {

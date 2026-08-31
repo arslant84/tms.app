@@ -57,7 +57,7 @@ class WorkflowRouter:
             return None
 
         # Check if workflow has steps
-        if workflow_template.steps.count() == 0:
+        if workflow_template.steps.filter(is_active=True).count() == 0:
             logger.warning(f"Workflow template {workflow_template.name} has no steps")
             return None
 

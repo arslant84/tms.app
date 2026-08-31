@@ -231,7 +231,7 @@ class WorkflowTemplateSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_by", "created_at", "updated_at"]
 
     def get_step_count(self, obj):
-        return obj.steps.count()
+        return obj.steps.filter(is_active=True).count()
 
     def validate_entity_type(self, value):
         """Validate entity type is in lowercase"""
@@ -241,10 +241,19 @@ class WorkflowTemplateSerializer(serializers.ModelSerializer):
 class WorkflowTemplateDetailSerializer(WorkflowTemplateSerializer):
     """Detailed serializer with nested steps"""
 
-    steps = WorkflowStepSerializer(many=True, read_only=True)
+    steps = serializers.SerializerMethodField()
 
     class Meta(WorkflowTemplateSerializer.Meta):
         fields = WorkflowTemplateSerializer.Meta.fields + ["steps"]
+
+    def get_steps(self, obj):
+        # Only expose active steps - a step is kept (but deactivated rather
+        # than deleted) when it has execution history, so the config screen
+        # and step counts must not show it as part of the live workflow.
+        active_steps = obj.steps.filter(is_active=True).order_by("step_order")
+        return WorkflowStepSerializer(
+            active_steps, many=True, context=self.context
+        ).data
 
 
 class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
@@ -416,12 +425,14 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
 
             # Update steps if provided
             if steps_data is not None:
-                # Match incoming steps to existing ones by step_order and update
+                # Match incoming steps to existing ones by step_order (including
+                # ones currently deactivated, so a step_order that was removed
+                # and later reintroduced reuses/reactivates the same row rather
+                # than colliding with the unique_together constraint) and update
                 # them in place. WorkflowStepExecution.workflow_step cascades on
-                # delete, so wholesale delete-and-recreate here would wipe out the
-                # approval history of every past instance run against this
-                # template. Steps no longer present are only removed if they
-                # have no execution history to preserve.
+                # delete, so wholesale delete-and-recreate here would wipe out
+                # the approval history of every past instance run against this
+                # template.
                 existing_steps_by_order = {
                     step.step_order: step for step in instance.steps.all()
                 }
@@ -447,6 +458,7 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                         step.requires_comments = step_data.get(
                             "requires_comments", False
                         )
+                        step.is_active = True  # reactivate if previously removed
                         step.save()
                         step.notification_configs.all().delete()
                     else:
@@ -461,6 +473,7 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                             is_required=step_data.get("is_required", True),
                             can_skip=step_data.get("can_skip", False),
                             requires_comments=step_data.get("requires_comments", False),
+                            is_active=True,
                         )
 
                     # On UPDATE: Use exactly what frontend sends (respect user's changes)
@@ -482,14 +495,21 @@ class WorkflowTemplateCreateSerializer(serializers.ModelSerializer):
                             priority=config_data.get("priority", "normal"),
                         )
 
-                # Remove steps that are no longer part of the template, as long
-                # as they have no execution history to lose.
+                # Remove steps that are no longer part of the template. Ones
+                # with no execution history are hard-deleted; ones that have
+                # been run against by a past workflow instance are instead
+                # deactivated, so that history stays intact but the step no
+                # longer counts toward the workflow's step count, is excluded
+                # from the editable step list, and is skipped by live workflow
+                # progression for new/in-flight instances.
                 for step_order, step in existing_steps_by_order.items():
-                    if (
-                        step_order not in incoming_orders
-                        and not step.executions.exists()
-                    ):
-                        step.delete()
+                    if step_order not in incoming_orders:
+                        if step.executions.exists():
+                            if step.is_active:
+                                step.is_active = False
+                                step.save(update_fields=["is_active"])
+                        else:
+                            step.delete()
 
             return instance
         except Exception as e:
@@ -661,8 +681,12 @@ class WorkflowInstanceCreateSerializer(serializers.Serializer):
             additional_data=additional_data,
         )
 
-        # Create step executions for all steps
-        for step in workflow_template.steps.all().order_by("step_order"):
+        # Create step executions for all active steps (a deactivated step is
+        # kept only for the execution history of past instances - it must not
+        # be part of the workflow for new instances)
+        for step in workflow_template.steps.filter(is_active=True).order_by(
+            "step_order"
+        ):
             # Determine who to assign the step to
             assigned_to = step.approver_user if step.approver_user else None
 

@@ -15,11 +15,9 @@ import { WorkflowService } from '../../../../core/services/workflow.service';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
-import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import type {
   WorkflowInstance,
   WorkflowInstanceList,
-  WorkflowStepExecution,
 } from '../../../../core/models/workflow.models';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
@@ -43,13 +41,7 @@ import type {
 @Component({
   selector: 'app-trf-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    WorkflowStatusComponent,
-    ApprovalActionsComponent,
-    LoadingSpinnerComponent,
-  ],
+  imports: [CommonModule, RouterModule, WorkflowStatusComponent, LoadingSpinnerComponent],
   templateUrl: './trf-detail.component.html',
   styleUrls: ['./trf-detail.component.scss'],
 })
@@ -62,7 +54,6 @@ export class TrfDetailComponent implements OnInit {
   // Workflow properties
   workflow: WorkflowInstance | null = null;
   workflowLoading: boolean = false;
-  currentStepExecution: WorkflowStepExecution | null = null;
 
   // Status-based visibility constants
   // Note: Cancellable statuses are determined dynamically - any status starting with "Pending"
@@ -260,7 +251,7 @@ export class TrfDetailComponent implements OnInit {
     };
     if (travelType === 'Domestic') {
       travelTypeFields = this.extractDomesticFields(data);
-    } else if (travelType === 'Overseas' || travelType === 'Home Leave') {
+    } else if (travelType === 'Overseas') {
       travelTypeFields = this.extractOverseasFields(data);
     } else if (travelType === 'External Parties') {
       travelTypeFields = this.extractExternalPartiesFields(data);
@@ -268,7 +259,7 @@ export class TrfDetailComponent implements OnInit {
 
     // Passport details are returned at the top level (passport_details) regardless
     // of travel type - Domestic and External Parties can upload one too, not just
-    // Overseas/Home Leave.
+    // Overseas.
     const passportDetails = firstTruthy<TrfPassportRow[]>(
       [],
       data.passport_details,
@@ -358,10 +349,10 @@ export class TrfDetailComponent implements OnInit {
   }
 
   /**
-   * Check if TRF is overseas or home leave
+   * Check if TRF is overseas
    */
   get isOverseas(): boolean {
-    return this.trfData?.travelType === 'Overseas' || this.trfData?.travelType === 'Home Leave';
+    return this.trfData?.travelType === 'Overseas';
   }
 
   /**
@@ -373,20 +364,10 @@ export class TrfDetailComponent implements OnInit {
 
   /**
    * Meal provisions are only captured for Domestic and External Parties
-   * travel types (not Overseas/Home Leave, by design).
+   * travel types (not Overseas, by design).
    */
   get hasMealProvision(): boolean {
     return !!this.trfData?.mealSelections?.length;
-  }
-
-  /**
-   * The signed-in user has a pending, actionable workflow step on this TRF
-   * right now - i.e. they're the one being asked to approve/reject it.
-   * Reuses the same can_action signal the approval-actions UI already
-   * trusts, rather than a separate role check.
-   */
-  get isCurrentApprover(): boolean {
-    return !!this.currentStepExecution;
   }
 
   /**
@@ -405,7 +386,7 @@ export class TrfDetailComponent implements OnInit {
    * Only allow editing for: Draft, Rejected, and Pending (before any approval)
    */
   canEdit(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     if (!this.trfData?.status) return false;
 
     const status = this.trfData.status;
@@ -433,7 +414,7 @@ export class TrfDetailComponent implements OnInit {
    * Check if TRF can be cancelled based on status
    */
   canCancel(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     const status = this.trfData?.status || '';
     // Allow cancel for any status that contains 'Pending' and is not approved
     if (status.includes('Pending')) {
@@ -448,7 +429,7 @@ export class TrfDetailComponent implements OnInit {
    * Only allow deletion for Draft and Rejected statuses
    */
   canDelete(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     if (!this.trfData?.status) return false;
     return this.DELETABLE_STATUSES.includes(this.trfData.status);
   }
@@ -637,7 +618,6 @@ export class TrfDetailComponent implements OnInit {
             this.workflowService.getInstance(instance.id).subscribe({
               next: workflow => {
                 this.workflow = workflow;
-                this.updateCurrentStepExecution();
                 this.workflowLoading = false;
               },
               error: () => {
@@ -652,38 +632,6 @@ export class TrfDetailComponent implements OnInit {
           this.workflowLoading = false;
         },
       });
-  }
-
-  updateCurrentStepExecution(): void {
-    if (!this.workflow?.step_executions) {
-      this.currentStepExecution = null;
-      return;
-    }
-
-    this.currentStepExecution =
-      this.workflow.step_executions.find(
-        step =>
-          step.status === 'pending' &&
-          step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
-          step.can_action === true
-      ) || null;
-  }
-
-  onWorkflowApproved(): void {
-    this.toastService.success('Approval successful');
-    this.loadTrfDetails();
-    this.loadWorkflow();
-  }
-
-  onWorkflowRejected(): void {
-    this.toastService.success('Request rejected');
-    this.loadTrfDetails();
-    this.loadWorkflow();
-  }
-
-  onWorkflowDelegated(): void {
-    this.toastService.success('Successfully delegated');
-    this.loadWorkflow();
   }
 
   /**

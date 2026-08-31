@@ -122,12 +122,7 @@ export class FlightsProcessingComponent implements OnInit {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const approvedTrfs = trfs.filter((trf: any) => {
           if (trf.status !== 'Approved') return false;
-          if (
-            trf.travel_type === 'Overseas' ||
-            trf.travel_type === 'Home Leave' ||
-            trf.travel_type === 'External Parties'
-          )
-            return true;
+          if (trf.travel_type === 'Overseas' || trf.travel_type === 'External Parties') return true;
           if (trf.travel_type === 'Domestic' && trf.domestic_travel_details?.itinerary?.length > 0)
             return true;
           return false;
@@ -140,23 +135,12 @@ export class FlightsProcessingComponent implements OnInit {
           let itinerary: ItinerarySegment[] | undefined;
 
           const overseasDetails = trf.overseas_travel_details || trf.overseasTravelDetails;
-          const homeLeaveDetails = trf.home_leave_details;
           const domesticDetails = trf.domestic_travel_details || trf.domesticTravelDetails;
           const externalDetails =
             trf.external_parties_travel_details || trf.externalPartiesTravelDetails;
 
           if (overseasDetails?.itinerary?.length) {
             itinerary = overseasDetails.itinerary;
-            if (itinerary) {
-              destinationSummary = itinerary
-                .map(
-                  (s: ItinerarySegment) => `${s.from_location || s.from} → ${s.to_location || s.to}`
-                )
-                .join(', ');
-              requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
-            }
-          } else if (homeLeaveDetails?.itinerary?.length) {
-            itinerary = homeLeaveDetails.itinerary;
             if (itinerary) {
               destinationSummary = itinerary
                 .map(

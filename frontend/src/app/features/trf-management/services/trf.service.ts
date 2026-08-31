@@ -1,254 +1,251 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { EMPTY, Observable, throwError, timer } from 'rxjs';
 import { catchError, map, switchMap, takeWhile } from 'rxjs/operators';
-import { DomesticTravelRequestForm, OverseasTravelRequestForm, TravelRequestForm } from '../models/trf.model';
+import {
+  DomesticTravelRequestForm,
+  OverseasTravelRequestForm,
+  TravelRequestForm,
+} from '../models/trf.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class TrfService {
   private apiUrl = `${environment.apiUrl}/trf`;
   private overseasApiUrl = `${environment.apiUrl}/overseas-trf`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   // Get all TRFs (legacy method)
-  getAllTrfs(params?: any): Observable<any> {
+  getAllTrfs(params?: Record<string, unknown>): Observable<unknown> {
     let queryParams = '';
     if (params) {
       // Convert adminView boolean to admin_view string parameter
-      if (params.adminView === true) {
-        params.admin_view = 'true';
-        delete params.adminView;
+      if (params['adminView'] === true) {
+        params['admin_view'] = 'true';
+        delete params['adminView'];
       }
 
       const queryString = Object.keys(params)
         .filter(key => params[key] !== null && params[key] !== undefined && params[key] !== '')
-        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key]))}`)
         .join('&');
       queryParams = queryString ? `?${queryString}` : '';
     }
 
-    return this.http.get<any>(`${environment.apiUrl}/trf/travel-requests/${queryParams}`)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http
+      .get<unknown>(`${environment.apiUrl}/trf/travel-requests/${queryParams}`)
+      .pipe(catchError(this.handleError));
   }
-  
+
   // Get all domestic TRFs
   getAllDomesticTrfs(): Observable<DomesticTravelRequestForm[]> {
-    return this.http.get<DomesticTravelRequestForm[]>(`${this.apiUrl}/`)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http
+      .get<DomesticTravelRequestForm[]>(`${this.apiUrl}/`)
+      .pipe(catchError(this.handleError));
   }
-  
+
   // Get all overseas TRFs
   getAllOverseasTrfs(): Observable<OverseasTravelRequestForm[]> {
-    return this.http.get<OverseasTravelRequestForm[]>(`${this.overseasApiUrl}/`)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http
+      .get<OverseasTravelRequestForm[]>(`${this.overseasApiUrl}/`)
+      .pipe(catchError(this.handleError));
   }
 
   // Get TRF by ID and type
-  getTrfById(id: number, isOverseas: boolean = false, adminView: boolean = false): Observable<TravelRequestForm> {
+  getTrfById(
+    id: number,
+    _isOverseas: boolean = false,
+    adminView: boolean = false
+  ): Observable<TravelRequestForm> {
     const params = adminView ? '?admin_view=true' : '';
-    return this.http.get<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/${params}`)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http
+      .get<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/${params}`)
+      .pipe(catchError(this.handleError));
   }
 
   // Create new domestic TRF
   createDomesticTrf(trf: DomesticTravelRequestForm): Observable<DomesticTravelRequestForm> {
-    return this.http.post<DomesticTravelRequestForm>(`${this.apiUrl}/`, trf)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http
+      .post<DomesticTravelRequestForm>(`${this.apiUrl}/`, trf)
+      .pipe(catchError(this.handleError));
   }
-  
+
   // Create new overseas TRF
   createOverseasTrf(trf: OverseasTravelRequestForm): Observable<OverseasTravelRequestForm> {
-    return this.http.post<OverseasTravelRequestForm>(`${this.overseasApiUrl}/`, trf)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http
+      .post<OverseasTravelRequestForm>(`${this.overseasApiUrl}/`, trf)
+      .pipe(catchError(this.handleError));
   }
 
   // Update TRF
-  updateTrf(id: number, trf: TravelRequestForm, isOverseas: boolean = false): Observable<TravelRequestForm> {
-    return this.http.put<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/`, trf)
-      .pipe(
-        catchError(this.handleError)
-      );
+  updateTrf(
+    id: number,
+    trf: TravelRequestForm,
+    _isOverseas: boolean = false
+  ): Observable<TravelRequestForm> {
+    return this.http
+      .put<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/`, trf)
+      .pipe(catchError(this.handleError));
   }
 
   // Delete TRF
-  deleteTrf(id: number, isOverseas: boolean = false): Observable<any> {
-    return this.http.delete(`${environment.apiUrl}/trf/travel-requests/${id}/`)
-      .pipe(
-        catchError(this.handleError)
-      );
+  deleteTrf(id: number, _isOverseas: boolean = false): Observable<unknown> {
+    return this.http
+      .delete(`${environment.apiUrl}/trf/travel-requests/${id}/`)
+      .pipe(catchError(this.handleError));
   }
 
   // Submit TRF for approval
   submitTrf(
     id: number,
-    isOverseas: boolean = false,
+    _isOverseas: boolean = false,
     selectedApprovers?: { [stepOrder: number]: number },
     skippedSteps?: { [stepOrder: number]: string | null }
   ): Observable<TravelRequestForm> {
-    const payload: any = {};
+    const payload: Record<string, unknown> = {};
     if (selectedApprovers && Object.keys(selectedApprovers).length > 0) {
-      payload.selected_approvers = selectedApprovers;
+      payload['selected_approvers'] = selectedApprovers;
     }
     if (skippedSteps && Object.keys(skippedSteps).length > 0) {
-      payload.skipped_steps = skippedSteps;
+      payload['skipped_steps'] = skippedSteps;
     }
-    return this.http.post<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/submit/`, payload)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http
+      .post<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/submit/`, payload)
+      .pipe(catchError(this.handleError));
   }
 
   // Cancel TRF
-  cancelTrf(id: number, isOverseas: boolean = false): Observable<TravelRequestForm> {
-    return this.http.post<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/cancel/`, {})
-      .pipe(
-        catchError(this.handleError)
-      );
+  cancelTrf(id: number, _isOverseas: boolean = false): Observable<TravelRequestForm> {
+    return this.http
+      .post<TravelRequestForm>(`${environment.apiUrl}/trf/travel-requests/${id}/cancel/`, {})
+      .pipe(catchError(this.handleError));
   }
 
   // Meal Admin: TRFs with requested meals, ready for processing
-  getMealQueue(params?: { status?: string; search?: string; page?: number; page_size?: number }): Observable<any> {
+  getMealQueue(params?: {
+    status?: string;
+    search?: string;
+    page?: number;
+    page_size?: number;
+  }): Observable<unknown> {
     return this.getAllTrfs({ ...params, meal_queue: 'true' });
   }
 
   // Meal Admin: update a TRF's meal fulfillment status
-  updateMealStatus(id: number, mealProcessingStatus: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/travel-requests/${id}/meal-status/`, {
-      meal_processing_status: mealProcessingStatus
-    }).pipe(
-      catchError(this.handleError)
-    );
+  updateMealStatus(id: number, mealProcessingStatus: string): Observable<unknown> {
+    return this.http
+      .post<unknown>(`${environment.apiUrl}/trf/travel-requests/${id}/meal-status/`, {
+        meal_processing_status: mealProcessingStatus,
+      })
+      .pipe(catchError(this.handleError));
   }
 
   // Check TSR accommodation availability
-  checkAccommodationAvailability(id: number): Observable<any> {
-    return this.http.get<any>(`${environment.apiUrl}/trf/travel-requests/${id}/check-accommodation-availability/`)
-      .pipe(
-        catchError(this.handleError)
-      );
+  checkAccommodationAvailability(id: number): Observable<unknown> {
+    return this.http
+      .get<unknown>(
+        `${environment.apiUrl}/trf/travel-requests/${id}/check-accommodation-availability/`
+      )
+      .pipe(catchError(this.handleError));
   }
 
   // Export TRF to PDF — async flow:
   //   1. POST /export-pdf/  → { task_id }
   //   2. Poll /api/tasks/{task_id}/ every 2 s until SUCCESS or FAILURE
   //   3. GET  /download-pdf/?task_id=  → PDF blob
-  exportTrfToPdf(id: number, isOverseas: boolean = false): Observable<Blob> {
-    return this.http.post<{ task_id: string }>(
-      `${environment.apiUrl}/trf/travel-requests/${id}/export-pdf/`, {}
-    ).pipe(
-      switchMap(({ task_id }) =>
-        timer(0, 2000).pipe(
-          switchMap(() =>
-            this.http.get<{ status: string; result?: any; error?: string }>(
-              `${environment.apiUrl}/tasks/${task_id}/`
-            )
-          ),
-          takeWhile(r => r.status !== 'SUCCESS' && r.status !== 'FAILURE', true),
-          switchMap(r => {
-            if (r.status === 'FAILURE') {
-              return throwError(() => new Error(r.error || 'PDF generation failed'));
-            }
-            if (r.status !== 'SUCCESS') {
-              return EMPTY;
-            }
-            return this.http.get(
-              `${environment.apiUrl}/trf/travel-requests/${id}/download-pdf/`,
-              { params: { task_id }, responseType: 'blob' }
-            );
-          })
-        )
-      ),
-      map(v => v as Blob),
-      catchError(this.handleError)
-    );
+  exportTrfToPdf(id: number, _isOverseas: boolean = false): Observable<Blob> {
+    return this.http
+      .post<{ task_id: string }>(`${environment.apiUrl}/trf/travel-requests/${id}/export-pdf/`, {})
+      .pipe(
+        switchMap(({ task_id }) =>
+          timer(0, 2000).pipe(
+            switchMap(() =>
+              this.http.get<{ status: string; result?: unknown; error?: string }>(
+                `${environment.apiUrl}/tasks/${task_id}/`
+              )
+            ),
+            takeWhile(r => r.status !== 'SUCCESS' && r.status !== 'FAILURE', true),
+            switchMap(r => {
+              if (r.status === 'FAILURE') {
+                return throwError(() => new Error(r.error || 'PDF generation failed'));
+              }
+              if (r.status !== 'SUCCESS') {
+                return EMPTY;
+              }
+              return this.http.get(
+                `${environment.apiUrl}/trf/travel-requests/${id}/download-pdf/`,
+                { params: { task_id }, responseType: 'blob' }
+              );
+            })
+          )
+        ),
+        map(v => v as Blob),
+        catchError(this.handleError)
+      );
   }
 
   // =============== NEW METHODS FOR WIZARD INTEGRATION ===============
 
   // Create main Travel Request (supports selected_approvers for direct submission)
-  createTravelRequest(data: any, selectedApprovers?: { [stepOrder: number]: number }): Observable<any> {
+  createTravelRequest(
+    data: Record<string, unknown>,
+    selectedApprovers?: { [stepOrder: number]: number }
+  ): Observable<unknown> {
     const payload = { ...data };
     if (selectedApprovers && Object.keys(selectedApprovers).length > 0) {
-      payload.selected_approvers = selectedApprovers;
+      payload['selected_approvers'] = selectedApprovers;
     }
-    return this.http.post<any>(`${environment.apiUrl}/trf/travel-requests/`, payload)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http
+      .post<unknown>(`${environment.apiUrl}/trf/travel-requests/`, payload)
+      .pipe(catchError(this.handleError));
   }
 
   // Create Itinerary Segment
-  createItinerarySegment(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/itinerary-segments/`, data)
-      .pipe(
-        catchError(this.handleError)
-      );
+  createItinerarySegment(data: Record<string, unknown>): Observable<unknown> {
+    return this.http
+      .post<unknown>(`${environment.apiUrl}/trf/itinerary-segments/`, data)
+      .pipe(catchError(this.handleError));
   }
 
   // Create Daily Meal Selection
-  createDailyMeal(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/daily-meals/`, data)
-      .pipe(
-        catchError(this.handleError)
-      );
+  createDailyMeal(data: Record<string, unknown>): Observable<unknown> {
+    return this.http
+      .post<unknown>(`${environment.apiUrl}/trf/daily-meals/`, data)
+      .pipe(catchError(this.handleError));
   }
 
   // Create Meal Provision
-  createMealProvision(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/meal-provisions/`, data)
-      .pipe(
-        catchError(this.handleError)
-      );
-  }
-
-  // Create Passport Detail
-  createPassportDetail(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/passport-details/`, data)
-      .pipe(
-        catchError(this.handleError)
-      );
+  createMealProvision(data: Record<string, unknown>): Observable<unknown> {
+    return this.http
+      .post<unknown>(`${environment.apiUrl}/trf/meal-provisions/`, data)
+      .pipe(catchError(this.handleError));
   }
 
   // Create Bank Detail
-  createBankDetail(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/bank-details/`, data)
-      .pipe(
-        catchError(this.handleError)
-      );
+  createBankDetail(data: Record<string, unknown>): Observable<unknown> {
+    return this.http
+      .post<unknown>(`${environment.apiUrl}/trf/bank-details/`, data)
+      .pipe(catchError(this.handleError));
   }
 
   // Create Advance Amount Requested Item
-  createAdvanceAmountItem(data: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/advance-amounts/`, data)
-      .pipe(
-        catchError(this.handleError)
-      );
+  createAdvanceAmountItem(data: Record<string, unknown>): Observable<unknown> {
+    return this.http
+      .post<unknown>(`${environment.apiUrl}/trf/advance-amounts/`, data)
+      .pipe(catchError(this.handleError));
   }
 
   // Delete nested resources by type
-  deleteNestedResources(trfId: number, type: string): Observable<any> {
+  deleteNestedResources(trfId: number, type: string): Observable<unknown> {
     const endpoints: { [key: string]: string } = {
-      'itinerary': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-itinerary/`,
-      'meals': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-meals/`,
-      'passport': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-passport/`,
-      'bank': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-bank/`,
-      'advance-amounts': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-advance-amounts/`
+      itinerary: `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-itinerary/`,
+      meals: `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-meals/`,
+      passport: `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-passport/`,
+      bank: `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-bank/`,
+      'advance-amounts': `${environment.apiUrl}/trf/travel-requests/${trfId}/delete-advance-amounts/`,
     };
 
     const url = endpoints[type];
@@ -256,37 +253,36 @@ export class TrfService {
       return throwError(() => new Error(`Unknown resource type: ${type}`));
     }
 
-    return this.http.delete<any>(url).pipe(
-      catchError(this.handleError)
-    );
+    return this.http.delete<unknown>(url).pipe(catchError(this.handleError));
   }
 
   // Book flight for TRF (Admin action)
-  bookFlight(trfId: string, payload: any): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/travel-requests/${trfId}/admin/book-flight/`, payload)
-      .pipe(
-        catchError(this.handleError)
-      );
+  bookFlight(trfId: string, payload: FormData): Observable<unknown> {
+    return this.http
+      .post<unknown>(
+        `${environment.apiUrl}/trf/travel-requests/${trfId}/admin/book-flight/`,
+        payload
+      )
+      .pipe(catchError(this.handleError));
   }
 
   // Reject TRF (Admin action)
-  rejectTrf(trfId: string, reason: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/trf/travel-requests/${trfId}/action/`, {
-      action: 'reject',
-      approverRole: 'Flight Admin',
-      approverName: 'Flight Administrator',
-      comments: reason
-    }).pipe(
-      catchError(this.handleError)
-    );
+  rejectTrf(trfId: string, reason: string): Observable<unknown> {
+    return this.http
+      .post<unknown>(`${environment.apiUrl}/trf/travel-requests/${trfId}/action/`, {
+        action: 'reject',
+        approverRole: 'Flight Admin',
+        approverName: 'Flight Administrator',
+        comments: reason,
+      })
+      .pipe(catchError(this.handleError));
   }
 
   // Cancel flight booking
-  cancelFlightBooking(flightId: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/bookings/flights/${flightId}/cancel/`, {})
-      .pipe(
-        catchError(this.handleError)
-      );
+  cancelFlightBooking(flightId: string): Observable<unknown> {
+    return this.http
+      .post<unknown>(`${environment.apiUrl}/bookings/flights/${flightId}/cancel/`, {})
+      .pipe(catchError(this.handleError));
   }
 
   // =============== PASSPORT FILE UPLOAD METHODS ===============
@@ -295,58 +291,53 @@ export class TrfService {
    * Upload passport document for a TRF
    * Creates passport detail record if it doesn't exist
    */
-  uploadPassportDocument(trfId: number, file: File): Observable<any> {
+  uploadPassportDocument(trfId: number, file: File): Observable<unknown> {
     const formData = new FormData();
     formData.append('trf', trfId.toString());
     formData.append('passport_file', file);
 
-    return this.http.post<any>(
-      `${environment.apiUrl}/trf/passport-details/upload-for-trf/`,
-      formData
-    ).pipe(
-      catchError(this.handleError)
-    );
+    return this.http
+      .post<unknown>(`${environment.apiUrl}/trf/passport-details/upload-for-trf/`, formData)
+      .pipe(catchError(this.handleError));
   }
 
   /**
    * Upload passport file to an existing passport detail record
    */
-  uploadPassportFile(passportDetailId: number, file: File): Observable<any> {
+  uploadPassportFile(passportDetailId: number, file: File): Observable<unknown> {
     const formData = new FormData();
     formData.append('passport_file', file);
 
-    return this.http.post<any>(
-      `${environment.apiUrl}/trf/passport-details/${passportDetailId}/upload-passport/`,
-      formData
-    ).pipe(
-      catchError(this.handleError)
-    );
+    return this.http
+      .post<unknown>(
+        `${environment.apiUrl}/trf/passport-details/${passportDetailId}/upload-passport/`,
+        formData
+      )
+      .pipe(catchError(this.handleError));
   }
 
   /**
    * Delete passport file from a passport detail record
    */
-  deletePassportFile(passportDetailId: number): Observable<any> {
-    return this.http.delete<any>(
-      `${environment.apiUrl}/trf/passport-details/${passportDetailId}/delete-passport-file/`
-    ).pipe(
-      catchError(this.handleError)
-    );
+  deletePassportFile(passportDetailId: number): Observable<unknown> {
+    return this.http
+      .delete<unknown>(
+        `${environment.apiUrl}/trf/passport-details/${passportDetailId}/delete-passport-file/`
+      )
+      .pipe(catchError(this.handleError));
   }
 
   /**
    * Get passport details for a TRF
    */
-  getPassportDetails(trfId: number): Observable<any> {
-    return this.http.get<any>(
-      `${environment.apiUrl}/trf/passport-details/?trf=${trfId}`
-    ).pipe(
-      catchError(this.handleError)
-    );
+  getPassportDetails(trfId: number): Observable<unknown> {
+    return this.http
+      .get<unknown>(`${environment.apiUrl}/trf/passport-details/?trf=${trfId}`)
+      .pipe(catchError(this.handleError));
   }
 
   // Error handling
-  private handleError(error: any) {
+  private handleError(error: unknown) {
     console.error('An error occurred:', error);
     return throwError(() => error);
   }

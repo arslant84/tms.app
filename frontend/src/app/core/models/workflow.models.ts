@@ -41,7 +41,15 @@ export interface WorkflowCondition {
 export interface WorkflowStepNotificationConfig {
   id?: string;
   workflow_step?: string;
-  event_type: 'assignment' | 'approval' | 'rejection' | 'reminder' | 'delegation';
+  event_type:
+    | 'assignment'
+    | 'approval'
+    | 'rejection'
+    | 'delegation'
+    | 'workflow_started'
+    | 'workflow_completed'
+    | 'workflow_cancelled'
+    | 'processing_completed';
   event_type_display?: string;
   notification_template: string;
   notification_template_name?: string;
@@ -71,12 +79,13 @@ export const EVENT_TYPE_OPTIONS = [
   { value: 'assignment', label: 'On Step Assignment' },
   { value: 'approval', label: 'On Step Approval' },
   { value: 'rejection', label: 'On Step Rejection' },
-  { value: 'reminder', label: 'Reminder Notification' },
   { value: 'delegation', label: 'On Step Delegation' },
 
   // Workflow-level events (after all approvals)
+  { value: 'workflow_started', label: 'When Workflow Starts' },
   { value: 'workflow_completed', label: 'When All Approvals Complete' },
   { value: 'workflow_cancelled', label: 'When Workflow Cancelled' },
+  { value: 'processing_completed', label: 'When Processing Is Marked Complete' },
 ];
 
 export interface WorkflowStep {

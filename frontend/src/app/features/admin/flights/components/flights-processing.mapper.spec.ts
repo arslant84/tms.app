@@ -194,7 +194,6 @@ describe('flights-processing.mapper', () => {
   describe('getTravelTypeBadgeClass', () => {
     it('maps known travel types to their badge class', () => {
       expect(getTravelTypeBadgeClass('Overseas')).toBe('badge-blue');
-      expect(getTravelTypeBadgeClass('Home Leave')).toBe('badge-purple');
       expect(getTravelTypeBadgeClass('Domestic')).toBe('badge-green');
     });
 

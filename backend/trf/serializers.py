@@ -336,7 +336,6 @@ class TravelRequestSerializer(serializers.ModelSerializer):
     has_meal_provision = serializers.SerializerMethodField()
     flight_details = serializers.SerializerMethodField()
     overseas_travel_details = serializers.SerializerMethodField()
-    home_leave_details = serializers.SerializerMethodField()
     domestic_travel_details = serializers.SerializerMethodField()
     external_parties_travel_details = serializers.SerializerMethodField()
     arrangement_status = serializers.SerializerMethodField()
@@ -374,7 +373,6 @@ class TravelRequestSerializer(serializers.ModelSerializer):
             "meal_processing_status",
             "flight_details",
             "overseas_travel_details",
-            "home_leave_details",
             "domestic_travel_details",
             "external_parties_travel_details",
             "arrangement_status",
@@ -429,33 +427,6 @@ class TravelRequestSerializer(serializers.ModelSerializer):
     def get_overseas_travel_details(self, obj):
         """Get overseas travel details with itinerary"""
         if obj.travel_type == "Overseas":
-            itinerary_segments = obj.trfitinerarysegment_set.all()
-            return {
-                "itinerary": [
-                    {
-                        "from_location": seg.from_location,
-                        "from": seg.from_location,
-                        "to_location": seg.to_location,
-                        "to": seg.to_location,
-                        "departure_date": (
-                            seg.segment_date.isoformat() if seg.segment_date else None
-                        ),
-                        "date": (
-                            seg.segment_date.isoformat() if seg.segment_date else None
-                        ),
-                        "etd": seg.departure_time,
-                        "eta": seg.arrival_time,
-                        "departure_time": seg.departure_time,
-                        "arrival_time": seg.arrival_time,
-                    }
-                    for seg in itinerary_segments
-                ]
-            }
-        return None
-
-    def get_home_leave_details(self, obj):
-        """Get home leave details with itinerary"""
-        if obj.travel_type == "Home Leave":
             itinerary_segments = obj.trfitinerarysegment_set.all()
             return {
                 "itinerary": [
@@ -702,8 +673,8 @@ class TravelRequestDetailSerializer(serializers.ModelSerializer):
         return None
 
     def get_overseasTravelDetails(self, obj):
-        """Get overseas/home leave travel details with itinerary"""
-        if obj.travel_type in ["Overseas", "Home Leave"]:
+        """Get overseas travel details with itinerary"""
+        if obj.travel_type == "Overseas":
             itinerary_segments = obj.trfitinerarysegment_set.all()
             advance_amounts = obj.trfadvanceamountrequesteditem_set.all()
             try:

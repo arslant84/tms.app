@@ -204,8 +204,6 @@ export function getTravelTypeBadgeClass(travelType: string): string {
   switch (travelType) {
     case 'Overseas':
       return 'badge-blue';
-    case 'Home Leave':
-      return 'badge-purple';
     case 'Domestic':
       return 'badge-green';
     default:

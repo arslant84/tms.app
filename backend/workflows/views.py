@@ -108,8 +108,10 @@ class WorkflowTemplateViewSet(viewsets.ModelViewSet):
             created_by=request.user,
         )
 
-        # Duplicate all steps
-        for step in original.steps.all():
+        # Duplicate all active steps (a deactivated step only exists to
+        # preserve execution history on the original template and has no
+        # place in a fresh duplicate)
+        for step in original.steps.filter(is_active=True):
             new_step = WorkflowStep.objects.create(
                 workflow_template=duplicate,
                 step_order=step.step_order,
@@ -692,7 +694,7 @@ def get_eligible_approvers(request, entity_type: str):
         )
 
     steps_data = []
-    for step in template.steps.all().order_by("step_order"):
+    for step in template.steps.filter(is_active=True).order_by("step_order"):
         approvers = WorkflowApprovalHelper.get_eligible_approvers_for_step(
             step, requester
         )

@@ -11,7 +11,6 @@
       {{ isEditMode ? 'Edit ' : 'New ' }}
       <span *ngIf="selectedTravelType === 'Domestic'">Domestic Travel Request</span>
       <span *ngIf="selectedTravelType === 'Overseas'">Overseas Travel Request</span>
-      <span *ngIf="selectedTravelType === 'Home Leave'">Home Leave Passage Request</span>
       <span *ngIf="selectedTravelType === 'External Parties'">External Parties Travel Request</span>
     </h1>
     <p class="page-subtitle">Follow the steps to complete your travel & service request.</p>
@@ -56,13 +55,6 @@
         (backClick)="onPrevious()"
       >
       </app-overseas-travel-details>
-      <app-home-leave-details
-        *ngIf="selectedTravelType === 'Home Leave'"
-        [initialData]="homeLeaveData"
-        (formSubmit)="onTravelDetailsSubmit($event)"
-        (backClick)="onPrevious()"
-      >
-      </app-home-leave-details>
       <app-external-parties-details
         *ngIf="selectedTravelType === 'External Parties'"
         [initialData]="externalPartiesData"
