@@ -190,25 +190,12 @@ export interface RawPassportRow {
   passportExpiryDate?: string | null;
 }
 
-/** Return shape of transformPassportDetails() / what's read back out of it
- * in createNestedResources(). */
-export interface TransformedPassportDetails {
-  fullName: string;
-  passportNumber: string;
-  nationality: string;
-  dateOfBirth: string | null;
-  placeOfBirth: string;
-  passportIssueDate: string | null;
-  passportExpiryDate: string | null;
-}
-
 /** Return shape of prepareTrfData()/prepareXData() - what
  * createNestedResources() consumes to build every linked resource. */
 export interface PreparedTrfData {
   mainTrf: Record<string, unknown>;
   itinerarySegments: NestedItineraryRow[];
   mealSelections: DailyMealSelection[];
-  passportDetails: TransformedPassportDetails | null;
   bankDetails: AdvanceBankDetails | null;
   advanceAmounts: AdvanceAmountItem[];
   accommodation?: AccommodationDetails | null;

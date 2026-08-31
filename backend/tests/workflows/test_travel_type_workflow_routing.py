@@ -36,7 +36,6 @@ class TestWorkflowEntityTypeProperty:
         expected = {
             "Domestic": "travelrequest_domestic",
             "Overseas": "travelrequest_overseas",
-            "Home Leave": "travelrequest_homeleave",
             "External Parties": "travelrequest_external",
         }
         for travel_type, expected_entity_type in expected.items():

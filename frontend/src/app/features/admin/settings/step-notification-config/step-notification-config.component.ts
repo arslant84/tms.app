@@ -161,7 +161,7 @@ export class StepNotificationConfigComponent implements OnInit {
   }
 
   private doRestoreDefaults(): void {
-    type EventType = 'assignment' | 'approval' | 'rejection' | 'reminder' | 'delegation';
+    type EventType = 'assignment' | 'approval' | 'rejection' | 'delegation';
     type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
     // Default notification configs matching backend defaults

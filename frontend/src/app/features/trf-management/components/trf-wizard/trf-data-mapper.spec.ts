@@ -8,7 +8,6 @@ import {
   transformExternalPartiesItineraryData,
   transformItineraryData,
   transformMealSelectionsData,
-  transformPassportDetails,
 } from './trf-data-mapper';
 
 describe('trf-data-mapper', () => {
@@ -234,35 +233,6 @@ describe('trf-data-mapper', () => {
     it('takes the first element when given an array', () => {
       const result = extractPassportFileInfo([{ passport_file_url: 'https://example.com/a.pdf' }]);
       expect(result.fileName).toBe('a.pdf');
-    });
-  });
-
-  describe('transformPassportDetails', () => {
-    it('returns blank defaults for missing input', () => {
-      expect(transformPassportDetails(null)).toEqual({
-        fullName: '',
-        passportNumber: '',
-        nationality: '',
-        dateOfBirth: null,
-        placeOfBirth: '',
-        passportIssueDate: null,
-        passportExpiryDate: null,
-      });
-    });
-
-    it('reads the first element when given an array', () => {
-      const result = transformPassportDetails([
-        { full_name: 'Jane Doe', passport_number: 'A1234567', nationality: 'Malaysian' },
-      ]);
-      expect(result.fullName).toBe('Jane Doe');
-      expect(result.passportNumber).toBe('A1234567');
-      expect(result.nationality).toBe('Malaysian');
-    });
-
-    it('reads a single object directly', () => {
-      const result = transformPassportDetails({ fullName: 'John Doe', passportNumber: 'B7654321' });
-      expect(result.fullName).toBe('John Doe');
-      expect(result.passportNumber).toBe('B7654321');
     });
   });
 });

@@ -17,7 +17,6 @@ import type {
   ItinerarySegment as OverseasItinerarySegment,
   OverseasTravelDetails,
 } from '../overseas-travel-details/overseas-travel-details.component';
-import type { HomeLeaveDetails } from '../home-leave-details/home-leave-details.component';
 import type { ExternalPartiesDetails } from '../external-parties-details/external-parties-details.component';
 import {
   deriveTripTypeFromItinerary,
@@ -27,7 +26,6 @@ import {
   transformExternalPartiesItineraryData,
   transformItineraryData,
   transformMealSelectionsData,
-  transformPassportDetails,
 } from './trf-data-mapper';
 import type {
   NestedItineraryRow,
@@ -35,18 +33,14 @@ import type {
   RawBankDetailRow,
   RawMealRow,
   RawPassportRow,
-  TransformedPassportDetails,
   TrfBackendResponse,
 } from './trf-wizard.types';
 
-type SelectedTravelType = 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties' | null;
+type SelectedTravelType = 'Domestic' | 'Overseas' | 'External Parties' | null;
 
 export interface TravelTypeEditResult {
   domesticTravelData?: Partial<DomesticTravelSpecificDetails>;
   overseasTravelData?: Partial<OverseasTravelDetails>;
-  homeLeaveData?: Partial<HomeLeaveDetails> & {
-    passportDetails?: TransformedPassportDetails | null;
-  };
   externalPartiesData?: Partial<ExternalPartiesDetails>;
 }
 
@@ -116,7 +110,7 @@ export class TrfEditLoaderService {
   /**
    * Pre-populate travel-specific data
    *
-   * High cyclomatic complexity is a 4-branch switch over travel type, each
+   * High cyclomatic complexity is a 3-branch switch over travel type, each
    * branch a straight-line field mapping from the backend's nested response
    * shape - not genuinely branchy logic. A real refactor (e.g. one mapper
    * method per travel type) is better done on its own rather than folded
@@ -205,51 +199,6 @@ export class TrfEditLoaderService {
         };
       }
 
-      case 'Home Leave': {
-        // Backend returns nested structure: data.overseasTravelDetails (Home Leave reuses overseas structure)
-        const homeLeaveDetails = data.overseasTravelDetails || {};
-        const homeLeaveItinerary =
-          homeLeaveDetails.itinerary || data.itinerary_segments || data.itinerary || [];
-        const passportDetails = (data.passport_details || data.passportDetails) as
-          | RawPassportRow
-          | RawPassportRow[];
-        const homeLeaveBank =
-          homeLeaveDetails.advanceBankDetails ||
-          data.bank_detail ||
-          data.advance_bank_details ||
-          data.bankDetails;
-        const homeLeaveAdvanceAmounts =
-          homeLeaveDetails.advanceAmountRequested ||
-          data.advance_amounts ||
-          data.advance_amount_items ||
-          data.advanceAmounts ||
-          [];
-        const homeLeavePassport = extractPassportFileInfo(passportDetails);
-
-        const homeLeaveTransformedItinerary = transformItineraryData(
-          homeLeaveItinerary as NestedItineraryRow[]
-        );
-        return {
-          homeLeaveData: {
-            purpose: homeLeaveDetails.purpose || data.purpose || '',
-            tripType: deriveTripTypeFromItinerary(
-              homeLeaveTransformedItinerary as unknown as Record<string, unknown>[],
-              'from',
-              'to',
-              'date'
-            ),
-            itinerary: homeLeaveTransformedItinerary,
-            passportDetails: transformPassportDetails(passportDetails),
-            advanceBankDetails: transformBankDetails(homeLeaveBank as RawBankDetailRow),
-            advanceAmountRequested: transformAdvanceAmounts(
-              homeLeaveAdvanceAmounts as RawAdvanceAmountRow[]
-            ),
-            advanceConsentAccepted: data.advance_consent_accepted || false,
-            passportUpload: homeLeavePassport,
-          },
-        };
-      }
-
       case 'External Parties': {
         // Backend returns nested structure: data.externalPartiesTravelDetails
         const externalDetails = data.externalPartiesTravelDetails || {};
@@ -293,7 +242,7 @@ export class TrfEditLoaderService {
               data.external_cost_center ||
               data.externalCostCenter ||
               '',
-            itinerary: externalTransformedItinerary,
+            itinerary: externalTransformedItinerary as unknown as Record<string, unknown>[],
             passportUpload: externalPassport,
           },
         };

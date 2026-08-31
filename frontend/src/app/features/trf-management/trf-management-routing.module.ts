@@ -8,40 +8,36 @@ import { TrfTypeSelectionComponent } from './components/trf-type-selection/trf-t
 const routes: Routes = [
   {
     path: '',
-    component: TrfListComponent
+    component: TrfListComponent,
   },
   {
     path: 'create',
-    component: TrfTypeSelectionComponent
+    component: TrfTypeSelectionComponent,
   },
   {
     path: 'create/domestic',
-    component: TrfWizardComponent
+    component: TrfWizardComponent,
   },
   {
     path: 'create/overseas',
-    component: TrfWizardComponent
-  },
-  {
-    path: 'create/home-leave',
-    component: TrfWizardComponent
+    component: TrfWizardComponent,
   },
   {
     path: 'create/external-parties',
-    component: TrfWizardComponent
+    component: TrfWizardComponent,
   },
   {
     path: 'edit/:id',
-    component: TrfWizardComponent
+    component: TrfWizardComponent,
   },
   {
     path: ':id',
-    component: TrfDetailComponent
-  }
+    component: TrfDetailComponent,
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class TrfManagementRoutingModule { }
+export class TrfManagementRoutingModule {}

@@ -13,9 +13,8 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
-import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
+import { WorkflowInstance } from '../../../../core/models/workflow.models';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
@@ -24,13 +23,7 @@ import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handl
 @Component({
   selector: 'app-visa-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    ApprovalActionsComponent,
-    WorkflowStatusComponent,
-    LoadingSpinnerComponent,
-  ],
+  imports: [CommonModule, RouterModule, WorkflowStatusComponent, LoadingSpinnerComponent],
   templateUrl: './visa-detail.component.html',
   styleUrl: './visa-detail.component.scss',
 })
@@ -44,7 +37,6 @@ export class VisaDetailComponent implements OnInit {
   // Workflow properties
   workflow: WorkflowInstance | null = null;
   workflowLoading: boolean = false;
-  currentStepExecution: WorkflowStepExecution | null = null;
 
   private readonly EDITABLE_STATUSES = ['Draft', 'Rejected'];
   private readonly CANCELLABLE_STATUSES = ['Pending'];
@@ -117,7 +109,6 @@ export class VisaDetailComponent implements OnInit {
             this.workflowService.getInstance(instance.id).subscribe({
               next: workflow => {
                 this.workflow = workflow;
-                this.updateCurrentStepExecution();
                 this.workflowLoading = false;
               },
               error: () => {
@@ -132,39 +123,6 @@ export class VisaDetailComponent implements OnInit {
           this.workflowLoading = false;
         },
       });
-  }
-
-  updateCurrentStepExecution(): void {
-    if (!this.workflow?.step_executions) {
-      this.currentStepExecution = null;
-      return;
-    }
-
-    // Find the current pending step that the user can action
-    this.currentStepExecution =
-      this.workflow.step_executions.find(
-        step =>
-          step.status === 'pending' &&
-          step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
-          step.can_action === true
-      ) || null;
-  }
-
-  onWorkflowApproved(): void {
-    this.toastService.success('Approval successful');
-    this.loadApplicationDetails();
-    this.loadWorkflow();
-  }
-
-  onWorkflowRejected(): void {
-    this.toastService.info('Request rejected');
-    this.loadApplicationDetails();
-    this.loadWorkflow();
-  }
-
-  onWorkflowDelegated(): void {
-    this.toastService.success('Successfully delegated');
-    this.loadWorkflow();
   }
 
   loadApprovalSteps(): void {
@@ -184,16 +142,6 @@ export class VisaDetailComponent implements OnInit {
   }
 
   /**
-   * The signed-in user has a pending, actionable workflow step on this
-   * application right now - i.e. they're the one being asked to
-   * approve/reject it. Reuses the same can_action signal the
-   * approval-actions UI already trusts, rather than a separate role check.
-   */
-  get isCurrentApprover(): boolean {
-    return !!this.currentStepExecution;
-  }
-
-  /**
    * The signed-in user created this application. Owner-only actions
    * (Edit/Cancel/Delete) are gated on this so a viewer with read access -
    * an approver, an admin browsing, anyone else - can't act on someone
@@ -205,7 +153,7 @@ export class VisaDetailComponent implements OnInit {
   }
 
   canEdit(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     if (!this.application?.status) return false;
 
     const status = this.application.status;
@@ -230,7 +178,7 @@ export class VisaDetailComponent implements OnInit {
   }
 
   canCancel(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     const status = this.application?.status || '';
     // Allow cancel for any status that contains 'Pending' and is not approved
     if (status.includes('Pending')) {
@@ -246,7 +194,7 @@ export class VisaDetailComponent implements OnInit {
    * owner only), the same gap fixed there.
    */
   canDelete(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     return this.EDITABLE_STATUSES.includes(this.application?.status || '');
   }
 

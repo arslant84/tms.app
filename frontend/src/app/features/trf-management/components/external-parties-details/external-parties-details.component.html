@@ -2,48 +2,63 @@
   <form [formGroup]="externalForm" (ngSubmit)="onSubmit()">
     <!-- Purpose of Travel Section -->
     <app-form-section-card icon="bi-file-text" title="Purpose of Visit">
-        <div class="form-group mb-3">
-          <label for="purpose" class="form-label">Please describe the purpose of the visit <span class="text-danger">*</span></label>
-          <textarea
-            class="form-control"
-            id="purpose"
-            formControlName="purpose"
-            rows="3"
-            placeholder="Describe the purpose of visit"
-            [ngClass]="{'is-invalid': externalForm.get('purpose')?.invalid && externalForm.get('purpose')?.touched}"></textarea>
-          <div class="invalid-feedback" *ngIf="externalForm.get('purpose')?.errors?.['required'] && externalForm.get('purpose')?.touched">
-            Purpose is required
-          </div>
-          <div class="invalid-feedback" *ngIf="externalForm.get('purpose')?.errors?.['minlength'] && externalForm.get('purpose')?.touched">
-            Purpose must be at least 10 characters
-          </div>
+      <div class="form-group mb-3">
+        <label for="purpose" class="form-label"
+          >Please describe the purpose of the visit <span class="text-danger">*</span></label
+        >
+        <textarea
+          class="form-control"
+          id="purpose"
+          formControlName="purpose"
+          rows="3"
+          placeholder="Describe the purpose of visit"
+          [ngClass]="{
+            'is-invalid':
+              externalForm.get('purpose')?.invalid && externalForm.get('purpose')?.touched,
+          }"
+        ></textarea>
+        <div
+          class="invalid-feedback"
+          *ngIf="
+            externalForm.get('purpose')?.errors?.['required'] &&
+            externalForm.get('purpose')?.touched
+          "
+        >
+          Purpose is required
         </div>
+        <div
+          class="invalid-feedback"
+          *ngIf="
+            externalForm.get('purpose')?.errors?.['minlength'] &&
+            externalForm.get('purpose')?.touched
+          "
+        >
+          Purpose must be at least 10 characters
+        </div>
+      </div>
 
-        <div class="form-group">
-          <label for="tripType" class="form-label d-flex align-items-center gap-2">
-            <i class="bi bi-card-checklist"></i>
-            Trip Type <span class="text-danger">*</span>
-          </label>
-          <select
-            id="tripType"
-            formControlName="tripType"
-            class="form-select"
-          >
-            <option value="One Way">One Way</option>
-            <option value="Round Trip">Round Trip</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label for="tripType" class="form-label d-flex align-items-center gap-2">
+          <i class="bi bi-card-checklist"></i>
+          Trip Type <span class="text-danger">*</span>
+        </label>
+        <select id="tripType" formControlName="tripType" class="form-select">
+          <option value="One Way">One Way</option>
+          <option value="Round Trip">Round Trip</option>
+        </select>
+      </div>
     </app-form-section-card>
 
     <!-- Itinerary Section -->
     <app-form-section-card icon="bi-map" title="Travel Itinerary">
-        <app-itinerary-editor
-          [fields]="itineraryFields"
-          [initialSegments]="initialData.itinerary || []"
-          [tripType]="tripTypeValue"
-          (segmentsChange)="onItinerarySegmentsChange($event)"
-          (datesChange)="onItineraryDatesChange($event)">
-        </app-itinerary-editor>
+      <app-itinerary-editor
+        [fields]="itineraryFields"
+        [initialSegments]="initialData.itinerary || []"
+        [tripType]="tripTypeValue"
+        (segmentsChange)="onItinerarySegmentsChange($event)"
+        (datesChange)="onItineraryDatesChange($event)"
+      >
+      </app-itinerary-editor>
     </app-form-section-card>
 
     <!-- Meal Provisions Section -->
@@ -51,81 +66,341 @@
       <app-meal-provision
         [itineraryDates]="itineraryDates"
         [initialSelections]="initialData.mealProvisions?.dailySelections || []"
-        (selectionsChange)="onMealSelectionsChange($event)">
+        (selectionsChange)="onMealSelectionsChange($event)"
+      >
       </app-meal-provision>
+    </app-form-section-card>
+
+    <!-- Accommodation Section -->
+    <app-form-section-card icon="bi-house-door" title="Accommodation">
+      <div formGroupName="accommodation">
+        <div class="form-check mb-3">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="accommodationRequired"
+            formControlName="required"
+          />
+          <label class="form-check-label" for="accommodationRequired">
+            Requires Accommodation
+          </label>
+        </div>
+
+        <div class="form-grid" *ngIf="externalForm.get('accommodation.required')?.value">
+          <div class="form-group">
+            <label for="accommodationGender" class="form-label">Gender*</label>
+            <select
+              id="accommodationGender"
+              class="form-control"
+              formControlName="gender"
+              [ngClass]="{
+                'is-invalid':
+                  externalForm.get('accommodation.gender')?.invalid &&
+                  externalForm.get('accommodation.gender')?.touched,
+              }"
+            >
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                externalForm.get('accommodation.gender')?.invalid &&
+                externalForm.get('accommodation.gender')?.touched
+              "
+            >
+              Please select gender
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationLocation" class="form-label">Location*</label>
+            <select
+              id="accommodationLocation"
+              class="form-control"
+              formControlName="location"
+              [ngClass]="{
+                'is-invalid':
+                  externalForm.get('accommodation.location')?.invalid &&
+                  externalForm.get('accommodation.location')?.touched,
+              }"
+            >
+              <option value="">Select location</option>
+              <option *ngFor="let loc of accommodationLocations" [value]="loc">{{ loc }}</option>
+            </select>
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                externalForm.get('accommodation.location')?.invalid &&
+                externalForm.get('accommodation.location')?.touched
+              "
+            >
+              Please select location
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationCheckInDate" class="form-label">Check-in Date*</label>
+            <input
+              type="date"
+              id="accommodationCheckInDate"
+              class="form-control"
+              formControlName="checkInDate"
+              [ngClass]="{
+                'is-invalid':
+                  (externalForm.get('accommodation.checkInDate')?.invalid &&
+                    externalForm.get('accommodation.checkInDate')?.touched) ||
+                  (externalForm.get('accommodation')?.errors?.['outsideItineraryRange'] &&
+                    externalForm.get('accommodation.checkInDate')?.touched),
+              }"
+            />
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                externalForm.get('accommodation.checkInDate')?.invalid &&
+                externalForm.get('accommodation.checkInDate')?.touched
+              "
+            >
+              Check-in date is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationCheckInTime" class="form-label">Check-in Time</label>
+            <input
+              type="time"
+              id="accommodationCheckInTime"
+              class="form-control"
+              formControlName="checkInTime"
+            />
+            <small class="form-text">Time of arrival (HH:MM)</small>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationCheckOutDate" class="form-label">Check-out Date*</label>
+            <input
+              type="date"
+              id="accommodationCheckOutDate"
+              class="form-control"
+              formControlName="checkOutDate"
+              [ngClass]="{
+                'is-invalid':
+                  (externalForm.get('accommodation.checkOutDate')?.invalid &&
+                    externalForm.get('accommodation.checkOutDate')?.touched) ||
+                  (externalForm.get('accommodation')?.errors?.['checkOutBeforeCheckIn'] &&
+                    externalForm.get('accommodation.checkOutDate')?.touched) ||
+                  (externalForm.get('accommodation')?.errors?.['outsideItineraryRange'] &&
+                    externalForm.get('accommodation.checkOutDate')?.touched),
+              }"
+            />
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                externalForm.get('accommodation.checkOutDate')?.invalid &&
+                externalForm.get('accommodation.checkOutDate')?.touched
+              "
+            >
+              Check-out date is required
+            </div>
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                externalForm.get('accommodation')?.errors?.['checkOutBeforeCheckIn'] &&
+                externalForm.get('accommodation.checkOutDate')?.touched
+              "
+            >
+              Check-out date can't be earlier than check-in date
+            </div>
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="
+                externalForm.get('accommodation')?.errors?.['outsideItineraryRange'] &&
+                externalForm.get('accommodation.checkOutDate')?.touched
+              "
+            >
+              Check-in/Check-out must fall within your itinerary dates ({{
+                externalForm.get('accommodation')?.errors?.['outsideItineraryRange']?.first
+              }}
+              to
+              {{ externalForm.get('accommodation')?.errors?.['outsideItineraryRange']?.last }})
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationCheckOutTime" class="form-label">Check-out Time</label>
+            <input
+              type="time"
+              id="accommodationCheckOutTime"
+              class="form-control"
+              formControlName="checkOutTime"
+            />
+            <small class="form-text">Time of departure (HH:MM)</small>
+          </div>
+
+          <div class="form-group">
+            <label for="accommodationRoomType" class="form-label">Preferred Room Type</label>
+            <select id="accommodationRoomType" class="form-control" formControlName="roomType">
+              <option value="">Select room type (optional)</option>
+              <option *ngFor="let type of accommodationRoomTypes" [value]="type">{{ type }}</option>
+            </select>
+            <small class="form-text"
+              >Select your preferred room type (subject to availability)</small
+            >
+          </div>
+
+          <div class="form-group full-width">
+            <label for="accommodationSpecialRequests" class="form-label">Special Requests</label>
+            <textarea
+              id="accommodationSpecialRequests"
+              class="form-control"
+              formControlName="specialRequests"
+              rows="2"
+              placeholder="Any special requirements or preferences"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </app-form-section-card>
+
+    <!-- Transport Section -->
+    <app-form-section-card icon="bi-truck" title="Transport">
+      <div formGroupName="transport">
+        <div class="form-check mb-3">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="transportRequired"
+            formControlName="required"
+          />
+          <label class="form-check-label" for="transportRequired"> Requires Transport </label>
+        </div>
+
+        <div *ngIf="externalForm.get('transport.required')?.value">
+          <app-itinerary-editor
+            #transportJourneyEditor
+            [fields]="transportJourneyFields"
+            [initialSegments]="initialData.transport?.journeys || []"
+            [forceAllowAdd]="true"
+            addButtonLabel="Add Journey"
+            (segmentsChange)="onTransportSegmentsChange($event)"
+          >
+          </app-itinerary-editor>
+          <div class="invalid-feedback d-block" *ngIf="isTransportIncomplete">
+            At least one journey is required
+          </div>
+          <div class="invalid-feedback d-block" *ngIf="isTransportOutsideItineraryRange">
+            All journey dates must fall within your itinerary dates
+            <ng-container *ngIf="transportItineraryRangeText as range">
+              ({{ range.first }} to {{ range.last }})
+            </ng-container>
+          </div>
+        </div>
+      </div>
     </app-form-section-card>
 
     <!-- External Party Information Section -->
     <app-form-section-card icon="bi-person" title="External Party Information">
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <label class="form-label">Full Name <span class="text-danger">*</span></label>
-            <input
-              type="text"
-              formControlName="externalFullName"
-              placeholder="Enter full name"
-              class="form-control"
-              [ngClass]="{'is-invalid': externalForm.get('externalFullName')?.invalid && externalForm.get('externalFullName')?.touched}"
-            />
-            <div class="invalid-feedback" *ngIf="externalForm.get('externalFullName')?.errors?.['required'] && externalForm.get('externalFullName')?.touched">
-              Full name is required
-            </div>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Organization <span class="text-danger">*</span></label>
-            <input
-              type="text"
-              formControlName="externalOrganization"
-              placeholder="Organization name"
-              class="form-control"
-              [ngClass]="{'is-invalid': externalForm.get('externalOrganization')?.invalid && externalForm.get('externalOrganization')?.touched}"
-            />
-            <div class="invalid-feedback" *ngIf="externalForm.get('externalOrganization')?.errors?.['required'] && externalForm.get('externalOrganization')?.touched">
-              Organization is required
-            </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Full Name <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            formControlName="externalFullName"
+            placeholder="Enter full name"
+            class="form-control"
+            [ngClass]="{
+              'is-invalid':
+                externalForm.get('externalFullName')?.invalid &&
+                externalForm.get('externalFullName')?.touched,
+            }"
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="
+              externalForm.get('externalFullName')?.errors?.['required'] &&
+              externalForm.get('externalFullName')?.touched
+            "
+          >
+            Full name is required
           </div>
         </div>
+        <div class="col-md-6">
+          <label class="form-label">Organization <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            formControlName="externalOrganization"
+            placeholder="Organization name"
+            class="form-control"
+            [ngClass]="{
+              'is-invalid':
+                externalForm.get('externalOrganization')?.invalid &&
+                externalForm.get('externalOrganization')?.touched,
+            }"
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="
+              externalForm.get('externalOrganization')?.errors?.['required'] &&
+              externalForm.get('externalOrganization')?.touched
+            "
+          >
+            Organization is required
+          </div>
+        </div>
+      </div>
 
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Reference to Authority Letter</label>
-            <input
-              type="text"
-              formControlName="externalRefToAuthorityLetter"
-              placeholder="Letter reference number"
-              class="form-control"
-            />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Cost Center <span class="text-danger">*</span></label>
-            <input
-              type="text"
-              formControlName="externalCostCenter"
-              placeholder="Cost center code"
-              class="form-control"
-              [ngClass]="{'is-invalid': externalForm.get('externalCostCenter')?.invalid && externalForm.get('externalCostCenter')?.touched}"
-            />
-            <div class="invalid-feedback" *ngIf="externalForm.get('externalCostCenter')?.errors?.['required'] && externalForm.get('externalCostCenter')?.touched">
-              Cost center is required
-            </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Reference to Authority Letter</label>
+          <input
+            type="text"
+            formControlName="externalRefToAuthorityLetter"
+            placeholder="Letter reference number"
+            class="form-control"
+          />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Cost Center <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            formControlName="externalCostCenter"
+            placeholder="Cost center code"
+            class="form-control"
+            [ngClass]="{
+              'is-invalid':
+                externalForm.get('externalCostCenter')?.invalid &&
+                externalForm.get('externalCostCenter')?.touched,
+            }"
+          />
+          <div
+            class="invalid-feedback"
+            *ngIf="
+              externalForm.get('externalCostCenter')?.errors?.['required'] &&
+              externalForm.get('externalCostCenter')?.touched
+            "
+          >
+            Cost center is required
           </div>
         </div>
+      </div>
     </app-form-section-card>
 
     <!-- Passport Details Section -->
     <app-form-section-card icon="bi-file-earmark-text" title="Passport Details (Optional)">
-        <p class="text-muted small mb-3">
-          Upload a copy of the external party's passport for flight booking purposes.
-        </p>
+      <p class="text-muted small mb-3">
+        Upload a copy of the external party's passport for flight booking purposes.
+      </p>
 
-        <!-- File Input -->
-        <app-passport-upload
-          inputId="passportFileExternal"
-          [fileName]="initialData.passportUpload?.fileName || ''"
-          [fileUrl]="initialData.passportUpload?.fileUrl || ''"
-          (fileSelected)="onPassportFileSelected($event)"
-          (fileRemoved)="onPassportFileRemoved()">
-        </app-passport-upload>
+      <!-- File Input -->
+      <app-passport-upload
+        inputId="passportFileExternal"
+        [fileName]="initialData.passportUpload?.fileName || ''"
+        [fileUrl]="initialData.passportUpload?.fileUrl || ''"
+        (fileSelected)="onPassportFileSelected($event)"
+        (fileRemoved)="onPassportFileRemoved()"
+      >
+      </app-passport-upload>
     </app-form-section-card>
 
     <!-- Navigation Buttons -->

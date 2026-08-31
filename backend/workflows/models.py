@@ -117,6 +117,18 @@ class WorkflowStep(models.Model):
         default=False, help_text="Whether approver must provide comments"
     )
 
+    is_active = models.BooleanField(
+        default=True,
+        help_text=(
+            "False means this step was removed from the workflow configuration "
+            "(e.g. step count reduced) but is kept because past workflow "
+            "instances have execution history against it. Inactive steps are "
+            "excluded from step counts, live workflow progression, and the "
+            "editable step list, and are reactivated automatically if a future "
+            "edit reintroduces the same step_order."
+        ),
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -57,7 +57,7 @@ export interface ApprovalSubmissionData {
 export class ApprovalSubmissionComponent implements OnInit {
   @ViewChild(ApproverSelectionComponent) approverSelectionComponent?: ApproverSelectionComponent;
 
-  @Input() travelType: 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties' | null = null;
+  @Input() travelType: 'Domestic' | 'Overseas' | 'External Parties' | null = null;
   @Input() requestorData: RequestorSummary | null = null;
   @Input() travelDetails: TravelDetailsSummary | null = null;
   @Input() initialData: Partial<ApprovalSubmissionData> = {};
@@ -108,7 +108,7 @@ export class ApprovalSubmissionComponent implements OnInit {
     this.entityType = this.resolveWorkflowEntityType();
 
     // Determine if international travel
-    this.isInternationalTravel = this.travelType === 'Overseas' || this.travelType === 'Home Leave';
+    this.isInternationalTravel = this.travelType === 'Overseas';
 
     // Initialize selectedApprovers from initialData if available (edit mode)
     if (this.initialData?.selected_approvers) {
@@ -145,7 +145,6 @@ export class ApprovalSubmissionComponent implements OnInit {
     const map: Record<string, string> = {
       Domestic: 'travelrequest_domestic',
       Overseas: 'travelrequest_overseas',
-      'Home Leave': 'travelrequest_homeleave',
       'External Parties': 'travelrequest_external',
     };
     return (this.travelType && map[this.travelType]) || 'travelrequest';
@@ -227,7 +226,6 @@ export class ApprovalSubmissionComponent implements OnInit {
     const iconMap: { [key: string]: string } = {
       Domestic: 'bi-building',
       Overseas: 'bi-globe',
-      'Home Leave': 'bi-house-door',
       'External Parties': 'bi-people',
     };
     return iconMap[this.travelType || ''] || 'bi-airplane';

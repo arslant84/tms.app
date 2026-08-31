@@ -30,7 +30,6 @@ interface TrfRaw {
   has_flight_booking?: boolean;
   flight_details?: unknown;
   overseas_travel_details?: { itinerary?: ItinerarySegment[] };
-  home_leave_details?: { itinerary?: ItinerarySegment[] };
   domestic_travel_details?: { itinerary?: ItinerarySegment[] };
 }
 
@@ -107,14 +106,12 @@ export class FlightsAdminOverviewComponent implements OnInit {
     this.error = null;
 
     this.trfService.getAllTrfs({ adminView: true, page_size: 1000 }).subscribe({
-      next: (response: { results?: TrfRaw[]; trfs?: TrfRaw[] }) => {
+      next: (raw: unknown) => {
+        const response = raw as { results?: TrfRaw[]; trfs?: TrfRaw[] };
         const trfs: TrfRaw[] = response.results || response.trfs || [];
 
         const flightTrfs = trfs.filter(trf => {
-          if (
-            trf.travel_type === 'Overseas' ||
-            trf.travel_type === 'Home Leave'
-          ) {
+          if (trf.travel_type === 'Overseas') {
             return true;
           }
           if (trf.travel_type === 'Domestic') {
@@ -130,8 +127,6 @@ export class FlightsAdminOverviewComponent implements OnInit {
           let destinationSummary = 'N/A';
           if (trf.overseas_travel_details?.itinerary?.length) {
             destinationSummary = trf.overseas_travel_details.itinerary.map(segmentLabel).join(', ');
-          } else if (trf.home_leave_details?.itinerary?.length) {
-            destinationSummary = trf.home_leave_details.itinerary.map(segmentLabel).join(', ');
           } else if (trf.domestic_travel_details?.itinerary?.length) {
             destinationSummary = trf.domestic_travel_details.itinerary.map(segmentLabel).join(', ');
           } else if (trf.purpose) {
@@ -273,8 +268,6 @@ export class FlightsAdminOverviewComponent implements OnInit {
     switch (travelType) {
       case 'Overseas':
         return 'badge-blue';
-      case 'Home Leave':
-        return 'badge-purple';
       case 'Domestic':
         return 'badge-green';
       default:

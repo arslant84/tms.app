@@ -89,8 +89,8 @@ class WorkflowTemplateAdmin(admin.ModelAdmin):
     )
 
     def step_count(self, obj):
-        """Display number of steps"""
-        return obj.steps.count()
+        """Display number of active steps"""
+        return obj.steps.filter(is_active=True).count()
 
     step_count.short_description = "Steps"
 
@@ -108,8 +108,15 @@ class WorkflowStepAdmin(admin.ModelAdmin):
         "approver_role",
         "is_required",
         "can_skip",
+        "is_active",
     ]
-    list_filter = ["is_required", "can_skip", "requires_comments", "workflow_template"]
+    list_filter = [
+        "is_required",
+        "can_skip",
+        "requires_comments",
+        "is_active",
+        "workflow_template",
+    ]
     search_fields = [
         "step_name",
         "step_description",
@@ -130,7 +137,10 @@ class WorkflowStepAdmin(admin.ModelAdmin):
                 "description": "Use approver_permission (preferred) or approver_role (deprecated) to assign approvers",
             },
         ),
-        ("Behavior", {"fields": ("is_required", "can_skip", "requires_comments")}),
+        (
+            "Behavior",
+            {"fields": ("is_required", "can_skip", "requires_comments", "is_active")},
+        ),
         (
             "Timestamps",
             {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},

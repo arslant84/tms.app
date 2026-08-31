@@ -137,7 +137,9 @@ class WorkflowEngine:
         )
 
         # Get first step
-        first_step = workflow_template.steps.filter(step_order=1).first()
+        first_step = workflow_template.steps.filter(
+            step_order=1, is_active=True
+        ).first()
 
         if first_step:
             # Start first step
@@ -878,7 +880,7 @@ class WorkflowEngine:
         # Find next step
         next_step = (
             workflow_instance.workflow_template.steps.filter(
-                step_order__gt=current_step_order
+                step_order__gt=current_step_order, is_active=True
             )
             .order_by("step_order")
             .first()

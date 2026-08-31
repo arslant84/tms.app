@@ -102,7 +102,6 @@ def generate_request_id(
 TSR_TYPE_CODES = {
     "Domestic": "DOM",
     "Overseas": "OVS",
-    "Home Leave": "HL",
     "External Parties": "EXT",
 }
 

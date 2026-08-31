@@ -7,12 +7,10 @@ import type { TransportRequestForm } from '../../models/transport.model';
 import { WorkflowService } from '../../../../core/services/workflow.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
-import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
 import type {
   WorkflowInstance,
   WorkflowInstanceList,
-  WorkflowStepExecution,
 } from '../../../../core/models/workflow.models';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -24,13 +22,7 @@ import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handl
 @Component({
   selector: 'app-transport-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    ApprovalActionsComponent,
-    WorkflowStatusComponent,
-    LoadingSpinnerComponent,
-  ],
+  imports: [CommonModule, RouterModule, WorkflowStatusComponent, LoadingSpinnerComponent],
   templateUrl: './transport-detail.component.html',
   styleUrls: ['./transport-detail.component.scss'],
 })
@@ -43,7 +35,6 @@ export class TransportDetailComponent implements OnInit {
   // Workflow properties
   workflow: WorkflowInstance | null = null;
   workflowLoading: boolean = false;
-  currentStepExecution: WorkflowStepExecution | null = null;
 
   // Status-based visibility constants
   private readonly EDITABLE_STATUSES = ['Draft', 'Rejected'];
@@ -116,7 +107,6 @@ export class TransportDetailComponent implements OnInit {
             this.workflowService.getInstance(instance.id).subscribe({
               next: workflow => {
                 this.workflow = workflow;
-                this.updateCurrentStepExecution();
                 this.workflowLoading = false;
               },
               error: () => {
@@ -133,49 +123,6 @@ export class TransportDetailComponent implements OnInit {
       });
   }
 
-  updateCurrentStepExecution(): void {
-    if (!this.workflow?.step_executions) {
-      this.currentStepExecution = null;
-      return;
-    }
-
-    // Find the current pending step that the user can action
-    this.currentStepExecution =
-      this.workflow.step_executions.find(
-        step =>
-          step.status === 'pending' &&
-          step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
-          step.can_action === true
-      ) || null;
-  }
-
-  onWorkflowApproved(): void {
-    this.toastService.success('Approval successful');
-    this.loadRequestDetails();
-    this.loadWorkflow();
-  }
-
-  onWorkflowRejected(): void {
-    this.toastService.success('Request rejected');
-    this.loadRequestDetails();
-    this.loadWorkflow();
-  }
-
-  onWorkflowDelegated(): void {
-    this.toastService.success('Successfully delegated');
-    this.loadWorkflow();
-  }
-
-  /**
-   * The signed-in user has a pending, actionable workflow step on this
-   * request right now - i.e. they're the one being asked to approve/reject
-   * it. Reuses the same can_action signal the approval-actions UI already
-   * trusts, rather than a separate role check.
-   */
-  get isCurrentApprover(): boolean {
-    return !!this.currentStepExecution;
-  }
-
   /**
    * The signed-in user created this request. Owner-only actions
    * (Edit/Cancel/Delete) are gated on this so a viewer with read access -
@@ -188,7 +135,7 @@ export class TransportDetailComponent implements OnInit {
   }
 
   canEdit(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     if (!this.request?.status) return false;
 
     const status = this.request.status;
@@ -213,7 +160,7 @@ export class TransportDetailComponent implements OnInit {
   }
 
   canCancel(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     const status = this.request?.status || '';
     // Allow cancel for any status that contains 'Pending' and is not approved
     if (status.includes('Pending')) {
@@ -224,7 +171,7 @@ export class TransportDetailComponent implements OnInit {
   }
 
   canDelete(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     return this.DELETABLE_STATUSES.includes(this.request?.status || '');
   }
 

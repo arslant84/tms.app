@@ -56,7 +56,7 @@ class TravelRequest(models.Model):
     )
     advance_consent_accepted = models.BooleanField(
         default=False,
-        help_text="Requestor acknowledged the advance amount refund/deduction Terms and Conditions (Overseas/Home Leave only).",
+        help_text="Requestor acknowledged the advance amount refund/deduction Terms and Conditions (Overseas only).",
     )
     advance_consent_accepted_at = models.DateTimeField(blank=True, null=True)
     department_focal_notified = models.BooleanField(
@@ -93,7 +93,6 @@ class TravelRequest(models.Model):
     WORKFLOW_ENTITY_TYPE_MAP = {
         "Domestic": "travelrequest_domestic",
         "Overseas": "travelrequest_overseas",
-        "Home Leave": "travelrequest_homeleave",
         "External Parties": "travelrequest_external",
     }
 

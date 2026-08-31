@@ -3,17 +3,12 @@ import { firstValueFrom } from 'rxjs';
 import { AccommodationService } from '../../../accommodation/services/accommodation.service';
 import { TransportService } from '../../../transport/services/transport.service';
 import { TrfService } from '../../services/trf.service';
-import type { RequestorInformation } from '../requestor-information/requestor-information.component';
 import type { DomesticTravelSpecificDetails } from '../domestic-travel-details/domestic-travel-details.component';
-import type { OverseasTravelDetails } from '../overseas-travel-details/overseas-travel-details.component';
-import type { HomeLeaveDetails } from '../home-leave-details/home-leave-details.component';
 import type { ExternalPartiesDetails } from '../external-parties-details/external-parties-details.component';
+import type { OverseasTravelDetails } from '../overseas-travel-details/overseas-travel-details.component';
+import type { RequestorInformation } from '../requestor-information/requestor-information.component';
 import { formatDateForAPI } from './trf-data-mapper';
-import type {
-  NestedItineraryRow,
-  PreparedTrfData,
-  TransformedPassportDetails,
-} from './trf-wizard.types';
+import type { NestedItineraryRow, PreparedTrfData } from './trf-wizard.types';
 
 /**
  * Submission orchestration for the TRF wizard. Phase 3 of the
@@ -26,13 +21,10 @@ import type {
  * isSubmitting) - that's UI orchestration, not data preparation.
  */
 export interface PrepareTrfDataParams {
-  selectedTravelType: 'Domestic' | 'Overseas' | 'Home Leave' | 'External Parties' | null;
+  selectedTravelType: 'Domestic' | 'Overseas' | 'External Parties' | null;
   requestorData: Partial<RequestorInformation>;
   domesticTravelData: Partial<DomesticTravelSpecificDetails>;
   overseasTravelData: Partial<OverseasTravelDetails>;
-  homeLeaveData: Partial<HomeLeaveDetails> & {
-    passportDetails?: TransformedPassportDetails | null;
-  };
   externalPartiesData: Partial<ExternalPartiesDetails>;
   additionalComments: string;
 }
@@ -68,8 +60,6 @@ export class TrfSubmissionService {
         return this.prepareDomesticData(mainTrf, params);
       case 'Overseas':
         return this.prepareOverseasData(mainTrf, params);
-      case 'Home Leave':
-        return this.prepareHomeLeaveData(mainTrf, params);
       case 'External Parties':
         return this.prepareExternalPartiesData(mainTrf, params);
       default:
@@ -77,7 +67,6 @@ export class TrfSubmissionService {
           mainTrf,
           itinerarySegments: [],
           mealSelections: [],
-          passportDetails: null,
           bankDetails: null,
           advanceAmounts: [],
         };
@@ -99,7 +88,6 @@ export class TrfSubmissionService {
       mainTrf,
       itinerarySegments: (domesticTravelData?.itinerary || []) as unknown as NestedItineraryRow[],
       mealSelections: domesticTravelData?.mealProvisions?.dailySelections || [],
-      passportDetails: null,
       bankDetails: null,
       advanceAmounts: [],
       accommodation: domesticTravelData?.accommodation || null,
@@ -123,31 +111,8 @@ export class TrfSubmissionService {
       mainTrf,
       itinerarySegments: (overseasTravelData?.itinerary || []) as unknown as NestedItineraryRow[],
       mealSelections: [],
-      passportDetails: null,
       bankDetails: overseasTravelData?.advanceBankDetails || null,
       advanceAmounts: overseasTravelData?.advanceAmountRequested || [],
-    };
-  }
-
-  /**
-   * Prepare Home Leave data
-   */
-  private prepareHomeLeaveData(
-    mainTrf: Record<string, unknown>,
-    params: PrepareTrfDataParams
-  ): PreparedTrfData {
-    const { homeLeaveData } = params;
-    mainTrf['purpose'] = homeLeaveData?.purpose || '';
-    mainTrf['additional_comments'] = params.additionalComments || '';
-    mainTrf['advance_consent_accepted'] = homeLeaveData?.advanceConsentAccepted || false;
-
-    return {
-      mainTrf,
-      itinerarySegments: (homeLeaveData?.itinerary || []) as unknown as NestedItineraryRow[],
-      mealSelections: [],
-      passportDetails: homeLeaveData?.passportDetails || null,
-      bankDetails: homeLeaveData?.advanceBankDetails || null,
-      advanceAmounts: homeLeaveData?.advanceAmountRequested || [],
     };
   }
 
@@ -173,9 +138,10 @@ export class TrfSubmissionService {
       mainTrf,
       itinerarySegments: (externalPartiesData?.itinerary || []) as unknown as NestedItineraryRow[],
       mealSelections: [],
-      passportDetails: null,
       bankDetails: null,
       advanceAmounts: [],
+      accommodation: externalPartiesData?.accommodation || null,
+      transport: externalPartiesData?.transport || null,
     };
   }
 
@@ -312,27 +278,7 @@ export class TrfSubmissionService {
       });
     }
 
-    // Create passport details (Home Leave)
-    if (data.passportDetails) {
-      const passportData = {
-        trf: trfId,
-        full_name: data.passportDetails.fullName || '',
-        passport_number: data.passportDetails.passportNumber || '',
-        nationality: data.passportDetails.nationality || '',
-        date_of_birth: data.passportDetails.dateOfBirth || '',
-        place_of_birth: data.passportDetails.placeOfBirth || '',
-        passport_issue_date: data.passportDetails.passportIssueDate || '',
-        passport_expiry_date: data.passportDetails.passportExpiryDate || '',
-      };
-
-      // Note: Need to create passport details endpoint in service
-      // For now, we'll skip if not available
-      if (this.trfService.createPassportDetail) {
-        promises.push(firstValueFrom(this.trfService.createPassportDetail(passportData)));
-      }
-    }
-
-    // Create bank details (Overseas, Home Leave)
+    // Create bank details (Overseas)
     if (data.bankDetails) {
       const bankData = {
         trf: trfId,
@@ -346,7 +292,7 @@ export class TrfSubmissionService {
       promises.push(firstValueFrom(this.trfService.createBankDetail(bankData)));
     }
 
-    // Create advance amount items (Overseas, Home Leave)
+    // Create advance amount items (Overseas)
     if (data.advanceAmounts && data.advanceAmounts.length > 0) {
       data.advanceAmounts.forEach(amount => {
         const advanceData = {

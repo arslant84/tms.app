@@ -36,16 +36,6 @@
 
         <!-- Approver viewing a request pending their action: Approve/Reject
              (and Skip/Delegate, if applicable) instead of owner-only actions. -->
-        <app-approval-actions
-          *ngIf="isCurrentApprover && !workflowLoading"
-          [stepExecution]="currentStepExecution!"
-          [compact]="true"
-          (approved)="onWorkflowApproved()"
-          (rejected)="onWorkflowRejected()"
-          (delegated)="onWorkflowDelegated()"
-        >
-        </app-approval-actions>
-
         <button class="btn btn-warning" (click)="onCancel()" *ngIf="canCancel()">
           <i class="bi bi-x-circle"></i> Cancel
         </button>
@@ -432,7 +422,7 @@
         </div>
 
         <!-- Workflow Status Timeline. Approve/Reject/Skip/Delegate now live
-             in the page header (app-approval-actions there), not duplicated
+             on the Approval Queue instead, not duplicated
              here. -->
         <app-workflow-status *ngIf="workflow && !workflowLoading" [workflowInstance]="workflow">
         </app-workflow-status>

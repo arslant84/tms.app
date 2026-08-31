@@ -8,8 +8,7 @@ import { ConfirmationService } from '../../../../core/services/confirmation.serv
 import { WorkflowService } from '../../../../core/services/workflow.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { WorkflowStatusComponent } from '../../../../shared/components/workflow-status/workflow-status.component';
-import { ApprovalActionsComponent } from '../../../../shared/components/approval-actions/approval-actions.component';
-import { WorkflowInstance, WorkflowStepExecution } from '../../../../core/models/workflow.models';
+import { WorkflowInstance } from '../../../../core/models/workflow.models';
 import {
   AccommodationRequestBackend,
   AccommodationRequestDetails,
@@ -35,7 +34,6 @@ import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handl
     CommonModule,
     RouterModule,
     WorkflowStatusComponent,
-    ApprovalActionsComponent,
     DepartmentNamePipe,
     LoadingSpinnerComponent,
   ],
@@ -61,7 +59,6 @@ export class AccommodationDetailComponent implements OnInit {
   // Workflow properties
   workflow: WorkflowInstance | null = null;
   workflowLoading: boolean = false;
-  currentStepExecution: WorkflowStepExecution | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -167,16 +164,6 @@ export class AccommodationDetailComponent implements OnInit {
   }
 
   /**
-   * The signed-in user has a pending, actionable workflow step on this
-   * request right now - i.e. they're the one being asked to approve/reject
-   * it. Reuses the same can_action signal the approval-actions UI already
-   * trusts, rather than a separate role check.
-   */
-  get isCurrentApprover(): boolean {
-    return !!this.currentStepExecution;
-  }
-
-  /**
    * The signed-in user created this request. Owner-only actions
    * (Cancel/Delete) are gated on this so a viewer with read access - an
    * approver, an admin browsing, anyone else - can't act on someone
@@ -196,12 +183,12 @@ export class AccommodationDetailComponent implements OnInit {
   }
 
   canCancel(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     return this.request ? isCancellable(this.request.status) : false;
   }
 
   canDelete(): boolean {
-    if (!this.isOwner || this.isCurrentApprover) return false;
+    if (!this.isOwner) return false;
     return this.request ? isDeletable(this.request.status) : false;
   }
 
@@ -563,7 +550,6 @@ export class AccommodationDetailComponent implements OnInit {
             this.workflowService.getInstance(instance.id).subscribe({
               next: workflow => {
                 this.workflow = workflow;
-                this.updateCurrentStepExecution();
                 this.workflowLoading = false;
               },
               error: () => {
@@ -578,38 +564,6 @@ export class AccommodationDetailComponent implements OnInit {
           this.workflowLoading = false;
         },
       });
-  }
-
-  updateCurrentStepExecution(): void {
-    if (!this.workflow?.step_executions) {
-      this.currentStepExecution = null;
-      return;
-    }
-
-    this.currentStepExecution =
-      this.workflow.step_executions.find(
-        step =>
-          step.status === 'pending' &&
-          step.workflow_step_detail?.step_order === this.workflow?.current_step_order &&
-          step.can_action === true
-      ) || null;
-  }
-
-  onWorkflowApproved(): void {
-    this.toastService.success('Approval successful');
-    this.loadRequestDetails();
-    this.loadWorkflow();
-  }
-
-  onWorkflowRejected(): void {
-    this.toastService.success('Request rejected');
-    this.loadRequestDetails();
-    this.loadWorkflow();
-  }
-
-  onWorkflowDelegated(): void {
-    this.toastService.success('Successfully delegated');
-    this.loadWorkflow();
   }
 
   getWorkflowStatus(): string {

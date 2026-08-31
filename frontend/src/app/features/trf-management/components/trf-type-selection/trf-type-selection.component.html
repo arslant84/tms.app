@@ -8,21 +8,21 @@
     <p class="text-muted fs-5">Please select the type of travel request you want to create.</p>
   </div>
 
-  <div class="row g-4" style="max-width: 1000px; margin: 0 auto;">
-    <div class="col-md-6" *ngFor="let option of travelTypeOptions">
-      <div
-        class="card h-100 shadow-sm hover-card cursor-pointer"
-        (click)="navigateToTravelType(option.route)"
-        tabindex="0"
-        (keydown.enter)="navigateToTravelType(option.route)"
-        (keydown.space)="navigateToTravelType(option.route)">
-        <div class="card-body p-4">
-          <div class="d-flex align-items-center gap-3 mb-3">
-            <i [class]="option.icon + ' fs-1 text-primary'"></i>
-            <h3 class="card-title fs-5 fw-semibold mb-0">{{ option.title }}</h3>
-          </div>
-          <p class="card-text text-muted">{{ option.description }}</p>
+  <div class="travel-type-grid">
+    <div
+      class="card h-100 shadow-sm hover-card cursor-pointer"
+      *ngFor="let option of travelTypeOptions"
+      (click)="navigateToTravelType(option.route)"
+      tabindex="0"
+      (keydown.enter)="navigateToTravelType(option.route)"
+      (keydown.space)="navigateToTravelType(option.route)"
+    >
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <i [class]="option.icon + ' fs-1 text-primary'"></i>
+          <h3 class="card-title fs-5 fw-semibold mb-0">{{ option.title }}</h3>
         </div>
+        <p class="card-text text-muted">{{ option.description }}</p>
       </div>
     </div>
   </div>

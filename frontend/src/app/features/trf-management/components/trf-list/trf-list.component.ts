@@ -4,9 +4,8 @@ import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TrfService } from '../../services/trf.service';
 import { ToastService } from '../../../../core/services/toast.service';
-import { finalize, takeUntil } from 'rxjs/operators';
+import { finalize, takeUntil, filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
@@ -30,7 +29,7 @@ export interface TrfListItem {
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './trf-list.component.html',
-  styleUrls: ['./trf-list.component.scss']
+  styleUrls: ['./trf-list.component.scss'],
 })
 export class TrfListComponent implements OnInit, OnDestroy {
   // Filter properties
@@ -63,9 +62,9 @@ export class TrfListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.listState.search$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => { this.fetchTrfs(); });
+    this.listState.search$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.fetchTrfs();
+    });
 
     this.router.events
       .pipe(
@@ -74,7 +73,9 @@ export class TrfListComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-        if (this.navigationRefreshReady) { this.fetchTrfs(); }
+        if (this.navigationRefreshReady) {
+          this.fetchTrfs();
+        }
       });
 
     this.fetchTrfs();
@@ -96,7 +97,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
     this.listState.clearError();
 
     const params: Record<string, unknown> = {
-      ...this.listState.getFilters()
+      ...this.listState.getFilters(),
     };
 
     if (this.statusFilter) {
@@ -112,7 +113,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
       params['sortOrder'] = this.sortDirection;
     }
 
-    this.trfService.getAllTrfs(params)
+    this.trfService
+      .getAllTrfs(params)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
@@ -120,7 +122,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe({
-        next: (response: { results?: TrfListItem[]; count?: number } | TrfListItem[]) => {
+        next: (raw: unknown) => {
+          const response = raw as { results?: TrfListItem[]; count?: number } | TrfListItem[];
           if (Array.isArray(response)) {
             this.trfs = response;
             this.listState.setTotalItems(response.length);
@@ -132,7 +135,9 @@ export class TrfListComponent implements OnInit, OnDestroy {
             this.trfStatuses = [...new Set(this.trfs.map(i => i.status).filter(Boolean))].sort();
           }
           if (this.travelTypes.length === 0) {
-            this.travelTypes = [...new Set(this.trfs.map(i => i.travel_type).filter(Boolean))].sort();
+            this.travelTypes = [
+              ...new Set(this.trfs.map(i => i.travel_type).filter(Boolean)),
+            ].sort();
           }
         },
         error: (err: { error?: { detail?: string }; statusText?: string; message?: string }) => {
@@ -145,7 +150,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
 
           this.listState.setError(err.message ?? 'Failed to load TRFs');
           this.trfs = [];
-        }
+        },
       });
   }
 
@@ -180,7 +185,9 @@ export class TrfListComponent implements OnInit, OnDestroy {
   }
 
   hasActiveFilters(): boolean {
-    return this.listState.hasActiveFilters() || this.statusFilter !== '' || this.travelTypeFilter !== '';
+    return (
+      this.listState.hasActiveFilters() || this.statusFilter !== '' || this.travelTypeFilter !== ''
+    );
   }
 
   navigateToCreate(): void {
@@ -207,7 +214,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
       }
       this.deleteConfirmId = null;
 
-      this.trfService.deleteTrf(id)
+      this.trfService
+        .deleteTrf(id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
@@ -218,7 +226,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
           },
           error: () => {
             this.toastService.error('Failed to delete travel request');
-          }
+          },
         });
     } else {
       this.deleteConfirmId = id;
