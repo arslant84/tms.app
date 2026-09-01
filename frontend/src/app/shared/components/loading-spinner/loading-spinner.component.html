@@ -1,10 +1,17 @@
 <div class="loading-spinner-container" [class.overlay]="overlay" [class.full-screen]="fullScreen">
   <div class="loading-content" [ngClass]="'size-' + size">
-    <img
-      src="/img/pet-loading.gif"
-      alt="Loading..."
-      class="loading-gif"
-      [ngClass]="'size-' + size">
+    <picture>
+      <source srcset="/img/pet-loading.webp" type="image/webp" />
+      <img
+        src="/img/pet-loading.gif"
+        alt="Loading..."
+        class="loading-gif"
+        width="120"
+        height="120"
+        [attr.fetchpriority]="fullScreen ? 'high' : null"
+        [ngClass]="'size-' + size"
+      />
+    </picture>
     <p *ngIf="message" class="loading-message">{{ message }}</p>
   </div>
 </div>
