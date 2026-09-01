@@ -64,14 +64,23 @@ def noop_reverse(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
+    # These four cross-app deps used to be ("<app>", "__latest__") - resolved
+    # fresh against whatever each app's newest migration is *at graph-build
+    # time*, not frozen to what "latest" meant when this migration was
+    # written. That caused a production deploy to fail outright: a later,
+    # unrelated trf migration (0015, a harmless help_text change) got pulled
+    # in as this migration's dependency and had never been applied, so
+    # Django refused to run `migrate` for any app with InconsistentMigrationHistory.
+    # Pinned to the migrations that were actually current for each app when
+    # this one was authored (2026-08-23) / applied in production (2026-08-24).
     dependencies = [
         ("workflows", "0018_remove_sla_tracking"),
         ("notifications", "0009_fix_stale_action_urls"),
         ("contenttypes", "0002_remove_content_type_name"),
-        ("trf", "__latest__"),
-        ("transport", "__latest__"),
-        ("visa", "__latest__"),
-        ("accommodation", "__latest__"),
+        ("trf", "0014_travelrequest_department_focal_notified"),
+        ("transport", "0008_delete_transportsegment"),
+        ("visa", "0004_add_passport_file_to_visa"),
+        ("accommodation", "0009_remove_accommodationrequest_created_by"),
     ]
 
     operations = [
