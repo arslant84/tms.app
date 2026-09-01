@@ -5,7 +5,15 @@
     <title>TMS</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Travel Management System - submit, approve, and track travel, accommodation, transport, and visa requests."
+    />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!-- Preload: this is the app's full-screen loading indicator, shown while
+         Angular bootstraps - it's frequently the LCP element since it paints
+         before any real page content exists (see loading-spinner.component). -->
+    <link rel="preload" as="image" href="/img/pet-loading.webp" fetchpriority="high" />
     <!-- Raleway font loaded locally via angular.json -->
     <!-- Bootstrap Icons loaded locally via angular.json -->
     <!-- Bootstrap JS loaded locally via angular.json scripts -->

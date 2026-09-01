@@ -14,24 +14,27 @@
   align-items: center;
   justify-content: center;
   font-family: inherit;
-  font-weight: vars.$font-weight-semibold;  // Fluent uses 600
+  font-weight: vars.$font-weight-semibold; // Fluent uses 600
   text-align: center;
   white-space: nowrap;
   vertical-align: middle;
   user-select: none;
   border: 1px solid transparent;
-  transition: background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease;  // Faster, Fluent-style
+  transition:
+    background-color 0.1s ease,
+    border-color 0.1s ease,
+    color 0.1s ease; // Faster, Fluent-style
   cursor: pointer;
   text-decoration: none;
   line-height: 1;
-  border-radius: vars.$radius-base !important;  // 4px - Fluent default (force override Bootstrap)
+  border-radius: vars.$radius-base !important; // 4px - Fluent default (force override Bootstrap)
 
   // Fluent 2 sizing - 32px default height
-  font-size: vars.$font-size-sm;      // 14px
-  padding: 0 vars.$spacing-3;         // 0 12px - Fluent horizontal padding
+  font-size: vars.$font-size-sm; // 14px
+  padding: 0 vars.$spacing-3; // 0 12px - Fluent horizontal padding
   min-height: 32px;
   height: 32px;
-  gap: vars.$spacing-2;               // 8px - Space between icon and text
+  gap: vars.$spacing-2; // 8px - Space between icon and text
 
   &:focus {
     outline: none;
@@ -45,13 +48,14 @@
 
   &:disabled,
   &.disabled {
-    opacity: 0.4;  // Fluent uses more muted disabled state
+    opacity: 0.4; // Fluent uses more muted disabled state
     cursor: not-allowed;
     pointer-events: none;
   }
 
   // Icon sizing within buttons
-  i, svg {
+  i,
+  svg {
     font-size: 1em;
     line-height: 1;
   }
@@ -84,20 +88,26 @@
 // Solid teal background, white text
 // ============================================================================
 .btn-primary {
-  background-color: colors.$primary-teal;
-  border-color: colors.$primary-teal;
+  // Uses $primary-teal-hover (not $primary-teal) as the resting background -
+  // white text on the base brand teal (#0d9488) only hits a 3.74:1 contrast
+  // ratio, short of WCAG's 4.5:1 for normal-size text (flagged by Lighthouse's
+  // color-contrast audit). $primary-teal-hover (#0f766e) gives ~5.48:1 while
+  // staying visually within the same brand teal family. Hover/active shift one
+  // step further down so the interaction states still read as feedback.
+  background-color: colors.$primary-teal-hover;
+  border-color: colors.$primary-teal-hover;
   color: vars.$white;
   border-radius: vars.$radius-base !important; // Force 4px
 
   &:hover:not(:disabled) {
-    background-color: colors.$primary-teal-hover;
-    border-color: colors.$primary-teal-hover;
+    background-color: colors.$primary-teal-active;
+    border-color: colors.$primary-teal-active;
   }
 
   &:active,
   &.active {
-    background-color: colors.$primary-teal-active;
-    border-color: colors.$primary-teal-active;
+    background-color: color.adjust(colors.$primary-teal-active, $lightness: -6%);
+    border-color: color.adjust(colors.$primary-teal-active, $lightness: -6%);
   }
 }
 
@@ -396,20 +406,20 @@
 
 // Small - 24px height (Fluent "small")
 .btn-sm {
-  font-size: vars.$font-size-xs;     // 12px
-  padding: 0 vars.$spacing-2;        // 0 8px
+  font-size: vars.$font-size-xs; // 12px
+  padding: 0 vars.$spacing-2; // 0 8px
   min-height: 24px;
   height: 24px;
-  border-radius: vars.$radius-sm !important;    // 2px for small buttons (force override)
+  border-radius: vars.$radius-sm !important; // 2px for small buttons (force override)
 }
 
 // Large - 40px height (Fluent "medium")
 .btn-lg {
-  font-size: vars.$font-size-base;   // 16px
-  padding: 0 vars.$spacing-5;        // 0 20px
+  font-size: vars.$font-size-base; // 16px
+  padding: 0 vars.$spacing-5; // 0 20px
   min-height: 40px;
   height: 40px;
-  border-radius: vars.$radius-base !important;  // 4px (force override)
+  border-radius: vars.$radius-base !important; // 4px (force override)
 }
 
 // ============================================================================
@@ -421,7 +431,7 @@
   width: 32px;
   height: 32px;
   min-height: 32px;
-  border-radius: vars.$radius-base !important;  // 4px - Fluent rounded square (force override)
+  border-radius: vars.$radius-base !important; // 4px - Fluent rounded square (force override)
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -435,7 +445,7 @@
     height: 24px;
     min-height: 24px;
     padding: 0;
-    border-radius: vars.$radius-sm !important;  // 2px (force override)
+    border-radius: vars.$radius-sm !important; // 2px (force override)
   }
 
   &.btn-lg {
@@ -534,7 +544,7 @@
     height: 28px;
     min-height: 28px;
     padding: 0;
-    border-radius: vars.$radius-full !important;  // Circular action buttons
+    border-radius: vars.$radius-full !important; // Circular action buttons
     font-size: vars.$font-size-xs;
   }
 }
@@ -577,7 +587,9 @@
   border-radius: vars.$radius-base;
   color: vars.$gray-500;
   cursor: pointer;
-  transition: background-color 0.1s ease, color 0.1s ease;
+  transition:
+    background-color 0.1s ease,
+    color 0.1s ease;
 
   &:hover {
     background-color: vars.$gray-100;

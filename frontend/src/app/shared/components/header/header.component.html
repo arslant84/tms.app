@@ -42,6 +42,7 @@
           type="button"
           id="notificationsDropdown"
           aria-expanded="false"
+          aria-label="Notifications"
           (click)="toggleNotificationsDropdown($event)"
         >
           <i class="bi bi-bell"></i>
@@ -104,8 +105,8 @@
           <li>
             <a
               class="dropdown-item text-center text-primary"
+              routerLink="/notifications"
               (click)="viewAllNotifications($event)"
-              href="javascript:void(0)"
             >
               View All Notifications
             </a>

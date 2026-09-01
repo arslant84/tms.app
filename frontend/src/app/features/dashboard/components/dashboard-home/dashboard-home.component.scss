@@ -29,7 +29,7 @@
   font-size: vars.$font-size-2xl;
   font-weight: vars.$font-weight-bold;
   letter-spacing: -0.025em;
-  color: vars.$gray-800;  // Darker for better contrast
+  color: vars.$gray-800; // Darker for better contrast
   margin-bottom: vars.$spacing-md;
 
   @include vars.media-md {
@@ -43,7 +43,7 @@
 
 .hero-subtitle {
   font-size: vars.$font-size-md;
-  color: vars.$gray-700;  // Darker for better visibility on background
+  color: vars.$gray-700; // Darker for better visibility on background
   font-weight: vars.$font-weight-medium;
   margin-top: vars.$spacing-md;
 
@@ -80,16 +80,18 @@
   height: 40px;
   white-space: nowrap;
   text-align: center;
-  padding: 0 vars.$spacing-5;  // Fluent 2: 0 20px
-  font-size: vars.$font-size-base;  // 16px
-  font-weight: vars.$font-weight-semibold;  // Fluent 2: 600
-  border-radius: vars.$radius-base !important;  // Fluent 2: 4px
+  padding: 0 vars.$spacing-5; // Fluent 2: 0 20px
+  font-size: vars.$font-size-base; // 16px
+  font-weight: vars.$font-weight-semibold; // Fluent 2: 600
+  border-radius: vars.$radius-base !important; // Fluent 2: 4px
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: vars.$spacing-2;
-  transition: background-color 0.1s ease, border-color 0.1s ease;  // Fluent 2: fast, flat
+  transition:
+    background-color 0.1s ease,
+    border-color 0.1s ease; // Fluent 2: fast, flat
 
   i {
     font-size: 1em;
@@ -426,7 +428,7 @@
 .activity-item-info {
   flex-grow: 1;
 
-  h5.activity-item-title {
+  h3.activity-item-title {
     font-size: vars.$font-size-base;
     font-weight: vars.$font-weight-semibold;
     line-height: vars.$line-height-tight;

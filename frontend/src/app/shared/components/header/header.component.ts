@@ -199,12 +199,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Navigate to notifications page
+   * Close the dropdown when "View All Notifications" is clicked - navigation
+   * itself is handled by the element's own routerLink now (a real href, not
+   * javascript:void(0), so the link is crawlable/keyboard-openable-in-new-tab).
    */
   viewAllNotifications(event: Event): void {
-    event.preventDefault();
     event.stopPropagation();
-    this.router.navigate(['/notifications']);
     this.closeNotificationsDropdown();
   }
 
