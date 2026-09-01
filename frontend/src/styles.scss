@@ -709,14 +709,22 @@ tmsapp-admin-systemsettings-workflow-configuration,
 }
 
 // Primary buttons - teal theme (Fluent 2 style)
+//
+// Duplicates (and, via !important, actually wins over) buttons.scss's own
+// .btn-primary rule - that's pre-existing, not something to untangle here.
+// Uses $primary-hover, not $primary-color, as the resting background: white
+// text on the base brand teal (#0d9488) is a 3.74:1 contrast ratio, short of
+// WCAG's 4.5:1 for normal-size text (Lighthouse color-contrast audit).
+// $primary-hover (#0f766e) gives ~5.48:1 while staying in the same teal
+// family - see the matching comment in buttons.scss's .btn-primary.
 .btn-primary {
-  background-color: vars.$primary-color !important;
-  border-color: vars.$primary-color !important;
+  background-color: vars.$primary-hover !important;
+  border-color: vars.$primary-hover !important;
 
   &:hover,
   &:active {
-    background-color: vars.$primary-hover !important;
-    border-color: vars.$primary-hover !important;
+    background-color: vars.$primary-active !important;
+    border-color: vars.$primary-active !important;
   }
 
   // Fluent 2: High contrast black focus ring, no colored glow
@@ -738,8 +746,9 @@ tmsapp-admin-systemsettings-workflow-configuration,
 
   &:hover,
   &:active {
-    background-color: vars.$primary-color !important;
-    border-color: vars.$primary-color !important;
+    // Same white-on-teal contrast fix as .btn-primary above.
+    background-color: vars.$primary-hover !important;
+    border-color: vars.$primary-hover !important;
     color: #ffffff !important;
   }
 
