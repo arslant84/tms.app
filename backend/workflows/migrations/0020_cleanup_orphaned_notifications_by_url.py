@@ -57,12 +57,16 @@ def noop_reverse(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
+    # See workflows/0019's dependencies comment: these were ("<app>",
+    # "__latest__") - a non-pinned dependency that re-resolves at
+    # graph-build time and broke a production deploy when trf gained a
+    # newer migration. Pinned to what was actually current on 2026-08-23.
     dependencies = [
         ("workflows", "0019_cleanup_orphaned_workflow_instances"),
-        ("trf", "__latest__"),
-        ("transport", "__latest__"),
-        ("visa", "__latest__"),
-        ("accommodation", "__latest__"),
+        ("trf", "0014_travelrequest_department_focal_notified"),
+        ("transport", "0008_delete_transportsegment"),
+        ("visa", "0004_add_passport_file_to_visa"),
+        ("accommodation", "0009_remove_accommodationrequest_created_by"),
     ]
 
     operations = [
