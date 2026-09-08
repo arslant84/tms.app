@@ -6,13 +6,12 @@ import { Subject } from 'rxjs';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
-import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
-
-import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
+import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import {
-  TransportService,
   type TransportRequest,
+  TransportService,
   type VehicleAssignment,
 } from '../../../transport/services/transport.service';
 
