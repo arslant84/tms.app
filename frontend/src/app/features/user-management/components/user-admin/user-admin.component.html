@@ -29,15 +29,14 @@
             class="form-control"
             [(ngModel)]="searchTerm"
             (keyup.enter)="onSearch()"
-            placeholder="Search by name or email...">
+            placeholder="Search by name or email…"
+            aria-label="Search by name or email"
+          />
         </div>
 
         <div class="col-md-3">
           <label class="form-label">Role</label>
-          <select
-            class="form-select"
-            [(ngModel)]="filterRole"
-            (change)="onFilterChange()">
+          <select class="form-select" [(ngModel)]="filterRole" (change)="onFilterChange()">
             <option [ngValue]="null">All Roles</option>
             <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
           </select>
@@ -45,10 +44,7 @@
 
         <div class="col-md-3">
           <label class="form-label">Department</label>
-          <select
-            class="form-select"
-            [(ngModel)]="filterDepartment"
-            (change)="onFilterChange()">
+          <select class="form-select" [(ngModel)]="filterDepartment" (change)="onFilterChange()">
             <option value="">All Departments</option>
             <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
           </select>
@@ -56,10 +52,7 @@
 
         <div class="col-md-3">
           <label class="form-label">Status</label>
-          <select
-            class="form-select"
-            [(ngModel)]="filterStatus"
-            (change)="onFilterChange()">
+          <select class="form-select" [(ngModel)]="filterStatus" (change)="onFilterChange()">
             <option [ngValue]="null">All Status</option>
             <option [ngValue]="true">Active</option>
             <option [ngValue]="false">Inactive</option>
@@ -71,11 +64,19 @@
 
   <!-- Loading State -->
   <div *ngIf="loading" class="text-center py-5">
-    <app-loading-spinner size="lg" message="Loading users..."></app-loading-spinner>
+    <app-loading-spinner size="lg" message="Loading users…"></app-loading-spinner>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <i class="bi bi-exclamation-triangle error-icon"></i>
+    <h3 class="error-title">Error Loading Users</h3>
+    <p class="error-message">{{ error }}</p>
+    <button class="btn btn-primary" (click)="loadUsers()">Try Again</button>
   </div>
 
   <!-- Users Table -->
-  <div *ngIf="!loading" class="card">
+  <div *ngIf="!loading && !error" class="card">
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-hover mb-0">
@@ -124,20 +125,30 @@
                   <button
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="openEditModal(user)"
-                    title="Edit">
-                    <i class="bi bi-pencil"></i>
+                    title="Edit"
+                    aria-label="Edit"
+                  >
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="toggleUserStatus(user)"
-                    [title]="user.is_active ? 'Deactivate' : 'Activate'">
-                    <i class="bi" [ngClass]="user.is_active ? 'bi-pause-circle' : 'bi-play-circle'"></i>
+                    [title]="user.is_active ? 'Deactivate' : 'Activate'"
+                    [attr.aria-label]="user.is_active ? 'Deactivate' : 'Activate'"
+                  >
+                    <i
+                      class="bi"
+                      [ngClass]="user.is_active ? 'bi-pause-circle' : 'bi-play-circle'"
+                      aria-hidden="true"
+                    ></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="confirmDeleteUser(user)"
-                    title="Delete">
-                    <i class="bi bi-trash"></i>
+                    title="Delete"
+                    aria-label="Delete"
+                  >
+                    <i class="bi bi-trash" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>
@@ -157,19 +168,23 @@
     <div class="card-footer" *ngIf="totalCount > pageSize">
       <div class="d-flex justify-content-between align-items-center">
         <div class="text-muted small">
-          Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }} of {{ totalCount }} users
+          Showing {{ (currentPage - 1) * pageSize + 1 }} to
+          {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }} of
+          {{ totalCount }} users
         </div>
         <div class="btn-group">
           <button
             class="btn btn-outline-secondary btn-sm"
             (click)="previousPage()"
-            [disabled]="currentPage === 1">
+            [disabled]="currentPage === 1"
+          >
             <i class="bi bi-chevron-left"></i> Previous
           </button>
           <button
             class="btn btn-outline-secondary btn-sm"
             (click)="nextPage()"
-            [disabled]="currentPage * pageSize >= totalCount">
+            [disabled]="currentPage * pageSize >= totalCount"
+          >
             Next <i class="bi bi-chevron-right"></i>
           </button>
         </div>
@@ -179,7 +194,12 @@
 </div>
 
 <!-- Create/Edit Modal -->
-<div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'flex' : 'none'" tabindex="-1">
+<div
+  class="modal fade"
+  [class.show]="showModal"
+  [style.display]="showModal ? 'flex' : 'none'"
+  tabindex="-1"
+>
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
@@ -198,7 +218,8 @@
                 class="form-control"
                 formControlName="email"
                 [class.is-invalid]="isFieldInvalid('email')"
-                placeholder="user@example.com">
+                placeholder="user@example.com"
+              />
               <div class="invalid-feedback" *ngIf="isFieldInvalid('email')">
                 {{ getFieldError('email') }}
               </div>
@@ -206,14 +227,17 @@
 
             <!-- Name -->
             <div class="col-md-6">
-              <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+              <label for="name" class="form-label"
+                >Full Name <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 id="name"
                 class="form-control"
                 formControlName="name"
                 [class.is-invalid]="isFieldInvalid('name')"
-                placeholder="John Doe">
+                placeholder="John Doe"
+              />
               <div class="invalid-feedback" *ngIf="isFieldInvalid('name')">
                 {{ getFieldError('name') }}
               </div>
@@ -221,7 +245,9 @@
 
             <!-- Password (only for create) -->
             <div class="col-md-6" *ngIf="!isEditMode">
-              <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+              <label for="password" class="form-label"
+                >Password <span class="text-danger">*</span></label
+              >
               <div class="input-group">
                 <input
                   [type]="showPassword ? 'text' : 'password'"
@@ -229,11 +255,13 @@
                   class="form-control"
                   formControlName="password"
                   [class.is-invalid]="isFieldInvalid('password')"
-                  placeholder="Min {{ passwordMinLength }} characters">
+                  placeholder="Min {{ passwordMinLength }} characters"
+                />
                 <button
                   type="button"
                   class="btn btn-outline-secondary"
-                  (click)="togglePasswordVisibility()">
+                  (click)="togglePasswordVisibility()"
+                >
                   <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
                 </button>
               </div>
@@ -252,17 +280,24 @@
                 </small>
               </div>
 
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('password')" style="display: block;">
+              <div
+                class="invalid-feedback"
+                *ngIf="isFieldInvalid('password')"
+                style="display: block"
+              >
                 {{ getFieldError('password') }}
               </div>
               <small class="form-text text-muted d-block mt-1">
-                Must be at least {{ passwordMinLength }} characters with uppercase, lowercase, and number. Avoid common passwords.
+                Must be at least {{ passwordMinLength }} characters with uppercase, lowercase, and
+                number. Avoid common passwords.
               </small>
             </div>
 
             <!-- Confirm Password (only for create) -->
             <div class="col-md-6" *ngIf="!isEditMode">
-              <label for="password_confirm" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+              <label for="password_confirm" class="form-label"
+                >Confirm Password <span class="text-danger">*</span></label
+              >
               <div class="input-group">
                 <input
                   [type]="showConfirmPassword ? 'text' : 'password'"
@@ -270,15 +305,21 @@
                   class="form-control"
                   formControlName="password_confirm"
                   [class.is-invalid]="isFieldInvalid('password_confirm')"
-                  placeholder="Confirm password">
+                  placeholder="Confirm password"
+                />
                 <button
                   type="button"
                   class="btn btn-outline-secondary"
-                  (click)="toggleConfirmPasswordVisibility()">
+                  (click)="toggleConfirmPasswordVisibility()"
+                >
                   <i [class]="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
                 </button>
               </div>
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('password_confirm')" style="display: block;">
+              <div
+                class="invalid-feedback"
+                *ngIf="isFieldInvalid('password_confirm')"
+                style="display: block"
+              >
                 {{ getFieldError('password_confirm') }}
               </div>
             </div>
@@ -286,10 +327,7 @@
             <!-- Role -->
             <div class="col-md-6">
               <label for="role" class="form-label">Role</label>
-              <select
-                id="role"
-                class="form-select"
-                formControlName="role">
+              <select id="role" class="form-select" formControlName="role">
                 <option [ngValue]="null">Select Role</option>
                 <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
               </select>
@@ -298,10 +336,7 @@
             <!-- Department -->
             <div class="col-md-6">
               <label for="department" class="form-label">Department</label>
-              <select
-                id="department"
-                class="form-select"
-                formControlName="department">
+              <select id="department" class="form-select" formControlName="department">
                 <option value="">Select Department</option>
                 <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
               </select>
@@ -315,7 +350,8 @@
                 id="staff_id"
                 class="form-control"
                 formControlName="staff_id"
-                placeholder="e.g., EMP001">
+                placeholder="e.g., EMP001"
+              />
             </div>
 
             <!-- Phone -->
@@ -326,16 +362,14 @@
                 id="phone"
                 class="form-control"
                 formControlName="phone"
-                placeholder="+1 234 567 8900">
+                placeholder="+1 234 567 8900"
+              />
             </div>
 
             <!-- Gender -->
             <div class="col-md-4">
               <label for="gender" class="form-label">Gender</label>
-              <select
-                id="gender"
-                class="form-select"
-                formControlName="gender">
+              <select id="gender" class="form-select" formControlName="gender">
                 <option value="">Select Gender</option>
                 <option *ngFor="let g of genders" [value]="g.value">{{ g.label }}</option>
               </select>
@@ -348,10 +382,9 @@
                   class="form-check-input"
                   type="checkbox"
                   id="is_active"
-                  formControlName="is_active">
-                <label class="form-check-label" for="is_active">
-                  Active User
-                </label>
+                  formControlName="is_active"
+                />
+                <label class="form-check-label" for="is_active"> Active User </label>
               </div>
             </div>
 
@@ -361,22 +394,27 @@
                   class="form-check-input"
                   type="checkbox"
                   id="is_admin"
-                  formControlName="is_admin">
-                <label class="form-check-label" for="is_admin">
-                  Administrator
-                </label>
+                  formControlName="is_admin"
+                />
+                <label class="form-check-label" for="is_admin"> Administrator </label>
               </div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeModal()"
+            [disabled]="submitting"
+          >
             Cancel
           </button>
           <button type="submit" class="btn btn-primary" [disabled]="submitting">
             <span *ngIf="!submitting">{{ isEditMode ? 'Update User' : 'Create User' }}</span>
             <span *ngIf="submitting">
-              <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>Saving...
+              <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner
+              >Saving…
             </span>
           </button>
         </div>

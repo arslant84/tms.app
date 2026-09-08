@@ -30,14 +30,17 @@
           name="visaSearch"
           autocomplete="off"
           class="form-control search-input"
-          placeholder="Search by name, destination, passport number..."
+          placeholder="Search by name, destination, passport number…"
+          aria-label="Search by name, destination, or passport number"
           [value]="(listState.searchTerm | async) || ''"
-          (input)="onSearchChange($any($event.target).value)">
+          (input)="onSearchChange($any($event.target).value)"
+        />
 
         <select
           class="form-select filter-select"
           [(ngModel)]="filterStatus"
-          (change)="onFilterChange()">
+          (change)="onFilterChange()"
+        >
           <option value="">All Statuses</option>
           <option *ngFor="let status of statuses" [value]="status">
             {{ status }}
@@ -47,7 +50,8 @@
         <select
           class="form-select filter-select"
           [(ngModel)]="filterVisaType"
-          (change)="onFilterChange()">
+          (change)="onFilterChange()"
+        >
           <option value="">All Visa Types</option>
           <option *ngFor="let type of visaTypes" [value]="type">
             {{ type }}
@@ -78,16 +82,29 @@
     <div class="visa-card-content">
       <!-- Loading State (Initial Load) -->
       <div *ngIf="(listState.loading | async) && applications.length === 0" class="loading-state">
-        <app-loading-spinner size="lg" message="Loading visa applications..."></app-loading-spinner>
+        <app-loading-spinner size="lg" message="Loading visa applications…"></app-loading-spinner>
       </div>
 
       <!-- Loading Overlay (Pagination Navigation) -->
       <div *ngIf="(listState.loading | async) && applications.length > 0" class="loading-overlay">
-        <app-loading-spinner size="md" message="Loading..."></app-loading-spinner>
+        <app-loading-spinner size="md" message="Loading…"></app-loading-spinner>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="(listState.error | async) && !(listState.loading | async)" class="error-state">
+        <i class="bi bi-exclamation-triangle error-icon"></i>
+        <h3 class="error-title">Error Loading Visa Applications</h3>
+        <p class="error-message">{{ listState.error | async }}</p>
+        <button class="btn btn-primary" (click)="fetchApplications()">Try Again</button>
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!(listState.loading | async) && applications.length === 0" class="empty-state">
+      <div
+        *ngIf="
+          !(listState.loading | async) && !(listState.error | async) && applications.length === 0
+        "
+        class="empty-state"
+      >
         <i class="bi bi-inbox empty-icon"></i>
         <h3 class="empty-title">No Visa Applications Found</h3>
         <p class="empty-description">
@@ -96,7 +113,12 @@
       </div>
 
       <!-- Table View -->
-      <div *ngIf="!(listState.loading | async) && applications.length > 0" class="table-responsive">
+      <div
+        *ngIf="
+          !(listState.loading | async) && !(listState.error | async) && applications.length > 0
+        "
+        class="table-responsive"
+      >
         <table class="table table-hover applications-table">
           <thead>
             <tr>
@@ -111,9 +133,15 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let app of applications" [routerLink]="['/visa', app.id]" class="clickable-row">
+            <tr
+              *ngFor="let app of applications"
+              [routerLink]="['/visa', app.id]"
+              class="clickable-row"
+            >
               <td class="id-cell">
-                <span *ngIf="app.request_number" class="request-number">{{ app.request_number }}</span>
+                <span *ngIf="app.request_number" class="request-number">{{
+                  app.request_number
+                }}</span>
                 <span *ngIf="!app.request_number" class="text-muted">VIS-{{ app.id }}</span>
               </td>
               <td>
@@ -142,23 +170,26 @@
                     [routerLink]="['/visa', app.id]"
                     (click)="$event.stopPropagation()"
                     title="View Details"
+                    aria-label="View Details"
                   >
-                    <i class="bi bi-eye"></i>
+                    <i class="bi bi-eye" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-primary btn-icon"
                     [routerLink]="['/visa', app.id, 'edit']"
                     (click)="$event.stopPropagation()"
                     title="Edit Application"
+                    aria-label="Edit Application"
                   >
-                    <i class="bi bi-pencil"></i>
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="deleteApplication(app.id, $event)"
                     title="Delete Application"
+                    aria-label="Delete Application"
                   >
-                    <i class="bi bi-trash"></i>
+                    <i class="bi bi-trash" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>
@@ -168,7 +199,10 @@
       </div>
 
       <!-- Pagination -->
-      <div *ngIf="!(listState.loading | async) && listState.getTotalPages() > 1" class="pagination-container">
+      <div
+        *ngIf="!(listState.loading | async) && listState.getTotalPages() > 1"
+        class="pagination-container"
+      >
         <nav aria-label="Page navigation">
           <ul class="pagination justify-content-center mb-0">
             <li class="page-item" [class.disabled]="!listState.hasPreviousPage()">
@@ -193,7 +227,13 @@
         <div class="text-center mt-3 pagination-info">
           <small>
             Showing {{ ((listState.currentPage | async)! - 1) * listState.getPageSize() + 1 }} -
-            {{ Math.min((listState.currentPage | async)! * listState.getPageSize(), listState.getTotalItems()) }} of {{ listState.getTotalItems() }} applications
+            {{
+              Math.min(
+                (listState.currentPage | async)! * listState.getPageSize(),
+                listState.getTotalItems()
+              )
+            }}
+            of {{ listState.getTotalItems() }} applications
           </small>
         </div>
       </div>

@@ -92,3 +92,6 @@ docs/*.docx
 docs/*.pptx
 docs/TMS_Responsibility_Matrix.xlsx
 docs/~$*.xlsx
+
+# Design audit/roadmap working docs - internal planning artifacts, not project deliverables
+docs/design/

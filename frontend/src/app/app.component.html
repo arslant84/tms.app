@@ -1,15 +1,16 @@
 <!-- Global loading indicator for page navigation -->
-<app-loading-spinner
-  *ngIf="loading$ | async"
-  size="lg"
-  [fullScreen]="true"
-  message="Loading...">
+<app-loading-spinner *ngIf="loading$ | async" size="lg" [fullScreen]="true" message="Loading…">
 </app-loading-spinner>
 
 <!-- Connection lost - retrying in the background, current page stays as-is -->
-<div class="connection-issue-banner" *ngIf="connectionIssue$ | async">
-  <i class="bi bi-wifi-off"></i>
-  Connection lost. Retrying...
+<div
+  class="connection-issue-banner"
+  *ngIf="connectionIssue$ | async"
+  role="status"
+  aria-live="polite"
+>
+  <i class="bi bi-wifi-off" aria-hidden="true"></i>
+  Connection lost. Retrying…
 </div>
 
 <!-- Toast notifications -->

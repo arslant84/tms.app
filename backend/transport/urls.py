@@ -1,11 +1,11 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import (
+from .transport_assignment_views import (
     TransportApprovalStepViewSet,
-    TransportRequestViewSet,
     VehicleAssignmentViewSet,
 )
+from .transport_request_views import TransportRequestViewSet
 
 router = DefaultRouter()
 router.register(r"requests", TransportRequestViewSet, basename="transport-request")

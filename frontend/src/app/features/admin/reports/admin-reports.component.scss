@@ -1,4 +1,5 @@
 // Admin Reports Component - Using Unified Design System
+@use 'sass:color';
 @use '../../../../styles/variables' as vars;
 
 // Host element should fill content area
@@ -77,25 +78,43 @@
   }
 }
 
-.reports-actions {
+// Toolbar - unifies the View/Time Period toggles and Export/Print actions
+// into one visual control bar instead of loose buttons floating on the page.
+.reports-toolbar {
   display: flex;
+  align-items: center;
   gap: vars.$spacing-4;
+  padding: vars.$spacing-3 vars.$spacing-4;
+  background-color: vars.$bg-secondary;
+  border: 1px solid vars.$border-light;
+  border-radius: vars.$radius-lg;
+  flex-wrap: wrap;
 }
 
 .date-range-selector {
   display: flex;
   align-items: center;
   gap: vars.$spacing-2;
+}
 
-  span {
-    font-weight: vars.$font-weight-medium;
-    color: vars.$gray-700;
-  }
+.toolbar-label {
+  font-size: vars.$font-size-xs;
+  font-weight: vars.$font-weight-semibold;
+  color: vars.$gray-500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.toolbar-divider {
+  width: 1px;
+  align-self: stretch;
+  background-color: vars.$border-medium;
 }
 
 .export-actions {
   display: flex;
   gap: vars.$spacing-2;
+  margin-left: auto;
 }
 
 .dropdown-item {
@@ -104,6 +123,133 @@
   i {
     margin-right: vars.$spacing-2;
   }
+}
+
+// Toggle button groups (View, Time Period) - deliberately spaced-out buttons
+// rather than Bootstrap's connected .btn-group pill, so each button reads as
+// its own clickable target.
+.toggle-btn-group {
+  display: flex;
+  gap: vars.$spacing-2;
+}
+
+// Colored "chip" buttons - each option in the View/Time Period toggles and
+// the Export/Print actions gets its own permanent color identity (per
+// explicit design direction for this toolbar), rather than the app's usual
+// flat teal-primary/gray-outline button pair. Selection state still reads
+// clearly: the tinted (unselected) state and solid (selected) state are the
+// same hue at different saturation, not color vs. no-color.
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: vars.$spacing-2;
+  height: 36px;
+  padding: 0 vars.$spacing-4;
+  border: 1px solid transparent;
+  border-radius: vars.$radius-full;
+  font-size: vars.$font-size-sm;
+  font-weight: vars.$font-weight-semibold;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color vars.$transition-fast,
+    color vars.$transition-fast,
+    border-color vars.$transition-fast;
+
+  &:focus-visible {
+    outline: 2px solid vars.$black;
+    outline-offset: 2px;
+  }
+
+  // Solid buttons (Export/Print) don't toggle - always at full saturation.
+  &.chip-solid {
+    color: vars.$white;
+  }
+}
+
+@mixin chip-color($tint, $tint-hover, $text, $solid, $solid-hover) {
+  background-color: $tint;
+  color: $text;
+  border-color: transparent;
+
+  /* stylelint-disable nesting-selector-no-missing-scoping-root -- & only
+     gets a scoping root once this mixin is @included inside a rule */
+  &:hover:not(.chip-active, .chip-solid) {
+    background-color: $tint-hover;
+  }
+
+  &.chip-active,
+  &.chip-solid {
+    background-color: $solid;
+    color: vars.$white;
+  }
+
+  &.chip-active:hover,
+  &.chip-solid:hover {
+    background-color: $solid-hover;
+  }
+  /* stylelint-enable nesting-selector-no-missing-scoping-root */
+}
+
+.chip-teal {
+  @include chip-color(
+    vars.$primary-lightest,
+    vars.$primary-light,
+    vars.$primary-active,
+    vars.$primary-hover,
+    vars.$primary-active
+  );
+}
+
+.chip-indigo {
+  @include chip-color(
+    vars.$indigo-light,
+    color.adjust(vars.$indigo-light, $lightness: -8%),
+    vars.$indigo-dark,
+    vars.$indigo-color,
+    vars.$indigo-hover
+  );
+}
+
+.chip-blue {
+  @include chip-color(
+    vars.$info-light,
+    color.adjust(vars.$info-light, $lightness: -8%),
+    vars.$info-dark,
+    vars.$info-color,
+    vars.$info-hover
+  );
+}
+
+.chip-purple {
+  @include chip-color(
+    vars.$purple-light,
+    color.adjust(vars.$purple-light, $lightness: -8%),
+    vars.$purple-dark,
+    vars.$purple-color,
+    vars.$purple-hover
+  );
+}
+
+.chip-amber {
+  @include chip-color(
+    vars.$warning-light,
+    color.adjust(vars.$warning-light, $lightness: -8%),
+    vars.$warning-dark,
+    vars.$warning-color,
+    vars.$warning-hover
+  );
+}
+
+.chip-dark {
+  @include chip-color(
+    vars.$gray-200,
+    vars.$gray-300,
+    vars.$gray-800,
+    vars.$gray-800,
+    vars.$gray-900
+  );
 }
 
 /* Stats Grid - Unified with other admin components */
@@ -127,7 +273,9 @@
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-base;
   box-shadow: vars.$shadow-sm;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
     box-shadow: vars.$shadow-md;
@@ -163,6 +311,7 @@
       color: vars.$gray-900;
       line-height: 1;
       margin-bottom: vars.$spacing-1;
+      font-variant-numeric: tabular-nums;
     }
 
     .stat-description {
@@ -298,6 +447,40 @@
   color: vars.$gray-900;
 }
 
+// Categorical chart colors - shared by legend dots, stacked-bar segments,
+// and the donut chart's SVG <circle> strokes below. Values come from the
+// app's $chart-color-* design tokens (see styles/_variables.scss) instead
+// of one-off hex, so report charts stay in sync with the rest of the palette.
+.chart-color-red {
+  background-color: vars.$chart-color-1;
+  stroke: vars.$chart-color-1;
+}
+
+.chart-color-amber {
+  background-color: vars.$chart-color-2;
+  stroke: vars.$chart-color-2;
+}
+
+.chart-color-cyan {
+  background-color: vars.$chart-color-3;
+  stroke: vars.$chart-color-3;
+}
+
+.chart-color-green {
+  background-color: vars.$chart-color-4;
+  stroke: vars.$chart-color-4;
+}
+
+.chart-color-teal {
+  background-color: vars.$chart-color-5;
+  stroke: vars.$chart-color-5;
+}
+
+.chart-color-blue {
+  background-color: vars.$chart-color-6;
+  stroke: vars.$chart-color-6;
+}
+
 /* Chart Container */
 .chart-container {
   position: relative;
@@ -322,12 +505,20 @@
 
     &.primary-area {
       height: 60%;
-      background: linear-gradient(180deg, rgba(vars.$primary-color, 0.2) 0%, rgba(vars.$primary-color, 0.05) 100%);
+      background: linear-gradient(
+        180deg,
+        rgba(vars.$primary-color, 0.2) 0%,
+        rgba(vars.$primary-color, 0.05) 100%
+      );
     }
 
     &.success-area {
       height: 40%;
-      background: linear-gradient(180deg, rgba(vars.$success-color, 0.2) 0%, rgba(vars.$success-color, 0.05) 100%);
+      background: linear-gradient(
+        180deg,
+        rgba(vars.$success-color, 0.2) 0%,
+        rgba(vars.$success-color, 0.05) 100%
+      );
     }
   }
 }
@@ -476,7 +667,6 @@
   color: vars.$gray-700;
   min-width: 36px;
 }
-
 
 /* Table Cards - Unified with other admin components */
 .table-card {
@@ -627,6 +817,7 @@
 .breakdown-value {
   font-weight: vars.$font-weight-semibold;
   color: vars.$text-primary;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Responsive Adjustments */
@@ -637,20 +828,27 @@
     gap: vars.$spacing-4;
   }
 
-  .reports-actions {
+  .reports-toolbar {
     width: 100%;
     flex-direction: column;
+    align-items: stretch;
     gap: vars.$spacing-3;
   }
 
-  .date-range-selector, .export-actions {
+  .date-range-selector,
+  .export-actions {
     width: 100%;
   }
 
-  .btn-group {
+  .toolbar-divider {
+    width: 100%;
+    height: 1px;
+  }
+
+  .toggle-btn-group {
     width: 100%;
 
-    .btn {
+    .chip {
       flex: 1;
     }
   }
@@ -658,8 +856,10 @@
   .export-actions {
     display: flex;
     justify-content: space-between;
+    margin-left: 0;
 
-    .dropdown, .btn {
+    .dropdown,
+    .chip {
       width: 48%;
     }
   }

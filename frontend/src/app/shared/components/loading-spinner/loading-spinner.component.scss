@@ -16,22 +16,16 @@
 
   &.overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background-color: rgb(255 255 255 / 90%);
-    z-index: 10;
+    z-index: vars.$z-modal;
   }
 
   &.full-screen {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background-color: rgb(255 255 255 / 95%);
-    z-index: 9999;
+    z-index: vars.$z-tooltip;
   }
 }
 
@@ -42,22 +36,41 @@
   gap: vars.$spacing-3;
 }
 
-.loading-gif {
+.loading-ring {
   display: block;
+  border-radius: vars.$radius-full;
+  border: 3px solid vars.$primary-lightest;
+  border-top-color: vars.$primary-color;
+  animation: loading-ring-spin vars.$animation-spinner linear infinite;
 
   &.size-sm {
-    width: 40px;
-    height: 40px;
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
   }
 
   &.size-md {
-    width: 80px;
-    height: 80px;
+    width: 40px;
+    height: 40px;
+    border-width: 3px;
   }
 
   &.size-lg {
-    width: 120px;
-    height: 120px;
+    width: 56px;
+    height: 56px;
+    border-width: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-ring {
+    animation-duration: 1.5s;
+  }
+}
+
+@keyframes loading-ring-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

@@ -157,17 +157,9 @@
   }
 }
 
-// Request Number Links - Clickable with monospace font
 // .request-number: see global canonical rule in styles/tables.scss
-a.fw-medium {
-  font-family: vars.$font-mono;
-  color: vars.$primary-color;
-  cursor: pointer;
-
-  &:hover {
-    color: color.adjust(vars.$primary-color, $lightness: -10%);
-  }
-}
+// (a.fw-medium removed - dead selector since this element is a <button>
+// now, not an <a>; .request-number already covers it)
 
 // Icon Styles
 .icon-sm {
@@ -268,6 +260,10 @@ a.fw-medium {
   border-top: 4px solid vars.$primary-color;
   border-radius: vars.$radius-full;
   animation: spin 1s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 3s;
+  }
 }
 
 @keyframes spin {

@@ -107,7 +107,8 @@
                   name="flightsProcessingSearch"
                   autocomplete="off"
                   class="search-input"
-                  placeholder="Search by TRF ID, name, destination..."
+                  placeholder="Search by TRF ID, name, destination…"
+                  aria-label="Search by TRF ID, name, or destination"
                   [(ngModel)]="searchTerm"
                   (ngModelChange)="applyFilters()"
                 />
@@ -127,7 +128,7 @@
             <div *ngIf="isLoadingPending" class="loading-container">
               <app-loading-spinner
                 size="md"
-                message="Loading pending flight requests..."
+                message="Loading pending flight requests…"
               ></app-loading-spinner>
             </div>
 
@@ -195,13 +196,13 @@
                     [class.selected]="selectedTrf?.id === trf.id"
                   >
                     <td class="request-id">
-                      <a
-                        href="javascript:void(0)"
+                      <button
+                        type="button"
                         (click)="viewTrf(trf.id)"
                         class="text-decoration-none request-number"
                       >
                         {{ trf.request_number }}
-                      </a>
+                      </button>
                     </td>
                     <td class="staff-cell">
                       <div class="staff-name">{{ trf.requestorName }}</div>
@@ -227,15 +228,17 @@
                           class="btn btn-sm btn-outline-primary btn-icon"
                           (click)="openBookingModal(trf)"
                           title="Book Flight"
+                          aria-label="Book Flight"
                         >
-                          <i class="bi bi-check-circle"></i>
+                          <i class="bi bi-check-circle" aria-hidden="true"></i>
                         </button>
                         <button
                           class="btn btn-sm btn-outline-primary btn-icon"
                           (click)="viewTrf(trf.id)"
                           title="View Details"
+                          aria-label="View Details"
                         >
-                          <i class="bi bi-eye"></i>
+                          <i class="bi bi-eye" aria-hidden="true"></i>
                         </button>
                       </div>
                     </td>
@@ -251,7 +254,7 @@
       <div *ngIf="activeTab === 'booked'" class="tab-panel">
         <!-- Loading State -->
         <div *ngIf="isLoadingBooked" class="loading-container">
-          <app-loading-spinner size="md" message="Loading booked flights..."></app-loading-spinner>
+          <app-loading-spinner size="md" message="Loading booked flights…"></app-loading-spinner>
         </div>
 
         <!-- Empty State -->
@@ -314,16 +317,18 @@
                       class="btn btn-sm btn-outline-primary btn-icon"
                       (click)="viewTrf(flight.trfId)"
                       title="View Details"
+                      aria-label="View Details"
                     >
-                      <i class="bi bi-eye"></i>
+                      <i class="bi bi-eye" aria-hidden="true"></i>
                     </button>
                     <button
                       class="btn btn-sm btn-outline-danger btn-icon"
                       (click)="cancelBooking(flight)"
                       [disabled]="isProcessing"
                       title="Cancel Booking"
+                      aria-label="Cancel Booking"
                     >
-                      <i class="bi bi-x-circle"></i>
+                      <i class="bi bi-x-circle" aria-hidden="true"></i>
                     </button>
                   </div>
                 </td>
@@ -523,8 +528,9 @@
                         (click)="removeOutboundLeg(i)"
                         [disabled]="outboundLegs.length === 1"
                         title="Remove leg"
+                        aria-label="Remove leg"
                       >
-                        <i class="bi bi-trash"></i>
+                        <i class="bi bi-trash" aria-hidden="true"></i>
                       </button>
                     </td>
                   </tr>
@@ -631,8 +637,9 @@
                         class="btn btn-sm btn-outline-danger btn-icon"
                         (click)="removeReturnLeg(i)"
                         title="Remove leg"
+                        aria-label="Remove leg"
                       >
-                        <i class="bi bi-trash"></i>
+                        <i class="bi bi-trash" aria-hidden="true"></i>
                       </button>
                     </td>
                   </tr>
@@ -670,7 +677,7 @@
               name="flightNotes"
               rows="3"
               class="form-control"
-              placeholder="Add any additional notes about this booking..."
+              placeholder="Add any additional notes about this booking…"
             ></textarea>
           </div>
         </div>
@@ -699,7 +706,7 @@
           <span *ngIf="!isProcessing">Confirm Flight Booking</span>
           <span *ngIf="isProcessing">
             <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
-            Booking...
+            Booking…
           </span>
         </button>
       </div>

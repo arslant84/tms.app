@@ -21,7 +21,13 @@ export interface LocationDialogData {
         <div class="modal-header">
           <h2>{{ isEditMode ? 'Edit Location' : 'Add New Location' }}</h2>
           <button class="close-button" (click)="onClose()">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -39,7 +45,8 @@ export interface LocationDialogData {
                 [(ngModel)]="formData.name"
                 placeholder="e.g., Staff House 41"
                 required
-                #nameInput="ngModel">
+                #nameInput="ngModel"
+              />
               <div class="error-message" *ngIf="nameInput.invalid && nameInput.touched">
                 Staff house name is required
               </div>
@@ -53,7 +60,8 @@ export interface LocationDialogData {
                 name="location"
                 [(ngModel)]="formData.location"
                 required
-                #locationInput="ngModel">
+                #locationInput="ngModel"
+              >
                 <option value="">Select a location</option>
                 <option value="Ashgabat">Ashgabat</option>
                 <option value="Kiyanly">Kiyanly</option>
@@ -74,7 +82,8 @@ export interface LocationDialogData {
                 [(ngModel)]="formData.address"
                 placeholder="Full address"
                 required
-                #addressInput="ngModel">
+                #addressInput="ngModel"
+              />
               <div class="error-message" *ngIf="addressInput.invalid && addressInput.touched">
                 Address is required
               </div>
@@ -88,26 +97,29 @@ export interface LocationDialogData {
                 name="description"
                 [(ngModel)]="formData.description"
                 rows="3"
-                placeholder="Additional details about this location..."></textarea>
+                placeholder="Additional details about this location…"
+              ></textarea>
             </div>
           </div>
 
           <div class="modal-footer">
-            <button type="button" class="btn-secondary" (click)="onClose()">
-              Cancel
-            </button>
-            <button type="submit" class="btn-primary" [disabled]="!locationForm.form.valid || isSubmitting">
+            <button type="button" class="btn-secondary" (click)="onClose()">Cancel</button>
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="!locationForm.form.valid || isSubmitting"
+            >
               <span *ngIf="!isSubmitting">{{ isEditMode ? 'Update' : 'Create' }}</span>
               <span *ngIf="isSubmitting">
                 <div class="btn-spinner"></div>
-                {{ isEditMode ? 'Updating...' : 'Creating...' }}
+                {{ isEditMode ? 'Updating…' : 'Creating…' }}
               </span>
             </button>
           </div>
         </form>
       </div>
     </div>
-  `
+  `,
 })
 export class LocationDialogComponent {
   @Input() isOpen = false;
@@ -129,7 +141,7 @@ export class LocationDialogComponent {
     name: '',
     location: 'Ashgabat',
     address: '',
-    description: ''
+    description: '',
   };
 
   resetForm(): void {
@@ -137,7 +149,7 @@ export class LocationDialogComponent {
       name: '',
       location: 'Ashgabat',
       address: '',
-      description: ''
+      description: '',
     };
     this.isEditMode = false;
   }

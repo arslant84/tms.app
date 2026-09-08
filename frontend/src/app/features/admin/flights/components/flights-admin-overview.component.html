@@ -85,7 +85,8 @@
             name="flightsOverviewSearch"
             autocomplete="off"
             class="form-control"
-            placeholder="Search by TRF ID, requestor name, destination..."
+            placeholder="Search by TRF ID, requestor name, destination…"
+            aria-label="Search by TRF ID, requestor name, or destination"
             [(ngModel)]="searchTerm"
             (keyup.enter)="onSearchChange()"
           />
@@ -130,7 +131,7 @@
     <div class="card-body">
       <!-- Loading State -->
       <div *ngIf="isLoading" class="loading-state">
-        <app-loading-spinner size="md" message="Loading applications..."></app-loading-spinner>
+        <app-loading-spinner size="md" message="Loading applications…"></app-loading-spinner>
       </div>
 
       <!-- Error State -->
@@ -170,13 +171,13 @@
           <tbody>
             <tr *ngFor="let application of filteredApplications">
               <td>
-                <a
-                  href="javascript:void(0)"
+                <button
+                  type="button"
                   (click)="viewTrf(application.id)"
                   class="text-decoration-none fw-medium request-number"
                 >
                   {{ application.requestNumber }}
-                </a>
+                </button>
               </td>
               <td class="staff-cell">
                 <div class="staff-name">{{ application.requestorName }}</div>
@@ -209,8 +210,9 @@
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="viewTrf(application.id)"
                     title="View Details"
+                    aria-label="View Details"
                   >
-                    <i class="bi bi-eye"></i>
+                    <i class="bi bi-eye" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>

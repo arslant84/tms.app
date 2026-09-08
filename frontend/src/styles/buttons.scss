@@ -79,7 +79,35 @@
       border-radius: vars.$radius-full;
       border-right-color: transparent;
       animation: spinner-border 0.75s linear infinite;
+
+      @media (prefers-reduced-motion: reduce) {
+        animation-duration: 1.5s;
+      }
     }
+  }
+}
+
+// ============================================================================
+// BUTTON GROUPS - restore Bootstrap's segmented-corner behavior
+// The base .btn rule above forces a 4px radius on all 4 corners of every
+// button (needed so a lone .btn always matches the app's shape scale), but
+// that also overrides Bootstrap's own .btn-group corner-squaring - without
+// this, every segment in a toggle group (e.g. admin-reports' View/Time
+// Period selectors, user-admin's filter group) rendered as its own fully
+// rounded box instead of one seamless pill. Only the group's outer corners
+// stay rounded; touching inner corners are squared off.
+// ============================================================================
+.btn-group > .btn {
+  border-radius: 0 !important;
+
+  &:first-child {
+    border-top-left-radius: vars.$radius-base !important;
+    border-bottom-left-radius: vars.$radius-base !important;
+  }
+
+  &:last-child {
+    border-top-right-radius: vars.$radius-base !important;
+    border-bottom-right-radius: vars.$radius-base !important;
   }
 }
 
@@ -108,6 +136,17 @@
   &.active {
     background-color: color.adjust(colors.$primary-teal-active, $lightness: -6%);
     border-color: color.adjust(colors.$primary-teal-active, $lightness: -6%);
+  }
+
+  // Fluent 2: high-contrast black focus ring, no colored glow.
+  &:focus-visible {
+    outline: 2px solid vars.$black;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  &:focus:not(:focus-visible) {
+    box-shadow: none;
   }
 }
 
@@ -175,17 +214,30 @@
   color: colors.$primary-teal;
   border-radius: vars.$radius-base !important; // Force 4px
 
+  // Same white-on-teal contrast fix as .btn-primary above: hover/active fill
+  // with $primary-teal-hover (not the base $primary-teal), so white text on
+  // the filled state clears WCAG's 4.5:1 ratio.
   &:hover:not(:disabled) {
-    background-color: colors.$primary-teal;
-    border-color: colors.$primary-teal;
+    background-color: colors.$primary-teal-hover;
+    border-color: colors.$primary-teal-hover;
     color: vars.$white;
   }
 
   &:active,
   &.active {
-    background-color: colors.$primary-teal-hover;
-    border-color: colors.$primary-teal-hover;
+    background-color: colors.$primary-teal-active;
+    border-color: colors.$primary-teal-active;
     color: vars.$white;
+  }
+
+  &:focus-visible {
+    outline: 2px solid vars.$black;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  &:focus:not(:focus-visible) {
+    box-shadow: none;
   }
 }
 

@@ -146,6 +146,10 @@
 
 .spin-animation {
   animation: spin 1s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 3s;
+  }
 }
 
 @keyframes spin {
@@ -259,6 +263,11 @@
 
 .amount-cell {
   font-weight: vars.$font-weight-medium;
+  font-variant-numeric: tabular-nums;
+}
+
+.passengers-cell {
+  font-variant-numeric: tabular-nums;
 }
 
 .text-center {

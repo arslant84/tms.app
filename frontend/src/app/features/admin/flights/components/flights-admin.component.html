@@ -16,32 +16,62 @@
       <div class="row g-3">
         <div class="col-md-3">
           <label class="form-label">Search</label>
-          <input type="text" class="form-control" id="searchFilter" placeholder="Booking ref, airline, flight..."
-                 [(ngModel)]="filterCriteria.search" (keyup.enter)="applyLocalFilters()">
+          <input
+            type="text"
+            class="form-control"
+            id="searchFilter"
+            placeholder="Booking ref, airline, flight…"
+            [(ngModel)]="filterCriteria.search"
+            (keyup.enter)="applyLocalFilters()"
+          />
         </div>
 
         <div class="col-md-3">
           <label class="form-label">Status</label>
-          <select id="statusFilter" class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
+          <select
+            id="statusFilter"
+            class="form-select"
+            [(ngModel)]="filterCriteria.status"
+            (change)="applyFilters()"
+          >
             <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
           </select>
         </div>
 
         <div class="col-md-2">
           <label class="form-label">Class</label>
-          <select id="classFilter" class="form-select" [(ngModel)]="filterCriteria.bookingClass" (change)="applyLocalFilters()">
-            <option *ngFor="let opt of bookingClassOptions" [value]="opt.value">{{ opt.label }}</option>
+          <select
+            id="classFilter"
+            class="form-select"
+            [(ngModel)]="filterCriteria.bookingClass"
+            (change)="applyLocalFilters()"
+          >
+            <option *ngFor="let opt of bookingClassOptions" [value]="opt.value">
+              {{ opt.label }}
+            </option>
           </select>
         </div>
 
         <div class="col-md-2">
           <label class="form-label">Date From</label>
-          <input type="date" class="form-control" id="dateFrom" [(ngModel)]="filterCriteria.dateFrom" (change)="applyLocalFilters()">
+          <input
+            type="date"
+            class="form-control"
+            id="dateFrom"
+            [(ngModel)]="filterCriteria.dateFrom"
+            (change)="applyLocalFilters()"
+          />
         </div>
 
         <div class="col-md-2">
           <label class="form-label">Date To</label>
-          <input type="date" class="form-control" id="dateTo" [(ngModel)]="filterCriteria.dateTo" (change)="applyLocalFilters()">
+          <input
+            type="date"
+            class="form-control"
+            id="dateTo"
+            [(ngModel)]="filterCriteria.dateTo"
+            (change)="applyLocalFilters()"
+          />
         </div>
       </div>
     </div>
@@ -49,7 +79,7 @@
 
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-container">
-    <app-loading-spinner size="md" message="Loading bookings..."></app-loading-spinner>
+    <app-loading-spinner size="md" message="Loading bookings…"></app-loading-spinner>
   </div>
 
   <!-- Error State -->
@@ -85,9 +115,13 @@
           <tbody>
             <tr *ngFor="let booking of filteredBookings">
               <td>
-                <a href="javascript:void(0)" (click)="viewBooking(booking)" class="text-decoration-none fw-medium request-number">
+                <button
+                  type="button"
+                  (click)="viewBooking(booking)"
+                  class="text-decoration-none fw-medium request-number"
+                >
                   {{ booking.booking_reference }}
-                </a>
+                </button>
                 <div *ngIf="booking.ticket_number" class="small text-muted">
                   <i class="bi bi-ticket-perforated me-1"></i>
                   {{ booking.ticket_number }}
@@ -108,7 +142,9 @@
               </td>
               <td>
                 <div class="small">{{ dateUtils.formatDateTime(booking.departure_time) }}</div>
-                <small class="text-muted">Arr: {{ dateUtils.formatDateTime(booking.arrival_time) }}</small>
+                <small class="text-muted"
+                  >Arr: {{ dateUtils.formatDateTime(booking.arrival_time) }}</small
+                >
               </td>
               <td>
                 <span class="badge" [ngClass]="getBookingClassBadge(booking.booking_class)">
@@ -122,32 +158,53 @@
               </td>
               <td>
                 <div class="action-buttons justify-content-center">
-                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewBooking(booking)" title="View Details">
-                    <i class="bi bi-eye"></i>
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="viewBooking(booking)"
+                    title="View Details"
+                    aria-label="View Details"
+                  >
+                    <i class="bi bi-eye" aria-hidden="true"></i>
                   </button>
 
-                  <button *ngIf="canConfirm(booking)" class="btn btn-sm btn-outline-primary btn-icon"
-                          (click)="confirmBooking(booking)"
-                          [disabled]="isProcessing(booking.id)"
-                          title="Confirm Booking">
+                  <button
+                    *ngIf="canConfirm(booking)"
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="confirmBooking(booking)"
+                    [disabled]="isProcessing(booking.id)"
+                    title="Confirm Booking"
+                    aria-label="Confirm Booking"
+                  >
                     <span *ngIf="!isProcessing(booking.id)">
-                      <i class="bi bi-check-circle"></i>
+                      <i class="bi bi-check-circle" aria-hidden="true"></i>
                     </span>
-                    <app-loading-spinner *ngIf="isProcessing(booking.id)" size="sm" class="d-inline-block"></app-loading-spinner>
+                    <app-loading-spinner
+                      *ngIf="isProcessing(booking.id)"
+                      size="sm"
+                      class="d-inline-block"
+                    ></app-loading-spinner>
                   </button>
 
-                  <button *ngIf="canIssueTicket(booking)" class="btn btn-sm btn-outline-primary btn-icon"
-                          (click)="openIssueTicketModal(booking)"
-                          [disabled]="isProcessing(booking.id)"
-                          title="Issue Ticket">
-                    <i class="bi bi-ticket-perforated"></i>
+                  <button
+                    *ngIf="canIssueTicket(booking)"
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="openIssueTicketModal(booking)"
+                    [disabled]="isProcessing(booking.id)"
+                    title="Issue Ticket"
+                    aria-label="Issue Ticket"
+                  >
+                    <i class="bi bi-ticket-perforated" aria-hidden="true"></i>
                   </button>
 
-                  <button *ngIf="canCancel(booking)" class="btn btn-sm btn-outline-danger btn-icon"
-                          (click)="cancelBooking(booking)"
-                          [disabled]="isProcessing(booking.id)"
-                          title="Cancel Booking">
-                    <i class="bi bi-x-circle"></i>
+                  <button
+                    *ngIf="canCancel(booking)"
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    (click)="cancelBooking(booking)"
+                    [disabled]="isProcessing(booking.id)"
+                    title="Cancel Booking"
+                    aria-label="Cancel Booking"
+                  >
+                    <i class="bi bi-x-circle" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>
@@ -171,15 +228,23 @@
       <nav aria-label="Bookings pagination">
         <ul class="pagination pagination-sm mb-0 justify-content-center">
           <li class="page-item" [class.disabled]="currentPage === 1">
-            <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">Previous</a>
+            <button type="button" class="page-link" (click)="changePage(currentPage - 1)">
+              Previous
+            </button>
           </li>
 
-          <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
-            <a class="page-link" href="javascript:void(0)" (click)="changePage(page)">{{ page }}</a>
+          <li
+            class="page-item"
+            *ngFor="let page of getPageNumbers()"
+            [class.active]="page === currentPage"
+          >
+            <button type="button" class="page-link" (click)="changePage(page)">{{ page }}</button>
           </li>
 
           <li class="page-item" [class.disabled]="currentPage === totalPages">
-            <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">Next</a>
+            <button type="button" class="page-link" (click)="changePage(currentPage + 1)">
+              Next
+            </button>
           </li>
         </ul>
       </nav>
@@ -188,8 +253,13 @@
 </div>
 
 <!-- Issue Ticket Modal -->
-<div class="modal fade" [class.show]="showIssueTicketModal" [style.display]="showIssueTicketModal ? 'block' : 'none'"
-     tabindex="-1" *ngIf="showIssueTicketModal">
+<div
+  class="modal fade"
+  [class.show]="showIssueTicketModal"
+  [style.display]="showIssueTicketModal ? 'block' : 'none'"
+  tabindex="-1"
+  *ngIf="showIssueTicketModal"
+>
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -203,32 +273,47 @@
               <strong>Booking:</strong> {{ selectedBooking.booking_reference }}
             </div>
             <div class="col-12">
-              <strong>Flight:</strong> {{ selectedBooking.airline }} {{ selectedBooking.flight_number }}
+              <strong>Flight:</strong> {{ selectedBooking.airline }}
+              {{ selectedBooking.flight_number }}
             </div>
-            <div class="col-12">
-              <strong>Route:</strong> {{ formatRoute(selectedBooking) }}
-            </div>
+            <div class="col-12"><strong>Route:</strong> {{ formatRoute(selectedBooking) }}</div>
           </div>
         </div>
 
         <div class="mb-3">
-          <label for="ticketNumber" class="form-label">Ticket Number <span class="text-danger">*</span></label>
-          <input type="text" id="ticketNumber" class="form-control"
-                 [(ngModel)]="ticketNumber"
-                 placeholder="e.g., 123-4567890123"
-                 required>
+          <label for="ticketNumber" class="form-label"
+            >Ticket Number <span class="text-danger">*</span></label
+          >
+          <input
+            type="text"
+            id="ticketNumber"
+            class="form-control"
+            [(ngModel)]="ticketNumber"
+            placeholder="e.g., 123-4567890123"
+            required
+          />
           <small class="text-muted">Enter the airline ticket number</small>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeIssueTicketModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" (click)="issueTicket()"
-                [disabled]="processingId !== null || !ticketNumber">
+        <button type="button" class="btn btn-secondary" (click)="closeIssueTicketModal()">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="issueTicket()"
+          [disabled]="processingId !== null || !ticketNumber"
+        >
           <span *ngIf="processingId === null">
             <i class="bi bi-ticket-perforated me-1"></i>
             Issue Ticket
           </span>
-          <app-loading-spinner *ngIf="processingId !== null" size="sm" class="d-inline-block"></app-loading-spinner>
+          <app-loading-spinner
+            *ngIf="processingId !== null"
+            size="sm"
+            class="d-inline-block"
+          ></app-loading-spinner>
         </button>
       </div>
     </div>
@@ -236,4 +321,8 @@
 </div>
 
 <!-- Modal Backdrop -->
-<div class="modal-backdrop fade" [class.show]="showIssueTicketModal" *ngIf="showIssueTicketModal"></div>
+<div
+  class="modal-backdrop fade"
+  [class.show]="showIssueTicketModal"
+  *ngIf="showIssueTicketModal"
+></div>

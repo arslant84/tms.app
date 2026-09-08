@@ -66,7 +66,8 @@
             id="mealAdminSearch"
             name="mealAdminSearch"
             autocomplete="off"
-            placeholder="Search by ID, Requestor, Purpose..."
+            placeholder="Search by ID, Requestor, Purpose…"
+            aria-label="Search by ID, requestor, or purpose"
             [(ngModel)]="filterCriteria.search"
             (keyup.enter)="applyFilters()"
           />
@@ -94,7 +95,7 @@
     <div class="card-body p-0">
       <!-- Loading State -->
       <div *ngIf="loading" class="loading-state">
-        <app-loading-spinner size="md" message="Loading meal requests..."></app-loading-spinner>
+        <app-loading-spinner size="md" message="Loading meal requests…"></app-loading-spinner>
       </div>
 
       <!-- Error State -->
@@ -129,13 +130,13 @@
           <tbody>
             <tr *ngFor="let request of requests">
               <td>
-                <a
-                  href="javascript:void(0)"
+                <button
+                  type="button"
                   (click)="viewRequest(request)"
                   class="text-decoration-none fw-medium request-number"
                 >
                   {{ request.request_number || request.id }}
-                </a>
+                </button>
               </td>
               <td>{{ request.requestor_name || 'N/A' }}</td>
               <td>{{ request.department || 'N/A' }}</td>
@@ -156,8 +157,9 @@
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="viewRequest(request)"
                     title="View Details"
+                    aria-label="View Details"
                   >
-                    <i class="bi bi-eye"></i>
+                    <i class="bi bi-eye" aria-hidden="true"></i>
                   </button>
                   <button
                     *ngIf="
@@ -168,8 +170,9 @@
                     [disabled]="isProcessing(request.id)"
                     (click)="markStatus(request, 'Arranged')"
                     title="Mark Arranged"
+                    aria-label="Mark Arranged"
                   >
-                    <i class="bi bi-check-circle"></i>
+                    <i class="bi bi-check-circle" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>

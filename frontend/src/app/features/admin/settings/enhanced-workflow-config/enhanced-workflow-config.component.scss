@@ -36,7 +36,8 @@
       margin: 0;
     }
 
-    h4.card-title, h5.card-title {
+    h4.card-title,
+    h5.card-title {
       font-size: vars.$font-size-lg;
       font-weight: vars.$font-weight-semibold;
       color: vars.$white;
@@ -100,10 +101,15 @@
     color: vars.$gray-500;
     font-size: vars.$font-size-xl;
     animation: bounce 2s infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
   }
 
   @keyframes bounce {
-    0%, 100% {
+    0%,
+    100% {
       transform: translateY(0);
     }
     50% {

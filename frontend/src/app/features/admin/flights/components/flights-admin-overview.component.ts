@@ -130,7 +130,7 @@ export class FlightsAdminOverviewComponent implements OnInit {
           } else if (trf.domestic_travel_details?.itinerary?.length) {
             destinationSummary = trf.domestic_travel_details.itinerary.map(segmentLabel).join(', ');
           } else if (trf.purpose) {
-            destinationSummary = `${trf.purpose.substring(0, 50)}...`;
+            destinationSummary = `${trf.purpose.substring(0, 50)}…`;
           }
           return {
             id: String(trf.id),

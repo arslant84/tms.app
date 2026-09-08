@@ -59,6 +59,7 @@ export class NotificationListComponent implements OnInit, OnDestroy {
 
   loadNotifications(): void {
     this.listState.setLoading(true);
+    this.listState.clearError();
     const filters: ListFilters = {
       ...this.listState.getFilters(),
     };
@@ -83,6 +84,7 @@ export class NotificationListComponent implements OnInit, OnDestroy {
         },
         error: err => {
           console.error('Error loading notifications:', err);
+          this.listState.setError('Failed to load notifications');
           this.listState.setLoading(false);
         },
       });

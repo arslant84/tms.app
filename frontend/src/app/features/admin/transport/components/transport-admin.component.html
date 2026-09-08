@@ -77,9 +77,17 @@
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-8">
-          <input type="text" class="form-control" id="transportAdminSearch" name="transportAdminSearch"
-                 autocomplete="off" placeholder="Search by ID, Requestor, Purpose..."
-                 [(ngModel)]="filterCriteria.search" (keyup.enter)="applyFilters()">
+          <input
+            type="text"
+            class="form-control"
+            id="transportAdminSearch"
+            name="transportAdminSearch"
+            autocomplete="off"
+            placeholder="Search by ID, Requestor, Purpose…"
+            aria-label="Search by ID, requestor, or purpose"
+            [(ngModel)]="filterCriteria.search"
+            (keyup.enter)="applyFilters()"
+          />
         </div>
         <div class="col-md-4">
           <select class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
@@ -98,14 +106,15 @@
           <i class="bi bi-truck me-2"></i>
           <h3 class="card-title">All Transport Requests</h3>
         </div>
-        <p class="card-description">Complete list of transport requests from all users. Total: {{ totalRequests }}</p>
+        <p class="card-description">
+          Complete list of transport requests from all users. Total: {{ totalRequests }}
+        </p>
       </div>
     </div>
     <div class="card-body p-0">
-
       <!-- Loading State -->
       <div *ngIf="loading" class="loading-state">
-        <app-loading-spinner size="md" message="Loading transport requests..."></app-loading-spinner>
+        <app-loading-spinner size="md" message="Loading transport requests…"></app-loading-spinner>
       </div>
 
       <!-- Error State -->
@@ -140,9 +149,13 @@
           <tbody>
             <tr *ngFor="let request of filteredRequests">
               <td>
-                <a href="javascript:void(0)" (click)="viewRequest(request)" class="text-decoration-none fw-medium request-number">
+                <button
+                  type="button"
+                  (click)="viewRequest(request)"
+                  class="text-decoration-none fw-medium request-number"
+                >
                   {{ request.request_number || request.id }}
-                </a>
+                </button>
               </td>
               <td class="staff-cell">
                 <div class="staff-name">{{ request.requestorName || 'N/A' }}</div>
@@ -162,8 +175,64 @@
               <td>{{ dateUtils.formatDate(request.createdAt) }}</td>
               <td class="text-end">
                 <div class="action-buttons">
-                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="viewRequest(request)" title="View Details">
-                    <i class="bi bi-eye"></i>
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="viewRequest(request)"
+                    title="View Details"
+                    aria-label="View Details"
+                  >
+                    <i class="bi bi-eye" aria-hidden="true"></i>
+                  </button>
+
+                  <button
+                    *ngIf="canApprove(request)"
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="approveRequest(request)"
+                    [disabled]="isProcessing(request.id)"
+                    title="Approve"
+                    aria-label="Approve"
+                  >
+                    <span *ngIf="!isProcessing(request.id)">
+                      <i class="bi bi-check-circle" aria-hidden="true"></i>
+                    </span>
+                    <app-loading-spinner
+                      *ngIf="isProcessing(request.id)"
+                      size="sm"
+                      class="d-inline-block"
+                    ></app-loading-spinner>
+                  </button>
+
+                  <button
+                    *ngIf="canApprove(request)"
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    (click)="rejectRequest(request)"
+                    [disabled]="isProcessing(request.id)"
+                    title="Reject"
+                    aria-label="Reject"
+                  >
+                    <i class="bi bi-x-circle" aria-hidden="true"></i>
+                  </button>
+
+                  <button
+                    *ngIf="canAssignVehicle(request)"
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="openAssignVehicleModal(request)"
+                    [disabled]="isProcessing(request.id)"
+                    title="Assign Vehicle"
+                    aria-label="Assign Vehicle"
+                  >
+                    <i class="bi bi-truck" aria-hidden="true"></i>
+                  </button>
+
+                  <button
+                    *ngIf="canComplete(request)"
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="completeRequest(request)"
+                    [disabled]="isProcessing(request.id)"
+                    title="Mark as Completed"
+                    aria-label="Mark as Completed"
+                  >
+                    <i class="bi bi-check2-all" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>
@@ -177,27 +246,166 @@
         <nav aria-label="Page navigation">
           <ul class="pagination justify-content-center mb-0">
             <li class="page-item" [class.disabled]="currentPage === 1">
-              <a class="page-link" (click)="changePage(currentPage - 1)" aria-label="Previous">
+              <button
+                type="button"
+                class="page-link"
+                (click)="changePage(currentPage - 1)"
+                aria-label="Previous"
+              >
                 <span aria-hidden="true">&laquo;</span>
-              </a>
+              </button>
             </li>
-            <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
-              <a class="page-link" (click)="changePage(page)">{{ page }}</a>
+            <li
+              class="page-item"
+              *ngFor="let page of getPageNumbers()"
+              [class.active]="page === currentPage"
+            >
+              <button type="button" class="page-link" (click)="changePage(page)">{{ page }}</button>
             </li>
             <li class="page-item" [class.disabled]="currentPage === totalPages">
-              <a class="page-link" (click)="changePage(currentPage + 1)" aria-label="Next">
+              <button
+                type="button"
+                class="page-link"
+                (click)="changePage(currentPage + 1)"
+                aria-label="Next"
+              >
                 <span aria-hidden="true">&raquo;</span>
-              </a>
+              </button>
             </li>
           </ul>
         </nav>
         <div class="text-center mt-3 pagination-info">
           <small>
             Showing {{ (currentPage - 1) * pageSize + 1 }} -
-            {{ currentPage * pageSize > totalRequests ? totalRequests : currentPage * pageSize }} of {{ totalRequests }} requests
+            {{ currentPage * pageSize > totalRequests ? totalRequests : currentPage * pageSize }} of
+            {{ totalRequests }} requests
           </small>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Assign Vehicle Modal -->
+  <div class="modal" [class.show]="showAssignVehicleModal" *ngIf="showAssignVehicleModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Assign Vehicle</h5>
+          <button type="button" class="btn-close" (click)="closeAssignVehicleModal()"></button>
+        </div>
+        <div class="modal-body">
+          <div *ngIf="selectedRequest">
+            <p>
+              <strong>Request:</strong> {{ selectedRequest.request_number || selectedRequest.id }}
+            </p>
+            <p><strong>Requestor:</strong> {{ selectedRequest.requestorName || 'N/A' }}</p>
+
+            <div class="form-group mt-3">
+              <label for="vehicleNumber">Vehicle Number <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                id="vehicleNumber"
+                class="form-control"
+                [(ngModel)]="vehicleData.vehicle_number"
+                placeholder="e.g. WXY 1234"
+                required
+              />
+            </div>
+
+            <div class="form-group mt-3">
+              <label for="vehicleType">Vehicle Type</label>
+              <select id="vehicleType" class="form-select" [(ngModel)]="vehicleData.vehicle_type">
+                <option *ngFor="let type of vehicleTypes" [value]="type.value">
+                  {{ type.label }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group mt-3">
+              <label for="vehicleCapacity">Vehicle Capacity</label>
+              <input
+                type="number"
+                id="vehicleCapacity"
+                class="form-control"
+                [(ngModel)]="vehicleData.vehicle_capacity"
+                min="1"
+              />
+            </div>
+
+            <div class="form-group mt-3">
+              <label for="driverName">Driver Name <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                id="driverName"
+                class="form-control"
+                [(ngModel)]="vehicleData.driver_name"
+                required
+              />
+            </div>
+
+            <div class="form-group mt-3">
+              <label for="driverContact">Driver Contact <span class="text-danger">*</span></label>
+              <input
+                type="tel"
+                id="driverContact"
+                class="form-control"
+                [(ngModel)]="vehicleData.driver_contact"
+                autocomplete="tel"
+                required
+              />
+            </div>
+
+            <div class="form-group mt-3">
+              <label for="driverLicense">Driver License</label>
+              <input
+                type="text"
+                id="driverLicense"
+                class="form-control"
+                [(ngModel)]="vehicleData.driver_license"
+              />
+            </div>
+
+            <div class="form-group mt-3">
+              <label for="assignmentDate">Assignment Date</label>
+              <input
+                type="date"
+                id="assignmentDate"
+                class="form-control"
+                [(ngModel)]="vehicleData.assignment_date"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeAssignVehicleModal()"
+            [disabled]="selectedRequest && isProcessing(selectedRequest.id)"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="assignVehicle()"
+            [disabled]="selectedRequest && isProcessing(selectedRequest.id)"
+          >
+            <span *ngIf="!selectedRequest || !isProcessing(selectedRequest.id)"
+              >Assign Vehicle</span
+            >
+            <span *ngIf="selectedRequest && isProcessing(selectedRequest.id)">
+              <i class="bi bi-arrow-clockwise spin"></i> Assigning…
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="modal-backdrop"
+    *ngIf="showAssignVehicleModal"
+    (click)="closeAssignVehicleModal()"
+  ></div>
 </div>

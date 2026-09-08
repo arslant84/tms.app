@@ -50,10 +50,7 @@
     <div class="card-body">
       <!-- Loading State -->
       <div *ngIf="isLoading" class="loading-container">
-        <app-loading-spinner
-          size="md"
-          message="Loading transport requests..."
-        ></app-loading-spinner>
+        <app-loading-spinner size="md" message="Loading transport requests…"></app-loading-spinner>
       </div>
 
       <!-- Error State -->
@@ -104,12 +101,13 @@
                 <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
                 <div class="text-muted small">
                   {{ request.department || 'N/A' }} • ID:
-                  <a
-                    href="javascript:void(0)"
+                  <button
+                    type="button"
                     (click)="viewRequest(request.id)"
-                    class="text-decoration-none"
-                    >{{ request.request_number || request.id }}</a
+                    class="text-decoration-none request-number"
                   >
+                    {{ request.request_number || request.id }}
+                  </button>
                 </div>
                 <div class="text-muted small mt-1">
                   <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}
@@ -146,8 +144,9 @@
                   class="btn btn-sm btn-outline-primary btn-icon"
                   (click)="openDetailsDialog(request)"
                   title="View Details"
+                  aria-label="View Details"
                 >
-                  <i class="bi bi-eye"></i>
+                  <i class="bi bi-eye" aria-hidden="true"></i>
                 </button>
                 <!-- Older requests that already have a vehicle assigned
                      (from before completing was folded into one action)
@@ -159,8 +158,9 @@
                   (click)="completeTransport(request)"
                   [disabled]="isProcessing"
                   title="Complete Transport"
+                  aria-label="Complete Transport"
                 >
-                  <i class="bi bi-check-circle" *ngIf="!isProcessing"></i>
+                  <i class="bi bi-check-circle" *ngIf="!isProcessing" aria-hidden="true"></i>
                   <app-loading-spinner size="sm" *ngIf="isProcessing"></app-loading-spinner>
                 </button>
                 <button
@@ -168,8 +168,9 @@
                   class="btn btn-sm btn-outline-primary btn-icon"
                   (click)="openProcessingDialog(request)"
                   title="Process & Complete"
+                  aria-label="Process & Complete"
                 >
-                  <i class="bi bi-play-circle"></i>
+                  <i class="bi bi-play-circle" aria-hidden="true"></i>
                 </button>
               </div>
             </div>
@@ -206,12 +207,13 @@
                 <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
                 <div class="text-muted small">
                   {{ request.department || 'N/A' }} • ID:
-                  <a
-                    href="javascript:void(0)"
+                  <button
+                    type="button"
                     (click)="viewRequest(request.id)"
-                    class="text-decoration-none"
-                    >{{ request.request_number || request.id }}</a
+                    class="text-decoration-none request-number"
                   >
+                    {{ request.request_number || request.id }}
+                  </button>
                 </div>
                 <div class="text-muted small mt-1">
                   <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}
@@ -247,8 +249,9 @@
                   class="btn btn-sm btn-outline-primary btn-icon"
                   (click)="openDetailsDialog(request)"
                   title="View Details"
+                  aria-label="View Details"
                 >
-                  <i class="bi bi-eye"></i>
+                  <i class="bi bi-eye" aria-hidden="true"></i>
                 </button>
               </div>
             </div>
@@ -401,7 +404,7 @@
           </span>
           <span *ngIf="isLoading">
             <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
-            Completing...
+            Completing…
           </span>
         </button>
       </div>

@@ -11,37 +11,37 @@
 // ============================================================================
 
 // Base Colors
-$white: #ffffff;                      // Pure white
-$black: #000000;                      // Pure black
+$white: #ffffff; // Pure white
+$black: #000000; // Pure black
 
 // Primary Brand Colors (Teal Theme)
-$primary-color: #0d9488;              // Main brand color
-$primary-hover: #0f766e;              // Hover state
-$primary-active: #115e59;             // Active/pressed state
-$primary-light: #5eead4;              // Light variant
-$primary-lightest: #ccfbf1;           // Lightest variant for backgrounds
+$primary-color: #0d9488; // Main brand color
+$primary-hover: #0f766e; // Hover state
+$primary-active: #115e59; // Active/pressed state
+$primary-light: #5eead4; // Light variant
+$primary-lightest: #ccfbf1; // Lightest variant for backgrounds
 
 // Semantic Colors
-$success-color: #10b981;              // Success states
+$success-color: #10b981; // Success states
 $success-hover: #059669;
 $success-light: #d1fae5;
-$success-lightest: #ecfdf5;           // Very light success background
-$success-dark: #065f46;               // Dark success text
-$warning-color: #f59e0b;              // Warning states
+$success-lightest: #ecfdf5; // Very light success background
+$success-dark: #065f46; // Dark success text
+$warning-color: #f59e0b; // Warning states
 $warning-hover: #d97706;
 $warning-light: #fef3c7;
-$warning-lightest: #fffbeb;           // Very light warning background
-$warning-dark: #92400e;               // Dark warning text
-$error-color: #ef4444;                // Error states
+$warning-lightest: #fffbeb; // Very light warning background
+$warning-dark: #92400e; // Dark warning text
+$error-color: #ef4444; // Error states
 $error-hover: #dc2626;
 $error-light: #fee2e2;
-$error-lightest: #fef2f2;             // Very light error background
-$error-dark: #991b1b;                 // Dark error text
-$info-color: #3b82f6;                 // Info states
+$error-lightest: #fef2f2; // Very light error background
+$error-dark: #991b1b; // Dark error text
+$info-color: #3b82f6; // Info states
 $info-hover: #2563eb;
 $info-light: #dbeafe;
-$info-lightest: #eff6ff;              // Very light info background
-$info-dark: #1e40af;                  // Dark info text
+$info-lightest: #eff6ff; // Very light info background
+$info-dark: #1e40af; // Dark info text
 
 // Categorical accent colors (purple/indigo) - used for visual
 // differentiation (module/category badges, role pills), not for status.
@@ -70,24 +70,24 @@ $gray-800: #1f2937;
 $gray-900: #111827;
 
 // Text Colors
-$text-primary: #1f2937;               // Main text color
-$text-secondary: $gray-500;             // Secondary text
-$text-muted: #9ca3af;                 // Muted/disabled text
-$text-inverse: #ffffff;               // Text on dark backgrounds
-$text-link: $primary-color;           // Link color
-$text-link-hover: $primary-hover;     // Link hover
+$text-primary: #1f2937; // Main text color
+$text-secondary: $gray-500; // Secondary text
+$text-muted: #9ca3af; // Muted/disabled text
+$text-inverse: #ffffff; // Text on dark backgrounds
+$text-link: $primary-color; // Link color
+$text-link-hover: $primary-hover; // Link hover
 
 // Background Colors
-$bg-primary: #ffffff;                 // Main background
-$bg-secondary: $gray-50;               // Secondary background
-$bg-tertiary: #f3f4f6;                // Tertiary background
-$bg-dark: #1f2937;                    // Dark background
-$bg-overlay: rgb(0 0 0 / 50%);     // Modal overlay
+$bg-primary: #ffffff; // Main background
+$bg-secondary: $gray-50; // Secondary background
+$bg-tertiary: #f3f4f6; // Tertiary background
+$bg-dark: #1f2937; // Dark background
+$bg-overlay: rgb(0 0 0 / 50%); // Modal overlay
 
 // Border Colors
-$border-light: $gray-200;               // Light borders
-$border-medium: #d1d5db;              // Medium borders
-$border-dark: #9ca3af;                // Dark borders
+$border-light: $gray-200; // Light borders
+$border-medium: #d1d5db; // Medium borders
+$border-dark: #9ca3af; // Dark borders
 
 // Status Badge Colors
 $status-draft: $gray-500;
@@ -102,19 +102,30 @@ $status-completed: $primary-color;
 // ============================================================================
 
 // Font Families (Microsoft Azure / Fluent 2 Style)
-$font-primary: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
-$font-secondary: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-$font-mono: 'Cascadia Code', 'Cascadia Mono', Consolas, 'Courier New', monospace;
+$font-primary:
+  'Segoe UI',
+  'Segoe UI Web (West European)',
+  -apple-system,
+  'BlinkMacSystemFont',
+  'Roboto',
+  'Helvetica Neue',
+  sans-serif;
+$font-secondary:
+  'Segoe UI',
+  -apple-system,
+  'BlinkMacSystemFont',
+  sans-serif;
+$font-mono: 'Cascadia Code', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
 
 // Font Sizes
-$font-size-xs: 0.75rem;      // 12px
-$font-size-sm: 0.875rem;     // 14px
-$font-size-base: 1rem;       // 16px
-$font-size-md: 1.125rem;     // 18px
-$font-size-lg: 1.25rem;      // 20px
-$font-size-xl: 1.5rem;       // 24px
-$font-size-2xl: 1.875rem;    // 30px
-$font-size-3xl: 2.25rem;     // 36px
+$font-size-xs: 0.75rem; // 12px
+$font-size-sm: 0.875rem; // 14px
+$font-size-base: 1rem; // 16px
+$font-size-md: 1.125rem; // 18px
+$font-size-lg: 1.25rem; // 20px
+$font-size-xl: 1.5rem; // 24px
+$font-size-2xl: 1.875rem; // 30px
+$font-size-3xl: 2.25rem; // 36px
 
 // Font Weights
 $font-weight-light: 300;
@@ -135,54 +146,65 @@ $line-height-relaxed: 1.75;
 // ============================================================================
 
 $spacing-0: 0;
-$spacing-1: 0.25rem;    // 4px
-$spacing-2: 0.5rem;     // 8px
-$spacing-3: 0.75rem;    // 12px
-$spacing-4: 1rem;       // 16px
-$spacing-5: 1.25rem;    // 20px
-$spacing-6: 1.5rem;     // 24px
-$spacing-7: 1.75rem;    // 28px
-$spacing-8: 2rem;       // 32px
-$spacing-10: 2.5rem;    // 40px
-$spacing-12: 3rem;      // 48px
-$spacing-16: 4rem;      // 64px
-$spacing-20: 5rem;      // 80px
-$spacing-24: 6rem;      // 96px
+$spacing-1: 0.25rem; // 4px
+$spacing-2: 0.5rem; // 8px
+$spacing-3: 0.75rem; // 12px
+$spacing-4: 1rem; // 16px
+$spacing-5: 1.25rem; // 20px
+$spacing-6: 1.5rem; // 24px
+$spacing-7: 1.75rem; // 28px
+$spacing-8: 2rem; // 32px
+$spacing-10: 2.5rem; // 40px
+$spacing-12: 3rem; // 48px
+$spacing-16: 4rem; // 64px
+$spacing-20: 5rem; // 80px
+$spacing-24: 6rem; // 96px
 
 // Spacing Aliases for easier usage
-$spacing-xs: $spacing-2;    // 8px
-$spacing-sm: $spacing-3;    // 12px
-$spacing-md: $spacing-4;    // 16px
-$spacing-lg: $spacing-6;    // 24px
-$spacing-xl: $spacing-8;    // 32px
-$spacing-2xl: $spacing-12;  // 48px
+$spacing-xs: $spacing-2; // 8px
+$spacing-sm: $spacing-3; // 12px
+$spacing-md: $spacing-4; // 16px
+$spacing-lg: $spacing-6; // 24px
+$spacing-xl: $spacing-8; // 32px
+$spacing-2xl: $spacing-12; // 48px
 
 // ============================================================================
 // SHADOW SYSTEM
 // ============================================================================
 
+// Tinted toward $text-primary (#1f2937, RGB 31 41 55) rather than pure
+// black, so elevation reads as part of the app's cool-gray/teal surface
+// system instead of a generic flat-black drop shadow.
 $shadow-none: none;
-$shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 5%);
-$shadow-base: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px 0 rgb(0 0 0 / 6%);
-$shadow-md: 0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0 0 0 / 6%);
-$shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0 0 0 / 5%);
-$shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 10%), 0 10px 10px -5px rgb(0 0 0 / 4%);
-$shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 25%);
-$shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 6%);
+$shadow-sm: 0 1px 2px 0 rgb(31 41 55 / 5%);
+$shadow-base:
+  0 1px 3px 0 rgb(31 41 55 / 10%),
+  0 1px 2px 0 rgb(31 41 55 / 6%);
+$shadow-md:
+  0 4px 6px -1px rgb(31 41 55 / 10%),
+  0 2px 4px -1px rgb(31 41 55 / 6%);
+$shadow-lg:
+  0 10px 15px -3px rgb(31 41 55 / 10%),
+  0 4px 6px -2px rgb(31 41 55 / 5%);
+$shadow-xl:
+  0 20px 25px -5px rgb(31 41 55 / 10%),
+  0 10px 10px -5px rgb(31 41 55 / 4%);
+$shadow-2xl: 0 25px 50px -12px rgb(31 41 55 / 25%);
+$shadow-inner: inset 0 2px 4px 0 rgb(31 41 55 / 6%);
 
 // ============================================================================
 // BORDER RADIUS SYSTEM
 // ============================================================================
 
 $radius-none: 0;
-$radius-sm: 0.125rem;    // 2px
-$radius-base: 0.25rem;   // 4px
-$radius-md: 0.375rem;    // 6px
-$radius-lg: 0.5rem;      // 8px
-$radius-xl: 0.75rem;     // 12px
-$radius-2xl: 1rem;       // 16px
-$radius-3xl: 1.5rem;     // 24px
-$radius-full: 9999px;    // Fully rounded
+$radius-sm: 0.125rem; // 2px
+$radius-base: 0.25rem; // 4px
+$radius-md: 0.375rem; // 6px
+$radius-lg: 0.5rem; // 8px
+$radius-xl: 0.75rem; // 12px
+$radius-2xl: 1rem; // 16px
+$radius-3xl: 1.5rem; // 24px
+$radius-full: 9999px; // Fully rounded
 
 // ============================================================================
 // Z-INDEX SYSTEM
@@ -195,6 +217,7 @@ $z-modal-backdrop: 1040;
 $z-modal: 1050;
 $z-popover: 1060;
 $z-tooltip: 1070;
+$z-toast: 1080; // Above tooltips - toasts must out-rank any open modal/popover
 
 // ============================================================================
 // TRANSITION/ANIMATION SYSTEM
@@ -226,17 +249,17 @@ $breakpoint-xxl: 1400px;
 // ============================================================================
 
 // Buttons
-$btn-padding-y: $spacing-2;          // 8px
-$btn-padding-x: $spacing-4;          // 16px
-$btn-padding-y-sm: $spacing-1;       // 4px
-$btn-padding-x-sm: $spacing-3;       // 12px
-$btn-padding-y-lg: $spacing-3;       // 12px
-$btn-padding-x-lg: $spacing-6;       // 24px
+$btn-padding-y: $spacing-2; // 8px
+$btn-padding-x: $spacing-4; // 16px
+$btn-padding-y-sm: $spacing-1; // 4px
+$btn-padding-x-sm: $spacing-3; // 12px
+$btn-padding-y-lg: $spacing-3; // 12px
+$btn-padding-x-lg: $spacing-6; // 24px
 $btn-border-radius: $radius-md;
 $btn-font-weight: $font-weight-medium;
 
 // Cards
-$card-padding: $spacing-6;           // 24px
+$card-padding: $spacing-6; // 24px
 $card-border-radius: $radius-lg;
 $card-shadow: $shadow-base;
 $card-border: 1px solid $border-light;
@@ -248,6 +271,7 @@ $input-border: 1px solid $border-light;
 $input-border-radius: $radius-md;
 $input-focus-border: $primary-color;
 $input-focus-shadow: 0 0 0 3px rgb(13 148 136 / 10%);
+
 // Same shape as $input-focus-shadow/$focus-shadow, error-tinted - for
 // invalid-field focus rings, which were previously hardcoded per-file
 // with drifting red shades instead of one shared token.
@@ -302,12 +326,12 @@ $scrollbar-thumb: $gray-400;
 $scrollbar-thumb-hover: $gray-500;
 
 // Charts & Data Visualization
-$chart-color-1: $error-color;         // Red
-$chart-color-2: $warning-color;       // Amber
-$chart-color-3: #06b6d4;              // Cyan
-$chart-color-4: $success-color;       // Green
-$chart-color-5: $primary-color;       // Teal (primary)
-$chart-color-6: $info-color;          // Blue
+$chart-color-1: $error-color; // Red
+$chart-color-2: $warning-color; // Amber
+$chart-color-3: #06b6d4; // Cyan
+$chart-color-4: $success-color; // Green
+$chart-color-5: $primary-color; // Teal (primary)
+$chart-color-6: $info-color; // Blue
 
 // Focus States
 $focus-ring-color: $primary-color;
@@ -447,11 +471,14 @@ $focus-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
 
 // Button Focus Mixin (for consistent focus rings)
 @mixin button-focus($color: $primary-color) {
+  /* stylelint-disable nesting-selector-no-missing-scoping-root -- & only
+     gets a scoping root once this mixin is @included inside a rule */
   &:focus,
   &:focus-visible {
     outline: none;
     box-shadow: 0 0 0 0.2rem rgb($color / 25%);
   }
+  /* stylelint-enable nesting-selector-no-missing-scoping-root */
 }
 
 // Status Badge Mixin
@@ -469,6 +496,8 @@ $focus-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
 
 // Scrollbar Mixin
 @mixin custom-scrollbar {
+  /* stylelint-disable nesting-selector-no-missing-scoping-root -- & only
+     gets a scoping root once this mixin is @included inside a rule */
   &::-webkit-scrollbar {
     width: $scrollbar-width;
     height: $scrollbar-width;
@@ -487,6 +516,7 @@ $focus-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
       background: $scrollbar-thumb-hover;
     }
   }
+  /* stylelint-enable nesting-selector-no-missing-scoping-root */
 }
 
 // Truncate Text Mixin
@@ -509,4 +539,32 @@ $focus-shadow: 0 0 0 0.2rem rgb(13 148 136 / 25%);
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+// Skeleton Loading Placeholder Mixin - shape-matched loading state instead
+// of a generic spinner. Apply to a block that mimics the real content's
+// dimensions (a bar for a line of text, a card-shaped box, etc).
+//
+// Pair every use with a top-level (not nested - see loading-ring in
+// loading-spinner.component.scss for the same pattern) reduced-motion
+// override for the same selector:
+//   @media (prefers-reduced-motion: reduce) {
+//     .your-skeleton-class { animation: none; background: vars.$gray-100; }
+//   }
+@mixin skeleton-block {
+  background: linear-gradient(90deg, $gray-100 25%, $gray-200 37%, $gray-100 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  border-radius: $radius-base;
+  color: transparent; // Hide any text content still present in the DOM
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0 50%;
+  }
 }

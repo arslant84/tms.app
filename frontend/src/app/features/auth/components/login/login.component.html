@@ -7,14 +7,14 @@
       <h2>Travel Management System</h2>
       <p>Sign in to your account</p>
     </div>
-    
+
     <div class="login-body">
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
         <!-- Error message -->
         <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
           {{ errorMessage }}
         </div>
-        
+
         <!-- Email field -->
         <div class="form-group mb-4">
           <label for="email" class="form-label">Email address</label>
@@ -28,15 +28,22 @@
               autocomplete="email"
               formControlName="email"
               placeholder="name@example.com"
-              [ngClass]="{'is-invalid': loginForm.get('email')?.invalid && loginForm.get('email')?.touched}"
-            >
+              [ngClass]="{
+                'is-invalid': loginForm.get('email')?.invalid && loginForm.get('email')?.touched,
+              }"
+            />
           </div>
-          <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="invalid-feedback d-block mt-1 ms-1">
+          <div
+            *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+            class="invalid-feedback d-block mt-1 ms-1"
+          >
             <div *ngIf="loginForm.get('email')?.errors?.['required']">Email is required</div>
-            <div *ngIf="loginForm.get('email')?.errors?.['email']">Please enter a valid email address</div>
+            <div *ngIf="loginForm.get('email')?.errors?.['email']">
+              Please enter a valid email address
+            </div>
           </div>
         </div>
-        
+
         <!-- Password field -->
         <div class="form-group mb-4">
           <label for="password" class="form-label">Password</label>
@@ -49,20 +56,29 @@
               name="password"
               autocomplete="current-password"
               formControlName="password"
-              [ngClass]="{'is-invalid': loginForm.get('password')?.invalid && loginForm.get('password')?.touched}"
-            >
+              [ngClass]="{
+                'is-invalid':
+                  loginForm.get('password')?.invalid && loginForm.get('password')?.touched,
+              }"
+            />
             <button
               type="button"
               class="btn btn-outline-secondary"
               (click)="togglePasswordVisibility()"
-              tabindex="-1"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              [attr.aria-pressed]="showPassword"
             >
-              <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+              <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'" aria-hidden="true"></i>
             </button>
           </div>
-          <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="invalid-feedback d-block mt-1 ms-1">
+          <div
+            *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+            class="invalid-feedback d-block mt-1 ms-1"
+          >
             <div *ngIf="loginForm.get('password')?.errors?.['required']">Password is required</div>
-            <div *ngIf="loginForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</div>
+            <div *ngIf="loginForm.get('password')?.errors?.['minlength']">
+              Password must be at least 6 characters
+            </div>
           </div>
         </div>
 
@@ -73,8 +89,12 @@
             class="btn btn-primary btn-lg btn-gradient"
             [disabled]="loginForm.invalid || isSubmitting"
           >
-            <app-loading-spinner *ngIf="isSubmitting" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
-            {{ isSubmitting ? 'Signing in...' : 'Sign In' }}
+            <app-loading-spinner
+              *ngIf="isSubmitting"
+              size="sm"
+              class="me-2 d-inline-block"
+            ></app-loading-spinner>
+            {{ isSubmitting ? 'Signing in…' : 'Sign In' }}
           </button>
         </div>
 

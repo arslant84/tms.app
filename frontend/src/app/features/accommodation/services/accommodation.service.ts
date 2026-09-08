@@ -46,10 +46,15 @@ export interface AccommodationRequest {
   submitted_at?: string;
   created_at: string;
   updated_at: string;
-  additional_data?: any;
+  additional_data?: Record<string, unknown>;
   tsr_departure_date?: string;
   tsr_return_date?: string;
 }
+
+/** Paginated list responses across this service either come back as a bare
+ * array or a DRF-style {results: [...]} page - every list method here
+ * handles both shapes. */
+export type PaginatedOrArray<T> = T[] | { results: T[] };
 
 export interface AccommodationRequestDetail extends AccommodationRequest {
   bookings?: AccommodationBooking[];
@@ -72,7 +77,7 @@ export interface AccommodationBooking {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AccommodationService {
   private apiUrl = `${environment.apiUrl}/accommodation`;
@@ -85,8 +90,8 @@ export class AccommodationService {
     search?: string;
     page?: number;
     page_size?: number;
-    adminView?: boolean;  // Set to true when viewing from Accommodation Admin module
-  }): Observable<any> {
+    adminView?: boolean; // Set to true when viewing from Accommodation Admin module
+  }): Observable<PaginatedOrArray<AccommodationRequest>> {
     let params = new HttpParams();
 
     if (filters) {
@@ -98,27 +103,39 @@ export class AccommodationService {
       if (filters.adminView) params = params.set('admin_view', 'true');
     }
 
-    return this.http.get<any>(`${this.apiUrl}/requests/`, { params });
+    return this.http.get<PaginatedOrArray<AccommodationRequest>>(`${this.apiUrl}/requests/`, {
+      params,
+    });
   }
 
   getRequestById(id: number): Observable<AccommodationRequestDetail> {
     return this.http.get<AccommodationRequestDetail>(`${this.apiUrl}/requests/${id}/`);
   }
 
-  createRequest(data: any): Observable<AccommodationRequestDetail> {
+  createRequest(data: Partial<AccommodationRequest>): Observable<AccommodationRequestDetail> {
     return this.http.post<AccommodationRequestDetail>(`${this.apiUrl}/requests/`, data);
   }
 
-  updateRequest(id: number, data: any): Observable<AccommodationRequestDetail> {
-    return this.http.put<AccommodationRequestDetail>(`${this.apiUrl}/requests/${id}/`, data);
+  updateRequest(
+    id: number,
+    data: Partial<AccommodationRequest>
+  ): Observable<AccommodationRequestDetail> {
+    // PATCH, not PUT: this method's one caller (accommodation-processing's
+    // "Cancel Booking" flow) sends a partial payload ({ status: 'Approved' }).
+    // PUT semantically requires the full resource representation, so the
+    // backend serializer rejected it with "requestor_name: This field is
+    // required." - cancel-booking silently 400'd instead of cancelling.
+    return this.http.patch<AccommodationRequestDetail>(`${this.apiUrl}/requests/${id}/`, data);
   }
 
   deleteRequest(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/requests/${id}/`);
   }
 
-  cancelRequest(id: number, reason?: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/requests/${id}/cancel/`, { reason });
+  cancelRequest(id: number, reason?: string): Observable<{ message?: string }> {
+    return this.http.post<{ message?: string }>(`${this.apiUrl}/requests/${id}/cancel/`, {
+      reason,
+    });
   }
 
   // Submit request for approval with optional approver selection
@@ -127,33 +144,49 @@ export class AccommodationService {
     selectedApprovers?: { [stepOrder: number]: number },
     skippedSteps?: { [stepOrder: number]: string | null }
   ): Observable<AccommodationRequestDetail> {
-    const payload: any = {};
+    const payload: {
+      selected_approvers?: { [stepOrder: number]: number };
+      skipped_steps?: { [stepOrder: number]: string | null };
+    } = {};
     if (selectedApprovers && Object.keys(selectedApprovers).length > 0) {
       payload.selected_approvers = selectedApprovers;
     }
     if (skippedSteps && Object.keys(skippedSteps).length > 0) {
       payload.skipped_steps = skippedSteps;
     }
-    return this.http.post<AccommodationRequestDetail>(`${this.apiUrl}/requests/${id}/submit/`, payload);
+    return this.http.post<AccommodationRequestDetail>(
+      `${this.apiUrl}/requests/${id}/submit/`,
+      payload
+    );
   }
 
-  approveRequest(id: number, comments?: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/requests/${id}/approve/`, { comments });
+  approveRequest(id: number, comments?: string): Observable<{ message?: string }> {
+    return this.http.post<{ message?: string }>(`${this.apiUrl}/requests/${id}/approve/`, {
+      comments,
+    });
   }
 
-  rejectRequest(id: number, reason: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/requests/${id}/reject/`, { reason });
+  rejectRequest(id: number, reason: string): Observable<{ message?: string }> {
+    return this.http.post<{ message?: string }>(`${this.apiUrl}/requests/${id}/reject/`, {
+      reason,
+    });
   }
 
-  assignAccommodation(id: number, assignmentData: {
-    staff_house: number;
-    room: number;
-    start_date: string;
-    end_date: string;
-    notes?: string;
-    assigned_room_info: string;
-  }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/requests/${id}/assign/`, assignmentData);
+  assignAccommodation(
+    id: number,
+    assignmentData: {
+      staff_house: number;
+      room: number;
+      start_date: string;
+      end_date: string;
+      notes?: string;
+      assigned_room_info: string;
+    }
+  ): Observable<{ message?: string }> {
+    return this.http.post<{ message?: string }>(
+      `${this.apiUrl}/requests/${id}/assign/`,
+      assignmentData
+    );
   }
 
   // Staff Houses
@@ -162,26 +195,31 @@ export class AccommodationService {
     if (location) params = params.set('location', location);
     // Add page_size to get all results without pagination
     params = params.set('page_size', '1000');
-    return this.http.get<any>(`${this.apiUrl}/staff-houses/`, { params }).pipe(
-      map((response: any) => {
-        // Handle both paginated and non-paginated responses
-        if (response && response.results) {
-          return response.results;
-        }
-        return Array.isArray(response) ? response : [];
-      })
-    );
+    return this.http
+      .get<PaginatedOrArray<AccommodationStaffHouse>>(`${this.apiUrl}/staff-houses/`, { params })
+      .pipe(
+        map(response => {
+          // Handle both paginated and non-paginated responses
+          if (response && !Array.isArray(response) && response.results) {
+            return response.results;
+          }
+          return Array.isArray(response) ? response : [];
+        })
+      );
   }
 
   getStaffHouseById(id: number): Observable<AccommodationStaffHouse> {
     return this.http.get<AccommodationStaffHouse>(`${this.apiUrl}/staff-houses/${id}/`);
   }
 
-  createStaffHouse(data: any): Observable<AccommodationStaffHouse> {
+  createStaffHouse(data: Partial<AccommodationStaffHouse>): Observable<AccommodationStaffHouse> {
     return this.http.post<AccommodationStaffHouse>(`${this.apiUrl}/staff-houses/`, data);
   }
 
-  updateStaffHouse(id: number, data: any): Observable<AccommodationStaffHouse> {
+  updateStaffHouse(
+    id: number,
+    data: Partial<AccommodationStaffHouse>
+  ): Observable<AccommodationStaffHouse> {
     return this.http.put<AccommodationStaffHouse>(`${this.apiUrl}/staff-houses/${id}/`, data);
   }
 
@@ -195,26 +233,35 @@ export class AccommodationService {
     if (staffHouseId) params = params.set('staff_house', staffHouseId.toString());
     // Add page_size to get all results without pagination
     params = params.set('page_size', '1000');
-    return this.http.get<any>(`${this.apiUrl}/rooms/`, { params }).pipe(
-      map((response: any) => {
-        // Handle both paginated and non-paginated responses
-        if (response && response.results) {
-          return response.results;
-        }
-        return Array.isArray(response) ? response : [];
-      })
-    );
+    return this.http
+      .get<PaginatedOrArray<AccommodationRoom>>(`${this.apiUrl}/rooms/`, { params })
+      .pipe(
+        map(response => {
+          // Handle both paginated and non-paginated responses
+          if (response && !Array.isArray(response) && response.results) {
+            return response.results;
+          }
+          return Array.isArray(response) ? response : [];
+        })
+      );
   }
 
   getRoomById(id: number): Observable<AccommodationRoom> {
     return this.http.get<AccommodationRoom>(`${this.apiUrl}/rooms/${id}/`);
   }
 
-  createRoom(data: any): Observable<AccommodationRoom> {
+  // staff_house allows null (not just undefined) - the room-dialog form field
+  // starts unselected as null rather than omitted.
+  createRoom(
+    data: Partial<Omit<AccommodationRoom, 'staff_house'>> & { staff_house?: number | null }
+  ): Observable<AccommodationRoom> {
     return this.http.post<AccommodationRoom>(`${this.apiUrl}/rooms/`, data);
   }
 
-  updateRoom(id: number, data: any): Observable<AccommodationRoom> {
+  updateRoom(
+    id: number,
+    data: Partial<Omit<AccommodationRoom, 'staff_house'>> & { staff_house?: number | null }
+  ): Observable<AccommodationRoom> {
     return this.http.put<AccommodationRoom>(`${this.apiUrl}/rooms/${id}/`, data);
   }
 
@@ -223,12 +270,16 @@ export class AccommodationService {
   }
 
   // Room availability
-  checkRoomAvailability(staffHouseId: number, checkIn: string, checkOut: string): Observable<any> {
+  checkRoomAvailability(
+    staffHouseId: number,
+    checkIn: string,
+    checkOut: string
+  ): Observable<unknown> {
     const params = new HttpParams()
       .set('staff_house', staffHouseId.toString())
       .set('check_in', checkIn)
       .set('check_out', checkOut);
-    return this.http.get<any>(`${this.apiUrl}/rooms/availability/`, { params });
+    return this.http.get<unknown>(`${this.apiUrl}/rooms/availability/`, { params });
   }
 
   // Bookings
@@ -250,11 +301,11 @@ export class AccommodationService {
     return this.http.get<AccommodationBooking[]>(`${this.apiUrl}/bookings/`, { params });
   }
 
-  createBooking(data: any): Observable<AccommodationBooking> {
+  createBooking(data: Partial<AccommodationBooking>): Observable<AccommodationBooking> {
     return this.http.post<AccommodationBooking>(`${this.apiUrl}/bookings/`, data);
   }
 
-  updateBooking(id: number, data: any): Observable<AccommodationBooking> {
+  updateBooking(id: number, data: Partial<AccommodationBooking>): Observable<AccommodationBooking> {
     return this.http.put<AccommodationBooking>(`${this.apiUrl}/bookings/${id}/`, data);
   }
 
@@ -262,23 +313,25 @@ export class AccommodationService {
     return this.http.delete<void>(`${this.apiUrl}/bookings/${id}/`);
   }
 
-  checkIn(bookingId: number): Observable<any> {
+  checkIn(bookingId: number): Observable<unknown> {
     return this.http.post(`${this.apiUrl}/bookings/${bookingId}/checkin/`, {});
   }
 
-  checkOut(bookingId: number): Observable<any> {
+  checkOut(bookingId: number): Observable<unknown> {
     return this.http.post(`${this.apiUrl}/bookings/${bookingId}/checkout/`, {});
   }
 
   // Export accommodation request to PDF
   exportToPdf(id: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/requests/${id}/export-pdf/`, {
-      responseType: 'blob'
-    }).pipe(
-      catchError(error => {
-        console.error('PDF export error:', error);
-        return throwError(() => error);
+    return this.http
+      .get(`${this.apiUrl}/requests/${id}/export-pdf/`, {
+        responseType: 'blob',
       })
-    );
+      .pipe(
+        catchError(error => {
+          console.error('PDF export error:', error);
+          return throwError(() => error);
+        })
+      );
   }
 }

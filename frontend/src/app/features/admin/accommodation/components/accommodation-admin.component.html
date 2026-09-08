@@ -9,7 +9,10 @@
       <p class="page-subtitle">Manage accommodation locations, rooms, and processing.</p>
     </div>
     <div class="header-actions">
-      <button class="btn btn-primary" (click)="router.navigate(['/admin/accommodation/processing'])">
+      <button
+        class="btn btn-primary"
+        (click)="router.navigate(['/admin/accommodation/processing'])"
+      >
         <i class="bi bi-file-text me-2"></i>
         Processing Dashboard
       </button>
@@ -69,13 +72,15 @@
       <button
         class="tab-trigger"
         [class.active]="activeTab === 'locations'"
-        (click)="setActiveTab('locations')">
+        (click)="setActiveTab('locations')"
+      >
         Locations
       </button>
       <button
         class="tab-trigger"
         [class.active]="activeTab === 'rooms'"
-        (click)="setActiveTab('rooms')">
+        (click)="setActiveTab('rooms')"
+      >
         Rooms
       </button>
     </div>
@@ -89,7 +94,9 @@
               <i class="bi bi-building me-2"></i>
               <h3 class="card-title">Accommodation Locations</h3>
             </div>
-            <p class="card-description">Manage staff houses and camp locations in Ashgabat, Kiyanly, and Turkmenbashy</p>
+            <p class="card-description">
+              Manage staff houses and camp locations in Ashgabat, Kiyanly, and Turkmenbashy
+            </p>
           </div>
         </div>
         <div class="card-body">
@@ -104,17 +111,31 @@
 
             <!-- Loading State -->
             <div *ngIf="loadingLocations" class="loading-state">
-              <app-loading-spinner size="md" message="Loading locations..."></app-loading-spinner>
+              <app-loading-spinner size="md" message="Loading locations…"></app-loading-spinner>
+            </div>
+
+            <!-- Error State -->
+            <div *ngIf="errorLocations && !loadingLocations" class="error-state">
+              <i class="bi bi-exclamation-triangle error-icon"></i>
+              <h3 class="error-title">Error Loading Locations</h3>
+              <p class="error-message">{{ errorLocations }}</p>
+              <button class="btn btn-primary" (click)="fetchLocations()">Try Again</button>
             </div>
 
             <!-- Empty State -->
-            <div *ngIf="!loadingLocations && locations.length === 0" class="empty-state">
+            <div
+              *ngIf="!loadingLocations && !errorLocations && locations.length === 0"
+              class="empty-state"
+            >
               <i class="bi bi-inbox"></i>
               <p>No accommodation locations found. Add your first location to get started.</p>
             </div>
 
             <!-- Locations Table -->
-            <div *ngIf="!loadingLocations && locations.length > 0" class="table-responsive">
+            <div
+              *ngIf="!loadingLocations && !errorLocations && locations.length > 0"
+              class="table-responsive"
+            >
               <table class="table">
                 <thead>
                   <tr>
@@ -138,11 +159,21 @@
                     <td>{{ getRoomCount(location.id) }} rooms</td>
                     <td class="text-end">
                       <div class="action-buttons">
-                        <button class="btn btn-sm btn-outline-primary btn-icon" (click)="editLocation(location)" title="Edit">
-                          <i class="bi bi-pencil"></i>
+                        <button
+                          class="btn btn-sm btn-outline-primary btn-icon"
+                          (click)="editLocation(location)"
+                          title="Edit"
+                          aria-label="Edit"
+                        >
+                          <i class="bi bi-pencil" aria-hidden="true"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger btn-icon" (click)="confirmDeleteLocation(location)" title="Delete">
-                          <i class="bi bi-trash"></i>
+                        <button
+                          class="btn btn-sm btn-outline-danger btn-icon"
+                          (click)="confirmDeleteLocation(location)"
+                          title="Delete"
+                          aria-label="Delete"
+                        >
+                          <i class="bi bi-trash" aria-hidden="true"></i>
                         </button>
                       </div>
                     </td>
@@ -164,7 +195,9 @@
               <i class="bi bi-door-closed me-2"></i>
               <h3 class="card-title">Room Management</h3>
             </div>
-            <p class="card-description">Manage rooms in staff houses and camps across all locations</p>
+            <p class="card-description">
+              Manage rooms in staff houses and camps across all locations
+            </p>
           </div>
         </div>
         <div class="card-body">
@@ -175,13 +208,23 @@
                   <i class="bi bi-funnel me-2"></i>
                   <span>Filter:</span>
                 </div>
-                <select class="form-select filter-select" [(ngModel)]="filterLocation" (change)="applyRoomFilters()">
+                <select
+                  class="form-select filter-select"
+                  [(ngModel)]="filterLocation"
+                  (change)="applyRoomFilters()"
+                >
                   <option value="all">All Locations</option>
                   <option *ngFor="let loc of uniqueLocations" [value]="loc">{{ loc }}</option>
                 </select>
-                <select class="form-select filter-select" [(ngModel)]="filterStaffHouse" (change)="applyRoomFilters()">
+                <select
+                  class="form-select filter-select"
+                  [(ngModel)]="filterStaffHouse"
+                  (change)="applyRoomFilters()"
+                >
                   <option value="all">All Staff Houses</option>
-                  <option *ngFor="let house of filteredStaffHouses" [value]="house.id">{{ house.name }}</option>
+                  <option *ngFor="let house of filteredStaffHouses" [value]="house.id">
+                    {{ house.name }}
+                  </option>
                 </select>
               </div>
               <button class="btn btn-primary" (click)="openRoomDialog()">
@@ -192,17 +235,37 @@
 
             <!-- Loading State -->
             <div *ngIf="loadingRooms" class="loading-state">
-              <app-loading-spinner size="md" message="Loading rooms..."></app-loading-spinner>
+              <app-loading-spinner size="md" message="Loading rooms…"></app-loading-spinner>
+            </div>
+
+            <!-- Error State -->
+            <div *ngIf="errorRooms && !loadingRooms" class="error-state">
+              <i class="bi bi-exclamation-triangle error-icon"></i>
+              <h3 class="error-title">Error Loading Rooms</h3>
+              <p class="error-message">{{ errorRooms }}</p>
+              <button class="btn btn-primary" (click)="fetchRooms()">Try Again</button>
             </div>
 
             <!-- Empty State -->
-            <div *ngIf="!loadingRooms && filteredRooms.length === 0" class="empty-state">
+            <div
+              *ngIf="!loadingRooms && !errorRooms && filteredRooms.length === 0"
+              class="empty-state"
+            >
               <i class="bi bi-inbox"></i>
-              <p>{{ rooms.length === 0 ? 'No rooms found. Add your first room to get started.' : 'No rooms match the current filters.' }}</p>
+              <p>
+                {{
+                  rooms.length === 0
+                    ? 'No rooms found. Add your first room to get started.'
+                    : 'No rooms match the current filters.'
+                }}
+              </p>
             </div>
 
             <!-- Rooms Table -->
-            <div *ngIf="!loadingRooms && filteredRooms.length > 0" class="table-responsive">
+            <div
+              *ngIf="!loadingRooms && !errorRooms && filteredRooms.length > 0"
+              class="table-responsive"
+            >
               <table class="table">
                 <thead>
                   <tr>
@@ -219,7 +282,10 @@
                   <tr *ngFor="let room of filteredRooms">
                     <td class="fw-medium">{{ room.name }}</td>
                     <td>
-                      <span class="badge" [ngClass]="getLocationBadgeClass(getStaffHouseLocation(room.staff_house))">
+                      <span
+                        class="badge"
+                        [ngClass]="getLocationBadgeClass(getStaffHouseLocation(room.staff_house))"
+                      >
                         {{ getStaffHouseLocation(room.staff_house) }}
                       </span>
                     </td>
@@ -237,11 +303,21 @@
                     </td>
                     <td class="text-end">
                       <div class="action-buttons">
-                        <button class="btn btn-sm btn-outline-primary btn-icon" (click)="editRoom(room)" title="Edit">
-                          <i class="bi bi-pencil"></i>
+                        <button
+                          class="btn btn-sm btn-outline-primary btn-icon"
+                          (click)="editRoom(room)"
+                          title="Edit"
+                          aria-label="Edit"
+                        >
+                          <i class="bi bi-pencil" aria-hidden="true"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger btn-icon" (click)="confirmDeleteRoom(room)" title="Delete">
-                          <i class="bi bi-trash"></i>
+                        <button
+                          class="btn btn-sm btn-outline-danger btn-icon"
+                          (click)="confirmDeleteRoom(room)"
+                          title="Delete"
+                          aria-label="Delete"
+                        >
+                          <i class="bi bi-trash" aria-hidden="true"></i>
                         </button>
                       </div>
                     </td>
@@ -261,7 +337,8 @@
   [isOpen]="locationDialogOpen"
   [data]="locationDialogData"
   (close)="onLocationDialogClose()"
-  (save)="onLocationSave($event)">
+  (save)="onLocationSave($event)"
+>
 </app-location-dialog>
 
 <!-- Room Dialog -->
@@ -270,5 +347,6 @@
   [data]="roomDialogData"
   [staffHouses]="locations"
   (close)="onRoomDialogClose()"
-  (save)="onRoomSave($event)">
+  (save)="onRoomSave($event)"
+>
 </app-room-dialog>

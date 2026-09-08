@@ -4,82 +4,102 @@
       <h1>Admin Reports</h1>
       <p class="text-muted">Analytics and metrics for the Travel Management System</p>
     </div>
-    
-    <div class="reports-actions">
+
+    <div class="reports-toolbar">
       <div class="date-range-selector">
-        <span>View:</span>
-        <div class="btn-group" role="group">
+        <span class="toolbar-label">View</span>
+        <div class="toggle-btn-group" role="group">
           <button
             type="button"
-            class="btn"
-            [class.btn-primary]="activeView === 'overview'"
-            [class.btn-outline-secondary]="activeView !== 'overview'"
-            (click)="switchView('overview')">
+            class="chip chip-teal"
+            [class.chip-active]="activeView === 'overview'"
+            (click)="switchView('overview')"
+          >
             Overview
           </button>
           <button
             type="button"
-            class="btn"
-            [class.btn-primary]="activeView === 'department'"
-            [class.btn-outline-secondary]="activeView !== 'department'"
-            (click)="switchView('department')">
+            class="chip chip-indigo"
+            [class.chip-active]="activeView === 'department'"
+            (click)="switchView('department')"
+          >
             By Department
           </button>
         </div>
       </div>
 
       <div class="date-range-selector">
-        <span>Time Period:</span>
-        <div class="btn-group" role="group">
-          <button 
-            type="button" 
-            class="btn" 
-            [class.btn-primary]="dateRange === 'week'"
-            [class.btn-outline-secondary]="dateRange !== 'week'"
-            (click)="changeDateRange('week')">
+        <span class="toolbar-label">Time Period</span>
+        <div class="toggle-btn-group" role="group">
+          <button
+            type="button"
+            class="chip chip-blue"
+            [class.chip-active]="dateRange === 'week'"
+            (click)="changeDateRange('week')"
+          >
             Week
           </button>
-          <button 
-            type="button" 
-            class="btn" 
-            [class.btn-primary]="dateRange === 'month'"
-            [class.btn-outline-secondary]="dateRange !== 'month'"
-            (click)="changeDateRange('month')">
+          <button
+            type="button"
+            class="chip chip-teal"
+            [class.chip-active]="dateRange === 'month'"
+            (click)="changeDateRange('month')"
+          >
             Month
           </button>
-          <button 
-            type="button" 
-            class="btn" 
-            [class.btn-primary]="dateRange === 'quarter'"
-            [class.btn-outline-secondary]="dateRange !== 'quarter'"
-            (click)="changeDateRange('quarter')">
+          <button
+            type="button"
+            class="chip chip-purple"
+            [class.chip-active]="dateRange === 'quarter'"
+            (click)="changeDateRange('quarter')"
+          >
             Quarter
           </button>
-          <button 
-            type="button" 
-            class="btn" 
-            [class.btn-primary]="dateRange === 'year'"
-            [class.btn-outline-secondary]="dateRange !== 'year'"
-            (click)="changeDateRange('year')">
+          <button
+            type="button"
+            class="chip chip-amber"
+            [class.chip-active]="dateRange === 'year'"
+            (click)="changeDateRange('year')"
+          >
             Year
           </button>
         </div>
       </div>
-      
+
+      <div class="toolbar-divider" aria-hidden="true"></div>
+
       <div class="export-actions">
         <div class="dropdown">
-          <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-download"></i> Export
+          <button
+            class="chip chip-teal chip-solid dropdown-toggle"
+            type="button"
+            id="exportDropdown"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <i class="bi bi-download" aria-hidden="true"></i> Export
           </button>
           <ul class="dropdown-menu" aria-labelledby="exportDropdown">
-            <li><a class="dropdown-item" (click)="exportReport('pdf')"><i class="bi bi-file-pdf"></i> PDF</a></li>
-            <li><a class="dropdown-item" (click)="exportReport('excel')"><i class="bi bi-file-excel"></i> Excel</a></li>
-            <li><a class="dropdown-item" (click)="exportReport('csv')"><i class="bi bi-file-text"></i> CSV</a></li>
+            <li>
+              <button type="button" class="dropdown-item" (click)="exportReport('pdf')">
+                <i class="bi bi-file-pdf" aria-hidden="true"></i> PDF
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-item" (click)="exportReport('excel')">
+                <i class="bi bi-file-excel" aria-hidden="true"></i> Excel
+              </button>
+            </li>
+            <li>
+              <button type="button" class="dropdown-item" (click)="exportReport('csv')">
+                <i class="bi bi-file-text" aria-hidden="true"></i> CSV
+              </button>
+            </li>
           </ul>
         </div>
-        
-        <button class="btn btn-outline-secondary" (click)="printReport()">
-          <i class="bi bi-printer"></i> Print
+
+        <button class="chip chip-dark chip-solid" (click)="printReport()">
+          <i class="bi bi-printer" aria-hidden="true"></i> Print
         </button>
       </div>
     </div>
@@ -87,12 +107,16 @@
 
   <!-- Loading State -->
   <div *ngIf="isLoading && activeView === 'overview'" class="loading-container">
-    <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
-    <p>Loading reports data...</p>
+    <app-loading-spinner size="lg" message="Loading…"></app-loading-spinner>
+    <p>Loading reports data…</p>
   </div>
 
   <!-- Error State -->
-  <div *ngIf="error && !isLoading && activeView === 'overview'" class="alert alert-danger" role="alert">
+  <div
+    *ngIf="error && !isLoading && activeView === 'overview'"
+    class="alert alert-danger"
+    role="alert"
+  >
     <i class="bi bi-exclamation-triangle"></i>
     {{ error }}
     <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadReportData()">
@@ -118,193 +142,264 @@
         </div>
       </div>
     </div>
-  
-  <!-- Charts Section - CSS Grid Layout -->
-  <div class="charts-grid">
-    <!-- Request Trends Chart -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-header-content">
-          <div class="card-title-group">
-            <i class="bi bi-graph-up me-2"></i>
-            <h3 class="card-title">Request Trends</h3>
-          </div>
-          <p class="card-description">Submitted vs completed requests over time</p>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="chart-legend-inline">
-          <div class="legend-item">
-            <span class="legend-dot bg-primary"></span>
-            <span>Submitted</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-dot bg-success"></span>
-            <span>Completed</span>
-          </div>
-        </div>
-        <div class="chart-container">
-          <div class="area-chart-placeholder">
-            <div class="chart-area-fill primary-area"></div>
-            <div class="chart-area-fill success-area"></div>
-          </div>
-          <div class="chart-x-labels">
-            <span *ngFor="let label of requestTrendChart.labels">{{ label }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Requests by Type Chart -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-header-content">
-          <div class="card-title-group">
-            <i class="bi bi-pie-chart me-2"></i>
-            <h3 class="card-title">Requests by Type</h3>
-          </div>
-          <p class="card-description">Distribution of request types</p>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="donut-chart-container">
-          <div class="donut-chart-visual">
-            <svg viewBox="0 0 100 100" class="donut-svg">
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#e74a3b" stroke-width="20" stroke-dasharray="80 251.2" stroke-dashoffset="0"></circle>
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#f6c23e" stroke-width="20" stroke-dasharray="50 251.2" stroke-dashoffset="-80"></circle>
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#36b9cc" stroke-width="20" stroke-dasharray="50 251.2" stroke-dashoffset="-130"></circle>
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#1cc88a" stroke-width="20" stroke-dasharray="40 251.2" stroke-dashoffset="-180"></circle>
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#4e73df" stroke-width="20" stroke-dasharray="31.2 251.2" stroke-dashoffset="-220"></circle>
-            </svg>
-          </div>
-        </div>
-        <div class="chart-legend-vertical">
-          <div class="legend-item" *ngFor="let label of requestsByTypeChart.labels; let i = index">
-            <span class="legend-dot" [style.background-color]="requestsByTypeChart.datasets[0].backgroundColor && requestsByTypeChart.datasets[0].backgroundColor[i] ? requestsByTypeChart.datasets[0].backgroundColor[i] : '#cccccc'"></span>
-            <span class="legend-label">{{ label }}</span>
-            <span class="legend-value">{{ requestsByTypeChart.datasets[0].data[i] }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Processing Time Chart -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-header-content">
-        <div class="card-title-group">
-          <i class="bi bi-bar-chart me-2"></i>
-          <h3 class="card-title">Average Processing Time by Request Type</h3>
-        </div>
-        <p class="card-description">Measured in hours from submission to completion</p>
-      </div>
-    </div>
-    <div class="card-body">
-      <div class="bar-chart-container">
-        <div class="bar-chart-area">
-          <div class="bar-item" *ngFor="let value of processingTimeChart.datasets[0].data; let i = index">
-            <div class="bar-wrapper">
-              <span class="bar-value-label">{{ value }}h</span>
-              <div class="bar" [style.height.%]="getBarHeightPercent(value)"></div>
+    <!-- Charts Section - CSS Grid Layout -->
+    <div class="charts-grid">
+      <!-- Request Trends Chart -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-content">
+            <div class="card-title-group">
+              <i class="bi bi-graph-up me-2"></i>
+              <h3 class="card-title">Request Trends</h3>
             </div>
-            <span class="bar-label">{{ processingTimeChart.labels[i] }}</span>
+            <p class="card-description">Submitted vs completed requests over time</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart-legend-inline">
+            <div class="legend-item">
+              <span class="legend-dot bg-primary"></span>
+              <span>Submitted</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot bg-success"></span>
+              <span>Completed</span>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div class="area-chart-placeholder">
+              <div class="chart-area-fill primary-area"></div>
+              <div class="chart-area-fill success-area"></div>
+            </div>
+            <div class="chart-x-labels">
+              <span *ngFor="let label of requestTrendChart.labels">{{ label }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Requests by Type Chart -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-content">
+            <div class="card-title-group">
+              <i class="bi bi-pie-chart me-2"></i>
+              <h3 class="card-title">Requests by Type</h3>
+            </div>
+            <p class="card-description">Distribution of request types</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="donut-chart-container">
+            <div class="donut-chart-visual">
+              <svg viewBox="0 0 100 100" class="donut-svg">
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  class="chart-color-red"
+                  stroke-width="20"
+                  stroke-dasharray="80 251.2"
+                  stroke-dashoffset="0"
+                ></circle>
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  class="chart-color-amber"
+                  stroke-width="20"
+                  stroke-dasharray="50 251.2"
+                  stroke-dashoffset="-80"
+                ></circle>
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  class="chart-color-cyan"
+                  stroke-width="20"
+                  stroke-dasharray="50 251.2"
+                  stroke-dashoffset="-130"
+                ></circle>
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  class="chart-color-green"
+                  stroke-width="20"
+                  stroke-dasharray="40 251.2"
+                  stroke-dashoffset="-180"
+                ></circle>
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  class="chart-color-blue"
+                  stroke-width="20"
+                  stroke-dasharray="31.2 251.2"
+                  stroke-dashoffset="-220"
+                ></circle>
+              </svg>
+            </div>
+          </div>
+          <div class="chart-legend-vertical">
+            <div
+              class="legend-item"
+              *ngFor="let label of requestsByTypeChart.labels; let i = index"
+            >
+              <span
+                class="legend-dot"
+                [style.background-color]="
+                  requestsByTypeChart.datasets[0].backgroundColor &&
+                  requestsByTypeChart.datasets[0].backgroundColor[i]
+                    ? requestsByTypeChart.datasets[0].backgroundColor[i]
+                    : '#cccccc'
+                "
+              ></span>
+              <span class="legend-label">{{ label }}</span>
+              <span class="legend-value">{{ requestsByTypeChart.datasets[0].data[i] }}</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Department Statistics -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-header-content">
-        <div class="card-title-group">
-          <i class="bi bi-building me-2"></i>
-          <h3 class="card-title">Department Statistics</h3>
+    <!-- Processing Time Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-content">
+          <div class="card-title-group">
+            <i class="bi bi-bar-chart me-2"></i>
+            <h3 class="card-title">Average Processing Time by Request Type</h3>
+          </div>
+          <p class="card-description">Measured in hours from submission to completion</p>
         </div>
-        <p class="card-description">Request processing metrics by department</p>
+      </div>
+      <div class="card-body">
+        <div class="bar-chart-container">
+          <div class="bar-chart-area">
+            <div
+              class="bar-item"
+              *ngFor="let value of processingTimeChart.datasets[0].data; let i = index"
+            >
+              <div class="bar-wrapper">
+                <span class="bar-value-label">{{ value }}h</span>
+                <div class="bar" [style.height.%]="getBarHeightPercent(value)"></div>
+              </div>
+              <span class="bar-label">{{ processingTimeChart.labels[i] }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Department</th>
-              <th>Total Requests</th>
-              <th>Pending</th>
-              <th>Completed</th>
-              <th>Completion Rate</th>
-              <th>Avg. Processing Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let dept of departmentStats">
-              <td class="fw-medium">{{ dept.department }}</td>
-              <td>{{ dept.total }}</td>
-              <td>{{ dept.pending }}</td>
-              <td>{{ dept.completed }}</td>
-              <td>
-                <div class="progress-bar-container">
-                  <div class="progress-bar-fill"
-                       [style.width.%]="getCompletionPercentage(dept)"
-                       [ngClass]="{'bg-success': getCompletionPercentage(dept) > 80,
-                                   'bg-warning': getCompletionPercentage(dept) <= 80 && getCompletionPercentage(dept) >= 60,
-                                   'bg-danger': getCompletionPercentage(dept) < 60}">
+
+    <!-- Department Statistics -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-content">
+          <div class="card-title-group">
+            <i class="bi bi-building me-2"></i>
+            <h3 class="card-title">Department Statistics</h3>
+          </div>
+          <p class="card-description">Request processing metrics by department</p>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Department</th>
+                <th>Total Requests</th>
+                <th>Pending</th>
+                <th>Completed</th>
+                <th>Completion Rate</th>
+                <th>Avg. Processing Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let dept of departmentStats">
+                <td class="fw-medium">{{ dept.department }}</td>
+                <td>{{ dept.total }}</td>
+                <td>{{ dept.pending }}</td>
+                <td>{{ dept.completed }}</td>
+                <td>
+                  <div class="progress-bar-container">
+                    <div
+                      class="progress-bar-fill"
+                      [style.width.%]="getCompletionPercentage(dept)"
+                      [ngClass]="{
+                        'bg-success': getCompletionPercentage(dept) > 80,
+                        'bg-warning':
+                          getCompletionPercentage(dept) <= 80 &&
+                          getCompletionPercentage(dept) >= 60,
+                        'bg-danger': getCompletionPercentage(dept) < 60,
+                      }"
+                    ></div>
+                    <span class="progress-label">{{ getCompletionPercentage(dept) }}%</span>
                   </div>
-                  <span class="progress-label">{{ getCompletionPercentage(dept) }}%</span>
-                </div>
-              </td>
-              <td>{{ dept.avgProcessingTime.toFixed(1) }} hours</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Top Performers -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-header-content">
-        <div class="card-title-group">
-          <i class="bi bi-trophy me-2"></i>
-          <h3 class="card-title">Top Performing Clerks</h3>
+                </td>
+                <td>{{ dept.avgProcessingTime.toFixed(1) }} hours</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <p class="card-description">Based on number of requests processed and average processing time</p>
       </div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Name</th>
-              <th>Requests Processed</th>
-              <th>Avg. Processing Time</th>
-              <th>Performance</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let clerk of topClerks; let i = index">
-              <td><span class="rank-badge">{{ i + 1 }}</span></td>
-              <td class="fw-medium">{{ clerk.name }}</td>
-              <td>{{ clerk.processed }}</td>
-              <td>{{ clerk.avgTime.toFixed(1) }} hours</td>
-              <td>
-                <div class="stars">
-                  <i class="bi bi-star-fill" *ngFor="let star of [1, 2, 3, 4, 5]; let s = index"
-                     [class.active]="s < (5 - (clerk.avgTime / 10))"></i>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+
+    <!-- Top Performers -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-content">
+          <div class="card-title-group">
+            <i class="bi bi-trophy me-2"></i>
+            <h3 class="card-title">Top Performing Clerks</h3>
+          </div>
+          <p class="card-description">
+            Based on number of requests processed and average processing time
+          </p>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Requests Processed</th>
+                <th>Avg. Processing Time</th>
+                <th>Performance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let clerk of topClerks; let i = index">
+                <td>
+                  <span class="rank-badge">{{ i + 1 }}</span>
+                </td>
+                <td class="fw-medium">{{ clerk.name }}</td>
+                <td>{{ clerk.processed }}</td>
+                <td>{{ clerk.avgTime.toFixed(1) }} hours</td>
+                <td>
+                  <div class="stars">
+                    <i
+                      class="bi bi-star-fill"
+                      *ngFor="let star of [1, 2, 3, 4, 5]; let s = index"
+                      [class.active]="s < 5 - clerk.avgTime / 10"
+                    ></i>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </div>
   </div>
 
   <!-- By Department View -->
@@ -319,8 +414,11 @@
               id="departmentSelect"
               class="form-select department-select"
               [(ngModel)]="selectedDepartmentId"
-              (change)="onDepartmentSelectChange()">
-              <option *ngFor="let dept of availableDepartments" [ngValue]="dept.id">{{ dept.name }}</option>
+              (change)="onDepartmentSelectChange()"
+            >
+              <option *ngFor="let dept of availableDepartments" [ngValue]="dept.id">
+                {{ dept.name }}
+              </option>
             </select>
           </ng-container>
           <ng-template #lockedDepartmentLabel>
@@ -335,12 +433,16 @@
 
     <!-- Loading -->
     <div *ngIf="departmentReportLoading" class="loading-container">
-      <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
-      <p>Loading departmental report...</p>
+      <app-loading-spinner size="lg" message="Loading…"></app-loading-spinner>
+      <p>Loading departmental report…</p>
     </div>
 
     <!-- Error / empty state -->
-    <div *ngIf="departmentReportError && !departmentReportLoading" class="alert alert-warning" role="alert">
+    <div
+      *ngIf="departmentReportError && !departmentReportLoading"
+      class="alert alert-warning"
+      role="alert"
+    >
       <i class="bi bi-exclamation-triangle"></i>
       {{ departmentReportError }}
     </div>
@@ -428,12 +530,12 @@
               <span class="breakdown-value">{{ departmentReport.breakdown.transport }}</span>
             </div>
             <div class="breakdown-item">
-              <span class="legend-dot" style="background-color: #f6c23e;"></span>
+              <span class="legend-dot chart-color-amber"></span>
               <span class="breakdown-label">Visa</span>
               <span class="breakdown-value">{{ departmentReport.breakdown.visa }}</span>
             </div>
             <div class="breakdown-item">
-              <span class="legend-dot" style="background-color: #36b9cc;"></span>
+              <span class="legend-dot chart-color-cyan"></span>
               <span class="breakdown-label">Accommodation</span>
               <span class="breakdown-value">{{ departmentReport.breakdown.accommodation }}</span>
             </div>
@@ -449,38 +551,71 @@
               <i class="bi bi-graph-up me-2"></i>
               <h3 class="card-title">Travel Frequency (Last 12 Months)</h3>
             </div>
-            <p class="card-description">Requests submitted per month, by type - independent of the Time Period filter above</p>
+            <p class="card-description">
+              Requests submitted per month, by type - independent of the Time Period filter above
+            </p>
           </div>
         </div>
         <div class="card-body">
           <div class="chart-legend-inline">
             <div class="legend-item">
-              <span class="legend-dot" style="background-color: #4e73df;"></span>
+              <span class="legend-dot chart-color-teal"></span>
               <span>Travel</span>
             </div>
             <div class="legend-item">
-              <span class="legend-dot" style="background-color: #1cc88a;"></span>
+              <span class="legend-dot chart-color-green"></span>
               <span>Transport</span>
             </div>
             <div class="legend-item">
-              <span class="legend-dot" style="background-color: #f6c23e;"></span>
+              <span class="legend-dot chart-color-amber"></span>
               <span>Visa</span>
             </div>
             <div class="legend-item">
-              <span class="legend-dot" style="background-color: #36b9cc;"></span>
+              <span class="legend-dot chart-color-cyan"></span>
               <span>Accommodation</span>
             </div>
           </div>
           <div class="bar-chart-container">
             <div class="bar-chart-area">
-              <div class="bar-item" *ngFor="let label of departmentFrequencyChart.labels; let i = index">
+              <div
+                class="bar-item"
+                *ngFor="let label of departmentFrequencyChart.labels; let i = index"
+              >
                 <div class="bar-wrapper">
                   <span class="bar-value-label">{{ getFrequencyMonthTotal(i) }}</span>
                   <div class="stacked-bar">
-                    <div class="bar-segment" style="background-color: #36b9cc;" [style.height.%]="getFrequencySegmentHeightPercent(departmentFrequencyChart.datasets[3].data[i])"></div>
-                    <div class="bar-segment" style="background-color: #f6c23e;" [style.height.%]="getFrequencySegmentHeightPercent(departmentFrequencyChart.datasets[2].data[i])"></div>
-                    <div class="bar-segment" style="background-color: #1cc88a;" [style.height.%]="getFrequencySegmentHeightPercent(departmentFrequencyChart.datasets[1].data[i])"></div>
-                    <div class="bar-segment" style="background-color: #4e73df;" [style.height.%]="getFrequencySegmentHeightPercent(departmentFrequencyChart.datasets[0].data[i])"></div>
+                    <div
+                      class="bar-segment chart-color-cyan"
+                      [style.height.%]="
+                        getFrequencySegmentHeightPercent(
+                          departmentFrequencyChart.datasets[3].data[i]
+                        )
+                      "
+                    ></div>
+                    <div
+                      class="bar-segment chart-color-amber"
+                      [style.height.%]="
+                        getFrequencySegmentHeightPercent(
+                          departmentFrequencyChart.datasets[2].data[i]
+                        )
+                      "
+                    ></div>
+                    <div
+                      class="bar-segment chart-color-green"
+                      [style.height.%]="
+                        getFrequencySegmentHeightPercent(
+                          departmentFrequencyChart.datasets[1].data[i]
+                        )
+                      "
+                    ></div>
+                    <div
+                      class="bar-segment chart-color-teal"
+                      [style.height.%]="
+                        getFrequencySegmentHeightPercent(
+                          departmentFrequencyChart.datasets[0].data[i]
+                        )
+                      "
+                    ></div>
                   </div>
                 </div>
                 <span class="bar-label">{{ label }}</span>
@@ -514,7 +649,9 @@
               </thead>
               <tbody>
                 <tr *ngFor="let requestor of departmentReport.topRequestors; let i = index">
-                  <td><span class="rank-badge">{{ i + 1 }}</span></td>
+                  <td>
+                    <span class="rank-badge">{{ i + 1 }}</span>
+                  </td>
                   <td class="fw-medium">{{ requestor.name }}</td>
                   <td>{{ requestor.email }}</td>
                   <td>{{ requestor.requests }}</td>

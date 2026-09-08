@@ -78,7 +78,7 @@
         <div *ngIf="isLoadingPending" class="loading-container">
           <app-loading-spinner
             size="md"
-            message="Loading pending visa applications..."
+            message="Loading pending visa applications…"
           ></app-loading-spinner>
         </div>
 
@@ -143,13 +143,13 @@
             <tbody>
               <tr *ngFor="let app of pendingVisas">
                 <td>
-                  <a
-                    href="javascript:void(0)"
+                  <button
+                    type="button"
                     (click)="viewApplication(app.id)"
                     class="text-decoration-none request-number"
                   >
                     {{ app.request_number }}
-                  </a>
+                  </button>
                 </td>
                 <td>
                   <div class="fw-medium">{{ app.requestorName }}</div>
@@ -201,15 +201,17 @@
                       class="btn btn-sm btn-outline-primary btn-icon"
                       (click)="viewApplication(app.id)"
                       title="View Details"
+                      aria-label="View Details"
                     >
-                      <i class="bi bi-eye"></i>
+                      <i class="bi bi-eye" aria-hidden="true"></i>
                     </button>
                     <button
                       class="btn btn-sm btn-outline-primary btn-icon"
                       (click)="openProcessingDialog(app)"
                       title="Complete Processing"
+                      aria-label="Complete Processing"
                     >
-                      <i class="bi bi-check-circle"></i>
+                      <i class="bi bi-check-circle" aria-hidden="true"></i>
                     </button>
                   </div>
                 </td>
@@ -225,7 +227,7 @@
         <div *ngIf="isLoadingCompleted" class="loading-container">
           <app-loading-spinner
             size="md"
-            message="Loading completed visa applications..."
+            message="Loading completed visa applications…"
           ></app-loading-spinner>
         </div>
 
@@ -267,13 +269,13 @@
             <tbody>
               <tr *ngFor="let visa of completedVisas">
                 <td>
-                  <a
-                    href="javascript:void(0)"
+                  <button
+                    type="button"
                     (click)="viewApplication(visa.id)"
                     class="text-decoration-none request-number"
                   >
                     {{ visa.request_number }}
-                  </a>
+                  </button>
                 </td>
                 <td>
                   <div class="fw-medium">{{ visa.requestorName }}</div>
@@ -298,8 +300,9 @@
                 <td>
                   <div
                     *ngIf="
-                      visa.processing_details?.visa_valid_from &&
-                      visa.processing_details?.visa_valid_to
+                      visa.processing_details &&
+                      visa.processing_details.visa_valid_from &&
+                      visa.processing_details.visa_valid_to
                     "
                   >
                     <span class="fw-medium">{{
@@ -324,8 +327,9 @@
                       class="btn btn-sm btn-outline-primary btn-icon"
                       (click)="viewApplication(visa.id)"
                       title="View Details"
+                      aria-label="View Details"
                     >
-                      <i class="bi bi-eye"></i>
+                      <i class="bi bi-eye" aria-hidden="true"></i>
                     </button>
                   </div>
                 </td>
@@ -445,7 +449,7 @@
             <span *ngIf="!isProcessing">Complete Processing</span>
             <span *ngIf="isProcessing">
               <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
-              Processing...
+              Processing…
             </span>
           </button>
         </div>

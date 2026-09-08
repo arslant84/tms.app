@@ -170,7 +170,7 @@
 
           <!-- Loading State for Calendar -->
           <div *ngIf="isLoadingBookings" class="calendar-loading">
-            <app-loading-spinner size="md" message="Loading calendar data..."></app-loading-spinner>
+            <app-loading-spinner size="md" message="Loading calendar data…"></app-loading-spinner>
           </div>
         </div>
 
@@ -185,7 +185,7 @@
           <div *ngIf="isLoadingPending" class="loading-container">
             <app-loading-spinner
               size="md"
-              message="Loading pending accommodations..."
+              message="Loading pending accommodations…"
             ></app-loading-spinner>
           </div>
 
@@ -228,13 +228,13 @@
                   [class.selected]="selectedRequest?.id === request.id"
                 >
                   <td class="request-id">
-                    <a
-                      href="javascript:void(0)"
+                    <button
+                      type="button"
                       (click)="viewRequest(request.id)"
                       class="text-decoration-none request-number"
                     >
                       {{ request.request_number }}
-                    </a>
+                    </button>
                   </td>
                   <td class="staff-cell">
                     <div class="staff-name">{{ request.requestorName }}</div>
@@ -256,18 +256,22 @@
                         [class.btn-primary]="selectedRequest?.id === request.id"
                         [class.btn-outline-primary]="selectedRequest?.id !== request.id"
                         (click)="selectRequest(request)"
-                        title="{{
+                        [title]="
                           selectedRequest?.id === request.id ? 'Selected' : 'Select for processing'
-                        }}"
+                        "
+                        [attr.aria-label]="
+                          selectedRequest?.id === request.id ? 'Selected' : 'Select for processing'
+                        "
                       >
-                        <i class="bi bi-check2-circle"></i>
+                        <i class="bi bi-check2-circle" aria-hidden="true"></i>
                       </button>
                       <button
                         class="btn btn-sm btn-outline-primary btn-icon"
                         (click)="viewRequest(request.id)"
                         title="View Details"
+                        aria-label="View Details"
                       >
-                        <i class="bi bi-eye"></i>
+                        <i class="bi bi-eye" aria-hidden="true"></i>
                       </button>
                     </div>
                   </td>
@@ -433,7 +437,7 @@
                   name="notes"
                   rows="3"
                   class="form-textarea"
-                  placeholder="Add any additional notes about this assignment..."
+                  placeholder="Add any additional notes about this assignment…"
                 ></textarea>
               </div>
             </div>
@@ -455,7 +459,7 @@
                 <span *ngIf="!isProcessing">Book Accommodation</span>
                 <span *ngIf="isProcessing">
                   <span class="spinner-small"></span>
-                  Booking...
+                  Booking…
                 </span>
               </button>
             </div>
@@ -477,7 +481,7 @@
       <div *ngIf="isLoadingBooked" class="loading-container">
         <app-loading-spinner
           size="md"
-          message="Loading booked accommodations..."
+          message="Loading booked accommodations…"
         ></app-loading-spinner>
       </div>
 
@@ -539,16 +543,18 @@
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="viewRequest(booking.id)"
                     title="View Details"
+                    aria-label="View Details"
                   >
-                    <i class="bi bi-eye"></i>
+                    <i class="bi bi-eye" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="cancelBooking(booking)"
                     [disabled]="isProcessing || booking.status === 'Completed'"
                     title="Cancel Booking"
+                    aria-label="Cancel Booking"
                   >
-                    <i class="bi bi-x-circle"></i>
+                    <i class="bi bi-x-circle" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>

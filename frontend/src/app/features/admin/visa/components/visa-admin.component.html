@@ -83,7 +83,8 @@
             id="visaAdminSearch"
             name="visaAdminSearch"
             autocomplete="off"
-            placeholder="Search by request number, staff name, destination..."
+            placeholder="Search by request number, staff name, destination…"
+            aria-label="Search by request number, staff name, or destination"
             [(ngModel)]="filterCriteria.search"
             (keyup.enter)="applyFilters()"
           />
@@ -132,7 +133,7 @@
     <div class="card-body p-0">
       <!-- Loading State -->
       <div *ngIf="loadingApplications" class="loading-state">
-        <app-loading-spinner size="md" message="Loading applications..."></app-loading-spinner>
+        <app-loading-spinner size="md" message="Loading applications…"></app-loading-spinner>
       </div>
 
       <!-- Error State -->
@@ -179,13 +180,13 @@
           <tbody>
             <tr *ngFor="let app of filteredApplications">
               <td>
-                <a
-                  href="javascript:void(0)"
+                <button
+                  type="button"
                   (click)="viewApplication(app)"
                   class="text-decoration-none request-number"
                 >
                   {{ app.request_number || '#' + app.id }}
-                </a>
+                </button>
               </td>
               <td>
                 <div class="fw-medium">{{ app.requestor_name }}</div>
@@ -217,8 +218,9 @@
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="viewApplication(app)"
                     title="View"
+                    aria-label="View"
                   >
-                    <i class="bi bi-eye"></i>
+                    <i class="bi bi-eye" aria-hidden="true"></i>
                   </button>
 
                   <button
@@ -227,9 +229,10 @@
                     (click)="openProcessModal(app, 'approve')"
                     [disabled]="isProcessing(app.id)"
                     title="Approve"
+                    aria-label="Approve"
                   >
                     <span *ngIf="!isProcessing(app.id)">
-                      <i class="bi bi-check-circle"></i>
+                      <i class="bi bi-check-circle" aria-hidden="true"></i>
                     </span>
                     <app-loading-spinner
                       *ngIf="isProcessing(app.id)"
@@ -244,8 +247,9 @@
                     (click)="openProcessModal(app, 'reject')"
                     [disabled]="isProcessing(app.id)"
                     title="Reject"
+                    aria-label="Reject"
                   >
-                    <i class="bi bi-x-circle"></i>
+                    <i class="bi bi-x-circle" aria-hidden="true"></i>
                   </button>
 
                   <button
@@ -254,8 +258,9 @@
                     (click)="startProcessing(app)"
                     [disabled]="isProcessing(app.id)"
                     title="Start Processing"
+                    aria-label="Start Processing"
                   >
-                    <i class="bi bi-play-circle"></i>
+                    <i class="bi bi-play-circle" aria-hidden="true"></i>
                   </button>
 
                   <button
@@ -264,8 +269,9 @@
                     (click)="openProcessModal(app, 'complete')"
                     [disabled]="isProcessing(app.id)"
                     title="Mark as Completed"
+                    aria-label="Mark as Completed"
                   >
-                    <i class="bi bi-check2-all"></i>
+                    <i class="bi bi-check2-all" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>

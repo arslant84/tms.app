@@ -53,7 +53,8 @@
             name="adminApprovalsSearch"
             autocomplete="off"
             class="form-control"
-            placeholder="Search by name, purpose, or ID..."
+            placeholder="Search by name, purpose, or ID…"
+            aria-label="Search by name, purpose, or ID"
             [(ngModel)]="searchTerm"
             (input)="onSearchChange()"
           />
@@ -84,7 +85,7 @@
 
     <!-- Loading State -->
     <div *ngIf="isLoading" class="loading-state">
-      <app-loading-spinner size="md" message="Loading approvals..."></app-loading-spinner>
+      <app-loading-spinner size="md" message="Loading approvals…"></app-loading-spinner>
     </div>
 
     <!-- Error State -->
@@ -125,13 +126,13 @@
                 </div>
               </td>
               <td class="id-cell">
-                <a
-                  href="javascript:void(0)"
+                <button
+                  type="button"
                   (click)="viewItem(item)"
                   class="request-number text-decoration-none"
                 >
                   {{ item.requestNumber }}
-                </a>
+                </button>
               </td>
               <td class="staff-cell">
                 <div class="staff-name">{{ item.requestorName }}</div>
@@ -143,7 +144,9 @@
                   <span *ngIf="item.destination">{{ item.destination }}</span>
                   <span *ngIf="item.location">{{ item.location }}</span>
                   <span *ngIf="item.department">{{ item.department | departmentName }}</span>
-                  <span *ngIf="item.amount"> | {{ formatCurrency(item.amount) }}</span>
+                  <span *ngIf="item.amount" class="amount-value">
+                    | {{ formatCurrency(item.amount) }}</span
+                  >
                 </div>
               </td>
               <td>
@@ -158,22 +161,25 @@
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="viewItem(item)"
                     title="View Details"
+                    aria-label="View Details"
                   >
-                    <i class="bi bi-eye"></i>
+                    <i class="bi bi-eye" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="openApproveDialog(item)"
                     title="Approve"
+                    aria-label="Approve"
                   >
-                    <i class="bi bi-check-circle"></i>
+                    <i class="bi bi-check-circle" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="openRejectDialog(item)"
                     title="Reject"
+                    aria-label="Reject"
                   >
-                    <i class="bi bi-x-circle"></i>
+                    <i class="bi bi-x-circle" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>
@@ -238,7 +244,7 @@
               class="form-control"
               rows="3"
               [(ngModel)]="approvalComments"
-              placeholder="Add any comments..."
+              placeholder="Add any comments…"
             ></textarea>
           </div>
         </div>
@@ -260,7 +266,7 @@
         >
           <span *ngIf="!isActionPending">Approve</span>
           <span *ngIf="isActionPending"
-            ><i class="bi bi-arrow-clockwise spin-animation"></i> Approving...</span
+            ><i class="bi bi-arrow-clockwise spin-animation"></i> Approving…</span
           >
         </button>
       </div>
@@ -291,7 +297,7 @@
               class="form-control"
               rows="3"
               [(ngModel)]="rejectionComments"
-              placeholder="Please provide a reason for rejection..."
+              placeholder="Please provide a reason for rejection…"
               required
             ></textarea>
           </div>
@@ -314,7 +320,7 @@
         >
           <span *ngIf="!isActionPending">Reject</span>
           <span *ngIf="isActionPending"
-            ><i class="bi bi-arrow-clockwise spin-animation"></i> Rejecting...</span
+            ><i class="bi bi-arrow-clockwise spin-animation"></i> Rejecting…</span
           >
         </button>
       </div>

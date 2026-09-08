@@ -2,7 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
-import { DepartmentService, DepartmentCreatePayload, DepartmentUpdatePayload } from '../../../../core/services/department.service';
+import {
+  DepartmentService,
+  DepartmentCreatePayload,
+  DepartmentUpdatePayload,
+} from '../../../../core/services/department.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { RbacService } from '../../../../core/services/rbac.service';
 import { Permission } from '../../../../core/models/permission.models';
@@ -16,12 +20,13 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './department-management.component.html',
-  styleUrls: ['./department-management.component.scss']
+  styleUrls: ['./department-management.component.scss'],
 })
 export class DepartmentManagementComponent implements OnInit, OnDestroy {
   isLoading = true;
   isSaving = false;
   departments: Department[] = [];
+  error: string | null = null;
 
   // Form state
   showForm = false;
@@ -30,7 +35,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
     name: '',
     code: '',
     description: '',
-    is_active: true
+    is_active: true,
   };
 
   // Delete confirmation
@@ -59,20 +64,18 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
   }
 
   get hasManageUsersPermission(): boolean {
-    return this.rbacService.hasAnyPermission([
-      Permission.MANAGE_USERS,
-      Permission.SYSTEM_ADMIN
-    ]);
+    return this.rbacService.hasAnyPermission([Permission.MANAGE_USERS, Permission.SYSTEM_ADMIN]);
   }
 
   loadDepartments(): void {
     this.isLoading = true;
+    this.error = null;
     this.departmentService.getDepartments().subscribe({
-      next: (departments) => {
+      next: departments => {
         this.departments = departments;
         this.isLoading = false;
       },
-      error: (err) => {
+      error: err => {
         console.error('Error loading departments:', err);
         if (err.status === 401) {
           this.toast.error('Session expired. Please login again.');
@@ -83,8 +86,9 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
         } else {
           this.toast.error('Failed to load departments');
         }
+        this.error = 'Failed to load departments. Please try again.';
         this.isLoading = false;
-      }
+      },
     });
   }
 
@@ -94,7 +98,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
       name: '',
       code: '',
       description: '',
-      is_active: true
+      is_active: true,
     };
     this.showForm = true;
   }
@@ -105,7 +109,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
       name: department.name,
       code: department.code || '',
       description: department.description || '',
-      is_active: department.is_active
+      is_active: department.is_active,
     };
     this.showForm = true;
   }
@@ -117,7 +121,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
       name: '',
       code: '',
       description: '',
-      is_active: true
+      is_active: true,
     };
   }
 
@@ -135,7 +139,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
         name: this.formData.name.trim(),
         code: this.formData.code?.trim() || undefined,
         description: this.formData.description?.trim() || undefined,
-        is_active: this.formData.is_active
+        is_active: this.formData.is_active,
       };
 
       this.departmentService.updateDepartment(this.editingDepartment.id, updateData).subscribe({
@@ -144,7 +148,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
           this.cancelForm();
           this.loadDepartments();
         },
-        error: (err) => {
+        error: err => {
           console.error('Error updating department:', err);
           if (err.error?.name) {
             this.toast.error(err.error.name[0] || 'A department with this name already exists');
@@ -156,7 +160,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
         },
         complete: () => {
           this.isSaving = false;
-        }
+        },
       });
     } else {
       // Create new
@@ -164,7 +168,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
         name: this.formData.name.trim(),
         code: this.formData.code?.trim() || undefined,
         description: this.formData.description?.trim() || undefined,
-        is_active: this.formData.is_active
+        is_active: this.formData.is_active,
       };
 
       this.departmentService.createDepartment(createData).subscribe({
@@ -173,7 +177,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
           this.cancelForm();
           this.loadDepartments();
         },
-        error: (err) => {
+        error: err => {
           console.error('Error creating department:', err);
           if (err.error?.name) {
             this.toast.error(err.error.name[0] || 'A department with this name already exists');
@@ -185,7 +189,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
         },
         complete: () => {
           this.isSaving = false;
-        }
+        },
       });
     }
   }
@@ -197,10 +201,11 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
       title: 'Confirm Delete',
       message: 'Are you sure you want to delete this department?',
       warningMessage: `This action cannot be undone. Department "${department.name}" will be permanently removed.`,
-      confirmButtonText: 'Delete Department'
+      confirmButtonText: 'Delete Department',
     });
 
     // Get reference to the modal component
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ModalService.componentRef is intentionally private; no public API exists for this yet.
     const modalRef = (this.modalService as any).componentRef;
     if (modalRef) {
       // Subscribe to confirm event
@@ -214,6 +219,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
     if (!this.departmentToDelete) return;
 
     // Update the modal's isDeleting state
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ModalService.componentRef is intentionally private; no public API exists for this yet.
     const modalRef = (this.modalService as any).componentRef;
     if (modalRef) {
       modalRef.instance.isDeleting = true;
@@ -226,7 +232,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
         this.departmentToDelete = null;
         this.loadDepartments();
       },
-      error: (err) => {
+      error: err => {
         console.error('Error deleting department:', err);
         if (err.error?.message) {
           this.toast.error(err.error.message);
@@ -236,7 +242,7 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
         if (modalRef) {
           modalRef.instance.isDeleting = false;
         }
-      }
+      },
     });
   }
 

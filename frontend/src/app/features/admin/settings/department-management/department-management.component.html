@@ -1,61 +1,84 @@
 <div class="card shadow-lg">
   <div class="card-header gradient-header">
     <div>
-      <h4 class="card-title mb-0">
-        <i class="bi bi-building me-2"></i>Departments
-      </h4>
-      <p class="card-description mb-0 mt-1">Manage organizational departments for user assignments.</p>
+      <h4 class="card-title mb-0"><i class="bi bi-building me-2"></i>Departments</h4>
+      <p class="card-description mb-0 mt-1">
+        Manage organizational departments for user assignments.
+      </p>
     </div>
   </div>
   <div class="card-body">
     <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
-      <app-loading-spinner size="md" message="Loading..."></app-loading-spinner>
+      <app-loading-spinner size="md" message="Loading…"></app-loading-spinner>
     </div>
 
-    <ng-container *ngIf="!isLoading">
+    <!-- Error State -->
+    <div *ngIf="error && !isLoading" class="error-state">
+      <i class="bi bi-exclamation-triangle error-icon"></i>
+      <h3 class="error-title">Error Loading Departments</h3>
+      <p class="error-message">{{ error }}</p>
+      <button class="btn btn-primary" (click)="loadDepartments()">Try Again</button>
+    </div>
+
+    <ng-container *ngIf="!isLoading && !error">
       <!-- Department List -->
       <div class="mb-4">
         <h6 class="mb-3 fw-semibold">Existing Departments</h6>
         <div class="departments-scroll-area border rounded p-3">
           <div class="departments-list" *ngIf="departments.length > 0">
-            <div class="department-item border rounded p-3 mb-3 bg-white" *ngFor="let dept of departments">
+            <div
+              class="department-item border rounded p-3 mb-3 bg-white"
+              *ngFor="let dept of departments"
+            >
               <div class="d-flex justify-content-between align-items-center">
                 <div class="flex-grow-1">
                   <div class="d-flex align-items-center gap-2 mb-1">
                     <p class="mb-0 fw-medium">{{ dept.name }}</p>
                     <span *ngIf="dept.code" class="badge bg-secondary">{{ dept.code }}</span>
-                    <span
-                      class="badge"
-                      [ngClass]="dept.is_active ? 'bg-success' : 'bg-secondary'">
+                    <span class="badge" [ngClass]="dept.is_active ? 'bg-success' : 'bg-secondary'">
                       {{ dept.is_active ? 'Active' : 'Inactive' }}
                     </span>
                   </div>
-                  <p class="mb-1 text-muted small" *ngIf="dept.description">{{ dept.description }}</p>
-                  <p class="mb-0 text-muted text-xs">
-                    Users: {{ dept.user_count || 0 }} assigned
+                  <p class="mb-1 text-muted small" *ngIf="dept.description">
+                    {{ dept.description }}
                   </p>
+                  <p class="mb-0 text-muted text-xs">Users: {{ dept.user_count || 0 }} assigned</p>
                 </div>
                 <div class="action-buttons">
                   <button
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="openEdit(dept)"
                     [disabled]="isSaving || showForm"
-                    title="Edit">
-                    <i class="bi bi-pencil"></i>
+                    title="Edit"
+                    aria-label="Edit"
+                  >
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="confirmDelete(dept)"
                     [disabled]="isSaving || showForm || (dept.user_count && dept.user_count > 0)"
-                    [title]="(dept.user_count && dept.user_count > 0) ? 'Cannot delete department with assigned users' : 'Delete'">
-                    <i class="bi bi-trash"></i>
+                    [title]="
+                      dept.user_count && dept.user_count > 0
+                        ? 'Cannot delete department with assigned users'
+                        : 'Delete'
+                    "
+                    [attr.aria-label]="
+                      dept.user_count && dept.user_count > 0
+                        ? 'Cannot delete department with assigned users'
+                        : 'Delete'
+                    "
+                  >
+                    <i class="bi bi-trash" aria-hidden="true"></i>
                   </button>
                 </div>
               </div>
             </div>
           </div>
           <div *ngIf="departments.length === 0" class="text-center text-muted py-3">
-            <p class="mb-0 small">No departments defined yet. Click "Add New Department" to get started.</p>
+            <p class="mb-0 small">
+              No departments defined yet. Click "Add New Department" to get started.
+            </p>
           </div>
         </div>
       </div>
@@ -67,14 +90,17 @@
         </h6>
         <div class="row g-3">
           <div class="col-md-6">
-            <label for="deptName" class="form-label">Department Name <span class="text-danger">*</span></label>
+            <label for="deptName" class="form-label"
+              >Department Name <span class="text-danger">*</span></label
+            >
             <input
               type="text"
               class="form-control"
               id="deptName"
               [(ngModel)]="formData.name"
               placeholder="e.g., Human Resources"
-              [disabled]="isSaving">
+              [disabled]="isSaving"
+            />
           </div>
           <div class="col-md-6">
             <label for="deptCode" class="form-label">Code</label>
@@ -85,7 +111,8 @@
               [(ngModel)]="formData.code"
               placeholder="e.g., HR"
               maxlength="50"
-              [disabled]="isSaving">
+              [disabled]="isSaving"
+            />
             <small class="form-text text-muted">Short code for the department (optional)</small>
           </div>
           <div class="col-12">
@@ -96,7 +123,8 @@
               [(ngModel)]="formData.description"
               placeholder="Brief description of the department"
               rows="2"
-              [disabled]="isSaving"></textarea>
+              [disabled]="isSaving"
+            ></textarea>
           </div>
           <div class="col-12">
             <div class="form-check">
@@ -105,7 +133,8 @@
                 type="checkbox"
                 id="deptActive"
                 [(ngModel)]="formData.is_active"
-                [disabled]="isSaving">
+                [disabled]="isSaving"
+              />
               <label class="form-check-label" for="deptActive">
                 Active (department can be assigned to users)
               </label>
@@ -116,14 +145,20 @@
               <button
                 class="btn btn-primary"
                 (click)="saveForm()"
-                [disabled]="isSaving || !formData.name.trim()">
-                <app-loading-spinner *ngIf="isSaving" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
+                [disabled]="isSaving || !formData.name.trim()"
+              >
+                <app-loading-spinner
+                  *ngIf="isSaving"
+                  size="sm"
+                  class="me-2 d-inline-block"
+                ></app-loading-spinner>
                 {{ editingDepartment ? 'Update' : 'Create' }} Department
               </button>
               <button
                 class="btn btn-outline-secondary"
                 (click)="cancelForm()"
-                [disabled]="isSaving">
+                [disabled]="isSaving"
+              >
                 Cancel
               </button>
             </div>
@@ -136,7 +171,8 @@
         <button
           class="btn btn-primary"
           (click)="openCreate()"
-          [disabled]="isLoading || isSaving || showForm">
+          [disabled]="isLoading || isSaving || showForm"
+        >
           <i class="bi bi-plus-circle me-2"></i>
           Add New Department
         </button>

@@ -54,6 +54,248 @@ def generate_unique_tsr_request_number(trf) -> str:
     return ensure_unique_request_number(TravelRequest, candidate)
 
 
+def start_trf_workflow(trf, request_data, initiated_by):
+    """
+    Start the approval workflow for a TRF. Shared by perform_create and
+    the submit action (only two call sites here, not three - TravelRequestViewSet
+    has no perform_update override) - identical WorkflowRouter call +
+    selected_approvers/skipped_steps parsing. Callers keep their own
+    exception-handling/fallback-to-legacy-approval-step behavior, since
+    submit's fallback (creating a TrfApprovalStep) has no equivalent in
+    perform_create.
+    """
+    from workflows.router import WorkflowRouter
+
+    selected_approvers = request_data.get("selected_approvers", None)
+    if selected_approvers:
+        selected_approvers = {int(k): v for k, v in selected_approvers.items()}
+
+    skipped_steps = request_data.get("skipped_steps", None)
+    if skipped_steps:
+        skipped_steps = {int(k): v for k, v in skipped_steps.items()}
+
+    workflow_instance = WorkflowRouter.start_workflow_for_request(
+        entity=trf,
+        entity_type=trf.workflow_entity_type,
+        initiated_by=initiated_by,
+        selected_approvers=selected_approvers,
+        skipped_steps=skipped_steps,
+        fallback_entity_type="travelrequest",
+    )
+
+    if workflow_instance:
+        trf.refresh_from_db()
+        logger.info(
+            f" Workflow started for TRF #{trf.id}: Workflow Instance #{workflow_instance.id}"
+        )
+        logger.info(f" Status updated to: {trf.status}")
+    else:
+        logger.warning(
+            " No active workflow configured for travelrequest - using legacy approval system"
+        )
+
+    return workflow_instance
+
+
+def process_trf_approval_action(trf, request, action, step_role, comments):
+    """
+    Approve or reject a TRF at its current approval step: dispatch to the
+    active WorkflowInstance if one exists (syncing a legacy TrfApprovalStep
+    row alongside it, keyed by `step_role` via get_or_create - same
+    mechanics as visa's legacy sync), else fall back to the legacy manual
+    approval-step flow. `action` is "approve" or "reject".
+
+    Returns a DRF Response directly (unlike accommodation/transport/visa's
+    equivalents, which return a (data, status) tuple for the view to wrap)
+    since every TRF response here already goes through this project's
+    utils.api_response helpers, which build Response objects themselves.
+
+    Preserves two real asymmetries between approve and reject rather than
+    forcing them into one shape:
+    - reject's WorkflowInstance-found-but-no-pending-step case returns an
+      explicit 400 (unlike accommodation/transport/visa's reject, which
+      silently falls through) - TRF's original reject already had this
+      explicit branch, so it's kept, not "fixed" to match the others.
+    - only approve's legacy-fallback branch creates the *next* pending
+      TrfApprovalStep via the status-progression map; reject's legacy
+      fallback has no equivalent (it just sets "Rejected" and stops) -
+      and only approve distinguishes a WorkflowEngine ValueError
+      (authorization failure) into its own 400 response; reject folds a
+      ValueError into the same generic 500 handler as any other exception,
+      exactly as the original two actions did.
+    """
+    from datetime import datetime
+
+    from accounts.models import AdminActionLog
+    from accounts.utils import can_approve
+    from django.contrib.contenttypes.models import ContentType
+    from django.utils import timezone
+    from utils.api_response import (
+        error_response,
+        forbidden_response,
+        server_error_response,
+        success_response,
+    )
+    from workflows.engine import WorkflowEngine
+    from workflows.models import WorkflowInstance
+
+    from .models import TrfApprovalStep
+    from .serializers import TravelRequestDetailSerializer
+
+    is_approve = action == "approve"
+    target_status = "Approved" if is_approve else "Rejected"
+    verb = "approved" if is_approve else "rejected"
+
+    try:
+        content_type = ContentType.objects.get_for_model(trf)
+        workflow_instance = WorkflowInstance.objects.filter(
+            content_type=content_type, object_id=trf.id, status="in_progress"
+        ).first()
+
+        if workflow_instance:
+            current_step = (
+                workflow_instance.step_executions.filter(status="pending")
+                .order_by("workflow_step__step_order")
+                .first()
+            )
+
+            if current_step:
+                WorkflowEngine.process_action(
+                    step_execution_id=current_step.id,
+                    action=action,
+                    actioned_by=request.user,
+                    comments=comments,
+                )
+                trf.refresh_from_db()
+
+                approval_step, created = TrfApprovalStep.objects.get_or_create(
+                    trf=trf,
+                    step_role=step_role,
+                    defaults={
+                        "step_name": f"{step_role} Approval",
+                        "status": "Pending",
+                    },
+                )
+                approval_step.status = target_status
+                approval_step.comments = comments
+                approval_step.step_date = timezone.now()
+                approval_step.save()
+
+                trf_serializer = TravelRequestDetailSerializer(trf)
+                return success_response(
+                    data=trf_serializer.data,
+                    message=f"Travel request {verb} successfully",
+                    status_code=200,
+                )
+            else:
+                return error_response(
+                    message=(
+                        "No pending approval step found for this role"
+                        if is_approve
+                        else "No pending approval step found"
+                    ),
+                    status_code=400,
+                )
+        else:
+            # Fallback to legacy manual approval/rejection if no workflow found
+            if not (request.user.is_superuser or can_approve(request.user, "trf")):
+                return forbidden_response(
+                    message=f"You do not have permission to {action} travel requests"
+                )
+
+            logger.warning(
+                f" No workflow instance found for TRF #{trf.id}, using legacy "
+                + ("approval" if is_approve else "rejection")
+            )
+
+            approval_step, created = TrfApprovalStep.objects.get_or_create(
+                trf=trf,
+                step_role=step_role,
+                defaults={
+                    "step_name": f"{step_role} Approval",
+                    "status": "Pending",
+                },
+            )
+            approval_step.status = target_status
+            approval_step.comments = comments
+            approval_step.step_date = datetime.now()
+            approval_step.save()
+
+            if is_approve:
+                # Update TRF status based on approval workflow. Only real
+                # roles that exist in this system's active workflow
+                # templates (Department Focal, Line Manager, HOD) - "Travel
+                # Desk" and "Finance" were never real roles here and never
+                # matched any active TSR workflow step.
+                status_progression = {
+                    "Department Focal": "Pending HOD",
+                    "Line Manager": "Pending HOD",
+                    "HOD": "Approved",
+                }
+                if step_role in status_progression:
+                    trf.status = status_progression[step_role]
+                    trf.save()
+
+                    # Create next approval step if not final
+                    if trf.status != "Approved":
+                        next_role = trf.status.replace("Pending ", "")
+                        TrfApprovalStep.objects.get_or_create(
+                            trf=trf,
+                            step_role=next_role,
+                            defaults={
+                                "step_name": f"{next_role} Review",
+                                "status": "Pending",
+                            },
+                        )
+            else:
+                trf.status = "Rejected"
+                trf.save()
+
+            AdminActionLog.log_action(
+                user=request.user,
+                action_type=f"workflow_step_{verb}",
+                description=(
+                    f"{target_status} TRF #{trf.id} at step '{step_role}' "
+                    "(legacy fallback - no active WorkflowTemplate)"
+                ),
+                entity_type="travelrequest",
+                entity_id=trf.id,
+                request=request,
+            )
+
+            trf_serializer = TravelRequestDetailSerializer(trf)
+            return success_response(
+                data=trf_serializer.data,
+                message=f"Travel request {verb} successfully",
+                status_code=200,
+            )
+
+    except ValueError as e:
+        if is_approve:
+            # ValueError is raised by WorkflowEngine for authorization
+            # failures - only approve's original action distinguished
+            # this into its own 400; reject's original action let it fall
+            # into the generic Exception handler below (preserved as-is).
+            logger.error(f" ValueError in approve workflow: {str(e)}")
+            return error_response(message=str(e), status_code=400)
+        logger.error(f" Error in reject workflow: {str(e)}")
+        import traceback
+
+        traceback.print_exc()
+        return server_error_response(
+            message="Failed to process rejection", error_details=str(e)
+        )
+    except Exception as e:
+        logger.error(f" Error in {action} workflow: {str(e)}")
+        import traceback
+
+        traceback.print_exc()
+        return server_error_response(
+            message=f"Failed to process {'approval' if is_approve else 'rejection'}",
+            error_details=str(e),
+        )
+
+
 def find_trf_for_visa(visa):
     """
     Reverse of get_linked_visa_applications: given a VisaApplication, find

@@ -71,11 +71,11 @@
           <!-- Notification Items -->
           <ng-container *ngIf="notifications.length > 0; else noNotifications">
             <li *ngFor="let notification of notifications">
-              <a
+              <button
+                type="button"
                 class="dropdown-item notification-item"
                 [class.unread]="!notification.is_read"
                 (click)="onNotificationClick(notification)"
-                href="javascript:void(0)"
               >
                 <div class="notification-content">
                   <div class="notification-icon">
@@ -90,7 +90,7 @@
                     <span class="unread-dot"></span>
                   </div>
                 </div>
-              </a>
+              </button>
             </li>
           </ng-container>
 
@@ -131,6 +131,8 @@
                 [src]="getUserAvatar(user)!"
                 [alt]="user.name"
                 class="avatar-img"
+                width="36"
+                height="36"
                 (error)="$any($event.target).style.display = 'none'"
               />
               <div class="avatar-initials" *ngIf="!getUserAvatar(user)">

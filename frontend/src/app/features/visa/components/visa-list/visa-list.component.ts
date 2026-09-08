@@ -12,13 +12,12 @@ import { StatusUtilsService } from '../../../../core/utils/status-utils.service'
 import { ListStateService } from '../../../../core/services/list-state.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
-
 @Component({
   selector: 'app-visa-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './visa-list.component.html',
-  styleUrl: './visa-list.component.scss'
+  styleUrl: './visa-list.component.scss',
 })
 export class VisaListComponent implements OnInit, OnDestroy {
   applications: VisaApplication[] = [];
@@ -48,9 +47,9 @@ export class VisaListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.listState.search$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => { this.fetchApplications(); });
+    this.listState.search$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.fetchApplications();
+    });
 
     this.fetchApplications();
   }
@@ -72,32 +71,38 @@ export class VisaListComponent implements OnInit, OnDestroy {
 
   fetchApplications(): void {
     this.listState.setLoading(true);
+    this.listState.clearError();
 
     // Add filter parameters to the request
     const filters = {
       ...this.listState.getFilters(),
       ...(this.filterStatus && { status: this.filterStatus }),
-      ...(this.filterVisaType && { visa_type: this.filterVisaType })
+      ...(this.filterVisaType && { visa_type: this.filterVisaType }),
     };
 
-    this.visaService.getAllApplications(filters)
+    this.visaService
+      .getAllApplications(filters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: response => {
           this.applications = response.results || response;
           this.listState.setTotalItems(response.count || this.applications.length);
           this.listState.setLoading(false);
 
           if (this.statuses.length === 0) {
-            this.statuses = [...new Set(this.applications.map(i => i.status ?? '').filter(Boolean))].sort();
+            this.statuses = [
+              ...new Set(this.applications.map(i => i.status ?? '').filter(Boolean)),
+            ].sort();
           }
           if (this.visaTypes.length === 0) {
-            this.visaTypes = [...new Set(this.applications.map(i => i.visa_type ?? '').filter(Boolean))].sort();
+            this.visaTypes = [
+              ...new Set(this.applications.map(i => i.visa_type ?? '').filter(Boolean)),
+            ].sort();
           }
 
           this.loadWorkflowInstances();
         },
-        error: (error) => {
+        error: error => {
           // Handle "Invalid page" error from DRF pagination
           if (error.error?.detail === 'Invalid page.' || error.statusText === 'Not Found') {
             // Reset to first page and retry
@@ -106,8 +111,10 @@ export class VisaListComponent implements OnInit, OnDestroy {
             return;
           }
 
+          console.error('Error fetching visa applications:', error);
+          this.listState.setError('Failed to load visa applications');
           this.listState.setLoading(false);
-        }
+        },
       });
   }
 
@@ -115,27 +122,38 @@ export class VisaListComponent implements OnInit, OnDestroy {
     if (this.applications.length === 0) return;
 
     // Fetch all workflow instances for visa applications
-    this.workflowService.getInstances({
-      entity_type: 'visaapplication'
-    })
+    this.workflowService
+      .getInstances({
+        entity_type: 'visaapplication',
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
-          // Handle both paginated response and array response
-          const instances = Array.isArray(response) ? response : (response.results || []);
+        next: response => {
+          // Handle both paginated response and array response - the
+          // declared return type is a bare array, but this defensively
+          // guards a paginated {results} shape too, same reasoning as
+          // other list endpoints in this app.
+          const instances: WorkflowInstanceList[] = Array.isArray(response)
+            ? response
+            : (response as { results?: WorkflowInstanceList[] }).results || [];
 
           // Create a map of entity_id to workflow instance
           this.workflowMap.clear();
 
-          instances.forEach((instance: any) => {
-            const entityId = instance.object_id || instance.entity_info?.id || instance.entity_id;
+          instances.forEach(instance => {
+            const entityId =
+              instance.object_id ||
+              instance.entity_info?.id ||
+              (instance as { entity_id?: number }).entity_id;
             if (entityId) {
               this.workflowMap.set(entityId, instance);
             }
           });
         },
-        error: (err) => {
-        }
+        error: () => {
+          // Best-effort enrichment - a failed fetch just leaves workflowMap
+          // empty, falling back to app.status everywhere it's consulted.
+        },
       });
   }
 
@@ -185,35 +203,36 @@ export class VisaListComponent implements OnInit, OnDestroy {
     this.fetchApplications();
   }
 
-  navigateToDetail(id: number): void {
+  navigateToDetail(_id: number): void {
     // Navigation handled by routerLink in template
   }
 
-  navigateToEdit(id: number): void {
+  navigateToEdit(_id: number): void {
     // Navigation handled by routerLink in template
   }
 
   private deleteConfirmId: number | null = null;
-  private deleteConfirmTimeout: any = null;
+  private deleteConfirmTimeout: ReturnType<typeof setTimeout> | null = null;
 
   deleteApplication(id: number, event: Event): void {
     event.stopPropagation();
 
     // If this is the second click on the same item within 3 seconds, proceed with deletion
     if (this.deleteConfirmId === id) {
-      clearTimeout(this.deleteConfirmTimeout);
+      if (this.deleteConfirmTimeout) clearTimeout(this.deleteConfirmTimeout);
       this.deleteConfirmId = null;
 
-      this.visaService.deleteApplication(id)
+      this.visaService
+        .deleteApplication(id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
             this.toastService.success('Visa application deleted successfully');
             this.fetchApplications();
           },
-          error: (error) => {
+          error: () => {
             this.toastService.error('Failed to delete visa application');
-          }
+          },
         });
     } else {
       // First click - show confirmation toast
@@ -227,7 +246,6 @@ export class VisaListComponent implements OnInit, OnDestroy {
     }
   }
 
-
   getStatusBadgeClass(status: string): string {
     return this.statusUtils.getStatusBadgeClass(status);
   }
@@ -236,7 +254,9 @@ export class VisaListComponent implements OnInit, OnDestroy {
    * Check if any filters are currently active
    */
   hasActiveFilters(): boolean {
-    return this.listState.hasActiveFilters() || this.filterStatus !== '' || this.filterVisaType !== '';
+    return (
+      this.listState.hasActiveFilters() || this.filterStatus !== '' || this.filterVisaType !== ''
+    );
   }
 
   /**

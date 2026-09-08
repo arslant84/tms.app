@@ -320,6 +320,10 @@
   border-top: 4px solid vars.$primary-color;
   border-radius: vars.$radius-full;
   animation: spin 1s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 3s;
+  }
 }
 
 @keyframes spin {

@@ -27,12 +27,19 @@
               maxlength="6"
               inputmode="numeric"
               autocomplete="one-time-code"
-              [ngClass]="{'is-invalid': otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched}"
-            >
+              [ngClass]="{
+                'is-invalid': otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched,
+              }"
+            />
           </div>
-          <div *ngIf="otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched" class="invalid-feedback d-block mt-1 ms-1">
+          <div
+            *ngIf="otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched"
+            class="invalid-feedback d-block mt-1 ms-1"
+          >
             <div *ngIf="otpForm.get('otp')?.errors?.['required']">Code is required</div>
-            <div *ngIf="otpForm.get('otp')?.errors?.['pattern']">Enter the 6-digit code from your app</div>
+            <div *ngIf="otpForm.get('otp')?.errors?.['pattern']">
+              Enter the 6-digit code from your app
+            </div>
           </div>
           <div class="form-text mt-2">
             <i class="bi bi-clock me-1"></i>Codes refresh every 30 seconds
@@ -45,8 +52,12 @@
             class="btn btn-primary btn-lg btn-gradient"
             [disabled]="otpForm.invalid || isSubmitting"
           >
-            <app-loading-spinner *ngIf="isSubmitting" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
-            {{ isSubmitting ? 'Verifying...' : 'Verify Code' }}
+            <app-loading-spinner
+              *ngIf="isSubmitting"
+              size="sm"
+              class="me-2 d-inline-block"
+            ></app-loading-spinner>
+            {{ isSubmitting ? 'Verifying…' : 'Verify Code' }}
           </button>
         </div>
 

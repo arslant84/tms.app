@@ -1,30 +1,39 @@
+"""
+TransportRequestViewSet - the transport module's dominant class.
+
+Split out of transport/views.py (see docs/CODEBASE_REFACTOR_ROADMAP.md
+item 7) - a pure file move, no logic changed. Approval-step/vehicle-
+assignment viewsets moved to their own sibling module in the same split.
+"""
+
 import logging
 from datetime import datetime
 
 from accounts.models import AdminActionLog
-from accounts.utils import can_approve, can_view_all, has_permission, is_module_admin
+from accounts.utils import can_view_all, has_permission, is_module_admin
 from django.db.models import Q
 from django.utils import timezone
-from rest_framework import serializers, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
-logger = logging.getLogger(__name__)
-
 from utils.viewset_mixins import StandardResultsPagination
-from workflows.router import WorkflowRouter
 
-from .models import TransportApprovalStep, TransportRequest, VehicleAssignment
+from .models import TransportApprovalStep, TransportRequest
 from .serializers import (
     ApprovalActionSerializer,
-    TransportApprovalStepSerializer,
     TransportRequestCreateSerializer,
     TransportRequestDetailSerializer,
     TransportRequestSerializer,
     TransportRequestUpdateSerializer,
-    VehicleAssignmentSerializer,
 )
+from .services import (
+    generate_unique_transport_request_number,
+    process_transport_approval_action,
+    start_transport_workflow,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class TransportRequestViewSet(viewsets.ModelViewSet):
@@ -142,10 +151,24 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             "reject_old",
             "export_pdf",
         ):
-            # Users with view_all_transport permission can access any request detail (e.g. from Recent Activity)
-            if user.is_superuser or can_view_all(user, "transport"):
+            # complete()/cancel()'s own internal check is is_module_admin
+            # (view_all OR manage/process transport) - a strict superset of
+            # can_view_all. A user with only manage_transport/
+            # process_transport (no view_all_transport) would pass those
+            # actions' own internal check but still 404 here first if this
+            # bypass only checked can_view_all like the rest of the group -
+            # see docs/RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 6. The other
+            # actions here (view/submit/export) are left on can_view_all
+            # since viewing and processing are different permissions for
+            # them - this is about precision, not blanket-widening.
+            if self.action in ("cancel", "complete"):
+                is_admin = user.is_superuser or is_module_admin(user, "transport")
+            else:
+                is_admin = user.is_superuser or can_view_all(user, "transport")
+
+            if is_admin:
                 logger.info(
-                    " %s action: User has view_all_transport - allowing full access",
+                    " %s action: User has admin access - allowing full visibility",
                     self.action,
                 )
                 return queryset
@@ -304,10 +327,6 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             # Generate request number if submitting directly (not Draft)
             if not validated_data.get("request_number"):
                 try:
-                    from transport.services import (
-                        generate_unique_transport_request_number,
-                    )
-
                     request_number = generate_unique_transport_request_number(
                         transport_details=validated_data.get("transport_details", []),
                         applicant_name=validated_data["requestor_name"],
@@ -330,36 +349,8 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # status to match the TSR's outcome once it resolves. Ad-hoc requests
         # (trf is null) are completely unaffected by this guard.
         if status_value in ["Pending", "Submitted"] and not transport_request.trf_id:
-            # Extract selected approvers from request data (optional)
-            selected_approvers = self.request.data.get("selected_approvers", None)
-            if selected_approvers:
-                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
-
-            # Extract skipped steps from request data (optional)
-            skipped_steps = self.request.data.get("skipped_steps", None)
-            if skipped_steps:
-                skipped_steps = {int(k): v for k, v in skipped_steps.items()}
-
             try:
-                workflow_instance = WorkflowRouter.start_workflow_for_request(
-                    entity=transport_request,
-                    entity_type="transportrequest",
-                    initiated_by=user,
-                    selected_approvers=selected_approvers,
-                    skipped_steps=skipped_steps,
-                )
-
-                if workflow_instance:
-                    # Reload the transport request to get the updated status from workflow
-                    transport_request.refresh_from_db()
-                    logger.info(
-                        f" Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}"
-                    )
-                    logger.info(f" Status updated to: {transport_request.status}")
-                else:
-                    logger.warning(
-                        " No active workflow configured for transportrequest - using legacy approval system"
-                    )
+                start_transport_workflow(transport_request, self.request.data, user)
             except Exception as e:
                 logger.error(
                     f" Error starting workflow for Transport Request #{transport_request.id}: {str(e)}"
@@ -396,10 +387,6 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             # Generate request number if doesn't exist
             if not transport_request.request_number:
                 try:
-                    from transport.services import (
-                        generate_unique_transport_request_number,
-                    )
-
                     transport_request.request_number = (
                         generate_unique_transport_request_number(
                             transport_details=transport_request.transport_details or [],
@@ -433,38 +420,13 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                 except Exception as e:
                     logger.warning(f" Error cancelling existing workflow: {str(e)}")
 
-            # Extract selected approvers from request data
-            selected_approvers = self.request.data.get("selected_approvers", None)
-            if selected_approvers:
-                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
-
-            # Extract skipped steps from request data
-            skipped_steps = self.request.data.get("skipped_steps", None)
-            if skipped_steps:
-                skipped_steps = {int(k): v for k, v in skipped_steps.items()}
-
             # Start new workflow - skipped for TSR-embedded requests (trf is set),
             # same as perform_create/submit above.
             if not transport_request.trf_id:
                 try:
-                    workflow_instance = WorkflowRouter.start_workflow_for_request(
-                        entity=transport_request,
-                        entity_type="transportrequest",
-                        initiated_by=self.request.user,
-                        selected_approvers=selected_approvers,
-                        skipped_steps=skipped_steps,
+                    start_transport_workflow(
+                        transport_request, self.request.data, self.request.user
                     )
-
-                    if workflow_instance:
-                        transport_request.refresh_from_db()
-                        logger.info(
-                            f" Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}"
-                        )
-                        logger.info(f" Status updated to: {transport_request.status}")
-                    else:
-                        logger.warning(
-                            " No active workflow configured for transportrequest"
-                        )
                 except Exception as e:
                     logger.error(f" Error starting workflow: {str(e)}")
 
@@ -517,8 +479,6 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # Generate request number if it doesn't exist
         if not transport_request.request_number:
             try:
-                from transport.services import generate_unique_transport_request_number
-
                 request_number = generate_unique_transport_request_number(
                     transport_details=transport_request.transport_details or [],
                     applicant_name=transport_request.requestor_name,
@@ -541,16 +501,6 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         transport_request.submitted_at = timezone.now()
         transport_request.save()
 
-        # Extract selected approvers from request data (optional)
-        selected_approvers = request.data.get("selected_approvers", None)
-        if selected_approvers:
-            selected_approvers = {int(k): v for k, v in selected_approvers.items()}
-
-        # Extract skipped steps from request data (optional)
-        skipped_steps = request.data.get("skipped_steps", None)
-        if skipped_steps:
-            skipped_steps = {int(k): v for k, v in skipped_steps.items()}
-
         # Start workflow using WorkflowRouter - skipped entirely for TSR-embedded
         # requests (trf is set), which ride on the parent TSR's own approval
         # instead. See WorkflowEngine._cascade_status_to_linked_transport, which
@@ -560,22 +510,11 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # Accommodation requests.
         if not transport_request.trf_id:
             try:
-                workflow_instance = WorkflowRouter.start_workflow_for_request(
-                    entity=transport_request,
-                    entity_type="transportrequest",
-                    initiated_by=request.user,
-                    selected_approvers=selected_approvers,
-                    skipped_steps=skipped_steps,
+                workflow_instance = start_transport_workflow(
+                    transport_request, request.data, request.user
                 )
 
-                if workflow_instance:
-                    # Reload the transport request to get the updated status from workflow
-                    transport_request.refresh_from_db()
-                    logger.info(
-                        f" Workflow started for Transport Request #{transport_request.id}: Workflow Instance #{workflow_instance.id}"
-                    )
-                    logger.info(f" Status updated to: {transport_request.status}")
-                else:
+                if not workflow_instance:
                     # Fallback to legacy approval system if no workflow configured
                     logger.warning(
                         " No active workflow configured - creating legacy approval step"
@@ -610,139 +549,25 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         """
         Approve a transport request using WorkflowEngine
         """
-        from django.contrib.contenttypes.models import ContentType
-        from workflows.engine import WorkflowEngine
-        from workflows.models import WorkflowInstance
-
         transport_request = self.get_object()
 
-        # Get approval action data
         action_serializer = ApprovalActionSerializer(
             data=request.data, context={"action_type": "approve"}
         )
         action_serializer.is_valid(raise_exception=True)
         comments = action_serializer.validated_data.get("comments", "")
 
-        try:
-            # Get the workflow instance for this transport request
-            content_type = ContentType.objects.get_for_model(transport_request)
-            workflow_instance = WorkflowInstance.objects.filter(
-                content_type=content_type,
-                object_id=transport_request.id,
-                status="in_progress",
-            ).first()
-
-            if workflow_instance:
-                # Find the current pending step
-                current_step = (
-                    workflow_instance.step_executions.filter(status="pending")
-                    .order_by("workflow_step__step_order")
-                    .first()
-                )
-
-                if current_step:
-                    # Use workflow engine to process approval
-                    WorkflowEngine.process_action(
-                        step_execution_id=current_step.id,
-                        action="approve",
-                        actioned_by=request.user,
-                        comments=comments,
-                    )
-
-                    # Reload to get updated status
-                    transport_request.refresh_from_db()
-
-                    # Update legacy approval step for backward compatibility
-                    legacy_step = transport_request.approval_steps.filter(
-                        status="Pending"
-                    ).first()
-                    if legacy_step:
-                        legacy_step.status = "Approved"
-                        legacy_step.step_date = timezone.now()
-                        legacy_step.comments = comments
-                        legacy_step.save()
-
-                    serializer = TransportRequestDetailSerializer(transport_request)
-                    return Response(serializer.data)
-                else:
-                    return Response(
-                        {"error": "No pending approval step found"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-            else:
-                # Fallback to legacy approval logic
-                if not (
-                    request.user.is_superuser or can_approve(request.user, "transport")
-                ):
-                    return Response(
-                        {
-                            "error": "You do not have permission to approve transport requests"
-                        },
-                        status=status.HTTP_403_FORBIDDEN,
-                    )
-
-                logger.warning(
-                    f" No workflow instance found for Transport #{transport_request.id}, using legacy approval"
-                )
-
-                current_step = transport_request.approval_steps.filter(
-                    status="Pending"
-                ).first()
-                if not current_step:
-                    return Response(
-                        {"error": "No pending approval step found"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                # Update current step
-                current_step.status = "Approved"
-                current_step.step_date = timezone.now()
-                current_step.comments = comments
-                current_step.save()
-
-                # Determine next step or completion
-                status_progression = {
-                    "Department Focal": "Pending HOD",
-                    "HOD": "Approved",
-                }
-
-                next_status = status_progression.get(current_step.step_role)
-                if next_status:
-                    transport_request.status = next_status
-                    transport_request.save()
-
-                AdminActionLog.log_action(
-                    user=request.user,
-                    action_type="workflow_step_approved",
-                    description=(
-                        f"Approved transport request #{transport_request.id} at step "
-                        f"'{current_step.step_role}' (legacy fallback - no active WorkflowTemplate)"
-                    ),
-                    entity_type="transportrequest",
-                    entity_id=transport_request.id,
-                    request=request,
-                )
-
-                serializer = TransportRequestDetailSerializer(transport_request)
-                return Response(serializer.data)
-
-        except Exception as e:
-            logger.error(f" Error in approve workflow: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
-            return Response(
-                {"error": f"Failed to process approval: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        result = process_transport_approval_action(
+            transport_request, request, "approve", comments
+        )
+        if result is None:
+            return None
+        data, http_status = result
+        return Response(data, status=http_status)
 
     @action(detail=True, methods=["post"])
     def reject(self, request, pk=None):
         """Reject a transport request using WorkflowEngine"""
-        from django.contrib.contenttypes.models import ContentType
-        from workflows.engine import WorkflowEngine
-        from workflows.models import WorkflowInstance
-
         transport_request = self.get_object()
 
         action_serializer = ApprovalActionSerializer(
@@ -751,95 +576,24 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         action_serializer.is_valid(raise_exception=True)
         comments = action_serializer.validated_data.get("comments", "")
 
-        try:
-            content_type = ContentType.objects.get_for_model(transport_request)
-            workflow_instance = WorkflowInstance.objects.filter(
-                content_type=content_type,
-                object_id=transport_request.id,
-                status="in_progress",
-            ).first()
-
-            if workflow_instance:
-                current_step = (
-                    workflow_instance.step_executions.filter(status="pending")
-                    .order_by("workflow_step__step_order")
-                    .first()
-                )
-
-                if current_step:
-                    WorkflowEngine.process_action(
-                        step_execution_id=current_step.id,
-                        action="reject",
-                        actioned_by=request.user,
-                        comments=comments,
-                    )
-
-                    transport_request.refresh_from_db()
-
-                    legacy_step = transport_request.approval_steps.filter(
-                        status="Pending"
-                    ).first()
-                    if legacy_step:
-                        legacy_step.status = "Rejected"
-                        legacy_step.step_date = timezone.now()
-                        legacy_step.comments = comments
-                        legacy_step.save()
-
-                    serializer = TransportRequestDetailSerializer(transport_request)
-                    return Response(serializer.data)
-            else:
-                # Fallback to legacy rejection
-                if not (
-                    request.user.is_superuser or can_approve(request.user, "transport")
-                ):
-                    return Response(
-                        {
-                            "error": "You do not have permission to reject transport requests"
-                        },
-                        status=status.HTTP_403_FORBIDDEN,
-                    )
-
-                current_step = transport_request.approval_steps.filter(
-                    status="Pending"
-                ).first()
-                if current_step:
-                    current_step.status = "Rejected"
-                    current_step.step_date = timezone.now()
-                    current_step.comments = comments
-                    current_step.save()
-
-                transport_request.status = "Rejected"
-                transport_request.save()
-
-                AdminActionLog.log_action(
-                    user=request.user,
-                    action_type="workflow_step_rejected",
-                    description=(
-                        f"Rejected transport request #{transport_request.id} "
-                        "(legacy fallback - no active WorkflowTemplate)"
-                    ),
-                    entity_type="transportrequest",
-                    entity_id=transport_request.id,
-                    request=request,
-                )
-
-                serializer = TransportRequestDetailSerializer(transport_request)
-                return Response(serializer.data)
-
-        except Exception as e:
-            logger.error(f" Error in reject workflow: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
-            return Response(
-                {"error": f"Failed to process rejection: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        result = process_transport_approval_action(
+            transport_request, request, "reject", comments
+        )
+        if result is None:
+            return None
+        data, http_status = result
+        return Response(data, status=http_status)
 
     @action(detail=True, methods=["post"])
     def reject_old(self, request, pk=None):
         """
         Reject a transport request at current approval step
+
+        Deprecated: superseded by `reject`, which does everything this does
+        plus the modern WorkflowEngine path. Kept registered (not part of
+        this refactor's scope to remove) - see
+        docs/CODEBASE_REFACTOR_ROADMAP.md item 7 for the "confirm unused,
+        then delete" follow-up.
         """
         transport_request = self.get_object()
         user = request.user
@@ -1054,405 +808,8 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="export-pdf")
     def export_pdf(self, request, pk=None):
-        """
-        Export Transport Request to PDF
-
-        Returns a PDF document containing all transport request details including:
-        - Requestor information
-        - Transport details (pickup, dropoff, vehicle type)
-        - Journey segments
-        - Vehicle assignment details
-        - Approval history and workflow status
-        """
-        import io
-
-        from django.http import HttpResponse
-        from reportlab.lib.units import inch
-        from reportlab.platypus import Paragraph
-        from utils import pdf_export
+        """Export Transport Request to PDF - see transport/pdf_export.py"""
+        from .pdf_export import build_request_pdf
 
         transport_request = self.get_object()
-
-        buffer = io.BytesIO()
-        doc = pdf_export.new_document(buffer)
-        styles = pdf_export.get_styles()
-
-        elements = pdf_export.build_header(
-            title="Transport Request",
-            request_number=transport_request.request_number
-            or f"TR-{transport_request.id}",
-            status=transport_request.status,
-            styles=styles,
-        )
-
-        # Requestor Information
-        elements.extend(pdf_export.section_heading("Requestor Information", styles))
-        requestor_data = [
-            ["Field", "Value"],
-            ["Name", transport_request.requestor_name or "Not provided"],
-            ["Staff ID", transport_request.staff_id or "Not provided"],
-            ["Department", transport_request.department or "Not provided"],
-            ["Position", transport_request.position or "Not provided"],
-            [
-                "Email",
-                (
-                    transport_request.requestor.email
-                    if transport_request.requestor
-                    else "Not provided"
-                ),
-            ],
-        ]
-        elements.append(pdf_export.make_table(requestor_data, [2 * inch, 5 * inch]))
-
-        # Status & Tracking
-        elements.extend(pdf_export.section_heading("Status &amp; Tracking", styles))
-        tracking_data = [
-            ["Field", "Value"],
-            [
-                "Request Number",
-                transport_request.request_number or f"TR-{transport_request.id}",
-            ],
-            ["Current Status", transport_request.status],
-            [
-                "TSR Reference",
-                (
-                    transport_request.trf.request_number
-                    if transport_request.trf_id and transport_request.trf
-                    else "Ad-Hoc Transport Request"
-                ),
-            ],
-            [
-                "Created",
-                (
-                    transport_request.created_at.strftime("%Y-%m-%d %H:%M")
-                    if transport_request.created_at
-                    else "Not available"
-                ),
-            ],
-            [
-                "Submitted",
-                (
-                    transport_request.submitted_at.strftime("%Y-%m-%d %H:%M")
-                    if transport_request.submitted_at
-                    else "Not submitted"
-                ),
-            ],
-            [
-                "Last Updated",
-                (
-                    transport_request.updated_at.strftime("%Y-%m-%d %H:%M")
-                    if transport_request.updated_at
-                    else "Not available"
-                ),
-            ],
-        ]
-        elements.append(pdf_export.make_table(tracking_data, [2 * inch, 5 * inch]))
-
-        # Transport Details
-        elements.extend(pdf_export.section_heading("Transport Details", styles))
-        transport_data = [
-            ["Field", "Value"],
-            ["Purpose", (transport_request.purpose or "Not provided")[:100]],
-            [
-                "Additional Comments",
-                (transport_request.additional_comments or "None")[:100],
-            ],
-        ]
-        elements.append(pdf_export.make_table(transport_data, [2 * inch, 5 * inch]))
-
-        # Journey Details from transport_details JSON field
-        if transport_request.transport_details:
-            # transport_details is a list of journey objects
-            journeys = (
-                transport_request.transport_details
-                if isinstance(transport_request.transport_details, list)
-                else []
-            )
-            if journeys:
-                elements.extend(pdf_export.section_heading("Journey Details", styles))
-                journey_data = [["#", "Date", "From", "To", "Time", "Passengers"]]
-                for i, journey in enumerate(journeys, 1):
-                    journey_data.append(
-                        [
-                            str(i),
-                            str(journey.get("date", "-"))[:10],
-                            str(journey.get("from", journey.get("from_location", "-")))[
-                                :20
-                            ],
-                            str(journey.get("to", journey.get("to_location", "-")))[
-                                :20
-                            ],
-                            str(
-                                journey.get(
-                                    "departureTime", journey.get("departure_time", "-")
-                                )
-                            )[:8],
-                            str(
-                                journey.get(
-                                    "numberOfPassengers",
-                                    journey.get("number_of_passengers", "-"),
-                                )
-                            ),
-                        ]
-                    )
-                elements.append(
-                    pdf_export.make_table(
-                        journey_data,
-                        [
-                            0.3 * inch,
-                            0.9 * inch,
-                            1.5 * inch,
-                            1.5 * inch,
-                            0.9 * inch,
-                            1 * inch,
-                        ],
-                    )
-                )
-
-        # Vehicle Assignment
-        vehicle_assignments = transport_request.vehicle_assignments.all()
-        if vehicle_assignments.exists():
-            elements.extend(pdf_export.section_heading("Vehicle Assignment", styles))
-            for assignment in vehicle_assignments:
-                # Vehicle Type, Vehicle Capacity, and Driver License are
-                # omitted: no admin processing UI (transport-processing or
-                # transport-admin components) ever collects them as real
-                # per-assignment data - they're hardcoded constants
-                # ("COMPANY_VEHICLE", 4, "") on every assignment ever created.
-                assignment_data = [
-                    ["Field", "Value"],
-                    ["Vehicle Number", assignment.vehicle_number or "-"],
-                    ["Driver Name", assignment.driver_name or "-"],
-                    ["Driver Contact", assignment.driver_contact or "-"],
-                    ["Assignment Status", assignment.status or "-"],
-                    [
-                        "Assigned Date",
-                        (
-                            assignment.assignment_date.strftime("%Y-%m-%d %H:%M")
-                            if assignment.assignment_date
-                            else "-"
-                        ),
-                    ],
-                ]
-                elements.append(
-                    pdf_export.make_table(assignment_data, [2 * inch, 5 * inch])
-                )
-
-        # Approval History - try workflow first, then fall back to legacy approval steps
-        from django.contrib.contenttypes.models import ContentType
-        from workflows.models import WorkflowInstance
-
-        approval_found = False
-        try:
-            content_type = ContentType.objects.get_for_model(transport_request)
-            workflow_instance = WorkflowInstance.objects.filter(
-                content_type=content_type, object_id=transport_request.id
-            ).first()
-
-            if workflow_instance and workflow_instance.step_executions.exists():
-                elements.extend(pdf_export.section_heading("Approval History", styles))
-                approval_data = [
-                    ["Step", "Role", "Status", "Actioned By", "Date", "Comments"]
-                ]
-                for step in workflow_instance.step_executions.select_related(
-                    "workflow_step", "actioned_by"
-                ).order_by("workflow_step__step_order"):
-                    approval_data.append(
-                        [
-                            str(step.workflow_step.step_order),
-                            (step.workflow_step.step_name or "-")[:14],
-                            step.status or "-",
-                            step.actioned_by.name if step.actioned_by else "-",
-                            (
-                                step.action_date.strftime("%Y-%m-%d %H:%M")
-                                if step.action_date
-                                else "-"
-                            ),
-                            (step.comments or "-")[:30],
-                        ]
-                    )
-                elements.append(
-                    pdf_export.make_table(
-                        approval_data,
-                        [
-                            0.4 * inch,
-                            1.2 * inch,
-                            0.9 * inch,
-                            1.2 * inch,
-                            1.3 * inch,
-                            2 * inch,
-                        ],
-                    )
-                )
-                approval_found = True
-        except Exception:
-            pass
-
-        # Fall back to legacy approval steps if no workflow found
-        if not approval_found:
-            approval_steps = transport_request.approval_steps.all().order_by(
-                "created_at"
-            )
-            if approval_steps.exists():
-                elements.extend(pdf_export.section_heading("Approval History", styles))
-                approval_data = [["Role", "Status", "Date", "Comments"]]
-                for step in approval_steps:
-                    approval_data.append(
-                        [
-                            step.step_role or "-",
-                            step.status or "-",
-                            (
-                                step.step_date.strftime("%Y-%m-%d %H:%M")
-                                if step.step_date
-                                else "-"
-                            ),
-                            (step.comments or "-")[:50],
-                        ]
-                    )
-                elements.append(
-                    pdf_export.make_table(
-                        approval_data,
-                        [1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch],
-                    )
-                )
-
-        # Build PDF
-        pdf_export.build(doc, elements)
-        buffer.seek(0)
-
-        # Create response
-        filename = (
-            f"Transport-{transport_request.request_number or transport_request.id}.pdf"
-        )
-        response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        return response
-
-
-class TransportApprovalStepViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    Read-only ViewSet for transport approval steps
-    """
-
-    queryset = TransportApprovalStep.objects.all()
-    serializer_class = TransportApprovalStepSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """Filter approval steps by transport request if specified"""
-        queryset = super().get_queryset()
-        transport_request_id = self.request.query_params.get("transport_request", None)
-
-        if transport_request_id:
-            queryset = queryset.filter(transport_request_id=transport_request_id)
-
-        return queryset.select_related("transport_request")
-
-
-class VehicleAssignmentViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for managing vehicle assignments (admin only)
-    """
-
-    queryset = VehicleAssignment.objects.all()
-    serializer_class = VehicleAssignmentSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """Filter by transport request and status"""
-        queryset = super().get_queryset()
-
-        transport_request_id = self.request.query_params.get("transport_request", None)
-        if transport_request_id:
-            queryset = queryset.filter(transport_request_id=transport_request_id)
-
-        assignment_status = self.request.query_params.get("status", None)
-        if assignment_status:
-            queryset = queryset.filter(status=assignment_status)
-
-        vehicle_number = self.request.query_params.get("vehicle_number", None)
-        if vehicle_number:
-            queryset = queryset.filter(vehicle_number__icontains=vehicle_number)
-
-        return queryset.select_related("transport_request", "assigned_by")
-
-    def perform_create(self, serializer):
-        """
-        Create vehicle assignment
-        Only transport admin can assign vehicles
-        """
-        user = self.request.user
-        if not user.is_superuser and not is_module_admin(user, "transport"):
-            from rest_framework.exceptions import PermissionDenied
-
-            raise PermissionDenied("Only transport admin can assign vehicles")
-
-        serializer.save(assigned_by=user)
-
-    @action(detail=True, methods=["post"])
-    def start_journey(self, request, pk=None):
-        """
-        Mark vehicle assignment as In Progress and record starting odometer
-        """
-        assignment = self.get_object()
-
-        if assignment.status != "Assigned":
-            return Response(
-                {
-                    "error": f"Cannot start journey for assignment with status {assignment.status}"
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        odometer_start = request.data.get("odometer_start")
-        if not odometer_start:
-            return Response(
-                {"error": "Starting odometer reading is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        assignment.status = "In Progress"
-        assignment.odometer_start = odometer_start
-        assignment.save()
-
-        serializer = self.get_serializer(assignment)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["post"])
-    def complete_journey(self, request, pk=None):
-        """
-        Mark vehicle assignment as Completed and record ending odometer and fuel used
-        """
-        assignment = self.get_object()
-
-        if assignment.status != "In Progress":
-            return Response(
-                {
-                    "error": f"Cannot complete journey for assignment with status {assignment.status}"
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        odometer_end = request.data.get("odometer_end")
-        fuel_used = request.data.get("fuel_used_liters")
-
-        if not odometer_end:
-            return Response(
-                {"error": "Ending odometer reading is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if odometer_end < assignment.odometer_start:
-            return Response(
-                {"error": "Ending odometer cannot be less than starting odometer"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        assignment.status = "Completed"
-        assignment.odometer_end = odometer_end
-        assignment.fuel_used_liters = fuel_used
-        assignment.completion_date = timezone.now()
-        assignment.save()
-
-        serializer = self.get_serializer(assignment)
-        return Response(serializer.data)
+        return build_request_pdf(transport_request)

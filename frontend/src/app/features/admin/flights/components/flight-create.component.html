@@ -3,7 +3,9 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h2 class="mb-1">{{ isEditMode ? 'Edit' : 'Create' }} Flight Booking</h2>
-      <p class="text-muted mb-0">{{ isEditMode ? 'Update flight booking details' : 'Create a new flight booking' }}</p>
+      <p class="text-muted mb-0">
+        {{ isEditMode ? 'Update flight booking details' : 'Create a new flight booking' }}
+      </p>
     </div>
     <button class="btn btn-outline-secondary" (click)="cancel()">
       <i class="bi bi-x me-2"></i>Cancel
@@ -12,13 +14,12 @@
 
   <!-- Loading State -->
   <div *ngIf="loading" class="text-center py-5">
-    <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
-    <p class="mt-3 text-muted">Loading booking details...</p>
+    <app-loading-spinner size="lg" message="Loading…"></app-loading-spinner>
+    <p class="mt-3 text-muted">Loading booking details…</p>
   </div>
 
   <!-- Form -->
   <form [formGroup]="flightForm" (ngSubmit)="onSubmit()" *ngIf="!loading">
-
     <!-- Basic Information -->
     <div class="card mb-4">
       <div class="card-header bg-primary text-white">
@@ -34,7 +35,8 @@
               class="form-control"
               formControlName="trf"
               [class.is-invalid]="isFieldInvalid('trf')"
-              placeholder="Enter TRF ID">
+              placeholder="Enter TRF ID"
+            />
             <div class="invalid-feedback" *ngIf="isFieldInvalid('trf')">
               {{ getFieldError('trf') }}
             </div>
@@ -48,21 +50,25 @@
               class="form-control"
               formControlName="user"
               [class.is-invalid]="isFieldInvalid('user')"
-              placeholder="Enter User ID">
+              placeholder="Enter User ID"
+            />
             <div class="invalid-feedback" *ngIf="isFieldInvalid('user')">
               {{ getFieldError('user') }}
             </div>
           </div>
 
           <div class="col-md-4 mb-3">
-            <label for="booking_reference" class="form-label">Booking Reference <span class="text-danger">*</span></label>
+            <label for="booking_reference" class="form-label"
+              >Booking Reference <span class="text-danger">*</span></label
+            >
             <input
               type="text"
               id="booking_reference"
               class="form-control"
               formControlName="booking_reference"
               [class.is-invalid]="isFieldInvalid('booking_reference')"
-              placeholder="e.g., ABC123XYZ">
+              placeholder="e.g., ABC123XYZ"
+            />
             <div class="invalid-feedback" *ngIf="isFieldInvalid('booking_reference')">
               {{ getFieldError('booking_reference') }}
             </div>
@@ -71,13 +77,18 @@
 
         <div class="row">
           <div class="col-md-4 mb-3">
-            <label for="flight_type" class="form-label">Flight Type <span class="text-danger">*</span></label>
+            <label for="flight_type" class="form-label"
+              >Flight Type <span class="text-danger">*</span></label
+            >
             <select
               id="flight_type"
               class="form-select"
               formControlName="flight_type"
-              [class.is-invalid]="isFieldInvalid('flight_type')">
-              <option *ngFor="let type of flightTypes" [value]="type.value">{{ type.label }}</option>
+              [class.is-invalid]="isFieldInvalid('flight_type')"
+            >
+              <option *ngFor="let type of flightTypes" [value]="type.value">
+                {{ type.label }}
+              </option>
             </select>
             <div class="invalid-feedback" *ngIf="isFieldInvalid('flight_type')">
               {{ getFieldError('flight_type') }}
@@ -85,13 +96,18 @@
           </div>
 
           <div class="col-md-4 mb-3">
-            <label for="booking_class" class="form-label">Booking Class <span class="text-danger">*</span></label>
+            <label for="booking_class" class="form-label"
+              >Booking Class <span class="text-danger">*</span></label
+            >
             <select
               id="booking_class"
               class="form-select"
               formControlName="booking_class"
-              [class.is-invalid]="isFieldInvalid('booking_class')">
-              <option *ngFor="let cls of bookingClasses" [value]="cls.value">{{ cls.label }}</option>
+              [class.is-invalid]="isFieldInvalid('booking_class')"
+            >
+              <option *ngFor="let cls of bookingClasses" [value]="cls.value">
+                {{ cls.label }}
+              </option>
             </select>
             <div class="invalid-feedback" *ngIf="isFieldInvalid('booking_class')">
               {{ getFieldError('booking_class') }}
@@ -104,7 +120,8 @@
               id="status"
               class="form-select"
               formControlName="status"
-              [class.is-invalid]="isFieldInvalid('status')">
+              [class.is-invalid]="isFieldInvalid('status')"
+            >
               <option *ngFor="let stat of statuses" [value]="stat.value">{{ stat.label }}</option>
             </select>
             <div class="invalid-feedback" *ngIf="isFieldInvalid('status')">
@@ -123,14 +140,17 @@
       <div class="card-body">
         <div class="row">
           <div class="col-md-4 mb-3">
-            <label for="airline" class="form-label">Airline <span class="text-danger">*</span></label>
+            <label for="airline" class="form-label"
+              >Airline <span class="text-danger">*</span></label
+            >
             <input
               type="text"
               id="airline"
               class="form-control"
               formControlName="airline"
               [class.is-invalid]="isFieldInvalid('airline')"
-              placeholder="e.g., Emirates">
+              placeholder="e.g., Emirates"
+            />
             <div class="invalid-feedback" *ngIf="isFieldInvalid('airline')">
               {{ getFieldError('airline') }}
             </div>
@@ -143,18 +163,22 @@
               id="airline_code"
               class="form-control"
               formControlName="airline_code"
-              placeholder="e.g., EK">
+              placeholder="e.g., EK"
+            />
           </div>
 
           <div class="col-md-4 mb-3">
-            <label for="flight_number" class="form-label">Flight Number <span class="text-danger">*</span></label>
+            <label for="flight_number" class="form-label"
+              >Flight Number <span class="text-danger">*</span></label
+            >
             <input
               type="text"
               id="flight_number"
               class="form-control"
               formControlName="flight_number"
               [class.is-invalid]="isFieldInvalid('flight_number')"
-              placeholder="e.g., EK502">
+              placeholder="e.g., EK502"
+            />
             <div class="invalid-feedback" *ngIf="isFieldInvalid('flight_number')">
               {{ getFieldError('flight_number') }}
             </div>
@@ -163,14 +187,17 @@
 
         <div class="row">
           <div class="col-md-3 mb-3">
-            <label for="departure_airport" class="form-label">Departure Airport <span class="text-danger">*</span></label>
+            <label for="departure_airport" class="form-label"
+              >Departure Airport <span class="text-danger">*</span></label
+            >
             <input
               type="text"
               id="departure_airport"
               class="form-control"
               formControlName="departure_airport"
               [class.is-invalid]="isFieldInvalid('departure_airport')"
-              placeholder="e.g., Dubai International">
+              placeholder="e.g., Dubai International"
+            />
             <div class="invalid-feedback" *ngIf="isFieldInvalid('departure_airport')">
               {{ getFieldError('departure_airport') }}
             </div>
@@ -183,7 +210,8 @@
               id="departure_airport_code"
               class="form-control"
               formControlName="departure_airport_code"
-              placeholder="e.g., DXB">
+              placeholder="e.g., DXB"
+            />
           </div>
 
           <div class="col-md-2 mb-3">
@@ -193,17 +221,21 @@
               id="departure_terminal"
               class="form-control"
               formControlName="departure_terminal"
-              placeholder="e.g., 3">
+              placeholder="e.g., 3"
+            />
           </div>
 
           <div class="col-md-5 mb-3">
-            <label for="departure_time" class="form-label">Departure Time <span class="text-danger">*</span></label>
+            <label for="departure_time" class="form-label"
+              >Departure Time <span class="text-danger">*</span></label
+            >
             <input
               type="datetime-local"
               id="departure_time"
               class="form-control"
               formControlName="departure_time"
-              [class.is-invalid]="isFieldInvalid('departure_time')">
+              [class.is-invalid]="isFieldInvalid('departure_time')"
+            />
             <div class="invalid-feedback" *ngIf="isFieldInvalid('departure_time')">
               {{ getFieldError('departure_time') }}
             </div>
@@ -212,14 +244,17 @@
 
         <div class="row">
           <div class="col-md-3 mb-3">
-            <label for="arrival_airport" class="form-label">Arrival Airport <span class="text-danger">*</span></label>
+            <label for="arrival_airport" class="form-label"
+              >Arrival Airport <span class="text-danger">*</span></label
+            >
             <input
               type="text"
               id="arrival_airport"
               class="form-control"
               formControlName="arrival_airport"
               [class.is-invalid]="isFieldInvalid('arrival_airport')"
-              placeholder="e.g., London Heathrow">
+              placeholder="e.g., London Heathrow"
+            />
             <div class="invalid-feedback" *ngIf="isFieldInvalid('arrival_airport')">
               {{ getFieldError('arrival_airport') }}
             </div>
@@ -232,7 +267,8 @@
               id="arrival_airport_code"
               class="form-control"
               formControlName="arrival_airport_code"
-              placeholder="e.g., LHR">
+              placeholder="e.g., LHR"
+            />
           </div>
 
           <div class="col-md-2 mb-3">
@@ -242,17 +278,21 @@
               id="arrival_terminal"
               class="form-control"
               formControlName="arrival_terminal"
-              placeholder="e.g., 4">
+              placeholder="e.g., 4"
+            />
           </div>
 
           <div class="col-md-5 mb-3">
-            <label for="arrival_time" class="form-label">Arrival Time <span class="text-danger">*</span></label>
+            <label for="arrival_time" class="form-label"
+              >Arrival Time <span class="text-danger">*</span></label
+            >
             <input
               type="datetime-local"
               id="arrival_time"
               class="form-control"
               formControlName="arrival_time"
-              [class.is-invalid]="isFieldInvalid('arrival_time')">
+              [class.is-invalid]="isFieldInvalid('arrival_time')"
+            />
             <div class="invalid-feedback" *ngIf="isFieldInvalid('arrival_time')">
               {{ getFieldError('arrival_time') }}
             </div>
@@ -267,7 +307,8 @@
               id="seat_number"
               class="form-control"
               formControlName="seat_number"
-              placeholder="e.g., 12A">
+              placeholder="e.g., 12A"
+            />
           </div>
 
           <div class="col-md-4 mb-3">
@@ -277,7 +318,8 @@
               id="ticket_number"
               class="form-control"
               formControlName="ticket_number"
-              placeholder="Enter ticket number">
+              placeholder="Enter ticket number"
+            />
           </div>
         </div>
       </div>
@@ -297,7 +339,8 @@
               id="baggage_allowance"
               class="form-control"
               formControlName="baggage_allowance"
-              placeholder="e.g., 2 pieces, 23kg each">
+              placeholder="e.g., 2 pieces, 23kg each"
+            />
           </div>
 
           <div class="col-md-4 mb-3">
@@ -307,7 +350,8 @@
               id="carry_on_allowance"
               class="form-control"
               formControlName="carry_on_allowance"
-              placeholder="e.g., 1 piece, 7kg">
+              placeholder="e.g., 1 piece, 7kg"
+            />
           </div>
 
           <div class="col-md-4 mb-3">
@@ -317,7 +361,8 @@
               id="meal_preference"
               class="form-control"
               formControlName="meal_preference"
-              placeholder="e.g., Vegetarian">
+              placeholder="e.g., Vegetarian"
+            />
           </div>
         </div>
 
@@ -329,7 +374,8 @@
               class="form-control"
               formControlName="special_requests"
               rows="2"
-              placeholder="Enter any special requests"></textarea>
+              placeholder="Enter any special requests"
+            ></textarea>
           </div>
         </div>
       </div>
@@ -348,7 +394,8 @@
               type="date"
               id="booking_date"
               class="form-control"
-              formControlName="booking_date">
+              formControlName="booking_date"
+            />
           </div>
 
           <div class="col-md-3 mb-3">
@@ -357,7 +404,8 @@
               type="date"
               id="confirmation_date"
               class="form-control"
-              formControlName="confirmation_date">
+              formControlName="confirmation_date"
+            />
           </div>
 
           <div class="col-md-3 mb-3">
@@ -366,7 +414,8 @@
               type="date"
               id="ticketing_date"
               class="form-control"
-              formControlName="ticketing_date">
+              formControlName="ticketing_date"
+            />
           </div>
 
           <div class="col-md-3 mb-3">
@@ -376,7 +425,8 @@
               id="booked_by"
               class="form-control"
               formControlName="booked_by"
-              placeholder="Enter user ID">
+              placeholder="Enter user ID"
+            />
           </div>
         </div>
 
@@ -387,7 +437,8 @@
               type="date"
               id="cancellation_date"
               class="form-control"
-              formControlName="cancellation_date">
+              formControlName="cancellation_date"
+            />
           </div>
 
           <div class="col-md-6 mb-3">
@@ -397,7 +448,8 @@
               id="cancellation_reason"
               class="form-control"
               formControlName="cancellation_reason"
-              placeholder="Enter cancellation reason">
+              placeholder="Enter cancellation reason"
+            />
           </div>
         </div>
       </div>
@@ -416,7 +468,8 @@
             class="form-control"
             formControlName="notes"
             rows="3"
-            placeholder="Enter any additional notes or comments"></textarea>
+            placeholder="Enter any additional notes or comments"
+          ></textarea>
         </div>
       </div>
     </div>
@@ -429,33 +482,33 @@
             type="button"
             class="btn btn-outline-secondary"
             (click)="cancel()"
-            [disabled]="submitting">
+            [disabled]="submitting"
+          >
             <i class="bi bi-x me-2"></i>Cancel
           </button>
           <button
             type="button"
             class="btn btn-warning"
             (click)="saveDraft()"
-            [disabled]="submitting">
+            [disabled]="submitting"
+          >
             <i class="bi bi-save me-2"></i>
             <span *ngIf="!submitting">Save Draft</span>
             <span *ngIf="submitting">
-              <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>Saving...
+              <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner
+              >Saving…
             </span>
           </button>
-          <button
-            type="submit"
-            class="btn btn-primary"
-            [disabled]="submitting">
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
             <i class="bi bi-check-circle me-2"></i>
             <span *ngIf="!submitting">{{ isEditMode ? 'Update' : 'Create' }} Booking</span>
             <span *ngIf="submitting">
-              <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>Submitting...
+              <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner
+              >Submitting…
             </span>
           </button>
         </div>
       </div>
     </div>
-
   </form>
 </div>

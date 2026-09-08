@@ -7,9 +7,6 @@
 @use './styles/modal';
 @use './styles/tables';
 
-// We're using Google Fonts for Raleway instead of local font files
-// The font is loaded in index.html
-
 // Global styles - Full viewport coverage with no gaps
 html,
 body {
@@ -32,52 +29,17 @@ body {
   box-sizing: inherit;
 }
 
-// Ensure no gaps from any container
-html,
-body,
-app-root,
-app-main-layout {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
 body {
   @include typography.body-text;
   color: colors.$text-primary;
-  background-image: url('/img/background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-color: vars.$bg-secondary;
 }
 
-// Ensure app-root fills viewport completely
-app-root {
-  display: flex;
-  flex-direction: column;
-  width: 100% !important;
-  max-width: 100% !important;
-  height: 100vh !important;
-  min-height: 100vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow-x: hidden;
-  position: fixed !important;
-  inset: 0 !important;
-}
-
-// Ensure main-layout fills its container
-app-main-layout {
-  display: flex;
-  flex: 1;
-  width: 100% !important;
-  height: 100% !important;
-  min-height: 0;
-  margin: 0 !important;
-  padding: 0 !important;
-  position: absolute !important;
-  inset: 0 !important;
-}
+// app-root and app-main-layout's box model (fill viewport, no gaps) are
+// owned by their own components - see the :host rules in app.component.scss
+// and main-layout.component.scss - not duplicated here. (The one exception
+// is index.html's inline pre-boot critical CSS, which resets app-root before
+// Angular has rendered anything for it to apply to.)
 
 h1 {
   @include typography.title;
@@ -88,58 +50,6 @@ h2 {
   @include typography.subtitle;
   color: colors.$primary-dark-gray;
 }
-
-// Secondary font usage for specific elements
-.secondary-font {
-  @include typography.secondary-text;
-}
-
-// Utility classes for colors
-.bg-primary-teal {
-  background-color: colors.$primary-teal;
-}
-.bg-primary-dark-gray {
-  background-color: colors.$primary-dark-gray;
-}
-.bg-secondary-purple-dark {
-  background-color: colors.$secondary-purple-dark;
-}
-.bg-secondary-purple-medium {
-  background-color: colors.$secondary-purple-medium;
-}
-.bg-secondary-blue {
-  background-color: colors.$secondary-blue;
-}
-.bg-secondary-light-blue {
-  background-color: colors.$secondary-light-blue;
-}
-.bg-secondary-green {
-  background-color: colors.$secondary-green;
-}
-.bg-secondary-yellow {
-  background-color: colors.$secondary-yellow;
-}
-.bg-secondary-orange {
-  background-color: colors.$secondary-orange;
-}
-.bg-neutral {
-  background-color: colors.$neutral-color;
-}
-.bg-highlight {
-  background-color: colors.$highlight-color;
-}
-
-.text-primary-teal {
-  color: colors.$primary-teal;
-}
-.text-primary-dark-gray {
-  color: colors.$primary-dark-gray;
-}
-.text-highlight {
-  color: colors.$highlight-color;
-}
-
-// Add your custom global styles below
 
 // ========== UTILITY CLASSES ==========
 // Replace common inline styles with reusable classes
@@ -249,6 +159,59 @@ h2 {
 // ========== PAGE CONTAINER HEIGHT FIX ==========
 // Ensure all page containers fill the full height of the content area
 // This prevents pages from displaying with empty space below content
+//
+// Shared by both blocks below (was ~80 lines of duplicated declarations
+// that could silently drift between the two - now one definition each).
+@mixin fill-height-last-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; // Let this flex item shrink to the container instead of forcing siblings out
+
+  .card-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .table-responsive {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto; // Without this, content taller than the fixed-height container was silently clipped instead of scrolling
+
+    table {
+      flex: 1;
+    }
+  }
+}
+
+@mixin fill-height-card-with-table {
+  /* stylelint-disable-next-line nesting-selector-no-missing-scoping-root -- & only gets a scoping root once this mixin is @included inside a rule */
+  &:has(.table-responsive) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    .table-responsive {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
+    }
+  }
+}
+
+// Explicit, known container classes. The bracketed selectors below are a
+// deliberate, documented fallback for pages that don't opt in explicitly -
+// not accidental drift - so a new admin/list/panel page still gets the fix
+// even if its container class isn't added to this list yet. Prefer adding
+// the explicit class when touching a page; the wildcard exists as a safety
+// net, not the primary mechanism.
 .flights-admin-container,
 .accommodation-admin-container,
 .claims-admin-container,
@@ -273,52 +236,17 @@ h2 {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: transparent; // Transparent to show background image
+  background-color: transparent;
 
   // Make the last card grow to fill remaining space
   > .card:last-of-type,
   > div:last-child > .card:last-of-type {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0; // Let this flex item shrink to the container instead of forcing siblings out
-
-    .card-body {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .table-responsive {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      overflow-y: auto; // Without this, content taller than the fixed-height container was silently clipped instead of scrolling
-
-      table {
-        flex: 1;
-      }
-    }
+    @include fill-height-last-card;
   }
 
   // Also handle cards that are not last but should still expand
   > .card {
-    &:has(.table-responsive) {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-
-      .table-responsive {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-        overflow-y: auto;
-      }
-    }
+    @include fill-height-card-with-table;
   }
 }
 
@@ -334,7 +262,8 @@ app-system-settings,
 tmsapp-admin-systemsettings-notification-templates,
 tmsapp-admin-systemsettings-role-management,
 tmsapp-admin-systemsettings-workflow-configuration,
-// Catch-all for any admin components
+// Catch-all for any admin components - same deliberate-fallback rationale
+// as above.
 [class*="app-"][class*="-admin"],
 [class*="tmsapp-admin"] {
   display: flex;
@@ -346,51 +275,16 @@ tmsapp-admin-systemsettings-workflow-configuration,
     height: 100%;
     display: flex;
     flex-direction: column;
-    background-color: transparent; // Allow background image to show through
+    background-color: transparent;
 
     // Make the last card grow to fill remaining space
     > .card:last-of-type {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-
-      .card-body {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .table-responsive {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-        overflow-y: auto;
-
-        table {
-          flex: 1;
-        }
-      }
+      @include fill-height-last-card;
     }
 
     // Also handle cards that are not last but should still expand
     > .card {
-      &:has(.table-responsive) {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        min-height: 0;
-
-        .table-responsive {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          min-height: 0;
-          overflow-y: auto;
-        }
-      }
+      @include fill-height-card-with-table;
     }
   }
 }
@@ -664,17 +558,23 @@ tmsapp-admin-systemsettings-workflow-configuration,
   color: vars.$primary-hover;
 }
 
+// "Processing" is a workflow status (like pending/approved/rejected), so it
+// uses the same semantic info-blue as the rest of the status badge set
+// rather than an off-palette hue.
 .badge-processing {
-  background-color: #e0e7ff; // indigo-100 - specific to processing state
-  color: #3730a3; // indigo-800
-  border: 1px solid #6366f1; // indigo-500
+  background-color: vars.$info-light;
+  color: vars.$info-dark;
+  border: 1px solid vars.$info-color;
 }
 
-// Special badge for visa types
+// Special badge for visa types - categorical/module label (not a status),
+// intentionally distinct from the status palette. Uses the app's formalized
+// "categorical accent" purple token (see $purple-* in _variables.scss)
+// instead of a hardcoded hex.
 .badge-visa-type {
-  background-color: #f3e8ff; // purple-100 - specific to visa type
-  color: #6b21a8; // purple-800
-  border: 1px solid #a855f7; // purple-500
+  background-color: vars.$purple-light;
+  color: vars.$purple-dark;
+  border: 1px solid vars.$purple-color;
   font-weight: 600;
 }
 
@@ -708,61 +608,9 @@ tmsapp-admin-systemsettings-workflow-configuration,
   box-shadow: 0 0 0 3px rgb(13 148 136 / 10%) !important;
 }
 
-// Primary buttons - teal theme (Fluent 2 style)
-//
-// Duplicates (and, via !important, actually wins over) buttons.scss's own
-// .btn-primary rule - that's pre-existing, not something to untangle here.
-// Uses $primary-hover, not $primary-color, as the resting background: white
-// text on the base brand teal (#0d9488) is a 3.74:1 contrast ratio, short of
-// WCAG's 4.5:1 for normal-size text (Lighthouse color-contrast audit).
-// $primary-hover (#0f766e) gives ~5.48:1 while staying in the same teal
-// family - see the matching comment in buttons.scss's .btn-primary.
-.btn-primary {
-  background-color: vars.$primary-hover !important;
-  border-color: vars.$primary-hover !important;
-
-  &:hover,
-  &:active {
-    background-color: vars.$primary-active !important;
-    border-color: vars.$primary-active !important;
-  }
-
-  // Fluent 2: High contrast black focus ring, no colored glow
-  &:focus-visible {
-    outline: 2px solid #000000 !important;
-    outline-offset: 2px !important;
-    box-shadow: none !important;
-  }
-
-  &:focus:not(:focus-visible) {
-    box-shadow: none !important;
-  }
-}
-
-// Outline primary buttons - teal theme (Fluent 2 style)
-.btn-outline-primary {
-  color: vars.$primary-color !important;
-  border-color: vars.$primary-color !important;
-
-  &:hover,
-  &:active {
-    // Same white-on-teal contrast fix as .btn-primary above.
-    background-color: vars.$primary-hover !important;
-    border-color: vars.$primary-hover !important;
-    color: #ffffff !important;
-  }
-
-  // Fluent 2: High contrast black focus ring
-  &:focus-visible {
-    outline: 2px solid #000000 !important;
-    outline-offset: 2px !important;
-    box-shadow: none !important;
-  }
-
-  &:focus:not(:focus-visible) {
-    box-shadow: none !important;
-  }
-}
+// .btn-primary / .btn-outline-primary live in styles/buttons.scss - the
+// single source of truth for button appearance (colors, hover/active,
+// Fluent 2 focus-visible ring). Do not redefine them here.
 
 // Primary text color utility
 .text-primary {

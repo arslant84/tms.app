@@ -14,47 +14,32 @@
 
   <!-- Loading State -->
   <div *ngIf="loading" class="text-center py-5">
-    <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
-    <p class="mt-3 text-muted">Loading booking details...</p>
+    <app-loading-spinner size="lg" message="Loading…"></app-loading-spinner>
+    <p class="mt-3 text-muted">Loading booking details…</p>
   </div>
 
   <!-- Error State -->
   <div *ngIf="error && !loading" class="alert alert-danger" role="alert">
     <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
-    <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadBooking()">
-      Retry
-    </button>
+    <button class="btn btn-sm btn-outline-danger ms-3" (click)="loadBooking()">Retry</button>
   </div>
 
   <!-- Booking Details -->
   <div *ngIf="booking && !loading">
-
     <!-- Action Buttons -->
     <div class="card mb-4">
       <div class="card-body">
         <div class="d-flex flex-wrap gap-2">
-          <button
-            *ngIf="canEdit()"
-            class="btn btn-primary"
-            (click)="editBooking()">
+          <button *ngIf="canEdit()" class="btn btn-primary" (click)="editBooking()">
             <i class="bi bi-pencil me-2"></i>Edit Booking
           </button>
-          <button
-            *ngIf="canConfirm()"
-            class="btn btn-success"
-            (click)="confirmBooking()">
+          <button *ngIf="canConfirm()" class="btn btn-success" (click)="confirmBooking()">
             <i class="bi bi-check-circle me-2"></i>Confirm Booking
           </button>
-          <button
-            *ngIf="canCancel()"
-            class="btn btn-warning"
-            (click)="cancelBooking()">
+          <button *ngIf="canCancel()" class="btn btn-warning" (click)="cancelBooking()">
             <i class="bi bi-x-circle me-2"></i>Cancel Booking
           </button>
-          <button
-            *ngIf="canDelete()"
-            class="btn btn-danger"
-            (click)="deleteBooking()">
+          <button *ngIf="canDelete()" class="btn btn-danger" (click)="deleteBooking()">
             <i class="bi bi-trash me-2"></i>Delete Booking
           </button>
         </div>
@@ -97,7 +82,9 @@
               <div class="col-6">
                 <label class="text-muted small">Airline</label>
                 <div class="fw-medium">{{ booking.airline }}</div>
-                <div class="text-muted small" *ngIf="booking.airline_code">{{ booking.airline_code }}</div>
+                <div class="text-muted small" *ngIf="booking.airline_code">
+                  {{ booking.airline_code }}
+                </div>
               </div>
               <div class="col-6">
                 <label class="text-muted small">Flight Number</label>
@@ -110,7 +97,9 @@
               <div class="fw-medium">{{ booking.departure_airport }}</div>
               <div class="text-muted small" *ngIf="booking.departure_airport_code">
                 {{ booking.departure_airport_code }}
-                <span *ngIf="booking.departure_terminal"> - Terminal {{ booking.departure_terminal }}</span>
+                <span *ngIf="booking.departure_terminal">
+                  - Terminal {{ booking.departure_terminal }}</span
+                >
               </div>
               <div class="text-primary">{{ dateUtils.formatDateTime(booking.departure_time) }}</div>
             </div>
@@ -120,7 +109,9 @@
               <div class="fw-medium">{{ booking.arrival_airport }}</div>
               <div class="text-muted small" *ngIf="booking.arrival_airport_code">
                 {{ booking.arrival_airport_code }}
-                <span *ngIf="booking.arrival_terminal"> - Terminal {{ booking.arrival_terminal }}</span>
+                <span *ngIf="booking.arrival_terminal">
+                  - Terminal {{ booking.arrival_terminal }}</span
+                >
               </div>
               <div class="text-success">{{ dateUtils.formatDateTime(booking.arrival_time) }}</div>
             </div>
@@ -243,7 +234,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </div>

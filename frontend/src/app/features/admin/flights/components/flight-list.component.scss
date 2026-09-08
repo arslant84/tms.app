@@ -55,14 +55,16 @@
 // .btn-create removed - HTML now uses canonical .btn .btn-lg .btn-primary
 
 // Filters and Cards
-.filters-card, .bookings-list-card {
+.filters-card,
+.bookings-list-card {
   background: vars.$white;
   border-radius: vars.$radius-md;
   border: 1px solid vars.$border-light;
   box-shadow: vars.$shadow-lg;
 }
 
-.filters-card-header, .bookings-card-header {
+.filters-card-header,
+.bookings-card-header {
   padding: vars.$spacing-6;
 }
 
@@ -108,7 +110,8 @@
   }
 }
 
-.search-input, .filter-select {
+.search-input,
+.filter-select {
   padding: vars.$spacing-2 vars.$spacing-3;
   font-size: vars.$font-size-sm;
   border: 1px solid vars.$gray-300;
@@ -143,11 +146,19 @@
 
 .spin-animation {
   animation: spin 1s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 3s;
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-state {
@@ -234,7 +245,6 @@
   cursor: pointer;
 }
 
-
 .title-cell {
   font-weight: vars.$font-weight-medium;
   color: vars.$text-primary;
@@ -317,7 +327,7 @@
   }
 
   .page-subtitle {
-  // Using darker color for better contrast
+    // Using darker color for better contrast
     margin-left: 0;
   }
 

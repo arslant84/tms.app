@@ -12,18 +12,24 @@
               name="clerkSearch"
               autocomplete="off"
               class="form-control"
-              placeholder="Search tasks..."
+              placeholder="Search tasks…"
+              aria-label="Search tasks"
               [(ngModel)]="filterCriteria.search"
-              (input)="applyFilters()">
+              (input)="applyFilters()"
+            />
             <button class="btn btn-outline-secondary" type="button" (click)="resetFilters()">
               <i class="bi bi-x-circle"></i>
             </button>
           </div>
-          
+
           <div class="filter-row">
             <div class="filter-item">
               <label>Type</label>
-              <select class="form-select" [(ngModel)]="filterCriteria.type" (change)="applyFilters()">
+              <select
+                class="form-select"
+                [(ngModel)]="filterCriteria.type"
+                (change)="applyFilters()"
+              >
                 <option value="all">All Types</option>
                 <option value="travel">Travel</option>
                 <option value="accommodation">Accommodation</option>
@@ -32,10 +38,14 @@
                 <option value="expense">Expense</option>
               </select>
             </div>
-            
+
             <div class="filter-item">
               <label>Status</label>
-              <select class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
+              <select
+                class="form-select"
+                [(ngModel)]="filterCriteria.status"
+                (change)="applyFilters()"
+              >
                 <option value="all">All Statuses</option>
                 <option value="pending">Pending</option>
                 <option value="in_progress">In Progress</option>
@@ -43,10 +53,14 @@
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
-            
+
             <div class="filter-item">
               <label>Priority</label>
-              <select class="form-select" [(ngModel)]="filterCriteria.priority" (change)="applyFilters()">
+              <select
+                class="form-select"
+                [(ngModel)]="filterCriteria.priority"
+                (change)="applyFilters()"
+              >
                 <option value="all">All Priorities</option>
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
@@ -56,25 +70,25 @@
           </div>
         </div>
       </div>
-      
+
       <div class="task-list">
         <div *ngIf="filteredTasks.length === 0" class="no-tasks">
           <i class="bi bi-inbox"></i>
           <p>No tasks match your filter criteria</p>
           <button class="btn btn-outline-primary" (click)="resetFilters()">Reset Filters</button>
         </div>
-        
-        <div 
-          *ngFor="let task of filteredTasks" 
-          class="task-card" 
+
+        <div
+          *ngFor="let task of filteredTasks"
+          class="task-card"
           [class.selected]="selectedTask?.id === task.id"
           [class.overdue]="isOverdue(task)"
-          (click)="selectTask(task)">
-          
+          (click)="selectTask(task)"
+        >
           <div class="task-icon">
             <i class="bi" [ngClass]="getTypeIcon(task.requestType)"></i>
           </div>
-          
+
           <div class="task-content">
             <div class="task-header">
               <h3 class="task-title">{{ task.title }}</h3>
@@ -82,11 +96,9 @@
                 {{ task.priority }}
               </span>
             </div>
-            
+
             <div class="task-details">
-              <p class="requester">
-                <i class="bi bi-person"></i> {{ task.requester.name }}
-              </p>
+              <p class="requester"><i class="bi bi-person"></i> {{ task.requester.name }}</p>
               <p class="department">
                 <i class="bi bi-building"></i> {{ task.requester.department }}
               </p>
@@ -97,7 +109,7 @@
                 <i class="bi bi-alarm"></i> Deadline: {{ task.deadline }}
               </p>
             </div>
-            
+
             <div class="task-footer">
               <span class="task-status" [ngClass]="getStatusClass(task.status)">
                 {{ task.status.replace('_', ' ') | titlecase }}
@@ -113,7 +125,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Task Details Panel -->
     <div class="col-lg-7 col-md-12 task-details-panel" *ngIf="selectedTask">
       <div class="panel-header">
@@ -125,7 +137,7 @@
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
-      
+
       <div class="task-details-content">
         <div class="row">
           <div class="col-md-6">
@@ -163,7 +175,7 @@
               </div>
             </div>
           </div>
-          
+
           <div class="col-md-6">
             <div class="detail-section">
               <h3>Requester Information</h3>
@@ -182,11 +194,11 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Request Type Specific Details -->
         <div class="detail-section">
           <h3>Request Details</h3>
-          
+
           <!-- Travel Request Details -->
           <div *ngIf="selectedTask.requestType === 'travel'">
             <div class="row">
@@ -219,39 +231,50 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="vendor-integration">
               <h4>Book Flight</h4>
               <div class="vendor-buttons">
-                <button 
-                  *ngFor="let vendor of vendorOptions.flights" 
+                <button
+                  *ngFor="let vendor of vendorOptions.flights"
                   class="btn btn-outline-primary"
-                  (click)="openVendorWebsite('flights', vendor.id)">
+                  (click)="openVendorWebsite('flights', vendor.id)"
+                >
                   {{ vendor.name }}
                 </button>
               </div>
             </div>
           </div>
-          
+
           <!-- Accommodation Request Details -->
           <div *ngIf="selectedTask.requestType === 'accommodation'">
             <div class="row">
               <div class="col-md-6">
                 <div class="detail-item">
                   <span class="detail-label">Check-in Date:</span>
-                  <span class="detail-value">{{ selectedTask.details.checkInDate | date:'mediumDate' }}</span>
+                  <span class="detail-value">{{
+                    selectedTask.details.checkInDate | date: 'mediumDate'
+                  }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Check-out Date:</span>
-                  <span class="detail-value">{{ selectedTask.details.checkOutDate | date:'mediumDate' }}</span>
+                  <span class="detail-value">{{
+                    selectedTask.details.checkOutDate | date: 'mediumDate'
+                  }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Accommodation Type:</span>
-                  <span class="detail-value">{{ selectedTask.details.accommodationType === 'ashgabat' ? 'Ashgabat Staff House' : 'Kiyanly Camp' }}</span>
+                  <span class="detail-value">{{
+                    selectedTask.details.accommodationType === 'ashgabat'
+                      ? 'Ashgabat Staff House'
+                      : 'Kiyanly Camp'
+                  }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Gender:</span>
-                  <span class="detail-value">{{ selectedTask.details.gender === 'male' ? 'Male' : 'Female' }}</span>
+                  <span class="detail-value">{{
+                    selectedTask.details.gender === 'male' ? 'Male' : 'Female'
+                  }}</span>
                 </div>
               </div>
               <div class="col-md-6">
@@ -277,40 +300,38 @@
               <span class="detail-label">Reason for Accommodation:</span>
               <span class="detail-value">{{ selectedTask.details.reason }}</span>
             </div>
-            
+
             <div class="vendor-integration">
               <h4>Accommodation Management</h4>
               <div class="vendor-buttons">
                 <!-- Different vendor options based on accommodation type -->
                 <ng-container *ngIf="selectedTask.details.accommodationType === 'ashgabat'">
-                  <button 
-                    class="btn btn-outline-primary"
-                    (click)="openVendorWebsite('hotels', 1)">
+                  <button class="btn btn-outline-primary" (click)="openVendorWebsite('hotels', 1)">
                     Staff House Management
                   </button>
-                  <button 
+                  <button
                     class="btn btn-outline-secondary"
-                    (click)="openVendorWebsite('hotels', 2)">
+                    (click)="openVendorWebsite('hotels', 2)"
+                  >
                     Room Allocation
                   </button>
                 </ng-container>
-                
+
                 <ng-container *ngIf="selectedTask.details.accommodationType === 'kiyanly'">
-                  <button 
-                    class="btn btn-outline-primary"
-                    (click)="openVendorWebsite('hotels', 3)">
+                  <button class="btn btn-outline-primary" (click)="openVendorWebsite('hotels', 3)">
                     Camp Management
                   </button>
-                  <button 
+                  <button
                     class="btn btn-outline-secondary"
-                    (click)="openVendorWebsite('hotels', 2)">
+                    (click)="openVendorWebsite('hotels', 2)"
+                  >
                     Room Allocation
                   </button>
                 </ng-container>
               </div>
             </div>
           </div>
-          
+
           <!-- Transport Request Details -->
           <div *ngIf="selectedTask.requestType === 'transport'">
             <div class="row">
@@ -335,24 +356,27 @@
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Additional Requirements:</span>
-                  <span class="detail-value">{{ selectedTask.details.additionalRequirements }}</span>
+                  <span class="detail-value">{{
+                    selectedTask.details.additionalRequirements
+                  }}</span>
                 </div>
               </div>
             </div>
-            
+
             <div class="vendor-integration">
               <h4>Book Transport</h4>
               <div class="vendor-buttons">
-                <button 
-                  *ngFor="let vendor of vendorOptions.transport" 
+                <button
+                  *ngFor="let vendor of vendorOptions.transport"
                   class="btn btn-outline-primary"
-                  (click)="openVendorWebsite('transport', vendor.id)">
+                  (click)="openVendorWebsite('transport', vendor.id)"
+                >
                   {{ vendor.name }}
                 </button>
               </div>
             </div>
           </div>
-          
+
           <!-- Visa Request Details -->
           <div *ngIf="selectedTask.requestType === 'visa'">
             <div class="row">
@@ -385,54 +409,62 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="vendor-integration">
               <h4>Process Visa</h4>
               <div class="vendor-buttons">
-                <button 
-                  *ngFor="let vendor of vendorOptions.visa" 
+                <button
+                  *ngFor="let vendor of vendorOptions.visa"
                   class="btn btn-outline-primary"
-                  (click)="openVendorWebsite('visa', vendor.id)">
+                  (click)="openVendorWebsite('visa', vendor.id)"
+                >
                   {{ vendor.name }}
                 </button>
               </div>
             </div>
           </div>
         </div>
-        
+
         <!-- Processing Actions -->
         <div class="detail-section">
           <h3>Processing Actions</h3>
-          
+
           <div class="processing-notes">
             <label for="processingNotes">Processing Notes</label>
-            <textarea 
-              id="processingNotes" 
-              class="form-control" 
-              rows="3" 
-              placeholder="Add notes about processing this request..."
-              [(ngModel)]="processingNotes"></textarea>
+            <textarea
+              id="processingNotes"
+              class="form-control"
+              rows="3"
+              placeholder="Add notes about processing this request…"
+              [(ngModel)]="processingNotes"
+            ></textarea>
           </div>
-          
+
           <div class="form-footer-actions">
             <button
               class="btn btn-primary"
-              [disabled]="selectedTask.status === 'in_progress' || selectedTask.status === 'completed' || isProcessing"
-              (click)="startProcessing()">
+              [disabled]="
+                selectedTask.status === 'in_progress' ||
+                selectedTask.status === 'completed' ||
+                isProcessing
+              "
+              (click)="startProcessing()"
+            >
               <i class="bi bi-play-fill"></i> Start Processing
             </button>
-            
-            <button 
-              class="btn btn-success" 
+
+            <button
+              class="btn btn-success"
               [disabled]="selectedTask.status !== 'in_progress' || isProcessing"
-              (click)="completeTask()">
+              (click)="completeTask()"
+            >
               <i class="bi bi-check-lg"></i> Mark as Completed
             </button>
           </div>
         </div>
       </div>
     </div>
-    
+
     <!-- Empty state when no task is selected -->
     <div class="col-lg-7 col-md-12 task-details-panel empty-state" *ngIf="!selectedTask">
       <div class="empty-state-content">

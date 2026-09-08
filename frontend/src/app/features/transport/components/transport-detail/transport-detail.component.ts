@@ -14,6 +14,7 @@ import type {
 } from '../../../../core/models/workflow.models';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { CurrencyUtils } from '../../../../core/utils/currency.utils';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
@@ -291,22 +292,7 @@ export class TransportDetailComponent implements OnInit {
   }
 
   formatCurrency(amount: number | null | undefined, currency?: string | null): string {
-    if (amount === null || amount === undefined || Number.isNaN(amount)) {
-      return 'N/A';
-    }
-
-    const currencyCode = currency || this.appSettingsService.getDefaultCurrency();
-
-    try {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currencyCode,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(amount);
-    } catch {
-      return `${currencyCode} ${amount.toFixed(2)}`;
-    }
+    return CurrencyUtils.format(amount, currency || this.appSettingsService.getDefaultCurrency());
   }
 
   formatTime(timeString: string | undefined): string {

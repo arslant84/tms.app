@@ -239,6 +239,112 @@ class TestTransportRequestUpdate:
         assert tr.status == "Completed"
 
 
+@pytest.fixture
+def manage_transport_only_client(db, api_client, create_user):
+    """Authenticated client whose user holds manage_transport but NOT
+    view_all_transport - used to prove Fix 6's precision fix (complete/
+    cancel's queryset bypass now checks is_module_admin, not the narrower
+    can_view_all)."""
+    from accounts.models import Permission, Role, RolePermission
+
+    perm, _ = Permission.objects.get_or_create(
+        name="manage_transport", defaults={"description": "Manage transport requests"}
+    )
+    role = Role.objects.create(name="Transport Manager Test")
+    RolePermission.objects.create(role=role, permission=perm)
+    user = create_user(
+        email="transport-manager@example.com",
+        password="testpass123",
+        name="Transport Manager",
+        role=role,
+    )
+    api_client.force_authenticate(user=user)
+    return api_client
+
+
+@pytest.mark.django_db
+class TestTransportCompleteCancelPermissionPrecision:
+    """Regression tests for docs/RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 6:
+    complete()/cancel()'s own internal check is is_module_admin (view_all OR
+    manage/process transport), but their queryset bypass only checked the
+    narrower can_view_all - a user with only manage_transport (no
+    view_all_transport) passed the internal check but still got a false 404
+    at the object-lookup stage, before ever reaching it."""
+
+    def test_manage_transport_only_user_can_cancel_another_users_request(
+        self, manage_transport_only_client, regular_user
+    ):
+        from transport.models import TransportRequest
+
+        tr = TransportRequest.objects.create(
+            requestor=regular_user,
+            requestor_name=regular_user.name,
+            staff_id="S1",
+            department="IT",
+            position="Dev",
+            purpose="Owned by someone else",
+            status="Approved",
+            transport_details=[
+                {
+                    "date": "2026-09-01",
+                    "day": "Tuesday",
+                    "from": "A",
+                    "to": "B",
+                    "departure_time": "09:00",
+                    "number_of_passengers": 1,
+                }
+            ],
+        )
+
+        response = manage_transport_only_client.post(
+            f"/api/transport/requests/{tr.id}/cancel/"
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        tr.refresh_from_db()
+        assert tr.status == "Cancelled"
+
+    def test_manage_transport_only_user_can_complete_another_users_request(
+        self, manage_transport_only_client, regular_user
+    ):
+        from transport.models import TransportRequest, VehicleAssignment
+
+        tr = TransportRequest.objects.create(
+            requestor=regular_user,
+            requestor_name=regular_user.name,
+            staff_id="S1",
+            department="IT",
+            position="Dev",
+            purpose="Owned by someone else",
+            status="Approved",
+            transport_details=[
+                {
+                    "date": "2026-09-01",
+                    "day": "Tuesday",
+                    "from": "A",
+                    "to": "B",
+                    "departure_time": "09:00",
+                    "number_of_passengers": 1,
+                }
+            ],
+        )
+        VehicleAssignment.objects.create(
+            transport_request=tr,
+            vehicle_number="ABC-1",
+            driver_name="Driver",
+            assigned_by=regular_user,
+            status="Assigned",
+        )
+
+        response = manage_transport_only_client.post(
+            f"/api/transport/requests/{tr.id}/complete/", {}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        tr.refresh_from_db()
+        assert tr.status == "Completed"
+
+
 @pytest.mark.django_db
 class TestVehicleAssignmentDriverContact:
     """Regression test: VehicleAssignment.driver_contact has no blank=True

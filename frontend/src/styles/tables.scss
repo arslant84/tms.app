@@ -17,15 +17,28 @@
   overflow-x: auto;
 }
 
+// Written when this was always an <a>, which has no default border/
+// background/padding - now also used on <button> (converted from anchors
+// for keyboard accessibility), so the reset below is needed to avoid the
+// browser's default button chrome (border box, gray background) showing
+// through on every request-number in every list/table.
 .request-number {
   font-family: vars.$font-mono;
   font-weight: vars.$font-weight-semibold;
   color: vars.$primary-color;
   white-space: nowrap;
   cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
 
   &:hover {
     color: color.adjust(vars.$primary-color, $lightness: -10%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid vars.$primary-color;
+    outline-offset: 2px;
   }
 }
 

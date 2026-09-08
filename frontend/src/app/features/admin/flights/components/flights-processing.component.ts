@@ -170,7 +170,7 @@ export class FlightsProcessingComponent implements OnInit {
               requestedDate = itinerary[0]?.departure_date || itinerary[0]?.date || requestedDate;
             }
           } else if (trf.purpose) {
-            destinationSummary = trf.purpose.substring(0, 50) + '...';
+            destinationSummary = trf.purpose.substring(0, 50) + '…';
           }
 
           return {

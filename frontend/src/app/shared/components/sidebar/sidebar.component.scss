@@ -84,8 +84,8 @@
     }
 
     &.active {
-      background-color: rgba(vars.$indigo-color, 0.2);
-      color: vars.$info-color;
+      background-color: rgba(vars.$primary-color, 0.2);
+      color: vars.$primary-light;
       font-weight: vars.$font-weight-semibold;
     }
   }

@@ -200,16 +200,8 @@
         }
 
         // .request-number: see global canonical rule in styles/tables.scss
-        a.fw-medium {
-          font-family: vars.$font-mono;
-          font-weight: vars.$font-weight-semibold;
-          color: vars.$primary-color;
-          cursor: pointer;
-
-          &:hover {
-            color: color.adjust(vars.$primary-color, $lightness: -10%);
-          }
-        }
+        // (a.fw-medium removed - dead selector since this element is a
+        // <button> now, not an <a>; .request-number already covers it)
       }
     }
   }

@@ -3,102 +3,180 @@
     <h2>Staff House/Camp Accommodation Request</h2>
     <p>Book staff houses in Ashgabat or camps in Kiyanly</p>
   </div>
-  
+
   <!-- Progress Indicator -->
   <div class="progress-container">
     <div class="progress mb-3">
-      <div class="progress-bar" role="progressbar" [style.width.%]="progressPercentage" 
-           [attr.aria-valuenow]="currentStep" aria-valuemin="0" [attr.aria-valuemax]="totalSteps">
+      <div
+        class="progress-bar"
+        role="progressbar"
+        [style.width.%]="progressPercentage"
+        [attr.aria-valuenow]="currentStep"
+        aria-valuemin="0"
+        [attr.aria-valuemax]="totalSteps"
+      >
         Step {{ currentStep }} of {{ totalSteps }}
       </div>
     </div>
     <div class="steps-indicator">
-      <div class="step-item" *ngFor="let title of stepTitles; let i = index" 
-           [class.active]="currentStep === i + 1"
-           [class.completed]="currentStep > i + 1">
+      <div
+        class="step-item"
+        *ngFor="let title of stepTitles; let i = index"
+        [class.active]="currentStep === i + 1"
+        [class.completed]="currentStep > i + 1"
+      >
         <div class="step-number">{{ i + 1 }}</div>
         <div class="step-title">{{ title }}</div>
       </div>
     </div>
   </div>
-  
+
   <!-- Form -->
   <div class="wizard-form">
     <form [formGroup]="accommodationForm" (ngSubmit)="submitRequest()">
-      
       <!-- Step 1: Accommodation Selection -->
       <div class="step-content" *ngIf="currentStep === 1">
         <h3>Accommodation Selection</h3>
-        
+
         <!-- Loading indicator -->
         <div *ngIf="isLoading" class="text-center py-4">
-          <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
-          <p class="mt-2">Loading accommodation options...</p>
+          <app-loading-spinner size="lg" message="Loading…"></app-loading-spinner>
+          <p class="mt-2">Loading accommodation options…</p>
         </div>
 
         <!-- Location Type Selection -->
         <div class="mb-4" *ngIf="!isLoading">
           <label class="form-label">Location *</label>
           <div class="btn-group w-100" role="group">
-            <input type="radio" class="btn-check" formControlName="accommodationType" id="ashgabat" value="Ashgabat">
+            <input
+              type="radio"
+              class="btn-check"
+              formControlName="accommodationType"
+              id="ashgabat"
+              value="Ashgabat"
+            />
             <label class="btn btn-outline-primary" for="ashgabat">Ashgabat Staff Houses</label>
 
-            <input type="radio" class="btn-check" formControlName="accommodationType" id="kiyanly" value="Kiyanly">
+            <input
+              type="radio"
+              class="btn-check"
+              formControlName="accommodationType"
+              id="kiyanly"
+              value="Kiyanly"
+            />
             <label class="btn btn-outline-primary" for="kiyanly">Kiyanly Camps</label>
 
-            <input type="radio" class="btn-check" formControlName="accommodationType" id="turkmenbashy" value="Turkmenbashy">
+            <input
+              type="radio"
+              class="btn-check"
+              formControlName="accommodationType"
+              id="turkmenbashy"
+              value="Turkmenbashy"
+            />
             <label class="btn btn-outline-primary" for="turkmenbashy">Turkmenbashy</label>
           </div>
         </div>
-        
+
         <!-- Date Selection -->
         <div class="row mb-4">
           <div class="col-md-6">
             <label for="checkInDate" class="form-label">Check-in Date *</label>
-            <input type="date" class="form-control" id="checkInDate" formControlName="checkInDate">
-            <div class="invalid-feedback" *ngIf="accommodationForm.get('checkInDate')?.invalid && accommodationForm.get('checkInDate')?.touched">
+            <input
+              type="date"
+              class="form-control"
+              id="checkInDate"
+              formControlName="checkInDate"
+            />
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                accommodationForm.get('checkInDate')?.invalid &&
+                accommodationForm.get('checkInDate')?.touched
+              "
+            >
               Check-in date is required
             </div>
           </div>
           <div class="col-md-6">
             <label for="checkOutDate" class="form-label">Check-out Date *</label>
-            <input type="date" class="form-control" id="checkOutDate" formControlName="checkOutDate">
-            <div class="invalid-feedback" *ngIf="accommodationForm.get('checkOutDate')?.invalid && accommodationForm.get('checkOutDate')?.touched">
+            <input
+              type="date"
+              class="form-control"
+              id="checkOutDate"
+              formControlName="checkOutDate"
+            />
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                accommodationForm.get('checkOutDate')?.invalid &&
+                accommodationForm.get('checkOutDate')?.touched
+              "
+            >
               Check-out date is required
             </div>
           </div>
         </div>
-        
+
         <!-- Gender Selection (for room assignment) -->
         <div class="mb-4">
           <label class="form-label">Gender (for room assignment) *</label>
           <div class="btn-group w-100" role="group">
-            <input type="radio" class="btn-check" formControlName="gender" id="genderMale" value="male">
+            <input
+              type="radio"
+              class="btn-check"
+              formControlName="gender"
+              id="genderMale"
+              value="male"
+            />
             <label class="btn btn-outline-primary" for="genderMale">Male</label>
-            
-            <input type="radio" class="btn-check" formControlName="gender" id="genderFemale" value="female">
+
+            <input
+              type="radio"
+              class="btn-check"
+              formControlName="gender"
+              id="genderFemale"
+              value="female"
+            />
             <label class="btn btn-outline-primary" for="genderFemale">Female</label>
           </div>
           <div class="form-text text-warning">
-            <i class="bi bi-info-circle"></i> Rooms are gender-segregated. You can only book rooms assigned to your gender.
+            <i class="bi bi-info-circle"></i> Rooms are gender-segregated. You can only book rooms
+            assigned to your gender.
           </div>
         </div>
-        
+
         <!-- Accommodation Selection -->
         <div class="mb-4" *ngIf="accommodations.length > 0">
           <label for="selectedAccommodation" class="form-label">Select Staff House/Camp *</label>
-          <select class="form-select" id="selectedAccommodation" formControlName="selectedAccommodation">
+          <select
+            class="form-select"
+            id="selectedAccommodation"
+            formControlName="selectedAccommodation"
+          >
             <option value="">-- Select --</option>
             <option *ngFor="let acc of accommodations" [value]="acc.id">
               {{ acc.name }} - {{ acc.location }}
             </option>
           </select>
-          <div class="invalid-feedback" *ngIf="accommodationForm.get('selectedAccommodation')?.invalid && accommodationForm.get('selectedAccommodation')?.touched">
+          <div
+            class="invalid-feedback"
+            *ngIf="
+              accommodationForm.get('selectedAccommodation')?.invalid &&
+              accommodationForm.get('selectedAccommodation')?.touched
+            "
+          >
             Please select an accommodation
           </div>
         </div>
 
-        <div class="mb-4" *ngIf="!isLoading && accommodations.length === 0 && accommodationForm.get('accommodationType')?.value">
+        <div
+          class="mb-4"
+          *ngIf="
+            !isLoading &&
+            accommodations.length === 0 &&
+            accommodationForm.get('accommodationType')?.value
+          "
+        >
           <div class="alert alert-warning">
             <i class="bi bi-exclamation-triangle me-2"></i>
             No staff houses available for the selected location.
@@ -114,18 +192,27 @@
               {{ room.name }} (Capacity: {{ room.capacity }})
             </option>
           </select>
-          <div class="invalid-feedback" *ngIf="accommodationForm.get('selectedRoom')?.invalid && accommodationForm.get('selectedRoom')?.touched">
+          <div
+            class="invalid-feedback"
+            *ngIf="
+              accommodationForm.get('selectedRoom')?.invalid &&
+              accommodationForm.get('selectedRoom')?.touched
+            "
+          >
             Please select a room
           </div>
         </div>
 
-        <div class="mb-4" *ngIf="accommodationForm.get('selectedAccommodation')?.value && rooms.length === 0">
+        <div
+          class="mb-4"
+          *ngIf="accommodationForm.get('selectedAccommodation')?.value && rooms.length === 0"
+        >
           <div class="alert alert-warning">
             <i class="bi bi-exclamation-triangle me-2"></i>
             No available rooms in the selected staff house.
           </div>
         </div>
-        
+
         <!-- Room Selection Info -->
         <div class="mb-4" *ngIf="accommodationForm.get('selectedRoom')?.value">
           <div class="alert alert-success">
@@ -134,11 +221,11 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Step 2: Booking Confirmation -->
       <div class="step-content" *ngIf="currentStep === 2">
         <h3>Booking Confirmation</h3>
-        
+
         <div class="booking-summary card mb-4">
           <div class="card-header bg-light">
             <h5 class="mb-0">Accommodation Details</h5>
@@ -146,7 +233,9 @@
           <div class="card-body">
             <div class="row mb-3">
               <div class="col-md-6">
-                <p><strong>Location:</strong> {{ accommodationForm.get('accommodationType')?.value }}</p>
+                <p>
+                  <strong>Location:</strong> {{ accommodationForm.get('accommodationType')?.value }}
+                </p>
                 <p *ngIf="accommodationForm.get('selectedAccommodation')?.value">
                   <strong>Staff House/Camp:</strong> {{ getAccommodationName() }}
                 </p>
@@ -162,10 +251,14 @@
             </div>
           </div>
         </div>
-        
+
         <div class="mb-4">
           <label for="relatedTravelRequest" class="form-label">Related Travel Request (TRF)</label>
-          <select class="form-select" id="relatedTravelRequest" formControlName="relatedTravelRequest">
+          <select
+            class="form-select"
+            id="relatedTravelRequest"
+            formControlName="relatedTravelRequest"
+          >
             <option value="">None</option>
             <option value="TRF-2025-001">TRF-2025-001: Business Trip to Ashgabat</option>
             <option value="TRF-2025-002">TRF-2025-002: Site Visit to Kiyanly</option>
@@ -173,22 +266,37 @@
           </select>
           <div class="form-text">Link this accommodation to an existing travel request</div>
         </div>
-        
+
         <div class="mb-4">
           <label for="specialRequirements" class="form-label">Special Requirements</label>
-          <textarea class="form-control" id="specialRequirements" formControlName="specialRequirements" rows="2"
-                   placeholder="Any special requirements or preferences"></textarea>
+          <textarea
+            class="form-control"
+            id="specialRequirements"
+            formControlName="specialRequirements"
+            rows="2"
+            placeholder="Any special requirements or preferences"
+          ></textarea>
         </div>
-        
+
         <div class="mb-4">
           <label for="reason" class="form-label">Reason for Accommodation *</label>
-          <textarea class="form-control" id="reason" formControlName="reason" rows="3"
-                   placeholder="Please provide the reason for your accommodation request"></textarea>
-          <div class="invalid-feedback" *ngIf="accommodationForm.get('reason')?.invalid && accommodationForm.get('reason')?.touched">
+          <textarea
+            class="form-control"
+            id="reason"
+            formControlName="reason"
+            rows="3"
+            placeholder="Please provide the reason for your accommodation request"
+          ></textarea>
+          <div
+            class="invalid-feedback"
+            *ngIf="
+              accommodationForm.get('reason')?.invalid && accommodationForm.get('reason')?.touched
+            "
+          >
             Reason is required
           </div>
         </div>
-        
+
         <div class="alert alert-info">
           <div class="d-flex">
             <div class="me-3">
@@ -206,17 +314,28 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Step 3: Budget & Approvals -->
       <div class="step-content" *ngIf="currentStep === 3">
         <h3>Budget & Approvals</h3>
-        
+
         <div class="row mb-3">
           <div class="col-md-6">
             <label for="estimatedBudget" class="form-label">Estimated Budget *</label>
-            <input type="number" class="form-control" id="estimatedBudget" formControlName="estimatedBudget" 
-                   placeholder="Enter amount">
-            <div class="invalid-feedback" *ngIf="accommodationForm.get('estimatedBudget')?.invalid && accommodationForm.get('estimatedBudget')?.touched">
+            <input
+              type="number"
+              class="form-control"
+              id="estimatedBudget"
+              formControlName="estimatedBudget"
+              placeholder="Enter amount"
+            />
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                accommodationForm.get('estimatedBudget')?.invalid &&
+                accommodationForm.get('estimatedBudget')?.touched
+              "
+            >
               Valid budget amount is required
             </div>
           </div>
@@ -230,74 +349,105 @@
             </select>
           </div>
         </div>
-        
+
         <div class="mb-3">
           <label for="budgetJustification" class="form-label">Budget Justification</label>
-          <textarea class="form-control" id="budgetJustification" formControlName="budgetJustification" rows="2"
-                   placeholder="Explain your budget breakdown"></textarea>
+          <textarea
+            class="form-control"
+            id="budgetJustification"
+            formControlName="budgetJustification"
+            rows="2"
+            placeholder="Explain your budget breakdown"
+          ></textarea>
         </div>
-        
+
         <div class="mb-3">
           <label for="attachments" class="form-label">Attachments</label>
-          <input type="file" class="form-control" id="attachments" multiple>
-          <div class="form-text">Upload any supporting documents (quotes, price comparisons, etc.)</div>
+          <input type="file" class="form-control" id="attachments" multiple />
+          <div class="form-text">
+            Upload any supporting documents (quotes, price comparisons, etc.)
+          </div>
         </div>
-        
+
         <div formGroupName="approvers" class="mb-3">
           <h4 class="mt-4">Approvers</h4>
-          
+
           <div class="mb-3">
             <label for="focalPerson" class="form-label">Focal Person *</label>
             <select class="form-select" id="focalPerson" formControlName="focalPerson">
-              <option value="">Select focal person...</option>
+              <option value="">Select focal person…</option>
               <option value="1">John Smith</option>
               <option value="2">Sarah Johnson</option>
               <option value="3">Michael Brown</option>
             </select>
-            <div class="invalid-feedback" *ngIf="accommodationForm.get('approvers.focalPerson')?.invalid && accommodationForm.get('approvers.focalPerson')?.touched">
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                accommodationForm.get('approvers.focalPerson')?.invalid &&
+                accommodationForm.get('approvers.focalPerson')?.touched
+              "
+            >
               Focal person is required
             </div>
           </div>
-          
+
           <div class="mb-3">
             <label for="departmentHead" class="form-label">Department Head *</label>
             <select class="form-select" id="departmentHead" formControlName="departmentHead">
-              <option value="">Select department head...</option>
+              <option value="">Select department head…</option>
               <option value="1">Robert Wilson</option>
               <option value="2">Emily Davis</option>
               <option value="3">David Miller</option>
             </select>
-            <div class="invalid-feedback" *ngIf="accommodationForm.get('approvers.departmentHead')?.invalid && accommodationForm.get('approvers.departmentHead')?.touched">
+            <div
+              class="invalid-feedback"
+              *ngIf="
+                accommodationForm.get('approvers.departmentHead')?.invalid &&
+                accommodationForm.get('approvers.departmentHead')?.touched
+              "
+            >
               Department head is required
             </div>
           </div>
         </div>
       </div>
-      
+
       <!-- Navigation Buttons -->
       <div class="wizard-actions">
-        <button type="button" class="btn btn-outline-secondary" 
-                *ngIf="currentStep > 1" 
-                (click)="previousStep()">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          *ngIf="currentStep > 1"
+          (click)="previousStep()"
+        >
           <i class="bi bi-arrow-left"></i> Previous
         </button>
-        
-        <button type="button" class="btn btn-primary" 
-                *ngIf="currentStep < totalSteps" 
-                [disabled]="!isCurrentStepValid()"
-                (click)="nextStep()">
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          *ngIf="currentStep < totalSteps"
+          [disabled]="!isCurrentStepValid()"
+          (click)="nextStep()"
+        >
           Next <i class="bi bi-arrow-right"></i>
         </button>
-        
-        <button type="submit" class="btn btn-success" 
-                *ngIf="currentStep === totalSteps" 
-                [disabled]="accommodationForm.invalid || isSubmitting">
-          <app-loading-spinner *ngIf="isSubmitting" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
-          {{ isSubmitting ? 'Submitting...' : 'Submit Request' }}
+
+        <button
+          type="submit"
+          class="btn btn-success"
+          *ngIf="currentStep === totalSteps"
+          [disabled]="accommodationForm.invalid || isSubmitting"
+        >
+          <app-loading-spinner
+            *ngIf="isSubmitting"
+            size="sm"
+            class="me-2 d-inline-block"
+          ></app-loading-spinner>
+          {{ isSubmitting ? 'Submitting…' : 'Submit Request' }}
         </button>
-        
-        <button type="button" class="btn btn-link text-danger ms-auto" 
-                (click)="clearDraft()">
+
+        <button type="button" class="btn btn-link text-danger ms-auto" (click)="clearDraft()">
           Clear Form
         </button>
       </div>

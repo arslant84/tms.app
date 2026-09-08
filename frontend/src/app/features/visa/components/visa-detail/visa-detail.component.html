@@ -1,7 +1,7 @@
 <div class="visa-detail-container">
   <div *ngIf="isLoading" class="text-center py-5">
-    <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
-    <p class="mt-2">Loading visa application details...</p>
+    <app-loading-spinner size="lg" message="Loading…"></app-loading-spinner>
+    <p class="mt-2">Loading visa application details…</p>
   </div>
 
   <div *ngIf="!isLoading && application">
@@ -58,7 +58,7 @@
       <!-- Loading state -->
       <span *ngIf="workflowLoading" class="badge bg-secondary">
         <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
-        Loading workflow...
+        Loading workflow…
       </span>
       <span class="text-muted"
         >Application ID: {{ application.request_number || '#' + application.id }}</span
@@ -492,8 +492,8 @@
       <div class="card-body">
         <!-- Loading State -->
         <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
-          <app-loading-spinner size="lg" message="Loading workflow..."></app-loading-spinner>
-          <p class="text-muted mt-2">Loading workflow status...</p>
+          <app-loading-spinner size="lg" message="Loading workflow…"></app-loading-spinner>
+          <p class="text-muted mt-2">Loading workflow status…</p>
         </div>
 
         <!-- Workflow Status Timeline. Approve/Reject/Skip/Delegate now live

@@ -31,7 +31,8 @@
             name="transportSearch"
             autocomplete="off"
             class="search-input"
-            placeholder="Search by requestor, purpose, or location..."
+            placeholder="Search by requestor, purpose, or location…"
+            aria-label="Search by requestor, purpose, or location"
             [value]="(listState.searchTerm | async) || ''"
             (input)="onSearchChange($any($event.target).value)"
           />
@@ -64,12 +65,12 @@
 
     <!-- Loading State (Initial Load) -->
     <div *ngIf="(listState.loading | async) && requests.length === 0" class="loading-state">
-      <app-loading-spinner size="lg" message="Loading transport requests..."></app-loading-spinner>
+      <app-loading-spinner size="lg" message="Loading transport requests…"></app-loading-spinner>
     </div>
 
     <!-- Loading Overlay (Pagination Navigation) -->
     <div *ngIf="(listState.loading | async) && requests.length > 0" class="loading-overlay">
-      <app-loading-spinner size="md" message="Loading..."></app-loading-spinner>
+      <app-loading-spinner size="md" message="Loading…"></app-loading-spinner>
     </div>
 
     <!-- Error State -->
@@ -127,7 +128,7 @@
                 }}</small>
               </td>
               <td class="purpose-cell">{{ request.purpose || 'N/A' }}</td>
-              <td class="text-center">{{ getTotalPassengers(request) }}</td>
+              <td class="text-center passengers-cell">{{ getTotalPassengers(request) }}</td>
               <td>{{ request.department || 'N/A' }}</td>
               <td>
                 <span class="badge" [ngClass]="getStatusClass(request.status)">
@@ -142,23 +143,26 @@
                     [routerLink]="['/transport', request.id]"
                     (click)="$event.stopPropagation()"
                     title="View Details"
+                    aria-label="View Details"
                   >
-                    <i class="bi bi-eye"></i>
+                    <i class="bi bi-eye" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-primary btn-icon"
                     [routerLink]="['/transport', 'edit', request.id]"
                     (click)="$event.stopPropagation()"
                     title="Edit Request"
+                    aria-label="Edit Request"
                   >
-                    <i class="bi bi-pencil"></i>
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="deleteRequest(request.id, $event)"
                     title="Delete Request"
+                    aria-label="Delete Request"
                   >
-                    <i class="bi bi-trash"></i>
+                    <i class="bi bi-trash" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>

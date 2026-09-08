@@ -6,7 +6,7 @@ import {
   ReportMetric,
   DepartmentStats,
   TopPerformer,
-  DepartmentalReportEntry
+  DepartmentalReportEntry,
 } from './services/reports.service';
 import { HttpErrorHandlerService } from '../../../core/utils/http-error-handler.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
@@ -33,9 +33,20 @@ interface ChartData {
   standalone: true,
   imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './admin-reports.component.html',
-  styleUrl: './admin-reports.component.scss'
+  styleUrl: './admin-reports.component.scss',
 })
 export class AdminReportsComponent implements OnInit {
+  // Report chart colors - mirror styles/_variables.scss design tokens
+  // ($chart-color-1..6, $primary-color, $success-color, $warning-color) so
+  // Chart.js-style inline dataset colors stay in sync with the SCSS palette
+  // (TS can't `@use` SCSS variables directly). Do not hand-pick new hex here.
+  private readonly CHART_RED = '#ef4444'; // $chart-color-1 / $error-color
+  private readonly CHART_AMBER = '#f59e0b'; // $chart-color-2 / $warning-color
+  private readonly CHART_CYAN = '#06b6d4'; // $chart-color-3
+  private readonly CHART_GREEN = '#10b981'; // $chart-color-4 / $success-color
+  private readonly CHART_TEAL = '#0d9488'; // $chart-color-5 / $primary-color
+  private readonly CHART_BLUE = '#3b82f6'; // $chart-color-6 / $info-color
+
   // Date range filter
   dateRange: 'week' | 'month' | 'quarter' | 'year' = 'month';
 
@@ -91,7 +102,7 @@ export class AdminReportsComponent implements OnInit {
             this.loadDepartmentReport();
           }
         },
-        error: () => (this.availableDepartments = [])
+        error: () => (this.availableDepartments = []),
       });
     }
   }
@@ -101,38 +112,47 @@ export class AdminReportsComponent implements OnInit {
     if (!department) return null;
     return typeof department === 'string' ? department : department.id;
   }
-  
+
   // Load real data from API
   loadReportData(): void {
     this.isLoading = true;
     this.error = null;
 
     this.reportsService.getAdminReports(this.dateRange).subscribe({
-      next: (data) => {
+      next: data => {
         // Set key metrics
         this.keyMetrics = data.key_metrics;
 
         // Set requests by type chart
         this.requestsByTypeChart = {
           labels: data.requests_by_type.labels,
-          datasets: [{
-            label: 'Requests by Type',
-            data: data.requests_by_type.data || [],
-            backgroundColor: ['#4e73df', '#36b9cc', '#f6c23e', '#1cc88a'] as string[]
-          }]
+          datasets: [
+            {
+              label: 'Requests by Type',
+              data: data.requests_by_type.data || [],
+              backgroundColor: [
+                this.CHART_BLUE,
+                this.CHART_CYAN,
+                this.CHART_AMBER,
+                this.CHART_GREEN,
+              ] as string[],
+            },
+          ],
         };
 
         // Set processing time chart
         this.processingTimeChart = {
           labels: data.processing_by_type.labels,
-          datasets: [{
-            label: 'Average Processing Time (hours)',
-            data: data.processing_by_type.data || [],
-            backgroundColor: ['rgba(78, 115, 223, 0.2)'] as string[],
-            borderColor: '#4e73df',
-            borderWidth: 2,
-            fill: true
-          }]
+          datasets: [
+            {
+              label: 'Average Processing Time (hours)',
+              data: data.processing_by_type.data || [],
+              backgroundColor: ['rgba(59, 130, 246, 0.2)'] as string[],
+              borderColor: this.CHART_BLUE,
+              borderWidth: 2,
+              fill: true,
+            },
+          ],
         };
 
         // Set request trend chart
@@ -142,18 +162,18 @@ export class AdminReportsComponent implements OnInit {
             {
               label: 'Submitted',
               data: data.monthly_trends.submitted || [],
-              borderColor: '#4e73df',
-              backgroundColor: ['rgba(78, 115, 223, 0.05)'] as string[],
-              fill: true
+              borderColor: this.CHART_BLUE,
+              backgroundColor: ['rgba(59, 130, 246, 0.05)'] as string[],
+              fill: true,
             },
             {
               label: 'Completed',
               data: data.monthly_trends.completed || [],
-              borderColor: '#1cc88a',
-              backgroundColor: ['rgba(28, 200, 138, 0.05)'] as string[],
-              fill: true
-            }
-          ]
+              borderColor: this.CHART_GREEN,
+              backgroundColor: ['rgba(16, 185, 129, 0.05)'] as string[],
+              fill: true,
+            },
+          ],
         };
 
         // Set department statistics
@@ -164,14 +184,14 @@ export class AdminReportsComponent implements OnInit {
 
         this.isLoading = false;
       },
-      error: (err) => {
+      error: err => {
         console.error('Error loading reports:', err);
         this.error = 'Failed to load reports data. Please try again.';
         this.isLoading = false;
-      }
+      },
     });
   }
-  
+
   // Change date range and update data
   changeDateRange(range: 'week' | 'month' | 'quarter' | 'year'): void {
     this.dateRange = range;
@@ -196,7 +216,8 @@ export class AdminReportsComponent implements OnInit {
 
   private loadDepartmentReport(): void {
     if (!this.canViewAnyDepartment && !this.myDepartmentId) {
-      this.departmentReportError = 'No department assigned to your account - contact your administrator.';
+      this.departmentReportError =
+        'No department assigned to your account - contact your administrator.';
       this.departmentReport = null;
       return;
     }
@@ -214,7 +235,7 @@ export class AdminReportsComponent implements OnInit {
     this.departmentReportError = null;
 
     this.reportsService.getDepartmentalReports(targetDepartmentId, this.dateRange).subscribe({
-      next: (data) => {
+      next: data => {
         this.departmentReport = data.reports[0] || null;
         if (!this.departmentReport) {
           this.departmentReportError = 'No data available for this department yet.';
@@ -222,19 +243,48 @@ export class AdminReportsComponent implements OnInit {
           this.departmentFrequencyChart = {
             labels: this.departmentReport.monthlyFrequency.labels,
             datasets: [
-              { label: 'Travel', data: this.departmentReport.monthlyFrequency.travel, borderColor: '#4e73df', backgroundColor: ['rgba(78, 115, 223, 0.05)'], fill: true },
-              { label: 'Transport', data: this.departmentReport.monthlyFrequency.transport, borderColor: '#1cc88a', backgroundColor: ['rgba(28, 200, 138, 0.05)'], fill: true },
-              { label: 'Visa', data: this.departmentReport.monthlyFrequency.visa, borderColor: '#f6c23e', backgroundColor: ['rgba(246, 194, 62, 0.05)'], fill: true },
-              { label: 'Accommodation', data: this.departmentReport.monthlyFrequency.accommodation, borderColor: '#36b9cc', backgroundColor: ['rgba(54, 185, 204, 0.05)'], fill: true }
-            ]
+              // Colors match the breakdown-row above (.bg-primary Travel / .bg-success Transport)
+              // so the same category reads as the same color everywhere on this page.
+              {
+                label: 'Travel',
+                data: this.departmentReport.monthlyFrequency.travel,
+                borderColor: this.CHART_TEAL,
+                backgroundColor: ['rgba(13, 148, 136, 0.05)'],
+                fill: true,
+              },
+              {
+                label: 'Transport',
+                data: this.departmentReport.monthlyFrequency.transport,
+                borderColor: this.CHART_GREEN,
+                backgroundColor: ['rgba(16, 185, 129, 0.05)'],
+                fill: true,
+              },
+              {
+                label: 'Visa',
+                data: this.departmentReport.monthlyFrequency.visa,
+                borderColor: this.CHART_AMBER,
+                backgroundColor: ['rgba(245, 158, 11, 0.05)'],
+                fill: true,
+              },
+              {
+                label: 'Accommodation',
+                data: this.departmentReport.monthlyFrequency.accommodation,
+                borderColor: this.CHART_CYAN,
+                backgroundColor: ['rgba(6, 182, 212, 0.05)'],
+                fill: true,
+              },
+            ],
           };
         }
         this.departmentReportLoading = false;
       },
-      error: (err) => {
-        this.departmentReportError = this.errorHandler.getErrorMessage(err, 'Failed to load departmental report');
+      error: err => {
+        this.departmentReportError = this.errorHandler.getErrorMessage(
+          err,
+          'Failed to load departmental report'
+        );
         this.departmentReportLoading = false;
-      }
+      },
     });
   }
 
@@ -254,10 +304,7 @@ export class AdminReportsComponent implements OnInit {
   // Highest month total across the frequency chart, for proportional bar scaling
   getFrequencyMax(): number {
     const labels = this.departmentFrequencyChart.labels;
-    const max = Math.max(
-      0,
-      ...labels.map((_, i) => this.getFrequencyMonthTotal(i))
-    );
+    const max = Math.max(0, ...labels.map((_, i) => this.getFrequencyMonthTotal(i)));
     return max > 0 ? max * 1.2 : 1;
   }
 
@@ -265,39 +312,45 @@ export class AdminReportsComponent implements OnInit {
   getFrequencySegmentHeightPercent(value: number): number {
     return Math.min((value / this.getFrequencyMax()) * 100, 100);
   }
-  
+
   // Get CSS class for trend
   getTrendClass(trend: 'up' | 'down' | 'neutral'): string {
-    switch(trend) {
-      case 'up': return 'trend-up';
-      case 'down': return 'trend-down';
-      default: return 'trend-neutral';
+    switch (trend) {
+      case 'up':
+        return 'trend-up';
+      case 'down':
+        return 'trend-down';
+      default:
+        return 'trend-neutral';
     }
   }
-  
+
   // Get trend icon
   getTrendIcon(trend: 'up' | 'down' | 'neutral'): string {
-    switch(trend) {
-      case 'up': return 'bi-arrow-up';
-      case 'down': return 'bi-arrow-down';
-      default: return 'bi-dash';
+    switch (trend) {
+      case 'up':
+        return 'bi-arrow-up';
+      case 'down':
+        return 'bi-arrow-down';
+      default:
+        return 'bi-dash';
     }
   }
-  
+
   // Format percentage
   formatPercentage(value: number): string {
     return value > 0 ? `+${value}%` : `${value}%`;
   }
-  
+
   // Calculate completion percentage
   getCompletionPercentage(department: DepartmentStats): number {
     return Math.round((department.completed / department.total) * 100);
   }
-  
+
   // Export report data
   exportReport(format: 'pdf' | 'excel' | 'csv'): void {
     this.reportsService.exportReports(format, this.dateRange).subscribe({
-      next: (blob) => {
+      next: blob => {
         // Create download link
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -305,9 +358,9 @@ export class AdminReportsComponent implements OnInit {
 
         // Set filename based on format
         const extensions: Record<string, string> = {
-          'pdf': 'pdf',
-          'excel': 'xlsx',
-          'csv': 'csv'
+          pdf: 'pdf',
+          excel: 'xlsx',
+          csv: 'csv',
         };
         const filename = `tms-report-${this.dateRange}-${new Date().toISOString().split('T')[0]}.${extensions[format]}`;
         link.download = filename;
@@ -318,9 +371,9 @@ export class AdminReportsComponent implements OnInit {
         // Cleanup
         window.URL.revokeObjectURL(url);
       },
-      error: (err) => {
+      error: err => {
         this.error = this.errorHandler.getErrorMessage(err, 'Failed to export report');
-      }
+      },
     });
   }
 

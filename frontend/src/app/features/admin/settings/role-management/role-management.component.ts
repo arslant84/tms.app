@@ -2,7 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
-import { TmsApp_Core_Services_RolesService, TmsApp_Roles_RoleWithPermissions, TmsApp_Roles_Permission } from '../../../../core/services/roles.service';
+import {
+  TmsApp_Core_Services_RolesService,
+  TmsApp_Roles_RoleWithPermissions,
+  TmsApp_Roles_Permission,
+} from '../../../../core/services/roles.service';
 import { RoleFormComponent } from '../role-form/role-form.component';
 import { ToastService } from '../../../../core/services/toast.service';
 import { RbacService } from '../../../../core/services/rbac.service';
@@ -16,13 +20,14 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './role-management.component.html',
-  styleUrls: ['./role-management.component.scss']
+  styleUrls: ['./role-management.component.scss'],
 })
 export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnInit, OnDestroy {
   isLoading = true;
   isSaving = false;
   roles: TmsApp_Roles_RoleWithPermissions[] = [];
   permissions: TmsApp_Roles_Permission[] = [];
+  error: string | null = null;
 
   private roleToDelete: TmsApp_Roles_RoleWithPermissions | null = null;
 
@@ -37,7 +42,9 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
   ngOnInit(): void {
     // Check if user has permission to manage roles
     if (!this.hasManageRolesPermission) {
-      this.toast.error('You do not have permission to manage roles. This feature requires system administrator access.');
+      this.toast.error(
+        'You do not have permission to manage roles. This feature requires system administrator access.'
+      );
       this.isLoading = false;
       // Redirect to dashboard after showing error
       setTimeout(() => {
@@ -50,38 +57,43 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
   }
 
   get hasManageRolesPermission(): boolean {
-    return this.rbacService.hasAnyPermission([
-      Permission.MANAGE_ROLES,
-      Permission.SYSTEM_ADMIN
-    ]);
+    return this.rbacService.hasAnyPermission([Permission.MANAGE_ROLES, Permission.SYSTEM_ADMIN]);
   }
 
   loadData(): void {
     this.isLoading = true;
+    this.error = null;
     Promise.all([
       this.rolesService.getRoles().toPromise(),
-      this.rolesService.getPermissions().toPromise()
+      this.rolesService.getPermissions().toPromise(),
     ])
       .then(([roles, perms]) => {
         this.roles = roles || [];
         this.permissions = perms || [];
 
         if (this.permissions.length === 0) {
-          this.toast.error('No permissions available in the system. Please contact your administrator.');
+          this.toast.error(
+            'No permissions available in the system. Please contact your administrator.'
+          );
         }
       })
-      .catch((err) => {
+      .catch(err => {
         console.error('Error loading roles/permissions:', err);
 
         if (err.status === 401) {
           this.toast.error('Session expired. Please login again.');
           setTimeout(() => this.router.navigate(['/auth/login']), 1500);
         } else if (err.status === 403) {
-          this.toast.error('Access Denied: You need System Administrator privileges. Your account is not authorized to manage roles and permissions.');
+          this.toast.error(
+            'Access Denied: You need System Administrator privileges. Your account is not authorized to manage roles and permissions.'
+          );
           setTimeout(() => this.router.navigate(['/dashboard']), 2000);
         } else {
-          this.toast.error(`Failed to load data: ${err.statusText || 'Unknown error'}. Please refresh the page or contact support.`);
+          this.toast.error(
+            `Failed to load data: ${err.statusText || 'Unknown error'}. Please refresh the page or contact support.`
+          );
         }
+        this.error = 'Failed to load roles and permissions. Please try again.';
       })
       .finally(() => {
         this.isLoading = false;
@@ -98,10 +110,10 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
   }
 
   openEdit(role: TmsApp_Roles_RoleWithPermissions): void {
-    this.modalService.open(RoleFormComponent, { 
-      editId: role.id, 
-      role: role, 
-      permissions: this.permissions 
+    this.modalService.open(RoleFormComponent, {
+      editId: role.id,
+      role: role,
+      permissions: this.permissions,
     });
     this.modalService.afterClosed.subscribe(result => {
       if (result) {
@@ -110,7 +122,6 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
     });
   }
 
-
   confirmDelete(role: TmsApp_Roles_RoleWithPermissions): void {
     this.roleToDelete = role;
 
@@ -118,10 +129,11 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
       title: 'Confirm Delete',
       message: 'Are you sure you want to delete this role?',
       warningMessage: `This action cannot be undone. Role "${role.name}" will be permanently removed. Ensure no users are currently assigned this role before deleting.`,
-      confirmButtonText: 'Delete Role'
+      confirmButtonText: 'Delete Role',
     });
 
     // Get reference to the modal component
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ModalService.componentRef is intentionally private; no public API exists for this yet.
     const modalRef = (this.modalService as any).componentRef;
     if (modalRef) {
       // Subscribe to confirm event
@@ -135,6 +147,7 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
     if (!this.roleToDelete) return;
 
     // Update the modal's isDeleting state
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ModalService.componentRef is intentionally private; no public API exists for this yet.
     const modalRef = (this.modalService as any).componentRef;
     if (modalRef) {
       modalRef.instance.isDeleting = true;
@@ -147,13 +160,13 @@ export class TmsApp_Admin_SystemSettings_RoleManagementComponent implements OnIn
         this.roleToDelete = null;
         this.loadData();
       },
-      error: (err) => {
+      error: err => {
         this.toast.error('Failed to delete role');
         console.error(err);
         if (modalRef) {
           modalRef.instance.isDeleting = false;
         }
-      }
+      },
     });
   }
 

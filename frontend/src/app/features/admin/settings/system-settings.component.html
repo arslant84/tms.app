@@ -6,7 +6,9 @@
       <i class="bi bi-gear page-icon"></i>
       <div>
         <h1 class="page-title mb-1">System Settings</h1>
-        <p class="page-description mb-0">Manage application settings, user roles, permissions, and workflow configurations.</p>
+        <p class="page-description mb-0">
+          Manage application settings, user roles, permissions, and workflow configurations.
+        </p>
       </div>
     </div>
   </div>
@@ -15,9 +17,7 @@
   <div class="settings-card shadow-lg mb-4">
     <div class="card-header">
       <div>
-        <h2 class="card-title">
-          <i class="bi bi-gear me-2"></i>General Application Settings
-        </h2>
+        <h2 class="card-title"><i class="bi bi-gear me-2"></i>General Application Settings</h2>
         <p class="card-description mb-0">Configure global settings for the application.</p>
       </div>
     </div>
@@ -25,8 +25,8 @@
     <div class="card-body">
       <!-- Loading State -->
       <div *ngIf="isLoading" class="loading-container">
-        <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
-        <p class="mt-3 text-muted">Loading settings...</p>
+        <app-loading-spinner size="lg" message="Loading…"></app-loading-spinner>
+        <p class="mt-3 text-muted">Loading settings…</p>
       </div>
 
       <!-- Settings Form -->
@@ -42,7 +42,8 @@
                 class="form-control"
                 id="appName"
                 [(ngModel)]="formData.application_name"
-                placeholder="Enter application name">
+                placeholder="Enter application name"
+              />
             </div>
 
             <div class="form-group">
@@ -52,7 +53,8 @@
                 class="form-control"
                 id="supportEmail"
                 [(ngModel)]="formData.support_email"
-                placeholder="support@example.com">
+                placeholder="support@example.com"
+              />
             </div>
 
             <div class="form-group">
@@ -65,13 +67,16 @@
                 placeholder="USD"
                 maxlength="3"
                 pattern="[A-Z]{3}"
-                title="Enter a 3-letter currency code (e.g., USD, EUR, GBP)">
-              <small class="form-text text-muted">3-letter currency code (e.g., USD, EUR, GBP, MYR)</small>
+                title="Enter a 3-letter currency code (e.g., USD, EUR, GBP)"
+              />
+              <small class="form-text text-muted"
+                >3-letter currency code (e.g., USD, EUR, GBP, MYR)</small
+              >
             </div>
           </div>
         </div>
 
-        <hr class="section-divider">
+        <hr class="section-divider" />
 
         <!-- System Configuration -->
         <div class="settings-section">
@@ -85,7 +90,8 @@
                 id="sessionTimeout"
                 [(ngModel)]="formData.session_timeout_minutes"
                 min="15"
-                max="1440">
+                max="1440"
+              />
             </div>
 
             <div class="form-group">
@@ -97,7 +103,8 @@
                 [ngModel]="formData.max_file_upload_size / 1048576"
                 (ngModelChange)="formData.max_file_upload_size = $event * 1048576"
                 min="1"
-                max="100">
+                max="100"
+              />
             </div>
           </div>
 
@@ -109,7 +116,8 @@
                   type="checkbox"
                   role="switch"
                   id="maintenanceMode"
-                  [(ngModel)]="formData.maintenance_mode">
+                  [(ngModel)]="formData.maintenance_mode"
+                />
                 <label class="form-check-label" for="maintenanceMode">
                   <div class="switch-title">Maintenance Mode</div>
                   <div class="switch-description">Prevent user access to the application</div>
@@ -124,17 +132,20 @@
                   type="checkbox"
                   role="switch"
                   id="emailNotifications"
-                  [(ngModel)]="formData.enable_email_notifications">
+                  [(ngModel)]="formData.enable_email_notifications"
+                />
                 <label class="form-check-label" for="emailNotifications">
                   <div class="switch-title">Email Notifications</div>
-                  <div class="switch-description">Enable system-wide email notifications (configured via .env file)</div>
+                  <div class="switch-description">
+                    Enable system-wide email notifications (configured via .env file)
+                  </div>
                 </label>
               </div>
             </div>
           </div>
         </div>
 
-        <hr class="section-divider">
+        <hr class="section-divider" />
 
         <!-- Action Buttons -->
         <div class="form-actions">
@@ -149,17 +160,23 @@
             <button
               class="btn btn-outline-secondary"
               (click)="handleReset()"
-              [disabled]="!hasChanges || isSaving">
+              [disabled]="!hasChanges || isSaving"
+            >
               <i class="bi bi-arrow-counterclockwise me-2"></i>
               Reset
             </button>
             <button
               class="btn btn-primary"
               (click)="handleSaveSettings()"
-              [disabled]="!hasChanges || isSaving">
+              [disabled]="!hasChanges || isSaving"
+            >
               <i *ngIf="!isSaving" class="bi bi-save me-2"></i>
-              <app-loading-spinner *ngIf="isSaving" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
-              {{ isSaving ? 'Saving...' : 'Save Settings' }}
+              <app-loading-spinner
+                *ngIf="isSaving"
+                size="sm"
+                class="me-2 d-inline-block"
+              ></app-loading-spinner>
+              {{ isSaving ? 'Saving…' : 'Save Settings' }}
             </button>
           </div>
         </div>
@@ -180,9 +197,7 @@
   <div class="settings-card shadow-lg">
     <div class="card-header">
       <div>
-        <h2 class="card-title">
-          <i class="bi bi-bell me-2"></i>Notification Templates
-        </h2>
+        <h2 class="card-title"><i class="bi bi-bell me-2"></i>Notification Templates</h2>
         <p class="card-description mb-0">Manage email and system notification templates</p>
       </div>
     </div>

@@ -1,41 +1,36 @@
 // App Root Component - Using Unified Design System
 @use '../styles/variables' as vars;
 
-// Root component - fills entire viewport with no gaps
+// Root component - fills entire viewport with no gaps. This is the single
+// owner of app-root's box model (see styles.scss, which intentionally does
+// not duplicate this) - custom elements have no default margin/padding to
+// fight, so no !important is needed here.
 :host {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100vh;
   min-height: 100vh;
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0;
+  padding: 0;
   overflow-x: hidden;
   font-family: vars.$font-primary;
   color: vars.$text-primary;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
 }
 
-// App container - fills the host and provides background
+// App container - fills the host (a flex:1 child of the :host flex column
+// above already fills the remaining space; width/height kept explicit here
+// for clarity, not because anything competes for them).
 .app-container {
   display: flex;
   flex-direction: column;
   flex: 1;
   width: 100%;
   height: 100%;
-  min-height: 100vh;
-  margin: 0 !important;
-  padding: 0 !important;
   overflow-x: hidden;
-  background-image: url('/img/background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-color: vars.$bg-secondary;
 }
 
 // Connection-lost banner - sits above everything, doesn't block the current page

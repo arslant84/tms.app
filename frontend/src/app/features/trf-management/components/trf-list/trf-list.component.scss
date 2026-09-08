@@ -185,6 +185,10 @@
 
 .spin-animation {
   animation: spin 1s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 3s;
+  }
 }
 
 @keyframes spin {
@@ -268,6 +272,46 @@
 .sortable-header {
   cursor: pointer;
   user-select: none;
+}
+
+// Skeleton loading placeholders - shape-matched to the real table row cells.
+.skeleton-bar {
+  display: inline-block;
+
+  @include vars.skeleton-block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-bar {
+    animation: none;
+    background: vars.$gray-100;
+  }
+}
+
+.skeleton-cell-sm {
+  width: 60px;
+  height: 0.875rem;
+}
+
+.skeleton-cell-md {
+  width: 110px;
+  height: 0.875rem;
+}
+
+.skeleton-cell-lg {
+  width: 160px;
+  height: 0.875rem;
+}
+
+.skeleton-cell-badge {
+  width: 70px;
+  height: 1.5rem;
+  border-radius: vars.$radius-full;
+}
+
+.skeleton-cell-actions {
+  width: 90px;
+  height: 1.75rem;
 }
 
 .font-medium {

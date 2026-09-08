@@ -19,20 +19,28 @@
   <div class="card templates-card">
     <div class="card-header">
       <div>
-        <h2 class="card-title">
-          <i class="bi bi-bell me-2"></i>All Notification Templates
-        </h2>
-        <p class="card-description mb-0">Configure notification templates for different system events.</p>
+        <h2 class="card-title"><i class="bi bi-bell me-2"></i>All Notification Templates</h2>
+        <p class="card-description mb-0">
+          Configure notification templates for different system events.
+        </p>
       </div>
     </div>
     <div class="card-body">
       <!-- Loading State -->
       <div *ngIf="isLoading" class="loading-container">
-        <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
+        <app-loading-spinner size="lg" message="Loading…"></app-loading-spinner>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error && !isLoading" class="error-state">
+        <i class="bi bi-exclamation-triangle error-icon"></i>
+        <h3 class="error-title">Error Loading Notification Templates</h3>
+        <p class="error-message">{{ error }}</p>
+        <button class="btn btn-primary" (click)="loadData()">Try Again</button>
       </div>
 
       <!-- Templates Table -->
-      <div *ngIf="!isLoading" class="table-responsive">
+      <div *ngIf="!isLoading && !error" class="table-responsive">
         <table class="table">
           <thead>
             <tr>
@@ -47,7 +55,9 @@
             <tr *ngFor="let template of templates">
               <td>
                 <div class="template-name">{{ template.name }}</div>
-                <div class="template-description" *ngIf="template.description">{{ template.description }}</div>
+                <div class="template-description" *ngIf="template.description">
+                  {{ template.description }}
+                </div>
               </td>
               <td>{{ template.subject }}</td>
               <td>
@@ -56,11 +66,21 @@
               <td>{{ dateUtils.formatDate(template.created_at) }}</td>
               <td class="text-end">
                 <div class="action-buttons">
-                  <button class="btn btn-sm btn-outline-secondary btn-icon" (click)="openEditModal(template)" title="Edit">
-                    <i class="bi bi-pencil"></i>
+                  <button
+                    class="btn btn-sm btn-outline-secondary btn-icon"
+                    (click)="openEditModal(template)"
+                    title="Edit"
+                    aria-label="Edit"
+                  >
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
                   </button>
-                  <button class="btn btn-sm btn-outline-danger btn-icon" (click)="deleteTemplate(template)" title="Delete">
-                    <i class="bi bi-trash"></i>
+                  <button
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    (click)="deleteTemplate(template)"
+                    title="Delete"
+                    aria-label="Delete"
+                  >
+                    <i class="bi bi-trash" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>
@@ -77,15 +97,27 @@
   </div>
 
   <!-- Modal Dialog -->
-  <div class="modal" [class.show]="isModalOpen" [style.display]="isModalOpen ? 'flex' : 'none'" tabindex="-1">
+  <div
+    class="modal"
+    [class.show]="isModalOpen"
+    [style.display]="isModalOpen ? 'flex' : 'none'"
+    tabindex="-1"
+  >
     <div class="modal-backdrop" [class.show]="isModalOpen" (click)="closeModal()"></div>
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">
-            {{ currentTemplate ? 'Edit Notification Template' : 'Create New Notification Template' }}
+            {{
+              currentTemplate ? 'Edit Notification Template' : 'Create New Notification Template'
+            }}
           </h5>
-          <button type="button" class="btn-close" (click)="closeModal()" [disabled]="isSaving"></button>
+          <button
+            type="button"
+            class="btn-close"
+            (click)="closeModal()"
+            [disabled]="isSaving"
+          ></button>
         </div>
         <div class="modal-body">
           <form (ngSubmit)="submitForm()">
@@ -119,7 +151,13 @@
             <!-- Notification Type -->
             <div class="mb-3">
               <label class="form-label">Notification Type <span class="text-danger">*</span></label>
-              <select class="form-select" [(ngModel)]="form.notification_type" name="notification_type" [disabled]="isSaving" required>
+              <select
+                class="form-select"
+                [(ngModel)]="form.notification_type"
+                name="notification_type"
+                [disabled]="isSaving"
+                required
+              >
                 <option value="email">Email</option>
                 <option value="system">System</option>
                 <option value="both">Both</option>
@@ -196,17 +234,34 @@
                     {{ '{' }}{{ variable }}{{ '}' }}
                   </span>
                 </div>
-                <p class="variables-help">These placeholders will be replaced with actual values when notifications are sent.</p>
+                <p class="variables-help">
+                  These placeholders will be replaced with actual values when notifications are
+                  sent.
+                </p>
               </div>
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="isSaving">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeModal()"
+            [disabled]="isSaving"
+          >
             Cancel
           </button>
-          <button type="button" class="btn btn-primary" (click)="submitForm()" [disabled]="!isFormValid() || isSaving">
-            <app-loading-spinner *ngIf="isSaving" size="sm" class="me-2 d-inline-block"></app-loading-spinner>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="submitForm()"
+            [disabled]="!isFormValid() || isSaving"
+          >
+            <app-loading-spinner
+              *ngIf="isSaving"
+              size="sm"
+              class="me-2 d-inline-block"
+            ></app-loading-spinner>
             {{ currentTemplate ? 'Update Template' : 'Add Template' }}
           </button>
         </div>

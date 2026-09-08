@@ -1,7 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
-import { UserService, User, Role } from '../../services/user.service';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  FormsModule,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
+import { UserService, User, Role, UserDepartment } from '../../services/user.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DepartmentService } from '../../../../core/services/department.service';
@@ -16,13 +24,14 @@ import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './user-admin.component.html',
-  styleUrls: ['./user-admin.component.scss']
+  styleUrls: ['./user-admin.component.scss'],
 })
 export class UserAdminComponent implements OnInit, OnDestroy {
   users: User[] = [];
   roles: Role[] = [];
   departments: DepartmentListItem[] = [];
   loading = false;
+  error: string | null = null;
   showModal = false;
   isEditMode = false;
   selectedUserId: number | null = null;
@@ -35,7 +44,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
 
   // Filters
   searchTerm = '';
-  filterRole: string | null = null;  // UUID
+  filterRole: string | null = null; // UUID
   filterDepartment = '';
   filterStatus: boolean | null = null;
   currentPage = 1;
@@ -46,7 +55,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
   genders = [
     { value: 'Male', label: 'Male' },
     { value: 'Female', label: 'Female' },
-    { value: 'Other', label: 'Other' }
+    { value: 'Other', label: 'Other' },
   ];
 
   // Password visibility toggles
@@ -70,36 +79,40 @@ export class UserAdminComponent implements OnInit, OnDestroy {
   }
 
   initializeForm(): void {
-    this.userForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      name: ['', Validators.required],
-      password: [''],
-      password_confirm: [''],
-      role: [null],
-      department: [''],
-      is_admin: [false],
-      is_active: [true],
-      staff_id: [''],
-      phone: [''],
-      gender: ['']
-    }, {
-      validators: this.passwordMatchValidator
-    });
+    this.userForm = this.fb.group(
+      {
+        email: ['', [Validators.required, Validators.email]],
+        name: ['', Validators.required],
+        password: [''],
+        password_confirm: [''],
+        role: [null],
+        department: [''],
+        is_admin: [false],
+        is_active: [true],
+        staff_id: [''],
+        phone: [''],
+        gender: [''],
+      },
+      {
+        validators: this.passwordMatchValidator,
+      }
+    );
   }
 
   loadUsers(): void {
     this.loading = true;
+    this.error = null;
     const filters = {
       search: this.searchTerm || undefined,
       role: this.filterRole || undefined,
       department: this.filterDepartment || undefined,
       is_active: this.filterStatus !== null ? this.filterStatus : undefined,
       page: this.currentPage,
-      page_size: this.pageSize
+      page_size: this.pageSize,
     };
 
     this.userService.getAllUsers(filters).subscribe({
-      next: (response) => {
+      next: response => {
         // Handle both paginated response and direct array response
         if (Array.isArray(response)) {
           this.users = response;
@@ -113,18 +126,19 @@ export class UserAdminComponent implements OnInit, OnDestroy {
         }
         this.loading = false;
       },
-      error: (error) => {
+      error: error => {
         console.error('Error loading users:', error);
         this.toastService.error('Failed to load users');
+        this.error = 'Failed to load users. Please try again.';
         this.users = [];
         this.loading = false;
-      }
+      },
     });
   }
 
   loadRoles(): void {
     this.userService.getAllRoles().subscribe({
-      next: (response) => {
+      next: response => {
         // Handle both array response and paginated response
         if (Array.isArray(response)) {
           this.roles = response;
@@ -134,22 +148,22 @@ export class UserAdminComponent implements OnInit, OnDestroy {
           this.roles = [];
         }
       },
-      error: (error) => {
+      error: error => {
         console.error('Error loading roles:', error);
         this.roles = [];
-      }
+      },
     });
   }
 
   loadDepartments(): void {
     this.departmentService.getActiveDepartments().subscribe({
-      next: (departments) => {
+      next: departments => {
         this.departments = departments;
       },
-      error: (error) => {
+      error: error => {
         console.error('Error loading departments:', error);
         this.departments = [];
-      }
+      },
     });
   }
 
@@ -158,9 +172,15 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     this.selectedUserId = null;
     this.userForm.reset({
       is_admin: false,
-      is_active: true
+      is_active: true,
     });
-    this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), this.passwordStrengthValidator]);
+    this.userForm
+      .get('password')
+      ?.setValidators([
+        Validators.required,
+        Validators.minLength(PASSWORD_MIN_LENGTH),
+        this.passwordStrengthValidator,
+      ]);
     this.userForm.get('password_confirm')?.setValidators([Validators.required]);
     this.userForm.get('password')?.updateValueAndValidity();
     this.userForm.get('password_confirm')?.updateValueAndValidity();
@@ -192,24 +212,21 @@ export class UserAdminComponent implements OnInit, OnDestroy {
       is_active: user.is_active ?? true,
       staff_id: user.staff_id || '',
       phone: user.phone || '',
-      gender: user.gender || ''
+      gender: user.gender || '',
     });
 
     this.showModal = true;
     document.body.classList.add('modal-open');
   }
 
-  private extractDepartmentId(department: any): string {
+  private extractDepartmentId(department: UserDepartment | string | null | undefined): string {
     if (!department) {
       return '';
     }
     if (typeof department === 'string') {
       return department;
     }
-    if (typeof department === 'object' && department.id) {
-      return department.id;
-    }
-    return '';
+    return department.id || '';
   }
 
   closeModal(): void {
@@ -264,9 +281,10 @@ export class UserAdminComponent implements OnInit, OnDestroy {
       }
     }
 
-    const request = this.isEditMode && this.selectedUserId
-      ? this.userService.updateUser(this.selectedUserId, formData)
-      : this.userService.createUser(formData);
+    const request =
+      this.isEditMode && this.selectedUserId
+        ? this.userService.updateUser(this.selectedUserId, formData)
+        : this.userService.createUser(formData);
 
     request.subscribe({
       next: () => {
@@ -276,11 +294,11 @@ export class UserAdminComponent implements OnInit, OnDestroy {
         this.loadUsers();
         this.submitting = false;
       },
-      error: (error) => {
+      error: error => {
         console.error('Error saving user:', error);
         this.toastService.error(error.error?.detail || 'Failed to save user');
         this.submitting = false;
-      }
+      },
     });
   }
 
@@ -291,10 +309,11 @@ export class UserAdminComponent implements OnInit, OnDestroy {
       title: 'Confirm Delete User',
       message: `Are you sure you want to delete user "${user.name}"?`,
       warningMessage: `This action cannot be undone. User "${user.email}" will be permanently removed from the system.`,
-      confirmButtonText: 'Delete User'
+      confirmButtonText: 'Delete User',
     });
 
     // Get reference to the modal component
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ModalService.componentRef is intentionally private; no public API exists for this yet.
     const modalRef = (this.modalService as any).componentRef;
     if (modalRef) {
       // Subscribe to confirm event
@@ -308,6 +327,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     if (!this.userToDelete) return;
 
     // Update the modal's isDeleting state
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- ModalService.componentRef is intentionally private; no public API exists for this yet.
     const modalRef = (this.modalService as any).componentRef;
     if (modalRef) {
       modalRef.instance.isDeleting = true;
@@ -320,27 +340,29 @@ export class UserAdminComponent implements OnInit, OnDestroy {
         this.userToDelete = null;
         this.loadUsers();
       },
-      error: (error) => {
+      error: error => {
         console.error('Error deleting user:', error);
         this.toastService.error('Failed to delete user');
         if (modalRef) {
           modalRef.instance.isDeleting = false;
         }
-      }
+      },
     });
   }
 
   toggleUserStatus(user: User): void {
     const action = user.is_active ? 'deactivate' : 'activate';
-    this.confirmationService.confirm({
-      title: `${action.charAt(0).toUpperCase() + action.slice(1)} User`,
-      message: `Are you sure you want to ${action} user "${user.name}"?`,
-      confirmText: action.charAt(0).toUpperCase() + action.slice(1),
-      type: user.is_active ? 'warning' : 'success'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-      this.executeToggleUserStatus(user, action);
-    });
+    this.confirmationService
+      .confirm({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} User`,
+        message: `Are you sure you want to ${action} user "${user.name}"?`,
+        confirmText: action.charAt(0).toUpperCase() + action.slice(1),
+        type: user.is_active ? 'warning' : 'success',
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.executeToggleUserStatus(user, action);
+      });
   }
 
   private executeToggleUserStatus(user: User, action: string): void {
@@ -349,10 +371,10 @@ export class UserAdminComponent implements OnInit, OnDestroy {
         this.toastService.success(`User ${action}d successfully`);
         this.loadUsers();
       },
-      error: (error) => {
+      error: error => {
         console.error('Error updating user status:', error);
         this.toastService.error('Failed to update user status');
-      }
+      },
     });
   }
 
@@ -401,8 +423,8 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     if (typeof dept === 'string') {
       return dept;
     }
-    if (typeof dept === 'object' && dept !== null && 'name' in dept) {
-      return (dept as any).name || 'N/A';
+    if (typeof dept === 'object') {
+      return dept.name || 'N/A';
     }
     return 'N/A';
   }
@@ -425,15 +447,18 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     if (field?.errors) {
       if (field.errors['required']) return 'This field is required';
       if (field.errors['email']) return 'Invalid email format';
-      if (field.errors['minlength']) return `Minimum length is ${field.errors['minlength'].requiredLength}`;
+      if (field.errors['minlength'])
+        return `Minimum length is ${field.errors['minlength'].requiredLength}`;
       if (field.errors['passwordMismatch']) return 'Passwords do not match';
       if (field.errors['passwordStrength']) {
         const errors = field.errors['passwordStrength'];
-        if (errors.isCommonPattern) return 'Password is too common. Please choose a stronger password';
+        if (errors.isCommonPattern)
+          return 'Password is too common. Please choose a stronger password';
         if (!errors.hasUpperCase) return 'Password must contain at least one uppercase letter';
         if (!errors.hasLowerCase) return 'Password must contain at least one lowercase letter';
         if (!errors.hasNumber) return 'Password must contain at least one number';
-        if (!errors.isLongEnough) return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
+        if (!errors.isLongEnough)
+          return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
         return 'Password must contain uppercase, lowercase, and number';
       }
     }
@@ -456,16 +481,11 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     const hasSpecialChar = /[^a-zA-Z0-9]/.test(value);
 
     // Check for common weak patterns
-    const commonPatterns = [
-      /^password/i,
-      /^123456/,
-      /^qwerty/i,
-      /^abc123/i,
-      /^letmein/i
-    ];
+    const commonPatterns = [/^password/i, /^123456/, /^qwerty/i, /^abc123/i, /^letmein/i];
     const isCommonPattern = commonPatterns.some(pattern => pattern.test(value));
 
-    const passwordValid = hasUpperCase && hasLowerCase && hasNumber && isLongEnough && !isCommonPattern;
+    const passwordValid =
+      hasUpperCase && hasLowerCase && hasNumber && isLongEnough && !isCommonPattern;
 
     if (!passwordValid) {
       return {
@@ -475,8 +495,8 @@ export class UserAdminComponent implements OnInit, OnDestroy {
           hasNumber,
           isLongEnough,
           hasSpecialChar,
-          isCommonPattern
-        }
+          isCommonPattern,
+        },
       };
     }
 

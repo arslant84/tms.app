@@ -125,6 +125,39 @@ def is_module_admin(user, module):
     return can_view_all(user, module) or can_manage(user, module)
 
 
+def can_process_accommodation(user):
+    """
+    Check if user is an accommodation admin for *read* purposes - i.e. any
+    of view_all_accommodation, approve_accommodation, or
+    process_accommodation. Extracted so AccommodationRequestViewSet's
+    retrieve/export_pdf/assign/update/cancel bypass and its admin_view list
+    filter all use the exact same check, rather than three independently
+    hand-copied inline filters that could silently drift apart (see docs/
+    RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 7 - a user with only
+    approve_accommodation could open any request directly by ID but not see
+    it in the admin list, since the list filter alone only checked
+    view_all_accommodation).
+
+    Args:
+        user: The user object to check
+
+    Returns:
+        True if user can view/process accommodation requests for admin
+        purposes, False otherwise.
+    """
+    if user.is_superuser:
+        return True
+    if not user.role:
+        return False
+    return user.role.permissions.filter(
+        name__in=[
+            "view_all_accommodation",
+            "approve_accommodation",
+            "process_accommodation",
+        ]
+    ).exists()
+
+
 def can_approve(user, module=None):
     """
     Check if user has approval permissions.

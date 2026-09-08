@@ -14,7 +14,7 @@
 
 <div class="visa-form-container">
   <div *ngIf="isLoading" class="text-center py-5">
-    <app-loading-spinner size="lg" message="Loading visa application..."></app-loading-spinner>
+    <app-loading-spinner size="lg" message="Loading visa application…"></app-loading-spinner>
   </div>
 
   <form [formGroup]="visaForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
@@ -81,7 +81,7 @@
               class="form-control"
               formControlName="family_information"
               rows="2"
-              placeholder="Spouse name, children, dependents..."
+              placeholder="Spouse name, children, dependents…"
             ></textarea>
           </div>
           <div class="col-12 mb-3">
@@ -90,7 +90,7 @@
               class="form-control"
               formControlName="education_details"
               rows="2"
-              placeholder="Highest degree, institution, year..."
+              placeholder="Highest degree, institution, year…"
             ></textarea>
           </div>
         </div>
@@ -249,7 +249,7 @@
             formControlName="travel_purpose"
             rows="3"
             required
-            placeholder="Describe the purpose of your visit..."
+            placeholder="Describe the purpose of your visit…"
           ></textarea>
           <div class="invalid-feedback" *ngIf="isFieldInvalid('travel_purpose')">
             Travel Purpose is required
@@ -261,7 +261,7 @@
             class="form-control"
             formControlName="itinerary_details"
             rows="3"
-            placeholder="Provide detailed travel itinerary including cities, dates, and activities..."
+            placeholder="Provide detailed travel itinerary including cities, dates, and activities…"
           ></textarea>
         </div>
       </div>
@@ -276,7 +276,7 @@
             class="form-control"
             formControlName="additional_comments"
             rows="3"
-            placeholder="Any additional information or special requests..."
+            placeholder="Any additional information or special requests…"
           ></textarea>
         </div>
         <div class="col-12 mb-3">
@@ -285,7 +285,7 @@
             class="form-control"
             formControlName="supporting_documents_notes"
             rows="2"
-            placeholder="List any documents attached or to be attached..."
+            placeholder="List any documents attached or to be attached…"
           ></textarea>
         </div>
       </div>
@@ -322,11 +322,11 @@
         [disabled]="isSubmitting"
       >
         <i class="bi bi-save"></i>
-        {{ isSubmitting ? 'Saving...' : 'Save Draft' }}
+        {{ isSubmitting ? 'Saving…' : 'Save Draft' }}
       </button>
       <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">
         <i class="bi bi-send"></i>
-        {{ isSubmitting ? 'Submitting...' : 'Submit Application' }}
+        {{ isSubmitting ? 'Submitting…' : 'Submit Application' }}
       </button>
     </div>
   </form>

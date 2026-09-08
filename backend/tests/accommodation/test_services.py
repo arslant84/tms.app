@@ -9,36 +9,51 @@ view stack.
 
 from unittest.mock import MagicMock, patch
 
+import pytest
 from accommodation.services import (
     generate_accommodation_request_number,
     generate_accommodation_request_number_with_fallback,
     start_accommodation_workflow,
 )
 
+# ensure_unique_request_number (called by both generate_* functions below)
+# queries AccommodationRequest for collisions, so every test in this module
+# needs DB access even though the assertions themselves don't touch the ORM.
+pytestmark = pytest.mark.django_db
+
 
 class TestGenerateAccommodationRequestNumber:
     def test_generates_with_location_context(self):
-        result = generate_accommodation_request_number({"location": "Ashgabat"})
+        result = generate_accommodation_request_number(
+            {"location": "Ashgabat"}, "Jane Doe"
+        )
         assert result is not None
         assert result.startswith("ACCOM-")
 
     def test_defaults_to_accom_context_when_no_location(self):
-        result = generate_accommodation_request_number({})
+        result = generate_accommodation_request_number({}, "Jane Doe")
         assert result is not None
         assert result.startswith("ACCOM-")
 
     def test_returns_none_for_non_dict_additional_data(self):
         # isinstance(additional_data, dict) is False -> location stays ""
         # -> falls into the "ACCOM" default context, still succeeds
-        result = generate_accommodation_request_number(None)
+        result = generate_accommodation_request_number(None, "Jane Doe")
         assert result is not None
 
     def test_returns_none_on_generation_failure(self):
+        # build_accommodation_request_id is imported locally inside the
+        # function body (re-resolved from utils.request_id_generator on
+        # every call), so it must be patched at its source module - patching
+        # accommodation.services.build_accommodation_request_id would only
+        # ever affect a module-level name that doesn't exist here.
         with patch(
-            "accommodation.services.generate_request_id",
+            "utils.request_id_generator.build_accommodation_request_id",
             side_effect=Exception("boom"),
         ):
-            result = generate_accommodation_request_number({"location": "Ashgabat"})
+            result = generate_accommodation_request_number(
+                {"location": "Ashgabat"}, "Jane Doe"
+            )
         assert result is None
 
 
@@ -56,7 +71,7 @@ class TestGenerateAccommodationRequestNumberWithFallback:
     def test_falls_back_to_timestamp_format_on_failure(self):
         request = MagicMock(id=42, additional_data={"location": "Ashgabat"})
         with patch(
-            "accommodation.services.generate_request_id",
+            "utils.request_id_generator.build_accommodation_request_id",
             side_effect=Exception("boom"),
         ):
             result = generate_accommodation_request_number_with_fallback(request)

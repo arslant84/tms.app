@@ -125,7 +125,10 @@
   background: vars.$bg-primary;
   border-radius: vars.$radius-lg;
   border: 1px solid vars.$border-light;
-  transition: all vars.$transition-slow;
+  transition:
+    background-color vars.$transition-slow,
+    transform vars.$transition-slow,
+    box-shadow vars.$transition-slow;
 
   &:hover {
     background-color: vars.$gray-50;
@@ -220,6 +223,72 @@
   font-size: vars.$font-size-2xl;
   font-weight: vars.$font-weight-bold;
   margin-bottom: vars.$spacing-1;
+  font-variant-numeric: tabular-nums;
+}
+
+// Skeleton loading placeholders - shape-matched to the real summary card /
+// activity item content above, so the loading state doesn't jump/reflow.
+.skeleton-bar {
+  display: block;
+
+  @include vars.skeleton-block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-bar {
+    animation: none;
+    background: vars.$gray-100;
+  }
+}
+
+.skeleton-title {
+  width: 60%;
+  height: 1rem;
+}
+
+.skeleton-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: vars.$radius-full;
+}
+
+.skeleton-value {
+  width: 40%;
+  height: vars.$font-size-2xl;
+  margin-bottom: vars.$spacing-2;
+}
+
+.skeleton-description {
+  width: 80%;
+  height: 0.75rem;
+}
+
+.skeleton-activity-item {
+  pointer-events: none;
+}
+
+.skeleton-activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: vars.$radius-full;
+  flex-shrink: 0;
+}
+
+.skeleton-activity-title {
+  width: 50%;
+  height: 1rem;
+  margin-bottom: vars.$spacing-2;
+}
+
+.skeleton-activity-meta {
+  width: 35%;
+  height: 0.75rem;
+}
+
+.skeleton-activity-badge {
+  width: 70px;
+  height: 1.5rem;
+  border-radius: vars.$radius-full;
 }
 
 .summary-description {
@@ -278,6 +347,10 @@
 
   i.spin {
     animation: spin 1s linear infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation-duration: 3s;
+    }
   }
 }
 
@@ -320,23 +393,6 @@
   padding: vars.$spacing-2 vars.$spacing-6 vars.$spacing-6;
   min-height: 300px;
   overflow: hidden;
-}
-
-// Loading State
-.loading-state {
-  padding: vars.$spacing-10 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  i {
-    font-size: vars.$font-size-2xl;
-    color: vars.$primary-color;
-  }
-}
-
-.spin-animation {
-  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -391,7 +447,7 @@
   background: vars.$bg-primary;
   border: 1px solid vars.$border-light;
   border-radius: vars.$radius-lg;
-  transition: all vars.$transition-base;
+  transition: background-color vars.$transition-base;
 
   &:hover {
     background-color: vars.$gray-50;

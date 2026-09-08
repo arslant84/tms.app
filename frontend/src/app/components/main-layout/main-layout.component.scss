@@ -1,7 +1,9 @@
 // Main Layout Component - Using Unified Design System
 @use '../../../styles/variables' as vars;
 
-// Host element fills parent container completely (no gaps)
+// Host element fills parent container completely (no gaps). Single owner of
+// this component's box model - custom elements have no default
+// margin/padding to fight, so no !important is needed here.
 :host {
   display: flex;
   flex: 1;
@@ -9,20 +11,22 @@
   height: 100vh;
   min-height: 100vh;
   overflow: hidden;
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0;
+  padding: 0;
   position: absolute;
   inset: 0;
 }
 
-// Layout Container - horizontal flex for sidebar + content
+// Layout Container - horizontal flex for sidebar + content. A flex:1 child
+// filling the :host above; margin/padding kept at 0 for a plain <div>'s
+// default (already 0, stated explicitly for clarity, not to fight anything).
 .layout-container {
   display: flex;
   flex: 1;
   width: 100%;
   height: 100vh;
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
   background-color: transparent;
   position: absolute;

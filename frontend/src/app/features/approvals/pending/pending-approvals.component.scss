@@ -346,6 +346,10 @@
     .detail-value {
       color: vars.$text-primary;
     }
+
+    .currency-value {
+      font-variant-numeric: tabular-nums;
+    }
   }
 
   .approval-actions {
@@ -376,7 +380,8 @@
     flex-direction: column;
 
     &.with-details {
-      .requests-list, .request-details {
+      .requests-list,
+      .request-details {
         flex: auto;
       }
     }

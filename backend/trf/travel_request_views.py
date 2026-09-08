@@ -1,32 +1,38 @@
+"""
+TravelRequestViewSet - the TRF module's dominant class.
+
+Split out of trf/views.py (see docs/CODEBASE_REFACTOR_ROADMAP.md item 9)
+- a pure file move for get_queryset/CRUD/small actions, with the
+request-number/workflow-start duplication and approve/reject dispatch
+collapsed into trf/services.py, and book_flight's helper methods moved to
+trf/flight_booking.py (already well-factored internally, so this is a
+mechanical move). Nested sub-resource ViewSets moved to their own sibling
+module (trf_nested_views.py) in the same split.
+"""
+
 import logging
 from datetime import datetime
 
+from accounts.models import AdminActionLog
+from accounts.utils import can_manage, can_view_all, has_permission
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from utils.viewset_mixins import StandardResultsPagination
-
-logger = logging.getLogger(__name__)
-from accounts.models import AdminActionLog
-from accounts.utils import can_approve, can_manage, can_view_all, has_permission
 from utils.api_response import (
     created_response,
     error_response,
     forbidden_response,
-    get_pagination_params,
     not_found_response,
-    paginated_response,
-    server_error_response,
     success_response,
-    unauthorized_response,
     validation_error_response,
 )
 from utils.constants import BOOKABLE_STATUSES
-from workflows.router import WorkflowRouter
+from utils.viewset_mixins import StandardResultsPagination
 
+from . import flight_booking
 from .models import (
     TravelRequest,
     TrfAdvanceAmountRequestedItem,
@@ -43,14 +49,10 @@ from .serializers import (
     TravelRequestDetailSerializer,
     TravelRequestSerializer,
     TravelRequestUpdateSerializer,
-    TrfAdvanceAmountRequestedItemSerializer,
-    TrfAdvanceBankDetailSerializer,
-    TrfApprovalStepSerializer,
-    TrfDailyMealSelectionSerializer,
-    TrfItinerarySegmentSerializer,
-    TrfMealProvisionSerializer,
-    TrfPassportDetailSerializer,
 )
+from .services import process_trf_approval_action, start_trf_workflow
+
+logger = logging.getLogger(__name__)
 
 
 class TravelRequestViewSet(viewsets.ModelViewSet):
@@ -205,37 +207,8 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
         # Start workflow if status is submitted (not Draft)
         if status_value not in ["Draft"]:
-            # Extract selected approvers from request data (optional)
-            selected_approvers = self.request.data.get("selected_approvers", None)
-            if selected_approvers:
-                selected_approvers = {int(k): v for k, v in selected_approvers.items()}
-
-            # Extract skipped steps from request data (optional)
-            skipped_steps = self.request.data.get("skipped_steps", None)
-            if skipped_steps:
-                skipped_steps = {int(k): v for k, v in skipped_steps.items()}
-
             try:
-                workflow_instance = WorkflowRouter.start_workflow_for_request(
-                    entity=trf,
-                    entity_type=trf.workflow_entity_type,
-                    initiated_by=user,
-                    selected_approvers=selected_approvers,
-                    skipped_steps=skipped_steps,
-                    fallback_entity_type="travelrequest",
-                )
-
-                if workflow_instance:
-                    # Reload the TRF to get the updated status from workflow
-                    trf.refresh_from_db()
-                    logger.info(
-                        f" Workflow started for TRF #{trf.id}: Workflow Instance #{workflow_instance.id}"
-                    )
-                    logger.info(f" Status updated to: {trf.status}")
-                else:
-                    logger.warning(
-                        " No active workflow configured for travelrequest - using legacy approval system"
-                    )
+                start_trf_workflow(trf, self.request.data, user)
             except Exception as e:
                 logger.error(f" Error starting workflow for TRF #{trf.id}: {str(e)}")
                 # Don't fail the request creation if workflow fails
@@ -303,15 +276,19 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     " Booking action: User has booking permissions - allowing access to bookable TRFs"
                 )
                 return queryset.filter(status__in=bookable_statuses)
-            # Allow users with ticketing-related roles (Travel Desk, Ticketing, etc.)
-            if user.role and any(
-                keyword in user.role.name.lower()
-                for keyword in ["ticket", "travel desk", "booking", "admin"]
-            ):
-                logger.info(
-                    f" Booking action: User role '{user.role.name}' indicates booking capability - allowing access"
-                )
-                return queryset.filter(status__in=bookable_statuses)
+            # Removed: a substring match on the role's display *name*
+            # (any role containing "ticket"/"travel desk"/"booking"/"admin")
+            # used to grant booking access here too - not a real permission
+            # check, so any role later named to include "admin" (e.g.
+            # "Transport Admin", "Accommodation Admin", "Meal Admin" - none
+            # of which are ticketing/booking-related) got book_flight access
+            # by accident. Confirmed via a role-data audit (2026-09-07) that
+            # the 3 roles relying on this had zero flight bookings ever
+            # created by their users - dead capability, not a relied-upon
+            # one. See docs/RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 4.
+            # Superuser/view_all_trf admins still reach book_flight via the
+            # general admin bypass below (Fix 2); anyone who legitimately
+            # needs booking access gets the real manage_bookings permission.
 
         # Meal Admin queue and status updates: not gated by ownership, only by
         # the meal-admin permission (mirrors the "retrieve" special-case below)
@@ -383,12 +360,18 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 "-created_at"
             )
 
-        # For retrieve (viewing details), check view_all permission first, then pending approvals
-        if self.action == "retrieve":
+        # For retrieve (viewing details) and PDF export/download, check
+        # view_all permission first, then pending approvals. export_pdf/
+        # download_pdf previously bypassed get_queryset() entirely (fetched
+        # via TravelRequest.objects.get(pk=pk) directly) - any authenticated
+        # user could export/download any other user's TRF PDF. They now go
+        # through self.get_object() like retrieve, so they need the same
+        # bypass here.
+        if self.action in ("retrieve", "export_pdf", "download_pdf"):
             # Users with view_all_trf permission can access any TRF detail (e.g. from Recent Activity)
             if user.is_superuser or can_view_all(user, "trf"):
                 logger.info(
-                    " Retrieve action: User has view_all_trf - allowing full access"
+                    f" {self.action} action: User has view_all_trf - allowing full access"
                 )
                 return queryset
             # Get IDs of TRFs pending this user's approval
@@ -401,9 +384,42 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 Q(created_by=user) | Q(id__in=pending_approval_ids)
             )
             logger.info(
-                f" Retrieve action: Filtering to own TRFs and {len(pending_approval_ids)} pending approval"
+                f" {self.action} action: Filtering to own TRFs and {len(pending_approval_ids)} pending approval"
             )
             return queryset
+
+        # Write/delete/cancel actions and book_flight: give admins
+        # (is_superuser or view_all_trf) the same full-access bypass as
+        # retrieve, so an admin acting on a TRF they didn't create doesn't
+        # get a false 404 (the same bug shape already fixed on
+        # transport/visa - see docs/RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md
+        # Fix 2). Deliberately NOT extended to the pending-approval fallback
+        # that retrieve/export_pdf/download_pdf get above: none of these
+        # actions have their own internal permission check beyond
+        # get_object() (confirmed by reading each one), so a user with only
+        # a pending *approval* step on this TRF should not gain the ability
+        # to edit/delete/cancel/book-flight-for it - reviewing a request
+        # isn't the same as being allowed to modify it. Non-admins continue
+        # to fall through to the existing owner-only filtering below
+        # unchanged (admin_view only ever applies to the list endpoint, so
+        # these detail actions land on the final `else` either way).
+        if self.action in (
+            "update",
+            "partial_update",
+            "destroy",
+            "cancel",
+            "delete_itinerary",
+            "delete_meals",
+            "delete_passport",
+            "delete_bank",
+            "delete_advance_amounts",
+            "book_flight",
+        ):
+            if user.is_superuser or can_view_all(user, "trf"):
+                logger.info(
+                    f" {self.action} action: User has view_all_trf - allowing admin access"
+                )
+                return queryset
 
         # Check if this is an admin view (Admin module for TRF/Ticketing)
         admin_view = (
@@ -536,8 +552,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
                 traceback.print_exc()
                 # Fallback to simple format
-                from datetime import datetime
-
                 trf.request_number = (
                     f"TSR-{datetime.now().strftime('%Y%m%d-%H%M')}-TRF-{trf.id}"
                 )
@@ -586,38 +600,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         trf.submitted_at = timezone.now()
         trf.save()
 
-        # Extract selected approvers from request data (optional)
-        selected_approvers = request.data.get("selected_approvers", None)
-        if selected_approvers:
-            # Convert string keys to integers for consistency
-            selected_approvers = {int(k): v for k, v in selected_approvers.items()}
-
-        # Extract skipped steps from request data (optional)
-        # Skipped steps are for approvers that are not available or not designated
-        skipped_steps = request.data.get("skipped_steps", None)
-        if skipped_steps:
-            # Convert string keys to integers for consistency
-            skipped_steps = {int(k): v for k, v in skipped_steps.items()}
-
         # Start workflow using WorkflowRouter
         try:
-            workflow_instance = WorkflowRouter.start_workflow_for_request(
-                entity=trf,
-                entity_type=trf.workflow_entity_type,
-                initiated_by=request.user,
-                selected_approvers=selected_approvers,
-                skipped_steps=skipped_steps,
-                fallback_entity_type="travelrequest",
-            )
+            workflow_instance = start_trf_workflow(trf, request.data, request.user)
 
-            if workflow_instance:
-                # Reload the TRF to get the updated status from workflow
-                trf.refresh_from_db()
-                logger.info(
-                    f" Workflow started for TRF #{trf.id}: Workflow Instance #{workflow_instance.id}"
-                )
-                logger.info(f" Status updated to: {trf.status}")
-            else:
+            if not workflow_instance:
                 # Fallback to legacy approval system if no workflow configured
                 logger.warning(
                     " No active workflow configured - creating legacy approval step"
@@ -654,10 +641,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
         """Approve a TRF at current approval step using WorkflowEngine"""
-        from django.contrib.contenttypes.models import ContentType
-        from workflows.engine import WorkflowEngine
-        from workflows.models import WorkflowInstance
-
         trf = self.get_object()
         serializer = ApprovalActionSerializer(data=request.data)
 
@@ -669,166 +652,16 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         step_role = serializer.validated_data["step_role"]
         comments = serializer.validated_data.get("comments", "")
 
-        try:
-            # Get the workflow instance for this TRF
-            content_type = ContentType.objects.get_for_model(trf)
-            workflow_instance = WorkflowInstance.objects.filter(
-                content_type=content_type, object_id=trf.id, status="in_progress"
-            ).first()
+        logger.debug(f" Approving TRF #{trf.id}")
+        logger.debug(
+            f" User: {request.user.email}, is_staff={request.user.is_staff}, is_superuser={request.user.is_superuser}"
+        )
 
-            logger.debug(f" Approving TRF #{trf.id}")
-            logger.debug(
-                f" User: {request.user.email}, is_staff={request.user.is_staff}, is_superuser={request.user.is_superuser}"
-            )
-            logger.debug(f" Workflow instance found: {workflow_instance is not None}")
-
-            if workflow_instance:
-                # Find the current pending step (by order)
-                # The WorkflowEngine will validate if the user is authorized
-                current_step = (
-                    workflow_instance.step_executions.filter(status="pending")
-                    .order_by("workflow_step__step_order")
-                    .first()
-                )
-
-                logger.debug(f" Pending step found: {current_step is not None}")
-                if current_step:
-                    logger.debug(
-                        f" Step: {current_step.workflow_step.step_name}, assigned_to: {current_step.assigned_to}"
-                    )
-
-                if current_step:
-                    # Use workflow engine to process approval
-                    WorkflowEngine.process_action(
-                        step_execution_id=current_step.id,
-                        action="approve",
-                        actioned_by=request.user,
-                        comments=comments,
-                    )
-
-                    # Reload TRF to get updated status
-                    trf.refresh_from_db()
-
-                    # Also update legacy approval step for backward compatibility
-                    approval_step, created = TrfApprovalStep.objects.get_or_create(
-                        trf=trf,
-                        step_role=step_role,
-                        defaults={
-                            "step_name": f"{step_role} Approval",
-                            "status": "Pending",
-                        },
-                    )
-                    approval_step.status = "Approved"
-                    approval_step.comments = comments
-                    approval_step.step_date = timezone.now()
-                    approval_step.save()
-
-                    trf_serializer = TravelRequestDetailSerializer(trf)
-                    return success_response(
-                        data=trf_serializer.data,
-                        message="Travel request approved successfully",
-                        status_code=status.HTTP_200_OK,
-                    )
-                else:
-                    return error_response(
-                        message="No pending approval step found for this role",
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                    )
-            else:
-                # Fallback to legacy manual approval if no workflow found
-                if not (request.user.is_superuser or can_approve(request.user, "trf")):
-                    return forbidden_response(
-                        message="You do not have permission to approve travel requests"
-                    )
-
-                logger.warning(
-                    f" No workflow instance found for TRF #{trf.id}, using legacy approval"
-                )
-
-                # Find or create approval step for this role
-                approval_step, created = TrfApprovalStep.objects.get_or_create(
-                    trf=trf,
-                    step_role=step_role,
-                    defaults={
-                        "step_name": f"{step_role} Approval",
-                        "status": "Pending",
-                    },
-                )
-
-                # Update approval step
-                approval_step.status = "Approved"
-                approval_step.comments = comments
-                approval_step.step_date = datetime.now()
-                approval_step.save()
-
-                # Update TRF status based on approval workflow. Only real
-                # roles that exist in this system's active workflow
-                # templates (Department Focal, Line Manager, HOD) - "Travel
-                # Desk" and "Finance" were never real roles here and never
-                # matched any active TSR workflow step.
-                status_progression = {
-                    "Department Focal": "Pending HOD",
-                    "Line Manager": "Pending HOD",
-                    "HOD": "Approved",
-                }
-
-                if step_role in status_progression:
-                    trf.status = status_progression[step_role]
-                    trf.save()
-
-                    # Create next approval step if not final
-                    if trf.status != "Approved":
-                        next_role = trf.status.replace("Pending ", "")
-                        TrfApprovalStep.objects.get_or_create(
-                            trf=trf,
-                            step_role=next_role,
-                            defaults={
-                                "step_name": f"{next_role} Review",
-                                "status": "Pending",
-                            },
-                        )
-
-                AdminActionLog.log_action(
-                    user=request.user,
-                    action_type="workflow_step_approved",
-                    description=(
-                        f"Approved TRF #{trf.id} at step '{step_role}' "
-                        "(legacy fallback - no active WorkflowTemplate)"
-                    ),
-                    entity_type="travelrequest",
-                    entity_id=trf.id,
-                    request=request,
-                )
-
-                trf_serializer = TravelRequestDetailSerializer(trf)
-                return success_response(
-                    data=trf_serializer.data,
-                    message="Travel request approved successfully",
-                    status_code=status.HTTP_200_OK,
-                )
-
-        except ValueError as e:
-            # ValueError is raised by WorkflowEngine for authorization failures
-            logger.error(f" ValueError in approve workflow: {str(e)}")
-            return error_response(
-                message=str(e), status_code=status.HTTP_400_BAD_REQUEST
-            )
-        except Exception as e:
-            logger.error(f" Error in approve workflow: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
-            return server_error_response(
-                message="Failed to process approval", error_details=str(e)
-            )
+        return process_trf_approval_action(trf, request, "approve", step_role, comments)
 
     @action(detail=True, methods=["post"])
     def reject(self, request, pk=None):
         """Reject a TRF using WorkflowEngine"""
-        from django.contrib.contenttypes.models import ContentType
-        from workflows.engine import WorkflowEngine
-        from workflows.models import WorkflowInstance
-
         trf = self.get_object()
         serializer = ApprovalActionSerializer(data=request.data)
 
@@ -840,116 +673,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         step_role = serializer.validated_data["step_role"]
         comments = serializer.validated_data.get("comments", "")
 
-        try:
-            # Get the workflow instance for this TRF
-            content_type = ContentType.objects.get_for_model(trf)
-            workflow_instance = WorkflowInstance.objects.filter(
-                content_type=content_type, object_id=trf.id, status="in_progress"
-            ).first()
-
-            if workflow_instance:
-                # Find the current step execution for the given role
-                current_step = (
-                    workflow_instance.step_executions.filter(status="pending")
-                    .order_by("workflow_step__step_order")
-                    .first()
-                )
-
-                if current_step:
-                    # Use workflow engine to process rejection
-                    WorkflowEngine.process_action(
-                        step_execution_id=current_step.id,
-                        action="reject",
-                        actioned_by=request.user,
-                        comments=comments,
-                    )
-
-                    # Reload TRF to get updated status
-                    trf.refresh_from_db()
-
-                    # Also update legacy approval step for backward compatibility
-                    approval_step, created = TrfApprovalStep.objects.get_or_create(
-                        trf=trf,
-                        step_role=step_role,
-                        defaults={
-                            "step_name": f"{step_role} Approval",
-                            "status": "Pending",
-                        },
-                    )
-                    approval_step.status = "Rejected"
-                    approval_step.comments = comments
-                    approval_step.step_date = datetime.now()
-                    approval_step.save()
-
-                    trf_serializer = TravelRequestDetailSerializer(trf)
-                    return success_response(
-                        data=trf_serializer.data,
-                        message="Travel request rejected successfully",
-                        status_code=status.HTTP_200_OK,
-                    )
-                else:
-                    return error_response(
-                        message="No pending approval step found",
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                    )
-            else:
-                # Fallback to legacy manual rejection if no workflow found
-                if not (request.user.is_superuser or can_approve(request.user, "trf")):
-                    return forbidden_response(
-                        message="You do not have permission to reject travel requests"
-                    )
-
-                logger.warning(
-                    f" No workflow instance found for TRF #{trf.id}, using legacy rejection"
-                )
-
-                # Find or create approval step for this role
-                approval_step, created = TrfApprovalStep.objects.get_or_create(
-                    trf=trf,
-                    step_role=step_role,
-                    defaults={
-                        "step_name": f"{step_role} Approval",
-                        "status": "Pending",
-                    },
-                )
-
-                # Update approval step
-                approval_step.status = "Rejected"
-                approval_step.comments = comments
-                approval_step.step_date = datetime.now()
-                approval_step.save()
-
-                # Update TRF status
-                trf.status = "Rejected"
-                trf.save()
-
-                AdminActionLog.log_action(
-                    user=request.user,
-                    action_type="workflow_step_rejected",
-                    description=(
-                        f"Rejected TRF #{trf.id} at step '{step_role}' "
-                        "(legacy fallback - no active WorkflowTemplate)"
-                    ),
-                    entity_type="travelrequest",
-                    entity_id=trf.id,
-                    request=request,
-                )
-
-                trf_serializer = TravelRequestDetailSerializer(trf)
-                return success_response(
-                    data=trf_serializer.data,
-                    message="Travel request rejected successfully",
-                    status_code=status.HTTP_200_OK,
-                )
-
-        except Exception as e:
-            logger.error(f" Error in reject workflow: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
-            return server_error_response(
-                message="Failed to process rejection", error_details=str(e)
-            )
+        return process_trf_approval_action(trf, request, "reject", step_role, comments)
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
@@ -1148,103 +872,6 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             status_code=status.HTTP_200_OK,
         )
 
-    @staticmethod
-    def _parse_flight_datetime(value):
-        """Parse an ISO datetime string into an aware datetime, or None."""
-        from datetime import datetime
-
-        if not value:
-            return None
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-        if parsed.tzinfo is None:
-            parsed = timezone.make_aware(parsed)
-        return parsed
-
-    @classmethod
-    def _parse_flight_segments(cls, raw_segments):
-        """
-        Parse the `segments` JSON payload for book_flight into
-        (outbound, return) lists, each a list of dicts with a parsed
-        `departure_time`/`arrival_time`. Raises ValueError with a
-        user-facing message on any structural or field problem.
-        """
-        import json
-
-        try:
-            segments = json.loads(raw_segments) if raw_segments else []
-        except (TypeError, ValueError):
-            raise ValueError("segments must be valid JSON")
-        if not isinstance(segments, list) or not segments:
-            raise ValueError("At least one outbound flight segment is required")
-
-        required_fields = [
-            "direction",
-            "flightNumber",
-            "departureAirport",
-            "arrivalAirport",
-            "departureDateTime",
-            "arrivalDateTime",
-        ]
-        outbound, return_legs = [], []
-        for index, seg in enumerate(segments, start=1):
-            missing = [f for f in required_fields if not seg.get(f)]
-            if missing:
-                raise ValueError(f"Segment {index} is missing: {', '.join(missing)}")
-            if seg["direction"] not in ("OUTBOUND", "RETURN"):
-                raise ValueError(f"Segment {index} has an invalid direction")
-            parsed = {
-                "flight_number": seg["flightNumber"],
-                "departure_airport": seg["departureAirport"],
-                "arrival_airport": seg["arrivalAirport"],
-                "departure_time": cls._parse_flight_datetime(seg["departureDateTime"]),
-                "arrival_time": cls._parse_flight_datetime(seg["arrivalDateTime"]),
-            }
-            (outbound if seg["direction"] == "OUTBOUND" else return_legs).append(parsed)
-
-        if not outbound:
-            raise ValueError("At least one outbound flight segment is required")
-        return outbound, return_legs
-
-    @staticmethod
-    def _save_flight_segments(flight_booking, outbound, return_legs):
-        """Replace a booking's segment rows with the freshly parsed legs."""
-        from bookings.models import FlightBookingSegment, SegmentDirection
-
-        flight_booking.segments.all().delete()
-        rows = [
-            FlightBookingSegment(
-                booking=flight_booking,
-                direction=SegmentDirection.OUTBOUND,
-                sequence=sequence,
-                **leg,
-            )
-            for sequence, leg in enumerate(outbound, start=1)
-        ] + [
-            FlightBookingSegment(
-                booking=flight_booking,
-                direction=SegmentDirection.RETURN,
-                sequence=sequence,
-                **leg,
-            )
-            for sequence, leg in enumerate(return_legs, start=1)
-        ]
-        FlightBookingSegment.objects.bulk_create(rows)
-
-    def _validate_book_flight_fields(
-        self, trf, pnr, airline, e_ticket, existing_booking
-    ):
-        """Return a list of missing required field names (empty if valid)."""
-        required = {"pnr": pnr}
-        if trf.travel_type == "Overseas":
-            required["airline"] = airline
-        missing = [name for name, value in required.items() if not value]
-        # E-ticket is required the first time a booking is created; an
-        # existing booking already has one on file, so re-uploading isn't
-        # forced on every edit.
-        if not e_ticket and not (existing_booking and existing_booking.e_ticket):
-            missing.append("eTicket")
-        return missing
-
     @action(detail=True, methods=["post"], url_path="admin/book-flight")
     def book_flight(self, request, pk=None):
         """
@@ -1283,7 +910,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
         existing_booking = FlightBooking.objects.filter(trf=trf).first()
 
-        missing = self._validate_book_flight_fields(
+        missing = flight_booking.validate_book_flight_fields(
             trf, pnr, airline, e_ticket, existing_booking
         )
         if missing:
@@ -1296,7 +923,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             )
 
         try:
-            outbound, return_legs = self._parse_flight_segments(
+            outbound, return_legs = flight_booking.parse_flight_segments(
                 request.data.get("segments")
             )
         except ValueError as e:
@@ -1336,12 +963,12 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             existing_booking.confirmation_date = timezone.now()
             existing_booking.notes = flight_notes
             existing_booking.save()
-            flight_booking = existing_booking
+            flight_booking_obj = existing_booking
             logger.info(
-                f" Updated existing flight booking {flight_booking.id} for TRF {trf.id}"
+                f" Updated existing flight booking {flight_booking_obj.id} for TRF {trf.id}"
             )
         else:
-            flight_booking = FlightBooking.objects.create(
+            flight_booking_obj = FlightBooking.objects.create(
                 trf=trf,
                 user=trf.created_by if trf.created_by else request.user,
                 e_ticket=e_ticket,
@@ -1354,10 +981,10 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 **summary,
             )
             logger.info(
-                f" Created new flight booking {flight_booking.id} for TRF {trf.id}"
+                f" Created new flight booking {flight_booking_obj.id} for TRF {trf.id}"
             )
 
-        self._save_flight_segments(flight_booking, outbound, return_legs)
+        flight_booking.save_flight_segments(flight_booking_obj, outbound, return_legs)
 
         trf.status = "Flight Booked"
         trf.save()
@@ -1367,9 +994,9 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
             data={
                 "trf": serializer.data,
                 "flight_booking": {
-                    "id": flight_booking.id,
-                    "booking_reference": flight_booking.booking_reference,
-                    "status": flight_booking.status,
+                    "id": flight_booking_obj.id,
+                    "booking_reference": flight_booking_obj.booking_reference,
+                    "status": flight_booking_obj.status,
                 },
             },
             message="Flight booking created successfully",
@@ -1384,10 +1011,11 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         SUCCESS, then call GET /api/trf/travel-requests/{pk}/download-pdf/
         with ?task_id={task_id} to receive the PDF blob.
         """
-        try:
-            trf = TravelRequest.objects.get(pk=pk)
-        except TravelRequest.DoesNotExist:
-            return not_found_response(message="Travel Request not found")
+        # self.get_object() goes through get_queryset()'s ownership/
+        # view_all_trf/pending-approval filtering (see the "retrieve" branch
+        # above, which this action now shares) - previously this fetched the
+        # TRF directly, bypassing all authorization.
+        trf = self.get_object()
 
         from trf.tasks import export_trf_pdf
 
@@ -1406,6 +1034,12 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
         from django.core.cache import cache
         from django.http import HttpResponse
 
+        # Authorization first (see get_queryset()'s "retrieve" branch, shared
+        # by this action) - before touching the cache, so an unauthorized
+        # request for this pk is rejected regardless of whether task_id is
+        # valid.
+        trf = self.get_object()
+
         task_id = request.query_params.get("task_id")
         if not task_id:
             return validation_error_response(
@@ -1419,262 +1053,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 message="PDF not found or has expired — please export again."
             )
 
-        try:
-            trf = TravelRequest.objects.get(pk=pk)
-        except TravelRequest.DoesNotExist:
-            return not_found_response(message="Travel Request not found")
-
         filename = f"TSR-{trf.request_number or trf.id}.pdf"
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
-
-
-# =============== NESTED RESOURCE VIEWSETS ===============
-
-
-class TrfAdvanceAmountRequestedItemViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Advance Amount Requested Items"""
-
-    queryset = TrfAdvanceAmountRequestedItem.objects.all()
-    serializer_class = TrfAdvanceAmountRequestedItemSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        trf_id = self.request.query_params.get("trf", None)
-        if trf_id:
-            return self.queryset.filter(trf_id=trf_id)
-        return self.queryset.order_by("-created_at")
-
-
-class TrfAdvanceBankDetailViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Advance Bank Details"""
-
-    queryset = TrfAdvanceBankDetail.objects.all()
-    serializer_class = TrfAdvanceBankDetailSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        trf_id = self.request.query_params.get("trf", None)
-        if trf_id:
-            return self.queryset.filter(trf_id=trf_id)
-        return self.queryset.order_by("-created_at")
-
-
-class TrfApprovalStepViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Approval Steps"""
-
-    queryset = TrfApprovalStep.objects.all()
-    serializer_class = TrfApprovalStepSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        trf_id = self.request.query_params.get("trf", None)
-        if trf_id:
-            return self.queryset.filter(trf_id=trf_id)
-        return self.queryset.order_by("-created_at")
-
-
-class TrfDailyMealSelectionViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Daily Meal Selections"""
-
-    queryset = TrfDailyMealSelection.objects.all()
-    serializer_class = TrfDailyMealSelectionSerializer
-    permission_classes = [IsAuthenticated]
-
-    def create(self, request, *args, **kwargs):
-        logger.debug("\n=== TrfDailyMealSelection CREATE ===")
-        logger.debug(f"Request data: {request.data}")
-        logger.debug(f"TRF field value: {request.data.get('trf')}")
-        logger.debug(f"Meal date value: {request.data.get('meal_date')}")
-        return super().create(request, *args, **kwargs)
-
-    def get_queryset(self):
-        trf_id = self.request.query_params.get("trf", None)
-        if trf_id:
-            return self.queryset.filter(trf_id=trf_id)
-        return self.queryset.order_by("meal_date")
-
-
-class TrfItinerarySegmentViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Itinerary Segments"""
-
-    queryset = TrfItinerarySegment.objects.all()
-    serializer_class = TrfItinerarySegmentSerializer
-    permission_classes = [IsAuthenticated]
-
-    def create(self, request, *args, **kwargs):
-        logger.debug("\n=== TrfItinerarySegment CREATE ===")
-        logger.debug(f"Request data: {request.data}")
-        logger.debug(f"TRF field value: {request.data.get('trf')}")
-        return super().create(request, *args, **kwargs)
-
-    def get_queryset(self):
-        trf_id = self.request.query_params.get("trf", None)
-        if trf_id:
-            return self.queryset.filter(trf_id=trf_id)
-        return self.queryset.order_by("segment_date")
-
-
-class TrfMealProvisionViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Meal Provisions"""
-
-    queryset = TrfMealProvision.objects.all()
-    serializer_class = TrfMealProvisionSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        trf_id = self.request.query_params.get("trf", None)
-        if trf_id:
-            return self.queryset.filter(trf_id=trf_id)
-        return self.queryset.order_by("-created_at")
-
-
-class TrfPassportDetailViewSet(viewsets.ModelViewSet):
-    """ViewSet for TRF Passport Details with file upload support"""
-
-    queryset = TrfPassportDetail.objects.all()
-    serializer_class = TrfPassportDetailSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_serializer_context(self):
-        """Include request in serializer context for building absolute URLs"""
-        context = super().get_serializer_context()
-        context["request"] = self.request
-        return context
-
-    def get_queryset(self):
-        trf_id = self.request.query_params.get("trf", None)
-        if trf_id:
-            return self.queryset.filter(trf_id=trf_id)
-        return self.queryset.order_by("-created_at")
-
-    @action(detail=True, methods=["post"], url_path="upload-passport")
-    def upload_passport(self, request, pk=None):
-        """
-        Upload or update passport file for an existing passport detail record.
-        Accepts multipart/form-data with 'passport_file' field.
-        """
-        passport_detail = self.get_object()
-
-        if "passport_file" not in request.FILES:
-            return error_response(
-                message="No passport file provided",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        passport_file = request.FILES["passport_file"]
-
-        # Validate file type
-        allowed_types = ["application/pdf", "image/jpeg", "image/jpg", "image/png"]
-        if passport_file.content_type not in allowed_types:
-            return error_response(
-                message="Passport file must be PDF, JPG, or PNG format",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Validate file size (max 10MB)
-        max_size = 10 * 1024 * 1024
-        if passport_file.size > max_size:
-            return error_response(
-                message="Passport file size must not exceed 10MB",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Delete old file if exists
-        if passport_detail.passport_file:
-            passport_detail.passport_file.delete(save=False)
-
-        # Save new file
-        passport_detail.passport_file = passport_file
-        passport_detail.save()
-
-        serializer = self.get_serializer(passport_detail)
-        return success_response(
-            data=serializer.data,
-            message="Passport file uploaded successfully",
-            status_code=status.HTTP_200_OK,
-        )
-
-    @action(detail=True, methods=["delete"], url_path="delete-passport-file")
-    def delete_passport_file(self, request, pk=None):
-        """Delete the passport file from an existing passport detail record."""
-        passport_detail = self.get_object()
-
-        if not passport_detail.passport_file:
-            return error_response(
-                message="No passport file to delete",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Delete the file
-        passport_detail.passport_file.delete(save=True)
-
-        serializer = self.get_serializer(passport_detail)
-        return success_response(
-            data=serializer.data,
-            message="Passport file deleted successfully",
-            status_code=status.HTTP_200_OK,
-        )
-
-    @action(detail=False, methods=["post"], url_path="upload-for-trf")
-    def upload_for_trf(self, request):
-        """
-        Upload passport file for a TRF. Creates passport detail if it doesn't exist.
-        Expects: trf (TRF ID) and passport_file in multipart/form-data
-        """
-        trf_id = request.data.get("trf")
-        if not trf_id:
-            return error_response(
-                message="TRF ID is required", status_code=status.HTTP_400_BAD_REQUEST
-            )
-
-        if "passport_file" not in request.FILES:
-            return error_response(
-                message="No passport file provided",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        passport_file = request.FILES["passport_file"]
-
-        # Validate file type
-        allowed_types = ["application/pdf", "image/jpeg", "image/jpg", "image/png"]
-        if passport_file.content_type not in allowed_types:
-            return error_response(
-                message="Passport file must be PDF, JPG, or PNG format",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Validate file size (max 10MB)
-        max_size = 10 * 1024 * 1024
-        if passport_file.size > max_size:
-            return error_response(
-                message="Passport file size must not exceed 10MB",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Verify TRF exists
-        try:
-            trf = TravelRequest.objects.get(pk=trf_id)
-        except TravelRequest.DoesNotExist:
-            return not_found_response(message="TRF not found")
-
-        # Get or create passport detail for this TRF
-        passport_detail, created = TrfPassportDetail.objects.get_or_create(
-            trf=trf, defaults={}
-        )
-
-        # Delete old file if exists
-        if passport_detail.passport_file:
-            passport_detail.passport_file.delete(save=False)
-
-        # Save new file
-        passport_detail.passport_file = passport_file
-        passport_detail.save()
-
-        serializer = self.get_serializer(passport_detail)
-        return success_response(
-            data=serializer.data,
-            message="Passport file uploaded successfully",
-            status_code=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )

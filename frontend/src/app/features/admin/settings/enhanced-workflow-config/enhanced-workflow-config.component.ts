@@ -51,6 +51,7 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
   // State management
   isLoading = false;
   isSaving = false;
+  error: string | null = null;
   existingWorkflows: any[] = [];
   editingWorkflowId: string | null = null;
   showStepsConfiguration = false;
@@ -91,6 +92,7 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
 
   loadExistingWorkflows(): void {
     this.isLoading = true;
+    this.error = null;
     this.http.get<any>(`${environment.apiUrl}/workflows/templates/`).subscribe({
       next: response => {
         // Handle paginated response
@@ -99,6 +101,7 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
       },
       error: () => {
         this.toast.error('Failed to load existing workflows');
+        this.error = 'Failed to load existing workflows. Please try again.';
         this.isLoading = false;
       },
     });

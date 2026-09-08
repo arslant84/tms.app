@@ -2,7 +2,12 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AccommodationService, AccommodationStaffHouse, AccommodationRoom } from '../../../accommodation/services/accommodation.service';
+import {
+  AccommodationService,
+  type AccommodationRequest,
+  type AccommodationStaffHouse,
+  type AccommodationRoom,
+} from '../../../accommodation/services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { LocationDialogComponent, LocationDialogData } from './location-dialog.component';
@@ -13,9 +18,15 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
 @Component({
   selector: 'app-accommodation-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, LocationDialogComponent, RoomDialogComponent, LoadingSpinnerComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    LocationDialogComponent,
+    RoomDialogComponent,
+    LoadingSpinnerComponent,
+  ],
   templateUrl: './accommodation-admin.component.html',
-  styleUrl: './accommodation-admin.component.scss'
+  styleUrl: './accommodation-admin.component.scss',
 })
 export class AccommodationAdminComponent implements OnInit {
   @ViewChild(LocationDialogComponent) locationDialog?: LocationDialogComponent;
@@ -28,7 +39,7 @@ export class AccommodationAdminComponent implements OnInit {
     approved: 0,
     processing: 0,
     completed: 0,
-    rejected: 0
+    rejected: 0,
   };
 
   // Tab state
@@ -37,11 +48,13 @@ export class AccommodationAdminComponent implements OnInit {
   // Locations
   locations: AccommodationStaffHouse[] = [];
   loadingLocations = false;
+  errorLocations: string | null = null;
 
   // Rooms
   rooms: AccommodationRoom[] = [];
   filteredRooms: AccommodationRoom[] = [];
   loadingRooms = false;
+  errorRooms: string | null = null;
   filterLocation = 'all';
   filterStaffHouse = 'all';
 
@@ -71,30 +84,26 @@ export class AccommodationAdminComponent implements OnInit {
    */
   fetchStats(): void {
     this.accommodationService.getAllRequests({ adminView: true, page_size: 1000 }).subscribe({
-      next: (response: any) => {
-        const requests = response.results || response || [];
+      next: response => {
+        const requests: AccommodationRequest[] = Array.isArray(response)
+          ? response
+          : response.results || [];
 
         this.stats.total = requests.length;
-        this.stats.pending = requests.filter((r: any) =>
-          r.status && r.status.toLowerCase().includes('pending')
+        this.stats.pending = requests.filter(r =>
+          r.status.toLowerCase().includes('pending')
         ).length;
-        this.stats.approved = requests.filter((r: any) =>
-          r.status === 'Approved'
+        this.stats.approved = requests.filter(r => r.status === 'Approved').length;
+        this.stats.processing = requests.filter(r =>
+          r.status.toLowerCase().includes('processing')
         ).length;
-        this.stats.processing = requests.filter((r: any) =>
-          r.status && r.status.toLowerCase().includes('processing')
-        ).length;
-        this.stats.completed = requests.filter((r: any) =>
-          r.status === 'Completed'
-        ).length;
-        this.stats.rejected = requests.filter((r: any) =>
-          r.status === 'Rejected'
-        ).length;
+        this.stats.completed = requests.filter(r => r.status === 'Completed').length;
+        this.stats.rejected = requests.filter(r => r.status === 'Rejected').length;
       },
-      error: (err) => {
+      error: err => {
         console.error('Error fetching stats:', err);
         // Keep default values on error
-      }
+      },
     });
   }
 
@@ -110,17 +119,19 @@ export class AccommodationAdminComponent implements OnInit {
    */
   fetchLocations(): void {
     this.loadingLocations = true;
+    this.errorLocations = null;
 
     this.accommodationService.getAllStaffHouses().subscribe({
-      next: (data) => {
+      next: data => {
         this.locations = data;
         this.loadingLocations = false;
       },
-      error: (err) => {
+      error: err => {
         console.error('❌ Error fetching locations:', err);
         this.toastService.error('Failed to load locations');
+        this.errorLocations = 'Failed to load locations. Please try again.';
         this.loadingLocations = false;
-      }
+      },
     });
   }
 
@@ -129,18 +140,20 @@ export class AccommodationAdminComponent implements OnInit {
    */
   fetchRooms(): void {
     this.loadingRooms = true;
+    this.errorRooms = null;
 
     this.accommodationService.getAllRooms().subscribe({
-      next: (data) => {
+      next: data => {
         this.rooms = data;
         this.applyRoomFilters();
         this.loadingRooms = false;
       },
-      error: (err) => {
+      error: err => {
         console.error('Error fetching rooms:', err);
         this.toastService.error('Failed to load rooms');
+        this.errorRooms = 'Failed to load rooms. Please try again.';
         this.loadingRooms = false;
-      }
+      },
     });
   }
 
@@ -149,10 +162,11 @@ export class AccommodationAdminComponent implements OnInit {
    */
   applyRoomFilters(): void {
     this.filteredRooms = this.rooms.filter(room => {
-      const matchesLocation = this.filterLocation === 'all' ||
+      const matchesLocation =
+        this.filterLocation === 'all' ||
         this.getStaffHouseLocation(room.staff_house) === this.filterLocation;
-      const matchesStaffHouse = this.filterStaffHouse === 'all' ||
-        room.staff_house.toString() === this.filterStaffHouse;
+      const matchesStaffHouse =
+        this.filterStaffHouse === 'all' || room.staff_house.toString() === this.filterStaffHouse;
       return matchesLocation && matchesStaffHouse;
     });
   }
@@ -201,20 +215,29 @@ export class AccommodationAdminComponent implements OnInit {
    */
   getLocationBadgeClass(location: string): string {
     switch (location) {
-      case 'Ashgabat': return 'badge-blue';
-      case 'Kiyanly': return 'badge-green';
-      case 'Turkmenbashy': return 'badge-amber';
-      default: return 'badge-gray';
+      case 'Ashgabat':
+        return 'badge-blue';
+      case 'Kiyanly':
+        return 'badge-green';
+      case 'Turkmenbashy':
+        return 'badge-amber';
+      default:
+        return 'badge-gray';
     }
   }
 
   getRoomTypeBadgeClass(type: string): string {
     switch (type) {
-      case 'Single': return 'badge-blue';
-      case 'Double': return 'badge-purple';
-      case 'Suite': return 'badge-indigo';
-      case 'Tent': return 'badge-green';
-      default: return 'badge-gray';
+      case 'Single':
+        return 'badge-blue';
+      case 'Double':
+        return 'badge-purple';
+      case 'Suite':
+        return 'badge-indigo';
+      case 'Tent':
+        return 'badge-green';
+      default:
+        return 'badge-gray';
     }
   }
 
@@ -234,9 +257,9 @@ export class AccommodationAdminComponent implements OnInit {
     this.locationDialogData = {
       id: location.id,
       name: location.name,
-      location: location.location as any,
+      location: location.location as LocationDialogData['location'],
       address: location.address || '',
-      description: location.description || ''
+      description: location.description || '',
     };
     this.locationDialogOpen = true;
   }
@@ -251,13 +274,13 @@ export class AccommodationAdminComponent implements OnInit {
       name: data.name,
       location: data.location,
       address: data.address,
-      description: data.description
+      description: data.description,
     };
 
     if (data.id) {
       // Update existing location
       this.accommodationService.updateStaffHouse(data.id, payload).subscribe({
-        next: (response) => {
+        next: () => {
           this.toastService.success('Location updated successfully');
           this.fetchLocations();
           this.locationDialogOpen = false;
@@ -266,13 +289,15 @@ export class AccommodationAdminComponent implements OnInit {
             this.locationDialog.setSubmitting(false);
           }
         },
-        error: (err) => {
+        error: err => {
           console.error('Error updating location:', err);
-          this.toastService.error('Failed to update location: ' + (err.error?.detail || err.message));
+          this.toastService.error(
+            'Failed to update location: ' + (err.error?.detail || err.message)
+          );
           if (this.locationDialog) {
             this.locationDialog.setSubmitting(false);
           }
-        }
+        },
       });
     } else {
       // Create new location
@@ -286,24 +311,28 @@ export class AccommodationAdminComponent implements OnInit {
             this.locationDialog.setSubmitting(false);
           }
         },
-        error: (err) => {
+        error: err => {
           console.error('❌ Error creating location:', err);
           console.error('Error details:', err.error);
-          this.toastService.error('Failed to create location: ' + (err.error?.detail || err.message));
+          this.toastService.error(
+            'Failed to create location: ' + (err.error?.detail || err.message)
+          );
           if (this.locationDialog) {
             this.locationDialog.setSubmitting(false);
           }
-        }
+        },
       });
     }
   }
 
   confirmDeleteLocation(location: AccommodationStaffHouse): void {
-    this.confirmationService.confirmDestructive('delete', `"${location.name}" (including all rooms)`).subscribe(confirmed => {
-      if (confirmed) {
-        this.deleteLocation(location);
-      }
-    });
+    this.confirmationService
+      .confirmDestructive('delete', `"${location.name}" (including all rooms)`)
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.deleteLocation(location);
+        }
+      });
   }
 
   deleteLocation(location: AccommodationStaffHouse): void {
@@ -313,10 +342,10 @@ export class AccommodationAdminComponent implements OnInit {
         this.fetchLocations();
         this.fetchRooms(); // Refresh rooms as they may be affected
       },
-      error: (err) => {
+      error: err => {
         console.error('Error deleting location:', err);
         this.toastService.error('Failed to delete location: ' + (err.error?.detail || err.message));
-      }
+      },
     });
   }
 
@@ -335,7 +364,7 @@ export class AccommodationAdminComponent implements OnInit {
       name: room.name,
       room_type: room.room_type || '',
       capacity: room.capacity,
-      status: room.status as any
+      status: room.status as RoomDialogData['status'],
     };
     this.roomDialogOpen = true;
   }
@@ -351,13 +380,13 @@ export class AccommodationAdminComponent implements OnInit {
       name: data.name,
       room_type: data.room_type,
       capacity: data.capacity,
-      status: data.status
+      status: data.status,
     };
 
     if (data.id) {
       // Update existing room
       this.accommodationService.updateRoom(data.id, payload).subscribe({
-        next: (response) => {
+        next: () => {
           this.toastService.success('Room updated successfully');
           this.fetchRooms();
           this.roomDialogOpen = false;
@@ -366,18 +395,18 @@ export class AccommodationAdminComponent implements OnInit {
             this.roomDialog.setSubmitting(false);
           }
         },
-        error: (err) => {
+        error: err => {
           console.error('Error updating room:', err);
           this.toastService.error('Failed to update room: ' + (err.error?.detail || err.message));
           if (this.roomDialog) {
             this.roomDialog.setSubmitting(false);
           }
-        }
+        },
       });
     } else {
       // Create new room
       this.accommodationService.createRoom(payload).subscribe({
-        next: (response) => {
+        next: () => {
           this.toastService.success('Room created successfully');
           this.fetchRooms();
           this.roomDialogOpen = false;
@@ -386,13 +415,13 @@ export class AccommodationAdminComponent implements OnInit {
             this.roomDialog.setSubmitting(false);
           }
         },
-        error: (err) => {
+        error: err => {
           console.error('Error creating room:', err);
           this.toastService.error('Failed to create room: ' + (err.error?.detail || err.message));
           if (this.roomDialog) {
             this.roomDialog.setSubmitting(false);
           }
-        }
+        },
       });
     }
   }
@@ -411,10 +440,10 @@ export class AccommodationAdminComponent implements OnInit {
         this.toastService.success('Room deleted successfully');
         this.fetchRooms();
       },
-      error: (err) => {
+      error: err => {
         console.error('Error deleting room:', err);
         this.toastService.error('Failed to delete room: ' + (err.error?.detail || err.message));
-      }
+      },
     });
   }
 }

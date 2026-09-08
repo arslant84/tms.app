@@ -44,6 +44,10 @@
     border-top-color: vars.$primary-color;
     border-radius: vars.$radius-full;
     animation: spin 1s linear infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation-duration: 3s;
+    }
   }
 
   p {
@@ -64,7 +68,7 @@
   }
 
   .page-subtitle {
-  // Using darker color for better contrast
+    // Using darker color for better contrast
     font-size: vars.$font-size-base;
     color: vars.$text-secondary;
     margin: 0;
@@ -132,6 +136,10 @@
 
 .spin {
   animation: spin 1s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 3s;
+  }
 }
 
 @keyframes fadeIn {
@@ -157,7 +165,7 @@
     }
 
     .page-subtitle {
-  // Using darker color for better contrast
+      // Using darker color for better contrast
       font-size: vars.$font-size-sm;
     }
   }

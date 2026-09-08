@@ -4,15 +4,25 @@
       <h4 class="card-title mb-0">
         <i class="bi bi-shield-check me-2"></i>User Roles & Permissions
       </h4>
-      <p class="card-description mb-0 mt-1">Define roles and assign permissions to control access to system features.</p>
+      <p class="card-description mb-0 mt-1">
+        Define roles and assign permissions to control access to system features.
+      </p>
     </div>
   </div>
   <div class="card-body">
     <div *ngIf="isLoading" class="d-flex justify-content-center py-5">
-      <app-loading-spinner size="md" message="Loading..."></app-loading-spinner>
+      <app-loading-spinner size="md" message="Loading…"></app-loading-spinner>
     </div>
 
-    <ng-container *ngIf="!isLoading">
+    <!-- Error State -->
+    <div *ngIf="error && !isLoading" class="error-state">
+      <i class="bi bi-exclamation-triangle error-icon"></i>
+      <h3 class="error-title">Error Loading Roles</h3>
+      <p class="error-message">{{ error }}</p>
+      <button class="btn btn-primary" (click)="loadData()">Try Again</button>
+    </div>
+
+    <ng-container *ngIf="!isLoading && !error">
       <div class="mb-4">
         <h6 class="mb-3 fw-semibold">Existing Roles</h6>
         <div class="roles-scroll-area border rounded p-3">
@@ -27,11 +37,23 @@
                   </p>
                 </div>
                 <div class="action-buttons">
-                  <button class="btn btn-sm btn-outline-primary btn-icon" (click)="openEdit(role)" [disabled]="isSaving" title="Edit">
-                    <i class="bi bi-pencil"></i>
+                  <button
+                    class="btn btn-sm btn-outline-primary btn-icon"
+                    (click)="openEdit(role)"
+                    [disabled]="isSaving"
+                    title="Edit"
+                    aria-label="Edit"
+                  >
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
                   </button>
-                  <button class="btn btn-sm btn-outline-danger btn-icon" (click)="confirmDelete(role)" [disabled]="isSaving" title="Delete">
-                    <i class="bi bi-trash"></i>
+                  <button
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    (click)="confirmDelete(role)"
+                    [disabled]="isSaving"
+                    title="Delete"
+                    aria-label="Delete"
+                  >
+                    <i class="bi bi-trash" aria-hidden="true"></i>
                   </button>
                 </div>
               </div>
@@ -44,7 +66,11 @@
       </div>
 
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <button class="btn btn-primary" (click)="openCreate()" [disabled]="isLoading || isSaving || permissions.length === 0">
+        <button
+          class="btn btn-primary"
+          (click)="openCreate()"
+          [disabled]="isLoading || isSaving || permissions.length === 0"
+        >
           <i class="bi bi-plus-circle me-2"></i>
           Add New Role
         </button>

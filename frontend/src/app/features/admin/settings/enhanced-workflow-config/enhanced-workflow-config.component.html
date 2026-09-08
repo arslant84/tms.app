@@ -186,17 +186,25 @@
     <div class="card-body">
       <div *ngIf="isLoading" class="text-center py-4">
         <app-loading-spinner size="md"></app-loading-spinner>
-        <p class="mt-2 text-muted">Loading workflows...</p>
+        <p class="mt-2 text-muted">Loading workflows…</p>
       </div>
 
-      <div *ngIf="!isLoading && existingWorkflows.length === 0" class="text-center py-4">
+      <!-- Error State -->
+      <div *ngIf="error && !isLoading" class="error-state">
+        <i class="bi bi-exclamation-triangle error-icon"></i>
+        <h3 class="error-title">Error Loading Workflows</h3>
+        <p class="error-message">{{ error }}</p>
+        <button class="btn btn-primary" (click)="loadExistingWorkflows()">Try Again</button>
+      </div>
+
+      <div *ngIf="!isLoading && !error && existingWorkflows.length === 0" class="text-center py-4">
         <i class="bi bi-inbox text-muted icon-jumbo"></i>
         <p class="text-muted mt-2">
           No workflows configured yet. Create your first workflow above.
         </p>
       </div>
 
-      <div *ngIf="!isLoading && existingWorkflows.length > 0" class="table-responsive">
+      <div *ngIf="!isLoading && !error && existingWorkflows.length > 0" class="table-responsive">
         <table class="table table-hover">
           <thead>
             <tr>
@@ -237,26 +245,30 @@
                     class="btn btn-sm btn-outline-primary btn-icon"
                     (click)="editWorkflow(workflow)"
                     title="Edit Workflow"
+                    aria-label="Edit Workflow"
                   >
-                    <i class="bi bi-pencil"></i>
+                    <i class="bi bi-pencil" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-secondary btn-icon"
                     (click)="toggleWorkflowStatus(workflow)"
                     [title]="workflow.is_active ? 'Deactivate' : 'Activate'"
+                    [attr.aria-label]="workflow.is_active ? 'Deactivate' : 'Activate'"
                   >
                     <i
                       class="bi"
                       [class.bi-toggle-on]="workflow.is_active"
                       [class.bi-toggle-off]="!workflow.is_active"
+                      aria-hidden="true"
                     ></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="deleteWorkflow(workflow)"
                     title="Delete Workflow"
+                    aria-label="Delete Workflow"
                   >
-                    <i class="bi bi-trash"></i>
+                    <i class="bi bi-trash" aria-hidden="true"></i>
                   </button>
                 </div>
               </td>

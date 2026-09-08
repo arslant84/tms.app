@@ -44,6 +44,10 @@
   height: 50px;
   animation: spin 1s linear infinite;
   margin-bottom: vars.$spacing-md;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-duration: 3s;
+  }
 }
 
 @keyframes spin {

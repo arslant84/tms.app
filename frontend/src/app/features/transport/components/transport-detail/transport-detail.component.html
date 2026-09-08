@@ -3,7 +3,7 @@
   <div *ngIf="loading" class="loading-state">
     <app-loading-spinner
       size="md"
-      message="Loading transport request details..."
+      message="Loading transport request details…"
     ></app-loading-spinner>
   </div>
 
@@ -64,7 +64,7 @@
       <!-- Loading state -->
       <span *ngIf="workflowLoading" class="badge bg-secondary">
         <app-loading-spinner size="sm" class="me-2 d-inline-block"></app-loading-spinner>
-        Loading workflow...
+        Loading workflow…
       </span>
       <span class="text-muted">Request ID: {{ request.request_number || '#' + request.id }}</span>
       <span class="text-muted">Created: {{ dateUtils.formatDate(request.updatedAt) }}</span>
@@ -277,8 +277,8 @@
       <div class="card-body">
         <!-- Loading State -->
         <div *ngIf="workflowLoading && !workflow" class="text-center py-3">
-          <app-loading-spinner size="lg" message="Loading workflow..."></app-loading-spinner>
-          <p class="text-muted mt-2">Loading workflow status...</p>
+          <app-loading-spinner size="lg" message="Loading workflow…"></app-loading-spinner>
+          <p class="text-muted mt-2">Loading workflow status…</p>
         </div>
 
         <!-- Workflow Status Timeline (read-only; approvals happen via the

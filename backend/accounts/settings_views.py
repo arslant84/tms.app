@@ -224,8 +224,12 @@ class AdminActionLogViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
 
-        # SECURITY: Admin users see all audit logs
-        if user.is_admin or user.is_superuser:
+        # Access governed by RBAC only - no separate is_admin bypass (see
+        # docs/RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 9). Superusers still
+        # see everything; everyone else falls through to the
+        # view_activity_logs permission check below, which "System
+        # Administrator" (and any role granted that permission) already has.
+        if user.is_superuser:
             return queryset
 
         # SECURITY: Check if user has explicit permission to view audit logs
@@ -267,9 +271,17 @@ class AdminActionLogViewSet(viewsets.ReadOnlyModelViewSet):
     def stats(self, request):
         """
         Get audit log statistics.
-        SECURITY: Only available to admin users.
+        SECURITY: Only available to users who can view activity logs.
         """
-        if not request.user.is_admin and not request.user.is_superuser:
+        user = request.user
+        has_view_permission = bool(
+            user.role
+            and user.role.permissions.filter(name="view_activity_logs").exists()
+        )
+        # Same rule as get_queryset() above (RBAC only, no is_admin bypass -
+        # see docs/RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 9), so anyone who
+        # can see the full audit log list can also see its stats.
+        if not (user.is_superuser or has_view_permission):
             return forbidden_response(
                 message="Only administrators can view audit log statistics"
             )

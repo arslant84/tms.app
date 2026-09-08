@@ -156,6 +156,35 @@ class TestVisaProcessingAdminActions:
         visa.refresh_from_db()
         assert visa.status == "Completed"
 
+    def test_ordinary_applicant_cannot_complete_own_application(
+        self, api_client, regular_user
+    ):
+        """Regression test for docs/RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md
+        Fix 5: complete() had no internal permission check at all - the
+        queryset bypass's Q(user=user) fallback (correct for retrieve/
+        submit/export_pdf, which share the same bypass tuple) meant an
+        ordinary applicant could reach complete() on their own approved
+        application and mark it completed themselves, without any
+        admin/processing permission. complete() now requires
+        is_superuser/is_module_admin, matching transport's complete()."""
+        visa = VisaApplication.objects.create(
+            user=regular_user,
+            requestor_name=regular_user.name,
+            staff_id="S1",
+            department="IT",
+            destination="Some Country",
+            travel_purpose="Business",
+            visa_type="Business",
+            status="Approved",
+        )
+
+        api_client.force_authenticate(user=regular_user)
+        response = api_client.post(f"/api/visa/applications/{visa.id}/complete/", {})
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        visa.refresh_from_db()
+        assert visa.status == "Approved"
+
     def test_superuser_can_update_another_users_application(
         self, api_client, admin_user, regular_user
     ):

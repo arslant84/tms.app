@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AccommodationStaffHouse } from '../../../accommodation/services/accommodation.service';
+import type { AccommodationStaffHouse } from '../../../accommodation/services/accommodation.service';
 
 export interface RoomDialogData {
   id?: number;
@@ -23,7 +23,13 @@ export interface RoomDialogData {
         <div class="modal-header">
           <h2>{{ isEditMode ? 'Edit Room' : 'Add New Room' }}</h2>
           <button class="close-button" (click)="onClose()">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -39,7 +45,8 @@ export interface RoomDialogData {
                 name="staffHouse"
                 [(ngModel)]="formData.staff_house"
                 required
-                #staffHouseInput="ngModel">
+                #staffHouseInput="ngModel"
+              >
                 <option [value]="null">Select a staff house</option>
                 <option *ngFor="let house of staffHouses" [value]="house.id">
                   {{ house.name }} - {{ house.location }}
@@ -60,7 +67,8 @@ export interface RoomDialogData {
                 [(ngModel)]="formData.name"
                 placeholder="e.g., Room 101, Tent 1"
                 required
-                #roomNameInput="ngModel">
+                #roomNameInput="ngModel"
+              />
               <div class="error-message" *ngIf="roomNameInput.invalid && roomNameInput.touched">
                 Room name is required
               </div>
@@ -74,7 +82,8 @@ export interface RoomDialogData {
                 name="roomType"
                 [(ngModel)]="formData.room_type"
                 required
-                #roomTypeInput="ngModel">
+                #roomTypeInput="ngModel"
+              >
                 <option value="">Select room type</option>
                 <option value="Single">Single</option>
                 <option value="Double">Double</option>
@@ -98,7 +107,8 @@ export interface RoomDialogData {
                 min="1"
                 max="20"
                 required
-                #capacityInput="ngModel">
+                #capacityInput="ngModel"
+              />
               <div class="helper-text">Number of people this room can accommodate</div>
               <div class="error-message" *ngIf="capacityInput.invalid && capacityInput.touched">
                 Capacity must be between 1 and 20
@@ -113,7 +123,8 @@ export interface RoomDialogData {
                 name="status"
                 [(ngModel)]="formData.status"
                 required
-                #statusInput="ngModel">
+                #statusInput="ngModel"
+              >
                 <option value="Available">Available</option>
                 <option value="Maintenance">Maintenance</option>
                 <option value="Reserved">Reserved</option>
@@ -125,21 +136,23 @@ export interface RoomDialogData {
           </div>
 
           <div class="modal-footer">
-            <button type="button" class="btn-secondary" (click)="onClose()">
-              Cancel
-            </button>
-            <button type="submit" class="btn-primary" [disabled]="!roomForm.form.valid || isSubmitting">
+            <button type="button" class="btn-secondary" (click)="onClose()">Cancel</button>
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="!roomForm.form.valid || isSubmitting"
+            >
               <span *ngIf="!isSubmitting">{{ isEditMode ? 'Update' : 'Create' }}</span>
               <span *ngIf="isSubmitting">
                 <div class="btn-spinner"></div>
-                {{ isEditMode ? 'Updating...' : 'Creating...' }}
+                {{ isEditMode ? 'Updating…' : 'Creating…' }}
               </span>
             </button>
           </div>
         </form>
       </div>
     </div>
-  `
+  `,
 })
 export class RoomDialogComponent {
   @Input() isOpen = false;
@@ -163,7 +176,7 @@ export class RoomDialogComponent {
     name: '',
     room_type: '',
     capacity: 1,
-    status: 'Available'
+    status: 'Available',
   };
 
   resetForm(): void {
@@ -172,7 +185,7 @@ export class RoomDialogComponent {
       name: '',
       room_type: '',
       capacity: 1,
-      status: 'Available'
+      status: 'Available',
     };
     this.isEditMode = false;
   }

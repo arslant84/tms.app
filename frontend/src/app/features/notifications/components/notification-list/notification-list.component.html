@@ -16,7 +16,8 @@
       <button
         class="btn btn-primary"
         (click)="markAllAsRead()"
-        [disabled]="filteredNotifications.length === 0">
+        [disabled]="filteredNotifications.length === 0"
+      >
         <i class="bi bi-check2-all"></i>
         Mark All Read
       </button>
@@ -31,7 +32,8 @@
         id="statusFilter"
         class="form-select"
         [(ngModel)]="filterStatus"
-        (change)="onFilterChange()">
+        (change)="onFilterChange()"
+      >
         <option value="all">All Notifications</option>
         <option value="unread">Unread</option>
         <option value="read">Read</option>
@@ -44,7 +46,8 @@
         id="priorityFilter"
         class="form-select"
         [(ngModel)]="filterPriority"
-        (change)="onFilterChange()">
+        (change)="onFilterChange()"
+      >
         <option value="all">All Priorities</option>
         <option value="urgent">Urgent</option>
         <option value="high">High</option>
@@ -56,24 +59,45 @@
 
   <!-- Notifications List -->
   <div class="notifications-list">
-    <div *ngIf="(listState.loading | async)" class="loading-state">
-      <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
-      <p>Loading notifications...</p>
+    <div *ngIf="listState.loading | async" class="loading-state">
+      <app-loading-spinner size="lg" message="Loading…"></app-loading-spinner>
+      <p>Loading notifications…</p>
     </div>
 
-    <div *ngIf="!(listState.loading | async) && filteredNotifications.length === 0" class="empty-state">
+    <div *ngIf="(listState.error | async) && !(listState.loading | async)" class="error-state">
+      <i class="bi bi-exclamation-triangle error-icon"></i>
+      <h3 class="error-title">Error Loading Notifications</h3>
+      <p class="error-message">{{ listState.error | async }}</p>
+      <button class="btn btn-primary" (click)="loadNotifications()">Try Again</button>
+    </div>
+
+    <div
+      *ngIf="
+        !(listState.loading | async) &&
+        !(listState.error | async) &&
+        filteredNotifications.length === 0
+      "
+      class="empty-state"
+    >
       <i class="bi bi-inbox empty-icon"></i>
       <h3>No Notifications</h3>
       <p>You're all caught up! No notifications to display.</p>
     </div>
 
-    <div class="notification-cards" *ngIf="!(listState.loading | async) && filteredNotifications.length > 0">
+    <div
+      class="notification-cards"
+      *ngIf="
+        !(listState.loading | async) &&
+        !(listState.error | async) &&
+        filteredNotifications.length > 0
+      "
+    >
       <div
         *ngFor="let notification of filteredNotifications"
         class="notification-card"
         [class.unread]="!notification.is_read"
-        (click)="onNotificationClick(notification)">
-
+        (click)="onNotificationClick(notification)"
+      >
         <!-- Notification Icon -->
         <div class="notification-icon-wrapper">
           <i [class]="getNotificationIcon(notification.priority)"></i>
@@ -107,14 +131,18 @@
             class="btn-icon"
             *ngIf="!notification.is_read"
             (click)="markAsRead(notification, $event)"
-            title="Mark as read">
-            <i class="bi bi-check2"></i>
+            title="Mark as read"
+            aria-label="Mark as read"
+          >
+            <i class="bi bi-check2" aria-hidden="true"></i>
           </button>
           <button
             class="btn-icon action-delete"
             (click)="deleteNotification(notification.id, $event)"
-            title="Delete">
-            <i class="bi bi-trash"></i>
+            title="Delete"
+            aria-label="Delete"
+          >
+            <i class="bi bi-trash" aria-hidden="true"></i>
           </button>
         </div>
 
@@ -125,7 +153,10 @@
   </div>
 
   <!-- Pagination -->
-  <div *ngIf="!(listState.loading | async) && listState.getTotalPages() > 1" class="pagination-container">
+  <div
+    *ngIf="!(listState.loading | async) && listState.getTotalPages() > 1"
+    class="pagination-container"
+  >
     <nav aria-label="Page navigation">
       <ul class="pagination justify-content-center mb-0">
         <li class="page-item" [class.disabled]="!listState.hasPreviousPage()">
@@ -133,7 +164,11 @@
             <span aria-hidden="true">&laquo;</span>
           </a>
         </li>
-        <li class="page-item" *ngFor="let page of listState.getPageNumbers()" [class.active]="(listState.currentPage | async) === page">
+        <li
+          class="page-item"
+          *ngFor="let page of listState.getPageNumbers()"
+          [class.active]="(listState.currentPage | async) === page"
+        >
           <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
         </li>
         <li class="page-item" [class.disabled]="!listState.hasNextPage()">
@@ -146,7 +181,13 @@
     <div class="text-center mt-3 pagination-info">
       <small>
         Showing {{ ((listState.currentPage | async)! - 1) * listState.getPageSize() + 1 }} -
-        {{ Math.min((listState.currentPage | async)! * listState.getPageSize(), listState.getTotalItems()) }} of {{ listState.getTotalItems() }} notifications
+        {{
+          Math.min(
+            (listState.currentPage | async)! * listState.getPageSize(),
+            listState.getTotalItems()
+          )
+        }}
+        of {{ listState.getTotalItems() }} notifications
       </small>
     </div>
   </div>

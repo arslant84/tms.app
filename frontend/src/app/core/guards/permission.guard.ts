@@ -45,10 +45,12 @@ export const PermissionGuard: CanActivateFn = (route: ActivatedRouteSnapshot) =>
         return false;
       }
 
-      // SECURITY: Admin users have access to everything
-      if (currentUser.is_admin) {
-        return true;
-      }
+      // Access is governed entirely by the user's Role/Permission
+      // assignment (see accounts.models.Role) - there is no separate
+      // is_admin bypass. A "full access" role like System Administrator
+      // gets there by having every relevant permission actually assigned
+      // via the Role admin UI, the same as any other role (see docs/
+      // RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 9).
 
       // Check permissions
       const hasPermission = requireAll
@@ -119,10 +121,9 @@ export const AdminMenuGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => 
         return false;
       }
 
-      // SECURITY: Admin users have access to everything
-      if (currentUser.is_admin) {
-        return true;
-      }
+      // Access is governed entirely by the user's Role/Permission
+      // assignment - no separate is_admin bypass (see docs/
+      // RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 9).
 
       // Check if user can access admin menu
       const hasAccess = rbacService.canAccessAdminMenu(adminModule);

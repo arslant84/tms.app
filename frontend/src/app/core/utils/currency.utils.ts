@@ -1,87 +1,38 @@
-import { AppSettingsService } from '../services/app-settings.service';
-
 /**
- * Centralized currency formatting utility
- * Ensures consistent currency display across the entire application
+ * Centralized currency formatting utility.
+ * Callers resolve the currency code themselves (e.g. via the injected
+ * AppSettingsService) and pass it in - this stays a plain function with no
+ * static singleton to initialize, so there's no risk of it silently running
+ * before its dependency is wired up.
  */
 export class CurrencyUtils {
-  private static appSettingsService: AppSettingsService;
-
   /**
-   * Initialize the utility with the AppSettingsService
-   * This should be called once during app initialization
-   */
-  static initialize(appSettingsService: AppSettingsService): void {
-    CurrencyUtils.appSettingsService = appSettingsService;
-  }
-
-  /**
-   * Format currency using the application's default currency
+   * Format an amount as currency.
    * @param amount - The amount to format
+   * @param currencyCode - The currency code to format with (e.g. from AppSettingsService.getDefaultCurrency())
    * @param locale - Optional locale (defaults to 'en-US')
    * @returns Formatted currency string
    */
-  static formatCurrency(
+  static format(
     amount: number | null | undefined,
+    currencyCode: string,
     locale: string = 'en-US'
   ): string {
     if (amount === null || amount === undefined || isNaN(amount)) {
       return 'N/A';
     }
-
-    const currency = CurrencyUtils.appSettingsService?.getDefaultCurrency() || 'USD';
-
-    try {
-      return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency: currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(amount);
-    } catch (error) {
-      console.error('Error formatting currency:', error);
-      return `${currency} ${amount.toFixed(2)}`;
-    }
-  }
-
-  /**
-   * Format currency with a specific currency code
-   * Use this when the currency is stored with the data (e.g., flight bookings)
-   * @param amount - The amount to format
-   * @param currency - The specific currency code
-   * @param locale - Optional locale (defaults to 'en-US')
-   * @returns Formatted currency string
-   */
-  static formatCurrencyWithCode(
-    amount: number | null | undefined,
-    currency: string | null | undefined,
-    locale: string = 'en-US'
-  ): string {
-    if (amount === null || amount === undefined || isNaN(amount)) {
-      return 'N/A';
-    }
-
-    const currencyCode = currency || CurrencyUtils.appSettingsService?.getDefaultCurrency() || 'USD';
 
     try {
       return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency: currencyCode,
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
       }).format(amount);
     } catch (error) {
       console.error('Error formatting currency:', error);
       return `${currencyCode} ${amount.toFixed(2)}`;
     }
-  }
-
-  /**
-   * Get the default currency code from app settings
-   * @returns Default currency code
-   */
-  static getDefaultCurrency(): string {
-    return CurrencyUtils.appSettingsService?.getDefaultCurrency() || 'USD';
   }
 
   /**
@@ -109,7 +60,7 @@ export class CurrencyUtils {
     try {
       return numericAmount.toLocaleString(locale, {
         minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
+        maximumFractionDigits: decimals,
       });
     } catch (error) {
       console.error('Error formatting number:', error);

@@ -13,13 +13,13 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
 from accounts.models import AdminActionLog
-from accounts.utils import has_permission
+from accounts.utils import can_process_accommodation, has_permission
+from utils.viewset_mixins import StandardResultsPagination
 
 from .models import AccommodationRequest
 from .serializers import AccommodationRequestSerializer
@@ -52,7 +52,12 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
     queryset = AccommodationRequest.objects.all()
     serializer_class = AccommodationRequestSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = PageNumberPagination
+    # Was plain DRF PageNumberPagination, which ignores the client's
+    # ?page_size= entirely and always returns exactly PAGE_SIZE=10 regardless
+    # of what's requested - same bug already fixed on TransportRequestViewSet
+    # (see docs/RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 3).
+    # StandardResultsPagination honors page_size, capped at 100.
+    pagination_class = StandardResultsPagination
 
     # Search across key fields
     search_fields = ["requestor_name", "staff_id", "department", "request_number"]
@@ -138,24 +143,16 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             )
             return queryset  # No filtering - authorization handled by WorkflowEngine
 
-        # For retrieve action, check permissions and workflow assignment
-        if self.action == "retrieve":
+        # For retrieve and export_pdf (viewing/exporting), check permissions
+        # and workflow assignment. export_pdf previously fell through to the
+        # admin_view branch below and landed in the personal-only filter,
+        # giving admins/approvers a false 404 - it now shares retrieve's
+        # bypass since viewing and exporting are the same kind of access
+        # (see docs/RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 3).
+        if self.action in ("retrieve", "export_pdf"):
             from workflows.services import WorkflowApprovalHelper
 
-            # Check if user has admin permissions to view all
-            can_view_all = (
-                user.role.permissions.filter(
-                    name__in=[
-                        "view_all_accommodation",
-                        "approve_accommodation",
-                        "process_accommodation",
-                    ]
-                ).exists()
-                if user.role
-                else False
-            )
-
-            if user.is_superuser or can_view_all:
+            if can_process_accommodation(user):
                 logger.info(
                     f" Retrieve action: User {user.email or user.username} has admin permissions - allowing access to all requests"
                 )
@@ -187,25 +184,26 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 )
             return queryset
 
-        # For assign action, check if user has admin permissions
-        if self.action == "assign" and (user.is_superuser or user.role):
-            can_view_all = (
-                user.role.permissions.filter(
-                    name__in=[
-                        "view_all_accommodation",
-                        "approve_accommodation",
-                        "process_accommodation",
-                    ]
-                ).exists()
-                if user.role
-                else False
+        # Write/delete/cancel actions: same admin-only bypass as assign (no
+        # pending-approval extension - none of these have their own internal
+        # permission check beyond get_object(), so a user with only a
+        # pending *approval* step on this request should not thereby gain
+        # the ability to edit/delete/cancel it; reviewing isn't the same as
+        # being allowed to modify - see docs/RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md
+        # Fix 3, mirroring the same deliberate scoping decision made for TRF
+        # in Fix 2). Non-admins fall through unchanged to the existing
+        # requestor-only filtering below.
+        if self.action in (
+            "assign",
+            "update",
+            "partial_update",
+            "destroy",
+            "cancel",
+        ) and can_process_accommodation(user):
+            logger.info(
+                f" {self.action} action: User {user.email or user.username} has admin permissions - allowing access to all requests"
             )
-
-            if user.is_superuser or can_view_all:
-                logger.info(
-                    f" Assign action: User {user.email or user.username} has admin permissions - allowing access to all requests"
-                )
-                return queryset  # No filtering for admins
+            return queryset  # No filtering for admins
 
         # Check if this is an admin view (Accommodation Admin module)
         admin_view = (
@@ -214,26 +212,22 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
 
         # Permission-based filtering
         if admin_view and (user.is_superuser or user.role):
-            # Admin module context - check permissions
-            can_view_all = (
-                user.role.permissions.filter(name="view_all_accommodation").exists()
-                if user.role
-                else False
-            )
-
-            if user.is_superuser or can_view_all:
+            # Admin module context - uses the same can_process_accommodation
+            # check as retrieve/assign/update/cancel above, so list
+            # visibility matches detail visibility (see docs/
+            # RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 7 - this previously
+            # only checked view_all_accommodation here, so a user with only
+            # approve_accommodation could open any request directly by ID
+            # but wouldn't see it in this admin list; the removed elif
+            # branch that used to check approve_accommodation/
+            # view_pending_approvals still filtered to requestor-only
+            # regardless, so it never actually granted broader visibility -
+            # dropping it doesn't reduce anyone's access).
+            if can_process_accommodation(user):
                 logger.info(
-                    f" Admin view: User {user.email or user.username} (role: {user.role.name if user.role else None}) has 'view_all_accommodation' permission - showing all accommodation requests"
+                    f" Admin view: User {user.email or user.username} (role: {user.role.name if user.role else None}) has accommodation admin permissions - showing all accommodation requests"
                 )
                 pass  # No filtering - show all
-            elif user.role.permissions.filter(
-                name__in=["approve_accommodation", "view_pending_approvals"]
-            ).exists():
-                # Department-level approvers - could be extended to filter by department if needed
-                queryset = queryset.filter(requestor_name=user.get_full_name())
-                logger.info(
-                    " Admin view: Approver - showing own accommodation requests"
-                )
             else:
                 # No admin permissions - show only own
                 queryset = queryset.filter(requestor_name=user.get_full_name())
@@ -275,7 +269,13 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
             )
             logger.debug(f"Searching accommodation for: {search}")
 
-        return queryset.order_by("-created_at")
+        # Explicit tie-breaker: AccommodationRequest has no Meta.ordering, so
+        # rows with an identical created_at (common with bulk-created test/
+        # seed data) would otherwise sort arbitrarily between two identical
+        # requests - unsafe under pagination (see docs/
+        # RBAC_AND_ADMIN_ACCESS_FIX_ROADMAP.md Fix 3, mirroring the same fix
+        # already shipped on TransportRequestViewSet).
+        return queryset.order_by("-created_at", "-id")
 
     def create(self, request, *args, **kwargs):
         """Create a new accommodation request"""

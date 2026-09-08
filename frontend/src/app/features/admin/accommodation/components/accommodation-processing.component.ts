@@ -1,13 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { lastValueFrom } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import {
-  AccommodationService,
+import type {
   AccommodationRoom,
   AccommodationStaffHouse,
-  AccommodationBooking,
 } from '../../../accommodation/services/accommodation.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
@@ -32,96 +29,14 @@ import {
   getDayName as mapperGetDayName,
   isWeekend as mapperIsWeekend,
   getLocationBadgeClass as mapperGetLocationBadgeClass,
-  firstTruthy,
+  getDateBookingInfo as mapperGetDateBookingInfo,
+  isRoomAvailableForDates,
+  validateAssignmentDates,
+  type BookedAccommodation,
+  type BookingData,
+  type PendingAccommodation,
 } from './accommodation-processing.mapper';
-
-interface PendingAccommodation {
-  id: number;
-  request_number: string;
-  requestorName: string;
-  department: string;
-  staffId: string;
-  location: string;
-  checkInDate: string;
-  checkOutDate: string;
-  roomType: string;
-  status: string;
-  requestedDate: string;
-  duration: number;
-  gender?: string;
-  trfId?: number;
-  tsrDepartureDate?: string;
-  tsrReturnDate?: string;
-}
-
-interface BookedAccommodation {
-  id: number;
-  requestNumber: string;
-  requestorName: string;
-  staffId: string;
-  staffHouseName: string;
-  roomName: string;
-  location: string;
-  checkInDate: string;
-  checkOutDate: string;
-  status: string;
-  notes?: string;
-  bookingCount?: number;
-}
-
-interface BookingData {
-  id: number;
-  staff_house_id: number;
-  room_id: number;
-  date: string;
-  status: string;
-  guest_name?: string;
-  gender?: string;
-  trf_id?: number;
-  notes?: string;
-}
-
-/** Raw accommodation request shape as returned by
- * AccommodationService.getAllRequests() - the same request may carry its
- * check-in/out dates and room details on `additional_data.accommodations[0]`,
- * directly on `additional_data`, or on the request itself, depending on
- * which flow created it. */
-interface RawAccommodationAccom {
-  location?: string;
-  check_in_date?: string;
-  checkInDate?: string;
-  check_out_date?: string;
-  checkOutDate?: string;
-  room_type?: string;
-  roomType?: string;
-  gender?: string;
-}
-
-interface RawAccommodationRequest {
-  id: number;
-  status?: string;
-  request_number?: string;
-  requestor_name?: string;
-  department?: string;
-  staff_id?: string;
-  submitted_at?: string;
-  created_at?: string;
-  trf?: number | null;
-  tsr_departure_date?: string;
-  tsr_return_date?: string;
-  additional_comments?: string;
-  check_in_date?: string;
-  requested_check_in_date?: string;
-  check_out_date?: string;
-  requested_check_out_date?: string;
-  additional_data?: RawAccommodationAccom & {
-    accommodations?: RawAccommodationAccom[];
-    requested_check_in_date?: string;
-    requestedCheckInDate?: string;
-    requested_check_out_date?: string;
-    requestedCheckOutDate?: string;
-  };
-}
+import { AccommodationProcessingService } from './accommodation-processing.service';
 
 @Component({
   selector: 'app-accommodation-processing',
@@ -182,7 +97,7 @@ export class AccommodationProcessingComponent implements OnInit {
   dateRange: { from: Date | null; to: Date | null } = { from: null, to: null };
 
   constructor(
-    private accommodationService: AccommodationService,
+    private accommodationProcessing: AccommodationProcessingService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private router: Router,
@@ -198,95 +113,15 @@ export class AccommodationProcessingComponent implements OnInit {
     this.fetchBookings();
   }
 
-  private extractDates(req: RawAccommodationRequest): {
-    checkInDate: string;
-    checkOutDate: string;
-  } {
-    const additionalData = req.additional_data || {};
-    const firstAccom = (additionalData.accommodations || [])[0] || {};
-    const checkInDate = firstTruthy(
-      'N/A',
-      firstAccom.check_in_date,
-      firstAccom.checkInDate,
-      additionalData.check_in_date,
-      additionalData.checkInDate,
-      additionalData.requested_check_in_date,
-      additionalData.requestedCheckInDate,
-      req.check_in_date,
-      req.requested_check_in_date
-    );
-    const checkOutDate = firstTruthy(
-      'N/A',
-      firstAccom.check_out_date,
-      firstAccom.checkOutDate,
-      additionalData.check_out_date,
-      additionalData.checkOutDate,
-      additionalData.requested_check_out_date,
-      additionalData.requestedCheckOutDate,
-      req.check_out_date,
-      req.requested_check_out_date
-    );
-    return { checkInDate, checkOutDate };
-  }
-
   loadAccommodationRequests(): void {
     this.isLoadingPending = true;
     this.isLoadingBooked = true;
     this.errorPending = null;
 
-    this.accommodationService.getAllRequests({ adminView: true, page_size: 1000 }).subscribe({
-      next: (response: RawAccommodationRequest[] | { results: RawAccommodationRequest[] }) => {
-        const requests: RawAccommodationRequest[] = Array.isArray(response)
-          ? response
-          : response.results;
-
-        this.pendingAccommodations = requests
-          .filter(req => req.status === 'Approved')
-          .map(req => {
-            const additionalData = req.additional_data || {};
-            const firstAccom = (additionalData.accommodations || [])[0] || {};
-            const { checkInDate, checkOutDate } = this.extractDates(req);
-            return {
-              id: req.id,
-              request_number: req.request_number || `ACC-${req.id}`,
-              requestorName: firstTruthy('N/A', req.requestor_name),
-              department: firstTruthy('N/A', req.department),
-              staffId: firstTruthy('N/A', req.staff_id),
-              location: firstTruthy('N/A', firstAccom.location, additionalData.location),
-              checkInDate,
-              checkOutDate,
-              roomType: firstTruthy('Any', firstAccom.room_type, firstAccom.roomType),
-              status: req.status ?? '',
-              requestedDate: firstTruthy('', req.submitted_at, req.created_at),
-              duration: this.calculateDuration(checkInDate, checkOutDate),
-              gender: firstTruthy('N/A', firstAccom.gender, additionalData.gender),
-              trfId: req.trf || undefined,
-              tsrDepartureDate: req.tsr_departure_date || '',
-              tsrReturnDate: req.tsr_return_date || '',
-            };
-          });
-
-        this.bookedAccommodations = requests
-          .filter(req => req.status === 'Accommodation Assigned')
-          .map(req => {
-            const additionalData = req.additional_data || {};
-            const firstAccom = (additionalData.accommodations || [])[0] || {};
-            const { checkInDate, checkOutDate } = this.extractDates(req);
-            return {
-              id: req.id,
-              requestNumber: req.request_number || `ACC-${req.id}`,
-              requestorName: firstTruthy('N/A', req.requestor_name),
-              staffId: firstTruthy('N/A', req.staff_id),
-              staffHouseName: 'Not assigned',
-              roomName: 'Not assigned',
-              location: firstTruthy('N/A', firstAccom.location, additionalData.location),
-              checkInDate,
-              checkOutDate,
-              status: firstTruthy('Confirmed', req.status),
-              notes: req.additional_comments,
-            };
-          });
-
+    this.accommodationProcessing.loadRequests().subscribe({
+      next: ({ pending, booked }) => {
+        this.pendingAccommodations = pending;
+        this.bookedAccommodations = booked;
         this.isLoadingPending = false;
         this.isLoadingBooked = false;
       },
@@ -305,7 +140,7 @@ export class AccommodationProcessingComponent implements OnInit {
    * Fetch all staff houses
    */
   fetchStaffHouses(): void {
-    this.accommodationService.getAllStaffHouses().subscribe({
+    this.accommodationProcessing.fetchStaffHouses().subscribe({
       next: staffHouses => {
         this.allStaffHouses = staffHouses;
         this.availableStaffHouses = staffHouses;
@@ -322,7 +157,7 @@ export class AccommodationProcessingComponent implements OnInit {
    * Fetch all rooms for calendar display
    */
   fetchAllRooms(): void {
-    this.accommodationService.getAllRooms().subscribe({
+    this.accommodationProcessing.fetchRooms().subscribe({
       next: rooms => {
         this.allRooms = rooms;
       },
@@ -338,24 +173,9 @@ export class AccommodationProcessingComponent implements OnInit {
   fetchBookings(): void {
     this.isLoadingBookings = true;
     // For now, fetch all bookings - in production you'd filter by month
-    this.accommodationService.getAllBookings({}).subscribe({
-      next: (bookings: AccommodationBooking[] | { results?: AccommodationBooking[] }) => {
-        // Handle both array and paginated response
-        const bookingsList: AccommodationBooking[] = Array.isArray(bookings)
-          ? bookings
-          : bookings.results || [];
-
-        this.bookings = bookingsList.map(b => ({
-          id: b.id,
-          staff_house_id: b.staff_house,
-          room_id: b.room,
-          date: b.date,
-          status: b.status,
-          guest_name: b.staff_name,
-          trf_id: b.trf,
-          notes: b.notes,
-        }));
-
+    this.accommodationProcessing.fetchBookings().subscribe({
+      next: bookings => {
+        this.bookings = bookings;
         this.isLoadingBookings = false;
       },
       error: err => {
@@ -374,7 +194,7 @@ export class AccommodationProcessingComponent implements OnInit {
       return;
     }
 
-    this.accommodationService.getAllRooms(this.selectedStaffHouse).subscribe({
+    this.accommodationProcessing.fetchRooms(this.selectedStaffHouse).subscribe({
       next: rooms => {
         // Filter only available rooms
         this.availableRooms = rooms.filter(room => room.status === 'Available');
@@ -561,26 +381,7 @@ export class AccommodationProcessingComponent implements OnInit {
    * Check if room is available for the selected date range
    */
   checkRoomAvailability(roomId: number): boolean {
-    if (!this.dateRange.from || !this.dateRange.to) return true;
-
-    const startDate = new Date(this.dateRange.from);
-    const endDate = new Date(this.dateRange.to);
-    const currentDate = new Date(startDate);
-
-    while (currentDate <= endDate) {
-      const dateStr = this.formatDateForComparison(currentDate);
-      const isBooked = this.bookings.some(
-        b =>
-          b.room_id === roomId &&
-          this.formatDateForComparison(new Date(b.date)) === dateStr &&
-          b.status !== 'Cancelled'
-      );
-
-      if (isBooked) return false;
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return true;
+    return isRoomAvailableForDates(roomId, this.dateRange.from, this.dateRange.to, this.bookings);
   }
 
   /**
@@ -607,37 +408,16 @@ export class AccommodationProcessingComponent implements OnInit {
     const checkIn = new Date(this.checkInDate);
     const checkOut = new Date(this.checkOutDate);
 
-    // Allow same-day checkout (checkOut == checkIn is valid)
-    if (checkOut < checkIn) {
-      this.toastService.error('Check-out date cannot be before check-in date');
+    const dateError = validateAssignmentDates(
+      checkIn,
+      checkOut,
+      this.hasTsrReference,
+      this.tsrMinDate,
+      this.tsrMaxDate
+    );
+    if (dateError) {
+      this.toastService.error(dateError);
       return;
-    }
-
-    // If TSR reference exists, validate dates are within TSR travel dates
-    if (this.hasTsrReference && this.tsrMinDate && this.tsrMaxDate) {
-      const tsrMin = new Date(this.tsrMinDate);
-      const tsrMax = new Date(this.tsrMaxDate);
-
-      if (checkIn < tsrMin || checkIn > tsrMax) {
-        this.toastService.error(
-          `Check-in date must be within TSR travel dates (${this.formatDateForDisplay(tsrMin)} - ${this.formatDateForDisplay(tsrMax)})`
-        );
-        return;
-      }
-
-      if (checkOut < tsrMin || checkOut > tsrMax) {
-        this.toastService.error(
-          `Check-out date must be within TSR travel dates (${this.formatDateForDisplay(tsrMin)} - ${this.formatDateForDisplay(tsrMax)})`
-        );
-        return;
-      }
-
-      if (checkOut > tsrMax) {
-        this.toastService.error(
-          `Check-out date cannot be after TSR return date (${this.formatDateForDisplay(tsrMax)})`
-        );
-        return;
-      }
     }
 
     // Check availability
@@ -651,10 +431,12 @@ export class AccommodationProcessingComponent implements OnInit {
     // Get staff house and room names
     const staffHouse = this.availableStaffHouses.find(h => h.id === this.selectedStaffHouse);
     const room = this.availableRooms.find(r => r.id === this.selectedRoom);
+    const selectedRoomId = this.selectedRoom;
+    const requestToAssign = this.selectedRequest;
 
     const assignmentData = {
       staff_house: this.selectedStaffHouse!,
-      room: this.selectedRoom,
+      room: selectedRoomId,
       start_date: this.checkInDate,
       end_date: this.checkOutDate,
       notes: this.bookingNotes,
@@ -662,28 +444,25 @@ export class AccommodationProcessingComponent implements OnInit {
     };
 
     // Call the backend assign endpoint which creates daily booking records
-    this.accommodationService
-      .assignAccommodation(this.selectedRequest.id, assignmentData)
-      .subscribe({
-        next: response => {
-          this.toastService.success(
-            response.message ||
-              `Room assigned successfully for ${this.selectedRequest!.requestorName}`
-          );
-          this.loadAccommodationRequests();
-          this.fetchBookings();
-          this.selectedRequest = null;
-          this.resetFormFields();
-          this.isProcessing = false;
-        },
-        error: err => {
-          console.error('Failed to assign accommodation:', err);
-          this.toastService.error(
-            this.errorHandler.getErrorMessage(err, 'Failed to assign accommodation')
-          );
-          this.isProcessing = false;
-        },
-      });
+    this.accommodationProcessing.assignRoom(requestToAssign.id, assignmentData).subscribe({
+      next: response => {
+        this.toastService.success(
+          response.message || `Room assigned successfully for ${requestToAssign.requestorName}`
+        );
+        this.loadAccommodationRequests();
+        this.fetchBookings();
+        this.selectedRequest = null;
+        this.resetFormFields();
+        this.isProcessing = false;
+      },
+      error: err => {
+        console.error('Failed to assign accommodation:', err);
+        this.toastService.error(
+          this.errorHandler.getErrorMessage(err, 'Failed to assign accommodation')
+        );
+        this.isProcessing = false;
+      },
+    });
   }
 
   /**
@@ -711,29 +490,23 @@ export class AccommodationProcessingComponent implements OnInit {
   private executeNoRoomsAvailable(): void {
     if (!this.selectedRequest) return;
     this.isProcessing = true;
+    const requestToReject = this.selectedRequest;
 
-    this.accommodationService
-      .rejectRequest(
-        this.selectedRequest.id,
-        'No rooms available for requested dates and location. Request rejected by Accommodation Admin.'
-      )
-      .subscribe({
-        next: () => {
-          this.toastService.success(
-            `Request ${this.selectedRequest!.request_number} rejected due to no available rooms`
-          );
-          this.loadAccommodationRequests();
-          this.selectedRequest = null;
-          this.resetFormFields();
-          this.isProcessing = false;
-        },
-        error: err => {
-          this.toastService.error(
-            this.errorHandler.getErrorMessage(err, 'Failed to reject request')
-          );
-          this.isProcessing = false;
-        },
-      });
+    this.accommodationProcessing.rejectNoRoomsAvailable(requestToReject.id).subscribe({
+      next: () => {
+        this.toastService.success(
+          `Request ${requestToReject.request_number} rejected due to no available rooms`
+        );
+        this.loadAccommodationRequests();
+        this.selectedRequest = null;
+        this.resetFormFields();
+        this.isProcessing = false;
+      },
+      error: err => {
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to reject request'));
+        this.isProcessing = false;
+      },
+    });
   }
 
   /**
@@ -756,23 +529,20 @@ export class AccommodationProcessingComponent implements OnInit {
   private executeCancelBooking(booking: BookedAccommodation): void {
     this.isProcessing = true;
 
-    // Find and delete all booking records for this accommodation
-    this.accommodationService.getAllBookings({ status: 'Confirmed' }).subscribe({
-      next: (bookings: AccommodationBooking[] | { results?: AccommodationBooking[] }) => {
-        const bookingsList: AccommodationBooking[] = Array.isArray(bookings)
-          ? bookings
-          : bookings.results || [];
-        const relatedBookings = bookingsList.filter(b => b.trf === booking.id);
-
-        const deletePromises = relatedBookings.map(b =>
-          lastValueFrom(this.accommodationService.deleteBooking(b.id))
-        );
-
-        Promise.all(deletePromises)
-          .then(() => {
-            // Update request status back to Approved
-            this.accommodationService.updateRequest(booking.id, { status: 'Approved' }).subscribe({
-              next: () => {
+    // Three phases, matching accommodation-processing.service.ts's
+    // fetchRelatedBookings/deleteBookings/restoreApprovedStatus split -
+    // each phase keeps its own original error handling: a failure
+    // fetching bookings shows "...for cancellation"; a failure deleting
+    // them shows the generic "Failed to cancel booking"; a failure
+    // restoring the request's status shows no toast at all (a
+    // pre-existing quirk, preserved rather than "fixed" here).
+    this.accommodationProcessing.fetchRelatedBookings(booking).then(
+      relatedBookings => {
+        this.accommodationProcessing
+          .deleteBookings(relatedBookings)
+          .then(() =>
+            this.accommodationProcessing.restoreApprovedStatus(booking).then(
+              () => {
                 this.toastService.success(
                   `Booking for ${booking.requestorName} cancelled successfully`
                 );
@@ -780,22 +550,22 @@ export class AccommodationProcessingComponent implements OnInit {
                 this.fetchBookings();
                 this.isProcessing = false;
               },
-              error: () => {
+              () => {
                 this.isProcessing = false;
-              },
-            });
-          })
+              }
+            )
+          )
           .catch(err => {
             console.error('Failed to delete bookings:', err);
             this.toastService.error('Failed to cancel booking');
             this.isProcessing = false;
           });
       },
-      error: () => {
+      () => {
         this.toastService.error('Failed to fetch bookings for cancellation');
         this.isProcessing = false;
-      },
-    });
+      }
+    );
   }
 
   /**
@@ -925,23 +695,7 @@ export class AccommodationProcessingComponent implements OnInit {
     date: Date,
     roomId: number
   ): { isOccupied: boolean; status: string | null; guestName: string | null } {
-    const dateStr = this.formatDateForComparison(date);
-    const booking = this.bookings.find(
-      b =>
-        b.room_id === roomId &&
-        this.formatDateForComparison(new Date(b.date)) === dateStr &&
-        b.status !== 'Cancelled'
-    );
-
-    if (booking) {
-      return {
-        isOccupied: true,
-        status: booking.status,
-        guestName: booking.guest_name || 'Unknown',
-      };
-    }
-
-    return { isOccupied: false, status: null, guestName: null };
+    return mapperGetDateBookingInfo(date, roomId, this.bookings);
   }
 
   /**

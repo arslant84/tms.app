@@ -32,24 +32,20 @@
             name="flightSearch"
             autocomplete="off"
             class="search-input"
-            placeholder="Search by booking reference, airline, or flight number..."
+            placeholder="Search by booking reference, airline, or flight number…"
+            aria-label="Search by booking reference, airline, or flight number"
             [value]="(listState.searchTerm | async) || ''"
-            (input)="onSearchChange($any($event.target).value)" />
+            (input)="onSearchChange($any($event.target).value)"
+          />
         </div>
         <div class="filter-container">
-          <select
-            class="filter-select"
-            [(ngModel)]="filterStatus"
-            (change)="onFilterChange()">
+          <select class="filter-select" [(ngModel)]="filterStatus" (change)="onFilterChange()">
             <option value="">All Statuses</option>
             <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
           </select>
         </div>
         <div class="filter-container">
-          <select
-            class="filter-select"
-            [(ngModel)]="filterClass"
-            (change)="onFilterChange()">
+          <select class="filter-select" [(ngModel)]="filterClass" (change)="onFilterChange()">
             <option value="">All Classes</option>
             <option *ngFor="let class of bookingClasses" [value]="class.value">
               {{ class.label }}
@@ -71,20 +67,34 @@
     </div>
 
     <!-- Loading State -->
-    <div *ngIf="(listState.loading | async)" class="loading-state">
-      <app-loading-spinner size="lg" message="Loading..."></app-loading-spinner>
-      <p>Loading flight bookings...</p>
+    <div *ngIf="listState.loading | async" class="loading-state">
+      <app-loading-spinner size="lg" message="Loading…"></app-loading-spinner>
+      <p>Loading flight bookings…</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="(listState.error | async) && !(listState.loading | async)" class="error-state">
+      <i class="bi bi-exclamation-triangle error-icon"></i>
+      <h3 class="error-title">Error Loading Flight Bookings</h3>
+      <p class="error-message">{{ listState.error | async }}</p>
+      <button class="btn btn-primary" (click)="fetchBookings()">Try Again</button>
     </div>
 
     <!-- Empty State -->
-    <div *ngIf="!(listState.loading | async) && bookings.length === 0" class="empty-state">
+    <div
+      *ngIf="!(listState.loading | async) && !(listState.error | async) && bookings.length === 0"
+      class="empty-state"
+    >
       <i class="bi bi-inbox empty-icon"></i>
       <h3 class="empty-message">No flight bookings found</h3>
       <p class="empty-subtitle">Create your first flight booking to get started</p>
     </div>
 
     <!-- Bookings Table -->
-    <div *ngIf="!(listState.loading | async) && bookings.length > 0" class="bookings-card-content">
+    <div
+      *ngIf="!(listState.loading | async) && !(listState.error | async) && bookings.length > 0"
+      class="bookings-card-content"
+    >
       <table class="bookings-table">
         <thead>
           <tr>
@@ -98,7 +108,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let booking of bookings" (click)="navigateToDetail(booking.id)" class="clickable-row">
+          <tr
+            *ngFor="let booking of bookings"
+            (click)="navigateToDetail(booking.id)"
+            class="clickable-row"
+          >
             <td class="ref-cell">{{ booking.booking_reference }}</td>
             <td>{{ booking.airline }} {{ booking.flight_number }}</td>
             <td>{{ formatRoute(booking) }}</td>
@@ -111,11 +125,21 @@
             </td>
             <td>
               <div class="action-buttons">
-                <button class="btn btn-sm btn-outline-primary btn-icon" (click)="navigateToEdit(booking.id, $event)" title="Edit">
-                  <i class="bi bi-pencil"></i>
+                <button
+                  class="btn btn-sm btn-outline-primary btn-icon"
+                  (click)="navigateToEdit(booking.id, $event)"
+                  title="Edit"
+                  aria-label="Edit"
+                >
+                  <i class="bi bi-pencil" aria-hidden="true"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger btn-icon" (click)="deleteBooking(booking.id, $event)" title="Delete">
-                  <i class="bi bi-trash"></i>
+                <button
+                  class="btn btn-sm btn-outline-danger btn-icon"
+                  (click)="deleteBooking(booking.id, $event)"
+                  title="Delete"
+                  aria-label="Delete"
+                >
+                  <i class="bi bi-trash" aria-hidden="true"></i>
                 </button>
               </div>
             </td>
@@ -126,23 +150,32 @@
       <!-- Pagination -->
       <div class="pagination-section">
         <span class="pagination-info">
-          Showing {{ ((listState.currentPage | async)! - 1) * listState.getPageSize() + 1 }}
-          to {{ Math.min((listState.currentPage | async)! * listState.getPageSize(), listState.getTotalItems()) }}
+          Showing {{ ((listState.currentPage | async)! - 1) * listState.getPageSize() + 1 }} to
+          {{
+            Math.min(
+              (listState.currentPage | async)! * listState.getPageSize(),
+              listState.getTotalItems()
+            )
+          }}
           of {{ listState.getTotalItems() }} bookings
         </span>
         <div class="pagination-controls">
           <button
             class="btn btn-sm btn-secondary"
             (click)="previousPage()"
-            [disabled]="!listState.hasPreviousPage()">
+            [disabled]="!listState.hasPreviousPage()"
+          >
             <i class="bi bi-chevron-left"></i>
             Previous
           </button>
-          <span class="page-indicator">Page {{ listState.currentPage | async }} of {{ listState.getTotalPages() }}</span>
+          <span class="page-indicator"
+            >Page {{ listState.currentPage | async }} of {{ listState.getTotalPages() }}</span
+          >
           <button
             class="btn btn-sm btn-secondary"
             (click)="nextPage()"
-            [disabled]="!listState.hasNextPage()">
+            [disabled]="!listState.hasNextPage()"
+          >
             Next
             <i class="bi bi-chevron-right"></i>
           </button>

@@ -2,7 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { TmsApp_Core_Services_NotificationsService, TmsApp_Notifications_NotificationTemplate, TmsApp_Notifications_NotificationEventType, TmsApp_Notifications_NotificationTemplateFormValues } from '../../../../core/services/notifications.service';
+import {
+  TmsApp_Core_Services_NotificationsService,
+  TmsApp_Notifications_NotificationTemplate,
+  TmsApp_Notifications_NotificationEventType,
+  TmsApp_Notifications_NotificationTemplateFormValues,
+} from '../../../../core/services/notifications.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
@@ -13,11 +18,12 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './notification-templates.component.html',
-  styleUrls: ['./notification-templates.component.scss']
+  styleUrls: ['./notification-templates.component.scss'],
 })
 export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implements OnInit {
   isLoading = true;
   isSaving = false;
+  error: string | null = null;
   templates: TmsApp_Notifications_NotificationTemplate[] = [];
   eventTypes: TmsApp_Notifications_NotificationEventType[] = [];
 
@@ -34,7 +40,7 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
     notification_type: 'email',
     recipient_type: 'approver',
     variables_available: [],
-    is_active: true
+    is_active: true,
   };
 
   constructor(
@@ -50,17 +56,19 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
 
   loadData(): void {
     this.isLoading = true;
+    this.error = null;
     Promise.all([
       this.notificationsService.getTemplates().toPromise(),
-      this.notificationsService.getEventTypes().toPromise()
+      this.notificationsService.getEventTypes().toPromise(),
     ])
       .then(([templates, eventTypes]) => {
         this.templates = templates || [];
         this.eventTypes = eventTypes || [];
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('Failed to load data:', error);
         this.toast.error('Failed to load notifications data');
+        this.error = 'Failed to load notification templates. Please try again.';
       })
       .finally(() => {
         this.isLoading = false;
@@ -79,7 +87,7 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
       notification_type: 'email',
       recipient_type: 'approver',
       variables_available: [],
-      is_active: true
+      is_active: true,
     };
     this.isModalOpen = true;
   }
@@ -99,12 +107,13 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
           notification_type: fullTemplate.notification_type,
           recipient_type: fullTemplate.recipient_type,
           variables_available: fullTemplate.variables_available || [],
-          is_active: fullTemplate.is_active
+          is_active: fullTemplate.is_active,
         };
 
         // Set selected event type for display
         if (fullTemplate.event_type) {
-          this.selectedEventType = this.eventTypes.find(et => et.id === fullTemplate.event_type) || null;
+          this.selectedEventType =
+            this.eventTypes.find(et => et.id === fullTemplate.event_type) || null;
         }
 
         this.isModalOpen = true;
@@ -138,17 +147,19 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
 
     op.subscribe({
       next: () => {
-        this.toast.success(this.currentTemplate ? 'Template updated successfully' : 'Template created successfully');
+        this.toast.success(
+          this.currentTemplate ? 'Template updated successfully' : 'Template created successfully'
+        );
         this.closeModal();
         this.loadData();
       },
-      error: (error) => {
+      error: error => {
         console.error('Failed to save template:', error);
         this.toast.error('Failed to save template');
       },
       complete: () => {
         this.isSaving = false;
-      }
+      },
     });
   }
 
@@ -165,26 +176,31 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
         this.toast.success('Template deleted successfully');
         this.templates = this.templates.filter(t => t.id !== template.id);
       },
-      error: (error) => {
+      error: error => {
         console.error('Failed to delete template:', error);
         this.toast.error('Failed to delete template');
-      }
+      },
     });
   }
 
   isFormValid(): boolean {
-    return !!(this.form.name && this.form.subject && this.form.body &&
-              this.form.notification_type && this.form.event_type);
+    return !!(
+      this.form.name &&
+      this.form.subject &&
+      this.form.body &&
+      this.form.notification_type &&
+      this.form.event_type
+    );
   }
 
   getAvailableVariables(): string[] {
     const generalVars = ['userName', 'date', 'requestId'];
     const eventSpecificVars: Record<string, string[]> = {
-      'trf': ['requestorName', 'approverName', 'comments', 'entityType'],
-      'visa': ['requestorName', 'approverName', 'comments', 'entityType'],
-      'claims': ['requestorName', 'approverName', 'comments', 'entityType'],
-      'transport': ['requestorName', 'approverName', 'comments', 'entityType'],
-      'accommodation': ['requestorName', 'approverName', 'comments', 'entityType'],
+      trf: ['requestorName', 'approverName', 'comments', 'entityType'],
+      visa: ['requestorName', 'approverName', 'comments', 'entityType'],
+      claims: ['requestorName', 'approverName', 'comments', 'entityType'],
+      transport: ['requestorName', 'approverName', 'comments', 'entityType'],
+      accommodation: ['requestorName', 'approverName', 'comments', 'entityType'],
     };
 
     if (this.selectedEventType) {
@@ -194,5 +210,4 @@ export class TmsApp_Admin_SystemSettings_NotificationTemplatesComponent implemen
 
     return generalVars;
   }
-
 }

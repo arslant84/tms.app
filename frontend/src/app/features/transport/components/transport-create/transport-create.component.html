@@ -8,7 +8,7 @@
 <div *ngIf="loading" class="loading-container">
   <div class="loading-spinner">
     <i class="bi bi-arrow-clockwise spin-animation"></i>
-    <p>Loading request data...</p>
+    <p>Loading request data…</p>
   </div>
 </div>
 
@@ -237,11 +237,11 @@
     </button>
     <button type="button" class="btn btn-secondary" (click)="onSaveDraft()" [disabled]="submitting">
       <i class="bi bi-save"></i>
-      {{ submitting ? 'Saving...' : 'Save Draft' }}
+      {{ submitting ? 'Saving…' : 'Save Draft' }}
     </button>
     <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="submitting">
       <i class="bi bi-send"></i>
-      {{ submitting ? 'Submitting...' : 'Submit Request' }}
+      {{ submitting ? 'Submitting…' : 'Submit Request' }}
     </button>
   </div>
 </div>
