@@ -54,7 +54,6 @@ def generate_accommodation_request_number(additional_data, applicant_name):
     caller simply doesn't set request_number in that case.
     """
     from accommodation.models import AccommodationRequest
-    from django.utils import timezone
     from utils.request_id_generator import (
         build_accommodation_request_id,
         ensure_unique_request_number,
@@ -90,7 +89,6 @@ def generate_accommodation_request_number_with_fallback(accommodation_request):
     rather than leaving request_number unset.
     """
     from accommodation.models import AccommodationRequest
-    from django.utils import timezone
     from utils.request_id_generator import (
         build_accommodation_request_id,
         ensure_unique_request_number,
@@ -392,42 +390,18 @@ def assign_accommodation(
 
         accommodation_request.save()
 
-        # Add workflow step execution if workflow is active
-        try:
-            from workflows.models import StepExecution, WorkflowStep
-
-            content_type = ContentType.objects.get_for_model(accommodation_request)
-            workflow_instance = WorkflowInstance.objects.filter(
-                content_type=content_type,
-                object_id=accommodation_request.id,
-                status="in_progress",
-            ).first()
-
-            if workflow_instance:
-                accommodation_step = WorkflowStep.objects.filter(
-                    workflow_definition=workflow_instance.workflow_definition,
-                    step_name="Accommodation Admin",
-                ).first()
-
-                if accommodation_step:
-                    StepExecution.objects.create(
-                        workflow_instance=workflow_instance,
-                        workflow_step=accommodation_step,
-                        assigned_role=actioned_by.role,
-                        status="completed",
-                        action_taken="assign",
-                        actioned_by=actioned_by,
-                        actioned_at=timezone.now(),
-                        comments=f"Assigned: {assigned_room_info}",
-                    )
-
-                    workflow_instance.status = "completed"
-                    workflow_instance.completed_at = timezone.now()
-                    workflow_instance.save()
-        except Exception as e:
-            logger.warning(f" Could not add workflow step execution: {str(e)}")
-            # Don't fail the assignment if workflow update fails
-
+        # A dead block used to sit here trying to record a workflow step
+        # execution for the accommodation request itself (ERD fix roadmap,
+        # Issue 16, removed 2026-09-11): it imported a model class,
+        # `StepExecution`, that has never existed (the real model is
+        # `WorkflowStepExecution`), so it always raised ImportError, silently
+        # swallowed by a bare `except Exception`. Beyond the broken import,
+        # it was also structurally unreachable under the current
+        # architecture - accommodation has no WorkflowTemplate of its own
+        # (entity_type="accommodation" doesn't exist as an active template;
+        # see docs/ACCOMMODATION_IN_TSR_ROADMAP.md), so no WorkflowInstance
+        # is ever created against an AccommodationRequest for it to have
+        # found anyway. Removed rather than repaired.
         if accommodation_request.trf:
             from trf.services import notify_department_focal_if_ready
 

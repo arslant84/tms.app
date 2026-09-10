@@ -312,8 +312,17 @@ class WorkflowInstance(models.Model):
     Tracks the current state of workflow execution
     """
 
+    # PROTECT, not CASCADE (ERD fix roadmap, Issue 6): a WorkflowInstance is
+    # historical audit trail, not an owned child the way WorkflowStep is -
+    # deleting a WorkflowTemplate must never silently wipe out every
+    # request's approval history that ever used it. This is exactly the risk
+    # migration 0031_cleanup_orphaned_homeleave_template had to carefully
+    # work around with conditional logic instead of a plain delete; PROTECT
+    # makes that the enforced default instead of something each caller has
+    # to remember. Deactivate (is_active=False) a template instead of
+    # deleting it if it has any instance history.
     workflow_template = models.ForeignKey(
-        WorkflowTemplate, on_delete=models.CASCADE, related_name="instances"
+        WorkflowTemplate, on_delete=models.PROTECT, related_name="instances"
     )
 
     # Generic relation to any entity (TRF, Visa, etc.)
@@ -331,6 +340,13 @@ class WorkflowInstance(models.Model):
             ("rejected", "Rejected"),
             ("cancelled", "Cancelled"),
             ("on_hold", "On Hold"),
+            # Distinct from "approved": the approval chain finished AND
+            # downstream post-approval processing (e.g. visa issued) is also
+            # done. Was already being set by visa/services.py's
+            # finalize_visa_workflow_completion() before this choice existed
+            # here - added to match real usage rather than to introduce new
+            # behavior (see docs/erd-fix-roadmap.md Issue 13).
+            ("completed", "Completed"),
         ],
         default="pending",
     )

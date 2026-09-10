@@ -1,5 +1,6 @@
-from django.db import models
 from accounts.models import User
+from django.db import models
+
 
 class VisaApplication(models.Model):
     request_number = models.CharField(
@@ -7,7 +8,7 @@ class VisaApplication(models.Model):
         unique=True,
         blank=True,
         null=True,
-        help_text="Auto-generated request number (e.g., VIS-20251102-1423-TKM-PCYX)"
+        help_text="Auto-generated request number (e.g., VIS-20251102-1423-TKM-PCYX)",
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     requestor_name = models.CharField(max_length=255)
@@ -23,16 +24,20 @@ class VisaApplication(models.Model):
     passport_number = models.CharField(max_length=255, blank=True, null=True)
     passport_expiry_date = models.DateField(blank=True, null=True)
     passport_file = models.FileField(
-        upload_to='visa/passports/',
+        upload_to="visa/passports/",
         blank=True,
         null=True,
-        help_text="Uploaded passport scan/photo for visa application"
+        help_text="Uploaded passport scan/photo for visa application",
     )
 
     # Note: STATUS_CHOICES removed to support dynamic workflow statuses
     # Status will be set by workflow engine based on configured approval roles
     # Examples: "Draft", "Pending HOD", "Pending Line Manager", "Approved", etc.
-    status = models.CharField(max_length=100, default='Draft', help_text="Dynamic status set by workflow engine")
+    status = models.CharField(
+        max_length=100,
+        default="Draft",
+        help_text="Dynamic status set by workflow engine",
+    )
     additional_comments = models.TextField(blank=True, null=True)
     submitted_date = models.DateTimeField(blank=True, null=True)
     last_updated_date = models.DateTimeField(auto_now=True)
@@ -54,28 +59,25 @@ class VisaApplication(models.Model):
     current_employer_address = models.TextField(blank=True, null=True)
     marital_status = models.CharField(max_length=255, blank=True, null=True)
     family_information = models.TextField(blank=True, null=True)
-    request_type = models.CharField(max_length=255, default='VISA')
+    request_type = models.CharField(max_length=255, default="VISA")
     approximately_arrival_date = models.DateField(blank=True, null=True)
     duration_of_stay = models.CharField(max_length=255, blank=True, null=True)
     visa_entry_type = models.CharField(max_length=255, blank=True, null=True)
     work_visit_category = models.CharField(max_length=255, blank=True, null=True)
     application_fees_borne_by = models.CharField(max_length=255, blank=True, null=True)
     cost_centre_number = models.CharField(max_length=255, blank=True, null=True)
-    line_focal_person = models.CharField(max_length=255, blank=True, null=True)
-    line_focal_dept = models.CharField(max_length=255, blank=True, null=True)
-    line_focal_contact = models.CharField(max_length=255, blank=True, null=True)
-    line_focal_date = models.DateField(blank=True, null=True)
-    sponsoring_dept_head = models.CharField(max_length=255, blank=True, null=True)
-    sponsoring_dept_head_dept = models.CharField(max_length=255, blank=True, null=True)
-    sponsoring_dept_head_contact = models.CharField(max_length=255, blank=True, null=True)
-    sponsoring_dept_head_date = models.DateField(blank=True, null=True)
-    ceo_approval_name = models.CharField(max_length=255, blank=True, null=True)
-    ceo_approval_date = models.DateField(blank=True, null=True)
+    # line_focal_*/sponsoring_dept_head_*/ceo_approval_* removed 2026-09-11
+    # (ERD fix roadmap, Issue 4): never read or written by any serializer,
+    # view, or frontend code - a fixed-shape approval chain that was
+    # superseded by VisaApprovalStep (and now the generic workflow engine)
+    # before ever being wired up to anything. Confirmed dead via grep across
+    # the whole backend and frontend; the one row with any value in these
+    # columns held junk test data ("uykyu" etc.), not real approvals.
     itinerary_details = models.TextField(blank=True, null=True)
     supporting_documents_notes = models.TextField(blank=True, null=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.requestor_name
@@ -92,10 +94,10 @@ class VisaApprovalStep(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
-        return f'{self.visa} - {self.step_name}'
+        return f"{self.visa} - {self.step_name}"
 
 
 class VisaDocument(models.Model):

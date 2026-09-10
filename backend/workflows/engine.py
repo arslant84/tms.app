@@ -212,7 +212,17 @@ class WorkflowEngine:
             raise ValueError("Comments are required for this step")
 
         # Update step execution
-        step_execution.status = action + "d" if action != "skip" else "skipped"
+        # Past-tense form of each action - not action + "d", which silently
+        # produced "rejectd" (missing the middle "e") for "reject" while
+        # coincidentally working for "approve" -> "approved". Caught by the
+        # workflows_workflowstepexecution_status_valid CHECK constraint
+        # (docs/erd-fix-roadmap.md Issue 13) rejecting the malformed value.
+        past_tense_action = {
+            "approve": "approved",
+            "reject": "rejected",
+            "skip": "skipped",
+        }[action]
+        step_execution.status = past_tense_action
         step_execution.actioned_by = actioned_by
         step_execution.action_date = timezone.now()
         step_execution.comments = comments
@@ -223,8 +233,8 @@ class WorkflowEngine:
         # Log the action
         WorkflowAuditLog.objects.create(
             workflow_instance=workflow_instance,
-            action_type=action + "d" if action != "skip" else "skipped",
-            action_description=f"Step '{step_execution.workflow_step.step_name}' {action}d by {actioned_by.email}",
+            action_type=past_tense_action,
+            action_description=f"Step '{step_execution.workflow_step.step_name}' {past_tense_action} by {actioned_by.email}",
             performed_by=actioned_by,
         )
 

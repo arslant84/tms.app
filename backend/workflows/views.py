@@ -3,6 +3,7 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from utils import error_response, success_response
@@ -91,6 +92,26 @@ class WorkflowTemplateViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Set creator when creating template"""
         serializer.save(created_by=self.request.user)
+
+    def perform_destroy(self, instance):
+        """
+        Reject deletion with a clear error instead of an unhandled 500 if
+        the template has any WorkflowInstance history - workflow_template
+        is on_delete=PROTECT (ERD fix roadmap, Issue 6) specifically so
+        approval history can never be silently destroyed by deleting its
+        template. Deactivate the template instead.
+        """
+        if instance.instances.exists():
+            raise DRFValidationError(
+                {
+                    "detail": (
+                        f"Cannot delete '{instance.name}' - {instance.instances.count()} "
+                        "workflow instance(s) reference it. Set is_active=false to "
+                        "deactivate it instead of deleting it."
+                    )
+                }
+            )
+        instance.delete()
 
     @action(detail=True, methods=["post"])
     def duplicate(self, request, pk=None):
