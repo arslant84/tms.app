@@ -10,7 +10,7 @@ from workflows.models import WorkflowStep, WorkflowTemplate
 
 
 class Command(BaseCommand):
-    help = "Creates default workflow templates for all modules (TRF, Visa, Transport, Accommodation)"
+    help = "Creates default workflow templates for all modules (TRF, Visa, Transport)"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -248,70 +248,13 @@ class Command(BaseCommand):
             self.style.SUCCESS("  ✓ Created Transport workflow with 4 steps")
         )
 
-    def create_accommodation_workflow(self, created_by):
-        """Create Accommodation Request workflow"""
-        self.stdout.write("Creating Accommodation Request workflow...")
-
-        template = WorkflowTemplate.objects.create(
-            name="Accommodation Request Standard Approval Workflow",
-            description="Standard approval workflow for Accommodation Requests (subset of TRF)",
-            entity_type="travelrequest",  # Accommodation is part of TRF
-            is_active=False,  # Inactive since TRF workflow handles this
-            allow_parallel_steps=False,
-            auto_approve_on_condition=False,
-            created_by=created_by,
-        )
-
-        # Step 1: Department Focal
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=1,
-            step_name="Department Focal Approval",
-            step_description="Department Focal reviews accommodation needs",
-            approver_role="Department Focal",
-            is_required=True,
-            can_skip=False,
-            requires_comments=False,
-        )
-
-        # Step 2: Line Manager
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=2,
-            step_name="Line Manager Approval",
-            step_description="Line Manager approves the accommodation request",
-            approver_role="Line Manager",
-            is_required=True,
-            can_skip=False,
-            requires_comments=False,
-        )
-
-        # Step 3: HOD
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=3,
-            step_name="HOD Approval",
-            step_description="Head of Department approves the accommodation request",
-            approver_role="HOD",
-            is_required=True,
-            can_skip=False,
-            requires_comments=False,
-        )
-
-        # Step 4: Accommodation Admin
-        WorkflowStep.objects.create(
-            workflow_template=template,
-            step_order=4,
-            step_name="Accommodation Admin Processing",
-            step_description="Accommodation Admin arranges booking",
-            approver_role="Accommodation Admin",
-            is_required=True,
-            can_skip=False,
-            requires_comments=False,
-        )
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                "  ✓ Created Accommodation workflow with 4 steps (inactive)"
-            )
-        )
+    # create_accommodation_workflow was removed (2026-09-10): it was never
+    # called from handle() (only TRF/Visa/Transport are), so it never ran in
+    # any environment - and its entity_type="travelrequest" (with a comment
+    # claiming "Accommodation is part of TRF") contradicted the real runtime
+    # lookup accommodation actually uses (entity_type="accommodation", see
+    # accommodation/accommodation_request_views.py and accommodation/services.py).
+    # The real accommodation WorkflowTemplate (entity_type="accommodation",
+    # correctly deactivated - accommodation now rides on the parent TSR's own
+    # approval, see docs/ACCOMMODATION_IN_TSR_ROADMAP.md) was seeded through a
+    # different path entirely; this dead method never created it.
