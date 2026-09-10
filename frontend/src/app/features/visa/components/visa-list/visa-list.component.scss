@@ -136,18 +136,6 @@
   }
 }
 
-.clear-filters-section {
-  padding-top: vars.$spacing-md;
-}
-
-.btn-clear {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-1;
-  font-size: vars.$font-size-sm;
-  padding: vars.$spacing-2 vars.$spacing-3;
-}
-
 // Visa List Card
 .visa-list-card {
   background: vars.$white;
@@ -257,6 +245,7 @@
         padding: vars.$spacing-md vars.$spacing-3;
         vertical-align: middle;
         color: vars.$gray-700;
+        border: none;
       }
     }
   }

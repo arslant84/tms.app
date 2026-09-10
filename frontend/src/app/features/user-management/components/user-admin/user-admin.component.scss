@@ -324,6 +324,13 @@
     margin-bottom: vars.$spacing-md;
   }
 
+  h3 {
+    font-size: vars.$font-size-lg;
+    font-weight: vars.$font-weight-semibold;
+    color: vars.$text-primary;
+    margin: 0 0 vars.$spacing-2;
+  }
+
   p {
     color: vars.$text-secondary;
     margin: vars.$spacing-2 0;
@@ -337,6 +344,10 @@
 .empty-state i {
   color: vars.$gray-500;
 }
+
+// Growing the results card (and centering the message) when there are
+// zero results is handled globally - see "EMPTY-RESULTS CARD FILL" in
+// styles.scss - so every list/admin page gets it uniformly.
 
 // Password Strength Indicator
 .password-strength {

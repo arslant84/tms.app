@@ -58,12 +58,6 @@
           </option>
         </select>
       </div>
-
-      <div *ngIf="hasActiveFilters()" class="clear-filters-section">
-        <button class="btn btn-outline-secondary btn-sm btn-clear" (click)="clearFilters()">
-          <i class="bi bi-x me-1"></i>Clear All Filters
-        </button>
-      </div>
     </div>
   </div>
 
@@ -254,9 +248,6 @@
           {{ hasActiveFilters() ? 'No TSRs found matching your criteria.' : 'No TSRs found.' }}
         </p>
         <p class="empty-subtitle">Click "Create New TSR" to get started.</p>
-        <button *ngIf="hasActiveFilters()" class="btn btn-link" (click)="clearFilters()">
-          Clear Filters
-        </button>
       </div>
     </div>
   </div>

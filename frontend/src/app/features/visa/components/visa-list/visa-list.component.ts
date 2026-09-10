@@ -249,24 +249,4 @@ export class VisaListComponent implements OnInit, OnDestroy {
   getStatusBadgeClass(status: string): string {
     return this.statusUtils.getStatusBadgeClass(status);
   }
-
-  /**
-   * Check if any filters are currently active
-   */
-  hasActiveFilters(): boolean {
-    return (
-      this.listState.hasActiveFilters() || this.filterStatus !== '' || this.filterVisaType !== ''
-    );
-  }
-
-  /**
-   * Clear all active filters and reset to first page
-   */
-  clearFilters(): void {
-    this.listState.clearSearch();
-    this.listState.clearFilters();
-    this.filterStatus = '';
-    this.filterVisaType = '';
-    this.fetchApplications();
-  }
 }

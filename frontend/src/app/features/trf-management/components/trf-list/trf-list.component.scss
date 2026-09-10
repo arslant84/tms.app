@@ -124,18 +124,6 @@
   }
 }
 
-.clear-filters-section {
-  padding-top: vars.$spacing-md;
-}
-
-.btn-clear {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-1;
-  font-size: vars.$font-size-xs;
-  padding: vars.$spacing-1 vars.$spacing-3;
-}
-
 // TSR List Card
 .tsr-list-card {
   background: vars.$bg-primary;

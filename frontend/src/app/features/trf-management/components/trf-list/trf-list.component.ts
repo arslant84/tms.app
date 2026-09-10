@@ -174,16 +174,6 @@ export class TrfListComponent implements OnInit, OnDestroy {
     this.fetchTrfs();
   }
 
-  clearFilters(): void {
-    this.listState.clearSearch();
-    this.listState.clearFilters();
-    this.statusFilter = '';
-    this.travelTypeFilter = '';
-    this.sortKey = 'submitted_at';
-    this.sortDirection = 'descending';
-    this.fetchTrfs();
-  }
-
   hasActiveFilters(): boolean {
     return (
       this.listState.hasActiveFilters() || this.statusFilter !== '' || this.travelTypeFilter !== ''

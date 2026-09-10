@@ -156,55 +156,28 @@ h2 {
   cursor: not-allowed !important;
 }
 
-// ========== PAGE CONTAINER HEIGHT FIX ==========
-// Ensure all page containers fill the full height of the content area
-// This prevents pages from displaying with empty space below content
+// ========== PAGE CONTAINER HEIGHT FIX (removed 2026-09-10) ==========
+// Was: force the last .card in each admin/list container to flex:1 and
+// fill 100% of the remaining viewport height, with an inner
+// .table-responsive{overflow-y:auto} scroll region, so long tables scroll
+// in place instead of pushing the page down. Implemented as two mixins
+// (fill-height-last-card, fill-height-card-with-table) included from the
+// selector blocks below.
 //
-// Shared by both blocks below (was ~80 lines of duplicated declarations
-// that could silently drift between the two - now one definition each).
-@mixin fill-height-last-card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0; // Let this flex item shrink to the container instead of forcing siblings out
-
-  .card-body {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .table-responsive {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow-y: auto; // Without this, content taller than the fixed-height container was silently clipped instead of scrolling
-
-    table {
-      flex: 1;
-    }
-  }
-}
-
-@mixin fill-height-card-with-table {
-  /* stylelint-disable-next-line nesting-selector-no-missing-scoping-root -- & only gets a scoping root once this mixin is @included inside a rule */
-  &:has(.table-responsive) {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-
-    .table-responsive {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      overflow-y: auto;
-    }
-  }
-}
+// Removed: flex-grow doesn't know how much space content actually needs -
+// it unconditionally fills whatever's left in the flex track. That's
+// invisible for a table with enough rows to fill the viewport anyway, but
+// for a short result set (e.g. a filtered admin list down to one match) it
+// left a large dead area below the last row, inside the card's own white
+// background - and made the deliberate "no border-bottom on the truly
+// last row" convention look broken, since there was no visible card edge
+// anywhere near that row to explain why its border was missing.
+//
+// Cards now size to their own content instead (no mixin needed - a flex
+// child with no explicit flex value already sizes to content by default):
+// short lists stay compact, and a table long enough to exceed the
+// viewport scrolls the whole page (browser-level) rather than inside a
+// capped inner region.
 
 // Explicit, known container classes. The bracketed selectors below are a
 // deliberate, documented fallback for pages that don't opt in explicitly -
@@ -226,27 +199,76 @@ h2 {
 .trf-create-container,
 .trf-detail-container,
 .dashboard-container,
+// These four don't match the wildcard fallbacks below (flights-overview
+// isn't "*-admin-container", and the *-page suffix used by meal-admin and
+// department-focal-admin isn't "*-container" at all) - listed explicitly
+// instead of renaming their component classes just to fit the pattern.
+.flights-overview-container,
+.meal-admin-page,
+.department-focal-admin-page,
+.approvals-container,
 // Also apply to any other admin or feature containers
 [class*="-admin-container"],
 [class*="-panel-container"],
 [class*="-list-container"],
 [class*="admin-"][class*="-container"],
 [class*="trf-"][class*="-container"] {
+  // min-height only, deliberately NOT height:100% - a hard height cap forces
+  // flex-shrink to kick in once real content (e.g. a long table) exceeds one
+  // viewport, and since .card has overflow:hidden, flexbox's shrink
+  // protection (min-height:auto) is disabled - so a sibling .card (like the
+  // filters card) gets crushed down to a sliver instead of the page simply
+  // growing and scrolling. min-height still gives short content a full
+  // viewport-height flex column to grow into (same effect for that case);
+  // it just stops capping tall content.
   min-height: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
   background-color: transparent;
+}
 
-  // Make the last card grow to fill remaining space
-  > .card:last-of-type,
-  > div:last-child > .card:last-of-type {
-    @include fill-height-last-card;
+// ========== EMPTY-RESULTS CARD FILL (added 2026-09-10) ==========
+// The height fix above was deliberately removed for short-but-nonempty
+// result sets (see the note further up) - stretching those left dead space
+// below a complete, already-rendered table. A genuinely empty result (zero
+// rows) is different: there's no table to look "cut short" next to, so the
+// short white .empty-state box sitting above bare page background reads as
+// broken/unfinished rather than as a normal, compact result. This grows
+// just that case - a .card (or a component's own "*-card" wrapper, e.g.
+// .visa-list-card) that contains .empty-state and no actual
+// table/table-responsive - so the message is nicely centered in the space
+// the page already reserves, instead of leaving a stub above blank
+// background. Structural (:has()), not per-page, so every current and
+// future list/admin page gets this the same way without its own override.
+// [class*="-card"] (substring, not $=) because these wrappers usually carry
+// extra trailing classes too (e.g. class="visa-list-card shadow-lg"), which
+// $= "ends with" would miss entirely. A substring match is safe here since
+// :has(.empty-state) already restricts this to the one actual results
+// wrapper - it won't accidentally grow an unrelated "*-card-header" div,
+// since headers never contain .empty-state.
+:is(.card, [class*='-card']):has(.empty-state):not(:has(.table-responsive), :has(table)) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  // Some pages nest .empty-state inside a .card-body (or their own
+  // "*-card-content" wrapper); others (e.g. pending-approvals) put it
+  // directly under .card with no wrapper. This only matches when a
+  // wrapper actually exists, so it's a no-op (not an error) either way.
+  > :has(.empty-state) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
-  // Also handle cards that are not last but should still expand
-  > .card {
-    @include fill-height-card-with-table;
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -271,21 +293,12 @@ tmsapp-admin-systemsettings-workflow-configuration,
   min-height: 100%;
 
   > .container-fluid {
+    // min-height only - see the matching note on the container-class block
+    // above for why a hard height:100% cap is wrong here.
     min-height: 100%;
-    height: 100%;
     display: flex;
     flex-direction: column;
     background-color: transparent;
-
-    // Make the last card grow to fill remaining space
-    > .card:last-of-type {
-      @include fill-height-last-card;
-    }
-
-    // Also handle cards that are not last but should still expand
-    > .card {
-      @include fill-height-card-with-table;
-    }
   }
 }
 
