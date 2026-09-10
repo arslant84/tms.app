@@ -69,12 +69,15 @@ class TravelRequest(models.Model):
     )
 
     # ForeignKey to User who created the request
+    # NOT NULL since 2026-09-11 (ERD fix roadmap, Issue 11): every TRF has
+    # had a creator in both dev and production for as long as anyone
+    # checked (production audited via a direct COUNT query before this was
+    # added), and perform_create always sets it - nullability was legacy
+    # caution, not a real, currently-used state.
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="travel_requests_created",
-        null=True,
-        blank=True,
     )
 
     def __str__(self):
