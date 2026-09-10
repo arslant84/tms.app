@@ -214,6 +214,8 @@ This diagram simplifies to 4 abstract role categories for readability — the re
 
 **`view_admin_department_focal` permission added (2026-08-30, migration `accounts/0045_add_department_focal_queue_permission.py`)**, granted only to the `Department Focal` role — gates the new Department Focal admin queue, §7.2.
 
+**Note (2026-09-11, ERD review):** `django.contrib.auth` is in `INSTALLED_APPS` (needed for Django admin/internals), which brings along its own built-in `Group`/`Permission` tables (`auth_group`, `auth_permission`, `auth_group_permissions`, plus the user-facing join tables `accounts_user_groups`/`accounts_user_user_permissions`). **None of it is used anywhere in this application** — every permission check in this codebase goes through the custom `accounts.Role`/`accounts.Permission`/`RolePermission` system described above, confirmed by grepping for any use of `user.groups`/`user.user_permissions`/`django.contrib.auth.models.Group` (zero hits). These Django-internal tables are expected to stay empty; don't build new features against them, and don't be alarmed that they exist unused.
+
 ---
 
 ## 5. Security Controls Stack
@@ -617,3 +619,64 @@ The four dead signal modules that used to exist in `trf`, `accommodation`, `tran
 | DevSecOps | ESLint + Prettier | TypeScript/HTML quality |
 | DevSecOps | pre-commit | Git hook runner |
 | DevSecOps | Husky + lint-staged | Frontend git hooks |
+
+---
+
+## 9. Database Schema Conventions & History
+
+**ERD integrity cleanup (2026-09-11).** A full ERD review against the live
+codebase found and fixed a batch of schema issues — dropped tables, a
+cascade-delete risk, missing constraints, and a couple of real bugs the new
+constraints caught immediately. Summarized here for anyone who needs the
+current state; the full audit trail (including two full rounds of
+corrections made *during* implementation, after a first-pass constraint
+broke real tests) lives in `docs/erd-fix-roadmap.md` locally (gitignored,
+not pushed — regenerate or ask for it if you need the blow-by-blow).
+
+- **Dropped, zero code references anywhere:** four pre-Django tables
+  (`users`, `travel_requests`, `audit_logs`, `alembic_version`) left over
+  from before this backend was ported from FastAPI/SQLAlchemy to Django
+  (commit `0d276763`), and four `expenses_*` tables belonging to an
+  `expenses` Django app that was deleted from the codebase without its
+  migrations ever being reverted first. If you ever see either set
+  referenced in an old doc/screenshot, they're gone — `accounts_user` and
+  `trf_travelrequest` are the real, current equivalents, and there is no
+  expense-claims feature in the current codebase.
+- **`WorkflowInstance.workflow_template` is `on_delete=PROTECT`, not
+  `CASCADE`.** Deleting a `WorkflowTemplate` that has any instance history
+  now fails with a clear error (both at the ORM level and via the admin
+  API's `perform_destroy()` override) instead of silently wiping that
+  history. Deactivate a template (`is_active=False`) instead of deleting it
+  if it's ever been used.
+- **`WorkflowStep.approver_permission` has a real FK** to
+  `accounts_permission.name` now (`ON DELETE SET NULL, ON UPDATE CASCADE`,
+  so renaming a permission updates every step that references it instead of
+  orphaning them). `approver_role` remains the older, `[DEPRECATED]`
+  free-text field — prefer `approver_permission` for anything new, though
+  as of 2026-09-11 no workflow step in this database actually uses it yet
+  (see §4's RBAC note below for the two role/permission systems this sits
+  between).
+- **The four per-module `*ApprovalStep` tables (`TrfApprovalStep`,
+  `VisaApprovalStep`, `TransportApprovalStep`) are legacy, dual-written
+  alongside the generic `WorkflowInstance`/`WorkflowStepExecution` engine
+  on purpose**, not by oversight — see `trf/services.py`,
+  `visa/services.py`, `transport/services.py`'s own "legacy fallback"
+  comments and `tests/workflows/test_legacy_fallback_authorization.py`.
+  This is a known, intentionally-deferred consolidation (real production
+  usage of the fallback path needs to be confirmed near-zero for a full
+  release cycle before it's safe to stop the dual-write) — don't "clean
+  this up" as a quick refactor; it needs its own dedicated project.
+- **PK typing has no single rule across this schema** and that's expected,
+  not accidental drift: `bigint` identity columns are used for
+  high-volume/operational tables (requests, bookings, workflow rows), while
+  `uuid` is used for admin-config/security-sensitive tables (`accounts_role`,
+  `accounts_permission`, `accounts_department`, `notification_templates`,
+  `notification_event_types`, `accounts_adminactionlog`,
+  `accounts_bulkimportjob`). Match whichever convention your new table's
+  category already uses rather than introducing a third pattern.
+- **`GenericForeignKey.object_id` fields are `PositiveBigIntegerField`**
+  (`WorkflowInstance`, `UserNotification`) to match the `bigint` PKs of
+  everything they can point to — if you add a new `GenericForeignKey`
+  anywhere in this codebase, use `PositiveBigIntegerField` for its
+  `object_id`, not the Django-default `PositiveIntegerField` (which caps
+  out around 2.1 billion, below what a `bigint` PK can reach).

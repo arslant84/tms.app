@@ -327,7 +327,12 @@ class WorkflowInstance(models.Model):
 
     # Generic relation to any entity (TRF, Visa, etc.)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    # PositiveBigIntegerField, not PositiveIntegerField (ERD fix roadmap,
+    # Issue 14): several entities this can point to (trf_travelrequest,
+    # visa_visaapplication, etc.) use bigint PKs, which a 32-bit
+    # PositiveIntegerField would silently wrap/fail on once one exceeds
+    # ~2.1 billion.
+    object_id = models.PositiveBigIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
 
     # Workflow state
