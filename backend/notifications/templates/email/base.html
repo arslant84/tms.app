@@ -18,7 +18,7 @@
 
                     <!-- Header -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); padding: 32px 24px; text-align: center;">
+                        <td style="background-color: #0f766e; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); padding: 32px 24px; text-align: center;">
                             <table width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td align="center">
@@ -65,9 +65,14 @@
                                     <td align="center">
                                         <table cellpadding="0" cellspacing="0" border="0">
                                             <tr>
-                                                <td align="center" style="border-radius: 6px; background-color: #0d9488; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                                <!-- Padding lives on the td, not the <a>: Outlook's Word
+                                                     rendering engine doesn't reliably apply padding to an
+                                                     inline-block anchor, which shrank the button down to
+                                                     hug the text with no visible padding. A td's padding is
+                                                     one of the few box-model properties Outlook does honor. -->
+                                                <td align="center" style="border-radius: 6px; background-color: #0d9488; padding: 14px 28px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
                                                     <a href="{{ action_url }}"
-                                                       style="display: inline-block; padding: 14px 28px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; border-radius: 6px; letter-spacing: 0.02em;"
+                                                       style="display: block; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 0.02em;"
                                                        target="_blank">
                                                         {{ action_text|default:"View Details" }}
                                                     </a>
