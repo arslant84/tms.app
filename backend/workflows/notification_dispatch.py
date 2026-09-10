@@ -648,11 +648,6 @@ def _build_notification_context(step_execution):
         "completionDate": completion_date,
         # Status
         "status": step_execution.status,
-        "urgencyHint": (
-            "High priority"
-            if getattr(step_execution.workflow_step, "is_urgent", False)
-            else "Normal priority"
-        ),
         "processorHint": f"Please review and approve {step_execution.workflow_step.step_name}",
         "completionDetails": "All approval steps have been successfully completed.",
         "rejectionReason": step_execution.comments or "No reason provided",
