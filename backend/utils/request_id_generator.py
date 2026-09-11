@@ -184,13 +184,27 @@ def ensure_unique_request_number(
     common case produces exactly the requested format and collisions
     (e.g. the same applicant resubmitting the same trip same-day) never
     fail a save with a uniqueness IntegrityError.
+
+    Truncates to the field's actual max_length (read from the model, not
+    hardcoded, since every current caller happens to use 50 but this
+    shouldn't silently drift out of sync if that ever changes) - and
+    reserves room for the "-N" suffix *before* checking for collisions,
+    not after. A candidate built right at the limit (e.g. a long
+    applicant name pushing "ACCOM-KIYANLY-20261020-JahanDovletalyyeva-
+    20260911" to exactly 50 chars) previously fit only until a collision
+    forced a "-2" suffix onto the end, pushing it past max_length and
+    crashing the save with an unhandled StringDataRightTruncation instead
+    of just... producing a request number that fits.
     """
+    max_length = model_cls._meta.get_field(field_name).max_length
+    candidate = candidate[:max_length]
     if not model_cls.objects.filter(**{field_name: candidate}).exists():
         return candidate
 
     suffix = 2
     while True:
-        next_candidate = f"{candidate}-{suffix}"
+        suffix_str = f"-{suffix}"
+        next_candidate = candidate[: max_length - len(suffix_str)] + suffix_str
         if not model_cls.objects.filter(**{field_name: next_candidate}).exists():
             return next_candidate
         suffix += 1

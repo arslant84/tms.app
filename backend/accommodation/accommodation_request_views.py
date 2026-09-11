@@ -9,6 +9,7 @@ modules in the same split.
 
 import logging
 
+from django.db import DataError
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
@@ -388,7 +389,22 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
         # Update status and submitted_at
         accommodation_request.status = "Pending"
         accommodation_request.submitted_at = timezone.now()
-        accommodation_request.save()
+        try:
+            accommodation_request.save()
+        except DataError as e:
+            # The request_number generator now truncates to the field's
+            # actual max_length itself, so this shouldn't fire in practice
+            # any more - kept as a safety net against any other unexpected
+            # DB-level save failure here, so it surfaces as a normal JSON
+            # error response instead of an unhandled 500 (whose raw HTML
+            # the frontend has no way to render sensibly to the user).
+            logger.error(f" Failed to save accommodation request on submit: {e}")
+            return Response(
+                {
+                    "error": "Could not submit this request due to a data error. Please try again or contact support."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Start workflow using WorkflowRouter
         start_accommodation_workflow(accommodation_request, request.data, request.user)
