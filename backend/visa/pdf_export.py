@@ -7,12 +7,10 @@ DRF request/response wiring beyond the HttpResponse it returns.
 
 import io
 
-from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph
 from utils import pdf_export
-from workflows.models import WorkflowInstance
 
 
 def build_request_pdf(visa) -> HttpResponse:
@@ -232,78 +230,26 @@ def build_request_pdf(visa) -> HttpResponse:
     # Approval History - try workflow first, then fall back to legacy approval steps
     approval_found = False
 
-    # Try workflow-based approval history
-    try:
-        content_type = ContentType.objects.get_for_model(visa)
-        workflow_instance = WorkflowInstance.objects.filter(
-            content_type=content_type, object_id=visa.id
-        ).first()
-
-        if workflow_instance and workflow_instance.step_executions.exists():
-            # Build table first, then add heading only if successful
-            approval_data = [
-                ["Step", "Role", "Status", "Actioned By", "Date", "Comments"]
-            ]
-            for step in workflow_instance.step_executions.select_related(
-                "workflow_step", "actioned_by"
-            ).order_by("workflow_step__step_order"):
-                approval_data.append(
-                    [
-                        str(step.workflow_step.step_order),
-                        (step.workflow_step.step_name or "-")[:14],
-                        step.status or "-",
-                        step.actioned_by.name if step.actioned_by else "-",
-                        (
-                            step.action_date.strftime("%Y-%m-%d %H:%M")
-                            if step.action_date
-                            else "-"
-                        ),
-                        (step.comments or "-")[:30],
-                    ]
-                )
-            # Only add if we have actual data rows (more than just header)
-            if len(approval_data) > 1:
-                elements.extend(pdf_export.section_heading("Approval History", styles))
-                elements.append(
-                    pdf_export.make_table(
-                        approval_data,
-                        [
-                            0.4 * inch,
-                            1.2 * inch,
-                            0.9 * inch,
-                            1.2 * inch,
-                            1.3 * inch,
-                            2 * inch,
-                        ],
-                    )
-                )
-                approval_found = True
-    except Exception:
-        pass
+    step_executions = pdf_export.get_latest_step_executions(visa)
+    if step_executions:
+        elements.extend(pdf_export.section_heading("Approval History", styles))
+        elements.append(
+            pdf_export.make_table(
+                pdf_export.approval_history_rows(step_executions),
+                pdf_export.APPROVAL_HISTORY_COL_WIDTHS,
+            )
+        )
+        approval_found = True
 
     # Fall back to legacy approval steps if no workflow found
     if not approval_found:
         approval_steps = visa.visaapprovalstep_set.all().order_by("created_at")
         if approval_steps.exists():
             elements.extend(pdf_export.section_heading("Approval History", styles))
-            approval_data = [["Role", "Status", "Date", "Comments"]]
-            for step in approval_steps:
-                approval_data.append(
-                    [
-                        step.step_role or "-",
-                        step.status or "-",
-                        (
-                            step.step_date.strftime("%Y-%m-%d %H:%M")
-                            if step.step_date
-                            else "-"
-                        ),
-                        (step.comments or "-")[:50],
-                    ]
-                )
             elements.append(
                 pdf_export.make_table(
-                    approval_data,
-                    [1.5 * inch, 1.2 * inch, 1.5 * inch, 3 * inch],
+                    pdf_export.legacy_approval_history_rows(approval_steps),
+                    pdf_export.APPROVAL_HISTORY_COL_WIDTHS,
                 )
             )
 

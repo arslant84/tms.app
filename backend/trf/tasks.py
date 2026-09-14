@@ -4,7 +4,6 @@ Celery tasks for the TRF app.
 
 import io
 import logging
-import re
 
 from celery import shared_task
 from django.core.cache import cache
@@ -68,7 +67,6 @@ def _build_pdf_bytes(trf):
     This is the same logic as TravelRequestViewSet.export_pdf, extracted so
     it can run inside a Celery worker without an HTTP request context.
     """
-    from django.contrib.contenttypes.models import ContentType
     from reportlab.lib.units import inch
     from reportlab.platypus import Paragraph, Spacer
     from trf.models import (
@@ -79,56 +77,6 @@ def _build_pdf_bytes(trf):
         TrfItinerarySegment,
     )
     from utils import pdf_export
-    from workflows.models import WorkflowInstance
-
-    def _latest_step_executions(entity):
-        """
-        Return *entity*'s most recent WorkflowInstance's step executions
-        (ordered by step order), or None if it never had one - e.g.
-        accommodation, which rides on the parent TRF's own approval chain
-        instead of having a WorkflowTemplate of its own. Shared by the main
-        TRF "Approval History" section and the embedded Accommodation/
-        Transport sections below, so all three show approver identity the
-        same way instead of each re-deriving it.
-        """
-        content_type = ContentType.objects.get_for_model(entity)
-        workflow_instance = (
-            WorkflowInstance.objects.filter(
-                content_type=content_type, object_id=entity.id
-            )
-            .order_by("-created_at")
-            .first()
-        )
-        if not workflow_instance:
-            return None
-        executions = workflow_instance.step_executions.select_related(
-            "workflow_step", "actioned_by"
-        ).order_by("workflow_step__step_order")
-        return executions if executions.exists() else None
-
-    def _approval_table_rows(step_executions):
-        rows = [["Approver", "Role", "Status", "Date", "Comments"]]
-        for execution in step_executions:
-            # WorkflowStep.step_name is always "Step N: <Role> Approval"
-            # (e.g. "Step 2: HOD Approval") - strip that boilerplate down to
-            # just the role.
-            step_name = execution.workflow_step.step_name or ""
-            role_display = re.sub(r"^Step \d+:\s*", "", step_name)
-            role_display = re.sub(r"\s*Approval$", "", role_display).strip()
-            rows.append(
-                [
-                    (execution.actioned_by.name if execution.actioned_by else "-"),
-                    (role_display or step_name or "-")[:22],
-                    execution.status or "-",
-                    (
-                        execution.action_date.strftime("%Y-%m-%d %H:%M")
-                        if execution.action_date
-                        else "-"
-                    ),
-                    (execution.comments or "-")[:40],
-                ]
-            )
-        return rows
 
     buffer = io.BytesIO()
     doc = pdf_export.new_document(buffer)
@@ -354,7 +302,7 @@ def _build_pdf_bytes(trf):
                         [1.2 * inch, 1.5 * inch, 1.5 * inch, 1.2 * inch, 1.1 * inch],
                     )
                 )
-            transport_steps = _latest_step_executions(transport_req)
+            transport_steps = pdf_export.get_latest_step_executions(transport_req)
             if transport_steps:
                 elements.append(Spacer(1, 6))
                 elements.append(
@@ -363,8 +311,8 @@ def _build_pdf_bytes(trf):
                 elements.append(Spacer(1, 4))
                 elements.append(
                     pdf_export.make_table(
-                        _approval_table_rows(transport_steps),
-                        [1.5 * inch, 1.5 * inch, 0.8 * inch, 1.3 * inch, 2.1 * inch],
+                        pdf_export.approval_history_rows(transport_steps),
+                        pdf_export.APPROVAL_HISTORY_COL_WIDTHS,
                     )
                 )
 
@@ -575,41 +523,24 @@ def _build_pdf_bytes(trf):
     # actually actioned each step (actioned_by) — TrfApprovalStep never did,
     # only the role. Checking legacy first (as this used to) meant the
     # richer modern path was effectively never reached for TRF exports.
-    step_executions = _latest_step_executions(trf)
+    step_executions = pdf_export.get_latest_step_executions(trf)
 
     if step_executions is not None:
         elements.extend(pdf_export.section_heading("Approval History", styles))
         elements.append(
             pdf_export.make_table(
-                _approval_table_rows(step_executions),
-                [1.5 * inch, 1.5 * inch, 0.8 * inch, 1.3 * inch, 2.1 * inch],
+                pdf_export.approval_history_rows(step_executions),
+                pdf_export.APPROVAL_HISTORY_COL_WIDTHS,
             )
         )
     else:
         approval_steps = TrfApprovalStep.objects.filter(trf=trf).order_by("created_at")
         if approval_steps.exists():
             elements.extend(pdf_export.section_heading("Approval History", styles))
-            # TrfApprovalStep never recorded who actioned a step, only their
-            # role, so "Approver" is always "-" here.
-            approval_data = [["Approver", "Role", "Status", "Date", "Comments"]]
-            for step in approval_steps:
-                approval_data.append(
-                    [
-                        "-",
-                        step.step_role or "-",
-                        step.status or "-",
-                        (
-                            step.step_date.strftime("%Y-%m-%d %H:%M")
-                            if step.step_date
-                            else "-"
-                        ),
-                        (step.comments or "-")[:50],
-                    ]
-                )
             elements.append(
                 pdf_export.make_table(
-                    approval_data,
-                    [1.3 * inch, 1.2 * inch, 1 * inch, 1.4 * inch, 2.3 * inch],
+                    pdf_export.legacy_approval_history_rows(approval_steps),
+                    pdf_export.APPROVAL_HISTORY_COL_WIDTHS,
                 )
             )
 

@@ -9,12 +9,10 @@ object, touches no other state, returns an HttpResponse.
 
 import io
 
-from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, Spacer
 from utils import pdf_export
-from workflows.models import WorkflowInstance
 
 
 def build_request_pdf(accommodation_request):
@@ -208,52 +206,15 @@ def build_request_pdf(accommodation_request):
         elements.append(pdf_export.make_table(no_booking_data, [2 * inch, 5 * inch]))
 
     # Approval History from Workflow
-    try:
-        content_type = ContentType.objects.get_for_model(accommodation_request)
-        workflow_instance = WorkflowInstance.objects.filter(
-            content_type=content_type, object_id=accommodation_request.id
-        ).first()
-
-        if workflow_instance and workflow_instance.step_executions.exists():
-            # Build table first, then add heading only if we have data
-            approval_data = [
-                ["Step", "Role", "Status", "Actioned By", "Date", "Comments"]
-            ]
-            for step in workflow_instance.step_executions.select_related(
-                "workflow_step", "actioned_by"
-            ).order_by("workflow_step__step_order"):
-                approval_data.append(
-                    [
-                        str(step.workflow_step.step_order),
-                        (step.workflow_step.step_name or "-")[:14],
-                        step.status or "-",
-                        step.actioned_by.name if step.actioned_by else "-",
-                        (
-                            step.action_date.strftime("%Y-%m-%d %H:%M")
-                            if step.action_date
-                            else "-"
-                        ),
-                        (step.comments or "-")[:30],
-                    ]
-                )
-            # Only add if we have actual data rows (more than just header)
-            if len(approval_data) > 1:
-                elements.extend(pdf_export.section_heading("Approval History", styles))
-                elements.append(
-                    pdf_export.make_table(
-                        approval_data,
-                        [
-                            0.4 * inch,
-                            1.2 * inch,
-                            0.9 * inch,
-                            1.2 * inch,
-                            1.3 * inch,
-                            2 * inch,
-                        ],
-                    )
-                )
-    except Exception:
-        pass  # No workflow found, skip approval history
+    step_executions = pdf_export.get_latest_step_executions(accommodation_request)
+    if step_executions:
+        elements.extend(pdf_export.section_heading("Approval History", styles))
+        elements.append(
+            pdf_export.make_table(
+                pdf_export.approval_history_rows(step_executions),
+                pdf_export.APPROVAL_HISTORY_COL_WIDTHS,
+            )
+        )
 
     # Additional Comments
     if accommodation_request.additional_comments:

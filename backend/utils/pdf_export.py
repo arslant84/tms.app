@@ -141,6 +141,107 @@ def make_table(data, col_widths):
     return table
 
 
+def get_latest_step_executions(entity):
+    """
+    Return *entity*'s most recent WorkflowInstance's step executions
+    (ordered by step order), or None if it never had one - e.g.
+    accommodation, which rides on its parent TSR's own approval chain
+    instead of having a WorkflowTemplate of its own.
+
+    Shared by every PDF export (TRF, Visa, Transport, Accommodation) so
+    they all resolve approval history the same way, instead of each
+    module hand-rolling its own copy of this lookup (previously true -
+    all four had a near-identical inline version, one of which even used
+    a bare `except Exception: pass` around it).
+    """
+    from django.contrib.contenttypes.models import ContentType
+    from workflows.models import WorkflowInstance
+
+    content_type = ContentType.objects.get_for_model(entity)
+    workflow_instance = (
+        WorkflowInstance.objects.filter(content_type=content_type, object_id=entity.id)
+        .order_by("-created_at")
+        .first()
+    )
+    if not workflow_instance:
+        return None
+    executions = workflow_instance.step_executions.select_related(
+        "workflow_step", "actioned_by"
+    ).order_by("workflow_step__step_order")
+    return executions if executions.exists() else None
+
+
+APPROVAL_HISTORY_COL_WIDTHS = [
+    1.5 * inch,
+    1.5 * inch,
+    0.8 * inch,
+    1.3 * inch,
+    2.1 * inch,
+]
+
+
+def approval_history_rows(step_executions):
+    """
+    Build ["Approver", "Role", "Status", "Date", "Comments"] table rows
+    from a WorkflowStepExecution queryset (see get_latest_step_executions)
+    - the one canonical layout every PDF export should use, so approval
+    history reads identically everywhere. Before this was centralized,
+    three of the four modules used a different "Step/Role/Status/Actioned
+    By/Date/Comments" layout with the raw, un-cleaned step_name truncated
+    to 14 characters (e.g. "Step 1: Line M"), while TRF's own export used
+    this cleaner one - pick this module's helpers (get_latest_step_executions
+    + approval_history_rows + APPROVAL_HISTORY_COL_WIDTHS) for any new PDF
+    section that needs approval history, not the old inline pattern.
+    """
+    import re
+
+    rows = [["Approver", "Role", "Status", "Date", "Comments"]]
+    for execution in step_executions:
+        # WorkflowStep.step_name is always "Step N: <Role> Approval" (e.g.
+        # "Step 2: HOD Approval") - strip that boilerplate down to just the
+        # role.
+        step_name = execution.workflow_step.step_name or ""
+        role_display = re.sub(r"^Step \d+:\s*", "", step_name)
+        role_display = re.sub(r"\s*Approval$", "", role_display).strip()
+        rows.append(
+            [
+                (execution.actioned_by.name if execution.actioned_by else "-"),
+                (role_display or step_name or "-")[:22],
+                execution.status or "-",
+                (
+                    execution.action_date.strftime("%Y-%m-%d %H:%M")
+                    if execution.action_date
+                    else "-"
+                ),
+                (execution.comments or "-")[:40],
+            ]
+        )
+    return rows
+
+
+def legacy_approval_history_rows(legacy_steps):
+    """
+    Same ["Approver", "Role", "Status", "Date", "Comments"] layout as
+    approval_history_rows, built from a legacy *ApprovalStep queryset
+    (TrfApprovalStep, VisaApprovalStep, TransportApprovalStep - all three
+    share the same step_role/status/step_date/comments fields) instead of
+    WorkflowStepExecution. These never recorded who actioned a step, only
+    their role, so "Approver" is always "-".
+    """
+    rows = [["Approver", "Role", "Status", "Date", "Comments"]]
+    for step in legacy_steps:
+        rows.append(
+            [
+                "-",
+                step.step_role or "-",
+                step.status or "-",
+                (step.step_date.strftime("%Y-%m-%d %H:%M") if step.step_date else "-"),
+                (step.comments or "-")[:50],
+            ]
+        )
+    return rows
+
+
 def section_heading(text, styles):
     """Section heading with a colored accent rule underneath."""
     return [
