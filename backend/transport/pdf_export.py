@@ -182,6 +182,10 @@ def build_request_pdf(transport_request) -> HttpResponse:
                         else "-"
                     ),
                 ],
+                [
+                    "Assigned By",
+                    assignment.assigned_by.name if assignment.assigned_by else "-",
+                ],
             ]
             elements.append(
                 pdf_export.make_table(assignment_data, [2 * inch, 5 * inch])

@@ -47,6 +47,19 @@ class VisaApplication(models.Model):
     processing_details = models.JSONField(blank=True, null=True)
     processing_started_at = models.DateTimeField(blank=True, null=True)
     processing_completed_at = models.DateTimeField(blank=True, null=True)
+    # Who marked processing complete - `complete()` in
+    # visa_application_views.py already passed request.user through to
+    # finalize_visa_workflow_completion() for the completion notification,
+    # but never persisted it anywhere durable. processing_details also has
+    # a "completed_by_admin" key, but that's just a boolean (human vs
+    # system-completed), not an identity.
+    processing_completed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="visa_applications_completed",
+    )
     date_of_birth = models.DateField(blank=True, null=True)
     place_of_birth = models.CharField(max_length=255, blank=True, null=True)
     citizenship = models.CharField(max_length=255, blank=True, null=True)

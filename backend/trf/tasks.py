@@ -480,7 +480,9 @@ def _build_pdf_bytes(trf):
             )
 
     # Flight Booking Details
-    flight_bookings = trf.flight_bookings.all().order_by("departure_time")
+    flight_bookings = trf.flight_bookings.select_related("booked_by").order_by(
+        "departure_time"
+    )
     if flight_bookings.exists():
         elements.extend(pdf_export.section_heading("Flight Booking Details", styles))
         for booking in flight_bookings:
@@ -490,6 +492,18 @@ def _build_pdf_bytes(trf):
                 ["Airline", booking.airline or "-"],
                 ["Status", booking.status or "-"],
             ]
+            if booking.booked_by:
+                summary_data.append(
+                    [
+                        "Booked By",
+                        (
+                            f"{booking.booked_by.name} "
+                            f"({booking.booking_date.strftime('%Y-%m-%d %H:%M')})"
+                            if booking.booking_date
+                            else booking.booked_by.name
+                        ),
+                    ]
+                )
             elements.append(pdf_export.make_table(summary_data, [2 * inch, 5 * inch]))
             segment_data = [
                 [

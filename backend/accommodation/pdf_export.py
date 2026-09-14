@@ -92,6 +92,18 @@ def build_request_pdf(accommodation_request):
             ),
         ],
     ]
+    if accommodation_request.processed_by:
+        tracking_data.append(
+            [
+                "Assigned By",
+                (
+                    f"{accommodation_request.processed_by.name} "
+                    f"({accommodation_request.processed_at.strftime('%Y-%m-%d %H:%M')})"
+                    if accommodation_request.processed_at
+                    else accommodation_request.processed_by.name
+                ),
+            ]
+        )
     elements.append(pdf_export.make_table(tracking_data, [2 * inch, 5 * inch]))
 
     # Booking Details

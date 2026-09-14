@@ -426,6 +426,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         # Update visa status and processing details
         visa.status = "Completed"
         visa.processing_completed_at = timezone.now()
+        visa.processing_completed_by = request.user
 
         # Update processing details if provided
         if "processing_details" in request.data:

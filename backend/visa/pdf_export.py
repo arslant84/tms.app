@@ -91,6 +91,10 @@ def build_request_pdf(visa) -> HttpResponse:
                 else "Not completed"
             ),
         ],
+    ]
+    if visa.processing_completed_by:
+        tracking_data.append(["Processed By", visa.processing_completed_by.name])
+    tracking_data.append(
         [
             "Last Updated",
             (
@@ -98,8 +102,8 @@ def build_request_pdf(visa) -> HttpResponse:
                 if visa.updated_at
                 else "Not available"
             ),
-        ],
-    ]
+        ]
+    )
     elements.append(pdf_export.make_table(tracking_data, [2 * inch, 5 * inch]))
 
     # Travel Details
