@@ -381,6 +381,8 @@ def assign_accommodation(
 
         # Update accommodation request status
         accommodation_request.status = "Accommodation Assigned"
+        accommodation_request.processed_by = actioned_by
+        accommodation_request.processed_at = timezone.now()
 
         # Update additional_comments with assignment info
         if accommodation_request.additional_comments:

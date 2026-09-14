@@ -68,6 +68,7 @@ def _build_pdf_bytes(trf):
     This is the same logic as TravelRequestViewSet.export_pdf, extracted so
     it can run inside a Celery worker without an HTTP request context.
     """
+    from django.contrib.contenttypes.models import ContentType
     from reportlab.lib.units import inch
     from reportlab.platypus import Paragraph, Spacer
     from trf.models import (
@@ -78,6 +79,56 @@ def _build_pdf_bytes(trf):
         TrfItinerarySegment,
     )
     from utils import pdf_export
+    from workflows.models import WorkflowInstance
+
+    def _latest_step_executions(entity):
+        """
+        Return *entity*'s most recent WorkflowInstance's step executions
+        (ordered by step order), or None if it never had one - e.g.
+        accommodation, which rides on the parent TRF's own approval chain
+        instead of having a WorkflowTemplate of its own. Shared by the main
+        TRF "Approval History" section and the embedded Accommodation/
+        Transport sections below, so all three show approver identity the
+        same way instead of each re-deriving it.
+        """
+        content_type = ContentType.objects.get_for_model(entity)
+        workflow_instance = (
+            WorkflowInstance.objects.filter(
+                content_type=content_type, object_id=entity.id
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if not workflow_instance:
+            return None
+        executions = workflow_instance.step_executions.select_related(
+            "workflow_step", "actioned_by"
+        ).order_by("workflow_step__step_order")
+        return executions if executions.exists() else None
+
+    def _approval_table_rows(step_executions):
+        rows = [["Approver", "Role", "Status", "Date", "Comments"]]
+        for execution in step_executions:
+            # WorkflowStep.step_name is always "Step N: <Role> Approval"
+            # (e.g. "Step 2: HOD Approval") - strip that boilerplate down to
+            # just the role.
+            step_name = execution.workflow_step.step_name or ""
+            role_display = re.sub(r"^Step \d+:\s*", "", step_name)
+            role_display = re.sub(r"\s*Approval$", "", role_display).strip()
+            rows.append(
+                [
+                    (execution.actioned_by.name if execution.actioned_by else "-"),
+                    (role_display or step_name or "-")[:22],
+                    execution.status or "-",
+                    (
+                        execution.action_date.strftime("%Y-%m-%d %H:%M")
+                        if execution.action_date
+                        else "-"
+                    ),
+                    (execution.comments or "-")[:40],
+                ]
+            )
+        return rows
 
     buffer = io.BytesIO()
     doc = pdf_export.new_document(buffer)
@@ -181,6 +232,18 @@ def _build_pdf_bytes(trf):
         elements.append(
             Paragraph(f"<b>Processing Status:</b> {meal_status}", normal_style)
         )
+        if trf.meal_processed_by:
+            processed_when = (
+                trf.meal_processed_at.strftime("%Y-%m-%d %H:%M")
+                if trf.meal_processed_at
+                else "-"
+            )
+            elements.append(
+                Paragraph(
+                    f"<b>Processed By:</b> {trf.meal_processed_by.name} ({processed_when})",
+                    normal_style,
+                )
+            )
         elements.append(Spacer(1, 6))
         meal_data = [["Date", "Breakfast", "Lunch", "Dinner", "Supper", "Refreshment"]]
         for meal in meal_selections:
@@ -228,10 +291,19 @@ def _build_pdf_bytes(trf):
                     f"{b.room} @ {b.staff_house} ({b.date})" for b in bookings
                 )
                 accom_data.append(["Assigned", booking_summary[:200]])
+            if accom.processed_by:
+                processed_when = (
+                    accom.processed_at.strftime("%Y-%m-%d %H:%M")
+                    if accom.processed_at
+                    else "-"
+                )
+                accom_data.append(
+                    ["Assigned By", f"{accom.processed_by.name} ({processed_when})"]
+                )
             elements.append(pdf_export.make_table(accom_data, [2 * inch, 5 * inch]))
 
     # Embedded Transport
-    from transport.models import TransportRequest
+    from transport.models import TransportRequest, VehicleAssignment
 
     transport_requests = TransportRequest.objects.filter(trf=trf)
     if transport_requests.exists():
@@ -244,6 +316,24 @@ def _build_pdf_bytes(trf):
                     normal_style,
                 )
             )
+            vehicle_assignment = (
+                VehicleAssignment.objects.filter(transport_request=transport_req)
+                .select_related("assigned_by")
+                .order_by("-assignment_date")
+                .first()
+            )
+            if vehicle_assignment and vehicle_assignment.assigned_by:
+                assigned_when = (
+                    vehicle_assignment.assignment_date.strftime("%Y-%m-%d %H:%M")
+                    if vehicle_assignment.assignment_date
+                    else "-"
+                )
+                elements.append(
+                    Paragraph(
+                        f"<b>Assigned By:</b> {vehicle_assignment.assigned_by.name} ({assigned_when})",
+                        normal_style,
+                    )
+                )
             elements.append(Spacer(1, 6))
             journeys = transport_req.transport_details or []
             if journeys:
@@ -262,6 +352,19 @@ def _build_pdf_bytes(trf):
                     pdf_export.make_table(
                         journey_data,
                         [1.2 * inch, 1.5 * inch, 1.5 * inch, 1.2 * inch, 1.1 * inch],
+                    )
+                )
+            transport_steps = _latest_step_executions(transport_req)
+            if transport_steps:
+                elements.append(Spacer(1, 6))
+                elements.append(
+                    Paragraph("<b>Transport Approval History</b>", normal_style)
+                )
+                elements.append(Spacer(1, 4))
+                elements.append(
+                    pdf_export.make_table(
+                        _approval_table_rows(transport_steps),
+                        [1.5 * inch, 1.5 * inch, 0.8 * inch, 1.3 * inch, 2.1 * inch],
                     )
                 )
 
@@ -458,50 +561,13 @@ def _build_pdf_bytes(trf):
     # actually actioned each step (actioned_by) — TrfApprovalStep never did,
     # only the role. Checking legacy first (as this used to) meant the
     # richer modern path was effectively never reached for TRF exports.
-    from django.contrib.contenttypes.models import ContentType
-    from workflows.models import WorkflowInstance
+    step_executions = _latest_step_executions(trf)
 
-    content_type = ContentType.objects.get_for_model(trf)
-    workflow_instance = (
-        WorkflowInstance.objects.filter(content_type=content_type, object_id=trf.id)
-        .order_by("-created_at")
-        .first()
-    )
-    step_executions = (
-        workflow_instance.step_executions.select_related(
-            "workflow_step", "actioned_by"
-        ).order_by("workflow_step__step_order")
-        if workflow_instance
-        else None
-    )
-
-    if step_executions is not None and step_executions.exists():
+    if step_executions is not None:
         elements.extend(pdf_export.section_heading("Approval History", styles))
-        approval_data = [["Approver", "Role", "Status", "Date", "Comments"]]
-        for execution in step_executions:
-            # WorkflowStep.step_name is always "Step N: <Role> Approval"
-            # (e.g. "Step 2: HOD Approval") — strip that boilerplate down to
-            # just the role, matching the legacy TrfApprovalStep.step_role
-            # convention this table used to show exclusively.
-            step_name = execution.workflow_step.step_name or ""
-            role_display = re.sub(r"^Step \d+:\s*", "", step_name)
-            role_display = re.sub(r"\s*Approval$", "", role_display).strip()
-            approval_data.append(
-                [
-                    (execution.actioned_by.name if execution.actioned_by else "-"),
-                    (role_display or step_name or "-")[:22],
-                    execution.status or "-",
-                    (
-                        execution.action_date.strftime("%Y-%m-%d %H:%M")
-                        if execution.action_date
-                        else "-"
-                    ),
-                    (execution.comments or "-")[:40],
-                ]
-            )
         elements.append(
             pdf_export.make_table(
-                approval_data,
+                _approval_table_rows(step_executions),
                 [1.5 * inch, 1.5 * inch, 0.8 * inch, 1.3 * inch, 2.1 * inch],
             )
         )

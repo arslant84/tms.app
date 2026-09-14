@@ -793,7 +793,15 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
 
         trf = self.get_object()
         trf.meal_processing_status = new_status
-        trf.save(update_fields=["meal_processing_status"])
+        trf.meal_processed_by = user
+        trf.meal_processed_at = timezone.now()
+        trf.save(
+            update_fields=[
+                "meal_processing_status",
+                "meal_processed_by",
+                "meal_processed_at",
+            ]
+        )
 
         from trf.services import notify_department_focal_if_ready
 

@@ -1,6 +1,7 @@
-from django.db import models
 from accounts.models import User
+from django.db import models
 from trf.models import TravelRequest
+
 
 class AccommodationStaffHouse(models.Model):
     name = models.CharField(max_length=255)
@@ -13,17 +14,19 @@ class AccommodationStaffHouse(models.Model):
     def __str__(self):
         return self.name
 
+
 class AccommodationRoom(models.Model):
     staff_house = models.ForeignKey(AccommodationStaffHouse, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     room_type = models.CharField(max_length=255, blank=True, null=True)
     capacity = models.IntegerField(default=1)
-    status = models.CharField(max_length=255, default='Available')
+    status = models.CharField(max_length=255, default="Available")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
+
 
 class AccommodationRequest(models.Model):
     """
@@ -39,7 +42,7 @@ class AccommodationRequest(models.Model):
         unique=True,
         blank=True,
         null=True,
-        help_text="Auto-generated request number (e.g., ACCOM-20251102-1423-DFS-PCYX)"
+        help_text="Auto-generated request number (e.g., ACCOM-20251102-1423-DFS-PCYX)",
     )
     requestor_name = models.CharField(max_length=255)
     staff_id = models.CharField(max_length=255, blank=True, null=True)
@@ -48,31 +51,64 @@ class AccommodationRequest(models.Model):
     cost_center = models.CharField(max_length=255, blank=True, null=True)
     tel_email = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
-    trf = models.ForeignKey(TravelRequest, on_delete=models.SET_NULL, blank=True, null=True, related_name='accommodation_requests')
-    status = models.CharField(max_length=100, default='Draft', help_text="Dynamic status set by workflow engine")
+    trf = models.ForeignKey(
+        TravelRequest,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="accommodation_requests",
+    )
+    status = models.CharField(
+        max_length=100,
+        default="Draft",
+        help_text="Dynamic status set by workflow engine",
+    )
     additional_comments = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     additional_data = models.JSONField(blank=True, null=True)
+    # Who/when a room was assigned (accommodation_request_views.py's
+    # `assign` action, via accommodation/services.py's assign_accommodation).
+    # Accommodation has no WorkflowTemplate of its own to draw an approver
+    # from (see docs/ACCOMMODATION_IN_TSR_ROADMAP.md - it rides on the
+    # parent TRF's own approval chain), so this is the only record of who
+    # actually processed the request.
+    processed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="accommodation_requests_processed",
+    )
+    processed_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.requestor_name
+
 
 class AccommodationBooking(models.Model):
     staff_house = models.ForeignKey(AccommodationStaffHouse, on_delete=models.CASCADE)
     room = models.ForeignKey(AccommodationRoom, on_delete=models.CASCADE)
     staff = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
-    accommodation_request = models.ForeignKey(AccommodationRequest, on_delete=models.CASCADE, blank=True, null=True, related_name='bookings')
+    accommodation_request = models.ForeignKey(
+        AccommodationRequest,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name="bookings",
+    )
     date = models.DateField()
-    trf = models.ForeignKey(TravelRequest, on_delete=models.CASCADE, blank=True, null=True)
-    status = models.CharField(max_length=255, default='Confirmed')
+    trf = models.ForeignKey(
+        TravelRequest, on_delete=models.CASCADE, blank=True, null=True
+    )
+    status = models.CharField(max_length=255, default="Confirmed")
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('room', 'date')
+        unique_together = ("room", "date")
 
     def __str__(self):
-        return f'{self.room} on {self.date}'
+        return f"{self.room} on {self.date}"

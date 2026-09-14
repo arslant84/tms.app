@@ -54,6 +54,19 @@ class TravelRequest(models.Model):
     meal_processing_status = models.CharField(
         max_length=20, choices=MEAL_PROCESSING_STATUS_CHOICES, default="Pending"
     )
+    # Who/when a Meal Admin last changed meal_processing_status - meal
+    # provisioning was never run through the workflow engine, just this one
+    # status flag, so there was previously no record of who arranged it at
+    # all (unlike accommodation/transport, which at least have an approval
+    # chain to fall back on). Set in TravelRequestViewSet.update_meal_status.
+    meal_processed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="meal_requests_processed",
+    )
+    meal_processed_at = models.DateTimeField(null=True, blank=True)
     advance_consent_accepted = models.BooleanField(
         default=False,
         help_text="Requestor acknowledged the advance amount refund/deduction Terms and Conditions (Overseas only).",
