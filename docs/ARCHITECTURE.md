@@ -309,6 +309,81 @@ The four `CRON` jobs above are real, tested Django management commands (`backend
 
 **Celery was introduced 2026-08-2x** to move slow, request-blocking work off the Gunicorn worker thread: bulk CSV user import (`accounts.tasks.process_bulk_user_import` — previously caused 502s on large uploads by exceeding the 30s Gunicorn timeout), notification email sending (`notifications.tasks.send_notification_email`, queue `emails`), TRF PDF export (`trf.tasks.export_trf_pdf`, queue `pdfs`, result cached in Redis for 10 minutes), and bulk approve/reject (`approvals.tasks.bulk_approve_task`). Redis (`Memurai` in the Windows dev environment) serves as both the Celery broker/result backend and the Django cache backend. **This supersedes the "no Celery anywhere in this codebase" statements elsewhere in this document (§7.3, §8) — those describe the pre-Celery design and are kept below as historical context, not current state.**
 
+### 6.1 Infrastructure & Network Topology
+
+§6's diagram above shows software processes and how they call each other; it deliberately doesn't distinguish "different host" from "different process on the same host." This diagram fills that gap — it's the actual network-level picture: how many VMs exist, what's externally reachable, and what's bound to localhost only.
+
+**Confirmed (2026-09-11): this is a single-VM deployment.** Every component below — Nginx, Gunicorn, the Celery worker(s), Redis, PostgreSQL, MinIO, cron, and the local filesystem — runs as a process on one host. Nothing in this environment is split across separate app/db/cache VMs.
+
+```mermaid
+graph TB
+    subgraph Internet["Internet"]
+        USERS["Users — Browser"]
+    end
+
+    subgraph Perimeter["Perimeter — Firewall (ufw, host-level, confirmed 2026-09-11)"]
+        RULE["Default: deny incoming · allow outgoing · deny routed<br/>Explicit ALLOW IN (v4 + v6), all from Anywhere:<br/>22/tcp (SSH) · 80/tcp · 443/tcp · 3443/tcp (Uptime Kuma HTTPS)<br/>Everything else: dropped"]
+    end
+
+    subgraph VM["Single Production VM"]
+        NG2["Nginx :443 / :80<br/>TLS termination · reverse proxy · static/SPA files"]
+        GN2["Gunicorn — 127.0.0.1:8000 (or unix socket)<br/>Django application"]
+        CW2["Celery Worker(s)<br/>local process — no listening port"]
+        RD2[("Redis :6379<br/>bound to 127.0.0.1 — not reachable off-host")]
+        PG3[("PostgreSQL 14 :5432<br/>bound to 127.0.0.1 — not reachable off-host")]
+        S32[("MinIO / S3-compatible :9000/:9001<br/>bound to 127.0.0.1 — not reachable off-host")]
+        FS2["Local disk<br/>backend/backups/ · backend/logs/ · media/"]
+        CRON2["cron<br/>backup_db · disable_inactive_accounts<br/>cleanup_expired_data · check_uptime"]
+        UK["Uptime Kuma (Docker container)<br/>:3443 externally-reachable · monitoring/status page<br/>separate from the app's own check_uptime cron job"]
+    end
+
+    subgraph ExtSvc["External Services (outbound only)"]
+        SMTP["SMTP relay<br/>config loaded from ApplicationSetting, §7.3"]
+    end
+
+    USERS -->|"HTTPS 443"| RULE --> NG2
+    RULE -->|"HTTPS 3443"| UK
+    NG2 -->|"proxy_pass, localhost"| GN2
+    GN2 --> RD2
+    GN2 --> PG3
+    GN2 --> S32
+    GN2 -->|"apply_async, localhost"| CW2
+    CW2 --> RD2
+    CW2 --> PG3
+    CW2 -->|"outbound SMTP"| SMTP
+    CRON2 -.->|"invokes manage.py"| GN2
+    NG2 --> FS2
+```
+
+**PETRONET:** no connectivity to a network named PETRONET is established or documented in this environment as of 2026-09-11 — the externally-reachable interfaces on this VM are exactly the four `ufw`-allowed ports above (22/80/443/3443), and Redis/PostgreSQL/MinIO are all localhost-bound rather than exposed to any internal network segment. If this deployment is later connected to PETRONET (or any other corporate/internal network — e.g. for SMTP relay, centralized log shipping, or admin access via a jump host), add that link here with its actual IP range/VLAN and firewall rules rather than assuming one — don't extend this diagram speculatively.
+
+**Uptime Kuma (2026-09-11 finding, not previously documented anywhere in this file):** a self-hosted status-page/monitoring service runs in a Docker container on this VM, confirmed via two independent signals — the `ufw` rule for 3443/tcp is explicitly commented `# Uptime Kuma HTTPS`, and the Docker `iptables` `DOCKER` chain forwards external traffic to container `172.17.0.2:3001` (Uptime Kuma's default port), corroborating the label. It's externally reachable on `:3443` and is a separate concern from the application's own `check_uptime` management command (§6) — that command is TMS's own liveness probe hitting itself; Uptime Kuma is independent third-party monitoring software watching the deployment from outside. Full container detail (image/version/what it's configured to monitor) wasn't retrievable in this pass — the `omega` user lacks Docker socket permission (`permission denied ... /var/run/docker.sock`); ask the sysadmin for `docker ps`/`docker inspect` output if that's needed.
+
+### 6.2 Virtualization & Hardware Layer
+
+Same environment as §6.1, one level down the stack — physical host → hypervisor → VM → storage/network — captured directly from the guest OS (2026-09-11: `lscpu`, `free -h`, `lsblk`, `ip addr`, `dmidecode`, `systemd-detect-virt`).
+
+```mermaid
+graph LR
+    PHYS["Physical Host — Dell PowerEdge R650xs<br/>16 logical CPUs — Intel(R) Xeon(R) Silver 4309Y @ 2.80GHz<br/>RAM: 128 GB total · NICs: 1<br/>per sysadmin/vCenter, 2026-09-11"]
+    HYP["Hypervisor<br/>VMware ESXi (systemd-detect-virt: vmware ·<br/>dmidecode: 'VMware Virtual Platform' / 'VMware, Inc.')"]
+    DS[("Datastore<br/>100GB SAS HDD<br/>guest-side: LVM ubuntu-vg 48G root lv + 2G /boot")]
+    VM1["VM: tms — single VM (§6.1)<br/>vCPU: 1 (Intel Xeon Silver 4310 @ 2.10GHz, 1 socket/1 core/1 thread)<br/>RAM: 7.8 GiB (+ 4 GiB swap)<br/>OS: Ubuntu 22.04.5 LTS"]
+    SW["Virtual Network Switch<br/>ens160 — 10.97.4.89/24"]
+    FWR["Router / Firewall<br/>inbound 443/HTTPS only (§6.1)"]
+    INET["Internet"]
+
+    PHYS --> HYP
+    HYP --> DS
+    HYP --> VM1
+    DS --> VM1
+    VM1 --> SW --> FWR --> INET
+```
+
+**VM memory allocation:** sysadmin/vCenter reported "4GB" for this VM's RAM, but that conflicts with what the guest OS itself sees — `free -h` above shows `total: 7.8Gi`, and a guest kernel can't report more RAM than the hypervisor actually assigned it at boot. The diagram above uses 7.8 GiB (guest-confirmed) rather than the reported 4GB. Likely explanation: 4GB is this VM's **memory reservation** (guaranteed minimum) in vCenter, not its **configured** size (the actual ~8GB limit) — these are separate fields under VM → Edit Settings → Memory. Worth a quick double-check with the sysadmin if the distinction matters for capacity planning.
+
+**Docker is present but the TMS application itself is not containerized:** no `docker-compose`/container orchestration files exist anywhere in this repo (confirmed by search) — Nginx/Gunicorn/Celery/Redis/PostgreSQL/MinIO are all native processes on the host, per §6. The `docker0` bridge (`172.17.0.1/16`) on this VM is running exactly one identified workload: **Uptime Kuma** (see the finding above, externally reachable on `:3443`) — third-party monitoring infrastructure, not part of the TMS application stack. An LXD snap is also installed but showed no evidence of active use in this pass. Don't read either as evidence that TMS itself runs in a container.
+
 ---
 
 ## 7. Application-Wide Data Flows
