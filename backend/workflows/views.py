@@ -220,12 +220,21 @@ class WorkflowInstanceViewSet(viewsets.ModelViewSet):
         # Users with workflow management permission see all
         is_workflow_admin = user.is_superuser or can_manage(user, "workflow")
         if not is_workflow_admin:
-            # Regular users see instances they initiated or have pending approvals
+            # Regular users see instances they initiated, currently have a
+            # pending approval on, or have ever acted on (approved/rejected).
+            # Without the actioned_by clause, an approver loses visibility
+            # into the workflow instance the instant their step resolves -
+            # since this viewset is what backs the detail pages' approval-
+            # status/timeline widget, that manifests as the widget silently
+            # going blank (no error) for anyone revisiting a request they
+            # already acted on, on every one of TRF/Transport/Visa/
+            # Accommodation's detail pages.
             queryset = queryset.filter(
                 Q(initiated_by=user)
                 | Q(
                     step_executions__assigned_to=user, step_executions__status="pending"
                 )
+                | Q(step_executions__actioned_by=user)
             ).distinct()
 
         # Filter by status

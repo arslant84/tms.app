@@ -101,8 +101,14 @@ class TrfChildOwnershipMixin:
         pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(
             user, TravelRequest
         )
+        # Also include TRFs the user has ever acted on - without this, an
+        # approver loses read access to a TRF's sub-records the instant
+        # their step resolves, same cliff as the parent TRF endpoint.
+        acted_ids = WorkflowApprovalHelper.get_acted_entity_ids_for_user(
+            user, TravelRequest
+        )
         return TravelRequest.objects.filter(
-            Q(created_by=user) | Q(id__in=pending_approval_ids)
+            Q(created_by=user) | Q(id__in=pending_approval_ids) | Q(id__in=acted_ids)
         ).values_list("id", flat=True)
 
     def get_queryset(self):

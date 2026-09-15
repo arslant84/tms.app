@@ -92,6 +92,45 @@ class WorkflowApprovalHelper:
         return all_ids
 
     @staticmethod
+    def get_acted_entity_ids_for_user(user, model_class) -> List:
+        """
+        Get IDs of entities the user has ever approved/rejected, regardless of
+        whether the request is still pending elsewhere in the workflow.
+
+        get_pending_entity_ids_for_user only returns entities CURRENTLY
+        awaiting this user's action - the moment they act on a step, that
+        step (and usually the whole request) moves on and disappears from
+        that list. Without this, get_queryset() filters built only from the
+        pending helper create a "visibility cliff": an approver who acted on
+        a request loses access to it entirely (404 on retrieve, silently
+        missing from list) as soon as their step resolves - even though they
+        legitimately took part in its history and may want to revisit it
+        (Recent Activity, an email link, browser back).
+
+        actioned_by (not assigned_to) is the right field here - assigned_to
+        only records who a step was routed to, not whether they acted on it.
+
+        Args:
+            user: The user to check
+            model_class: The Django model class (e.g., TravelRequest, VisaApplication)
+
+        Returns:
+            List of entity IDs this user has acted on
+        """
+        from workflows.models import WorkflowStepExecution
+
+        content_type = ContentType.objects.get_for_model(model_class)
+
+        acted_steps = WorkflowStepExecution.objects.filter(
+            actioned_by=user,
+            workflow_instance__content_type=content_type,
+        )
+
+        return list(
+            set(acted_steps.values_list("workflow_instance__object_id", flat=True))
+        )
+
+    @staticmethod
     def can_user_approve_entity(user, entity) -> bool:
         """
         Check if a specific user can approve a specific entity based on workflow step.

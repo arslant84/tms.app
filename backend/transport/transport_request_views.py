@@ -181,8 +181,14 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
                     user, TransportRequest
                 )
             )
+            # Also include requests the user has ever acted on - without this,
+            # an approver loses access to a request the instant their step
+            # resolves (404 on revisiting via Recent Activity/email/back button).
+            acted_ids = WorkflowApprovalHelper.get_acted_entity_ids_for_user(
+                user, TransportRequest
+            )
             queryset = queryset.filter(
-                Q(requestor=user) | Q(id__in=pending_approval_ids)
+                Q(requestor=user) | Q(id__in=pending_approval_ids) | Q(id__in=acted_ids)
             )
             logger.info(
                 " %s action: Filtering to own requests and %s pending approval",

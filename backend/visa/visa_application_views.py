@@ -159,11 +159,38 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                     user, VisaApplication
                 )
             )
-            queryset = queryset.filter(Q(user=user) | Q(id__in=pending_approval_ids))
+            # Also include applications the user has ever acted on - without
+            # this, an approver loses access the instant their step resolves
+            # (404 on revisiting via Recent Activity/email/back button).
+            acted_ids = WorkflowApprovalHelper.get_acted_entity_ids_for_user(
+                user, VisaApplication
+            )
+            # Department-level approvers (e.g. Department Focal, via the
+            # dedicated view_department_requests permission - "Can view
+            # requests from their department") get the same department-wide
+            # visibility here as they already get on the list endpoint's
+            # admin_view branch below - otherwise an application that's
+            # visible to them in the admin list 404s the moment they click
+            # into its detail page. Access is driven purely by the
+            # permission actually assigned to the role, not by whether the
+            # caller happened to pass admin_view=true.
+            department_scope_q = Q()
+            if user.department and has_permission(user, "view_department_requests"):
+                department_scope_q = Q(user__department=user.department)
+
+            queryset = queryset.filter(
+                Q(user=user)
+                | Q(id__in=pending_approval_ids)
+                | Q(id__in=acted_ids)
+                | department_scope_q
+            )
             logger.info(
-                " %s action: Filtering to own applications and %s pending approval",
+                " %s action: Filtering to own applications, %s pending approval, "
+                "%s previously acted on, and department scope: %s",
                 self.action,
                 len(pending_approval_ids),
+                len(acted_ids),
+                bool(department_scope_q),
             )
             return queryset
 
@@ -180,9 +207,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
                     f" Admin view: User {user.email or user.username} (role: {user.role.name if user.role else None}) has 'view_all_visa' permission - showing all visa applications"
                 )
                 pass  # No filtering - show all
-            elif user.role.permissions.filter(
-                name__in=["approve_visa", "view_pending_approvals"]
-            ).exists():
+            elif has_permission(user, "view_department_requests"):
                 # Department-level approvers
                 if user.department:
                     queryset = queryset.filter(user__department=user.department)

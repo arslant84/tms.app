@@ -18,6 +18,7 @@ Usage:
 """
 
 import logging
+
 from django.db.models import Q
 from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
@@ -25,9 +26,11 @@ from rest_framework.pagination import PageNumberPagination
 
 class StandardResultsPagination(PageNumberPagination):
     """Default pagination: respects client-supplied page_size, capped at 100."""
+
     page_size = 10
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 100
+
 
 logger = logging.getLogger(__name__)
 
@@ -52,22 +55,22 @@ class DualLookupMixin:
     """
 
     # Override in viewset if model doesn't have 'request_number' field
-    request_number_field = 'request_number'
+    request_number_field = "request_number"
 
     def get_object(self):
         """
         Override to support lookup by both numeric ID and request_number
         """
-        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field or 'pk'
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field or "pk"
         lookup_value = self.kwargs.get(lookup_url_kwarg)
 
         if lookup_value is None:
-            raise NotFound('No identifier provided')
+            raise NotFound("No identifier provided")
 
         # Determine if it's a numeric ID or request_number
         lookup_str = str(lookup_value)
         if lookup_str.isdigit():
-            filter_kwargs = {'pk': int(lookup_value)}
+            filter_kwargs = {"pk": int(lookup_value)}
         else:
             filter_kwargs = {self.request_number_field: lookup_value}
 
@@ -79,14 +82,18 @@ class DualLookupMixin:
             # Try to fetch from full queryset to get request_number for better error message
             try:
                 obj = self.model_class.objects.get(**filter_kwargs)
-                request_identifier = getattr(obj, self.request_number_field, None) or f"ID #{obj.id}"
+                request_identifier = (
+                    getattr(obj, self.request_number_field, None) or f"ID #{obj.id}"
+                )
                 model_name = self.model_class._meta.verbose_name
                 raise NotFound(
-                    f'{model_name.title()} {request_identifier} not found or you do not have permission to access it'
+                    f"{model_name.title()} {request_identifier} not found or you do not have permission to access it"
                 )
             except self.model_class.DoesNotExist:
                 model_name = self.model_class._meta.verbose_name
-                raise NotFound(f'{model_name.title()} not found with identifier: {lookup_value}')
+                raise NotFound(
+                    f"{model_name.title()} not found with identifier: {lookup_value}"
+                )
 
         # May raise a permission denied
         self.check_object_permissions(self.request, obj)
@@ -123,12 +130,12 @@ class WorkflowAwareQuerySetMixin:
 
         # Try common field names
         model = self.model_class
-        for field_name in ['created_by', 'requestor', 'user']:
+        for field_name in ["created_by", "requestor", "user"]:
             if hasattr(model, field_name):
                 return field_name
 
         # Default fallback
-        return 'created_by'
+        return "created_by"
 
     def get_workflow_filtered_queryset(self, queryset):
         """
@@ -147,28 +154,46 @@ class WorkflowAwareQuerySetMixin:
         user_field = self._get_user_field()
 
         # For approval actions, allow access to all (authorization handled by WorkflowEngine)
-        if self.action in ['approve', 'reject']:
-            logger.info(f" Approval action: Allowing access to all {self.model_class._meta.verbose_name_plural}")
+        if self.action in ["approve", "reject"]:
+            logger.info(
+                f" Approval action: Allowing access to all {self.model_class._meta.verbose_name_plural}"
+            )
             return queryset
 
-        # For retrieve (viewing details), include items pending user's approval via workflow
-        if self.action == 'retrieve':
-            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, self.model_class)
-            if pending_approval_ids:
-                user_filter = {user_field: user}
-                queryset = queryset.filter(Q(**user_filter) | Q(id__in=pending_approval_ids))
-                logger.info(
-                    f" Retrieve action: Including user's items and {len(pending_approval_ids)} pending approval"
+        # For retrieve (viewing details), include items pending user's approval
+        # via workflow, plus items they've ever acted on - without the
+        # latter, an approver loses access to an item the instant their step
+        # resolves (404 on revisiting via Recent Activity/email/back button).
+        if self.action == "retrieve":
+            pending_approval_ids = (
+                WorkflowApprovalHelper.get_pending_entity_ids_for_user(
+                    user, self.model_class
                 )
-                return queryset
+            )
+            acted_ids = WorkflowApprovalHelper.get_acted_entity_ids_for_user(
+                user, self.model_class
+            )
+            user_filter = {user_field: user}
+            queryset = queryset.filter(
+                Q(**user_filter) | Q(id__in=pending_approval_ids) | Q(id__in=acted_ids)
+            )
+            logger.info(
+                f" Retrieve action: Including user's items, {len(pending_approval_ids)} pending approval, "
+                f"and {len(acted_ids)} previously acted on"
+            )
+            return queryset
 
         # Check if this is an admin view
-        admin_view = self.request.query_params.get('admin_view', 'false').lower() == 'true'
+        admin_view = (
+            self.request.query_params.get("admin_view", "false").lower() == "true"
+        )
 
         # Permission-based filtering
         if admin_view and user.role:
-            view_all_permission = f'view_all_{self.permission_name}'
-            can_view_all = user.role.permissions.filter(name=view_all_permission).exists()
+            view_all_permission = f"view_all_{self.permission_name}"
+            can_view_all = user.role.permissions.filter(
+                name=view_all_permission
+            ).exists()
 
             if can_view_all:
                 logger.info(
@@ -176,39 +201,59 @@ class WorkflowAwareQuerySetMixin:
                     f"has '{view_all_permission}' permission - showing all"
                 )
                 # No filtering - show all
-            elif user.role.permissions.filter(name__in=[f'approve_{self.permission_name}', 'view_pending_approvals']).exists():
+            elif user.role.permissions.filter(
+                name__in=[f"approve_{self.permission_name}", "view_pending_approvals"]
+            ).exists():
                 # Department-level approvers
-                if hasattr(user, 'department') and user.department:
+                if hasattr(user, "department") and user.department:
                     queryset = queryset.filter(department=user.department)
-                    logger.info(f" Admin view: Approver role - showing department items")
+                    logger.info(" Admin view: Approver role - showing department items")
                 else:
                     user_filter = {user_field: user}
                     queryset = queryset.filter(**user_filter)
-                    logger.warning(f" Admin view: Approver but no department - showing only own")
+                    logger.warning(
+                        " Admin view: Approver but no department - showing only own"
+                    )
             else:
                 # No admin permissions - show own plus pending approval
-                pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, self.model_class)
+                pending_approval_ids = (
+                    WorkflowApprovalHelper.get_pending_entity_ids_for_user(
+                        user, self.model_class
+                    )
+                )
                 user_filter = {user_field: user}
                 if pending_approval_ids:
-                    queryset = queryset.filter(Q(**user_filter) | Q(id__in=pending_approval_ids))
+                    queryset = queryset.filter(
+                        Q(**user_filter) | Q(id__in=pending_approval_ids)
+                    )
                     logger.info(
                         f" Admin view: User lacks permission - showing own plus {len(pending_approval_ids)} pending"
                     )
                 else:
                     queryset = queryset.filter(**user_filter)
-                    logger.warning(f" Admin view: User lacks permission - showing only own items")
+                    logger.warning(
+                        " Admin view: User lacks permission - showing only own items"
+                    )
         else:
             # Personal requests view - show user's own items plus those pending their approval
-            pending_approval_ids = WorkflowApprovalHelper.get_pending_entity_ids_for_user(user, self.model_class)
+            pending_approval_ids = (
+                WorkflowApprovalHelper.get_pending_entity_ids_for_user(
+                    user, self.model_class
+                )
+            )
             user_filter = {user_field: user}
             if pending_approval_ids:
-                queryset = queryset.filter(Q(**user_filter) | Q(id__in=pending_approval_ids))
+                queryset = queryset.filter(
+                    Q(**user_filter) | Q(id__in=pending_approval_ids)
+                )
                 logger.info(
                     f" Personal view: User {user.username} - showing own plus {len(pending_approval_ids)} pending"
                 )
             else:
                 queryset = queryset.filter(**user_filter)
-                logger.info(f" Personal view: User {user.username} - showing only own items")
+                logger.info(
+                    f" Personal view: User {user.username} - showing only own items"
+                )
 
         return queryset
 
@@ -217,7 +262,7 @@ class WorkflowAwareQuerySetMixin:
         Apply status filter from query params.
         Uses startswith matching to handle workflow statuses like "Pending Line Manager".
         """
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.query_params.get("status", None)
         if status_filter:
             queryset = queryset.filter(status__istartswith=status_filter)
         return queryset
@@ -255,17 +300,21 @@ class RequestorPopulationMixin:
             dict: Extra kwargs to pass to serializer.save()
         """
         # Auto-populate requestor information if not provided
-        if not validated_data.get('requestor_name'):
-            validated_data['requestor_name'] = user.get_full_name() or user.email
+        if not validated_data.get("requestor_name"):
+            validated_data["requestor_name"] = user.get_full_name() or user.email
 
-        if not validated_data.get('staff_id'):
-            validated_data['staff_id'] = getattr(user, 'employee_id', '') or getattr(user, 'staff_id', '')
+        if not validated_data.get("staff_id"):
+            validated_data["staff_id"] = getattr(user, "employee_id", "") or getattr(
+                user, "staff_id", ""
+            )
 
-        if not validated_data.get('department'):
-            validated_data['department'] = getattr(user, 'department', '')
+        if not validated_data.get("department"):
+            validated_data["department"] = getattr(user, "department", "")
 
-        if not validated_data.get('position'):
-            validated_data['position'] = getattr(user, 'position', '') or getattr(user, 'job_title', '')
+        if not validated_data.get("position"):
+            validated_data["position"] = getattr(user, "position", "") or getattr(
+                user, "job_title", ""
+            )
 
         return validated_data
 
@@ -285,15 +334,17 @@ class RequestorPopulationMixin:
         from utils.constants import RequestStatus
 
         extra_kwargs = {}
-        status_value = validated_data.get('status', RequestStatus.DRAFT)
+        status_value = validated_data.get("status", RequestStatus.DRAFT)
 
         # Set submitted_at timestamp if status is not Draft
         if status_value not in RequestStatus.draft_statuses():
-            extra_kwargs['submitted_at'] = timezone.now()
+            extra_kwargs["submitted_at"] = timezone.now()
 
         return extra_kwargs
 
-    def start_workflow_if_needed(self, instance, user, status_value, selected_approvers=None):
+    def start_workflow_if_needed(
+        self, instance, user, status_value, selected_approvers=None
+    ):
         """
         Start workflow if status indicates submission.
 
@@ -306,8 +357,8 @@ class RequestorPopulationMixin:
         Returns:
             WorkflowInstance or None
         """
-        from workflows.router import WorkflowRouter
         from utils.constants import RequestStatus
+        from workflows.router import WorkflowRouter
 
         if status_value in RequestStatus.draft_statuses():
             return None
@@ -317,7 +368,7 @@ class RequestorPopulationMixin:
                 entity=instance,
                 entity_type=self.entity_type,
                 initiated_by=user,
-                selected_approvers=selected_approvers
+                selected_approvers=selected_approvers,
             )
 
             if workflow_instance:
@@ -334,6 +385,8 @@ class RequestorPopulationMixin:
                 return None
 
         except Exception as e:
-            logger.error(f" Error starting workflow for {self.entity_type} #{instance.id}: {str(e)}")
+            logger.error(
+                f" Error starting workflow for {self.entity_type} #{instance.id}: {str(e)}"
+            )
             # Don't fail the request creation if workflow fails
             return None

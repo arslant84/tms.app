@@ -374,17 +374,42 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                     f" {self.action} action: User has view_all_trf - allowing full access"
                 )
                 return queryset
-            # Get IDs of TRFs pending this user's approval
+            # Get IDs of TRFs pending this user's approval, plus ones they've
+            # already acted on - without the latter, an approver loses
+            # access to a TRF the moment their step resolves (404 on
+            # revisiting via Recent Activity/email link/browser back).
             pending_approval_ids = (
                 WorkflowApprovalHelper.get_pending_entity_ids_for_user(
                     user, TravelRequest
                 )
             )
+            acted_ids = WorkflowApprovalHelper.get_acted_entity_ids_for_user(
+                user, TravelRequest
+            )
+            # Department-level approvers (e.g. Department Focal, via the
+            # dedicated view_department_requests permission - "Can view
+            # requests from their department") get the same department-wide
+            # visibility here as they already get on the list endpoint's
+            # admin_view branch below - otherwise a TRF that's visible to
+            # them in the admin list 404s the moment they click into its
+            # detail page, since this branch previously only recognised
+            # created_by/pending/acted-on, not role permissions. Access is
+            # driven purely by the permission actually assigned to the
+            # role, not by whether the caller happened to pass
+            # admin_view=true.
+            department_scope_q = Q()
+            if user.department and has_permission(user, "view_department_requests"):
+                department_scope_q = Q(department=user.department)
+
             queryset = queryset.filter(
-                Q(created_by=user) | Q(id__in=pending_approval_ids)
+                Q(created_by=user)
+                | Q(id__in=pending_approval_ids)
+                | Q(id__in=acted_ids)
+                | department_scope_q
             )
             logger.info(
-                f" {self.action} action: Filtering to own TRFs and {len(pending_approval_ids)} pending approval"
+                f" {self.action} action: Filtering to own TRFs, {len(pending_approval_ids)} pending approval, "
+                f"{len(acted_ids)} previously acted on, and department scope: {bool(department_scope_q)}"
             )
             return queryset
 
@@ -436,9 +461,7 @@ class TravelRequestViewSet(viewsets.ModelViewSet):
                 pass  # No filtering - show all
 
             # Department-level approvers see TRFs from their department
-            elif user.role.permissions.filter(
-                name__in=["approve_trf", "view_pending_approvals"]
-            ).exists():
+            elif has_permission(user, "view_department_requests"):
                 if user.department:
                     logger.info(
                         f" Admin view: Approver role ({user.role.name}) - showing TRFs from department: {user.department}"

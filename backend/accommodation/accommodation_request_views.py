@@ -159,30 +159,28 @@ class AccommodationRequestViewSet(viewsets.ModelViewSet):
                 )
                 return queryset  # No filtering for admins
 
-            # Include requests pending user's approval via workflow
+            # Include requests pending user's approval via workflow, plus
+            # ones they've ever acted on - without the latter, an approver
+            # loses access to a request the instant their step resolves
+            # (404 on revisiting via Recent Activity/email/back button).
             pending_approval_ids = (
                 WorkflowApprovalHelper.get_pending_entity_ids_for_user(
                     user, AccommodationRequest
                 )
             )
-            if pending_approval_ids:
-                queryset = queryset.filter(
-                    Q(requestor_name=user.get_full_name())
-                    | Q(staff_id=user.staff_id)
-                    | Q(id__in=pending_approval_ids)
-                )
-                logger.info(
-                    f" Retrieve action: User {user.email or user.username} - showing own requests plus {len(pending_approval_ids)} pending approval"
-                )
-            else:
-                # Regular users can view their own requests only
-                logger.info(
-                    f" Retrieve action: User {user.email or user.username} - filtering by requestor"
-                )
-                # Filter by requestor_name or staff_id to handle different data entry methods
-                queryset = queryset.filter(
-                    Q(requestor_name=user.get_full_name()) | Q(staff_id=user.staff_id)
-                )
+            acted_ids = WorkflowApprovalHelper.get_acted_entity_ids_for_user(
+                user, AccommodationRequest
+            )
+            queryset = queryset.filter(
+                Q(requestor_name=user.get_full_name())
+                | Q(staff_id=user.staff_id)
+                | Q(id__in=pending_approval_ids)
+                | Q(id__in=acted_ids)
+            )
+            logger.info(
+                f" Retrieve action: User {user.email or user.username} - showing own requests plus "
+                f"{len(pending_approval_ids)} pending approval and {len(acted_ids)} previously acted on"
+            )
             return queryset
 
         # Write/delete/cancel actions: same admin-only bypass as assign (no
