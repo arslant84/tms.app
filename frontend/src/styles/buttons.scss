@@ -507,9 +507,11 @@
     padding: 0;
   }
 
-  // Circular variant (opt-in)
+  // Circular variant (opt-in). !important needed to win over this same
+  // class's own base border-radius: !important declaration above -
+  // ordinary specificity/source-order can't beat an !important rule.
   &.btn-icon-circle {
-    border-radius: vars.$radius-full;
+    border-radius: vars.$radius-full !important;
   }
 }
 

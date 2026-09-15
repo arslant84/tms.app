@@ -13,6 +13,37 @@ from .models import AdminActionLog, Role, RolePermission, User
 logger = logging.getLogger(__name__)
 
 
+def _cleanup_stale_approval_notifications(user):
+    """
+    A pending "Action Required: Approve ..." notification is tied to a
+    WorkflowStepExecution.assigned_to that was resolved once, at the moment
+    the step activated (see workflows/engine.py's _resolve_step_assignee) -
+    it is never re-resolved when the recipient's role changes later. Left
+    alone, the notification (and the approver assignment behind it) stays
+    pointed at a user who has since lost the role/permission that made them
+    an eligible approver in the first place.
+
+    There's no cheap way to re-check per-notification whether the *new*
+    role happens to still grant the same permission, so on any role change
+    every unread notification in the 'approval' category (APPROVAL_REQUESTED
+    / APPROVAL_DELEGATED - the only categories that ask the recipient to
+    take an approval action) is deleted outright rather than left to pile up
+    pointing at access the user may no longer have.
+    """
+    from notifications.models import UserNotification
+
+    count, _ = UserNotification.objects.filter(
+        user=user, is_read=False, event_type__category="approval"
+    ).delete()
+
+    if count:
+        logger.info(
+            "Cleaned up %d stale approval notification(s) for %s after role change",
+            count,
+            user.email,
+        )
+
+
 @receiver(pre_save, sender=User)
 def capture_previous_user_state(sender, instance, **kwargs):
     """Snapshot role and active status before save so post_save can detect changes."""
@@ -74,6 +105,7 @@ def log_user_changes(sender, instance, created, **kwargs):
                         request=req,
                     )
                     logger.info(f"Audit: User role changed - {instance.email}")
+                    _cleanup_stale_approval_notifications(instance)
 
     except Exception as e:
         logger.error(f"Error logging user change: {e}", exc_info=True)

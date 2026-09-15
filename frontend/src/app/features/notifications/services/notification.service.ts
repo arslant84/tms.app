@@ -200,10 +200,13 @@ export class NotificationService {
     return this.http.get<UserNotification>(`${this.apiUrl}/${id}/`);
   }
 
-  // Mark notification as read
-  markAsRead(id: number): Observable<UserNotification> {
+  // Mark notification as read. The backend deletes the notification once
+  // read - there's nothing left to act on, and keeping it around just meant
+  // read notifications piled up indefinitely - so no notification object
+  // comes back, just an acknowledgement.
+  markAsRead(id: number): Observable<unknown> {
     return this.http.post<unknown>(`${this.apiUrl}/${id}/mark_as_read/`, {}).pipe(
-      map(response => extractData<UserNotification>(response) as UserNotification),
+      map(response => extractData<unknown>(response)),
       tap(() => {
         this.refreshUnreadCount();
         this.refreshNotifications();

@@ -119,16 +119,13 @@
               <i class="bi bi-clock"></i>
               {{ getTimeAgo(notification.created_at) }}
             </span>
-            <span class="notification-action" *ngIf="notification.action_text">
-              {{ notification.action_text }}
-            </span>
           </div>
         </div>
 
         <!-- Notification Actions -->
         <div class="notification-actions">
           <button
-            class="btn-icon"
+            class="btn-icon btn-icon-circle btn-icon-success"
             *ngIf="!notification.is_read"
             (click)="markAsRead(notification, $event)"
             title="Mark as read"
@@ -137,12 +134,21 @@
             <i class="bi bi-check2" aria-hidden="true"></i>
           </button>
           <button
-            class="btn-icon action-delete"
+            class="btn-icon btn-icon-circle btn-icon-danger"
             (click)="deleteNotification(notification.id, $event)"
             title="Delete"
             aria-label="Delete"
           >
             <i class="bi bi-trash" aria-hidden="true"></i>
+          </button>
+          <button
+            class="btn-icon btn-icon-circle btn-icon-info"
+            *ngIf="notification.action_text"
+            (click)="viewNotification(notification, $event)"
+            [title]="notification.action_text"
+            [attr.aria-label]="notification.action_text"
+          >
+            <i class="bi bi-eye" aria-hidden="true"></i>
           </button>
         </div>
 

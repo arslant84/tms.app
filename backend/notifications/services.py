@@ -441,16 +441,17 @@ class NotificationService:
     @staticmethod
     def mark_all_as_read(user):
         """
-        Mark all notifications as read for a user
+        Mark all of a user's unread notifications as read - by deleting them.
+        Read notifications aren't kept around; there's nothing left for the
+        user to act on once read, so leaving the rows in place just meant
+        they piled up indefinitely in the list.
 
         Args:
             user: User instance
 
         Returns:
-            Number of notifications marked as read
+            Number of notifications deleted
         """
-        count = UserNotification.objects.filter(user=user, is_read=False).update(
-            is_read=True, read_at=timezone.now()
-        )
+        count, _ = UserNotification.objects.filter(user=user, is_read=False).delete()
 
         return count

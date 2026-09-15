@@ -340,7 +340,9 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def mark_as_read(self, request, pk=None):
-        """Mark a notification as read"""
+        """Mark a notification as read - deletes it, since a read
+        notification has nothing left to act on and would otherwise just
+        pile up in the list indefinitely."""
         notification = self.get_object()
 
         is_admin = request.user.is_superuser or can_manage(request.user, "notification")
@@ -349,40 +351,19 @@ class UserNotificationViewSet(viewsets.ModelViewSet):
                 message="You can only mark your own notifications as read"
             )
 
-        notification.mark_as_read()
+        notification_id = notification.id
+        notification.delete()
 
-        serializer = self.get_serializer(notification)
         return success_response(
-            data=serializer.data,
+            data={"id": notification_id, "deleted": True},
             message="Notification marked as read",
-            status_code=status.HTTP_200_OK,
-        )
-
-    @action(detail=True, methods=["post"])
-    def mark_as_unread(self, request, pk=None):
-        """Mark a notification as unread"""
-        notification = self.get_object()
-
-        is_admin = request.user.is_superuser or can_manage(request.user, "notification")
-        if notification.user != request.user and not is_admin:
-            return forbidden_response(
-                message="You can only mark your own notifications as unread"
-            )
-
-        notification.is_read = False
-        notification.read_at = None
-        notification.save(update_fields=["is_read", "read_at"])
-
-        serializer = self.get_serializer(notification)
-        return success_response(
-            data=serializer.data,
-            message="Notification marked as unread",
             status_code=status.HTTP_200_OK,
         )
 
     @action(detail=False, methods=["post"])
     def mark_all_as_read(self, request):
-        """Mark all notifications as read for current user"""
+        """Mark all notifications as read for current user - deletes them,
+        matching mark_as_read's single-notification behavior."""
         count = NotificationService.mark_all_as_read(request.user)
         return success_response(
             data={"count": count},

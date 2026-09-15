@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, type OnInit, type OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NavigationExtras, RouterModule, Router } from '@angular/router';
+import { type NavigationExtras, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { NotificationService, UserNotification } from '../../services/notification.service';
@@ -38,17 +38,13 @@ export class NotificationListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Service already fetched notifications on auth via startPolling().
-    // Subscribe to the stream for the initial render; loadNotifications() is called
-    // explicitly when the user changes filters or pages.
-    this.notificationService.notifications$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(notifications => {
-        this.notifications = notifications;
-        this.listState.setTotalItems(notifications.length);
-        this.applyFilters();
-        this.listState.setLoading(false);
-      });
+    // Load this page's own paginated data rather than reusing
+    // notificationService.notifications$ - that shared stream is always
+    // capped at page_size: 20 (it exists for the header bell dropdown/badge),
+    // so seeding totalItems from its .length silently capped this list's
+    // pagination at "1 page" no matter how many notifications actually
+    // exist, hiding the pager entirely on first load.
+    this.loadNotifications();
   }
 
   ngOnDestroy(): void {
@@ -116,7 +112,7 @@ export class NotificationListComponent implements OnInit, OnDestroy {
   onNotificationClick(notification: UserNotification): void {
     const navigate = () => {
       if (notification.action_url) {
-        const nav = this.buildNavigation(notification);
+        const nav = this.buildNavigation(notification, notification.action_url);
         this.router.navigate(nav.commands, nav.extras);
       }
     };
@@ -137,11 +133,14 @@ export class NotificationListComponent implements OnInit, OnDestroy {
   // /visa/123, /accommodation/123 - as an absolute URL (http://host/trf/123).
   // Approval notifications route to admin approvals with query params instead
   // of the entity detail page directly.
-  private buildNavigation(notification: UserNotification): {
+  private buildNavigation(
+    notification: UserNotification,
+    actionUrl: string
+  ): {
     commands: unknown[];
     extras?: NavigationExtras;
   } {
-    const pathname = this.extractPathname(notification.action_url!);
+    const pathname = this.extractPathname(actionUrl);
 
     const isApproval =
       notification.title?.toLowerCase().includes('approval required') ||
@@ -203,13 +202,23 @@ export class NotificationListComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
-            notification.is_read = true;
+            // Backend deletes the notification once read, so drop it from
+            // the local lists too instead of just flipping is_read.
+            this.notifications = this.notifications.filter(n => n.id !== notification.id);
+            this.filteredNotifications = this.filteredNotifications.filter(
+              n => n.id !== notification.id
+            );
           },
           error: err => {
             console.error('Error marking notification as read:', err);
           },
         });
     }
+  }
+
+  viewNotification(notification: UserNotification, event: Event): void {
+    event.stopPropagation();
+    this.onNotificationClick(notification);
   }
 
   markAllAsRead(): void {
@@ -253,7 +262,6 @@ export class NotificationListComponent implements OnInit, OnDestroy {
         return 'bi-exclamation-circle-fill text-warning';
       case 'normal':
         return 'bi-info-circle-fill text-info';
-      case 'low':
       default:
         return 'bi-bell-fill text-secondary';
     }
@@ -267,7 +275,6 @@ export class NotificationListComponent implements OnInit, OnDestroy {
         return 'badge-warning';
       case 'normal':
         return 'badge-info';
-      case 'low':
       default:
         return 'badge-secondary';
     }

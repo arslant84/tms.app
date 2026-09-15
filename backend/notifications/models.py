@@ -287,15 +287,6 @@ class UserNotification(models.Model):
     def __str__(self):
         return f"{self.title} → {self.user.email}"
 
-    def mark_as_read(self):
-        """Mark notification as read"""
-        if not self.is_read:
-            from django.utils import timezone
-
-            self.is_read = True
-            self.read_at = timezone.now()
-            self.save(update_fields=["is_read", "read_at"])
-
 
 class NotificationBatch(models.Model):
     """
