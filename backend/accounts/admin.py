@@ -112,8 +112,18 @@ class UserAdmin(BaseUserAdmin):
         "is_admin",
         "is_active",
         "status",
+        "mfa_status",
+        "mfa_reset_button",
     )
-    list_filter = ("is_admin", "is_active", "role", "department", "status")
+    list_filter = (
+        "is_admin",
+        "is_active",
+        "role",
+        "department",
+        "status",
+        "mfa_enabled",
+    )
+    actions = ["reset_mfa_action"]
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
@@ -165,6 +175,88 @@ class UserAdmin(BaseUserAdmin):
     ordering = ("email",)
     filter_horizontal = ()
 
+    @admin.display(description="MFA", boolean=True, ordering="mfa_enabled")
+    def mfa_status(self, obj):
+        return obj.mfa_enabled
+
+    @admin.display(description="")
+    def mfa_reset_button(self, obj):
+        if not obj.mfa_enabled:
+            return "—"
+        url = reverse("admin:accounts_user_reset_mfa", args=[obj.pk])
+        return format_html(
+            '<a class="button" style="background:#ffc107;color:#000" href="{}">Reset MFA</a>',
+            url,
+        )
+
+    def _reset_mfa_for_user(self, request, user):
+        user.mfa_enabled = False
+        user.mfa_secret = None
+        user.save(update_fields=["mfa_enabled", "mfa_secret"])
+        AdminActionLog.log_action(
+            user=request.user,
+            action_type="mfa_admin_reset",
+            description=f"MFA reset by admin ({request.user.email}) for user: {user.email}",
+            entity_type="User",
+            entity_id=str(user.id),
+            request=request,
+        )
+
+    @admin.action(description="Reset MFA for selected users")
+    def reset_mfa_action(self, request, queryset):
+        reset_count = 0
+        for user in queryset.filter(mfa_enabled=True):
+            self._reset_mfa_for_user(request, user)
+            reset_count += 1
+
+        if reset_count:
+            self.message_user(
+                request,
+                f"MFA reset for {reset_count} user(s). They will need to set it up again.",
+                messages.SUCCESS,
+            )
+        else:
+            self.message_user(
+                request,
+                "No selected users had MFA enabled.",
+                messages.WARNING,
+            )
+
+    def reset_mfa_view(self, request, user_id):
+        user = self.get_object(request, user_id)
+        if user is None:
+            self.message_user(request, "User not found.", messages.ERROR)
+            return HttpResponseRedirect(reverse("admin:accounts_user_changelist"))
+
+        if not self.has_change_permission(request, user):
+            self.message_user(
+                request, "You don't have permission to do that.", messages.ERROR
+            )
+            return HttpResponseRedirect(reverse("admin:accounts_user_changelist"))
+
+        if not user.mfa_enabled:
+            self.message_user(
+                request, f"{user.email} does not have MFA enabled.", messages.WARNING
+            )
+            return HttpResponseRedirect(reverse("admin:accounts_user_changelist"))
+
+        if request.method == "POST":
+            self._reset_mfa_for_user(request, user)
+            self.message_user(
+                request,
+                f"MFA has been reset for {user.email}. They will need to set it up again.",
+                messages.SUCCESS,
+            )
+            return HttpResponseRedirect(reverse("admin:accounts_user_changelist"))
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Reset MFA",
+            "target_user": user,
+            "opts": self.model._meta,
+        }
+        return render(request, "admin/accounts/reset_mfa_confirmation.html", context)
+
     def save_model(self, request, obj, form, change):
         obj._update_request = request
         super().save_model(request, obj, form, change)
@@ -205,6 +297,11 @@ class UserAdmin(BaseUserAdmin):
                 self.admin_site.admin_view(self.bulk_import_job_status_view),
                 name="accounts_bulk_import_job_status",
             ),
+            path(
+                "<int:user_id>/reset-mfa/",
+                self.admin_site.admin_view(self.reset_mfa_view),
+                name="accounts_user_reset_mfa",
+            ),
         ]
         return custom + urls
 
@@ -228,7 +325,9 @@ class UserAdmin(BaseUserAdmin):
                         "form": form,
                         "opts": self.model._meta,
                     }
-                    return render(request, "admin/accounts/bulk_import_users.html", context)
+                    return render(
+                        request, "admin/accounts/bulk_import_users.html", context
+                    )
 
                 x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
                 ip_address = (
@@ -245,6 +344,7 @@ class UserAdmin(BaseUserAdmin):
                 )
 
                 from .tasks import process_bulk_user_import
+
                 process_bulk_user_import.delay(str(job.id))
 
                 messages.info(

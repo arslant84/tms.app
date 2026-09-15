@@ -315,6 +315,7 @@ class AdminActionLog(models.Model):
         ("data_modification", "Direct Data Modification"),
         ("mfa_enabled", "MFA Enabled"),
         ("mfa_disabled", "MFA Disabled"),
+        ("mfa_admin_reset", "MFA Reset by Admin"),
         ("mfa_failed", "MFA Verification Failed"),
         ("privacy_consent_given", "Privacy Consent Given"),
         ("access_review", "Access Review Completed"),
@@ -446,8 +447,12 @@ class BulkImportJob(models.Model):
         related_name="+",
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
-    csv_content = models.TextField(help_text="Raw decoded CSV text to process in the background.")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING
+    )
+    csv_content = models.TextField(
+        help_text="Raw decoded CSV text to process in the background."
+    )
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True, null=True)
     created_count = models.IntegerField(default=0)

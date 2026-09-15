@@ -134,6 +134,7 @@ class UserListSerializer(serializers.ModelSerializer):
             "last_login_at",
             "permissions",
             "password_change_required",
+            "mfa_enabled",
         ]
         read_only_fields = fields
 
@@ -168,6 +169,7 @@ class UserSerializer(serializers.ModelSerializer):
             "last_login_at",
             "permissions",
             "password_change_required",
+            "mfa_enabled",
         ]
         # SECURITY: Prevent privilege escalation - these fields can only be modified by admins
         read_only_fields = [
@@ -180,6 +182,7 @@ class UserSerializer(serializers.ModelSerializer):
             "last_login_at",
             "permissions",
             "password_change_required",
+            "mfa_enabled",
         ]
 
     def get_permissions(self, obj):

@@ -309,6 +309,49 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=["post"],
+        url_path="reset-mfa",
+        permission_classes=[permissions.IsAdminUser],
+    )
+    def reset_mfa(self, request, pk=None):
+        """
+        Admin-initiated MFA reset - clears a user's MFA secret/enabled flag
+        so they can go through /auth/mfa-setup/ again from scratch (e.g.
+        lost/replaced authenticator device, the one recovery path that
+        didn't exist before this action). Unlike the self-service
+        MFADisableView, this doesn't require the target's own password/OTP
+        - an admin is acting on someone else's account, same trust level as
+        activate/deactivate above.
+        """
+        user = self.get_object()
+        if not user.mfa_enabled and not user.mfa_secret:
+            return error_response(
+                message="MFA is not enabled on this account.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.mfa_enabled = False
+        user.mfa_secret = None
+        user.save(update_fields=["mfa_enabled", "mfa_secret"])
+
+        AdminActionLog.log_action(
+            user=request.user,
+            action_type="mfa_admin_reset",
+            description=f"MFA reset by admin ({request.user.email}) for user: {user.email}",
+            entity_type="User",
+            entity_id=str(user.id),
+            request=request,
+        )
+
+        serializer = self.get_serializer(user)
+        return success_response(
+            data=serializer.data,
+            message=f"MFA has been reset for {user.email}. They will need to set it up again.",
+            status_code=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=["post"],
         url_path="access-review",
         permission_classes=[permissions.IsAdminUser],
     )

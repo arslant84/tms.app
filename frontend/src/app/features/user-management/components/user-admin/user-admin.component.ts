@@ -378,6 +378,29 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     });
   }
 
+  resetMfa(user: User): void {
+    this.confirmationService
+      .confirm({
+        title: 'Reset MFA',
+        message: `Reset multi-factor authentication for "${user.name}"? They will be signed out of MFA and need to set it up again from scratch (e.g. if they lost their authenticator device).`,
+        confirmText: 'Reset MFA',
+        type: 'warning',
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.userService.resetMfa(user.id).subscribe({
+          next: response => {
+            this.toastService.success(response.message || `MFA reset for ${user.name}`);
+            this.loadUsers();
+          },
+          error: error => {
+            console.error('Error resetting MFA:', error);
+            this.toastService.error(error?.error?.message || 'Failed to reset MFA for this user');
+          },
+        });
+      });
+  }
+
   onSearch(): void {
     this.currentPage = 1;
     this.loadUsers();

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 export interface Role {
-  id: string;  // UUID
+  id: string; // UUID
   name: string;
   description?: string;
   permissions?: Permission[];
@@ -13,7 +13,7 @@ export interface Role {
 }
 
 export interface Permission {
-  id: string;  // UUID
+  id: string; // UUID
   name: string;
   description?: string;
   created_at: string;
@@ -41,6 +41,14 @@ export interface User {
   gender?: string;
   last_login_at?: string;
   status?: string;
+  mfa_enabled?: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
 }
 
 export interface UserCreate {
@@ -48,7 +56,7 @@ export interface UserCreate {
   name: string;
   password: string;
   password_confirm: string;
-  role?: string;  // UUID
+  role?: string; // UUID
   department?: string;
   is_admin?: boolean;
   is_active?: boolean;
@@ -58,7 +66,7 @@ export interface UserCreate {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserService {
   private apiUrl = `${environment.apiUrl}`;
@@ -68,24 +76,25 @@ export class UserService {
   // User CRUD operations
   getAllUsers(filters?: {
     search?: string;
-    role?: string;  // UUID
+    role?: string; // UUID
     department?: string;
     is_active?: boolean;
     page?: number;
     page_size?: number;
-  }): Observable<any> {
+  }): Observable<User[] | PaginatedResponse<User>> {
     let params = new HttpParams();
 
     if (filters) {
       if (filters.search) params = params.set('search', filters.search);
       if (filters.role) params = params.set('role', filters.role);
       if (filters.department) params = params.set('department', filters.department);
-      if (filters.is_active !== undefined) params = params.set('is_active', filters.is_active.toString());
+      if (filters.is_active !== undefined)
+        params = params.set('is_active', filters.is_active.toString());
       if (filters.page) params = params.set('page', filters.page.toString());
       if (filters.page_size) params = params.set('page_size', filters.page_size.toString());
     }
 
-    return this.http.get<any>(`${this.apiUrl}/users/`, { params });
+    return this.http.get<User[] | PaginatedResponse<User>>(`${this.apiUrl}/users/`, { params });
   }
 
   getUserById(id: number): Observable<User> {
@@ -104,15 +113,28 @@ export class UserService {
     return this.http.delete<void>(`${this.apiUrl}/users/${id}/`);
   }
 
-  changePassword(data: { old_password: string; new_password: string }): Observable<{ message: string }> {
+  changePassword(data: {
+    old_password: string;
+    new_password: string;
+  }): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.apiUrl}/users/change-password/`, data);
   }
 
+  // Admin-initiated MFA reset - clears the target user's MFA so they can
+  // set it up again (e.g. lost authenticator device). Requires admin
+  // permission on the backend; doesn't need the target's own password/OTP.
+  resetMfa(id: number): Observable<{ success: boolean; message: string; data: User }> {
+    return this.http.post<{ success: boolean; message: string; data: User }>(
+      `${this.apiUrl}/users/${id}/reset-mfa/`,
+      {}
+    );
+  }
+
   // Role operations
-  getAllRoles(): Observable<any> {
+  getAllRoles(): Observable<Role[] | PaginatedResponse<Role>> {
     // Disable pagination for roles by requesting a large page size
     const params = new HttpParams().set('page_size', '1000');
-    return this.http.get<any>(`${this.apiUrl}/roles/`, { params });
+    return this.http.get<Role[] | PaginatedResponse<Role>>(`${this.apiUrl}/roles/`, { params });
   }
 
   getRoleById(id: string): Observable<Role> {

@@ -89,6 +89,7 @@
               <th>Staff ID</th>
               <th>Status</th>
               <th>Admin</th>
+              <th>MFA</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
@@ -120,6 +121,18 @@
                 <i class="bi bi-check-circle-fill text-success" *ngIf="user.is_admin"></i>
                 <i class="bi bi-dash-circle text-muted" *ngIf="!user.is_admin"></i>
               </td>
+              <td>
+                <i
+                  class="bi bi-shield-lock-fill text-success"
+                  *ngIf="user.mfa_enabled"
+                  title="MFA enabled"
+                ></i>
+                <i
+                  class="bi bi-dash-circle text-muted"
+                  *ngIf="!user.mfa_enabled"
+                  title="MFA not enabled"
+                ></i>
+              </td>
               <td class="text-end">
                 <div class="action-buttons">
                   <button
@@ -141,6 +154,15 @@
                       [ngClass]="user.is_active ? 'bi-pause-circle' : 'bi-play-circle'"
                       aria-hidden="true"
                     ></i>
+                  </button>
+                  <button
+                    *ngIf="user.mfa_enabled"
+                    class="btn btn-sm btn-outline-warning btn-icon"
+                    (click)="resetMfa(user)"
+                    title="Reset MFA"
+                    aria-label="Reset MFA"
+                  >
+                    <i class="bi bi-shield-x" aria-hidden="true"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-outline-danger btn-icon"

@@ -1,0 +1,25 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Reset MFA{% endblock %}
+
+{% block content %}
+<h1>Reset MFA</h1>
+
+<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:16px;margin-bottom:24px">
+  <p>
+    Reset multi-factor authentication for
+    <strong>{{ target_user.name }}</strong> ({{ target_user.email }})?
+  </p>
+  <p style="margin-bottom:0">
+    They will be signed out of MFA and need to set it up again from scratch
+    (e.g. if they lost their authenticator device).
+  </p>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <input type="submit" value="Reset MFA"
+    style="background:#ffc107;color:#000;border:none;padding:8px 16px;cursor:pointer;border-radius:4px">
+  &nbsp;
+  <a href="{% url 'admin:accounts_user_changelist' %}" class="button">Cancel</a>
+</form>
+{% endblock %}
