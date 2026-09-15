@@ -10,9 +10,9 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { TransportService } from '../../services/transport.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
-import { AuthService } from '../../../../core/services/auth.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import {
   TransportRequestForm,
   TransportDetail,
@@ -64,9 +64,9 @@ export class TransportCreateComponent implements OnInit {
     private transportService: TransportService,
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
-    private authService: AuthService,
     private formUtils: FormUtilsService,
-    private userFormHelper: UserFormHelperService
+    private userFormHelper: UserFormHelperService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -298,12 +298,9 @@ export class TransportCreateComponent implements OnInit {
       },
       error: err => {
         this.submitting = false;
-        const errorMessage =
-          err.error?.message ||
-          err.error?.detail ||
-          err.message ||
-          'Failed to create transport request';
-        this.toastService.error(errorMessage);
+        this.toastService.error(
+          this.errorHandler.getErrorMessage(err, 'Failed to create transport request')
+        );
       },
     });
   }
@@ -337,9 +334,7 @@ export class TransportCreateComponent implements OnInit {
       },
       error: err => {
         this.submitting = false;
-        const errorMessage =
-          err.error?.message || err.error?.detail || err.message || 'Failed to save draft';
-        this.toastService.error(errorMessage);
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to save draft'));
       },
     });
   }

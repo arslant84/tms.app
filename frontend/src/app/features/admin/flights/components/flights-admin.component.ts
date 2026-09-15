@@ -14,7 +14,7 @@ import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handl
   standalone: true,
   imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './flights-admin.component.html',
-  styleUrl: './flights-admin.component.scss'
+  styleUrl: './flights-admin.component.scss',
 })
 export class FlightsAdminComponent implements OnInit {
   bookings: FlightBooking[] = [];
@@ -27,7 +27,7 @@ export class FlightsAdminComponent implements OnInit {
     bookingClass: 'all',
     search: '',
     dateFrom: '',
-    dateTo: ''
+    dateTo: '',
   };
 
   // Pagination
@@ -53,7 +53,7 @@ export class FlightsAdminComponent implements OnInit {
     { value: 'TICKETED', label: 'Ticketed' },
     { value: 'CANCELLED', label: 'Cancelled' },
     { value: 'REFUNDED', label: 'Refunded' },
-    { value: 'NO_SHOW', label: 'No Show' }
+    { value: 'NO_SHOW', label: 'No Show' },
   ];
 
   // Booking class options
@@ -62,7 +62,7 @@ export class FlightsAdminComponent implements OnInit {
     { value: 'ECONOMY', label: 'Economy' },
     { value: 'PREMIUM_ECONOMY', label: 'Premium Economy' },
     { value: 'BUSINESS', label: 'Business' },
-    { value: 'FIRST', label: 'First Class' }
+    { value: 'FIRST', label: 'First Class' },
   ];
 
   constructor(
@@ -85,9 +85,9 @@ export class FlightsAdminComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    const filters: any = {
+    const filters: { status?: string; page?: number; page_size?: number } = {
       page: this.currentPage,
-      page_size: this.pageSize
+      page_size: this.pageSize,
     };
 
     if (this.filterCriteria.status !== 'all') {
@@ -95,17 +95,17 @@ export class FlightsAdminComponent implements OnInit {
     }
 
     this.bookingsService.getAllFlightBookings(filters).subscribe({
-      next: (response) => {
+      next: response => {
         this.bookings = response.results || response;
         this.totalBookings = response.count || this.bookings.length;
         this.applyLocalFilters();
         this.loading = false;
       },
-      error: (err) => {
-        this.error = 'Failed to load flight bookings: ' + (err.error?.message || err.message || 'Unknown error');
+      error: err => {
+        this.error = this.errorHandler.getErrorMessage(err, 'Failed to load flight bookings');
         this.loading = false;
         console.error('Error loading bookings:', err);
-      }
+      },
     });
   }
 
@@ -114,21 +114,15 @@ export class FlightsAdminComponent implements OnInit {
    */
   applyLocalFilters(): void {
     this.filteredBookings = this.bookings.filter(booking => {
-      // Search filter
-      if (this.filterCriteria.search) {
-        const search = this.filterCriteria.search.toLowerCase();
-        const matchesSearch =
-          booking.booking_reference.toLowerCase().includes(search) ||
-          booking.airline.toLowerCase().includes(search) ||
-          booking.flight_number.toLowerCase().includes(search) ||
-          (booking.departure_airport && booking.departure_airport.toLowerCase().includes(search)) ||
-          (booking.arrival_airport && booking.arrival_airport.toLowerCase().includes(search));
-
-        if (!matchesSearch) return false;
+      if (this.filterCriteria.search && !this.matchesSearch(booking)) {
+        return false;
       }
 
       // Booking class filter
-      if (this.filterCriteria.bookingClass !== 'all' && booking.booking_class !== this.filterCriteria.bookingClass) {
+      if (
+        this.filterCriteria.bookingClass !== 'all' &&
+        booking.booking_class !== this.filterCriteria.bookingClass
+      ) {
         return false;
       }
 
@@ -149,6 +143,17 @@ export class FlightsAdminComponent implements OnInit {
     });
   }
 
+  private matchesSearch(booking: FlightBooking): boolean {
+    const search = this.filterCriteria.search.toLowerCase();
+    return (
+      booking.booking_reference.toLowerCase().includes(search) ||
+      booking.airline.toLowerCase().includes(search) ||
+      booking.flight_number.toLowerCase().includes(search) ||
+      !!booking.departure_airport?.toLowerCase().includes(search) ||
+      !!booking.arrival_airport?.toLowerCase().includes(search)
+    );
+  }
+
   /**
    * Apply filters
    */
@@ -166,7 +171,7 @@ export class FlightsAdminComponent implements OnInit {
       bookingClass: 'all',
       search: '',
       dateFrom: '',
-      dateTo: ''
+      dateTo: '',
     };
     this.currentPage = 1;
     this.loadBookings();
@@ -225,11 +230,11 @@ export class FlightsAdminComponent implements OnInit {
         this.processingId = null;
         this.loadBookings();
       },
-      error: (err) => {
+      error: err => {
         this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to issue ticket'));
         this.processingId = null;
         console.error('Error issuing ticket:', err);
-      }
+      },
     });
   }
 
@@ -237,15 +242,17 @@ export class FlightsAdminComponent implements OnInit {
    * Confirm booking
    */
   confirmBooking(booking: FlightBooking): void {
-    this.confirmationService.confirm({
-      title: 'Confirm Booking',
-      message: `Are you sure you want to confirm booking #${booking.booking_reference}?`,
-      confirmText: 'Confirm',
-      type: 'success'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-      this.executeConfirmBooking(booking);
-    });
+    this.confirmationService
+      .confirm({
+        title: 'Confirm Booking',
+        message: `Are you sure you want to confirm booking #${booking.booking_reference}?`,
+        confirmText: 'Confirm',
+        type: 'success',
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.executeConfirmBooking(booking);
+      });
   }
 
   private executeConfirmBooking(booking: FlightBooking): void {
@@ -257,11 +264,13 @@ export class FlightsAdminComponent implements OnInit {
         this.processingId = null;
         this.loadBookings();
       },
-      error: (err) => {
-        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to confirm booking'));
+      error: err => {
+        this.toastService.error(
+          this.errorHandler.getErrorMessage(err, 'Failed to confirm booking')
+        );
         this.processingId = null;
         console.error('Error confirming booking:', err);
-      }
+      },
     });
   }
 
@@ -284,11 +293,11 @@ export class FlightsAdminComponent implements OnInit {
         this.processingId = null;
         this.loadBookings();
       },
-      error: (err) => {
+      error: err => {
         this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to cancel booking'));
         this.processingId = null;
         console.error('Error cancelling booking:', err);
-      }
+      },
     });
   }
 
@@ -300,7 +309,8 @@ export class FlightsAdminComponent implements OnInit {
     if (statusUpper === 'TICKETED') return 'badge bg-success';
     if (statusUpper === 'CONFIRMED') return 'badge bg-info';
     if (statusUpper === 'REQUESTED') return 'badge bg-primary';
-    if (statusUpper === 'CANCELLED' || statusUpper === 'REFUNDED' || statusUpper === 'NO_SHOW') return 'badge bg-danger';
+    if (statusUpper === 'CANCELLED' || statusUpper === 'REFUNDED' || statusUpper === 'NO_SHOW')
+      return 'badge bg-danger';
     if (statusUpper === 'PENDING') return 'badge bg-warning';
     return 'badge bg-secondary';
   }
@@ -316,7 +326,6 @@ export class FlightsAdminComponent implements OnInit {
     if (classUpper === 'ECONOMY') return 'badge bg-secondary';
     return 'badge bg-secondary';
   }
-
 
   /**
    * Format route
@@ -345,7 +354,11 @@ export class FlightsAdminComponent implements OnInit {
    * Check if booking can be cancelled
    */
   canCancel(booking: FlightBooking): boolean {
-    return booking.status !== 'CANCELLED' && booking.status !== 'REFUNDED' && booking.status !== 'NO_SHOW';
+    return (
+      booking.status !== 'CANCELLED' &&
+      booking.status !== 'REFUNDED' &&
+      booking.status !== 'NO_SHOW'
+    );
   }
 
   /**
@@ -369,7 +382,7 @@ export class FlightsAdminComponent implements OnInit {
     const pages: number[] = [];
     const maxPages = 5;
     let startPage = Math.max(1, this.currentPage - Math.floor(maxPages / 2));
-    let endPage = Math.min(this.totalPages, startPage + maxPages - 1);
+    const endPage = Math.min(this.totalPages, startPage + maxPages - 1);
 
     if (endPage - startPage + 1 < maxPages) {
       startPage = Math.max(1, endPage - maxPages + 1);

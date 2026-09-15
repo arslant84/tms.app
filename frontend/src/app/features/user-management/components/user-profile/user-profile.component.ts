@@ -13,7 +13,7 @@ import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, LoadingSpinnerComponent],
   templateUrl: './user-profile.component.html',
-  styleUrls: ['./user-profile.component.scss']
+  styleUrls: ['./user-profile.component.scss'],
 })
 export class UserProfileComponent implements OnInit {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
@@ -33,7 +33,7 @@ export class UserProfileComponent implements OnInit {
   genders = [
     { value: 'Male', label: 'Male' },
     { value: 'Female', label: 'Female' },
-    { value: 'Other', label: 'Other' }
+    { value: 'Other', label: 'Other' },
   ];
 
   constructor(
@@ -55,14 +55,14 @@ export class UserProfileComponent implements OnInit {
       name: ['', Validators.required],
       phone: [''],
       gender: [''],
-      profile_photo: [null]
+      profile_photo: [null],
     });
 
     // Password change form
     this.passwordForm = this.fb.group({
       current_password: ['', Validators.required],
       new_password: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH)]],
-      confirm_password: ['', Validators.required]
+      confirm_password: ['', Validators.required],
     });
   }
 
@@ -77,22 +77,22 @@ export class UserProfileComponent implements OnInit {
     }
 
     this.userService.getUserById(userId).subscribe({
-      next: (user) => {
+      next: user => {
         this.currentUser = user;
         this.previewImage = user.profile_photo || null;
         this.profileForm.patchValue({
           name: user.name,
           phone: user.phone,
           gender: user.gender,
-          profile_photo: user.profile_photo
+          profile_photo: user.profile_photo,
         });
         this.loading = false;
       },
-      error: (error) => {
+      error: error => {
         console.error('Error loading user profile:', error);
         this.toastService.error('Failed to load profile');
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -115,7 +115,7 @@ export class UserProfileComponent implements OnInit {
       name: this.currentUser?.name,
       phone: this.currentUser?.phone,
       gender: this.currentUser?.gender,
-      profile_photo: this.currentUser?.profile_photo
+      profile_photo: this.currentUser?.profile_photo,
     });
   }
 
@@ -187,12 +187,14 @@ export class UserProfileComponent implements OnInit {
         this.loadCurrentUser();
         this.submitting = false;
       },
-      error: (error) => {
+      error: error => {
         console.error('Error updating profile:', error);
         console.error('Error details:', error.error);
-        this.toastService.error(error.error?.detail || JSON.stringify(error.error) || 'Failed to update profile');
+        this.toastService.error(
+          this.errorHandler.getErrorMessage(error, 'Failed to update profile')
+        );
         this.submitting = false;
-      }
+      },
     });
   }
 
@@ -225,21 +227,21 @@ export class UserProfileComponent implements OnInit {
     const oldPassword = this.passwordForm.get('old_password')?.value;
     const passwordData = {
       old_password: oldPassword,
-      new_password: newPassword
+      new_password: newPassword,
     };
 
     this.userService.changePassword(passwordData).subscribe({
-      next: (response) => {
+      next: response => {
         this.toastService.success(response.message || 'Password changed successfully');
         this.closePasswordModal();
         this.submitting = false;
         this.passwordForm.reset();
       },
-      error: (err) => {
+      error: err => {
         const errorMsg = this.errorHandler.getErrorMessage(err, 'Failed to change password');
         this.toastService.error(errorMsg);
         this.submitting = false;
-      }
+      },
     });
   }
 
@@ -255,7 +257,8 @@ export class UserProfileComponent implements OnInit {
     if (field?.errors) {
       if (field.errors['required']) return 'This field is required';
       if (field.errors['email']) return 'Invalid email format';
-      if (field.errors['minlength']) return `Minimum length is ${field.errors['minlength'].requiredLength}`;
+      if (field.errors['minlength'])
+        return `Minimum length is ${field.errors['minlength'].requiredLength}`;
     }
     return '';
   }
@@ -263,7 +266,10 @@ export class UserProfileComponent implements OnInit {
   getInitials(): string {
     if (!this.currentUser?.name) return 'U';
     const names = this.currentUser.name.split(' ');
-    return names.map(n => n[0]).join('').toUpperCase();
+    return names
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
   }
 
   getStatusBadgeClass(): string {

@@ -7,13 +7,14 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LoadingSpinnerComponent],
   templateUrl: './forgot-password.component.html',
-  styleUrls: ['./forgot-password.component.scss']
+  styleUrls: ['./forgot-password.component.scss'],
 })
 export class ForgotPasswordComponent {
   email = '';
@@ -25,7 +26,8 @@ export class ForgotPasswordComponent {
   constructor(
     private http: HttpClient,
     private router: Router,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    private errorHandler: HttpErrorHandlerService
   ) {
     this.applicationName$ = this.appSettingsService.settings$.pipe(
       map(settings => settings.application_name || 'TMS')
@@ -49,19 +51,26 @@ export class ForgotPasswordComponent {
     this.loading = true;
     const url = `${environment.apiUrl}/password/reset/request/`;
 
-    this.http.post(url, {
-      email: this.email
-    }).subscribe({
-      next: (response: any) => {
-        this.loading = false;
-        this.success = response.message || 'If an account exists with this email, a password reset link has been sent.';
-        this.email = '';
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error?.message || err.error?.error || 'Failed to send password reset email';
-      }
-    });
+    this.http
+      .post(url, {
+        email: this.email,
+      })
+      .subscribe({
+        next: (response: { message?: string }) => {
+          this.loading = false;
+          this.success =
+            response.message ||
+            'If an account exists with this email, a password reset link has been sent.';
+          this.email = '';
+        },
+        error: err => {
+          this.loading = false;
+          this.error = this.errorHandler.getErrorMessage(
+            err,
+            'Failed to send password reset email'
+          );
+        },
+      });
   }
 
   private isValidEmail(email: string): boolean {

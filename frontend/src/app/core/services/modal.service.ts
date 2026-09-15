@@ -1,22 +1,26 @@
-import { Injectable, ViewContainerRef, createComponent, ComponentRef, Type } from '@angular/core';
+import { type ComponentRef, Injectable, type Type, type ViewContainerRef } from '@angular/core';
 import { Subject } from 'rxjs';
 
+/** Minimal shape a component hosted by ModalService may implement to emit
+ *  a close event back to ModalService.close(). */
+interface CloseEmitter {
+  subscribe: (next: (data?: unknown) => void) => void;
+}
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ModalService {
   private hostViewContainerRef!: ViewContainerRef;
-  private componentRef?: ComponentRef<any>;
-  private readonly _afterClosed = new Subject<any>();
+  private componentRef?: ComponentRef<unknown>;
+  private readonly _afterClosed = new Subject<unknown>();
   public readonly afterClosed = this._afterClosed.asObservable();
-
-  constructor() {}
 
   registerHostViewContainerRef(vcr: ViewContainerRef): void {
     this.hostViewContainerRef = vcr;
   }
 
-  open<T>(component: Type<T>, inputs?: Record<string, any>): void {
+  open<T>(component: Type<T>, inputs?: Record<string, unknown>): void {
     if (!this.hostViewContainerRef) {
       console.error('Modal host container not registered!');
       return;
@@ -30,16 +34,18 @@ export class ModalService {
 
     // Pass inputs to the component instance
     if (inputs) {
+      const instance = this.componentRef.instance as Record<string, unknown>;
       for (const key in inputs) {
-        if (inputs.hasOwnProperty(key)) {
-          this.componentRef.instance[key] = inputs[key];
+        if (Object.hasOwn(inputs, key)) {
+          instance[key] = inputs[key];
         }
       }
     }
 
     // Subscribe to a close event if the modal component has one
-    if (this.componentRef.instance.close) {
-      this.componentRef.instance.close.subscribe((data?: any) => {
+    const closeEmitter = (this.componentRef.instance as { close?: CloseEmitter }).close;
+    if (closeEmitter) {
+      closeEmitter.subscribe((data?: unknown) => {
         this.close(data);
       });
     }
@@ -47,7 +53,7 @@ export class ModalService {
     document.body.classList.add('modal-open');
   }
 
-  close(data?: any): void {
+  close(data?: unknown): void {
     if (this.componentRef) {
       this.componentRef.destroy();
       this.componentRef = undefined;
@@ -57,4 +63,3 @@ export class ModalService {
     document.body.classList.remove('modal-open');
   }
 }
-

@@ -6,15 +6,20 @@ import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { AccommodationService, AccommodationStaffHouse, AccommodationRoom } from '../../accommodation/services/accommodation.service';
+import {
+  AccommodationService,
+  AccommodationStaffHouse,
+  AccommodationRoom,
+} from '../../accommodation/services/accommodation.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-accommodation-request',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, LoadingSpinnerComponent],
   templateUrl: './accommodation-request.component.html',
-  styleUrl: './accommodation-request.component.scss'
+  styleUrl: './accommodation-request.component.scss',
 })
 export class AccommodationRequestComponent implements OnInit {
   currentStep: number = 1;
@@ -35,10 +40,7 @@ export class AccommodationRequestComponent implements OnInit {
   allRooms: AccommodationRoom[] = [];
 
   // Form step titles
-  stepTitles = [
-    'Accommodation Selection',
-    'Booking Confirmation'
-  ];
+  stepTitles = ['Accommodation Selection', 'Booking Confirmation'];
 
   constructor(
     private fb: FormBuilder,
@@ -46,7 +48,8 @@ export class AccommodationRequestComponent implements OnInit {
     private accommodationService: AccommodationService,
     private authService: AuthService,
     private toastService: ToastService,
-    private formUtils: FormUtilsService
+    private formUtils: FormUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {
     this.initForm();
   }
@@ -62,7 +65,7 @@ export class AccommodationRequestComponent implements OnInit {
 
     forkJoin({
       staffHouses: this.accommodationService.getAllStaffHouses(),
-      rooms: this.accommodationService.getAllRooms()
+      rooms: this.accommodationService.getAllRooms(),
     }).subscribe({
       next: ({ staffHouses, rooms }) => {
         this.allStaffHouses = staffHouses;
@@ -75,14 +78,14 @@ export class AccommodationRequestComponent implements OnInit {
           this.updateAvailableAccommodations(defaultType);
         }
       },
-      error: (err) => {
+      error: err => {
         console.error('Error loading accommodation data:', err);
         this.toastService.error('Failed to load accommodation options');
         this.isLoading = false;
-      }
+      },
     });
   }
-  
+
   // Initialize the form with all fields across all steps
   private initForm(): void {
     this.accommodationForm = this.fb.group({
@@ -97,7 +100,7 @@ export class AccommodationRequestComponent implements OnInit {
       // Step 2: Booking Confirmation
       relatedTravelRequest: [''], // TRF reference number
       specialRequirements: [''],
-      reason: ['', Validators.required]
+      reason: ['', Validators.required],
     });
 
     // Subscribe to form changes to update available options
@@ -122,7 +125,7 @@ export class AccommodationRequestComponent implements OnInit {
     // Reset selected accommodation and room
     this.accommodationForm.patchValue({
       selectedAccommodation: '',
-      selectedRoom: ''
+      selectedRoom: '',
     });
     this.rooms = [];
   }
@@ -136,10 +139,10 @@ export class AccommodationRequestComponent implements OnInit {
 
     // Reset selected room
     this.accommodationForm.patchValue({
-      selectedRoom: ''
+      selectedRoom: '',
     });
   }
-  
+
   // Navigation methods
   nextStep(): void {
     if (this.currentStep < this.totalSteps) {
@@ -147,13 +150,13 @@ export class AccommodationRequestComponent implements OnInit {
       this.autosaveDraft();
     }
   }
-  
+
   previousStep(): void {
     if (this.currentStep > 1) {
       this.currentStep--;
     }
   }
-  
+
   // Check if current step is valid
   isCurrentStepValid(): boolean {
     const fieldsToValidate = this.getFieldsForCurrentStep();
@@ -162,19 +165,26 @@ export class AccommodationRequestComponent implements OnInit {
       return control ? control.valid : true;
     });
   }
-  
+
   // Get fields that belong to current step
   private getFieldsForCurrentStep(): string[] {
-    switch(this.currentStep) {
+    switch (this.currentStep) {
       case 1:
-        return ['accommodationType', 'checkInDate', 'checkOutDate', 'gender', 'selectedAccommodation', 'selectedRoom'];
+        return [
+          'accommodationType',
+          'checkInDate',
+          'checkOutDate',
+          'gender',
+          'selectedAccommodation',
+          'selectedRoom',
+        ];
       case 2:
         return ['relatedTravelRequest', 'reason'];
       default:
         return [];
     }
   }
-  
+
   // Toggle calendar view between option 1 and option 2
   toggleCalendarView(): void {
     this.calendarView = this.calendarView === 'option1' ? 'option2' : 'option1';
@@ -196,17 +206,20 @@ export class AccommodationRequestComponent implements OnInit {
     const checkOut = new Date(checkOutDate);
     return checkOut >= checkIn;
   }
-  
+
   // Draft saving and loading
   autosaveDraft(): void {
     const draftData = this.accommodationForm.value;
-    localStorage.setItem('draft_accommodation_request', JSON.stringify({
-      formData: draftData,
-      lastStep: this.currentStep,
-      timestamp: new Date().toISOString()
-    }));
+    localStorage.setItem(
+      'draft_accommodation_request',
+      JSON.stringify({
+        formData: draftData,
+        lastStep: this.currentStep,
+        timestamp: new Date().toISOString(),
+      })
+    );
   }
-  
+
   loadDraft(): void {
     const savedDraft = localStorage.getItem('draft_accommodation_request');
     if (savedDraft) {
@@ -219,7 +232,7 @@ export class AccommodationRequestComponent implements OnInit {
       }
     }
   }
-  
+
   clearDraft(): void {
     localStorage.removeItem('draft_accommodation_request');
     this.accommodationForm.reset();
@@ -228,7 +241,7 @@ export class AccommodationRequestComponent implements OnInit {
     // Reset default values
     this.accommodationForm.patchValue({
       accommodationType: 'Ashgabat',
-      gender: 'male'
+      gender: 'male',
     });
   }
 
@@ -256,33 +269,37 @@ export class AccommodationRequestComponent implements OnInit {
           gender: formValue.gender,
           reason: formValue.reason,
           related_travel_request: formValue.relatedTravelRequest || null,
-          accommodations: [{
-            staff_house_id: Number(formValue.selectedAccommodation),
-            room_id: Number(formValue.selectedRoom),
-            check_in_date: formValue.checkInDate,
-            check_out_date: formValue.checkOutDate,
-            location: formValue.accommodationType
-          }]
-        }
+          accommodations: [
+            {
+              staff_house_id: Number(formValue.selectedAccommodation),
+              room_id: Number(formValue.selectedRoom),
+              check_in_date: formValue.checkInDate,
+              check_out_date: formValue.checkOutDate,
+              location: formValue.accommodationType,
+            },
+          ],
+        },
       };
 
       this.accommodationService.createRequest(requestData).subscribe({
-        next: (response) => {
+        next: response => {
           this.clearDraft();
           this.isSubmitting = false;
           this.toastService.success('Accommodation request submitted successfully!');
           this.router.navigate(['/requests/success'], {
             state: {
               message: 'Accommodation request submitted successfully!',
-              reference: response.request_number || `ACC-${response.id}`
-            }
+              reference: response.request_number || `ACC-${response.id}`,
+            },
           });
         },
-        error: (err) => {
+        error: err => {
           console.error('Error submitting accommodation request:', err);
-          this.toastService.error('Failed to submit request: ' + (err.error?.detail || err.message));
+          this.toastService.error(
+            this.errorHandler.getErrorMessage(err, 'Failed to submit request')
+          );
           this.isSubmitting = false;
-        }
+        },
       });
     } else {
       // Mark all fields as touched to show validation errors
@@ -306,7 +323,7 @@ export class AccommodationRequestComponent implements OnInit {
     const accommodation = this.allStaffHouses.find(h => h.id === Number(accommodationId));
     return accommodation ? accommodation.name : '';
   }
-  
+
   // Helper method to get room name for the template
   getRoomNumber(): string {
     const roomId = this.accommodationForm.get('selectedRoom')?.value;
@@ -317,29 +334,29 @@ export class AccommodationRequestComponent implements OnInit {
     const room = this.allRooms.find(r => r.id === Number(roomId));
     return room ? room.name : '';
   }
-  
+
   // Helper method to format dates for the template
   getFormattedDate(fieldName: string): string {
     const date = this.accommodationForm.get(fieldName)?.value;
     if (!date) {
       return '';
     }
-    
+
     // Format the date as medium date (e.g., 'Jun 15, 2025')
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   }
-  
+
   // Helper method to display gender in a user-friendly format
   getGenderDisplay(): string {
     const gender = this.accommodationForm.get('gender')?.value;
     return gender === 'male' ? 'Male' : 'Female';
   }
 
-  private extractDepartmentName(department: any): string {
+  private extractDepartmentName(department: string | { name?: string } | null | undefined): string {
     if (!department) {
       return '';
     }

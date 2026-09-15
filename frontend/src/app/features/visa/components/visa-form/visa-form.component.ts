@@ -7,6 +7,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { ConfirmationService } from '../../../../core/services/confirmation.service';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
 import { UserFormHelperService } from '../../../../core/utils/user-form-helper.service';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import {
   ApproverSelectionComponent,
   SkippedStepsSelection,
@@ -120,7 +121,8 @@ export class VisaFormComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private formUtils: FormUtilsService,
-    private userFormHelper: UserFormHelperService
+    private userFormHelper: UserFormHelperService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -335,7 +337,7 @@ export class VisaFormComponent implements OnInit {
             error: submitError => {
               this.isSubmitting = false;
               this.toastService.error(
-                submitError.error?.error || 'Failed to submit visa application'
+                this.errorHandler.getErrorMessage(submitError, 'Failed to submit visa application')
               );
             },
           });
@@ -369,12 +371,9 @@ export class VisaFormComponent implements OnInit {
 
           this.toastService.error(errorMessage, true, 10000);
         } else {
-          const errorMsg =
-            error?.error?.message ||
-            error?.error?.detail ||
-            error?.message ||
-            'Failed to save visa application';
-          this.toastService.error(errorMsg);
+          this.toastService.error(
+            this.errorHandler.getErrorMessage(error, 'Failed to save visa application')
+          );
         }
 
         this.isSubmitting = false;
@@ -431,12 +430,7 @@ export class VisaFormComponent implements OnInit {
 
           this.toastService.error(errorMessage, true, 10000);
         } else {
-          const errorMsg =
-            error?.error?.message ||
-            error?.error?.detail ||
-            error?.message ||
-            'Failed to save draft';
-          this.toastService.error(errorMsg);
+          this.toastService.error(this.errorHandler.getErrorMessage(error, 'Failed to save draft'));
         }
 
         this.isSubmitting = false;

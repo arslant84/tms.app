@@ -14,6 +14,7 @@ import { LocationDialogComponent, LocationDialogData } from './location-dialog.c
 import { RoomDialogComponent, RoomDialogData } from './room-dialog.component';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-accommodation-admin',
@@ -70,7 +71,8 @@ export class AccommodationAdminComponent implements OnInit {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     public router: Router,
-    public statusUtils: StatusUtilsService
+    public statusUtils: StatusUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -292,7 +294,7 @@ export class AccommodationAdminComponent implements OnInit {
         error: err => {
           console.error('Error updating location:', err);
           this.toastService.error(
-            'Failed to update location: ' + (err.error?.detail || err.message)
+            this.errorHandler.getErrorMessage(err, 'Failed to update location')
           );
           if (this.locationDialog) {
             this.locationDialog.setSubmitting(false);
@@ -315,7 +317,7 @@ export class AccommodationAdminComponent implements OnInit {
           console.error('❌ Error creating location:', err);
           console.error('Error details:', err.error);
           this.toastService.error(
-            'Failed to create location: ' + (err.error?.detail || err.message)
+            this.errorHandler.getErrorMessage(err, 'Failed to create location')
           );
           if (this.locationDialog) {
             this.locationDialog.setSubmitting(false);
@@ -344,7 +346,9 @@ export class AccommodationAdminComponent implements OnInit {
       },
       error: err => {
         console.error('Error deleting location:', err);
-        this.toastService.error('Failed to delete location: ' + (err.error?.detail || err.message));
+        this.toastService.error(
+          this.errorHandler.getErrorMessage(err, 'Failed to delete location')
+        );
       },
     });
   }
@@ -397,7 +401,7 @@ export class AccommodationAdminComponent implements OnInit {
         },
         error: err => {
           console.error('Error updating room:', err);
-          this.toastService.error('Failed to update room: ' + (err.error?.detail || err.message));
+          this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to update room'));
           if (this.roomDialog) {
             this.roomDialog.setSubmitting(false);
           }
@@ -417,7 +421,7 @@ export class AccommodationAdminComponent implements OnInit {
         },
         error: err => {
           console.error('Error creating room:', err);
-          this.toastService.error('Failed to create room: ' + (err.error?.detail || err.message));
+          this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to create room'));
           if (this.roomDialog) {
             this.roomDialog.setSubmitting(false);
           }
@@ -442,7 +446,7 @@ export class AccommodationAdminComponent implements OnInit {
       },
       error: err => {
         console.error('Error deleting room:', err);
-        this.toastService.error('Failed to delete room: ' + (err.error?.detail || err.message));
+        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to delete room'));
       },
     });
   }

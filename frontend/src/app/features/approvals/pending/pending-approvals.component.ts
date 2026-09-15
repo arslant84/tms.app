@@ -15,7 +15,7 @@ import { HttpErrorHandlerService } from '../../../core/utils/http-error-handler.
   standalone: true,
   imports: [CommonModule, FormsModule, CurrencyFormatPipe, LoadingSpinnerComponent],
   templateUrl: './pending-approvals.component.html',
-  styleUrl: './pending-approvals.component.scss'
+  styleUrl: './pending-approvals.component.scss',
 })
 export class PendingApprovalsComponent implements OnInit {
   pendingRequests: ApprovalRequest[] = [];
@@ -29,7 +29,7 @@ export class PendingApprovalsComponent implements OnInit {
   filterCriteria = {
     department: 'all',
     priority: 'all',
-    search: ''
+    search: '',
   };
 
   // For comments when approving/rejecting
@@ -50,7 +50,7 @@ export class PendingApprovalsComponent implements OnInit {
   ngOnInit(): void {
     this.loadPendingApprovals();
   }
-  
+
   /**
    * Load pending approvals from API
    */
@@ -58,21 +58,22 @@ export class PendingApprovalsComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
-    const loadObservable = this.activeTab === 'all'
-      ? this.approvalsService.getAllPendingApprovals()
-      : this.approvalsService.getPendingApprovalsByType(this.activeTab);
+    const loadObservable =
+      this.activeTab === 'all'
+        ? this.approvalsService.getAllPendingApprovals()
+        : this.approvalsService.getPendingApprovalsByType(this.activeTab);
 
     loadObservable.subscribe({
-      next: (approvals) => {
+      next: approvals => {
         this.pendingRequests = approvals;
         this.applyFilters();
         this.loading = false;
       },
-      error: (err) => {
-        this.error = 'Failed to load pending approvals: ' + (err.error?.message || err.message || 'Unknown error');
+      error: err => {
+        this.error = this.errorHandler.getErrorMessage(err, 'Failed to load pending approvals');
         this.loading = false;
         console.error('Error loading pending approvals:', err);
-      }
+      },
     });
   }
 
@@ -92,28 +93,35 @@ export class PendingApprovalsComponent implements OnInit {
     if (type === 'all') return this.pendingRequests.length;
     return this.pendingRequests.filter(req => req.type === type).length;
   }
-  
+
   /**
    * Apply filters to the requests
    */
   applyFilters(): void {
     this.filteredRequests = this.pendingRequests.filter(request => {
       // Department filter
-      if (this.filterCriteria.department !== 'all' &&
-          request.requester.department.toLowerCase() !== this.filterCriteria.department.toLowerCase()) {
+      if (
+        this.filterCriteria.department !== 'all' &&
+        request.requester.department.toLowerCase() !== this.filterCriteria.department.toLowerCase()
+      ) {
         return false;
       }
 
       // Priority filter
-      if (this.filterCriteria.priority !== 'all' && request.priority !== this.filterCriteria.priority) {
+      if (
+        this.filterCriteria.priority !== 'all' &&
+        request.priority !== this.filterCriteria.priority
+      ) {
         return false;
       }
 
       // Search filter (search in title and requester name)
       if (this.filterCriteria.search) {
         const searchTerm = this.filterCriteria.search.toLowerCase();
-        return request.title.toLowerCase().includes(searchTerm) ||
-               request.requester.name.toLowerCase().includes(searchTerm);
+        return (
+          request.title.toLowerCase().includes(searchTerm) ||
+          request.requester.name.toLowerCase().includes(searchTerm)
+        );
       }
 
       return true;
@@ -127,11 +135,11 @@ export class PendingApprovalsComponent implements OnInit {
     this.filterCriteria = {
       department: 'all',
       priority: 'all',
-      search: ''
+      search: '',
     };
     this.applyFilters();
   }
-  
+
   /**
    * Select a request to view details
    */
@@ -158,7 +166,7 @@ export class PendingApprovalsComponent implements OnInit {
       accommodation: `/accommodation/${this.selectedRequest.id}`,
       transport: `/transport/${this.selectedRequest.id}`,
       visa: `/visa/${this.selectedRequest.id}`,
-      expense: `/expenses/${this.selectedRequest.id}`
+      expense: `/expenses/${this.selectedRequest.id}`,
     };
 
     const route = routes[this.selectedRequest.type];
@@ -173,15 +181,17 @@ export class PendingApprovalsComponent implements OnInit {
   approveRequest(): void {
     if (!this.selectedRequest) return;
 
-    this.confirmationService.confirm({
-      title: 'Confirm Approval',
-      message: 'Are you sure you want to approve this request?',
-      confirmText: 'Approve',
-      type: 'success'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-      this.executeApproveRequest();
-    });
+    this.confirmationService
+      .confirm({
+        title: 'Confirm Approval',
+        message: 'Are you sure you want to approve this request?',
+        confirmText: 'Approve',
+        type: 'success',
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.executeApproveRequest();
+      });
   }
 
   private executeApproveRequest(): void {
@@ -191,29 +201,35 @@ export class PendingApprovalsComponent implements OnInit {
     // Extract step role from current approval step or use default
     const stepRole = this.extractStepRole(this.selectedRequest.currentApprovalStep);
 
-    this.approvalsService.approveRequest(
-      this.selectedRequest.type,
-      this.selectedRequest.id,
-      this.approvalComment,
-      stepRole
-    ).subscribe({
-      next: () => {
-        this.toastService.success('Request approved successfully');
+    this.approvalsService
+      .approveRequest(
+        this.selectedRequest.type,
+        this.selectedRequest.id,
+        this.approvalComment,
+        stepRole
+      )
+      .subscribe({
+        next: () => {
+          this.toastService.success('Request approved successfully');
 
-        // Remove from pending list
-        this.pendingRequests = this.pendingRequests.filter(r => r.id !== this.selectedRequest!.id);
-        this.applyFilters();
+          // Remove from pending list
+          this.pendingRequests = this.pendingRequests.filter(
+            r => r.id !== this.selectedRequest!.id
+          );
+          this.applyFilters();
 
-        this.isProcessing = false;
-        this.selectedRequest = null;
-        this.approvalComment = '';
-      },
-      error: (err) => {
-        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to approve request'));
-        this.isProcessing = false;
-        console.error('Error approving request:', err);
-      }
-    });
+          this.isProcessing = false;
+          this.selectedRequest = null;
+          this.approvalComment = '';
+        },
+        error: err => {
+          this.toastService.error(
+            this.errorHandler.getErrorMessage(err, 'Failed to approve request')
+          );
+          this.isProcessing = false;
+          console.error('Error approving request:', err);
+        },
+      });
   }
 
   /**
@@ -227,15 +243,17 @@ export class PendingApprovalsComponent implements OnInit {
       return;
     }
 
-    this.confirmationService.confirm({
-      title: 'Confirm Rejection',
-      message: 'Are you sure you want to reject this request?',
-      confirmText: 'Reject',
-      type: 'danger'
-    }).subscribe(confirmed => {
-      if (!confirmed) return;
-      this.executeRejectRequest();
-    });
+    this.confirmationService
+      .confirm({
+        title: 'Confirm Rejection',
+        message: 'Are you sure you want to reject this request?',
+        confirmText: 'Reject',
+        type: 'danger',
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.executeRejectRequest();
+      });
   }
 
   private executeRejectRequest(): void {
@@ -245,31 +263,37 @@ export class PendingApprovalsComponent implements OnInit {
     // Extract step role from current approval step or use default
     const stepRole = this.extractStepRole(this.selectedRequest.currentApprovalStep);
 
-    this.approvalsService.rejectRequest(
-      this.selectedRequest.type,
-      this.selectedRequest.id,
-      this.approvalComment,
-      stepRole
-    ).subscribe({
-      next: () => {
-        this.toastService.success('Request rejected successfully');
+    this.approvalsService
+      .rejectRequest(
+        this.selectedRequest.type,
+        this.selectedRequest.id,
+        this.approvalComment,
+        stepRole
+      )
+      .subscribe({
+        next: () => {
+          this.toastService.success('Request rejected successfully');
 
-        // Remove from pending list
-        this.pendingRequests = this.pendingRequests.filter(r => r.id !== this.selectedRequest!.id);
-        this.applyFilters();
+          // Remove from pending list
+          this.pendingRequests = this.pendingRequests.filter(
+            r => r.id !== this.selectedRequest!.id
+          );
+          this.applyFilters();
 
-        this.isProcessing = false;
-        this.selectedRequest = null;
-        this.approvalComment = '';
-      },
-      error: (err) => {
-        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to reject request'));
-        this.isProcessing = false;
-        console.error('Error rejecting request:', err);
-      }
-    });
+          this.isProcessing = false;
+          this.selectedRequest = null;
+          this.approvalComment = '';
+        },
+        error: err => {
+          this.toastService.error(
+            this.errorHandler.getErrorMessage(err, 'Failed to reject request')
+          );
+          this.isProcessing = false;
+          console.error('Error rejecting request:', err);
+        },
+      });
   }
-  
+
   /**
    * Extract step role from current approval step string
    * Dynamically extracts role name from status like "Pending Department Focal" -> "Department Focal"
@@ -294,11 +318,15 @@ export class PendingApprovalsComponent implements OnInit {
    * Get CSS class based on priority
    */
   getPriorityClass(priority: string): string {
-    switch(priority) {
-      case 'high': return 'priority-high';
-      case 'medium': return 'priority-medium';
-      case 'low': return 'priority-low';
-      default: return '';
+    switch (priority) {
+      case 'high':
+        return 'priority-high';
+      case 'medium':
+        return 'priority-medium';
+      case 'low':
+        return 'priority-low';
+      default:
+        return '';
     }
   }
 
@@ -306,13 +334,19 @@ export class PendingApprovalsComponent implements OnInit {
    * Get icon based on request type
    */
   getTypeIcon(type: string): string {
-    switch(type) {
-      case 'trf': return 'bi-airplane';
-      case 'accommodation': return 'bi-building';
-      case 'transport': return 'bi-truck';
-      case 'visa': return 'bi-file-text';
-      case 'expense': return 'bi-file-text';
-      default: return 'bi-file-earmark';
+    switch (type) {
+      case 'trf':
+        return 'bi-airplane';
+      case 'accommodation':
+        return 'bi-building';
+      case 'transport':
+        return 'bi-truck';
+      case 'visa':
+        return 'bi-file-text';
+      case 'expense':
+        return 'bi-file-text';
+      default:
+        return 'bi-file-earmark';
     }
   }
 
@@ -327,5 +361,4 @@ export class PendingApprovalsComponent implements OnInit {
 
     return deadlineDate < today;
   }
-
 }

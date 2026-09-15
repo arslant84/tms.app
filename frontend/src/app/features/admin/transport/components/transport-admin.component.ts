@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import {
   type TransportRequest,
@@ -60,6 +61,7 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 
   private transportService = inject(TransportService);
   private statusUtils = inject(StatusUtilsService);
+  private errorHandler = inject(HttpErrorHandlerService);
   router = inject(Router);
   dateUtils = inject(DateUtilsService);
 
@@ -104,9 +106,7 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
         }
       },
       error: err => {
-        this.error =
-          'Failed to load transport requests: ' +
-          (err.error?.message || err.message || 'Unknown error');
+        this.error = this.errorHandler.getErrorMessage(err, 'Failed to load transport requests');
         this.loading = false;
         console.error('Error loading requests:', err);
       },

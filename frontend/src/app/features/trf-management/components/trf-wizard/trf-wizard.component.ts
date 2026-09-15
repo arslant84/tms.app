@@ -205,7 +205,7 @@ export class TrfWizardComponent implements OnInit {
         this.isLoadingTrf = false;
       },
       error: (err: HttpErrorResponse) => {
-        this.submitError = `Failed to load TRF: ${err.error?.message || err.message || 'Unknown error'}`;
+        this.submitError = this.errorHandler.getErrorMessage(err, 'Failed to load TRF');
         this.isLoadingTrf = false;
       },
     });
@@ -521,27 +521,10 @@ export class TrfWizardComponent implements OnInit {
                   },
                   error: (error: HttpErrorResponse) => {
                     this.isSubmitting = false;
-
-                    let errorMessage = 'Error submitting TRF to workflow: ';
-                    if (error.error && typeof error.error === 'object') {
-                      if (error.error.error) {
-                        errorMessage += error.error.error;
-                      } else if (error.error.message) {
-                        errorMessage += error.error.message;
-                      } else if (error.error.detail) {
-                        errorMessage += error.error.detail;
-                      } else {
-                        errorMessage += JSON.stringify(error.error);
-                      }
-                    } else if (error.error && typeof error.error === 'string') {
-                      errorMessage += error.error;
-                    } else if (error.message) {
-                      errorMessage += error.message;
-                    } else {
-                      errorMessage += 'Unknown error';
-                    }
-
-                    this.submitError = errorMessage;
+                    this.submitError = this.errorHandler.getErrorMessage(
+                      error,
+                      'Error submitting TRF to workflow'
+                    );
                     this.toastService.error(this.submitError);
                   },
                 });

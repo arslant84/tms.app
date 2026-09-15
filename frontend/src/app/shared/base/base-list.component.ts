@@ -2,10 +2,11 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { Subject, Observable } from 'rxjs';
 import { takeUntil, filter, finalize } from 'rxjs/operators';
-import { ListStateService } from '../../core/services/list-state.service';
+import { ListStateService, type ListFilters } from '../../core/services/list-state.service';
 import { ToastService } from '../../core/services/toast.service';
 import { DateUtilsService } from '../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../core/utils/status-utils.service';
+import { HttpErrorHandlerService } from '../../core/utils/http-error-handler.service';
 
 /**
  * Base class for list components with common functionality.
@@ -38,18 +39,19 @@ import { StatusUtilsService } from '../../core/utils/status-utils.service';
  * ```
  */
 @Component({
-  template: '' // Abstract component - no template
+  template: '', // Abstract component - no template
 })
 export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
   // Injected services
   protected router = inject(Router);
   protected toastService = inject(ToastService);
+  protected errorHandler = inject(HttpErrorHandlerService);
   public dateUtils = inject(DateUtilsService);
   public statusUtils = inject(StatusUtilsService);
 
   // Configuration - override in subclass
   protected abstract entityName: string; // e.g., 'trf', 'accommodation', 'transport'
-  protected abstract basePath: string;   // e.g., '/trf', '/accommodation'
+  protected abstract basePath: string; // e.g., '/trf', '/accommodation'
   protected pageSize = 10;
   protected enableNavigationRefresh = true;
 
@@ -64,7 +66,7 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
 
   // Delete confirmation state
   private deleteConfirmId: number | null = null;
-  private deleteConfirmTimeout: any = null;
+  private deleteConfirmTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Prevents NavigationEnd that fires during component init from triggering a second fetchData()
   private navigationRefreshReady = false;
@@ -76,13 +78,13 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
    * Abstract method to fetch data from service.
    * Subclass must implement this to call the appropriate service method.
    */
-  protected abstract fetchDataFromService(): Observable<any>;
+  protected abstract fetchDataFromService(): Observable<unknown>;
 
   /**
    * Abstract method to delete item from service.
    * Subclass must implement this to call the appropriate delete method.
    */
-  protected abstract deleteFromService(id: number): Observable<any>;
+  protected abstract deleteFromService(id: number): Observable<unknown>;
 
   /**
    * Get status badge CSS class.
@@ -128,11 +130,9 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
    * Setup search subscription with automatic data fetch.
    */
   private setupSearchSubscription(): void {
-    this.listState.search$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.fetchData();
-      });
+    this.listState.search$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.fetchData();
+    });
   }
 
   /**
@@ -144,8 +144,9 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
     this.router.events
       .pipe(
         filter(event => event instanceof NavigationEnd),
-        filter((event: NavigationEnd) =>
-          event.url === this.basePath || event.url.startsWith(`${this.basePath}?`)
+        filter(
+          (event: NavigationEnd) =>
+            event.url === this.basePath || event.url.startsWith(`${this.basePath}?`)
         ),
         takeUntil(this.destroy$)
       )
@@ -171,12 +172,12 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
         })
       )
       .subscribe({
-        next: (response: any) => {
+        next: (response: unknown) => {
           this.handleFetchResponse(response);
         },
-        error: (err) => {
+        error: err => {
           this.handleFetchError(err);
-        }
+        },
       });
   }
 
@@ -184,15 +185,22 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
    * Handle successful fetch response.
    * Override to customize response handling.
    */
-  protected handleFetchResponse(response: any): void {
+  protected handleFetchResponse(response: unknown): void {
     // Handle both array response and paginated response
     if (Array.isArray(response)) {
-      this.items = response;
+      this.items = response as T[];
       this.listState.setTotalItems(response.length);
     } else {
-      this.items = response.results || response.data || [];
+      const paginated = response as {
+        results?: T[];
+        data?: T[];
+        count?: number;
+        totalCount?: number;
+        meta?: { pagination?: { total_count?: number } };
+      };
+      this.items = paginated.results || paginated.data || [];
       this.listState.setTotalItems(
-        response.count || response.totalCount || response.meta?.pagination?.total_count || 0
+        paginated.count || paginated.totalCount || paginated.meta?.pagination?.total_count || 0
       );
     }
   }
@@ -201,9 +209,11 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
    * Handle fetch error.
    * Override to customize error handling.
    */
-  protected handleFetchError(err: any): void {
+  protected handleFetchError(err: unknown): void {
     const entityLabel = this.formatEntityLabel();
-    this.listState.setError(err.message || `Failed to load ${entityLabel}`);
+    this.listState.setError(
+      this.errorHandler.getErrorMessage(err, `Failed to load ${entityLabel}`)
+    );
     this.items = [];
   }
 
@@ -211,11 +221,11 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
    * Build fetch parameters including filters, pagination, and sorting.
    * Override to add custom parameters.
    */
-  protected buildFetchParams(): any {
-    const params: any = {
+  protected buildFetchParams(): ListFilters {
+    const params: ListFilters = {
       ...this.listState.getFilters(),
       limit: this.listState.getPageSize(),
-      page: this.listState.getCurrentPage()
+      page: this.listState.getCurrentPage(),
     };
 
     if (this.statusFilter) {
@@ -334,7 +344,9 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
       // First click - show confirmation
       this.deleteConfirmId = id;
       const entityLabel = this.formatEntityLabel();
-      this.toastService.warning(`Click delete again to confirm deletion`);
+      this.toastService.warning(
+        `Click delete again to confirm deletion of this ${entityLabel.toLowerCase()}`
+      );
 
       this.deleteConfirmTimeout = setTimeout(() => {
         this.deleteConfirmId = null;
@@ -354,7 +366,7 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
         error: () => {
           const entityLabel = this.formatEntityLabel();
           this.toastService.error(`Failed to delete ${entityLabel}`);
-        }
+        },
       });
   }
 
@@ -376,12 +388,12 @@ export abstract class BaseListComponent<T> implements OnInit, OnDestroy {
    */
   protected formatEntityLabel(): string {
     const labels: Record<string, string> = {
-      'trf': 'Travel request',
-      'accommodation': 'Accommodation request',
-      'transport': 'Transport request',
-      'visa': 'Visa application',
-      'flight': 'Flight booking',
-      'notification': 'Notification'
+      trf: 'Travel request',
+      accommodation: 'Accommodation request',
+      transport: 'Transport request',
+      visa: 'Visa application',
+      flight: 'Flight booking',
+      notification: 'Notification',
     };
     return labels[this.entityName] || this.entityName;
   }

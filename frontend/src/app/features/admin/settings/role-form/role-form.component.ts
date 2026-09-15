@@ -1,16 +1,22 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TmsApp_Core_Services_RolesService, TmsApp_Roles_Permission, TmsApp_Roles_RoleFormValues, TmsApp_Roles_RoleWithPermissions } from '../../../../core/services/roles.service';
+import {
+  TmsApp_Core_Services_RolesService,
+  TmsApp_Roles_Permission,
+  TmsApp_Roles_RoleFormValues,
+  TmsApp_Roles_RoleWithPermissions,
+} from '../../../../core/services/roles.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-role-form',
   standalone: true,
   imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './role-form.component.html',
-  styleUrls: ['./role-form.component.scss']
+  styleUrls: ['./role-form.component.scss'],
 })
 export class RoleFormComponent implements OnInit {
   @Input() editId: string | null = null;
@@ -24,7 +30,8 @@ export class RoleFormComponent implements OnInit {
 
   constructor(
     private rolesService: TmsApp_Core_Services_RolesService,
-    private toast: ToastService
+    private toast: ToastService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -32,7 +39,7 @@ export class RoleFormComponent implements OnInit {
       this.form = {
         name: this.role.name,
         description: this.role.description || '',
-        permissionIds: this.role.permissionIds || []
+        permissionIds: this.role.permissionIds || [],
       };
     }
   }
@@ -74,15 +81,11 @@ export class RoleFormComponent implements OnInit {
         this.isSaving = false;
         this.close.emit(true); // Emit true on success to signal a reload
       },
-      error: (err) => {
+      error: err => {
         this.isSaving = false;
-        if (err.error?.message) {
-          this.submitError = err.error.message;
-        } else {
-          this.submitError = `Failed to save role: ${err.statusText || 'Unknown error'}`;
-        }
+        this.submitError = this.errorHandler.getErrorMessage(err, 'Failed to save role');
         this.toast.error(this.submitError);
-      }
+      },
     });
   }
 }

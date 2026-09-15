@@ -8,6 +8,7 @@ import { environment } from '../../../../../environments/environment';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -31,7 +32,8 @@ export class ResetPasswordComponent implements OnInit {
     private http: HttpClient,
     private router: Router,
     private route: ActivatedRoute,
-    private appSettingsService: AppSettingsService
+    private appSettingsService: AppSettingsService,
+    private errorHandler: HttpErrorHandlerService
   ) {
     this.applicationName$ = this.appSettingsService.settings$.pipe(
       map(settings => settings.application_name || 'TMS')
@@ -98,7 +100,7 @@ export class ResetPasswordComponent implements OnInit {
         },
         error: err => {
           this.loading = false;
-          this.error = err.error?.message || err.error?.error || 'Invalid or expired reset token';
+          this.error = this.errorHandler.getErrorMessage(err, 'Invalid or expired reset token');
           this.invalidToken = true;
         },
       });

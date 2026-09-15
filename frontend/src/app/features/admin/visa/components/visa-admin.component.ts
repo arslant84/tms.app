@@ -195,9 +195,7 @@ export class VisaAdminComponent implements OnInit, OnDestroy {
         this.loadingApplications = false;
       },
       error: err => {
-        this.error =
-          'Failed to load visa applications: ' +
-          (err.error?.message || err.message || 'Unknown error');
+        this.error = this.errorHandler.getErrorMessage(err, 'Failed to load visa applications');
         this.loadingApplications = false;
       },
     });

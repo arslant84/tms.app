@@ -95,9 +95,7 @@ export class AccommodationDetailComponent implements OnInit {
         this.loading = false;
       },
       error: err => {
-        this.error =
-          'Failed to load accommodation request: ' +
-          (err.error?.message || err.message || 'Unknown error');
+        this.error = this.errorHandler.getErrorMessage(err, 'Failed to load accommodation request');
         this.loading = false;
       },
     });

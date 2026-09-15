@@ -39,7 +39,6 @@ export class TransportDetailComponent implements OnInit {
 
   // Status-based visibility constants
   private readonly EDITABLE_STATUSES = ['Draft', 'Rejected'];
-  private readonly CANCELLABLE_STATUSES = ['Pending'];
   private readonly DELETABLE_STATUSES = ['Draft', 'Rejected'];
 
   // Statuses that indicate the request has been approved and should not be editable
@@ -79,9 +78,7 @@ export class TransportDetailComponent implements OnInit {
         this.loading = false;
       },
       error: err => {
-        this.error =
-          'Failed to load transport request: ' +
-          (err.error?.message || err.message || 'Unknown error');
+        this.error = this.errorHandler.getErrorMessage(err, 'Failed to load transport request');
         this.loading = false;
       },
     });

@@ -118,8 +118,8 @@ export class TrfDetailComponent implements OnInit {
         this.loadLinkedAccommodation();
         this.loadLinkedTransport();
       },
-      error: (err: { message?: string }) => {
-        this.error = `Failed to load TRF details: ${err.message || 'Unknown error'}`;
+      error: (err: HttpErrorResponse) => {
+        this.error = this.errorHandler.getErrorMessage(err, 'Failed to load TRF details');
         this.loading = false;
       },
     });

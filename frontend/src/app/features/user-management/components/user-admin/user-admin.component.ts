@@ -18,6 +18,7 @@ import { ModalService } from '../../../../core/services/modal.service';
 import { ConfirmDeleteModalComponent } from '../../../../core/components/confirm-delete-modal/confirm-delete-modal.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-user-admin',
@@ -68,7 +69,8 @@ export class UserAdminComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private confirmationService: ConfirmationService,
     private departmentService: DepartmentService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -296,7 +298,7 @@ export class UserAdminComponent implements OnInit, OnDestroy {
       },
       error: error => {
         console.error('Error saving user:', error);
-        this.toastService.error(error.error?.detail || 'Failed to save user');
+        this.toastService.error(this.errorHandler.getErrorMessage(error, 'Failed to save user'));
         this.submitting = false;
       },
     });
@@ -395,7 +397,9 @@ export class UserAdminComponent implements OnInit, OnDestroy {
           },
           error: error => {
             console.error('Error resetting MFA:', error);
-            this.toastService.error(error?.error?.message || 'Failed to reset MFA for this user');
+            this.toastService.error(
+              this.errorHandler.getErrorMessage(error, 'Failed to reset MFA for this user')
+            );
           },
         });
       });

@@ -10,6 +10,7 @@ import { DateUtilsService } from '../../../../core/utils/date-utils.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { ListStateService } from '../../../../core/services/list-state.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 export interface TrfListItem {
   id: number;
@@ -58,7 +59,8 @@ export class TrfListComponent implements OnInit, OnDestroy {
     private trfService: TrfService,
     private toastService: ToastService,
     public dateUtils: DateUtilsService,
-    public statusUtils: StatusUtilsService
+    public statusUtils: StatusUtilsService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -148,7 +150,7 @@ export class TrfListComponent implements OnInit, OnDestroy {
             return;
           }
 
-          this.listState.setError(err.message ?? 'Failed to load TRFs');
+          this.listState.setError(this.errorHandler.getErrorMessage(err, 'Failed to load TRFs'));
           this.trfs = [];
         },
       });

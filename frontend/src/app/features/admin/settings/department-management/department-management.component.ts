@@ -14,6 +14,7 @@ import { Department } from '../../../../core/models/user.model';
 import { ModalService } from '../../../../core/services/modal.service';
 import { ConfirmDeleteModalComponent } from '../../../../core/components/confirm-delete-modal/confirm-delete-modal.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-department-management',
@@ -46,7 +47,8 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
     private toast: ToastService,
     private rbacService: RbacService,
     private router: Router,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   ngOnInit(): void {
@@ -234,11 +236,12 @@ export class DepartmentManagementComponent implements OnInit, OnDestroy {
       },
       error: err => {
         console.error('Error deleting department:', err);
-        if (err.error?.message) {
-          this.toast.error(err.error.message);
-        } else {
-          this.toast.error('Failed to delete department. It may have users assigned.');
-        }
+        this.toast.error(
+          this.errorHandler.getErrorMessage(
+            err,
+            'Failed to delete department. It may have users assigned.'
+          )
+        );
         if (modalRef) {
           modalRef.instance.isDeleting = false;
         }

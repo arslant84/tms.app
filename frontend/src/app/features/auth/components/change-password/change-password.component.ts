@@ -6,13 +6,14 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../core/services/auth.service';
 import { environment } from '../../../../../environments/environment';
 import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
+import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 
 @Component({
   selector: 'app-change-password',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './change-password.component.html',
-  styleUrls: ['./change-password.component.scss']
+  styleUrls: ['./change-password.component.scss'],
 })
 export class ChangePasswordComponent {
   oldPassword = '';
@@ -24,7 +25,8 @@ export class ChangePasswordComponent {
   constructor(
     private http: HttpClient,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private errorHandler: HttpErrorHandlerService
   ) {}
 
   onSubmit(): void {
@@ -48,23 +50,29 @@ export class ChangePasswordComponent {
     this.loading = true;
     const url = `${environment.apiUrl}/password/change/`;
 
-    this.http.post(url, {
-      old_password: this.oldPassword,
-      new_password: this.newPassword,
-      new_password_confirm: this.newPasswordConfirm
-    }, { withCredentials: true }).subscribe({
-      next: () => {
-        // Update user in auth service to clear password_change_required flag
-        const currentUser = this.authService.getCurrentUser();
-        if (currentUser) {
-          currentUser.password_change_required = false;
-        }
-        this.router.navigate(['/dashboard']);
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error?.error || 'Password change failed';
-      }
-    });
+    this.http
+      .post(
+        url,
+        {
+          old_password: this.oldPassword,
+          new_password: this.newPassword,
+          new_password_confirm: this.newPasswordConfirm,
+        },
+        { withCredentials: true }
+      )
+      .subscribe({
+        next: () => {
+          // Update user in auth service to clear password_change_required flag
+          const currentUser = this.authService.getCurrentUser();
+          if (currentUser) {
+            currentUser.password_change_required = false;
+          }
+          this.router.navigate(['/dashboard']);
+        },
+        error: err => {
+          this.loading = false;
+          this.error = this.errorHandler.getErrorMessage(err, 'Password change failed');
+        },
+      });
   }
 }
