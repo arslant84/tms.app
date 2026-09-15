@@ -263,11 +263,7 @@
                       title="Undo Completion"
                       aria-label="Undo Completion"
                     >
-                      <i
-                        class="bi bi-arrow-counterclockwise"
-                        *ngIf="!isProcessing"
-                        aria-hidden="true"
-                      ></i>
+                      <i class="bi bi-x-circle" *ngIf="!isProcessing" aria-hidden="true"></i>
                       <app-loading-spinner size="sm" *ngIf="isProcessing"></app-loading-spinner>
                     </button>
                   </div>

@@ -11,6 +11,22 @@ export interface VisaApplicationDetail extends VisaApplication {
   documents?: VisaDocument[];
 }
 
+export interface VisaProcessingDetails {
+  visa_number?: string;
+  visa_valid_from?: string;
+  visa_valid_to?: string;
+  processing_notes?: string;
+  completed_by_admin?: boolean;
+  completed_at?: string;
+}
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
 export interface VisaApplication {
   id: number;
   request_number?: string;
@@ -65,7 +81,7 @@ export interface VisaApplication {
 
   // Status & Tracking
   status: string;
-  processing_details?: any;
+  processing_details?: VisaProcessingDetails;
   processing_started_at?: string;
   processing_completed_at?: string;
   submitted_date: string;
@@ -107,22 +123,23 @@ export interface VisaFilters {
   search?: string;
   page?: number;
   page_size?: number;
-  adminView?: boolean;  // Set to true when viewing from Visa Admin module
+  adminView?: boolean; // Set to true when viewing from Visa Admin module
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class VisaService {
-
   private apiUrl = `${environment.apiUrl}/visa/applications/`;
   private approvalStepsUrl = `${environment.apiUrl}/visa/approval-steps/`;
   private documentsUrl = `${environment.apiUrl}/visa/documents/`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   // Visa Applications CRUD
-  getAllApplications(filters?: VisaFilters): Observable<any> {
+  getAllApplications(
+    filters?: VisaFilters
+  ): Observable<VisaApplication[] | PaginatedResponse<VisaApplication>> {
     let params = new HttpParams();
     if (filters) {
       if (filters.status) params = params.set('status', filters.status);
@@ -136,7 +153,9 @@ export class VisaService {
     }
     // Add cache-busting parameter to prevent stale data
     params = params.set('_t', Date.now().toString());
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.http.get<VisaApplication[] | PaginatedResponse<VisaApplication>>(this.apiUrl, {
+      params,
+    });
   }
 
   getApplicationById(id: number, adminView: boolean = false): Observable<VisaApplication> {
@@ -168,17 +187,25 @@ export class VisaService {
     return this.http.get<VisaApplication[]>(`${this.apiUrl}my-applications/`);
   }
 
-  approveAtStep(id: number, stepRole: string, comments: string = ''): Observable<VisaApplicationDetail> {
+  approveAtStep(
+    id: number,
+    stepRole: string,
+    comments: string = ''
+  ): Observable<VisaApplicationDetail> {
     return this.http.post<VisaApplicationDetail>(`${this.apiUrl}${id}/approve/`, {
       step_role: stepRole,
-      comments: comments
+      comments: comments,
     });
   }
 
-  rejectAtStep(id: number, stepRole: string, comments: string = ''): Observable<VisaApplicationDetail> {
+  rejectAtStep(
+    id: number,
+    stepRole: string,
+    comments: string = ''
+  ): Observable<VisaApplicationDetail> {
     return this.http.post<VisaApplicationDetail>(`${this.apiUrl}${id}/reject/`, {
       step_role: stepRole,
-      comments: comments
+      comments: comments,
     });
   }
 
@@ -188,7 +215,10 @@ export class VisaService {
     selectedApprovers?: { [stepOrder: number]: number },
     skippedSteps?: { [stepOrder: number]: string | null }
   ): Observable<VisaApplication> {
-    const payload: any = {};
+    const payload: {
+      selected_approvers?: { [stepOrder: number]: number };
+      skipped_steps?: { [stepOrder: number]: string | null };
+    } = {};
     if (selectedApprovers && Object.keys(selectedApprovers).length > 0) {
       payload.selected_approvers = selectedApprovers;
     }
@@ -201,25 +231,34 @@ export class VisaService {
   approveApplication(id: number, comments?: string): Observable<VisaApplication> {
     return this.http.patch<VisaApplication>(`${this.apiUrl}${id}/`, {
       status: 'Approved',
-      additional_comments: comments
+      additional_comments: comments,
     });
   }
 
   rejectApplication(id: number, comments?: string): Observable<VisaApplication> {
     return this.http.patch<VisaApplication>(`${this.apiUrl}${id}/`, {
       status: 'Rejected',
-      additional_comments: comments
+      additional_comments: comments,
     });
   }
 
   cancelApplication(id: number): Observable<VisaApplication> {
     return this.http.patch<VisaApplication>(`${this.apiUrl}${id}/`, {
-      status: 'Cancelled'
+      status: 'Cancelled',
     });
   }
 
-  completeApplication(id: number, data?: { processing_details?: any; additional_comments?: string }): Observable<VisaApplication> {
+  completeApplication(
+    id: number,
+    data?: { processing_details?: VisaProcessingDetails; additional_comments?: string }
+  ): Observable<VisaApplication> {
     return this.http.post<VisaApplication>(`${this.apiUrl}${id}/complete/`, data || {});
+  }
+
+  // Undo a mistaken completion - reverts the application to Approved so it
+  // can be reassigned/re-processed via Visa Processing's Pending tab.
+  undoCompleteApplication(id: number): Observable<VisaApplication> {
+    return this.http.post<VisaApplication>(`${this.apiUrl}${id}/cancel-completion/`, {});
   }
 
   // Approval Steps
@@ -251,25 +290,27 @@ export class VisaService {
   }
 
   // Passport File Upload
-  uploadPassportFile(applicationId: number, file: File): Observable<any> {
+  uploadPassportFile(applicationId: number, file: File): Observable<unknown> {
     const formData = new FormData();
     formData.append('passport_file', file);
-    return this.http.post<any>(`${this.apiUrl}${applicationId}/upload-passport/`, formData);
+    return this.http.post(`${this.apiUrl}${applicationId}/upload-passport/`, formData);
   }
 
-  deletePassportFile(applicationId: number): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}${applicationId}/delete-passport-file/`);
+  deletePassportFile(applicationId: number): Observable<unknown> {
+    return this.http.delete(`${this.apiUrl}${applicationId}/delete-passport-file/`);
   }
 
   // Export visa application to PDF
   exportToPdf(id: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}${id}/export-pdf/`, {
-      responseType: 'blob'
-    }).pipe(
-      catchError(error => {
-        console.error('PDF export error:', error);
-        return throwError(() => error);
+    return this.http
+      .get(`${this.apiUrl}${id}/export-pdf/`, {
+        responseType: 'blob',
       })
-    );
+      .pipe(
+        catchError(error => {
+          console.error('PDF export error:', error);
+          return throwError(() => error);
+        })
+      );
   }
 }

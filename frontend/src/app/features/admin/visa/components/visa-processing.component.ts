@@ -279,6 +279,44 @@ export class VisaProcessingComponent implements OnInit {
   }
 
   /**
+   * Undo a mistaken completion - reverts the application to Approved and
+   * returns it to the Pending tab so it can be redone.
+   */
+  undoComplete(visa: CompletedVisa): void {
+    this.confirmationService
+      .confirm({
+        title: 'Undo Completion',
+        message: `Undo completion of visa application ${visa.request_number}? It will be returned to Approved so it can be re-processed.`,
+        confirmText: 'Undo Completion',
+        type: 'danger',
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.executeUndoComplete(visa);
+      });
+  }
+
+  private executeUndoComplete(visa: CompletedVisa): void {
+    this.isProcessing = true;
+
+    this.visaService.undoCompleteApplication(visa.id).subscribe({
+      next: () => {
+        this.toastService.success(
+          `Completion undone for ${visa.request_number} - returned to Approved`
+        );
+        this.loadAll();
+        this.isProcessing = false;
+      },
+      error: err => {
+        this.toastService.error(
+          this.errorHandler.getErrorMessage(err, 'Failed to undo completion')
+        );
+        this.isProcessing = false;
+      },
+    });
+  }
+
+  /**
    * View application details
    */
   viewApplication(applicationId: number): void {

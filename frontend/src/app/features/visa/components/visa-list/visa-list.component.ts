@@ -85,8 +85,10 @@ export class VisaListComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: response => {
-          this.applications = response.results || response;
-          this.listState.setTotalItems(response.count || this.applications.length);
+          this.applications = Array.isArray(response) ? response : response.results;
+          this.listState.setTotalItems(
+            Array.isArray(response) ? this.applications.length : response.count
+          );
           this.listState.setLoading(false);
 
           if (this.statuses.length === 0) {

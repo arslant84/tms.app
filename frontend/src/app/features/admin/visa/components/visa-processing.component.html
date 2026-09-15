@@ -331,6 +331,16 @@
                     >
                       <i class="bi bi-eye" aria-hidden="true"></i>
                     </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger btn-icon"
+                      (click)="undoComplete(visa)"
+                      [disabled]="isProcessing"
+                      title="Undo Completion"
+                      aria-label="Undo Completion"
+                    >
+                      <i class="bi bi-x-circle" *ngIf="!isProcessing" aria-hidden="true"></i>
+                      <app-loading-spinner size="sm" *ngIf="isProcessing"></app-loading-spinner>
+                    </button>
                   </div>
                 </td>
               </tr>

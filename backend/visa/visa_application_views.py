@@ -142,6 +142,7 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
             "destroy",
             "submit",
             "complete",
+            "cancel_completion",
             "upload_passport",
             "delete_passport_file",
             "export_pdf",
@@ -438,6 +439,57 @@ class VisaApplicationViewSet(viewsets.ModelViewSet):
         visa.save()
 
         finalize_visa_workflow_completion(visa, completed_by=request.user)
+
+        serializer = VisaApplicationDetailSerializer(visa)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], url_path="cancel-completion")
+    def cancel_completion(self, request, pk=None):
+        """
+        Undo a mistaken completion (visa admin only) - mirrors Transport's
+        cancel_assignment: reverts the application back to Approved (the
+        status Visa Processing's Pending tab filters on) so it can be
+        reassigned/re-processed, and clears the completion markers. Unlike
+        Transport there's no separate child assignment record to
+        soft-cancel - processing_details/processing_completed_at/_by all
+        live directly on VisaApplication, so those are what get reset.
+        """
+        visa = self.get_object()
+
+        if not (request.user.is_superuser or is_module_admin(request.user, "visa")):
+            return error_response(
+                message="Only visa admin can undo a completed application.",
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        if visa.status != "Completed":
+            return error_response(
+                message=f'Cannot undo completion for an application with status "{visa.status}".',
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        visa.status = "Approved"
+        visa.processing_completed_at = None
+        visa.processing_completed_by = None
+        visa.save(
+            update_fields=[
+                "status",
+                "processing_completed_at",
+                "processing_completed_by",
+            ]
+        )
+
+        AdminActionLog.log_action(
+            user=request.user,
+            action_type="visa_completion_cancelled",
+            description=(
+                f"Undid completion of visa application {visa.request_number} "
+                f"({visa.requestor_name})"
+            ),
+            entity_type="VisaApplication",
+            entity_id=str(visa.id),
+            request=request,
+        )
 
         serializer = VisaApplicationDetailSerializer(visa)
         return Response(serializer.data)

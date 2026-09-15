@@ -326,6 +326,7 @@ class AdminActionLog(models.Model):
         ("workflow_bulk_reject", "Bulk Workflow Rejection"),
         ("booking_cancelled", "Flight Booking Cancelled"),
         ("vehicle_assignment_cancelled", "Vehicle Assignment Cancelled"),
+        ("visa_completion_cancelled", "Visa Completion Cancelled"),
         ("entity_deleted", "Request Deleted"),
         ("other", "Other Action"),
     )
