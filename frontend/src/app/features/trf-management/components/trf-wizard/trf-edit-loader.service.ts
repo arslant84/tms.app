@@ -316,24 +316,16 @@ export class TrfEditLoaderService {
    * loadLinkedAccommodation above.
    */
   loadLinkedTransport(trfId: number): Observable<TransportDetails | null> {
-    // TransportService.getAllRequests() is typed Observable<any> at its own
-    // declaration (out of scope to fix here) - this interface describes
-    // only the fields this call site actually reads off each row.
-    interface LinkedTransportRow {
-      trfId?: number | string;
-      transportDetails?: TransportJourney[];
-    }
-
     return this.transportService.getAllRequests({ page_size: 100 }).pipe(
-      map((response: { results?: LinkedTransportRow[] } | LinkedTransportRow[]) => {
-        const results = (Array.isArray(response) ? response : response?.results) || [];
+      map(response => {
+        const results = Array.isArray(response) ? response : response.results;
         const linked = results.find(req => Number(req.trfId) === trfId);
         if (!linked) {
           return null;
         }
         return {
           required: true,
-          journeys: linked.transportDetails || [],
+          journeys: (linked.transportDetails || []) as TransportJourney[],
         };
       }),
       catchError(() => of(null))

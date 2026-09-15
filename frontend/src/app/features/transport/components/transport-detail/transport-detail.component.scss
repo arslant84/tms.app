@@ -12,7 +12,8 @@
   min-height: 100vh;
 }
 
-.loading-state, .error-state {
+.loading-state,
+.error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -24,6 +25,19 @@
 .error-icon {
   font-size: vars.$font-size-3xl;
   color: vars.$error-color;
+}
+
+// Flex-wrap grid (not a fixed 3-column layout) so a partial last row of
+// items fills the available width instead of leaving a visible empty gap
+// in the colored card background.
+.processing-detail-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: vars.$spacing-4;
+
+  .processing-detail-item {
+    flex: 1 1 220px;
+  }
 }
 
 .page-header {

@@ -271,7 +271,7 @@ export class TransportProcessingComponent implements OnInit {
    * booking form.
    */
   hasVehicleAssignment(request: TransportRequest): boolean {
-    return !!(request.vehicle_assignments && request.vehicle_assignments.length > 0);
+    return (request.vehicle_assignments || []).some(a => a.status !== 'Cancelled');
   }
 
   /**
@@ -372,6 +372,44 @@ export class TransportProcessingComponent implements OnInit {
       error: err => {
         this.toastService.error(
           this.errorHandler.getErrorMessage(err, 'Failed to complete request')
+        );
+        this.isProcessing = false;
+      },
+    });
+  }
+
+  /**
+   * Undo a mistaken completion - cancels the vehicle assignment and
+   * returns the request to Pending Processing so it can be redone.
+   */
+  undoComplete(transport: TransportRequest): void {
+    this.confirmationService
+      .confirm({
+        title: 'Undo Completion',
+        message: `Undo completion of request ${transport.request_number || transport.id}? The vehicle assignment will be cancelled and the request returned to processing so it can be redone.`,
+        confirmText: 'Undo Completion',
+        type: 'danger',
+      })
+      .subscribe(confirmed => {
+        if (!confirmed) return;
+        this.executeUndoComplete(transport);
+      });
+  }
+
+  private executeUndoComplete(transport: TransportRequest): void {
+    this.isProcessing = true;
+
+    this.transportService.undoCompleteRequest(transport.id).subscribe({
+      next: () => {
+        this.toastService.success(
+          `Completion undone for ${transport.request_number || transport.id} - returned to processing`
+        );
+        this.fetchTransportRequests();
+        this.isProcessing = false;
+      },
+      error: err => {
+        this.toastService.error(
+          this.errorHandler.getErrorMessage(err, 'Failed to undo completion')
         );
         this.isProcessing = false;
       },

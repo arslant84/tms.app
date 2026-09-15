@@ -169,8 +169,10 @@
     <div
       class="card mb-4"
       *ngIf="
-        request.bookingDetails &&
-        (request.status === 'Processing with Transport Admin' || request.status === 'Completed')
+        processingDetailItems.length > 0 &&
+        (request.status === 'Approved' ||
+          request.status === 'Processing with Transport Admin' ||
+          request.status === 'Completed')
       "
     >
       <div class="card-header">
@@ -179,42 +181,10 @@
         </h5>
       </div>
       <div class="card-body">
-        <div class="p-4 rounded bg-success-subtle">
-          <div class="row g-4">
-            <!-- Row 1 -->
-            <div class="col-md-4">
-              <div class="processing-detail-item">
-                <label class="text-muted small d-block mb-1">Vehicle Number</label>
-                <p class="mb-0 fw-medium">{{ request.bookingDetails.vehicleNumber || 'N/A' }}</p>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="processing-detail-item">
-                <label class="text-muted small d-block mb-1">Driver Name</label>
-                <p class="mb-0 fw-medium">{{ request.bookingDetails.driverName || 'N/A' }}</p>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="processing-detail-item">
-                <label class="text-muted small d-block mb-1">Driver Contact</label>
-                <p class="mb-0 fw-medium">{{ request.bookingDetails.driverContact || 'N/A' }}</p>
-              </div>
-            </div>
-
-            <!-- Row 2 -->
-            <div class="col-md-4">
-              <div class="processing-detail-item">
-                <label class="text-muted small d-block mb-1">Pickup Time</label>
-                <p class="mb-0 fw-medium">{{ request.bookingDetails.pickupTime || 'N/A' }}</p>
-              </div>
-            </div>
-
-            <div class="col-12" *ngIf="request.bookingDetails.additionalNotes">
-              <div class="processing-detail-item">
-                <label class="text-muted small d-block mb-1">Transport Admin Notes</label>
-                <p class="mb-0 fw-medium">{{ request.bookingDetails.additionalNotes }}</p>
-              </div>
-            </div>
+        <div class="p-4 rounded bg-success-subtle processing-detail-grid">
+          <div class="processing-detail-item" *ngFor="let item of processingDetailItems">
+            <label class="text-muted small d-block mb-1">{{ item.label }}</label>
+            <p class="mb-0 fw-medium">{{ item.value }}</p>
           </div>
         </div>
       </div>

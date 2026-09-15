@@ -135,6 +135,60 @@ export class TransportDetailComponent implements OnInit {
     return currentUserId != null && this.request?.requestorId === currentUserId;
   }
 
+  /**
+   * Vehicle/driver info to display once a Transport Admin has processed
+   * the request, as (label, value) pairs. Only fields that actually have a
+   * value are included - the Assign Vehicle modal doesn't collect pickup
+   * time/notes at all, so always rendering those as "N/A" left a
+   * permanently empty slot and a visible gap in the card.
+   *
+   * vehicle_assignments (the VehicleAssignment table) is the system of
+   * record - it's always populated the moment a vehicle is assigned, and
+   * carries fields (vehicle type/capacity, driver license, assignment
+   * date) that the older bookingDetails copy never captured. bookingDetails
+   * itself is only used as a fallback for requests that predate the
+   * vehicle_assignments relation being surfaced here, plus pickup
+   * time/notes which only the separate processing flow collects.
+   */
+  get processingDetailItems(): { label: string; value: string }[] {
+    // Prefer the latest still-active assignment - a cancelled one (from an
+    // admin's "Undo Completion") stays in the array for audit history but
+    // shouldn't be what's displayed as the current assignment.
+    const assignments = this.request?.vehicle_assignments || [];
+    const assignment =
+      assignments.filter(a => a.status !== 'Cancelled').slice(-1)[0] || assignments[0];
+    const booking = this.request?.bookingDetails;
+    const items: { label: string; value: string }[] = [];
+
+    const add = (label: string, value: string | number | null | undefined) => {
+      if (value !== null && value !== undefined && value !== '') {
+        items.push({ label, value: String(value) });
+      }
+    };
+
+    if (assignment) {
+      add('Vehicle Number', assignment.vehicle_number);
+      add('Vehicle Type', assignment.vehicle_type);
+      add('Vehicle Capacity', assignment.vehicle_capacity);
+      add('Driver Name', assignment.driver_name);
+      add('Driver Contact', assignment.driver_contact);
+      add('Driver License', assignment.driver_license);
+      add(
+        'Assignment Date',
+        assignment.assignment_date ? this.dateUtils.formatDate(assignment.assignment_date) : null
+      );
+    } else if (booking) {
+      add('Vehicle Number', booking.vehicleNumber);
+      add('Driver Name', booking.driverName);
+      add('Driver Contact', booking.driverContact);
+    }
+
+    add('Pickup Time', booking?.pickupTime);
+    add('Transport Admin Notes', booking?.additionalNotes);
+
+    return items;
+  }
+
   canEdit(): boolean {
     if (!this.isOwner) return false;
     if (!this.request?.status) return false;

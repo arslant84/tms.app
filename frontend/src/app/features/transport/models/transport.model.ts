@@ -58,7 +58,7 @@ export interface TransportRequestForm
   status: TransportRequestStatus;
   approvalWorkflow: TransportApprovalStep[];
   approval_steps?: TransportApprovalStep[]; // Legacy field for backward compatibility
-  vehicle_assignments?: unknown[]; // Vehicle assignments for transport processing
+  vehicle_assignments?: TransportVehicleAssignment[]; // Vehicle assignments for transport processing
   selected_approvers?: { [stepOrder: number]: number }; // Selected approvers for workflow steps
   skipped_steps?: { [stepOrder: number]: string | null }; // Skipped workflow steps
   /** Step orders (ints) that already have an APPROVED WorkflowStepExecution - see trf-wizard.types.ts. */
@@ -98,6 +98,21 @@ export interface TransportBookingDetails {
   additionalNotes?: string;
 }
 
+/** A VehicleAssignment row as returned by VehicleAssignmentSerializer - the
+ * system of record for "which vehicle/driver is on this request", distinct
+ * from the denormalized TransportBookingDetails copy. */
+export interface TransportVehicleAssignment {
+  id: number;
+  vehicle_number: string;
+  vehicle_type?: string;
+  vehicle_capacity?: number;
+  driver_name: string;
+  driver_contact: string;
+  driver_license?: string;
+  assignment_date?: string;
+  status: string;
+}
+
 export interface TransportRequestSummary {
   id: string;
   requestorName: string;
@@ -132,7 +147,7 @@ interface TransportBackendTransportDetail {
   number_of_passengers?: number;
 }
 
-interface TransportBackendData {
+export interface TransportBackendData {
   id?: string | number;
   request_number?: string;
   requestor_name?: string;
@@ -149,7 +164,7 @@ interface TransportBackendData {
   additional_comments?: string;
   approval_workflow?: TransportBackendApprovalStep[];
   approval_steps?: TransportBackendApprovalStep[];
-  vehicle_assignments?: unknown[];
+  vehicle_assignments?: TransportVehicleAssignment[];
   selected_approvers?: { [stepOrder: number]: number };
   skipped_steps?: { [stepOrder: number]: string | null };
   approved_step_orders?: number[];

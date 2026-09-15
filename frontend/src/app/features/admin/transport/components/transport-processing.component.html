@@ -93,14 +93,23 @@
           <p>No approved transport requests awaiting processing.</p>
         </div>
 
-        <!-- Pending Requests List -->
-        <div *ngIf="pendingRequests.length > 0" class="requests-list">
-          <div *ngFor="let request of pendingRequests" class="request-item">
-            <div class="request-content">
-              <div class="request-main">
-                <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
-                <div class="text-muted small">
-                  {{ request.department || 'N/A' }} • ID:
+        <!-- Pending Requests Table -->
+        <div *ngIf="pendingRequests.length > 0" class="table-responsive">
+          <table class="table table-hover requests-table">
+            <thead>
+              <tr>
+                <th>REQUEST NUMBER</th>
+                <th>STAFF NAME</th>
+                <th>PURPOSE</th>
+                <th>ROUTE</th>
+                <th>STATUS</th>
+                <th>SUBMITTED</th>
+                <th class="text-center">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let request of pendingRequests">
+                <td class="request-id">
                   <button
                     type="button"
                     (click)="viewRequest(request.id)"
@@ -108,73 +117,66 @@
                   >
                     {{ request.request_number || request.id }}
                   </button>
-                </div>
-                <div class="text-muted small mt-1">
-                  <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}
-                </div>
-                <div class="text-muted small">
-                  {{ formatTransportDetails(request) }}
-                </div>
-                <div class="text-muted small">
-                  <strong>Submitted:</strong>
-                  {{ dateUtils.formatDate(request.submittedAt || request.createdAt) }}
-                </div>
-                <div class="mt-2">
-                  <span class="badge badge-success">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      class="badge-icon"
+                </td>
+                <td class="staff-cell">
+                  <div class="staff-name">{{ request.requestorName || 'N/A' }}</div>
+                  <small class="staff-id" *ngIf="request.staffId">{{ request.staffId }}</small>
+                </td>
+                <td>
+                  <div class="text-truncate truncate-lg" [title]="request.purpose">
+                    {{ request.purpose || 'N/A' }}
+                  </div>
+                </td>
+                <td>
+                  <div class="text-truncate truncate-lg" [title]="formatTransportDetails(request)">
+                    {{ formatTransportDetails(request) }}
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [class]="getStatusColor(request.status)">{{
+                    request.status
+                  }}</span>
+                </td>
+                <td>{{ dateUtils.formatDate(request.submittedAt || request.createdAt) }}</td>
+                <td>
+                  <div class="action-buttons justify-content-center">
+                    <button
+                      class="btn btn-sm btn-outline-primary btn-icon"
+                      (click)="openDetailsDialog(request)"
+                      title="View Details"
+                      aria-label="View Details"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    {{ request.status }}
-                  </span>
-                </div>
-              </div>
-              <div class="action-buttons">
-                <button
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="openDetailsDialog(request)"
-                  title="View Details"
-                  aria-label="View Details"
-                >
-                  <i class="bi bi-eye" aria-hidden="true"></i>
-                </button>
-                <!-- Older requests that already have a vehicle assigned
-                     (from before completing was folded into one action)
-                     complete directly; everything else opens the booking
-                     form first. -->
-                <button
-                  *ngIf="hasVehicleAssignment(request)"
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="completeTransport(request)"
-                  [disabled]="isProcessing"
-                  title="Complete Transport"
-                  aria-label="Complete Transport"
-                >
-                  <i class="bi bi-check-circle" *ngIf="!isProcessing" aria-hidden="true"></i>
-                  <app-loading-spinner size="sm" *ngIf="isProcessing"></app-loading-spinner>
-                </button>
-                <button
-                  *ngIf="!hasVehicleAssignment(request)"
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="openProcessingDialog(request)"
-                  title="Process & Complete"
-                  aria-label="Process & Complete"
-                >
-                  <i class="bi bi-play-circle" aria-hidden="true"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+                      <i class="bi bi-eye" aria-hidden="true"></i>
+                    </button>
+                    <!-- Older requests that already have a vehicle assigned
+                         (from before completing was folded into one action)
+                         complete directly; everything else opens the
+                         booking form first. -->
+                    <button
+                      *ngIf="hasVehicleAssignment(request)"
+                      class="btn btn-sm btn-outline-primary btn-icon"
+                      (click)="completeTransport(request)"
+                      [disabled]="isProcessing"
+                      title="Complete Transport"
+                      aria-label="Complete Transport"
+                    >
+                      <i class="bi bi-check-circle" *ngIf="!isProcessing" aria-hidden="true"></i>
+                      <app-loading-spinner size="sm" *ngIf="isProcessing"></app-loading-spinner>
+                    </button>
+                    <button
+                      *ngIf="!hasVehicleAssignment(request)"
+                      class="btn btn-sm btn-outline-primary btn-icon"
+                      (click)="openProcessingDialog(request)"
+                      title="Process & Complete"
+                      aria-label="Process & Complete"
+                    >
+                      <i class="bi bi-play-circle" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -199,14 +201,23 @@
           <p>No transport requests have been completed yet.</p>
         </div>
 
-        <!-- Completed Requests List -->
-        <div *ngIf="completedRequests.length > 0" class="requests-list">
-          <div *ngFor="let request of completedRequests" class="request-item">
-            <div class="request-content">
-              <div class="request-main">
-                <div class="fw-medium request-name">{{ request.requestorName || 'N/A' }}</div>
-                <div class="text-muted small">
-                  {{ request.department || 'N/A' }} • ID:
+        <!-- Completed Requests Table -->
+        <div *ngIf="completedRequests.length > 0" class="table-responsive">
+          <table class="table table-hover requests-table">
+            <thead>
+              <tr>
+                <th>REQUEST NUMBER</th>
+                <th>STAFF NAME</th>
+                <th>PURPOSE</th>
+                <th>ROUTE</th>
+                <th>STATUS</th>
+                <th>SUBMITTED</th>
+                <th class="text-center">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let request of completedRequests">
+                <td class="request-id">
                   <button
                     type="button"
                     (click)="viewRequest(request.id)"
@@ -214,48 +225,56 @@
                   >
                     {{ request.request_number || request.id }}
                   </button>
-                </div>
-                <div class="text-muted small mt-1">
-                  <strong>Purpose:</strong> {{ request.purpose || 'N/A' }}
-                </div>
-                <div class="text-muted small">
-                  {{ formatTransportDetails(request) }}
-                </div>
-                <div class="text-muted small">
-                  <strong>Submitted:</strong> {{ dateUtils.formatDate(request.submittedAt) }}
-                </div>
-                <div class="mt-2">
-                  <span class="badge badge-success">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      class="badge-icon"
+                </td>
+                <td class="staff-cell">
+                  <div class="staff-name">{{ request.requestorName || 'N/A' }}</div>
+                  <small class="staff-id" *ngIf="request.staffId">{{ request.staffId }}</small>
+                </td>
+                <td>
+                  <div class="text-truncate truncate-lg" [title]="request.purpose">
+                    {{ request.purpose || 'N/A' }}
+                  </div>
+                </td>
+                <td>
+                  <div class="text-truncate truncate-lg" [title]="formatTransportDetails(request)">
+                    {{ formatTransportDetails(request) }}
+                  </div>
+                </td>
+                <td>
+                  <span class="badge" [class]="getStatusColor(request.status)">{{
+                    request.status
+                  }}</span>
+                </td>
+                <td>{{ dateUtils.formatDate(request.submittedAt) }}</td>
+                <td>
+                  <div class="action-buttons justify-content-center">
+                    <button
+                      class="btn btn-sm btn-outline-primary btn-icon"
+                      (click)="openDetailsDialog(request)"
+                      title="View Details"
+                      aria-label="View Details"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    {{ request.status }}
-                  </span>
-                </div>
-              </div>
-              <div class="action-buttons">
-                <button
-                  class="btn btn-sm btn-outline-primary btn-icon"
-                  (click)="openDetailsDialog(request)"
-                  title="View Details"
-                  aria-label="View Details"
-                >
-                  <i class="bi bi-eye" aria-hidden="true"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+                      <i class="bi bi-eye" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger btn-icon"
+                      (click)="undoComplete(request)"
+                      [disabled]="isProcessing"
+                      title="Undo Completion"
+                      aria-label="Undo Completion"
+                    >
+                      <i
+                        class="bi bi-arrow-counterclockwise"
+                        *ngIf="!isProcessing"
+                        aria-hidden="true"
+                      ></i>
+                      <app-loading-spinner size="sm" *ngIf="isProcessing"></app-loading-spinner>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

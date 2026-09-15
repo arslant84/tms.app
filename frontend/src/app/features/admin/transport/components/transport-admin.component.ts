@@ -3,18 +3,22 @@ import { Component, inject, type OnDestroy, type OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
-import { ConfirmationService } from '../../../../core/services/confirmation.service';
-import { ToastService } from '../../../../core/services/toast.service';
 import { DateUtilsService } from '../../../../core/utils/date-utils.service';
-import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import { StatusUtilsService } from '../../../../core/utils/status-utils.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import {
   type TransportRequest,
   TransportService,
-  type VehicleAssignment,
 } from '../../../transport/services/transport.service';
 
+/**
+ * Transport Administration - a read-only overview of every transport
+ * request (mirrors Flights/Accommodation Admin's list-only dashboards).
+ * Assigning a vehicle, completing, and undoing a completion all happen in
+ * Transport Processing instead - having two places that could both write
+ * vehicle assignments was the root cause of an earlier bug where
+ * assignments made here didn't show up consistently elsewhere.
+ */
 @Component({
   selector: 'app-transport-admin',
   standalone: true,
@@ -27,7 +31,6 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 
   requests: TransportRequest[] = [];
   filteredRequests: TransportRequest[] = [];
-  selectedRequest: TransportRequest | null = null;
 
   // Stats
   totalRequestsCount = 0;
@@ -51,35 +54,12 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
   // Loading states
   loading: boolean = true;
   error: string = '';
-  processingId: number | string | null = null;
-
-  // Assign vehicle modal
-  showAssignVehicleModal: boolean = false;
-  vehicleData: VehicleAssignment = {
-    vehicle_number: '',
-    vehicle_type: 'COMPANY_VEHICLE',
-    vehicle_capacity: 4,
-    driver_name: '',
-    driver_contact: '',
-    driver_license: '',
-    assignment_date: new Date().toISOString().split('T')[0],
-  };
 
   // Status options for filter - populated dynamically
   statusOptions: { value: string; label: string }[] = [{ value: 'all', label: 'All Statuses' }];
 
-  // Vehicle types
-  vehicleTypes = [
-    { value: 'COMPANY_VEHICLE', label: 'Company Vehicle' },
-    { value: 'HIRED_VEHICLE', label: 'Hired Vehicle' },
-    { value: 'RENTAL', label: 'Rental' },
-  ];
-
   private transportService = inject(TransportService);
-  private toastService = inject(ToastService);
-  private confirmationService = inject(ConfirmationService);
   private statusUtils = inject(StatusUtilsService);
-  private errorHandler = inject(HttpErrorHandlerService);
   router = inject(Router);
   dateUtils = inject(DateUtilsService);
 
@@ -109,8 +89,8 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
 
     this.transportService.getAllRequests(filters).subscribe({
       next: response => {
-        this.requests = response.results || response;
-        this.totalRequests = response.count || this.requests.length;
+        this.requests = Array.isArray(response) ? response : response.results;
+        this.totalRequests = Array.isArray(response) ? this.requests.length : response.count;
         this.filteredRequests = [...this.requests];
         this.calculateStats();
         this.loading = false;
@@ -189,197 +169,11 @@ export class TransportAdminComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Open assign vehicle modal
-   */
-  openAssignVehicleModal(request: TransportRequest): void {
-    this.selectedRequest = request;
-    this.vehicleData = {
-      vehicle_number: '',
-      vehicle_type: 'COMPANY_VEHICLE',
-      vehicle_capacity: 4,
-      driver_name: '',
-      driver_contact: '',
-      driver_license: '',
-      assignment_date: new Date().toISOString().split('T')[0],
-    };
-    this.showAssignVehicleModal = true;
-  }
-
-  /**
-   * Close assign vehicle modal
-   */
-  closeAssignVehicleModal(): void {
-    this.showAssignVehicleModal = false;
-    this.selectedRequest = null;
-  }
-
-  /**
-   * Assign vehicle to request
-   */
-  assignVehicle(): void {
-    if (!this.selectedRequest) return;
-
-    if (
-      !this.vehicleData.vehicle_number ||
-      !this.vehicleData.driver_name ||
-      !this.vehicleData.driver_contact
-    ) {
-      this.toastService.error('Please fill in all required fields');
-      return;
-    }
-
-    this.processingId = this.selectedRequest.id;
-
-    this.transportService.assignVehicle(this.selectedRequest.id, this.vehicleData).subscribe({
-      next: () => {
-        this.toastService.success('Vehicle assigned successfully');
-        this.closeAssignVehicleModal();
-        this.processingId = null;
-        this.loadRequests();
-      },
-      error: err => {
-        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to assign vehicle'));
-        this.processingId = null;
-        console.error('Error assigning vehicle:', err);
-      },
-    });
-  }
-
-  /**
-   * Approve request
-   */
-  approveRequest(request: TransportRequest): void {
-    this.confirmationService
-      .confirm({
-        title: 'Approve Request',
-        message: `Are you sure you want to approve request #${request.id}?`,
-        confirmText: 'Approve',
-        type: 'success',
-      })
-      .subscribe(confirmed => {
-        if (!confirmed) return;
-        this.executeApproveRequest(request);
-      });
-  }
-
-  private executeApproveRequest(request: TransportRequest): void {
-    this.processingId = request.id;
-
-    this.transportService.approveRequest(request.id, 'Approved by Admin').subscribe({
-      next: () => {
-        this.toastService.success('Request approved successfully');
-        this.processingId = null;
-        this.loadRequests();
-      },
-      error: err => {
-        this.toastService.error(
-          this.errorHandler.getErrorMessage(err, 'Failed to approve request')
-        );
-        this.processingId = null;
-        console.error('Error approving request:', err);
-      },
-    });
-  }
-
-  /**
-   * Reject request
-   */
-  rejectRequest(request: TransportRequest): void {
-    const reason = prompt('Please provide a reason for rejection:');
-
-    if (!reason || reason.trim() === '') {
-      this.toastService.error('Rejection reason is required');
-      return;
-    }
-
-    this.processingId = request.id;
-
-    this.transportService.rejectRequest(request.id, reason).subscribe({
-      next: () => {
-        this.toastService.success('Request rejected successfully');
-        this.processingId = null;
-        this.loadRequests();
-      },
-      error: err => {
-        this.toastService.error(this.errorHandler.getErrorMessage(err, 'Failed to reject request'));
-        this.processingId = null;
-        console.error('Error rejecting request:', err);
-      },
-    });
-  }
-
-  /**
-   * Complete request
-   */
-  completeRequest(request: TransportRequest): void {
-    this.confirmationService
-      .confirm({
-        title: 'Complete Request',
-        message: `Mark request #${request.id} as completed?`,
-        confirmText: 'Complete',
-        type: 'success',
-      })
-      .subscribe(confirmed => {
-        if (!confirmed) return;
-        this.executeCompleteRequest(request);
-      });
-  }
-
-  private executeCompleteRequest(request: TransportRequest): void {
-    this.processingId = request.id;
-
-    this.transportService.completeRequest(request.id).subscribe({
-      next: () => {
-        this.toastService.success('Request marked as completed');
-        this.processingId = null;
-        this.loadRequests();
-      },
-      error: err => {
-        this.toastService.error(
-          this.errorHandler.getErrorMessage(err, 'Failed to complete request')
-        );
-        this.processingId = null;
-        console.error('Error completing request:', err);
-      },
-    });
-  }
-
-  /**
    * Get status badge class - delegates to StatusUtilsService so the same
    * status renders the same color everywhere in the app.
    */
   getStatusClass(status: string): string {
     return this.statusUtils.getStatusBadgeClass(status);
-  }
-
-  /**
-   * Check if request can be approved
-   * Dynamically checks if status starts with "Pending" (approval workflow step)
-   */
-  canApprove(request: TransportRequest): boolean {
-    // Any status starting with "Pending" indicates it's awaiting approval
-    return request.status?.startsWith('Pending') || false;
-  }
-
-  /**
-   * Check if vehicle can be assigned
-   */
-  canAssignVehicle(request: TransportRequest): boolean {
-    return request.status === 'Approved' || request.status === 'Processing with Transport Admin';
-  }
-
-  /**
-   * Check if request can be completed
-   */
-  canComplete(request: TransportRequest): boolean {
-    return request.status === 'Processing with Transport Admin';
-  }
-
-  /**
-   * Check if request is processing
-   */
-  isProcessing(requestId: number | string): boolean {
-    return this.processingId === requestId;
   }
 
   getTotalPassengers(request: TransportRequest): number {

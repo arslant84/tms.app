@@ -148,6 +148,7 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             "submit",
             "cancel",
             "complete",
+            "cancel_assignment",
             "reject_old",
             "export_pdf",
         ):
@@ -161,7 +162,10 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
             # actions here (view/submit/export) are left on can_view_all
             # since viewing and processing are different permissions for
             # them - this is about precision, not blanket-widening.
-            if self.action in ("cancel", "complete"):
+            # cancel_assignment (Undo Completion) has the same is_module_admin
+            # internal check as complete(), so it needs the same bypass -
+            # else a transport admin can only ever undo their own requests.
+            if self.action in ("cancel", "complete", "cancel_assignment"):
                 is_admin = user.is_superuser or is_module_admin(user, "transport")
             else:
                 is_admin = user.is_superuser or can_view_all(user, "transport")
@@ -645,6 +649,59 @@ class TransportRequestViewSet(viewsets.ModelViewSet):
         # Update transport request status
         transport_request.status = "Rejected"
         transport_request.save()
+
+        serializer = TransportRequestDetailSerializer(transport_request)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def cancel_assignment(self, request, pk=None):
+        """
+        Undo a mistaken completion (transport admin only) - mirrors
+        FlightBookingViewSet.cancel: soft-cancels the vehicle assignment
+        (kept for audit trail, not deleted) and reverts the request back
+        to Processing with Transport Admin so it can be reassigned and
+        re-completed.
+        """
+        transport_request = self.get_object()
+
+        if not request.user.is_superuser and not is_module_admin(
+            request.user, "transport"
+        ):
+            return Response(
+                {"error": "Only transport admin can undo a completed request"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if transport_request.status != "Completed":
+            return Response(
+                {
+                    "error": f"Cannot undo completion for a request with status {transport_request.status}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        active_assignments = list(
+            transport_request.vehicle_assignments.exclude(status="Cancelled")
+        )
+        for assignment in active_assignments:
+            assignment.status = "Cancelled"
+            assignment.save(update_fields=["status"])
+
+        transport_request.status = "Processing with Transport Admin"
+        transport_request.save(update_fields=["status"])
+
+        assignment_ids = ", ".join(f"#{a.id}" for a in active_assignments) or "none"
+        AdminActionLog.log_action(
+            user=request.user,
+            action_type="vehicle_assignment_cancelled",
+            description=(
+                f"Undid completion of transport request {transport_request.request_number} "
+                f"(vehicle assignment(s) {assignment_ids} cancelled)"
+            ),
+            entity_type="TransportRequest",
+            entity_id=str(transport_request.id),
+            request=request,
+        )
 
         serializer = TransportRequestDetailSerializer(transport_request)
         return Response(serializer.data)
