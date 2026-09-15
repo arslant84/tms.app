@@ -28,12 +28,12 @@ export interface AdvanceAmountItem {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './advance-amount-editor.component.html',
-  styleUrls: ['./advance-amount-editor.component.scss']
+  styleUrls: ['./advance-amount-editor.component.scss'],
 })
 export class AdvanceAmountEditorComponent implements OnInit, OnDestroy {
   @Input() initialItems: Partial<AdvanceAmountItem>[] = [];
   @Input() initialConsent = false;
-  @Output() itemsChange = new EventEmitter<Record<string, any>[]>();
+  @Output() itemsChange = new EventEmitter<Record<string, unknown>[]>();
   /** Emits this component's own form validity (items + the required consent checkbox) so the parent form can gate submission on it. */
   @Output() validityChange = new EventEmitter<boolean>();
   /** Emits the consent checkbox's checked state so the parent can persist it with the TRF. */
@@ -50,7 +50,7 @@ export class AdvanceAmountEditorComponent implements OnInit, OnDestroy {
   ) {
     this.form = this.fb.group({
       items: this.fb.array([]),
-      advanceConsent: [false, Validators.requiredTrue]
+      advanceConsent: [false, Validators.requiredTrue],
     });
   }
 
@@ -59,7 +59,10 @@ export class AdvanceAmountEditorComponent implements OnInit, OnDestroy {
   }
 
   get totalUSD(): number {
-    return this.itemsArray.controls.reduce((sum, item) => sum + (Number(item.get('usd')?.value) || 0), 0);
+    return this.itemsArray.controls.reduce(
+      (sum, item) => sum + (Number(item.get('usd')?.value) || 0),
+      0
+    );
   }
 
   get periodFrom(): string | null {
@@ -69,7 +72,7 @@ export class AdvanceAmountEditorComponent implements OnInit, OnDestroy {
 
   get periodTo(): string | null {
     const dates = this.itemsArray.controls.map(item => item.get('dateTo')?.value).filter(Boolean);
-    return dates.length ? dates.sort().at(-1) ?? null : null;
+    return dates.length ? (dates.sort().at(-1) ?? null) : null;
   }
 
   markConsentTouched(): void {
@@ -88,9 +91,12 @@ export class AdvanceAmountEditorComponent implements OnInit, OnDestroy {
       this.emitItems();
     });
 
-    this.form.get('advanceConsent')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((checked) => {
-      this.consentChange.emit(!!checked);
-    });
+    this.form
+      .get('advanceConsent')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(checked => {
+        this.consentChange.emit(!!checked);
+      });
     this.consentChange.emit(!!this.form.get('advanceConsent')?.value);
 
     this.form.statusChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
@@ -114,13 +120,16 @@ export class AdvanceAmountEditorComponent implements OnInit, OnDestroy {
       tr: [data?.tr || 0, [Validators.min(0)]],
       oe: [data?.oe || 0, [Validators.min(0)]],
       usd: [{ value: data?.usd || 0, disabled: true }],
-      remarks: [data?.remarks || '']
+      remarks: [data?.remarks || ''],
     });
 
     ['lh', 'ma', 'oa', 'tr', 'oe'].forEach(field => {
-      formGroup.get(field)?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
-        this.calculateUSD(formGroup);
-      });
+      formGroup
+        .get(field)
+        ?.valueChanges.pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          this.calculateUSD(formGroup);
+        });
     });
 
     return formGroup;

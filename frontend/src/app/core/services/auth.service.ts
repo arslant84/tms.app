@@ -2,18 +2,34 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { map, tap, catchError, shareReplay, filter, take, switchMap, finalize } from 'rxjs/operators';
+import {
+  map,
+  tap,
+  catchError,
+  shareReplay,
+  filter,
+  take,
+  switchMap,
+  finalize,
+} from 'rxjs/operators';
 import { User, AuthResponse, LoginResult } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 
+interface RegistrationErrorResponse {
+  error?: {
+    message?: string;
+    errors?: Record<string, unknown>;
+  };
+}
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   private apiUrl = environment.apiUrl.replace('/api', ''); // Remove /api suffix for backward compatibility
-  private initializationRequest$?: Observable<User>;
+  private initializationRequest$?: Observable<User | null>;
 
   // Track whether initialization has completed
   private initializedSubject = new BehaviorSubject<boolean>(false);
@@ -27,7 +43,10 @@ export class AuthService {
   private readonly MAX_CONNECTION_RETRIES = 15;
   private readonly CONNECTION_RETRY_DELAY_MS = 3000; // 3s × 15 = 45s total retry budget
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {
     // SECURITY: Token now stored in HttpOnly cookie (not accessible to JavaScript)
     // Try to load user data from backend on init
     this.initializeUser();
@@ -60,45 +79,47 @@ export class AuthService {
 
   private runInitializeUserRequest(): void {
     // Create shared observable for initialization
-    console.log('[AuthService] runInitializeUserRequest: sending GET /api/users/me/');
-    this.initializationRequest$ = this.http.get<User>(`${this.apiUrl}/api/users/me/?_t=${Date.now()}`, {
-      withCredentials: true,
-      headers: { 'Cache-Control': 'no-cache' },
-    }).pipe(
-      tap((user) => {
-        this.connectionRetryCount = 0;
-        this.connectionIssueSubject.next(false);
-        this.currentUserSubject.next(user);
-        this.initializedSubject.next(true);
-      }),
-      catchError((error) => {
-        // status 0   = no response at all (offline / DNS / TCP failure)
-        // status 5xx = server-side transient error (502 during gunicorn reload,
-        //              503 maintenance, 504 timeout) — tells us nothing about
-        //              session validity, so retry rather than treating as logout.
-        // A real 401/403 means the session is genuinely invalid; no point retrying.
-        console.log('[AuthService] /api/users/me/ error:', error?.status, error?.message);
-        const isNetworkError = error?.status === 0 || error?.status >= 500;
+    console.warn('[AuthService] runInitializeUserRequest: sending GET /api/users/me/');
+    this.initializationRequest$ = this.http
+      .get<User>(`${this.apiUrl}/api/users/me/?_t=${Date.now()}`, {
+        withCredentials: true,
+        headers: { 'Cache-Control': 'no-cache' },
+      })
+      .pipe(
+        tap(user => {
+          this.connectionRetryCount = 0;
+          this.connectionIssueSubject.next(false);
+          this.currentUserSubject.next(user);
+          this.initializedSubject.next(true);
+        }),
+        catchError(error => {
+          // status 0   = no response at all (offline / DNS / TCP failure)
+          // status 5xx = server-side transient error (502 during gunicorn reload,
+          //              503 maintenance, 504 timeout) — tells us nothing about
+          //              session validity, so retry rather than treating as logout.
+          // A real 401/403 means the session is genuinely invalid; no point retrying.
+          console.warn('[AuthService] /api/users/me/ error:', error?.status, error?.message);
+          const isNetworkError = error?.status === 0 || error?.status >= 500;
 
-        if (isNetworkError && this.connectionRetryCount < this.MAX_CONNECTION_RETRIES) {
-          this.connectionRetryCount++;
-          this.connectionIssueSubject.next(true);
-          this.initializationRequest$ = undefined; // allow the next attempt to run
-          setTimeout(() => this.runInitializeUserRequest(), this.CONNECTION_RETRY_DELAY_MS);
-          // Deliberately do NOT resolve initializedSubject yet - isAuthenticated()
-          // stays pending until we either succeed or give up below.
-          return of(null as any);
-        }
+          if (isNetworkError && this.connectionRetryCount < this.MAX_CONNECTION_RETRIES) {
+            this.connectionRetryCount++;
+            this.connectionIssueSubject.next(true);
+            this.initializationRequest$ = undefined; // allow the next attempt to run
+            setTimeout(() => this.runInitializeUserRequest(), this.CONNECTION_RETRY_DELAY_MS);
+            // Deliberately do NOT resolve initializedSubject yet - isAuthenticated()
+            // stays pending until we either succeed or give up below.
+            return of(null);
+          }
 
-        // Retries exhausted, or a genuine server-confirmed auth failure.
-        this.connectionRetryCount = 0;
-        this.connectionIssueSubject.next(false);
-        this.currentUserSubject.next(null);
-        this.initializedSubject.next(true);
-        return of(null as any);
-      }),
-      shareReplay(1) // Share the result with all subscribers
-    );
+          // Retries exhausted, or a genuine server-confirmed auth failure.
+          this.connectionRetryCount = 0;
+          this.connectionIssueSubject.next(false);
+          this.currentUserSubject.next(null);
+          this.initializedSubject.next(true);
+          return of(null);
+        }),
+        shareReplay(1) // Share the result with all subscribers
+      );
 
     // Subscribe to trigger the request
     this.initializationRequest$.subscribe();
@@ -118,14 +139,16 @@ export class AuthService {
 
   private challengeToken: string | null = null;
 
-  getChallengeToken(): string | null { return this.challengeToken; }
+  getChallengeToken(): string | null {
+    return this.challengeToken;
+  }
 
   private mapToUser(data: Partial<User>, fallbackEmail = ''): User {
     return {
       id: data.id!,
       name: data.name || fallbackEmail.split('@')[0],
       email: data.email || fallbackEmail,
-      role: data.role || '' as any,
+      role: data.role || '',
       department: data.department || '',
       is_admin: data.is_admin || false,
       is_active: data.is_active !== undefined ? data.is_active : true,
@@ -183,72 +206,79 @@ export class AuthService {
   }
 
   verifyMfa(challengeToken: string, otp: string): Observable<User> {
-    return this.http.post<AuthResponse>(
-      `${this.apiUrl}/api/mfa/verify/`,
-      { challenge_token: challengeToken, otp },
-      { withCredentials: true }
-    ).pipe(
-      map(response => {
-        this.challengeToken = null;
-        const user = this.mapToUser(response.data);
-        this.currentUserSubject.next(user);
-        this.initializedSubject.next(true);
-        return user;
-      }),
-      catchError(error => throwError(() => new Error(
-        error.error?.message || error.error?.detail || 'Invalid or expired code.'
-      )))
-    );
+    return this.http
+      .post<AuthResponse>(
+        `${this.apiUrl}/api/mfa/verify/`,
+        { challenge_token: challengeToken, otp },
+        { withCredentials: true }
+      )
+      .pipe(
+        map(response => {
+          this.challengeToken = null;
+          const user = this.mapToUser(response.data);
+          this.currentUserSubject.next(user);
+          this.initializedSubject.next(true);
+          return user;
+        }),
+        catchError(error =>
+          throwError(
+            () =>
+              new Error(error.error?.message || error.error?.detail || 'Invalid or expired code.')
+          )
+        )
+      );
   }
 
   setupMfa(): Observable<{ secret: string; qr_uri: string }> {
-    return this.http.get<{ success: boolean; data: { secret: string; qr_uri: string } }>(
-      `${this.apiUrl}/api/mfa/setup/`,
-      { withCredentials: true }
-    ).pipe(
-      map(response => response.data),
-      catchError(error => throwError(() => new Error(
-        error.error?.message || 'Failed to initialise MFA setup.'
-      )))
-    );
+    return this.http
+      .get<{
+        success: boolean;
+        data: { secret: string; qr_uri: string };
+      }>(`${this.apiUrl}/api/mfa/setup/`, { withCredentials: true })
+      .pipe(
+        map(response => response.data),
+        catchError(error =>
+          throwError(() => new Error(error.error?.message || 'Failed to initialise MFA setup.'))
+        )
+      );
   }
 
   confirmMfa(otp: string): Observable<void> {
-    return this.http.post<any>(
-      `${this.apiUrl}/api/mfa/confirm/`,
-      { otp },
-      { withCredentials: true }
-    ).pipe(
-      tap(() => {
-        const user = this.currentUserSubject.value;
-        if (user) {
-          this.currentUserSubject.next({ ...user, mfa_enabled: true, mfa_setup_required: false });
-        }
-      }),
-      map(() => void 0),
-      catchError(error => throwError(() => new Error(
-        error.error?.message || 'Invalid code. Please try again.'
-      )))
-    );
+    return this.http
+      .post<unknown>(`${this.apiUrl}/api/mfa/confirm/`, { otp }, { withCredentials: true })
+      .pipe(
+        tap(() => {
+          const user = this.currentUserSubject.value;
+          if (user) {
+            this.currentUserSubject.next({ ...user, mfa_enabled: true, mfa_setup_required: false });
+          }
+        }),
+        map(() => void 0),
+        catchError(error =>
+          throwError(() => new Error(error.error?.message || 'Invalid code. Please try again.'))
+        )
+      );
   }
 
   disableMfa(password: string, otp: string): Observable<void> {
-    return this.http.post<any>(
-      `${this.apiUrl}/api/mfa/disable/`,
-      { password, otp },
-      { withCredentials: true }
-    ).pipe(
-      tap(() => {
-        const user = this.currentUserSubject.value;
-        if (user) {
-          this.currentUserSubject.next({ ...user, mfa_enabled: false });
-        }
-      }),
-      map(() => void 0),
-      catchError(error => throwError(() => new Error(
-        error.error?.message || 'Failed to disable MFA.'
-      )))
-    );
+    return this.http
+      .post<unknown>(
+        `${this.apiUrl}/api/mfa/disable/`,
+        { password, otp },
+        { withCredentials: true }
+      )
+      .pipe(
+        tap(() => {
+          const user = this.currentUserSubject.value;
+          if (user) {
+            this.currentUserSubject.next({ ...user, mfa_enabled: false });
+          }
+        }),
+        map(() => void 0),
+        catchError(error =>
+          throwError(() => new Error(error.error?.message || 'Failed to disable MFA.'))
+        )
+      );
   }
 
   /**
@@ -264,17 +294,20 @@ export class AuthService {
     const url = `${this.apiUrl}/api/logout/`;
 
     // SECURITY: withCredentials: true sends the HttpOnly cookie
-    this.http.post(url, {}, { withCredentials: true }).pipe(
-      catchError(error => {
-        console.error('Logout failed', error);
-        return of(null);
-      })
-    ).subscribe(() => {
-      // SECURITY: Cookie is cleared by backend
-      // Just clear user data from memory
-      this.clearUserState();
-      this.router.navigate(['/auth/login']);
-    });
+    this.http
+      .post(url, {}, { withCredentials: true })
+      .pipe(
+        catchError(error => {
+          console.error('Logout failed', error);
+          return of(null);
+        })
+      )
+      .subscribe(() => {
+        // SECURITY: Cookie is cleared by backend
+        // Just clear user data from memory
+        this.clearUserState();
+        this.router.navigate(['/auth/login']);
+      });
   }
 
   /**
@@ -302,8 +335,10 @@ export class AuthService {
         console.error('Token refresh failed', error);
         return of(false);
       }),
-      finalize(() => { this.refreshInProgress$ = null; }),
-      shareReplay(1),
+      finalize(() => {
+        this.refreshInProgress$ = null;
+      }),
+      shareReplay(1)
     );
 
     return this.refreshInProgress$;
@@ -381,28 +416,30 @@ export class AuthService {
     department: string;
     gender?: string;
     profile_photo?: string;
-  }): Observable<{ success: boolean; message: string; data?: any }> {
-    return this.http.post<any>(`${this.apiUrl}/api/register/`, userData).pipe(
-      map(response => {
-        // Handle standardized response format
-        if (response.success) {
-          return {
-            success: true,
-            message: response.message || 'Registration successful',
-            data: response.data
-          };
-        }
-        return response;
-      }),
-      catchError(error => {
-        // Extract error message
-        const message = this.getErrorMessage(error);
-        return throwError(() => ({ success: false, message, error }));
-      })
-    );
+  }): Observable<{ success: boolean; message: string; data?: Partial<User> }> {
+    return this.http
+      .post<{
+        success: boolean;
+        message?: string;
+        data?: Partial<User>;
+      }>(`${this.apiUrl}/api/register/`, userData)
+      .pipe(
+        map(response => ({
+          success: response.success,
+          message:
+            response.message ||
+            (response.success ? 'Registration successful' : 'Registration failed'),
+          data: response.data,
+        })),
+        catchError(error => {
+          // Extract error message
+          const message = this.getErrorMessage(error);
+          return throwError(() => ({ success: false, message, error }));
+        })
+      );
   }
 
-  private getErrorMessage(error: any): string {
+  private getErrorMessage(error: RegistrationErrorResponse): string {
     if (error.error?.message) {
       return error.error.message;
     }

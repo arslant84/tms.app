@@ -9,10 +9,13 @@ import { Pipe, PipeTransform } from '@angular/core';
  */
 @Pipe({
   name: 'departmentName',
-  standalone: true
+  standalone: true,
 })
 export class DepartmentNamePipe implements PipeTransform {
-  transform(value: any, fallback: string = 'N/A'): string {
+  transform(
+    value: string | { name?: string } | null | undefined,
+    fallback: string = 'N/A'
+  ): string {
     if (!value) {
       return fallback;
     }

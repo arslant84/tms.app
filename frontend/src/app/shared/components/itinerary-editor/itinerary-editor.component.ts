@@ -1,6 +1,24 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { DateUtilsService } from '../../../core/utils/date-utils.service';
 
@@ -56,11 +74,14 @@ export type TripType = 'One Way' | 'Round Trip';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './itinerary-editor.component.html',
-  styleUrls: ['./itinerary-editor.component.scss']
+  styleUrls: ['./itinerary-editor.component.scss'],
 })
 export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
   @Input() fields: ItineraryFieldConfig[] = [];
-  @Input() initialSegments: Record<string, any>[] = [];
+  // Callers pass concrete segment interfaces (ItinerarySegment, TransportJourney, ...) -
+  // `unknown[]` (rather than `Record<string, unknown>[]`) accepts any of those, since a
+  // named interface without its own index signature isn't assignable to an indexed type.
+  @Input() initialSegments: unknown[] = [];
   @Input() tripType: TripType = 'One Way';
   /** Key of the readonly day-of-week field to auto-populate; defaults to 'day'. */
   @Input() dayFieldKey = 'day';
@@ -72,7 +93,7 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
   @Input() forceAllowAdd = false;
   @Input() addButtonLabel = 'Add Itinerary Segment';
 
-  @Output() segmentsChange = new EventEmitter<Record<string, any>[]>();
+  @Output() segmentsChange = new EventEmitter<Record<string, unknown>[]>();
   @Output() datesChange = new EventEmitter<(string | null)[]>();
 
   form: FormGroup;
@@ -107,12 +128,15 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
     return this.forceAllowAdd || this.tripType === 'Round Trip';
   }
 
-  canRemove(index: number): boolean {
+  canRemove(_index: number): boolean {
     return this.segmentsArray.length > 1 && (this.forceAllowAdd || this.tripType === 'Round Trip');
   }
 
   ngOnInit(): void {
-    const seed = this.initialSegments?.length ? this.initialSegments : [{}];
+    const seed = (this.initialSegments?.length ? this.initialSegments : [{}]) as Record<
+      string,
+      unknown
+    >[];
     seed.forEach(segment => this.segmentsArray.push(this.createSegment(segment)));
     this.revalidateChronology();
     this.emitState();
@@ -138,8 +162,8 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
     this.destroy$.complete();
   }
 
-  private createSegment(data: Record<string, any>): FormGroup {
-    const group: Record<string, any> = {};
+  private createSegment(data: Record<string, unknown>): FormGroup {
+    const group: Record<string, unknown> = {};
     for (const field of this.fields) {
       const value = data?.[field.key] ?? '';
       // Date fields update on blur, not on every keystroke: native
@@ -152,32 +176,38 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
       // reproduced directly with a CPU profiler showing the renderer
       // pinned at 100% mid-keystroke. Deferring to blur keeps the same
       // validation/highlighting, just computed once instead of per digit.
-      group[field.key] = field.type === 'date'
-        ? this.fb.control(value, {
-            validators: field.required ? Validators.required : null,
-            updateOn: 'blur',
-          })
-        : field.required
-          ? [value, Validators.required]
-          : [value];
+      group[field.key] =
+        field.type === 'date'
+          ? this.fb.control(value, {
+              validators: field.required ? Validators.required : null,
+              updateOn: 'blur',
+            })
+          : field.required
+            ? [value, Validators.required]
+            : [value];
     }
     const originKey = this.fields.find(f => f.isOrigin)?.key;
     const destinationKey = this.fields.find(f => f.isDestination)?.key;
     const formGroup = this.fb.group(
       group,
-      originKey && destinationKey ? { validators: sameCityValidator(originKey, destinationKey) } : undefined
+      originKey && destinationKey
+        ? { validators: sameCityValidator(originKey, destinationKey) }
+        : undefined
     );
 
     const primaryDateKey = this.fields.find(f => f.isPrimaryDate)?.key;
     if (primaryDateKey) {
-      formGroup.get(primaryDateKey)?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
-        if (value) {
-          const dayName = this.dateUtils.getDayOfWeek(value);
-          if (dayName) {
-            formGroup.get(this.dayFieldKey)?.setValue(dayName, { emitEvent: false });
+      formGroup
+        .get(primaryDateKey)
+        ?.valueChanges.pipe(takeUntil(this.destroy$))
+        .subscribe(value => {
+          if (value) {
+            const dayName = this.dateUtils.getDayOfWeek(value);
+            if (dayName) {
+              formGroup.get(this.dayFieldKey)?.setValue(dayName, { emitEvent: false });
+            }
           }
-        }
-      });
+        });
     }
 
     return formGroup;
@@ -272,12 +302,12 @@ export class ItineraryEditorComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private emitState(): void {
-    const value = this.segmentsArray.value as Record<string, any>[];
+    const value = this.segmentsArray.value as Record<string, unknown>[];
     this.segmentsChange.emit(value);
 
     const primaryDateKey = this.fields.find(f => f.isPrimaryDate)?.key;
     if (primaryDateKey) {
-      this.datesChange.emit(value.map(segment => segment[primaryDateKey] || null));
+      this.datesChange.emit(value.map(segment => (segment[primaryDateKey] as string) || null));
     }
   }
 }

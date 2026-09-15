@@ -1,14 +1,13 @@
 import { Injectable } from '@angular/core';
-import { FormGroup, FormControl, FormArray, AbstractControl } from '@angular/forms';
+import { FormGroup, FormArray, AbstractControl } from '@angular/forms';
 
 /**
  * Shared utility service for common form operations
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class FormUtilsService {
-
   /**
    * Recursively marks all controls in a FormGroup as touched
    * Useful for triggering validation display on submit
@@ -31,7 +30,7 @@ export class FormUtilsService {
         const nestedInvalid = this.markFormGroupTouched(control, collectInvalidFields);
         invalidFields.push(...nestedInvalid);
       } else if (control instanceof FormArray) {
-        control.controls.forEach((ctrl: any) => {
+        control.controls.forEach((ctrl: AbstractControl) => {
           if (ctrl instanceof FormGroup) {
             const nestedInvalid = this.markFormGroupTouched(ctrl, collectInvalidFields);
             invalidFields.push(...nestedInvalid);

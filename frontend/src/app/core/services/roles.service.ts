@@ -28,6 +28,15 @@ export interface TmsApp_Roles_RoleFormValues {
   permissionIds?: string[];
 }
 
+type WrappedListResponse<T> = T[] | { data?: T[]; results?: T[] };
+
+function unwrapList<T>(response: WrappedListResponse<T>): T[] {
+  if (Array.isArray(response)) {
+    return response;
+  }
+  return response?.data || response?.results || [];
+}
+
 /**
  * TmsApp_Core_Services_RolesService
  * Purpose
@@ -48,14 +57,13 @@ export class TmsApp_Core_Services_RolesService {
 
   /** Get all roles with permissions */
   getRoles(): Observable<TmsApp_Roles_RoleWithPermissions[]> {
-    return this.http.get<any>(this.rolesUrl).pipe(
+    return this.http.get<WrappedListResponse<TmsApp_Roles_RoleWithPermissions>>(this.rolesUrl).pipe(
       map(response => {
-        // Handle wrapped response (data field) or direct array
-        const roles = Array.isArray(response) ? response : (response?.data || response?.results || []);
+        const roles = unwrapList(response);
         // Map permissions to permissionIds for each role
-        return roles.map((role: any) => ({
+        return roles.map(role => ({
           ...role,
-          permissionIds: role.permissionIds || (role.permissions || []).map((p: any) => p.id)
+          permissionIds: role.permissionIds || (role.permissions || []).map(p => p.id),
         }));
       })
     );
@@ -67,7 +75,10 @@ export class TmsApp_Core_Services_RolesService {
   }
 
   /** Update role, expects payload plus id */
-  updateRole(id: string, payload: TmsApp_Roles_RoleFormValues): Observable<TmsApp_Roles_RoleWithPermissions> {
+  updateRole(
+    id: string,
+    payload: TmsApp_Roles_RoleFormValues
+  ): Observable<TmsApp_Roles_RoleWithPermissions> {
     return this.http.put<TmsApp_Roles_RoleWithPermissions>(`${this.rolesUrl}${id}/`, payload);
   }
 
@@ -78,12 +89,8 @@ export class TmsApp_Core_Services_RolesService {
 
   /** Get all permissions */
   getPermissions(): Observable<TmsApp_Roles_Permission[]> {
-    return this.http.get<any>(this.permissionsUrl).pipe(
-      map(response => {
-        // Handle wrapped response (data field) or direct array
-        const perms = Array.isArray(response) ? response : (response?.data || response?.results || []);
-        return perms;
-      })
-    );
+    return this.http
+      .get<WrappedListResponse<TmsApp_Roles_Permission>>(this.permissionsUrl)
+      .pipe(map(response => unwrapList(response)));
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppSettingsService } from '../../../core/services/app-settings.service';
 import { Observable, map } from 'rxjs';
@@ -9,9 +9,9 @@ import { Observable, map } from 'rxjs';
   imports: [CommonModule],
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FooterComponent implements OnInit {
+export class FooterComponent {
   currentYear: number = new Date().getFullYear();
   applicationName$: Observable<string>;
   supportEmail$: Observable<string>;
@@ -24,6 +24,4 @@ export class FooterComponent implements OnInit {
       map(settings => settings.support_email || 'support@example.com')
     );
   }
-
-  ngOnInit(): void {}
 }

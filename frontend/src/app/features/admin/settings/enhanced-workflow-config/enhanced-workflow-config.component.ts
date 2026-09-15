@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- pre-existing loose typing against raw API responses, unrelated to this change */
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +8,11 @@ import {
 import { ToastService } from '../../../../core/services/toast.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
-import { WorkflowStepNotificationConfig } from '../../../../core/models/workflow.models';
+import {
+  WorkflowStep,
+  WorkflowStepNotificationConfig,
+  WorkflowTemplate,
+} from '../../../../core/models/workflow.models';
 import { StepNotificationConfigComponent } from '../step-notification-config/step-notification-config.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 
@@ -52,7 +55,7 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
   isLoading = false;
   isSaving = false;
   error: string | null = null;
-  existingWorkflows: any[] = [];
+  existingWorkflows: WorkflowTemplate[] = [];
   editingWorkflowId: string | null = null;
   showStepsConfiguration = false;
   workflowToDelete: { id: string; name: string } | null = null;
@@ -93,18 +96,22 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
   loadExistingWorkflows(): void {
     this.isLoading = true;
     this.error = null;
-    this.http.get<any>(`${environment.apiUrl}/workflows/templates/`).subscribe({
-      next: response => {
-        // Handle paginated response
-        this.existingWorkflows = response.results || response;
-        this.isLoading = false;
-      },
-      error: () => {
-        this.toast.error('Failed to load existing workflows');
-        this.error = 'Failed to load existing workflows. Please try again.';
-        this.isLoading = false;
-      },
-    });
+    this.http
+      .get<
+        WorkflowTemplate[] | { results: WorkflowTemplate[] }
+      >(`${environment.apiUrl}/workflows/templates/`)
+      .subscribe({
+        next: response => {
+          // Handle paginated response
+          this.existingWorkflows = Array.isArray(response) ? response : response.results;
+          this.isLoading = false;
+        },
+        error: () => {
+          this.toast.error('Failed to load existing workflows');
+          this.error = 'Failed to load existing workflows. Please try again.';
+          this.isLoading = false;
+        },
+      });
   }
 
   onModuleChange(): void {
@@ -224,39 +231,43 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
         this.toast.error('Failed to save workflow');
         this.isSaving = false;
       },
-      complete: () => (this.isSaving = false),
+      complete: () => {
+        this.isSaving = false;
+      },
     });
   }
 
-  editWorkflow(workflow: any): void {
+  editWorkflow(workflow: WorkflowTemplate): void {
     // Fetch full workflow details with steps
-    this.http.get<any>(`${environment.apiUrl}/workflows/templates/${workflow.id}/`).subscribe({
-      next: fullWorkflow => {
-        this.editingWorkflowId = fullWorkflow.id;
-        this.selectedModule = fullWorkflow.entity_type;
-        this.workflowName = fullWorkflow.name;
-        this.workflowDescription = fullWorkflow.description || '';
-        this.numberOfSteps = fullWorkflow.steps?.length || 3;
+    this.http
+      .get<WorkflowTemplate>(`${environment.apiUrl}/workflows/templates/${workflow.id}/`)
+      .subscribe({
+        next: fullWorkflow => {
+          this.editingWorkflowId = fullWorkflow.id;
+          this.selectedModule = fullWorkflow.entity_type;
+          this.workflowName = fullWorkflow.name;
+          this.workflowDescription = fullWorkflow.description || '';
+          this.numberOfSteps = fullWorkflow.steps?.length || 3;
 
-        this.steps = (fullWorkflow.steps || []).map((step: any) => ({
-          order: step.step_order,
-          roleId: step.approver_role || '',
-          notification_configs: step.notification_configs || [],
-        }));
+          this.steps = (fullWorkflow.steps || []).map(step => ({
+            order: step.step_order,
+            roleId: step.approver_role || '',
+            notification_configs: step.notification_configs || [],
+          }));
 
-        // Show steps configuration when editing
-        this.showStepsConfiguration = true;
+          // Show steps configuration when editing
+          this.showStepsConfiguration = true;
 
-        // Scroll to form
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      },
-      error: () => {
-        this.toast.error('Failed to load workflow details');
-      },
-    });
+          // Scroll to form
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+        error: () => {
+          this.toast.error('Failed to load workflow details');
+        },
+      });
   }
 
-  deleteWorkflow(workflow: any): void {
+  deleteWorkflow(workflow: WorkflowTemplate): void {
     // Show confirmation by setting the workflow to delete
     this.workflowToDelete = {
       id: workflow.id,
@@ -286,52 +297,56 @@ export class EnhancedWorkflowConfigComponent implements OnInit {
     this.workflowToDelete = null;
   }
 
-  toggleWorkflowStatus(workflow: any): void {
+  toggleWorkflowStatus(workflow: WorkflowTemplate): void {
     // First fetch the full workflow details
-    this.http.get<any>(`${environment.apiUrl}/workflows/templates/${workflow.id}/`).subscribe({
-      next: fullWorkflow => {
-        const updatedData = {
-          name: fullWorkflow.name,
-          description: fullWorkflow.description,
-          entity_type: fullWorkflow.entity_type,
-          is_active: !fullWorkflow.is_active,
-          allow_parallel_steps: fullWorkflow.allow_parallel_steps,
-          auto_approve_on_condition: fullWorkflow.auto_approve_on_condition,
-          steps: fullWorkflow.steps.map((step: any) => ({
-            step_order: step.step_order,
-            step_name: step.step_name,
-            step_description: step.step_description,
-            approver_role: step.approver_role,
-            is_required: step.is_required,
-            can_skip: step.can_skip,
-            requires_comments: step.requires_comments,
-            notification_configs: (step.notification_configs || []).map((config: any) => ({
-              event_type: config.event_type,
-              notification_template: config.notification_template,
-              recipient_types: config.recipient_types,
-              custom_recipients: config.custom_recipients,
-              is_active: config.is_active,
-              send_email: config.send_email,
-              send_system_notification: config.send_system_notification,
-              priority: config.priority,
+    this.http
+      .get<WorkflowTemplate>(`${environment.apiUrl}/workflows/templates/${workflow.id}/`)
+      .subscribe({
+        next: fullWorkflow => {
+          const updatedData = {
+            name: fullWorkflow.name,
+            description: fullWorkflow.description,
+            entity_type: fullWorkflow.entity_type,
+            is_active: !fullWorkflow.is_active,
+            allow_parallel_steps: fullWorkflow.allow_parallel_steps,
+            auto_approve_on_condition: fullWorkflow.auto_approve_on_condition,
+            steps: (fullWorkflow.steps || []).map((step: WorkflowStep) => ({
+              step_order: step.step_order,
+              step_name: step.step_name,
+              step_description: step.step_description,
+              approver_role: step.approver_role,
+              is_required: step.is_required,
+              can_skip: step.can_skip,
+              requires_comments: step.requires_comments,
+              notification_configs: (step.notification_configs || []).map(
+                (config: WorkflowStepNotificationConfig) => ({
+                  event_type: config.event_type,
+                  notification_template: config.notification_template,
+                  recipient_types: config.recipient_types,
+                  custom_recipients: config.custom_recipients,
+                  is_active: config.is_active,
+                  send_email: config.send_email,
+                  send_system_notification: config.send_system_notification,
+                  priority: config.priority,
+                })
+              ),
             })),
-          })),
-        };
+          };
 
-        this.http
-          .put(`${environment.apiUrl}/workflows/templates/${workflow.id}/`, updatedData)
-          .subscribe({
-            next: () => {
-              this.toast.success(
-                `Workflow ${workflow.is_active ? 'deactivated' : 'activated'} successfully`
-              );
-              this.loadExistingWorkflows();
-            },
-            error: () => this.toast.error('Failed to update workflow status'),
-          });
-      },
-      error: () => this.toast.error('Failed to load workflow details'),
-    });
+          this.http
+            .put(`${environment.apiUrl}/workflows/templates/${workflow.id}/`, updatedData)
+            .subscribe({
+              next: () => {
+                this.toast.success(
+                  `Workflow ${workflow.is_active ? 'deactivated' : 'activated'} successfully`
+                );
+                this.loadExistingWorkflows();
+              },
+              error: () => this.toast.error('Failed to update workflow status'),
+            });
+        },
+        error: () => this.toast.error('Failed to load workflow details'),
+      });
   }
 
   resetForm(): void {

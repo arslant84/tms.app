@@ -33,7 +33,7 @@
 /**
  * Standard API response structure (matches backend utils/api_response.py)
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data: T;
@@ -48,7 +48,7 @@ export interface ApiResponseMeta {
   timestamp?: string;
   request_id?: string;
   pagination?: PaginationMeta;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -85,7 +85,42 @@ export interface NormalizedResponse<T> {
   success: boolean;
   message: string;
   data: T | null;
-  errors?: any;
+  errors?: Record<string, string[]> | string[] | string | null;
+}
+
+/**
+ * A response body whose exact shape isn't known ahead of time - these
+ * handlers exist precisely to sniff it out. Every field the handlers below
+ * look for is declared (rather than relying on a `[key: string]` index
+ * signature) so dot-notation access on a narrowed value type-checks under
+ * `noPropertyAccessFromIndexSignature`.
+ */
+interface UnknownRecord {
+  success?: unknown;
+  message?: unknown;
+  data?: unknown;
+  errors?: unknown;
+  meta?: unknown;
+  pagination?: unknown;
+  page?: unknown;
+  limit?: unknown;
+  page_size?: unknown;
+  total_count?: unknown;
+  total_pages?: unknown;
+  has_next?: unknown;
+  has_previous?: unknown;
+  results?: unknown;
+  count?: unknown;
+  next?: unknown;
+  previous?: unknown;
+  error?: unknown;
+  detail?: unknown;
+  non_field_errors?: unknown;
+  status?: unknown;
+}
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === 'object' && value !== null;
 }
 
 /**
@@ -103,24 +138,24 @@ export interface NormalizedResponse<T> {
  *   }
  * });
  */
-export function handleApiResponse<T>(response: any): NormalizedResponse<T> {
+export function handleApiResponse<T>(response: unknown): NormalizedResponse<T> {
   // Handle null/undefined response
   if (response === null || response === undefined) {
     return {
       success: false,
       message: 'No response received',
       data: null,
-      errors: null
+      errors: null,
     };
   }
 
   // Handle standardized response format
-  if (typeof response === 'object' && 'success' in response) {
+  if (isRecord(response) && 'success' in response) {
     return {
-      success: response.success,
-      message: response.message || (response.success ? 'Success' : 'Error'),
-      data: response.data ?? null,
-      errors: response.errors
+      success: response.success === true,
+      message: (response.message as string) || (response.success ? 'Success' : 'Error'),
+      data: (response.data as T) ?? null,
+      errors: response.errors as NormalizedResponse<T>['errors'],
     };
   }
 
@@ -129,7 +164,7 @@ export function handleApiResponse<T>(response: any): NormalizedResponse<T> {
     success: true,
     message: 'Success',
     data: response as T,
-    errors: null
+    errors: null,
   };
 }
 
@@ -152,79 +187,122 @@ export function handleApiResponse<T>(response: any): NormalizedResponse<T> {
  *   this.totalPages = result.pagination.totalPages;
  * });
  */
-export function handlePaginatedResponse<T>(response: any, defaultPageSize: number = 10): PaginatedData<T> {
-  const defaultPagination = {
+function defaultPaginationFor(defaultPageSize: number): PaginatedData<never>['pagination'] {
+  return {
     page: 1,
     pageSize: defaultPageSize,
     totalCount: 0,
     totalPages: 1,
     hasNext: false,
-    hasPrevious: false
+    hasPrevious: false,
+  };
+}
+
+/** Raw array response - the entire array is the item list. */
+function paginatedFromArray<T>(response: unknown[], defaultPageSize: number): PaginatedData<T> {
+  return {
+    items: response as T[],
+    pagination: {
+      ...defaultPaginationFor(defaultPageSize),
+      totalCount: response.length,
+      totalPages: Math.ceil(response.length / defaultPageSize) || 1,
+    },
+  };
+}
+
+/** Standardized response with meta.pagination: { success, data: [...], meta: { pagination: {...} } } */
+function paginatedFromMeta<T>(
+  response: UnknownRecord,
+  defaultPageSize: number
+): PaginatedData<T> | undefined {
+  const meta = response.meta as UnknownRecord | undefined;
+  const pag = meta?.pagination as UnknownRecord | undefined;
+  if (response.success === undefined || !pag) {
+    return undefined;
+  }
+  return {
+    items: (response.data as T[]) || [],
+    pagination: {
+      page: (pag.page as number) || 1,
+      pageSize: (pag.limit as number) || defaultPageSize,
+      totalCount: (pag.total_count as number) || 0,
+      totalPages: (pag.total_pages as number) || 1,
+      hasNext: (pag.has_next as boolean) ?? false,
+      hasPrevious: (pag.has_previous as boolean) ?? false,
+    },
+  };
+}
+
+/** Standardized response where data itself is the array: { success, data: [...] } */
+function paginatedFromDataArray<T>(
+  response: UnknownRecord,
+  defaultPageSize: number
+): PaginatedData<T> | undefined {
+  if (response.success === undefined || !Array.isArray(response.data)) {
+    return undefined;
+  }
+  const data = response.data as T[];
+  return {
+    items: data,
+    pagination: {
+      ...defaultPaginationFor(defaultPageSize),
+      totalCount: data.length,
+      totalPages: Math.ceil(data.length / defaultPageSize) || 1,
+    },
+  };
+}
+
+/** DRF default pagination format: { results: [], count: N } */
+function paginatedFromDrf<T>(
+  response: UnknownRecord,
+  defaultPageSize: number
+): PaginatedData<T> | undefined {
+  if (!('results' in response)) {
+    return undefined;
+  }
+  const results = (response.results as T[]) || [];
+  const pageSize = (response.page_size as number) || defaultPageSize;
+  const totalCount = (response.count as number) || results.length || 0;
+  return {
+    items: results,
+    pagination: {
+      page: (response.page as number) || 1,
+      pageSize,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize) || 1,
+      hasNext: response.next !== null,
+      hasPrevious: response.previous !== null,
+    },
+  };
+}
+
+export function handlePaginatedResponse<T>(
+  response: unknown,
+  defaultPageSize: number = 10
+): PaginatedData<T> {
+  const fallback: PaginatedData<T> = {
+    items: [],
+    pagination: defaultPaginationFor(defaultPageSize),
   };
 
-  // Handle null/undefined response
   if (response === null || response === undefined) {
-    return { items: [], pagination: defaultPagination };
+    return fallback;
   }
 
-  // Handle raw array response
   if (Array.isArray(response)) {
-    return {
-      items: response as T[],
-      pagination: {
-        ...defaultPagination,
-        totalCount: response.length,
-        totalPages: Math.ceil(response.length / defaultPageSize) || 1
-      }
-    };
+    return paginatedFromArray<T>(response, defaultPageSize);
   }
 
-  // Handle standardized response with meta.pagination
-  if (response.success !== undefined && response.meta?.pagination) {
-    const pag = response.meta.pagination;
-    return {
-      items: (response.data || []) as T[],
-      pagination: {
-        page: pag.page || 1,
-        pageSize: pag.limit || defaultPageSize,
-        totalCount: pag.total_count || 0,
-        totalPages: pag.total_pages || 1,
-        hasNext: pag.has_next ?? false,
-        hasPrevious: pag.has_previous ?? false
-      }
-    };
+  if (!isRecord(response)) {
+    return fallback;
   }
 
-  // Handle standardized response where data is the array
-  if (response.success !== undefined && Array.isArray(response.data)) {
-    return {
-      items: response.data as T[],
-      pagination: {
-        ...defaultPagination,
-        totalCount: response.data.length,
-        totalPages: Math.ceil(response.data.length / defaultPageSize) || 1
-      }
-    };
-  }
-
-  // Handle DRF default pagination format: { results: [], count: N }
-  if ('results' in response) {
-    const totalCount = response.count || response.results?.length || 0;
-    return {
-      items: (response.results || []) as T[],
-      pagination: {
-        page: response.page || 1,
-        pageSize: response.page_size || defaultPageSize,
-        totalCount: totalCount,
-        totalPages: Math.ceil(totalCount / (response.page_size || defaultPageSize)) || 1,
-        hasNext: response.next !== null,
-        hasPrevious: response.previous !== null
-      }
-    };
-  }
-
-  // Fallback: treat the entire response as data
-  return { items: [], pagination: defaultPagination };
+  return (
+    paginatedFromMeta<T>(response, defaultPageSize) ||
+    paginatedFromDataArray<T>(response, defaultPageSize) ||
+    paginatedFromDrf<T>(response, defaultPageSize) ||
+    fallback
+  );
 }
 
 /**
@@ -242,19 +320,21 @@ export function handlePaginatedResponse<T>(response: any, defaultPageSize: numbe
  *   this.currentUser = user;
  * });
  */
-export function extractData<T>(response: any): T | null {
+export function extractData<T>(response: unknown): T | null {
   if (response === null || response === undefined) {
     return null;
   }
 
-  // Standardized response
-  if (typeof response === 'object' && 'success' in response) {
-    return response.data ?? null;
-  }
+  if (isRecord(response)) {
+    // Standardized response
+    if ('success' in response) {
+      return (response.data as T) ?? null;
+    }
 
-  // DRF pagination format
-  if ('results' in response) {
-    return response.results as T;
+    // DRF pagination format
+    if ('results' in response) {
+      return response.results as T;
+    }
   }
 
   // Raw response
@@ -274,60 +354,71 @@ export function extractData<T>(response: any): T | null {
  *   }
  * });
  */
-export function extractErrorMessage(error: any): string {
+function formatValidationErrors(errors: unknown): string {
+  if (typeof errors === 'string') {
+    return errors;
+  }
+  if (Array.isArray(errors)) {
+    return errors.join(', ');
+  }
+  // Object with field errors
+  return Object.entries(errors as UnknownRecord)
+    .map(([field, msgs]) => {
+      const messageList = Array.isArray(msgs) ? msgs : [msgs];
+      return `${field}: ${messageList.join(', ')}`;
+    })
+    .join('; ');
+}
+
+const HTTP_STATUS_MESSAGES: Record<number, string> = {
+  400: 'Invalid request. Please check your input.',
+  401: 'Authentication required. Please log in.',
+  403: 'Permission denied.',
+  404: 'Resource not found.',
+  413: 'File too large.',
+  429: 'Too many requests. Please try again later.',
+  500: 'Server error. Please try again later.',
+  503: 'Service unavailable. Please try again later.',
+};
+
+export function extractErrorMessage(error: unknown): string {
+  if (!isRecord(error)) {
+    return 'An unexpected error occurred';
+  }
+
+  const body = isRecord(error.error) ? error.error : undefined;
+
   // Handle standardized error response
-  if (error?.error?.message) {
-    return error.error.message;
+  if (body?.message) {
+    return body.message as string;
   }
 
   // Handle validation errors object
-  if (error?.error?.errors) {
-    const errors = error.error.errors;
-    if (typeof errors === 'string') {
-      return errors;
-    }
-    if (Array.isArray(errors)) {
-      return errors.join(', ');
-    }
-    // Object with field errors
-    const messages = Object.entries(errors)
-      .map(([field, msgs]) => {
-        const messageList = Array.isArray(msgs) ? msgs : [msgs];
-        return `${field}: ${messageList.join(', ')}`;
-      });
-    return messages.join('; ');
+  if (body?.errors) {
+    return formatValidationErrors(body.errors);
   }
 
   // Handle DRF default error format
-  if (error?.error?.detail) {
-    return error.error.detail;
+  if (body?.detail) {
+    return body.detail as string;
   }
 
   // Handle non_field_errors
-  if (error?.error?.non_field_errors) {
-    return Array.isArray(error.error.non_field_errors)
-      ? error.error.non_field_errors.join(', ')
-      : error.error.non_field_errors;
+  if (body?.non_field_errors) {
+    return Array.isArray(body.non_field_errors)
+      ? body.non_field_errors.join(', ')
+      : (body.non_field_errors as string);
   }
 
   // Handle plain error message
-  if (error?.message) {
-    return error.message;
+  if (error.message) {
+    return error.message as string;
   }
 
   // Handle HTTP status messages
-  if (error?.status) {
-    switch (error.status) {
-      case 400: return 'Invalid request. Please check your input.';
-      case 401: return 'Authentication required. Please log in.';
-      case 403: return 'Permission denied.';
-      case 404: return 'Resource not found.';
-      case 413: return 'File too large.';
-      case 429: return 'Too many requests. Please try again later.';
-      case 500: return 'Server error. Please try again later.';
-      case 503: return 'Service unavailable. Please try again later.';
-      default: return `Request failed with status ${error.status}`;
-    }
+  if (error.status) {
+    const status = error.status as number;
+    return HTTP_STATUS_MESSAGES[status] || `Request failed with status ${status}`;
   }
 
   return 'An unexpected error occurred';
@@ -339,13 +430,13 @@ export function extractErrorMessage(error: any): string {
  * @param response - Raw response from the API
  * @returns true if response indicates success
  */
-export function isSuccessResponse(response: any): boolean {
+export function isSuccessResponse(response: unknown): boolean {
   if (response === null || response === undefined) {
     return false;
   }
 
   // Standardized response
-  if (typeof response === 'object' && 'success' in response) {
+  if (isRecord(response) && 'success' in response) {
     return response.success === true;
   }
 
@@ -359,8 +450,8 @@ export function isSuccessResponse(response: any): boolean {
  * @param response - Raw response from the API
  * @returns Message string or default
  */
-export function getResponseMessage(response: any, defaultMessage: string = ''): string {
-  if (response?.message) {
+export function getResponseMessage(response: unknown, defaultMessage: string = ''): string {
+  if (isRecord(response) && typeof response.message === 'string') {
     return response.message;
   }
   return defaultMessage;

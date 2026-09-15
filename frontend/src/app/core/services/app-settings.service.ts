@@ -15,7 +15,7 @@ export interface AppSettings {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AppSettingsService {
   private settingsSubject = new BehaviorSubject<AppSettings>({
@@ -25,7 +25,7 @@ export class AppSettingsService {
     default_currency: 'USD',
     enable_email_notifications: true,
     session_timeout_minutes: 480,
-    max_file_upload_size: 10485760
+    max_file_upload_size: 10485760,
   });
 
   public settings$ = this.settingsSubject.asObservable();
@@ -36,9 +36,7 @@ export class AppSettingsService {
     this.loadPublicSettings();
 
     // Load full settings when user authenticates
-    this.authService.currentUser$.pipe(
-      filter(user => user !== null)
-    ).subscribe(() => {
+    this.authService.currentUser$.pipe(filter(user => user !== null)).subscribe(() => {
       this.loadSettings();
     });
   }
@@ -48,12 +46,12 @@ export class AppSettingsService {
    */
   private loadPublicSettings(): void {
     this.settingsService.getPublicSettings().subscribe({
-      next: (response) => {
+      next: response => {
         this.processSettings(response);
       },
-      error: (err) => {
+      error: err => {
         console.error('Error loading public settings:', err);
-      }
+      },
     });
   }
 
@@ -67,20 +65,22 @@ export class AppSettingsService {
     }
 
     this.settingsService.getAllSettings().subscribe({
-      next: (response) => {
+      next: response => {
         this.processSettings(response);
       },
-      error: (err) => {
+      error: err => {
         console.error('Error loading app settings:', err);
-      }
+      },
     });
   }
 
   /**
    * Process settings response and update the BehaviorSubject
    */
-  private processSettings(response: ApplicationSetting[]): void {
-    const settingsData = Array.isArray(response) ? response : (response as any).results || [];
+  private processSettings(
+    response: ApplicationSetting[] | { results: ApplicationSetting[] }
+  ): void {
+    const settingsData = Array.isArray(response) ? response : response.results || [];
 
     if (Array.isArray(settingsData)) {
       const currentSettings = this.settingsSubject.value;
@@ -108,7 +108,7 @@ export class AppSettingsService {
             }
           }
 
-          (acc as any)[setting.setting_key] = typedValue;
+          (acc as unknown as Record<string, SettingValue>)[setting.setting_key] = typedValue;
         }
         return acc;
       }, {} as AppSettings);

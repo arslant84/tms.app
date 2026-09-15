@@ -24,14 +24,14 @@ export type GuestGender = 'Male' | 'Female';
  * Booking status lifecycle
  */
 export type BookingStatus =
-  | 'Draft'           // Initial creation
-  | 'Pending'         // Awaiting approval
-  | 'Confirmed'       // Approved and room assigned
-  | 'Checked-in'      // Guest checked in
-  | 'Checked-out'     // Guest checked out
-  | 'Cancelled'       // Booking cancelled
-  | 'Rejected'        // Request rejected
-  | 'Blocked';        // Room blocked for maintenance
+  | 'Draft' // Initial creation
+  | 'Pending' // Awaiting approval
+  | 'Confirmed' // Approved and room assigned
+  | 'Checked-in' // Guest checked in
+  | 'Checked-out' // Guest checked out
+  | 'Cancelled' // Booking cancelled
+  | 'Rejected' // Request rejected
+  | 'Blocked'; // Room blocked for maintenance
 
 /**
  * Room types available (physical room bed configuration, managed via the
@@ -104,8 +104,8 @@ export interface DailyBooking {
   trfId?: number;
   status: BookingStatus;
   notes?: string;
-  checkInTime?: string;    // HH:MM format
-  checkOutTime?: string;   // HH:MM format
+  checkInTime?: string; // HH:MM format
+  checkOutTime?: string; // HH:MM format
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -149,7 +149,7 @@ export interface AccommodationRequestDetails {
   id: string | number;
   requestNumber?: string;
   trfId?: string | number;
-  trfRequestNumber?: string;  // TSR request number like "TSR-20251102-2327-TURKM-8M6B"
+  trfRequestNumber?: string; // TSR request number like "TSR-20251102-2327-TURKM-8M6B"
 
   // Requestor Information
   requestorName: string;
@@ -177,8 +177,8 @@ export interface AccommodationRequestDetails {
   assignedStaffHouseName?: string;
 
   // Flight Details
-  flightArrivalTime?: string;      // HH:MM format
-  flightDepartureTime?: string;    // HH:MM format
+  flightArrivalTime?: string; // HH:MM format
+  flightDepartureTime?: string; // HH:MM format
 
   // Additional Information
   specialRequests?: string;
@@ -287,7 +287,32 @@ export interface AccommodationRequestBackend {
   trf?: number;
   trf_request_number?: string;
   requestor_gender?: string;
-  additional_data?: any;
+  additional_data?: AccommodationAdditionalData;
+}
+
+/**
+ * Free-form bag the backend stores alongside the core request fields -
+ * some values here (dates, room type, etc.) mirror direct fields on
+ * AccommodationRequestBackend and are used as a fallback when those are
+ * absent; others (rejection, approval_workflow) exist only here.
+ */
+export interface AccommodationAdditionalData {
+  rejection?: {
+    rejected_by?: string;
+    rejected_at?: Date | string;
+    reason?: string;
+  };
+  approval_workflow?: ApprovalStep[];
+  requested_check_in_date?: string;
+  requested_check_out_date?: string;
+  requested_room_type?: string;
+  requestor_gender?: string;
+  location?: string;
+  flight_arrival_time?: string;
+  flight_departure_time?: string;
+  special_requests?: string;
+  travel_details?: TravelDetails;
+  number_of_nights?: number;
 }
 
 // ============================================================================
@@ -305,7 +330,7 @@ export function staffHouseToFrontend(backend: StaffHouseBackend): StaffHouse {
     address: backend.address,
     description: backend.description,
     createdAt: backend.created_at,
-    updatedAt: backend.updated_at
+    updatedAt: backend.updated_at,
   };
 }
 
@@ -322,7 +347,7 @@ export function roomToFrontend(backend: RoomBackend): Room {
     capacity: backend.capacity,
     status: (backend.status || 'Available') as RoomStatus,
     createdAt: backend.created_at,
-    updatedAt: backend.updated_at
+    updatedAt: backend.updated_at,
   };
 }
 
@@ -345,7 +370,26 @@ export function dailyBookingToFrontend(backend: DailyBookingBackend): DailyBooki
     checkInTime: backend.check_in_time,
     checkOutTime: backend.check_out_time,
     createdAt: backend.created_at,
-    updatedAt: backend.updated_at
+    updatedAt: backend.updated_at,
+  };
+}
+
+/** First truthy value among the given candidates, or undefined if none are. */
+function firstTruthy<T>(...values: (T | undefined)[]): T | undefined {
+  return values.find(v => !!v);
+}
+
+function extractRejectionDetails(
+  backend: AccommodationRequestBackend
+): RejectionDetails | undefined {
+  const rejection = backend.additional_data?.rejection;
+  if (!rejection) {
+    return undefined;
+  }
+  return {
+    rejectedBy: rejection.rejected_by,
+    rejectedAt: rejection.rejected_at,
+    reason: rejection.reason,
   };
 }
 
@@ -359,41 +403,24 @@ export function accommodationToFrontend(
   const dailyBookings = backend.bookings?.map(dailyBookingToFrontend) || [];
 
   // Extract rejection details from additional_data if present
-  const rejectionDetails: RejectionDetails | undefined = backend.additional_data?.rejection
-    ? {
-        rejectedBy: backend.additional_data.rejection.rejected_by,
-        rejectedAt: backend.additional_data.rejection.rejected_at,
-        reason: backend.additional_data.rejection.reason
-      }
-    : undefined;
+  const rejectionDetails = extractRejectionDetails(backend);
 
   // Extract approval workflow from additional_data if present
   const approvalWorkflow: ApprovalStep[] | undefined = backend.additional_data?.approval_workflow;
 
-  // Extract date fields from additional_data (primary source) or direct fields (fallback)
-  const checkInDate = backend.additional_data?.requested_check_in_date ||
-                      backend.requested_check_in_date ||
-                      '';
-  const checkOutDate = backend.additional_data?.requested_check_out_date ||
-                       backend.requested_check_out_date ||
-                       '';
-  const roomType = backend.additional_data?.requested_room_type ||
-                   backend.requested_room_type;
-  const gender = backend.additional_data?.requestor_gender ||
-                 backend.requestor_gender ||
-                 'Male';
-  const location = backend.additional_data?.location ||
-                   backend.location ||
-                   'Ashgabat';
-  const flightArrival = backend.additional_data?.flight_arrival_time ||
-                        backend.flight_arrival_time ||
-                        '';
-  const flightDeparture = backend.additional_data?.flight_departure_time ||
-                          backend.flight_departure_time ||
-                          '';
-  const requests = backend.additional_data?.special_requests ||
-                   backend.special_requests ||
-                   '';
+  // Extract date/detail fields from additional_data (primary source) or direct fields (fallback)
+  const ad = backend.additional_data;
+  const checkInDate =
+    firstTruthy(ad?.requested_check_in_date, backend.requested_check_in_date) || '';
+  const checkOutDate =
+    firstTruthy(ad?.requested_check_out_date, backend.requested_check_out_date) || '';
+  const roomType = firstTruthy(ad?.requested_room_type, backend.requested_room_type);
+  const gender = firstTruthy(ad?.requestor_gender, backend.requestor_gender) || 'Male';
+  const location = firstTruthy(ad?.location, backend.location) || 'Ashgabat';
+  const flightArrival = firstTruthy(ad?.flight_arrival_time, backend.flight_arrival_time) || '';
+  const flightDeparture =
+    firstTruthy(ad?.flight_departure_time, backend.flight_departure_time) || '';
+  const requests = firstTruthy(ad?.special_requests, backend.special_requests) || '';
 
   return {
     id: backend.id,
@@ -429,7 +456,7 @@ export function accommodationToFrontend(
     dailyBookings,
     rejectionDetails,
     approvalWorkflow,
-    travelDetails: backend.additional_data?.travel_details
+    travelDetails: backend.additional_data?.travel_details,
   };
 }
 
@@ -440,15 +467,17 @@ export function accommodationToBackend(
   frontend: AccommodationRequestDetails
 ): Partial<AccommodationRequestBackend> {
   // Build additional_data object with ALL accommodation details
-  const additionalData: any = {
+  const additionalData: AccommodationAdditionalData = {
     // Location and room details
     location: frontend.location,
-    requested_check_in_date: typeof frontend.requestedCheckInDate === 'string'
-      ? frontend.requestedCheckInDate
-      : frontend.requestedCheckInDate?.toISOString().split('T')[0],
-    requested_check_out_date: typeof frontend.requestedCheckOutDate === 'string'
-      ? frontend.requestedCheckOutDate
-      : frontend.requestedCheckOutDate?.toISOString().split('T')[0],
+    requested_check_in_date:
+      typeof frontend.requestedCheckInDate === 'string'
+        ? frontend.requestedCheckInDate
+        : frontend.requestedCheckInDate?.toISOString().split('T')[0],
+    requested_check_out_date:
+      typeof frontend.requestedCheckOutDate === 'string'
+        ? frontend.requestedCheckOutDate
+        : frontend.requestedCheckOutDate?.toISOString().split('T')[0],
     requested_room_type: frontend.requestedRoomType,
 
     // Requestor details
@@ -459,7 +488,7 @@ export function accommodationToBackend(
     flight_departure_time: frontend.flightDepartureTime,
 
     // Special requests
-    special_requests: frontend.specialRequests
+    special_requests: frontend.specialRequests,
   };
 
   // Add rejection details if present
@@ -467,7 +496,7 @@ export function accommodationToBackend(
     additionalData.rejection = {
       rejected_by: frontend.rejectionDetails.rejectedBy,
       rejected_at: frontend.rejectionDetails.rejectedAt,
-      reason: frontend.rejectionDetails.reason
+      reason: frontend.rejectionDetails.reason,
     };
   }
 
@@ -482,8 +511,14 @@ export function accommodationToBackend(
   }
 
   // Add number of guests if present
-  const checkInDate = typeof frontend.requestedCheckInDate === 'string' ? frontend.requestedCheckInDate : frontend.requestedCheckInDate?.toISOString().split('T')[0];
-  const checkOutDate = typeof frontend.requestedCheckOutDate === 'string' ? frontend.requestedCheckOutDate : frontend.requestedCheckOutDate?.toISOString().split('T')[0];
+  const checkInDate =
+    typeof frontend.requestedCheckInDate === 'string'
+      ? frontend.requestedCheckInDate
+      : frontend.requestedCheckInDate?.toISOString().split('T')[0];
+  const checkOutDate =
+    typeof frontend.requestedCheckOutDate === 'string'
+      ? frontend.requestedCheckOutDate
+      : frontend.requestedCheckOutDate?.toISOString().split('T')[0];
 
   if (checkInDate && checkOutDate) {
     // Calculate number of nights
@@ -506,8 +541,13 @@ export function accommodationToBackend(
     assigned_staff_house: frontend.assignedStaffHouseId,
     notes: frontend.notes,
     additional_comments: frontend.additionalComments,
-    trf: typeof frontend.trfId === 'number' ? frontend.trfId : (frontend.trfId ? parseInt(frontend.trfId as string) : undefined),
-    additional_data: additionalData
+    trf:
+      typeof frontend.trfId === 'number'
+        ? frontend.trfId
+        : frontend.trfId
+          ? parseInt(frontend.trfId as string)
+          : undefined,
+    additional_data: additionalData,
   };
 }
 
@@ -540,14 +580,14 @@ export function calculateNights(checkIn: Date | string, checkOut: Date | string)
  */
 export function getStatusBadgeClass(status: BookingStatus): string {
   const statusMap: Record<BookingStatus, string> = {
-    'Draft': 'badge-secondary',
-    'Pending': 'badge-warning',
-    'Confirmed': 'badge-success',
+    Draft: 'badge-secondary',
+    Pending: 'badge-warning',
+    Confirmed: 'badge-success',
     'Checked-in': 'badge-info',
     'Checked-out': 'badge-success',
-    'Cancelled': 'badge-danger',
-    'Rejected': 'badge-danger',
-    'Blocked': 'badge-danger'
+    Cancelled: 'badge-danger',
+    Rejected: 'badge-danger',
+    Blocked: 'badge-danger',
   };
 
   return statusMap[status] || 'badge-secondary';
@@ -568,10 +608,12 @@ export function isEditable(status: BookingStatus): boolean {
 
   // Allow editing for pending statuses that haven't been approved yet
   // (status contains 'Pending' but not 'Approved', 'Completed', or 'Assigned')
-  if (status.includes('Pending') &&
-      !status.includes('Approved') &&
-      !status.includes('Completed') &&
-      !status.includes('Assigned')) {
+  if (
+    status.includes('Pending') &&
+    !status.includes('Approved') &&
+    !status.includes('Completed') &&
+    !status.includes('Assigned')
+  ) {
     return true;
   }
 

@@ -84,7 +84,7 @@ export interface DepartmentalReportsResponse {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ReportsService {
   private apiUrl = `${environment.apiUrl}/reports`;
@@ -95,13 +95,15 @@ export class ReportsService {
    * Get admin analytics/reports data
    * @param dateRange - week, month, quarter, or year
    */
-  getAdminReports(dateRange: 'week' | 'month' | 'quarter' | 'year' = 'month'): Observable<AdminReportsResponse> {
-    return this.http.get<any>(`${this.apiUrl}/analytics/`, {
-      params: { date_range: dateRange },
-      withCredentials: true
-    }).pipe(
-      map(response => response.data)
-    );
+  getAdminReports(
+    dateRange: 'week' | 'month' | 'quarter' | 'year' = 'month'
+  ): Observable<AdminReportsResponse> {
+    return this.http
+      .get<{ data: AdminReportsResponse }>(`${this.apiUrl}/analytics/`, {
+        params: { date_range: dateRange },
+        withCredentials: true,
+      })
+      .pipe(map(response => response.data));
   }
 
   /**
@@ -120,12 +122,12 @@ export class ReportsService {
     if (department) {
       params['department'] = department;
     }
-    return this.http.get<any>(`${this.apiUrl}/departmental/`, {
-      params,
-      withCredentials: true
-    }).pipe(
-      map(response => response.data)
-    );
+    return this.http
+      .get<{ data: DepartmentalReportsResponse }>(`${this.apiUrl}/departmental/`, {
+        params,
+        withCredentials: true,
+      })
+      .pipe(map(response => response.data));
   }
 
   /**
@@ -133,15 +135,18 @@ export class ReportsService {
    * @param format - pdf, excel, or csv
    * @param dateRange - week, month, quarter, or year
    */
-  exportReports(format: 'pdf' | 'excel' | 'csv', dateRange: 'week' | 'month' | 'quarter' | 'year' = 'month'): Observable<Blob> {
+  exportReports(
+    format: 'pdf' | 'excel' | 'csv',
+    dateRange: 'week' | 'month' | 'quarter' | 'year' = 'month'
+  ): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/export/`, {
       params: {
         report_type: 'admin',
-        export_format: format,  // Use 'export_format' to avoid conflict with DRF's format negotiation
-        date_range: dateRange
+        export_format: format, // Use 'export_format' to avoid conflict with DRF's format negotiation
+        date_range: dateRange,
       },
       responseType: 'blob',
-      withCredentials: true
+      withCredentials: true,
     });
   }
 }

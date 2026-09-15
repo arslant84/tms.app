@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnInit, OnChanges, SimpleChanges, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  OnChanges,
+  SimpleChanges,
+  Output,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormUtilsService } from '../../../../core/utils/form-utils.service';
@@ -19,7 +27,7 @@ export interface RequestorInformation {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './requestor-information.component.html',
-  styleUrls: ['./requestor-information.component.scss']
+  styleUrls: ['./requestor-information.component.scss'],
 })
 export class RequestorInformationComponent implements OnInit, OnChanges {
   @Input() initialData: Partial<RequestorInformation> = {};
@@ -52,7 +60,7 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
       department: this.initialData.department,
       position: this.initialData.position,
       email: this.initialData.email,
-      phone: this.initialData.contactNo
+      phone: this.initialData.contactNo,
     });
 
     // Use merged data for form initialization
@@ -63,7 +71,7 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
       position: [formDefaults.position],
       costCenter: [this.initialData.costCenter || '', Validators.required],
       contactNo: [formDefaults.phone, Validators.required],
-      email: [formDefaults.email, [Validators.required, Validators.email]]
+      email: [formDefaults.email, [Validators.required, Validators.email]],
     });
   }
 
@@ -79,12 +87,12 @@ export class RequestorInformationComponent implements OnInit, OnChanges {
         position: this.initialData.position || '',
         costCenter: this.initialData.costCenter || '',
         contactNo: this.initialData.contactNo || '',
-        email: this.initialData.email || ''
+        email: this.initialData.email || '',
       });
     }
   }
 
-  private extractDepartmentName(department: any): string {
+  private extractDepartmentName(department: string | { name?: string } | null | undefined): string {
     if (!department) {
       return '';
     }

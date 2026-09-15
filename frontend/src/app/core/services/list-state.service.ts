@@ -85,12 +85,13 @@ export class ListStateService {
   readonly error: Observable<string> = this.error$.asObservable();
   readonly searchTerm: Observable<string> = this.searchTerm$.asObservable();
   readonly search$: Observable<string>;
-  readonly filters: Observable<Record<string, string | number | boolean | undefined>> = this.filters$.asObservable();
+  readonly filters: Observable<Record<string, string | number | boolean | undefined>> =
+    this.filters$.asObservable();
 
   constructor(config: ListStateConfig = {}) {
     this.config = {
       pageSize: config.pageSize || 10,
-      searchDebounceMs: config.searchDebounceMs || 500
+      searchDebounceMs: config.searchDebounceMs || 500,
     };
 
     // Setup debounced search
@@ -181,10 +182,12 @@ export class ListStateService {
    */
   hasActiveFilters(): boolean {
     const filters = this.filters$.value;
-    return Object.keys(filters).some(key => {
-      const value = filters[key];
-      return value !== '' && value !== null && value !== undefined;
-    }) || this.searchTerm$.value !== '';
+    return (
+      Object.keys(filters).some(key => {
+        const value = filters[key];
+        return value !== '' && value !== null && value !== undefined;
+      }) || this.searchTerm$.value !== ''
+    );
   }
 
   // ========== PAGINATION METHODS ==========
@@ -278,7 +281,7 @@ export class ListStateService {
       // Show subset with current page in middle
       const half = Math.floor(maxPagesToShow / 2);
       let start = Math.max(1, currentPage - half);
-      let end = Math.min(totalPages, start + maxPagesToShow - 1);
+      const end = Math.min(totalPages, start + maxPagesToShow - 1);
 
       // Adjust if we're at the end
       if (end - start < maxPagesToShow - 1) {
@@ -358,7 +361,7 @@ export class ListStateService {
       ...(search && { search }),
       page: this.currentPage$.value,
       page_size: this.config.pageSize,
-      ...filters
+      ...filters,
     };
   }
 

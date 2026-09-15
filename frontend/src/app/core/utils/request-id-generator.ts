@@ -142,7 +142,7 @@ export function parseRequestId(requestId: string): {
       timestamp: `${dateStr}-${timeStr}`,
       context,
       uniqueId,
-      date
+      date,
     };
   } catch (error) {
     return null;
@@ -155,10 +155,13 @@ export function parseRequestId(requestId: string): {
  * @param itinerary Array of itinerary segments
  * @returns Context string (first 3 characters of destination)
  */
-export function extractContextFromItinerary(itinerary: any[]): string {
+export function extractContextFromItinerary(
+  itinerary: Array<{ to_location?: string; to?: string; destination?: string }>
+): string {
   if (itinerary && itinerary.length > 0) {
     const firstSegment = itinerary[0];
-    const destination = firstSegment.to_location || firstSegment.to || firstSegment.destination || '';
+    const destination =
+      firstSegment.to_location || firstSegment.to || firstSegment.destination || '';
     return destination.substring(0, 3).toUpperCase() || 'TRF';
   }
   return 'TRF';

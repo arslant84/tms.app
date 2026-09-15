@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AuthService } from '../services/auth.service';
+import { Department, DepartmentListItem } from '../models/user.model';
 
 /**
  * User form data interface for auto-population
@@ -18,10 +19,9 @@ export interface UserFormDefaults {
  * Shared utility service for auto-populating user details in forms
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserFormHelperService {
-
   constructor(private authService: AuthService) {}
 
   /**
@@ -39,14 +39,16 @@ export class UserFormHelperService {
       position: position || '',
       email: currentUser?.email || '',
       phone: currentUser?.phone || '',
-      gender: currentUser?.gender || ''
+      gender: currentUser?.gender || '',
     };
   }
 
   /**
    * Extract department name from department field (handles both string and object types)
    */
-  private extractDepartmentName(department: any): string {
+  private extractDepartmentName(
+    department: Department | DepartmentListItem | string | null | undefined
+  ): string {
     if (!department) {
       return '';
     }
@@ -132,7 +134,7 @@ export class UserFormHelperService {
       position: initialData.position || userDefaults.position,
       email: initialData.email || userDefaults.email,
       phone: initialData.phone || userDefaults.phone,
-      gender: initialData.gender || userDefaults.gender
+      gender: initialData.gender || userDefaults.gender,
     };
   }
 }

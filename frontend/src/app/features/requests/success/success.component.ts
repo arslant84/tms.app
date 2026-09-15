@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 
@@ -8,11 +8,11 @@ import { Router, RouterModule } from '@angular/router';
   imports: [CommonModule, RouterModule],
   templateUrl: './success.component.html',
   styleUrl: './success.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SuccessComponent implements OnInit {
+export class SuccessComponent {
   successMessage: string = 'Your request has been submitted successfully!';
-  
+
   constructor(private router: Router) {
     // Get the success message from router state if available
     const navigation = this.router.getCurrentNavigation();
@@ -23,13 +23,11 @@ export class SuccessComponent implements OnInit {
       }
     }
   }
-  
-  ngOnInit(): void {}
-  
+
   goToRequests(): void {
     this.router.navigate(['/requests']);
   }
-  
+
   createNewRequest(): void {
     this.router.navigate(['/requests']);
   }
