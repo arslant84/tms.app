@@ -1,89 +1,16 @@
 // Visa Detail Component - Using Unified Design System
+//
+// Container/page-header/header-left/btn-back/page-title/header-actions/
+// status-bar/text-muted are all now shared via .detail-page-shell in
+// styles/detail-page.scss (btn-back is also separately global in
+// buttons.scss) - only what's genuinely specific to this page stays here.
 @use '../../../../../styles/variables' as vars;
 
-.visa-detail-container {
-  /* Full-width adaptive layout */
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: vars.$spacing-6 vars.$spacing-8;
-  box-sizing: border-box;
-  background-color: vars.$gray-50;
-  min-height: 100vh;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: vars.$spacing-6;
-  flex-wrap: wrap;
-  gap: vars.$spacing-md;
-}
-
-.header-left {
-  display: flex;
-  flex-direction: column;
-  gap: vars.$spacing-2;
-}
-
-.btn-back {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-2;
-  background: transparent;
-  border: none;
-  color: vars.$primary-color;
-  cursor: pointer;
-  padding: vars.$spacing-2 0;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-3;
-  font-size: vars.$font-size-3xl;
-  font-weight: vars.$font-weight-bold;
-  color: vars.$text-primary;
-  margin: 0;
-
-  i {
-    color: vars.$primary-color;
-  }
-}
-
-.header-actions {
-  display: flex;
-  gap: vars.$spacing-2;
-  flex-wrap: wrap;
-}
-
-.status-bar {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-md;
-  margin-bottom: vars.$spacing-6;
-  padding: vars.$spacing-md vars.$spacing-5;
-  background: vars.$white;
-  border-radius: vars.$radius-md;
-  box-shadow: vars.$shadow-sm;
-  flex-wrap: wrap;
-
-  .badge {
-    padding: vars.$badge-padding-y vars.$badge-padding-x;
-    font-size: vars.$badge-font-size;
-    font-weight: vars.$font-weight-medium;
-    border-radius: vars.$radius-base;
-  }
-}
-
-.text-muted {
-  color: vars.$text-secondary;
-  font-size: vars.$font-size-sm;
+.status-bar .badge {
+  padding: vars.$badge-padding-y vars.$badge-padding-x;
+  font-size: vars.$badge-font-size;
+  font-weight: vars.$font-weight-medium;
+  border-radius: vars.$radius-base;
 }
 
 .card {

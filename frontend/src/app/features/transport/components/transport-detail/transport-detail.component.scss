@@ -1,16 +1,10 @@
 // Transport Detail Component - Using Unified Design System
+//
+// Container/page-header/header-left/page-title/header-actions/status-bar/
+// text-muted are all now shared via .detail-page-shell in
+// styles/detail-page.scss - only what's genuinely specific to this page
+// stays here.
 @use '../../../../../styles/variables' as vars;
-
-.transport-detail-container {
-  /* Full-width adaptive layout */
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: vars.$spacing-6 vars.$spacing-8;
-  box-sizing: border-box;
-  background-color: vars.$gray-50;
-  min-height: 100vh;
-}
 
 .loading-state,
 .error-state {
@@ -40,55 +34,6 @@
   }
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: vars.$spacing-6;
-  flex-wrap: wrap;
-  gap: vars.$spacing-md;
-}
-
-.header-left {
-  display: flex;
-  flex-direction: column;
-  gap: vars.$spacing-2;
-}
-
-// .btn-back removed - see global .btn-back in buttons.scss
-
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-3;
-  font-size: vars.$font-size-3xl;
-  font-weight: vars.$font-weight-bold;
-  color: vars.$text-primary;
-  margin: 0;
-
-  i {
-    color: vars.$primary-color;
-  }
-}
-
-.header-actions {
-  display: flex;
-  gap: vars.$spacing-2;
-  flex-wrap: wrap;
-}
-
-.status-bar {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-md;
-  margin-bottom: vars.$spacing-6;
-  padding: vars.$spacing-md vars.$spacing-5;
-  background: vars.$white;
-  border-radius: vars.$radius-md;
-  box-shadow: vars.$shadow-sm;
-  flex-wrap: wrap;
-}
-
 // Colors come from the global "Unified Badge Styles" in styles.scss
 // (same badge-success/warning/danger/info/secondary classes everywhere
 // in the app); this file only adds shape/typography on top.
@@ -97,11 +42,6 @@
   font-size: vars.$badge-font-size;
   font-weight: vars.$font-weight-medium;
   border-radius: vars.$radius-base;
-}
-
-.text-muted {
-  color: vars.$text-secondary;
-  font-size: vars.$font-size-sm;
 }
 
 .detail-card {
@@ -339,18 +279,6 @@
 }
 
 @media (width <= 768px) {
-  .page-header {
-    flex-direction: column;
-  }
-
-  .header-actions {
-    width: 100%;
-
-    .btn {
-      flex: 1;
-    }
-  }
-
   .detail-grid {
     grid-template-columns: 1fr;
   }

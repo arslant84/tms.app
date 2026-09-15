@@ -1,0 +1,90 @@
+@use './variables' as vars;
+
+// ============================================================================
+// SHARED DETAIL PAGE HEADER SHELL
+// Canonical container / page-header / header-left / page-title /
+// header-actions / status-bar shell used by every "single request" detail
+// page (Transport, Visa, TRF detail - Accommodation Detail has enough
+// genuine per-page deltas in this same shell that it was left local rather
+// than forced in, see that component's scss). These were copy-pasted per
+// component with small drift; .btn-back is already global in buttons.scss
+// so no local page should redefine it.
+// Scoped under .detail-page-shell so nothing here can leak onto unrelated
+// pages that also use a plain .card/.badge/.text-muted.
+// ============================================================================
+
+.detail-page-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: vars.$spacing-6 vars.$spacing-8;
+  box-sizing: border-box;
+  background-color: vars.$gray-50;
+  min-height: 100vh;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: vars.$spacing-6;
+    flex-wrap: wrap;
+    gap: vars.$spacing-md;
+  }
+
+  .header-left {
+    display: flex;
+    flex-direction: column;
+    gap: vars.$spacing-2;
+  }
+
+  .page-title {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-3;
+    font-size: vars.$font-size-3xl;
+    font-weight: vars.$font-weight-bold;
+    color: vars.$text-primary;
+    margin: 0;
+
+    i {
+      color: vars.$primary-color;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: vars.$spacing-2;
+    flex-wrap: wrap;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-md;
+    margin-bottom: vars.$spacing-6;
+    padding: vars.$spacing-md vars.$spacing-5;
+    background: vars.$white;
+    border-radius: vars.$radius-md;
+    box-shadow: vars.$shadow-sm;
+    flex-wrap: wrap;
+  }
+
+  .text-muted {
+    color: vars.$text-secondary;
+    font-size: vars.$font-size-sm;
+  }
+
+  @media (width <= 768px) {
+    .page-header {
+      flex-direction: column;
+    }
+
+    .header-actions {
+      width: 100%;
+
+      .btn {
+        flex: 1;
+      }
+    }
+  }
+}

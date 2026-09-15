@@ -9,17 +9,6 @@
   min-height: 100%;
 }
 
-.trf-detail-container {
-  /* Full-width adaptive layout - matching transport-detail */
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: vars.$spacing-6 vars.$spacing-8;
-  box-sizing: border-box;
-  background-color: vars.$gray-50;
-  min-height: 100vh;
-}
-
 // Content wrapper - ensures all cards are properly contained
 .trf-detail-content {
   display: block;
@@ -82,87 +71,16 @@
   }
 }
 
-// Page Header
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: vars.$spacing-6;
-  flex-wrap: wrap;
-  gap: vars.$spacing-md;
-}
-
-.header-left {
-  display: flex;
-  flex-direction: column;
-  gap: vars.$spacing-2;
-}
-
-.btn-back {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-2;
-  background: transparent;
-  border: none;
-  color: vars.$primary-color;
-  cursor: pointer;
-  padding: vars.$spacing-2 0;
-  font-size: vars.$font-size-sm;
-  font-weight: vars.$font-weight-medium;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-
-  i {
-    font-size: vars.$font-size-base;
-  }
-}
-
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-3;
-  font-size: vars.$font-size-3xl;
-  font-weight: vars.$font-weight-bold;
-  color: vars.$text-primary;
-  margin: 0;
-
-  i {
-    color: vars.$primary-color;
-  }
-}
-
-.header-actions {
-  display: flex;
-  gap: vars.$spacing-2;
-  flex-wrap: wrap;
-}
-
-// Status Bar
+// Status Bar - shape/typography shared via .detail-page-shell in
+// styles/detail-page.scss; this page-specific override keeps its own
+// nested .badge sizing.
 .status-bar {
-  display: flex;
-  align-items: center;
-  gap: vars.$spacing-md;
-  margin-bottom: vars.$spacing-6;
-  padding: vars.$spacing-md vars.$spacing-5;
-  background: vars.$white;
-  border-radius: vars.$radius-md;
-  box-shadow: vars.$shadow-sm;
-  flex-wrap: wrap;
-
   .badge {
     padding: vars.$badge-padding-y vars.$badge-padding-x;
     font-size: vars.$badge-font-size;
     font-weight: vars.$font-weight-medium;
     border-radius: vars.$radius-base;
   }
-}
-
-.text-muted {
-  color: vars.$text-secondary;
-  font-size: vars.$font-size-sm;
 }
 
 // Detail Card - Consistent card styling for all sections

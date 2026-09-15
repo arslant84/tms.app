@@ -33,7 +33,9 @@ const MEAL_STATUSES = ['Pending', 'Arranged'] as const;
   standalone: true,
   imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
   templateUrl: './meal-admin.component.html',
-  styleUrl: './meal-admin.component.scss',
+  // No local styleUrl - this page's look comes entirely from the shared
+  // .admin-dashboard-page shell (styles/admin-dashboard.scss) plus global
+  // tables.scss/buttons.scss and Bootstrap.
 })
 export class MealAdminComponent implements OnInit {
   requests: MealQueueRequest[] = [];
