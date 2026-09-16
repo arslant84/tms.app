@@ -17,7 +17,8 @@
     "lint:scss": "stylelint \"src/**/*.scss\"",
     "lint:scss:fix": "stylelint \"src/**/*.scss\" --fix",
     "format": "prettier --write \"src/**/*.{ts,html,scss,css,json}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,html,scss,css,json}\""
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss,css,json}\"",
+    "e2e": "playwright test"
   },
   "lint-staged": {
     "src/**/*.ts": [
@@ -55,6 +56,7 @@
     "@angular-devkit/build-angular": "19.2.27",
     "@angular/cli": "19.2.27",
     "@angular/compiler-cli": "19.2.25",
+    "@playwright/test": "1.63.0",
     "@types/jasmine": "5.1.0",
     "@types/qrcode": "^1.5.6",
     "@typescript-eslint/eslint-plugin": "7.18.0",

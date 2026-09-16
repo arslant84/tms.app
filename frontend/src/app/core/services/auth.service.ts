@@ -79,7 +79,6 @@ export class AuthService {
 
   private runInitializeUserRequest(): void {
     // Create shared observable for initialization
-    console.warn('[AuthService] runInitializeUserRequest: sending GET /api/users/me/');
     this.initializationRequest$ = this.http
       .get<User>(`${this.apiUrl}/api/users/me/?_t=${Date.now()}`, {
         withCredentials: true,
@@ -98,7 +97,6 @@ export class AuthService {
           //              503 maintenance, 504 timeout) — tells us nothing about
           //              session validity, so retry rather than treating as logout.
           // A real 401/403 means the session is genuinely invalid; no point retrying.
-          console.warn('[AuthService] /api/users/me/ error:', error?.status, error?.message);
           const isNetworkError = error?.status === 0 || error?.status >= 500;
 
           if (isNetworkError && this.connectionRetryCount < this.MAX_CONNECTION_RETRIES) {
