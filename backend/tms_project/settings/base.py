@@ -323,6 +323,15 @@ EMAIL_TIMEOUT = 10  # seconds
 # Empty by default so the command is a silent no-op until configured.
 UPTIME_ALERT_EMAIL = config("UPTIME_ALERT_EMAIL", default="")
 
+# Safety gate for the "Reset Staging Data" admin button (accounts/admin.py's
+# AdminActionLogAdmin.reset_staging_data_view) - it irreversibly deletes every
+# TravelRequest/TransportRequest/VisaApplication/AccommodationRequest and all
+# UserNotification/NotificationBatch rows. Defaults to False (button refuses
+# to run) so a fresh deploy - production included - never has this enabled
+# unless the env explicitly opts in. Set ALLOW_DATA_RESET=true only in a
+# staging .env, never in production's.
+ALLOW_DATA_RESET = config("ALLOW_DATA_RESET", default=False, cast=bool)
+
 # Frontend URL for email links
 # This is used to generate absolute URLs in email notifications
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:4200")

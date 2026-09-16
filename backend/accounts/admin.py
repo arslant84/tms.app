@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
+from django.db import transaction
 from django.http import FileResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import path, reverse
@@ -523,10 +524,156 @@ class AdminActionLogAdmin(admin.ModelAdmin):
         # Prevent deletion of audit logs for security
         return False
 
+    # ── Staging Data Reset ────────────────────────────────────────────────
+    # Lets a superuser wipe every submitted request and notification so
+    # testers can start a staging environment from a clean slate. Gated on
+    # settings.ALLOW_DATA_RESET (env: ALLOW_DATA_RESET) - refuses to run
+    # entirely unless that's explicitly set, so this can never fire against
+    # an environment (production included) that didn't opt in.
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "reset-staging-data/",
+                self.admin_site.admin_view(self.reset_staging_data_view),
+                name="accounts_reset_staging_data",
+            ),
+        ]
+        return custom + urls
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["reset_staging_data_url"] = reverse(
+            "admin:accounts_reset_staging_data"
+        )
+        return super().changelist_view(request, extra_context=extra_context)
+
+    @staticmethod
+    def _staging_reset_counts():
+        """Current row counts for everything reset_staging_data_view deletes."""
+        from accommodation.models import AccommodationRequest
+        from notifications.models import NotificationBatch, UserNotification
+        from transport.models import TransportRequest
+        from trf.models import TravelRequest
+        from visa.models import VisaApplication
+        from workflows.models import WorkflowInstance
+
+        return {
+            "Travel requests (TSR)": TravelRequest.objects.count(),
+            "Transport requests": TransportRequest.objects.count(),
+            "Visa applications": VisaApplication.objects.count(),
+            "Accommodation requests": AccommodationRequest.objects.count(),
+            "Workflow instances": WorkflowInstance.objects.count(),
+            "Notifications": UserNotification.objects.count(),
+            "Notification batches": NotificationBatch.objects.count(),
+        }
+
+    @staticmethod
+    @transaction.atomic
+    def _run_staging_reset():
+        """
+        Delete every submitted request and notification.
+
+        Deleting each request queryset (rather than truncating tables)
+        deliberately goes through the ORM so workflows/signals.py's
+        pre_delete handler fires per row and cleans up the matching
+        WorkflowInstance (and its CASCADE-linked step executions/
+        delegations/audit logs) and any UserNotification whose action_url
+        points at that request - the same cleanup a normal single-request
+        delete gets, just for everything at once. The explicit
+        WorkflowInstance/UserNotification/NotificationBatch deletes at the
+        end are belt-and-suspenders for anything that cleanup doesn't catch
+        (e.g. notifications with no action_url match) rather than the
+        primary mechanism.
+        """
+        from accommodation.models import AccommodationRequest
+        from notifications.models import NotificationBatch, UserNotification
+        from transport.models import TransportRequest
+        from trf.models import TravelRequest
+        from visa.models import VisaApplication
+        from workflows.models import WorkflowInstance
+
+        counts = AdminActionLogAdmin._staging_reset_counts()
+
+        TravelRequest.objects.all().delete()
+        TransportRequest.objects.all().delete()
+        VisaApplication.objects.all().delete()
+        AccommodationRequest.objects.all().delete()
+        WorkflowInstance.objects.all().delete()
+        UserNotification.objects.all().delete()
+        NotificationBatch.objects.all().delete()
+
+        return counts
+
+    def reset_staging_data_view(self, request):
+        if not request.user.is_superuser:
+            messages.error(request, "Only superusers can reset staging data.")
+            return HttpResponseRedirect(
+                reverse("admin:accounts_adminactionlog_changelist")
+            )
+
+        if not settings.ALLOW_DATA_RESET:
+            messages.error(
+                request,
+                "Staging data reset is disabled. Set ALLOW_DATA_RESET=true in "
+                "this environment's .env to enable it - never on production.",
+            )
+            return HttpResponseRedirect(
+                reverse("admin:accounts_adminactionlog_changelist")
+            )
+
+        if request.method == "POST":
+            form = StagingResetForm(request.POST)
+            if form.is_valid():
+                counts = self._run_staging_reset()
+                summary = "; ".join(f"{label}: {n}" for label, n in counts.items())
+
+                AdminActionLog.log_action(
+                    user=request.user,
+                    action_type="staging_data_reset",
+                    description=f"Staging data reset - deleted {summary}",
+                    entity_type="StagingReset",
+                    request=request,
+                )
+
+                messages.success(
+                    request, f"Staging data reset complete. Deleted: {summary}."
+                )
+                return HttpResponseRedirect(
+                    reverse("admin:accounts_adminactionlog_changelist")
+                )
+        else:
+            form = StagingResetForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Reset Staging Data",
+            "form": form,
+            "counts": self._staging_reset_counts(),
+            "opts": AdminActionLog._meta,
+        }
+        return render(
+            request, "admin/accounts/reset_staging_data_confirmation.html", context
+        )
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Database Backup & Restore (CTRL-0000001040, 1382)
 # ──────────────────────────────────────────────────────────────────────────────
+
+
+class StagingResetForm(forms.Form):
+    confirm_text = forms.CharField(
+        label='Type "RESET" to confirm',
+        help_text="Case-sensitive. This cannot be undone.",
+    )
+
+    def clean_confirm_text(self):
+        value = self.cleaned_data["confirm_text"]
+        if value != "RESET":
+            raise forms.ValidationError('You must type "RESET" exactly to proceed.')
+        return value
 
 
 class RestoreForm(forms.Form):

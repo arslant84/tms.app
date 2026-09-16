@@ -328,6 +328,7 @@ class AdminActionLog(models.Model):
         ("vehicle_assignment_cancelled", "Vehicle Assignment Cancelled"),
         ("visa_completion_cancelled", "Visa Completion Cancelled"),
         ("entity_deleted", "Request Deleted"),
+        ("staging_data_reset", "Staging Data Reset"),
         ("other", "Other Action"),
     )
 
