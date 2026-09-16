@@ -182,17 +182,6 @@ class NotificationService:
         )
 
         try:
-            # Load DB-backed SMTP overrides (host/port/credentials/from-address
-            # from ApplicationSetting) into live Django settings before doing
-            # anything that reads them below. This used to never be called
-            # anywhere in the codebase, so admin-configured SMTP settings in
-            # the System Settings screen were silently ignored in favor of
-            # the static .env/settings.py values - confirmed live: the DB had
-            # a custom from_email configured that never actually took effect.
-            from core.email_settings_loader import ensure_email_settings_loaded
-
-            ensure_email_settings_loaded()
-
             # Check if email notifications are globally enabled
             from accounts.models import ApplicationSetting
 
