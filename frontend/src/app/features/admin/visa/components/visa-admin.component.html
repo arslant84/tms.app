@@ -90,13 +90,23 @@
           />
         </div>
         <div class="col-md-2">
-          <select class="form-select" [(ngModel)]="filterCriteria.status" (change)="applyFilters()">
+          <label for="visaAdminStatusFilter" class="visually-hidden">Filter by status</label>
+          <select
+            id="visaAdminStatusFilter"
+            class="form-select"
+            aria-label="Filter by status"
+            [(ngModel)]="filterCriteria.status"
+            (change)="applyFilters()"
+          >
             <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
           </select>
         </div>
         <div class="col-md-2">
+          <label for="visaAdminTypeFilter" class="visually-hidden">Filter by visa type</label>
           <select
+            id="visaAdminTypeFilter"
             class="form-select"
+            aria-label="Filter by visa type"
             [(ngModel)]="filterCriteria.visaType"
             (change)="applyFilters()"
           >
@@ -104,8 +114,13 @@
           </select>
         </div>
         <div class="col-md-2">
+          <label for="visaAdminDestinationFilter" class="visually-hidden"
+            >Filter by destination</label
+          >
           <select
+            id="visaAdminDestinationFilter"
             class="form-select"
+            aria-label="Filter by destination"
             [(ngModel)]="filterCriteria.destination"
             (change)="applyClientSideFilters()"
           >

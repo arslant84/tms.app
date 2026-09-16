@@ -60,7 +60,14 @@
           />
         </div>
         <div class="col-md-4">
-          <select class="form-select" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
+          <label for="pendingApprovalsStatusFilter" class="visually-hidden">Filter by status</label>
+          <select
+            id="pendingApprovalsStatusFilter"
+            class="form-select"
+            aria-label="Filter by status"
+            [(ngModel)]="statusFilter"
+            (change)="onStatusFilterChange()"
+          >
             <option value="">All Statuses</option>
             <option *ngFor="let status of statusOptions" [value]="status">
               {{ status }}

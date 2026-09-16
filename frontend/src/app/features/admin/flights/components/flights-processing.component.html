@@ -113,8 +113,13 @@
                   (ngModelChange)="applyFilters()"
                 />
               </div>
+              <label for="flightsProcessingStatusFilter" class="visually-hidden"
+                >Filter by status</label
+              >
               <select
+                id="flightsProcessingStatusFilter"
                 class="filter-select"
+                aria-label="Filter by status"
                 [(ngModel)]="statusFilter"
                 (ngModelChange)="applyFilters()"
               >

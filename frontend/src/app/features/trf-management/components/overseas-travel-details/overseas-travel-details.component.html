@@ -145,8 +145,8 @@
             </div>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Currency / Валюта</label>
-            <select formControlName="currency" class="form-select">
+            <label class="form-label" for="overseasCurrency">Currency / Валюта</label>
+            <select id="overseasCurrency" formControlName="currency" class="form-select">
               <option value="USD">USD - US Dollar</option>
               <option value="EUR">EUR - Euro</option>
               <option value="GBP">GBP - British Pound</option>
@@ -177,7 +177,8 @@
         [initialConsent]="initialData.advanceConsentAccepted || false"
         (itemsChange)="onAdvanceAmountsChange($event)"
         (validityChange)="onAdvanceValidityChange($event)"
-        (consentChange)="onAdvanceConsentChange($event)">
+        (consentChange)="onAdvanceConsentChange($event)"
+      >
       </app-advance-amount-editor>
       <p class="mt-2 text-muted small">
         LH: Lodging/Hotel. MA: Meal Allowance. OA: Other Allowances. TR: Transportation. OE: Other

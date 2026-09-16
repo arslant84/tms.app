@@ -65,8 +65,8 @@
             <input type="text" class="form-control" formControlName="contact_telephone" />
           </div>
           <div class="col-md-6 mb-3">
-            <label class="form-label">Marital Status</label>
-            <select class="form-select" formControlName="marital_status">
+            <label class="form-label" for="visaFormMaritalStatus">Marital Status</label>
+            <select id="visaFormMaritalStatus" class="form-select" formControlName="marital_status">
               <option value="">Select Status</option>
               <option *ngFor="let status of maritalStatuses" [value]="status">{{ status }}</option>
             </select>
@@ -155,8 +155,15 @@
     <app-form-section-card icon="bi-file-earmark-text" title="Section B: Type of Request">
       <div class="row">
         <div class="col-md-6 mb-3">
-          <label class="form-label">Request Type <span class="text-danger">*</span></label>
-          <select class="form-select" formControlName="request_type" required>
+          <label class="form-label" for="visaFormRequestType"
+            >Request Type <span class="text-danger">*</span></label
+          >
+          <select
+            id="visaFormRequestType"
+            class="form-select"
+            formControlName="request_type"
+            required
+          >
             <option value="">Select Request Type</option>
             <option value="LOI">LOI (Letter of Invitation)</option>
             <option value="VISA">VISA</option>
@@ -177,15 +184,19 @@
           />
         </div>
         <div class="col-md-4 mb-3">
-          <label class="form-label">Visa Entry Type</label>
-          <select class="form-select" formControlName="visa_entry_type">
+          <label class="form-label" for="visaFormEntryType">Visa Entry Type</label>
+          <select id="visaFormEntryType" class="form-select" formControlName="visa_entry_type">
             <option value="">Select Entry Type</option>
             <option *ngFor="let type of entryTypes" [value]="type">{{ type }}</option>
           </select>
         </div>
         <div class="col-md-4 mb-3">
-          <label class="form-label">Work Visit Category</label>
-          <select class="form-select" formControlName="work_visit_category">
+          <label class="form-label" for="visaFormWorkVisitCategory">Work Visit Category</label>
+          <select
+            id="visaFormWorkVisitCategory"
+            class="form-select"
+            formControlName="work_visit_category"
+          >
             <option value="">Select Category</option>
             <option value="Technical">Technical</option>
             <option value="Managerial">Managerial</option>
@@ -221,8 +232,10 @@
           </div>
         </div>
         <div class="col-md-4 mb-3">
-          <label class="form-label">Visa Type <span class="text-danger">*</span></label>
-          <select class="form-select" formControlName="visa_type" required>
+          <label class="form-label" for="visaFormVisaType"
+            >Visa Type <span class="text-danger">*</span></label
+          >
+          <select id="visaFormVisaType" class="form-select" formControlName="visa_type" required>
             <option value="">Select Visa Type</option>
             <option *ngFor="let type of visaTypes" [value]="type">{{ type }}</option>
           </select>

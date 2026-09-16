@@ -3,84 +3,136 @@
     <div
       *ngFor="let segment of segmentsArray.controls; let i = index"
       [formGroupName]="i"
-      class="itinerary-segment position-relative">
-
+      class="itinerary-segment position-relative"
+    >
       <button
         *ngIf="canRemove(i)"
         type="button"
         (click)="removeSegment(i)"
-        class="position-absolute top-0 end-0 m-2 btn btn-sm btn-outline-danger">
+        class="position-absolute top-0 end-0 m-2 btn btn-sm btn-outline-danger"
+      >
         <i class="bi bi-trash"></i>
       </button>
 
       <div class="itinerary-grid">
         <ng-container *ngFor="let field of fields">
-          <div *ngIf="!field.hidden" class="form-group" [style.grid-column]="'span ' + (field.colSpan || 1)">
-            <label class="form-label">{{ field.label }}<span *ngIf="field.required" class="text-danger"> *</span></label>
+          <div
+            *ngIf="!field.hidden"
+            class="form-group"
+            [style.grid-column]="'span ' + (field.colSpan || 1)"
+          >
+            <label class="form-label" [attr.for]="'segment-' + i + '-' + field.key"
+              >{{ field.label }}<span *ngIf="field.required" class="text-danger"> *</span></label
+            >
 
             <input
               *ngIf="field.type === 'readonly-text'"
               type="text"
               class="form-control"
+              [attr.id]="'segment-' + i + '-' + field.key"
               [formControlName]="field.key"
-              readonly>
+              readonly
+            />
 
             <input
               *ngIf="field.type === 'date'"
               type="date"
               class="form-control"
+              [attr.id]="'segment-' + i + '-' + field.key"
               [formControlName]="field.key"
               (change)="onPrimaryDateChange(i, field, $event)"
-              [ngClass]="{'is-invalid': (segment.get(field.key)?.invalid && segment.get(field.key)?.touched) || (field.isPrimaryDate && outOfOrderIndices.has(i) && segment.get(field.key)?.touched)}">
+              [ngClass]="{
+                'is-invalid':
+                  (segment.get(field.key)?.invalid && segment.get(field.key)?.touched) ||
+                  (field.isPrimaryDate &&
+                    outOfOrderIndices.has(i) &&
+                    segment.get(field.key)?.touched),
+              }"
+            />
 
             <input
               *ngIf="field.type === 'time'"
               type="time"
               class="form-control"
+              [attr.id]="'segment-' + i + '-' + field.key"
               [formControlName]="field.key"
-              [ngClass]="{'is-invalid': segment.get(field.key)?.invalid && segment.get(field.key)?.touched}">
+              [ngClass]="{
+                'is-invalid': segment.get(field.key)?.invalid && segment.get(field.key)?.touched,
+              }"
+            />
 
             <input
               *ngIf="field.type === 'text'"
               type="text"
               class="form-control"
+              [attr.id]="'segment-' + i + '-' + field.key"
               [formControlName]="field.key"
               [placeholder]="field.placeholder || ''"
-              [ngClass]="{'is-invalid': (segment.get(field.key)?.invalid && segment.get(field.key)?.touched) || ((field.isOrigin || field.isDestination) && segment.errors?.['sameOriginDestination'] && segment.get(field.key)?.touched)}">
+              [ngClass]="{
+                'is-invalid':
+                  (segment.get(field.key)?.invalid && segment.get(field.key)?.touched) ||
+                  ((field.isOrigin || field.isDestination) &&
+                    segment.errors?.['sameOriginDestination'] &&
+                    segment.get(field.key)?.touched),
+              }"
+            />
 
             <input
               *ngIf="field.type === 'number'"
               type="number"
               class="form-control"
+              [attr.id]="'segment-' + i + '-' + field.key"
               [formControlName]="field.key"
               [attr.min]="field.min"
               [placeholder]="field.placeholder || ''"
-              [ngClass]="{'is-invalid': segment.get(field.key)?.invalid && segment.get(field.key)?.touched}">
+              [ngClass]="{
+                'is-invalid': segment.get(field.key)?.invalid && segment.get(field.key)?.touched,
+              }"
+            />
 
             <select
               *ngIf="field.type === 'select'"
               class="form-select"
+              [attr.id]="'segment-' + i + '-' + field.key"
               [formControlName]="field.key"
-              [ngClass]="{'is-invalid': (segment.get(field.key)?.invalid && segment.get(field.key)?.touched) || ((field.isOrigin || field.isDestination) && segment.errors?.['sameOriginDestination'] && segment.get(field.key)?.touched)}">
+              [ngClass]="{
+                'is-invalid':
+                  (segment.get(field.key)?.invalid && segment.get(field.key)?.touched) ||
+                  ((field.isOrigin || field.isDestination) &&
+                    segment.errors?.['sameOriginDestination'] &&
+                    segment.get(field.key)?.touched),
+              }"
+            >
               <option value="">Select {{ field.label }}</option>
               <option *ngFor="let option of field.options" [value]="option">{{ option }}</option>
             </select>
 
             <div
               class="invalid-feedback"
-              *ngIf="segment.get(field.key)?.errors?.['required'] && segment.get(field.key)?.touched">
-              {{ field.requiredErrorMessage || (field.label + ' is required') }}
+              *ngIf="
+                segment.get(field.key)?.errors?.['required'] && segment.get(field.key)?.touched
+              "
+            >
+              {{ field.requiredErrorMessage || field.label + ' is required' }}
             </div>
 
             <div
               class="invalid-feedback"
-              *ngIf="field.isPrimaryDate && outOfOrderIndices.has(i) && segment.get(field.key)?.touched">
+              *ngIf="
+                field.isPrimaryDate && outOfOrderIndices.has(i) && segment.get(field.key)?.touched
+              "
+            >
               {{ field.label }} cannot be earlier than the previous segment's date
             </div>
 
             <div
               class="invalid-feedback d-block"
-              *ngIf="field.isDestination && segment.errors?.['sameOriginDestination'] && segment.get(field.key)?.touched">
+              *ngIf="
+                field.isDestination &&
+                segment.errors?.['sameOriginDestination'] &&
+                segment.get(field.key)?.touched
+              "
+            >
               Destination cannot be the same as origin
             </div>
           </div>

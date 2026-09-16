@@ -36,8 +36,11 @@
           (input)="onSearchChange($any($event.target).value)"
         />
 
+        <label for="trfStatusFilter" class="visually-hidden">Filter by status</label>
         <select
+          id="trfStatusFilter"
           class="form-select filter-select"
+          aria-label="Filter by status"
           [(ngModel)]="statusFilter"
           (change)="onStatusFilterChange()"
         >
@@ -47,8 +50,11 @@
           </option>
         </select>
 
+        <label for="trfTravelTypeFilter" class="visually-hidden">Filter by travel type</label>
         <select
+          id="trfTravelTypeFilter"
           class="form-select filter-select"
+          aria-label="Filter by travel type"
           [(ngModel)]="travelTypeFilter"
           (change)="onTravelTypeFilterChange()"
         >

@@ -64,10 +64,15 @@
               </button>
             </div>
             <div class="location-filter">
+              <label for="accommodationCalendarLocation" class="visually-hidden"
+                >Filter by location</label
+              >
               <select
+                id="accommodationCalendarLocation"
                 [(ngModel)]="selectedLocation"
                 (change)="fetchBookings()"
                 class="location-select"
+                aria-label="Filter by location"
               >
                 <option value="Ashgabat">Ashgabat</option>
                 <option value="Kiyanly">Kiyanly</option>

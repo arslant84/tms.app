@@ -35,24 +35,39 @@
         </div>
 
         <div class="col-md-3">
-          <label class="form-label">Role</label>
-          <select class="form-select" [(ngModel)]="filterRole" (change)="onFilterChange()">
+          <label class="form-label" for="userRoleFilter">Role</label>
+          <select
+            id="userRoleFilter"
+            class="form-select"
+            [(ngModel)]="filterRole"
+            (change)="onFilterChange()"
+          >
             <option [ngValue]="null">All Roles</option>
             <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
           </select>
         </div>
 
         <div class="col-md-3">
-          <label class="form-label">Department</label>
-          <select class="form-select" [(ngModel)]="filterDepartment" (change)="onFilterChange()">
+          <label class="form-label" for="userDepartmentFilter">Department</label>
+          <select
+            id="userDepartmentFilter"
+            class="form-select"
+            [(ngModel)]="filterDepartment"
+            (change)="onFilterChange()"
+          >
             <option value="">All Departments</option>
             <option *ngFor="let dept of departments" [value]="dept.id">{{ dept.name }}</option>
           </select>
         </div>
 
         <div class="col-md-3">
-          <label class="form-label">Status</label>
-          <select class="form-select" [(ngModel)]="filterStatus" (change)="onFilterChange()">
+          <label class="form-label" for="userStatusFilter">Status</label>
+          <select
+            id="userStatusFilter"
+            class="form-select"
+            [(ngModel)]="filterStatus"
+            (change)="onFilterChange()"
+          >
             <option [ngValue]="null">All Status</option>
             <option [ngValue]="true">Active</option>
             <option [ngValue]="false">Inactive</option>

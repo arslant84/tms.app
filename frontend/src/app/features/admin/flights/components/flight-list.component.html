@@ -39,13 +39,27 @@
           />
         </div>
         <div class="filter-container">
-          <select class="filter-select" [(ngModel)]="filterStatus" (change)="onFilterChange()">
+          <label for="flightListStatusFilter" class="visually-hidden">Filter by status</label>
+          <select
+            id="flightListStatusFilter"
+            class="filter-select"
+            aria-label="Filter by status"
+            [(ngModel)]="filterStatus"
+            (change)="onFilterChange()"
+          >
             <option value="">All Statuses</option>
             <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
           </select>
         </div>
         <div class="filter-container">
-          <select class="filter-select" [(ngModel)]="filterClass" (change)="onFilterChange()">
+          <label for="flightListClassFilter" class="visually-hidden">Filter by class</label>
+          <select
+            id="flightListClassFilter"
+            class="filter-select"
+            aria-label="Filter by class"
+            [(ngModel)]="filterClass"
+            (change)="onFilterChange()"
+          >
             <option value="">All Classes</option>
             <option *ngFor="let class of bookingClasses" [value]="class.value">
               {{ class.label }}

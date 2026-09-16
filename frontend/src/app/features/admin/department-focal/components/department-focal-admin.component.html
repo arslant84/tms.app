@@ -39,10 +39,12 @@
           />
         </div>
         <div class="col-md-4">
+          <label for="departmentFocalReadyOnly" class="visually-hidden">Filter by readiness</label>
           <select
             class="form-select"
             id="departmentFocalReadyOnly"
             name="departmentFocalReadyOnly"
+            aria-label="Filter by readiness"
             [(ngModel)]="filterCriteria.readyOnly"
             (change)="applyFilters()"
           >

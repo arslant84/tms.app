@@ -208,16 +208,26 @@
                   <i class="bi bi-funnel me-2"></i>
                   <span>Filter:</span>
                 </div>
+                <label for="accommodationAdminLocationFilter" class="visually-hidden"
+                  >Filter by location</label
+                >
                 <select
+                  id="accommodationAdminLocationFilter"
                   class="form-select filter-select"
+                  aria-label="Filter by location"
                   [(ngModel)]="filterLocation"
                   (change)="applyRoomFilters()"
                 >
                   <option value="all">All Locations</option>
                   <option *ngFor="let loc of uniqueLocations" [value]="loc">{{ loc }}</option>
                 </select>
+                <label for="accommodationAdminStaffHouseFilter" class="visually-hidden"
+                  >Filter by staff house</label
+                >
                 <select
+                  id="accommodationAdminStaffHouseFilter"
                   class="form-select filter-select"
+                  aria-label="Filter by staff house"
                   [(ngModel)]="filterStaffHouse"
                   (change)="applyRoomFilters()"
                 >

@@ -36,8 +36,11 @@
           (input)="onSearchChange($any($event.target).value)"
         />
 
+        <label for="visaStatusFilter" class="visually-hidden">Filter by status</label>
         <select
+          id="visaStatusFilter"
           class="form-select filter-select"
+          aria-label="Filter by status"
           [(ngModel)]="filterStatus"
           (change)="onFilterChange()"
         >
@@ -47,8 +50,11 @@
           </option>
         </select>
 
+        <label for="visaTypeFilter" class="visually-hidden">Filter by visa type</label>
         <select
+          id="visaTypeFilter"
           class="form-select filter-select"
+          aria-label="Filter by visa type"
           [(ngModel)]="filterVisaType"
           (change)="onFilterChange()"
         >

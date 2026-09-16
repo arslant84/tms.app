@@ -12,14 +12,16 @@
         class="btn btn-sm header-action-btn me-2"
         (click)="restoreDefaults()"
         *ngIf="!isAddingNew"
-        title="Restore default notification settings">
+        title="Restore default notification settings"
+      >
         <i class="bi bi-arrow-counterclockwise"></i> Restore Defaults
       </button>
       <button
         type="button"
         class="btn btn-sm header-action-btn"
         (click)="startAddNew()"
-        *ngIf="!isAddingNew">
+        *ngIf="!isAddingNew"
+      >
         <i class="bi bi-plus-circle"></i> Add Notification
       </button>
     </div>
@@ -43,18 +45,25 @@
             <span class="config-label">Recipients:</span>
             <span class="config-value">{{ getRecipientTypeLabels(config.recipient_types) }}</span>
           </div>
-          <div class="config-row" *ngIf="config.custom_recipients && config.custom_recipients.length > 0">
+          <div
+            class="config-row"
+            *ngIf="config.custom_recipients && config.custom_recipients.length > 0"
+          >
             <span class="config-label">Custom Emails:</span>
             <span class="config-value">{{ config.custom_recipients.join(', ') }}</span>
           </div>
           <div class="config-row">
             <span class="config-label">Priority:</span>
-            <span class="badge" [ngClass]="{
-              'bg-danger': config.priority === 'urgent',
-              'bg-warning': config.priority === 'high',
-              'bg-info': config.priority === 'normal',
-              'bg-secondary': config.priority === 'low'
-            }">{{ config.priority }}</span>
+            <span
+              class="badge"
+              [ngClass]="{
+                'bg-danger': config.priority === 'urgent',
+                'bg-warning': config.priority === 'high',
+                'bg-info': config.priority === 'normal',
+                'bg-secondary': config.priority === 'low',
+              }"
+              >{{ config.priority }}</span
+            >
           </div>
         </div>
         <div class="config-actions">
@@ -62,14 +71,16 @@
             type="button"
             class="btn btn-sm btn-outline-secondary"
             (click)="editConfig(config, i)"
-            title="Edit">
+            title="Edit"
+          >
             <i class="bi bi-pencil"></i>
           </button>
           <button
             type="button"
             class="btn btn-sm btn-outline-danger"
             (click)="deleteConfig(i)"
-            title="Delete">
+            title="Delete"
+          >
             <i class="bi bi-trash"></i>
           </button>
         </div>
@@ -93,8 +104,15 @@
 
       <!-- Event Type -->
       <div class="mb-3">
-        <label class="form-label">Event Type <span class="text-danger">*</span></label>
-        <select class="form-select" [(ngModel)]="form.event_type" required>
+        <label class="form-label" for="stepNotificationEventType"
+          >Event Type <span class="text-danger">*</span></label
+        >
+        <select
+          id="stepNotificationEventType"
+          class="form-select"
+          [(ngModel)]="form.event_type"
+          required
+        >
           <option *ngFor="let option of eventTypeOptions" [value]="option.value">
             {{ option.label }}
           </option>
@@ -103,8 +121,15 @@
 
       <!-- Notification Template -->
       <div class="mb-3">
-        <label class="form-label">Notification Template <span class="text-danger">*</span></label>
-        <select class="form-select" [(ngModel)]="form.notification_template" required>
+        <label class="form-label" for="stepNotificationTemplate"
+          >Notification Template <span class="text-danger">*</span></label
+        >
+        <select
+          id="stepNotificationTemplate"
+          class="form-select"
+          [(ngModel)]="form.notification_template"
+          required
+        >
           <option value="">-- Select Template --</option>
           <option *ngFor="let template of availableTemplates" [value]="template.id">
             {{ template.name }}
@@ -128,7 +153,8 @@
                 type="checkbox"
                 [id]="'recipient-' + option.value"
                 [checked]="isRecipientTypeSelected(option.value)"
-                (change)="toggleRecipientType(option.value)">
+                (change)="toggleRecipientType(option.value)"
+              />
               <label class="form-check-label" [for]="'recipient-' + option.value">
                 {{ option.label }}
               </label>
@@ -136,7 +162,10 @@
           </div>
 
           <!-- System Roles -->
-          <div class="recipient-category" *ngIf="getRecipientsByCategory('System Roles').length > 0">
+          <div
+            class="recipient-category"
+            *ngIf="getRecipientsByCategory('System Roles').length > 0"
+          >
             <div class="category-label">System Roles</div>
             <div class="form-check" *ngFor="let option of getRecipientsByCategory('System Roles')">
               <input
@@ -144,7 +173,8 @@
                 type="checkbox"
                 [id]="'recipient-' + option.value"
                 [checked]="isRecipientTypeSelected(option.value)"
-                (change)="toggleRecipientType(option.value)">
+                (change)="toggleRecipientType(option.value)"
+              />
               <label class="form-check-label" [for]="'recipient-' + option.value">
                 {{ option.label }}
               </label>
@@ -160,7 +190,8 @@
                 type="checkbox"
                 [id]="'recipient-' + option.value"
                 [checked]="isRecipientTypeSelected(option.value)"
-                (change)="toggleRecipientType(option.value)">
+                (change)="toggleRecipientType(option.value)"
+              />
               <label class="form-check-label" [for]="'recipient-' + option.value">
                 {{ option.label }}
               </label>
@@ -187,8 +218,8 @@
 
       <!-- Priority -->
       <div class="mb-3">
-        <label class="form-label">Priority</label>
-        <select class="form-select" [(ngModel)]="form.priority">
+        <label class="form-label" for="stepNotificationPriority">Priority</label>
+        <select id="stepNotificationPriority" class="form-select" [(ngModel)]="form.priority">
           <option value="low">Low</option>
           <option value="normal">Normal</option>
           <option value="high">High</option>
@@ -204,17 +235,17 @@
             class="form-check-input"
             type="checkbox"
             id="sendEmail"
-            [(ngModel)]="form.send_email">
-          <label class="form-check-label" for="sendEmail">
-            Send as Email
-          </label>
+            [(ngModel)]="form.send_email"
+          />
+          <label class="form-check-label" for="sendEmail"> Send as Email </label>
         </div>
         <div class="form-check">
           <input
             class="form-check-input"
             type="checkbox"
             id="sendSystemNotification"
-            [(ngModel)]="form.send_system_notification">
+            [(ngModel)]="form.send_system_notification"
+          />
           <label class="form-check-label" for="sendSystemNotification">
             Send as In-App Notification
           </label>
@@ -228,7 +259,8 @@
             class="form-check-input"
             type="checkbox"
             id="isActive"
-            [(ngModel)]="form.is_active">
+            [(ngModel)]="form.is_active"
+          />
           <label class="form-check-label" for="isActive">
             Active (notifications will be sent)
           </label>
@@ -237,11 +269,10 @@
 
       <!-- Form Actions -->
       <div class="form-actions">
-        <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
-          Cancel
-        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
         <button type="button" class="btn btn-primary" (click)="saveConfig()">
-          <i class="bi bi-check-circle"></i> {{ editingIndex >= 0 ? 'Update' : 'Add' }} Configuration
+          <i class="bi bi-check-circle"></i>
+          {{ editingIndex >= 0 ? 'Update' : 'Add' }} Configuration
         </button>
       </div>
     </div>

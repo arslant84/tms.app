@@ -83,6 +83,7 @@
             <div *ngIf="!hasNoApprovers(step); else noApprovers" class="approver-dropdown">
               <select
                 class="form-select"
+                [attr.aria-label]="'Select approver for ' + step.step_name"
                 [ngModel]="selections[step.step_order]"
                 (ngModelChange)="onApproverSelect(step.step_order, $event)"
                 [required]="step.is_required && required"

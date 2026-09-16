@@ -150,8 +150,11 @@
 
             <!-- Notification Type -->
             <div class="mb-3">
-              <label class="form-label">Notification Type <span class="text-danger">*</span></label>
+              <label class="form-label" for="notificationTemplateType"
+                >Notification Type <span class="text-danger">*</span></label
+              >
               <select
+                id="notificationTemplateType"
                 class="form-select"
                 [(ngModel)]="form.notification_type"
                 name="notification_type"
@@ -166,8 +169,11 @@
 
             <!-- Event Type -->
             <div class="mb-3">
-              <label class="form-label">Event Type <span class="text-danger">*</span></label>
+              <label class="form-label" for="notificationTemplateEventType"
+                >Event Type <span class="text-danger">*</span></label
+              >
               <select
+                id="notificationTemplateEventType"
                 class="form-select"
                 [(ngModel)]="form.event_type"
                 name="event_type"

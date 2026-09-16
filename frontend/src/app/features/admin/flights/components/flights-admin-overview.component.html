@@ -93,8 +93,11 @@
         </div>
 
         <div class="col-md-3">
+          <label for="flightsOverviewStatusFilter" class="visually-hidden">Filter by status</label>
           <select
+            id="flightsOverviewStatusFilter"
             class="form-select"
+            aria-label="Filter by status"
             [(ngModel)]="statusFilter"
             (ngModelChange)="onStatusFilterChange()"
           >
@@ -103,8 +106,13 @@
         </div>
 
         <div class="col-md-3">
+          <label for="flightsOverviewTravelTypeFilter" class="visually-hidden"
+            >Filter by travel type</label
+          >
           <select
+            id="flightsOverviewTravelTypeFilter"
             class="form-select"
+            aria-label="Filter by travel type"
             [(ngModel)]="travelTypeFilter"
             (ngModelChange)="onTravelTypeFilterChange()"
           >

@@ -24,8 +24,9 @@
 
           <div class="filter-row">
             <div class="filter-item">
-              <label>Type</label>
+              <label for="clerkTypeFilter">Type</label>
               <select
+                id="clerkTypeFilter"
                 class="form-select"
                 [(ngModel)]="filterCriteria.type"
                 (change)="applyFilters()"
@@ -40,8 +41,9 @@
             </div>
 
             <div class="filter-item">
-              <label>Status</label>
+              <label for="clerkStatusFilter">Status</label>
               <select
+                id="clerkStatusFilter"
                 class="form-select"
                 [(ngModel)]="filterCriteria.status"
                 (change)="applyFilters()"
@@ -55,8 +57,9 @@
             </div>
 
             <div class="filter-item">
-              <label>Priority</label>
+              <label for="clerkPriorityFilter">Priority</label>
               <select
+                id="clerkPriorityFilter"
                 class="form-select"
                 [(ngModel)]="filterCriteria.priority"
                 (change)="applyFilters()"
