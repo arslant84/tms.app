@@ -13,17 +13,12 @@ export enum Permission {
   // MODULE ACCESS (Admin Menus)
   // ============================================================================
   VIEW_ADMIN_ACCOMMODATION = 'view_admin_accommodation',
-  MANAGE_ACCOMMODATION_BOOKINGS = 'manage_accommodation_bookings',
 
   VIEW_ADMIN_TRANSPORT = 'view_admin_transport',
-  MANAGE_TRANSPORT_REQUESTS = 'manage_transport_requests',
 
   VIEW_ADMIN_VISA = 'view_admin_visa',
-  PROCESS_VISA_APPLICATIONS = 'process_visa_applications',
 
   VIEW_ADMIN_FLIGHTS = 'view_admin_flights',
-  MANAGE_FLIGHTS = 'manage_flights',
-  PROCESS_FLIGHTS = 'process_flights',
 
   VIEW_ADMIN_MEAL = 'view_admin_meal',
   PROCESS_MEAL = 'process_meal',
@@ -118,14 +113,9 @@ export enum PermissionCategory {
 export const PERMISSION_CATEGORIES: Record<Permission, PermissionCategory> = {
   // Module Access
   [Permission.VIEW_ADMIN_ACCOMMODATION]: PermissionCategory.MODULE_ACCESS,
-  [Permission.MANAGE_ACCOMMODATION_BOOKINGS]: PermissionCategory.MODULE_ACCESS,
   [Permission.VIEW_ADMIN_TRANSPORT]: PermissionCategory.MODULE_ACCESS,
-  [Permission.MANAGE_TRANSPORT_REQUESTS]: PermissionCategory.MODULE_ACCESS,
   [Permission.VIEW_ADMIN_VISA]: PermissionCategory.MODULE_ACCESS,
-  [Permission.PROCESS_VISA_APPLICATIONS]: PermissionCategory.MODULE_ACCESS,
   [Permission.VIEW_ADMIN_FLIGHTS]: PermissionCategory.MODULE_ACCESS,
-  [Permission.MANAGE_FLIGHTS]: PermissionCategory.MODULE_ACCESS,
-  [Permission.PROCESS_FLIGHTS]: PermissionCategory.MODULE_ACCESS,
 
   // Request Creation
   [Permission.CREATE_TRF]: PermissionCategory.REQUEST_CREATION,

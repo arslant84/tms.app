@@ -175,10 +175,29 @@ class TestDuplicatePermissionsConsolidated:
         ):
             assert not Permission.objects.filter(name=name).exists()
 
+    def test_redundant_process_permissions_deleted(self):
+        """
+        process_X/manage_X were assigned to identical role sets everywhere,
+        and accounts.utils.can_manage() only ever checked them together -
+        never individually, unlike every other module in that helper. Same
+        paper-permission pattern as test_duplicate_permissions_deleted
+        above, just missed in that pass. See 0053_consolidate_process_manage_permission_pairs.
+        """
+        from accounts.models import Permission
+
+        for name in (
+            "process_transport",
+            "process_trf",
+            "process_visa",
+            "process_accommodation",
+            "process_bookings",
+            "process_meal",
+        ):
+            assert not Permission.objects.filter(name=name).exists()
+
     def test_ticketing_clerk_has_booking_permissions(self):
         from accounts.models import Role
 
         role = Role.objects.get(name="Ticketing Clerk")
         perm_names = set(role.permissions.values_list("name", flat=True))
         assert "manage_bookings" in perm_names
-        assert "process_bookings" in perm_names

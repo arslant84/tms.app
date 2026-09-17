@@ -81,12 +81,12 @@ def can_manage(user, module):
         True if user can manage records for the module, False otherwise.
     """
     permission_map = {
-        "trf": ["process_trf", "manage_trf"],
-        "accommodation": ["process_accommodation", "manage_accommodation"],
-        "transport": ["process_transport", "manage_transport"],
-        "visa": ["process_visa", "manage_visa"],
-        "booking": ["process_bookings", "manage_bookings"],
-        "bookings": ["process_bookings", "manage_bookings"],
+        "trf": ["manage_trf"],
+        "accommodation": ["manage_accommodation"],
+        "transport": ["manage_transport"],
+        "visa": ["manage_visa"],
+        "booking": ["manage_bookings"],
+        "bookings": ["manage_bookings"],
         "workflow": ["manage_workflows"],
         "workflows": ["manage_workflows"],
         "user": ["manage_users"],
@@ -99,7 +99,7 @@ def can_manage(user, module):
         "notifications": ["manage_notifications", "send_notifications"],
         "approval": ["manage_approvals"],
         "approvals": ["manage_approvals"],
-        "meal": ["process_meal", "manage_meal"],
+        "meal": ["manage_meal"],
     }
     permissions = permission_map.get(module, [])
     if not permissions:
