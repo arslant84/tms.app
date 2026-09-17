@@ -952,3 +952,45 @@ class DatabaseBackupAdmin(admin.ModelAdmin):
             "opts": DatabaseBackup._meta,
         }
         return render(request, "admin/accounts/restore_backup.html", context)
+
+
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ["name", "code", "is_active", "created_at"]
+    search_fields = ["name", "code", "description"]
+    list_filter = ["is_active"]
+    ordering = ["name"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(BulkImportJob)
+class BulkImportJobAdmin(admin.ModelAdmin):
+    list_display = [
+        "id",
+        "status",
+        "created_by",
+        "created_count",
+        "skipped_count",
+        "error_count",
+        "created_at",
+    ]
+    search_fields = ["id", "task_id", "created_by__email"]
+    list_filter = ["status", "created_at"]
+    ordering = ["-created_at"]
+    readonly_fields = [
+        "id",
+        "created_by",
+        "created_at",
+        "csv_content",
+        "ip_address",
+        "user_agent",
+        "created_count",
+        "skipped_count",
+        "error_count",
+        "result_detail",
+        "task_id",
+        "status",
+    ]
+
+    def has_add_permission(self, request):
+        return False

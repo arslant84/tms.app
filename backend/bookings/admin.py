@@ -1,12 +1,29 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import FlightBooking
+from .models import FlightBooking, FlightBookingSegment
+
+
+class FlightBookingSegmentInline(admin.TabularInline):
+    model = FlightBookingSegment
+    extra = 0
+    ordering = ["direction", "sequence"]
+    fields = [
+        "direction",
+        "sequence",
+        "flight_number",
+        "departure_airport",
+        "arrival_airport",
+        "departure_time",
+        "arrival_time",
+    ]
 
 
 @admin.register(FlightBooking)
 class FlightBookingAdmin(admin.ModelAdmin):
     """Admin configuration for FlightBooking model"""
+
+    inlines = [FlightBookingSegmentInline]
 
     list_display = [
         "id",
