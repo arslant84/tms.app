@@ -30,8 +30,18 @@ SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int) 
 SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
 SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
 
-# Database connection pooling (recommended for production)
-DATABASES['default']['CONN_MAX_AGE'] = config('DB_CONN_MAX_AGE', default=600, cast=int)  # 10 minutes
+# Database connections: default to short-lived (no persistent pooling).
+#
+# Gunicorn here runs gevent workers, where each concurrent greenlet gets
+# its own DB connection via Django's connection-per-thread model (gevent
+# monkey-patches threading, so "per-thread" becomes "per-greenlet"). With
+# CONN_MAX_AGE holding those open for minutes, a traffic burst multiplies
+# open connections far past Postgres's max_connections — this caused a
+# full login outage on 2026-08-17 ("FATAL: remaining connection slots are
+# reserved for non-replication superuser connections"). Without a real
+# connection pooler (e.g. PgBouncer) in front of Postgres, 0 is the safe
+# default; only raise it once pooling is in place.
+DATABASES['default']['CONN_MAX_AGE'] = config('DB_CONN_MAX_AGE', default=0, cast=int)
 DATABASES['default']['OPTIONS'] = {
     'connect_timeout': 10,
 }

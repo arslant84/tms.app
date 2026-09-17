@@ -32,6 +32,25 @@ from utils.api_response import (
 
 logger = logging.getLogger(__name__)
 
+
+def _client_ip(request):
+    """Resolve the real client IP, honoring the reverse-proxy header."""
+    meta_key = getattr(settings, "RATELIMIT_IP_META_KEY", "REMOTE_ADDR")
+    value = request.META.get(meta_key, "")
+    return value.split(",")[0].strip()
+
+
+def _mfa_verify_ratelimit_key(group, request):
+    """
+    Rate-limit MFA verification by (ip, challenge_token) rather than ip
+    alone, so unrelated coworkers behind the same NAT gateway don't share
+    one 5/min budget while someone else fumbles their OTP (see the
+    matching note on LoginView's rate limit).
+    """
+    token = request.data.get("challenge_token") or ""
+    return f"{_client_ip(request)}:{token}"
+
+
 from .models import AdminActionLog
 from .serializers import (
     MFAConfirmSerializer,
@@ -146,7 +165,8 @@ class MFAVerifyView(APIView):
 
     permission_classes = [permissions.AllowAny]
 
-    @method_decorator(ratelimit(key="ip", rate="5/m", method="POST", block=True))
+    @method_decorator(ratelimit(key="ip", rate="30/m", method="POST", block=True))
+    @method_decorator(ratelimit(key=_mfa_verify_ratelimit_key, rate="5/m", method="POST", block=True))
     def post(self, request):
         serializer = MFAVerifySerializer(data=request.data)
         if not serializer.is_valid():

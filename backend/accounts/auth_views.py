@@ -39,6 +39,28 @@ from utils.api_response import (
 
 logger = logging.getLogger(__name__)
 
+
+def _client_ip(request):
+    """Resolve the real client IP, honoring the reverse-proxy header."""
+    meta_key = getattr(settings, "RATELIMIT_IP_META_KEY", "REMOTE_ADDR")
+    value = request.META.get(meta_key, "")
+    # HTTP_X_FORWARDED_FOR may carry a proxy chain; the client is the first hop.
+    return value.split(",")[0].strip()
+
+
+def _login_ratelimit_key(group, request):
+    """
+    Rate-limit login by (ip, email) rather than ip alone.
+
+    Many employees sit behind a handful of shared corporate NAT gateway
+    IPs. Keying solely on ip meant a few unrelated people mistyping their
+    password in the same minute could trip the limit and lock out every
+    coworker behind that same gateway, even ones with correct credentials.
+    """
+    email = (request.data.get("email") or "").strip().lower()
+    return f"{_client_ip(request)}:{email}"
+
+
 from .models import AdminActionLog, ApplicationSetting, Department
 from .serializers import (
     PasswordChangeSerializer,
@@ -80,7 +102,11 @@ class LoginView(APIView):
             429: OpenApiTypes.OBJECT,
         },
     )
-    @method_decorator(ratelimit(key="ip", rate="5/m", method="POST", block=True))
+    # Broad per-IP cap still stops a single source from flooding the endpoint;
+    # the tighter per-(ip, email) cap is what actually prevents lockout abuse
+    # without penalizing unrelated coworkers behind the same NAT gateway.
+    @method_decorator(ratelimit(key="ip", rate="30/m", method="POST", block=True))
+    @method_decorator(ratelimit(key=_login_ratelimit_key, rate="5/m", method="POST", block=True))
     def post(self, request, *args, **kwargs):
         # Get username and password from request
         username = request.data.get("email")
