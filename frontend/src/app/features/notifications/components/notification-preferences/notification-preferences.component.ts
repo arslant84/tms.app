@@ -12,7 +12,6 @@ interface Subscription {
   event_type_detail?: NotificationEventType;
   receive_email: boolean;
   receive_in_app: boolean;
-  receive_push?: boolean;
   is_active: boolean;
 }
 

@@ -22,8 +22,6 @@ export interface UserNotification {
   read_at?: string;
   sent_via_email: boolean;
   email_sent_at?: string;
-  sent_via_push: boolean;
-  push_sent_at?: string;
   additional_data?: Record<string, unknown>;
   expires_at?: string;
   created_at: string;
@@ -34,11 +32,6 @@ export interface NotificationPreference {
   user?: number;
   email_notifications_enabled: boolean;
   in_app_notifications_enabled: boolean;
-  push_notifications_enabled: boolean;
-  digest_frequency: 'instant' | 'hourly' | 'daily' | 'weekly';
-  quiet_hours_enabled: boolean;
-  quiet_hours_start?: string;
-  quiet_hours_end?: string;
 }
 
 interface NotificationListResponse {

@@ -54,10 +54,7 @@ class UserNotificationPreferenceAdmin(admin.ModelAdmin):
         "user",
         "email_notifications_enabled",
         "in_app_notifications_enabled",
-        "digest_frequency",
-        "quiet_hours_enabled",
     ]
-    list_filter = ["digest_frequency", "quiet_hours_enabled"]
     search_fields = ["user__email", "user__first_name", "user__last_name"]
     ordering = ["user"]
 

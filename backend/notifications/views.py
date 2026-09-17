@@ -221,7 +221,6 @@ class UserNotificationSubscriptionViewSet(viewsets.ModelViewSet):
             defaults={
                 "receive_email": request.data.get("receive_email", True),
                 "receive_in_app": request.data.get("receive_in_app", True),
-                "receive_push": request.data.get("receive_push", False),
                 "is_active": True,
             },
         )
@@ -233,9 +232,6 @@ class UserNotificationSubscriptionViewSet(viewsets.ModelViewSet):
             )
             subscription.receive_in_app = request.data.get(
                 "receive_in_app", subscription.receive_in_app
-            )
-            subscription.receive_push = request.data.get(
-                "receive_push", subscription.receive_push
             )
             subscription.is_active = request.data.get(
                 "is_active", subscription.is_active

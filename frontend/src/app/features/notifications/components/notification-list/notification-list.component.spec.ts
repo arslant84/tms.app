@@ -63,7 +63,6 @@ describe('NotificationListComponent', () => {
         priority: 'normal',
         is_read: true,
         sent_via_email: false,
-        sent_via_push: false,
         created_at: new Date().toISOString(),
         ...overrides,
       } as UserNotification;

@@ -133,30 +133,6 @@ class UserNotificationPreference(models.Model):
     in_app_notifications_enabled = models.BooleanField(
         default=True, help_text="Receive in-app notifications"
     )
-    push_notifications_enabled = models.BooleanField(
-        default=False, help_text="Receive push notifications (future feature)"
-    )
-
-    # Frequency settings
-    digest_frequency = models.CharField(
-        max_length=20,
-        choices=[
-            ("instant", "Instant"),
-            ("hourly", "Hourly Digest"),
-            ("daily", "Daily Digest"),
-            ("weekly", "Weekly Digest"),
-        ],
-        default="instant",
-    )
-
-    # Quiet hours
-    quiet_hours_enabled = models.BooleanField(default=False)
-    quiet_hours_start = models.TimeField(
-        null=True, blank=True, help_text="Start of quiet hours (no notifications)"
-    )
-    quiet_hours_end = models.TimeField(
-        null=True, blank=True, help_text="End of quiet hours"
-    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -183,7 +159,6 @@ class UserNotificationSubscription(models.Model):
     # Channel preferences for this event type
     receive_email = models.BooleanField(default=True)
     receive_in_app = models.BooleanField(default=True)
-    receive_push = models.BooleanField(default=False)
 
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -258,9 +233,6 @@ class UserNotification(models.Model):
     sent_via_email = models.BooleanField(default=False)
     email_sent_at = models.DateTimeField(null=True, blank=True)
     email_error = models.TextField(blank=True, null=True)
-
-    sent_via_push = models.BooleanField(default=False)
-    push_sent_at = models.DateTimeField(null=True, blank=True)
 
     # Additional data
     additional_data = models.JSONField(
