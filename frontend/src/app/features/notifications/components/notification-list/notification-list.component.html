@@ -105,12 +105,7 @@
 
         <!-- Notification Content -->
         <div class="notification-content">
-          <div class="notification-header">
-            <h4 class="notification-title">{{ notification.title }}</h4>
-            <span class="badge" [ngClass]="getPriorityBadgeClass(notification.priority)">
-              {{ notification.priority | titlecase }}
-            </span>
-          </div>
+          <h4 class="notification-title">{{ notification.title }}</h4>
 
           <p class="notification-message">{{ notification.message }}</p>
 
@@ -121,6 +116,14 @@
             </span>
           </div>
         </div>
+
+        <!-- Priority Badge -->
+        <span
+          class="badge notification-priority"
+          [ngClass]="getPriorityBadgeClass(notification.priority)"
+        >
+          {{ notification.priority | titlecase }}
+        </span>
 
         <!-- Notification Actions -->
         <div class="notification-actions">
