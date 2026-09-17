@@ -102,7 +102,7 @@ class TransportApprovalStep(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.transport_request.title} - {self.step_role}: {self.status}"
+        return f"{self.transport_request} - {self.step_role}: {self.status}"
 
 
 class VehicleAssignment(models.Model):
@@ -156,4 +156,4 @@ class VehicleAssignment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.vehicle_number} - {self.transport_request.title}"
+        return f"{self.vehicle_number} - {self.transport_request}"
