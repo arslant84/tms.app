@@ -30,6 +30,10 @@ export class UserProfileComponent implements OnInit {
   selectedFile: File | null = null;
   passwordMinLength = PASSWORD_MIN_LENGTH;
 
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+
   genders = [
     { value: 'Male', label: 'Male' },
     { value: 'Female', label: 'Female' },
@@ -200,12 +204,25 @@ export class UserProfileComponent implements OnInit {
 
   openPasswordModal(): void {
     this.passwordForm.reset();
+    this.showCurrentPassword = false;
+    this.showNewPassword = false;
+    this.showConfirmPassword = false;
     this.showPasswordModal = true;
   }
 
   closePasswordModal(): void {
     this.showPasswordModal = false;
     this.passwordForm.reset();
+  }
+
+  togglePasswordFieldVisibility(field: 'current' | 'new' | 'confirm'): void {
+    if (field === 'current') {
+      this.showCurrentPassword = !this.showCurrentPassword;
+    } else if (field === 'new') {
+      this.showNewPassword = !this.showNewPassword;
+    } else {
+      this.showConfirmPassword = !this.showConfirmPassword;
+    }
   }
 
   onSubmitPassword(): void {

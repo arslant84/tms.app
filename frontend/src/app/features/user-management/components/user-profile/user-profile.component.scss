@@ -226,7 +226,9 @@
       background-color: vars.$white;
       border: 1px solid vars.$border-light;
       border-radius: vars.$radius-base;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 
       &:focus {
         outline: none;
@@ -352,6 +354,45 @@
         &:focus {
           box-shadow: vars.$error-focus-shadow;
         }
+      }
+    }
+
+    .password-field-wrapper {
+      position: relative;
+
+      .form-control {
+        padding-right: vars.$spacing-8;
+      }
+    }
+
+    .password-toggle-btn {
+      position: absolute;
+      top: 50%;
+      right: vars.$spacing-2;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: vars.$gray-400;
+      cursor: pointer;
+
+      &:hover {
+        color: vars.$text-secondary;
+      }
+
+      &:focus-visible {
+        outline: 2px solid vars.$primary-color;
+        outline-offset: 1px;
+        border-radius: vars.$radius-base;
+      }
+
+      i {
+        font-size: vars.$font-size-base;
       }
     }
 

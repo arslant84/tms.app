@@ -234,15 +234,29 @@
             <label for="current_password" class="form-label"
               >Current Password <span class="text-danger">*</span></label
             >
-            <input
-              type="password"
-              id="current_password"
-              class="form-control"
-              formControlName="current_password"
-              autocomplete="current-password"
-              [class.is-invalid]="isFieldInvalid('password', 'current_password')"
-              placeholder="Enter current password"
-            />
+            <div class="password-field-wrapper">
+              <input
+                [type]="showCurrentPassword ? 'text' : 'password'"
+                id="current_password"
+                class="form-control"
+                formControlName="current_password"
+                autocomplete="current-password"
+                [class.is-invalid]="isFieldInvalid('password', 'current_password')"
+                placeholder="Enter current password"
+              />
+              <button
+                type="button"
+                class="password-toggle-btn"
+                (click)="togglePasswordFieldVisibility('current')"
+                [attr.aria-label]="showCurrentPassword ? 'Hide password' : 'Show password'"
+                [attr.aria-pressed]="showCurrentPassword"
+              >
+                <i
+                  [class]="showCurrentPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                  aria-hidden="true"
+                ></i>
+              </button>
+            </div>
             <div class="invalid-feedback" *ngIf="isFieldInvalid('password', 'current_password')">
               {{ getFieldError('password', 'current_password') }}
             </div>
@@ -252,15 +266,29 @@
             <label for="new_password" class="form-label"
               >New Password <span class="text-danger">*</span></label
             >
-            <input
-              type="password"
-              id="new_password"
-              class="form-control"
-              formControlName="new_password"
-              autocomplete="new-password"
-              [class.is-invalid]="isFieldInvalid('password', 'new_password')"
-              placeholder="Min {{ passwordMinLength }} characters"
-            />
+            <div class="password-field-wrapper">
+              <input
+                [type]="showNewPassword ? 'text' : 'password'"
+                id="new_password"
+                class="form-control"
+                formControlName="new_password"
+                autocomplete="new-password"
+                [class.is-invalid]="isFieldInvalid('password', 'new_password')"
+                placeholder="Min {{ passwordMinLength }} characters"
+              />
+              <button
+                type="button"
+                class="password-toggle-btn"
+                (click)="togglePasswordFieldVisibility('new')"
+                [attr.aria-label]="showNewPassword ? 'Hide password' : 'Show password'"
+                [attr.aria-pressed]="showNewPassword"
+              >
+                <i
+                  [class]="showNewPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                  aria-hidden="true"
+                ></i>
+              </button>
+            </div>
             <div class="invalid-feedback" *ngIf="isFieldInvalid('password', 'new_password')">
               {{ getFieldError('password', 'new_password') }}
             </div>
@@ -270,15 +298,29 @@
             <label for="confirm_password" class="form-label"
               >Confirm New Password <span class="text-danger">*</span></label
             >
-            <input
-              type="password"
-              id="confirm_password"
-              class="form-control"
-              formControlName="confirm_password"
-              autocomplete="new-password"
-              [class.is-invalid]="isFieldInvalid('password', 'confirm_password')"
-              placeholder="Re-enter new password"
-            />
+            <div class="password-field-wrapper">
+              <input
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                id="confirm_password"
+                class="form-control"
+                formControlName="confirm_password"
+                autocomplete="new-password"
+                [class.is-invalid]="isFieldInvalid('password', 'confirm_password')"
+                placeholder="Re-enter new password"
+              />
+              <button
+                type="button"
+                class="password-toggle-btn"
+                (click)="togglePasswordFieldVisibility('confirm')"
+                [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'"
+                [attr.aria-pressed]="showConfirmPassword"
+              >
+                <i
+                  [class]="showConfirmPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"
+                  aria-hidden="true"
+                ></i>
+              </button>
+            </div>
             <div class="invalid-feedback" *ngIf="isFieldInvalid('password', 'confirm_password')">
               {{ getFieldError('password', 'confirm_password') }}
             </div>
