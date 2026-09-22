@@ -61,6 +61,17 @@ def _login_ratelimit_key(group, request):
     return f"{_client_ip(request)}:{email}"
 
 
+def _password_change_ratelimit_key(group, request):
+    """
+    Rate-limit password change by (ip, user_id) rather than ip alone, same
+    NAT-gateway reasoning as _login_ratelimit_key - the request is already
+    authenticated here, so the real user id is available directly instead
+    of a client-supplied field.
+    """
+    user_id = request.user.id if request.user.is_authenticated else "anon"
+    return f"{_client_ip(request)}:{user_id}"
+
+
 from .models import AdminActionLog, ApplicationSetting, Department
 from .serializers import (
     PasswordChangeSerializer,
@@ -106,7 +117,9 @@ class LoginView(APIView):
     # the tighter per-(ip, email) cap is what actually prevents lockout abuse
     # without penalizing unrelated coworkers behind the same NAT gateway.
     @method_decorator(ratelimit(key="ip", rate="30/m", method="POST", block=True))
-    @method_decorator(ratelimit(key=_login_ratelimit_key, rate="5/m", method="POST", block=True))
+    @method_decorator(
+        ratelimit(key=_login_ratelimit_key, rate="5/m", method="POST", block=True)
+    )
     def post(self, request, *args, **kwargs):
         # Get username and password from request
         username = request.data.get("email")
@@ -372,6 +385,12 @@ class PasswordChangeView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @method_decorator(ratelimit(key="ip", rate="30/m", method="POST", block=True))
+    @method_decorator(
+        ratelimit(
+            key=_password_change_ratelimit_key, rate="5/m", method="POST", block=True
+        )
+    )
     def post(self, request):
         serializer = PasswordChangeSerializer(data=request.data)
         if not serializer.is_valid():
@@ -410,6 +429,15 @@ class PasswordChangeView(APIView):
         user.password_change_required = False
         user.password_last_changed = timezone.now()  # CTRL-0000001025
         user.save()
+
+        AdminActionLog.log_action(
+            user=user,
+            action_type="password_changed",
+            description=f"Password changed for {user.email}",
+            entity_type="User",
+            entity_id=str(user.id),
+            request=request,
+        )
 
         return success_response(
             data={"password_change_required": False},

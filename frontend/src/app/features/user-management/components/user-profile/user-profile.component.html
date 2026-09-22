@@ -22,14 +22,14 @@
         <h2 class="card-title">Personal Information</h2>
         <p class="card-description">View and manage your profile details.</p>
       </div>
-      <button
-        *ngIf="!isEditing"
-        type="button"
-        class="btn btn-outline-primary"
-        (click)="toggleEdit()"
-      >
-        <i class="bi bi-pencil me-2"></i>Edit Profile
-      </button>
+      <div *ngIf="!isEditing" class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="openPasswordModal()">
+          <i class="bi bi-key me-2"></i>Change Password
+        </button>
+        <button type="button" class="btn btn-outline-primary" (click)="toggleEdit()">
+          <i class="bi bi-pencil me-2"></i>Edit Profile
+        </button>
+      </div>
     </div>
 
     <div class="card-content">

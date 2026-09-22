@@ -116,8 +116,9 @@ export class UserService {
   changePassword(data: {
     old_password: string;
     new_password: string;
+    new_password_confirm: string;
   }): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/users/change-password/`, data);
+    return this.http.post<{ message: string }>(`${this.apiUrl}/password/change/`, data);
   }
 
   // Admin-initiated MFA reset - clears the target user's MFA so they can

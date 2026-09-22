@@ -1,12 +1,12 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { UserService, User } from '../../services/user.service';
-import { ToastService } from '../../../../core/services/toast.service';
+import { Component, type ElementRef, type OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, type FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
 import { AuthService } from '../../../../core/services/auth.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { HttpErrorHandlerService } from '../../../../core/utils/http-error-handler.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
-import { PASSWORD_MIN_LENGTH } from '../../../../core/constants';
+import { type User, UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-user-profile',
@@ -224,10 +224,11 @@ export class UserProfileComponent implements OnInit {
 
     this.submitting = true;
 
-    const oldPassword = this.passwordForm.get('old_password')?.value;
+    const oldPassword = this.passwordForm.get('current_password')?.value;
     const passwordData = {
       old_password: oldPassword,
       new_password: newPassword,
+      new_password_confirm: confirmPassword,
     };
 
     this.userService.changePassword(passwordData).subscribe({
@@ -248,7 +249,7 @@ export class UserProfileComponent implements OnInit {
   isFieldInvalid(formName: 'profile' | 'password', fieldName: string): boolean {
     const form = formName === 'profile' ? this.profileForm : this.passwordForm;
     const field = form.get(fieldName);
-    return !!(field && field.invalid && field.touched);
+    return !!(field?.invalid && field.touched);
   }
 
   getFieldError(formName: 'profile' | 'password', fieldName: string): string {
