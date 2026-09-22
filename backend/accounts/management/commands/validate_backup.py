@@ -41,7 +41,7 @@ class Command(BaseCommand):
 
         try:
             result = subprocess.run(
-                ['pg_restore', '--list', filepath],
+                [settings.PG_RESTORE_BIN, '--list', filepath],
                 env=env,
                 check=True,
                 capture_output=True,

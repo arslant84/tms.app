@@ -187,7 +187,7 @@ graph TD
 
     subgraph Resources["Protected Resources"]
         MNGMT["Management Commands<br/>backup_db · validate_backup<br/>cleanup_expired_data"]
-        AUDIT2["Audit Logs<br/>AdminActionLog (read-only)<br/>DB trigger blocks UPDATE/DELETE"]
+        AUDIT2["Audit Logs<br/>AdminActionLog (read-only)<br/>DB trigger blocks UPDATE only<br/>(DELETE permitted, for compliance retention purge)"]
         DATA["Sensitive PII<br/>Fernet-encrypted fields<br/>passport · visa · personal data"]
         BKUP["Backup Files<br/>backend/backups/*.dump<br/>Served via admin only"]
     end
@@ -203,7 +203,7 @@ graph TD
     TRV --> DATA
 ```
 
-This diagram simplifies to 4 abstract role categories for readability — the real system is more granular: `accounts.Role` ↔ `accounts.Permission` via a `RolePermission` join table, 51 named permissions as of 2026-08-19 (down from 57 on 2026-07-23 — migration `0044_remove_combined_request_permissions.py` deleted the 6 `combined_request`-specific permissions, `view_admin_combined`/`manage_combined_requests`/`process_combined_requests`/`create_combined`/`approve_combined`/`view_all_combined`, when the module itself was removed; 57 was itself down from 65 earlier on 2026-07-23 — Fix 9 deleted 7: 5 duplicates consolidated into existing permissions, plus `access_debug_endpoints`/`manage_document_templates` as dead code) (`approve_trf`, `manage_bookings`, `view_all_visa`, etc.), checked via helpers in `accounts/utils.py` (`has_permission`, `can_approve`, `can_view_all`, `can_manage`, `is_module_admin`).
+This diagram simplifies to 4 abstract role categories for readability — the real system is more granular: `accounts.Role` ↔ `accounts.Permission` via a `RolePermission` join table, 56 named permissions as of 2026-09-17 (queried directly from `accounts_permission`; up from 51 on 2026-08-19 as new permission-gated features shipped, e.g. `view_admin_department_focal` added 2026-08-30 — down from 57 on 2026-07-23 — migration `0044_remove_combined_request_permissions.py` deleted the 6 `combined_request`-specific permissions, `view_admin_combined`/`manage_combined_requests`/`process_combined_requests`/`create_combined`/`approve_combined`/`view_all_combined`, when the module itself was removed; 57 was itself down from 65 earlier on 2026-07-23 — Fix 9 deleted 7: 5 duplicates consolidated into existing permissions, plus `access_debug_endpoints`/`manage_document_templates` as dead code) (`approve_trf`, `manage_bookings`, `view_all_visa`, etc.), checked via helpers in `accounts/utils.py` (`has_permission`, `can_approve`, `can_view_all`, `can_manage`, `is_module_admin`).
 
 **Note (2026-08-19):** the `combined_request` module referenced throughout the permission-history entries below was subsequently **removed entirely** — see `docs/COMBINED_REQUEST_MODULE_REMOVAL_ROADMAP.md`. The entries are kept as a historical record of the permission-system fixes at the time; none of the `combined`/`combinedrequest` permissions, roles, or endpoints they describe still exist.
 
@@ -234,22 +234,22 @@ graph TD
         MFA2["TOTP MFA<br/>(django-otp)"]
         SESS["Session Timeout<br/>(SessionTimeoutMiddleware)"]
         INACT["Inactive Account Disable<br/>(90-day inactivity check)"]
-        PWD["Password Policy<br/>min 15 chars · min age · complexity"]
-        LOCK["Account Lockout<br/>(failed login throttle)"]
+        PWD["Password Policy<br/>min 15 chars · similarity/common-password/all-numeric checks"]
+        LOCK["Login Rate Limiting<br/>(IP-based throttle, 5/min — django-ratelimit)"]
     end
 
     subgraph Data2["Data Layer"]
         ENC2["Field Encryption<br/>(Fernet — PII columns)"]
         AUDIT3["Immutable Audit Log<br/>(PostgreSQL UPDATE trigger)"]
-        BACKUP2["Encrypted pg_dump Backups<br/>(pg_dump -Fc format)"]
+        BACKUP2["pg_dump Backups<br/>(pg_dump -Fc format — compressed, not encrypted)"]
         RET["Data Retention<br/>(cleanup_expired_data command)"]
     end
 
     subgraph SDLC["SDLC / DevSecOps"]
         PC["Pre-commit Hooks<br/>black · isort · flake8 · bandit"]
         LS["lint-staged<br/>ESLint · Prettier · Stylelint"]
-        CI["GitHub Actions CI<br/>bandit · safety · semgrep"]
-        SCAN["Dependency Scanning<br/>(safety check)"]
+        CI["GitHub Actions CI<br/>bandit · pip-audit"]
+        SCAN["Dependency Scanning<br/>(pip-audit, backend · npm audit, frontend)"]
     end
 
     HTTPS --> CORS --> CSP --> CSRF
@@ -259,7 +259,7 @@ graph TD
     PC --> LS --> CI --> SCAN
 ```
 
-**Rate limiting is Django/DRF-level, not Nginx.** Earlier drafts of §6's deployment diagram attributed "rate limiting" to the Nginx node — checked against this host's actual nginx config (no `limit_req`/`limit_conn` anywhere in `/etc/nginx`) and corrected. The real rate limiting lives in the application layer: self-registration (3/hr/IP, §7.5), MFA verify (5/min/IP, §2), and the account lockout / failed-login throttle above are all DRF throttle classes, not a reverse-proxy control.
+**Rate limiting is Django-level, not Nginx, and not DRF's throttle framework either.** Earlier drafts of §6's deployment diagram attributed "rate limiting" to the Nginx node — checked against this host's actual nginx config (no `limit_req`/`limit_conn` anywhere in `/etc/nginx`) and corrected. The real rate limiting lives in the application layer, applied per-view via `django_ratelimit.decorators.ratelimit` (not DRF's `Throttle` classes, which aren't used anywhere in this codebase): login (5/min/IP, `block=True`), self-registration (3/hr/IP, `block=False`, §7.5), MFA verify (5/min/IP, `block=True`, §2), and password reset request (3/hr/IP, `block=False`). None of these lock the underlying account — they throttle requests from the source IP only.
 
 **Production middleware audit (2026-08-28):** the effective `MIDDLEWARE` list under `tms_project.settings.production` was loaded directly (not just read from source) to check for drift. Both findings below were fixed the same day (`1cb5cc4f`):
 - ~~`whitenoise.middleware.WhiteNoiseMiddleware` is registered twice.~~ `settings/base.py` already lists it (after `SecurityHeadersMiddleware`); `settings/production.py` additionally did `MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')`, so production ran it twice per request. Confirmed by instantiating `settings.MIDDLEWARE` under the production settings module — it appeared at both index 1 and index 4. Not a security issue, just redundant work — fixed by deleting the `insert()` line in `production.py`.
@@ -690,7 +690,8 @@ The four dead signal modules that used to exist in `trf`, `accommodation`, `tran
 | Database | PostgreSQL 14 | Primary datastore |
 | DevSecOps | black + isort | Python formatting |
 | DevSecOps | flake8 | Python linting |
-| DevSecOps | bandit | Python security scan |
+| DevSecOps | bandit | Python security scan (SAST) |
+| DevSecOps | pip-audit | Python dependency vulnerability scan (CI) |
 | DevSecOps | ESLint + Prettier | TypeScript/HTML quality |
 | DevSecOps | pre-commit | Git hook runner |
 | DevSecOps | Husky + lint-staged | Frontend git hooks |

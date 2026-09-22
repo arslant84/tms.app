@@ -17,6 +17,7 @@ Validate a backup with: python manage.py validate_backup <filename>
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.utils import timezone
+from datetime import timedelta
 import subprocess
 import os
 
@@ -59,7 +60,7 @@ class Command(BaseCommand):
         try:
             subprocess.run(
                 [
-                    'pg_dump',
+                    settings.PG_DUMP_BIN,
                     '-h', db.get('HOST', 'localhost'),
                     '-p', str(db.get('PORT', 5432)),
                     '-U', db.get('USER', 'postgres'),
@@ -78,6 +79,7 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.SUCCESS(f'Backup created: {filename} ({size:,} bytes)')
             )
+            self._prune_old_backups()
 
         except subprocess.CalledProcessError as exc:
             stderr = exc.stderr.decode(errors='replace') if exc.stderr else str(exc)
@@ -85,3 +87,33 @@ class Command(BaseCommand):
             record.notes = stderr
             record.save(update_fields=['status', 'notes'])
             self.stderr.write(self.style.ERROR(f'Backup failed: {stderr}'))
+
+    def _prune_old_backups(self):
+        """
+        Delete completed backups older than BACKUP_RETENTION_DAYS, both the
+        dump file on disk and its DatabaseBackup row. Always keeps at least
+        the single newest completed backup, regardless of age, so a low or
+        misconfigured retention value can never leave zero backups.
+        """
+        from accounts.models import DatabaseBackup
+
+        cutoff = timezone.now() - timedelta(days=settings.BACKUP_RETENTION_DAYS)
+        candidates = DatabaseBackup.objects.filter(
+            status=DatabaseBackup.STATUS_COMPLETED,
+            created_at__lt=cutoff,
+        ).order_by('-created_at')[1:]
+
+        for backup in candidates:
+            filepath = settings.BACKUP_DIR / backup.filename
+            try:
+                if filepath.exists():
+                    filepath.unlink()
+            except OSError as exc:
+                self.stderr.write(
+                    self.style.WARNING(
+                        f'Could not delete {filepath}: {exc}. Keeping its record.'
+                    )
+                )
+                continue
+            backup.delete()
+            self.stdout.write(f'Pruned old backup: {backup.filename}')

@@ -28,6 +28,18 @@ SIEM_LOG_DIR = config("SIEM_LOG_DIR", default=str(BASE_DIR / "logs"))
 BACKUP_DIR = BASE_DIR / "backups"
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
+# How long to keep completed backup_db dumps before backup_db prunes them.
+# The command never deletes below this and always keeps the newest completed
+# backup regardless of age, so a misconfigured value can't leave zero backups.
+BACKUP_RETENTION_DAYS = config("BACKUP_RETENTION_DAYS", default=30, cast=int)
+
+# Absolute paths to the pg_dump/pg_restore binaries. Bare "pg_dump" relies on
+# $PATH, which works from cron (inherits the login shell's PATH) but not from
+# admin-triggered backup/restore actions running inside gunicorn — tms.service
+# sets PATH to only the venv's bin/, which doesn't contain pg_dump.
+PG_DUMP_BIN = config("PG_DUMP_BIN", default="/usr/bin/pg_dump")
+PG_RESTORE_BIN = config("PG_RESTORE_BIN", default="/usr/bin/pg_restore")
+
 # Privacy policy version shown to users at registration (CTRL-0000001000/1001/1003).
 PRIVACY_POLICY_VERSION = config("PRIVACY_POLICY_VERSION", default="1.0")
 

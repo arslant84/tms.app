@@ -800,7 +800,7 @@ class DatabaseBackupAdmin(admin.ModelAdmin):
         try:
             subprocess.run(
                 [
-                    "pg_dump",
+                    settings.PG_DUMP_BIN,
                     "-h",
                     db.get("HOST", "localhost"),
                     "-p",
@@ -878,7 +878,7 @@ class DatabaseBackupAdmin(admin.ModelAdmin):
                 try:
                     subprocess.run(
                         [
-                            "pg_dump",
+                            settings.PG_DUMP_BIN,
                             "-h",
                             db.get("HOST", "localhost"),
                             "-p",
@@ -910,7 +910,7 @@ class DatabaseBackupAdmin(admin.ModelAdmin):
                 try:
                     subprocess.run(
                         [
-                            "pg_restore",
+                            settings.PG_RESTORE_BIN,
                             "-h",
                             db.get("HOST", "localhost"),
                             "-p",
