@@ -129,7 +129,7 @@ def can_process_accommodation(user):
     """
     Check if user is an accommodation admin for *read* purposes - i.e. any
     of view_all_accommodation, approve_accommodation, or
-    process_accommodation. Extracted so AccommodationRequestViewSet's
+    manage_accommodation. Extracted so AccommodationRequestViewSet's
     retrieve/export_pdf/assign/update/cancel bypass and its admin_view list
     filter all use the exact same check, rather than three independently
     hand-copied inline filters that could silently drift apart (see docs/
@@ -153,7 +153,7 @@ def can_process_accommodation(user):
         name__in=[
             "view_all_accommodation",
             "approve_accommodation",
-            "process_accommodation",
+            "manage_accommodation",
         ]
     ).exists()
 
