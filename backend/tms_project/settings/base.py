@@ -348,6 +348,22 @@ ALLOW_DATA_RESET = config("ALLOW_DATA_RESET", default=False, cast=bool)
 # This is used to generate absolute URLs in email notifications
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:4200")
 
+# Microsoft Entra ID (Azure AD) SSO - optional, alongside the existing
+# email/password + MFA login. AZURE_AD_ENABLED is derived, not set directly:
+# the sign-in button/endpoints only activate once all three are configured.
+AZURE_AD_TENANT_ID = config("AZURE_AD_TENANT_ID", default="")
+AZURE_AD_CLIENT_ID = config("AZURE_AD_CLIENT_ID", default="")
+AZURE_AD_CLIENT_SECRET = config("AZURE_AD_CLIENT_SECRET", default="")
+AZURE_AD_REDIRECT_URI = config("AZURE_AD_REDIRECT_URI", default="")
+AZURE_AD_AUTHORITY = (
+    f"https://login.microsoftonline.com/{AZURE_AD_TENANT_ID}"
+    if AZURE_AD_TENANT_ID
+    else ""
+)
+AZURE_AD_ENABLED = bool(
+    AZURE_AD_TENANT_ID and AZURE_AD_CLIENT_ID and AZURE_AD_CLIENT_SECRET
+)
+
 # Security Headers
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True

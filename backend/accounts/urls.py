@@ -22,6 +22,7 @@ from .settings_views import (
     ApplicationSettingViewSet,
     PrivacyPolicyView,
 )
+from .sso_views import AzureADCallbackView, AzureADLoginView
 from .user_views import DepartmentViewSet, PermissionViewSet, RoleViewSet, UserViewSet
 
 router = DefaultRouter()
@@ -57,4 +58,9 @@ urlpatterns = [
     path("mfa/disable/", MFADisableView.as_view(), name="mfa_disable"),
     # Privacy policy — CTRL-0000001000 / CTRL-0000001001 / CTRL-0000001003
     path("privacy-policy/", PrivacyPolicyView.as_view(), name="privacy_policy"),
+    # Microsoft Entra ID SSO — optional alongside email/password + MFA login
+    path("oidc/azure/login/", AzureADLoginView.as_view(), name="azure_ad_login"),
+    path(
+        "oidc/azure/callback/", AzureADCallbackView.as_view(), name="azure_ad_callback"
+    ),
 ]

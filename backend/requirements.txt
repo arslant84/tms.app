@@ -54,6 +54,7 @@ markdown-it-py==4.0.0
 MarkupSafe==3.0.3
 marshmallow==4.2.0
 mdurl==0.1.2
+msal==1.39.0
 msgpack==1.2.1
 nltk==3.10.0
 nodeenv==1.10.0
