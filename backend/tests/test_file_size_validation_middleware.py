@@ -14,6 +14,7 @@ without transferring real megabytes.
 
 import pytest
 from accounts.models import ApplicationSetting
+from django.core.cache import cache
 from django.test import RequestFactory
 from tms_project.middleware import FileSizeValidationMiddleware
 
@@ -23,6 +24,12 @@ def small_max_upload_setting(db):
     ApplicationSetting.set_setting(
         "max_file_upload_size", 1048576, setting_type="number"  # 1 MB
     )
+    # The middleware caches this setting for 5 minutes (SETTINGS_CACHE_TIMEOUT)
+    # independently of the DB write above - clear it so this test isn't at
+    # the mercy of whatever an earlier test in the same run already cached.
+    cache.delete("setting_max_file_upload_size")
+    yield
+    cache.delete("setting_max_file_upload_size")
 
 
 def _make_middleware(called_flag):

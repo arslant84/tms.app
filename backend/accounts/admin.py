@@ -921,6 +921,18 @@ class DatabaseBackupAdmin(admin.ModelAdmin):
                             db.get("NAME", ""),
                             "--clean",
                             "--if-exists",
+                            # The dump's connecting role (whoever originally
+                            # owned the objects, e.g. postgres) usually
+                            # differs from the app's non-superuser DB role
+                            # doing the restore - replaying ownership/GRANT
+                            # statements as that role fails with "must be
+                            # member of role X" (reproduced live) even
+                            # though the target database's actual grants are
+                            # already correct independently of the dump.
+                            # Data and schema are unaffected by skipping
+                            # these.
+                            "--no-owner",
+                            "--no-privileges",
                             str(restore_path),
                         ],
                         env=env,
