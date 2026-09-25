@@ -152,12 +152,24 @@ class FileSizeValidationMiddleware:
     Checks Content-Length header before processing the request.
     """
 
+    # Admin-only endpoints exempted from the general max_file_upload_size cap.
+    # That setting is sized for routine user uploads (profile photos, passport
+    # scans, e-tickets); database backup restores are a structurally different
+    # kind of upload - infrequent, admin-only, and inherently much larger
+    # (already 2.7+ MB and only grows with the database) - reproduced live:
+    # a 2.7 MB backup rejected against a 1 MB max_file_upload_size setting,
+    # making the "Restore from Backup" admin feature unusable for any real
+    # backup this system produces.
+    EXEMPT_PATH_SUFFIXES = ("/databasebackup/restore/",)
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         # Only check for POST/PUT/PATCH requests with file uploads
-        if request.method in ["POST", "PUT", "PATCH"]:
+        if request.method in ["POST", "PUT", "PATCH"] and not request.path.endswith(
+            self.EXEMPT_PATH_SUFFIXES
+        ):
             content_length = request.META.get("CONTENT_LENGTH")
 
             if content_length:

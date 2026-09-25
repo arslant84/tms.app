@@ -37,7 +37,11 @@ def superuser_client(client, db):
 class TestStagingDataResetView:
     def test_blocked_when_allow_data_reset_off(self, superuser_client):
         url = reverse("admin:accounts_reset_staging_data")
-        response = superuser_client.get(url, follow=True)
+        # Pinned explicitly rather than relying on the ambient .env default,
+        # since a developer testing the reset feature locally may have
+        # ALLOW_DATA_RESET=true set for real in their own .env.
+        with override_settings(ALLOW_DATA_RESET=False):
+            response = superuser_client.get(url, follow=True)
         messages = [str(m) for m in response.context["messages"]]
         assert any("disabled" in m.lower() for m in messages)
 
